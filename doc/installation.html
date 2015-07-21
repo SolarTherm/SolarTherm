@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>OpenModelica Installation</title>
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/default.min.css">
+	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.5/highlight.min.js"></script>
+</head>
+<body>
+	<div id="content">
+	<h2>OpenModelica Installation</h2>
+	<p>This will guide you through the steps needed to install OpenModelica on your system.</p>
+	<h3>Windows</h3>
+	<p>Follow directions <a href="https://www.openmodelica.org/download/download-windows">here</a>.</p>
+	<h3>Mac</h3>
+	<p>Follow directions <a href="https://www.openmodelica.org/download/download-mac">here</a>.</p>
+	<h3>Ubuntu/Debian</h3>
+	<p>Follow directions <a href="https://www.openmodelica.org/download/download-linux">here</a>.</p>
+	<h3>From Source</h3>
+	<p>Follow directions <a href="https://github.com/OpenModelica/OpenModelica">here</a>.</p>
+	<h3>Archlinux Source</h3>
+	<p>Install dependencies from pacman:</p>
+	<pre><code class="bash">pacman -S lapack blas lpsolve expat</code></pre>
+	<p>Install dependencies for python interface from AUR (here using packer):</p>
+	<pre><code class="bash">packer -S omniorb omniorbpy</code></pre>
+	<p>Check you have the right build depedencies installed listed <a href="https://github.com/OpenModelica/OpenModelica">here</a> (e.g., clang, clang++, cmake, etc..).</p>
+	<p>Clone the git repository:</p>
+	<pre><code class="bash">git clone https://openmodelica.org/git-readonly/OpenModelica.git --recursive</code></pre>
+	<p>Configure and build:</p>
+	<pre><code class="bash">./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB
+make
+make install</code></pre>
+	<p>Install OMPython via pip:</p>
+	<pre><code class="bash">pip2 install git+git://github.com/OpenModelica/OMPython.git</code></pre>
+	<p>Add enviroment variable so python library can find OpenModelica:</p>
+	<pre><code class="bash">export OPENMODELICAHOME="/usr/local/"</code></pre>
+	</div>
+</body>
+<script>hljs.initHighlightingOnLoad();</script>
+</html>
