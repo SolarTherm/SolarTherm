@@ -1,4 +1,4 @@
-# Solar Thermal Energy and Economic Performance Simulator (steeps)
+# Solar Thermal Energy and Economic Performance Simulator (steep)
 
 ## Installation
 Add the solar thermal libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the `STLib` folder in the `~/.openmodelica/libraries/` folder.  On linux creating the symbolic link:
