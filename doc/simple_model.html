@@ -9,6 +9,14 @@
 <body>
 	<div id="content">
 	<h2>Simple Model Simulation</h2>
+	<p>Start the shell:</p>
+	<pre><code class="bash">OMShell-terminal</code></pre>
+	<p>Load the simple model and the standard libraries:</p>
+	<pre><code class="bash">loadModel(STLib.ControlSimple)
+loadModel(Modelica)</code></pre>
+	<p>Simulate the model for 20 seconds and plot results:</p>
+	<pre><code class="bash">simulate(STLib.ControlSimple, stopTime=20)
+plot({sol.port1.p, tank.e, gen.p})</code></pre>
 	</div>
 </body>
 <script>hljs.initHighlightingOnLoad();</script>
