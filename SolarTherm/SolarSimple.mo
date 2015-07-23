@@ -1,9 +1,9 @@
-within STLib;
+within SolarTherm;
 model SolarSimple "Simple sinusoidal solar source"
 	import SI = Modelica.SIunits;
 	import Modelica.Math.sin;
 	import Modelica.Constants.pi;
-	import STLib.PortSimple;
+	import SolarTherm.PortSimple;
 	parameter SI.Frequency freq = 0.1 "Frequency of source";
 	parameter SI.Irradiance irmax(min=0) = 1000 "Irradiance maximum";
 	parameter SI.Area area = 1 "Area of collector";

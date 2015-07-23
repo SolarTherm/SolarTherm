@@ -1,7 +1,7 @@
-within STLib;
+within SolarTherm;
 model GenSimple "Simple Generator"
 	import SI = Modelica.SIunits;
-	import STLib.PortSimple;
+	import SolarTherm.PortSimple;
 	parameter SI.Efficiency eff = 0.9 "Efficiency of generator";
 	parameter SI.Power pnom = 400 "Generator power";
 	PortSimple port1;

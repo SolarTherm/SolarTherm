@@ -1,9 +1,9 @@
-within STLib;
+within SolarTherm;
 model ControlSimple "Controller"
 	import SI = Modelica.SIunits;
-	import STLib.SolarSimple;
-	import STLib.TankSimple;
-	import STLib.GenSimple;
+	import SolarTherm.SolarSimple;
+	import SolarTherm.TankSimple;
+	import SolarTherm.GenSimple;
 	parameter Real upper(min=0, max=1, unit="1") = 0.8 "Frac for solar shutdown";
 	parameter Real lower (min=0, max=1, unit="1") = 0.2 "Frac for gen shutdown";
 	parameter Real band (min=0, max=1, unit="1") = 0.05 "Band for hysteresis";
