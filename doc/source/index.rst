@@ -17,6 +17,7 @@ Development
 
    openmodelica
    libraries
+   modelling
    models 
 
 Indices and Tables
