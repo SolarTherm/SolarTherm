@@ -1,19 +1,16 @@
-.. steep documentation master file, created by
-   sphinx-quickstart on Thu Jul 23 13:13:02 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+steep Documentation
+===================
 
-Welcome to steep's documentation!
-=================================
-
-Contents:
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
 
+   installation
+   simple_model
 
-
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`
