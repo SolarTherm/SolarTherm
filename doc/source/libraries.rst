@@ -1,16 +1,45 @@
 Libraries
 =========
-Here we list a number of existing libraries and within them the components that might be useful.
+Here we list a number of existing libraries and within them the components that might be useful.  Many of these libraries provide components that can be used for the detailed simulation of solar thermal power plants.  However, it is yet to be seen if they are suitable for performing year long simulations and if they have enough flexibility to enable rapid development and prototyping of new configurations.
 
 Modelica
 --------
-A number of standard and third party Modelica libraries are listed in the `Modelica library documentation`_.
-
-.. _Modelica library documentation: https://build.openmodelica.org/Documentation/index.html
+A number of standard and third party Modelica libraries are listed `here <https://www.modelica.org/libraries>`__ with more details found `here <https://build.openmodelica.org/Documentation/index.html>`__.
 
 Modelica
 ^^^^^^^^
 The `Modelica standard library`_.
+
+`Machines <http://modelica.github.io/Modelica/om/Modelica.Electrical.Machines.html>`__
+    contains models for synchronous, asynchronous and DC machines.
+
+`Fluid <http://modelica.github.io/Modelica/om/Modelica.Fluid.html>`__
+    1-dimensional thermo-fluid flow in pipes, vessels, fluid machines, valves and fittings.  Any of the media from the Media library can be used.  The components in this library need a System component at the top level to describe the surrounding environment, assumptions, initialisation and default parameters.  Some of the assumption options are: reversible flows, dynamic vs steady-state, ignore storage of mass, momentum and energy.
+
+    `Connectors <http://modelica.github.io/Modelica/om/Modelica.Fluid.UsersGuide.ComponentDefinition.FluidConnectors.html>`__
+        Ideal mixing is used to handle joins of more than two connectors.  It makes use of `stream <https://github.com/modelica/Modelica/blob/release/Modelica%203.2.1/Resources/Documentation/Fluid/Stream-Connectors-Overview-Rationale.pdf>`_ connections to handle enthalpy and other fluid properties.  For a single substance medium, mass flow rate, absolute pressure and specific enthalpy are used.  For multi-substance media mass fractions are used for both significant components and trace components (fluid properties are ignored but mass is balanced).  The connectors don't model any friction or velocity changes at the point of connection, so explicit components should be modelled if this or non-ideal mixing is needed (for example fittings).
+
+    `Vessels <http://modelica.github.io/Modelica/om/Modelica.Fluid.Vessels.html>`__
+        contains closed volume and open tank vessels as well as base classes to build your own.  They are ideally mixed and have the option for heat transfer through a thermal port.  Pressure losses for the fluid ports can be turned on to model different types of port connections to the vessel.
+
+    `Pipes <http://modelica.github.io/Modelica/om/Modelica.Fluid.Pipes.html>`__
+        has models for static (no mass or energy storage) and dynamic pipes.  A dynamic pipe can be used to produce the same results as the static pipe by changing a setting.  There are lots of parameter settings, so it might be best to refer to the examples to get an idea of how to model different types of pipes.  A finite volume method and staggered grid scheme is used to approximate the PDEs.  The pipe is split into a user selectable number of nodes.  I has heat ports which can be used for thermal losses or other heat exchange purposes.
+
+    `Machines <http://modelica.github.io/Modelica/om/Modelica.Fluid.Machines.html>`__
+        includes pistons and pumps.  The centrifugal pumps can either be ideally controlled or externally operated by a shaft or electronic signal.
+
+`Media <http://modelica.github.io/Modelica/om/Modelica.Media.UsersGuide.html>`__
+    The media thermodynamic parameters are defined with functions, polynomial equations or tables.  Fluids include ideal gases, water models, air models, table-based incompressible fluids and compressible liquids.  Instructions on how to define a medium are `here <http://modelica.github.io/Modelica/om/Modelica.Media.UsersGuide.MediumDefinition.html>`__.  Custom fluids can be provided and will work with other components as long as they extend the media interface.
+    
+
+Thermal
+    place
+
+Blocks
+    place
+
+Utilities
+    place
 
 .. _Modelica standard library: http://modelica.github.io/Modelica/
 
@@ -20,7 +49,7 @@ ThermoSysPro_ is an EDF library that provides common components for the static a
 
 Of interest it has models for `molten salt <https://build.openmodelica.org/Documentation/ThermoSysPro.Properties.MoltenSalt.html>`_ and a `solar collector <https://build.openmodelica.org/Documentation/ThermoSysPro.Solar.SolarCollector.html>`_.  There is a paper from SolarPACES 2013 on using this library for modelling three types of solar plant by `Baligh El Hefni 2013 <http://www.sciencedirect.com/science/article/pii/S1876610214005761>`_.
 
-It is open source, but the only access I have found to the library is from checking out the OpenModelica fork `here <https://github.com/dmikurube/OpenModelica/tree/master/testsuite/uncertainties/TestModels/ThermoSysPro>`_.
+It is open source, but the only access I have found to the library is from checking out the OpenModelica fork `here <https://github.com/dmikurube/OpenModelica/tree/master/testsuite/uncertainties/TestModels/ThermoSysPro>`__.
 
 .. _ThermoSysPro: http://www.eurosyslib.com/
 
@@ -30,7 +59,7 @@ ThermoCycle_ is unique in its ability to handle non-conventional working fluids 
 
 It contains models for a couple of solar collectors and some tutorials on their website.  They have a number of `papers <http://www.thermocycle.net/publications/>`_, including one on dynamic simulation of a micro-CSP plant with storage `Ireland et al. 2014 <http://orbi.ulg.ac.be/handle/2268/169522>`_.  The publications page also contains links to a couple of repositories which might contain additional models resulting from these publications.
 
-I have only seen mention of Dymola on the website, so it is yet to be seen whether this will work under OpenModelica.  The github link to the library is `here <https://github.com/thermocycle/Thermocycle-library>`_.
+I have only seen mention of Dymola on the website, so it is yet to be seen whether this will work under OpenModelica.  The github link to the library is `here <https://github.com/thermocycle/Thermocycle-library>`__.
 
 .. _ThermoCycle: http://www.thermocycle.net/
 
@@ -40,7 +69,7 @@ ThermoPower_ is for the dynamic modelling of thermal power plants with the purpo
 
 It lists quite a number of papers including one on a solar supercritical CO2 brayton cycle by `Casella and Colonna 2011 <http://www.sco2powercyclesymposium.org/resource_center/system_modeling_control/development-of-modelica-dynamic-model-of-solar-supercritical-co2-brayton-cycle-power-plants-for-control-studies>`_.
 
-It was developed primarily for Dymola.  It has some reporting on the test failures under OpenModelica.  The github repository is `here <https://github.com/modelica-3rdparty/ThermoPower>`_.
+It was developed primarily for Dymola.  It has some reporting on the test failures under OpenModelica.  The github repository is `here <https://github.com/modelica-3rdparty/ThermoPower>`__.
 
 .. _ThermoPower: https://build.openmodelica.org/Documentation/ThermoPower.html
 
@@ -48,10 +77,11 @@ Buildings
 ^^^^^^^^^
 `Buildings <http://simulationresearch.lbl.gov/modelica>`_ is used to model the thermal performance of buildings.
 
-Buildings.BoundaryConditions.WeatherData.ReaderTMY3_ is used to read in TMY3 weather data, including those supplied with EnergyPlus.  It is a block component type that provides the data on ports to which other components can connect.  An example is provided `here <https://build.openmodelica.org/Documentation/Buildings.BoundaryConditions.WeatherData.Examples.ReaderTMY3.html>`_.  This example failed on an initial test with OpenModelica.
+ReaderTMY3_
+    can read in TMY3 weather data, including those supplied with EnergyPlus.  It is a block component type that provides the data on ports to which other components can connect.  An example is provided `here <https://build.openmodelica.org/Documentation/Buildings.BoundaryConditions.WeatherData.Examples.ReaderTMY3.html>`__.  This example failed on an initial test with OpenModelica.
 
 .. _Buildings: http://simulationresearch.lbl.gov/modelica
-.. _Buildings.BoundaryConditions.WeatherData.ReaderTMY3: https://build.openmodelica.org/Documentation/Buildings.BoundaryConditions.WeatherData.ReaderTMY3.html
+.. _ReaderTMY3: https://build.openmodelica.org/Documentation/Buildings.BoundaryConditions.WeatherData.ReaderTMY3.html
 
 Other
 -----
