@@ -53,16 +53,37 @@ Add enviroment variable so python library can find OpenModelica::
 
 SolarTherm Library
 ------------------
-Add the SolarTherm libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the SolarTherm folder in the ``~/.openmodelica/libraries/`` folder.  On linux creating the symbolic link::
+Change to the source directory and make a build folder::
+    
+    cd steep
+    mkdir build
+    cd build
 
-    mkdir -p ~/.openmodelica/libraries/
-    cd ~/.openmodelica/libraries
-    ln -s $STLIBPARENTPATH/SolarTherm SolarTherm
+Call ``cmake`` to build the library::
 
-Where ``$STLIBPARENTPATH`` is the directory that contains the SolarTherm folder.
+    cmake ..
+    make
 
-The second way to do this is by setting the ``OPENMODELICALIBRARY`` environment variable::
+Run tests::
 
-    OPENMODELICA=$OPENMODELICAHOME/lib/omlibrary:~/.openmodelica/libraries/:$STLIBPARENTPATH
+    ctest -V
 
-On windows replace the : with ;.
+Install the library::
+
+    sudo make install
+
+Note that the tests currently default to using the system installed libraries if they exist.  So after the first installation, any changes made to the source code can only be tested after building and installing.  A solution where the tests default to using the locally built copy is needed.
+
+.. Add the SolarTherm libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the SolarTherm folder in the ``~/.openmodelica/libraries/`` folder.  On linux creating the symbolic link::
+.. 
+..     mkdir -p ~/.openmodelica/libraries/
+..     cd ~/.openmodelica/libraries
+..     ln -s $STLIBPARENTPATH/SolarTherm SolarTherm
+.. 
+.. Where ``$STLIBPARENTPATH`` is the directory that contains the SolarTherm folder.
+.. 
+.. The second way to do this is by setting the ``OPENMODELICALIBRARY`` environment variable::
+.. 
+..     OPENMODELICA=$OPENMODELICAHOME/lib/omlibrary:~/.openmodelica/libraries/:$STLIBPARENTPATH
+.. 
+.. On windows replace the : with ;.
