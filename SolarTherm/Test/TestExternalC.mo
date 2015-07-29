@@ -2,11 +2,11 @@ within SolarTherm.Test;
 block TestExternalC
 	output Real y;
 
-	function ExternalFunc
+	function Square
 		input Real x;
 		output Real y;
-		external y=TestExternalC_func(x) annotation(Library="solartherm_test");
-	end ExternalFunc;
+		external y=TestExternalC_square(x) annotation(Library="solartherm_test");
+	end Square;
 equation
-	y = ExternalFunc(time);
+	y = Square(time);
 end TestExternalC;

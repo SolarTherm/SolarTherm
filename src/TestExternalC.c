@@ -1,6 +1,6 @@
 #include "TestExternalC.h"
 
-double TestExternalC_func(double x)
+double TestExternalC_square(double x)
 {
 	return x*x;
 }
