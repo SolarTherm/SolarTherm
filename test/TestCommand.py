@@ -3,22 +3,25 @@
 import unittest
 
 import OMPython
+import os
 
-class TestExternalC(unittest.TestCase):
+class TestCommand(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestExternalC'
+		model = 'SolarTherm.Test.TestCommand'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
 		self.assertTrue(self.ex('loadModel('+model+')'))
 
-		ans = self.ex('simulate('+model+', stopTime=4)')
+		os.remove('TestCommandTouched')
+		ans = self.ex('simulate('+model+', stopTime=1)')
 		#print(self.ex('getErrorString()'))
 		self.assertEqual(ans['SimulationResults']['messages'], '""')
 
-	def test_squaring(self):
-		self.assertEqual(self.ex('val(y, 1)'), 1)
-		self.assertEqual(self.ex('val(y, 2)'), 4)
+	def test_touching(self):
+		self.assertEqual(self.ex('val(result, 0)'), 0)
+		self.assertTrue(os.path.isfile('TestCommandTouched'))
+		
 
 if __name__ == '__main__':
 	unittest.main()
