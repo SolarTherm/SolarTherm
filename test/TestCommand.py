@@ -11,13 +11,14 @@ class TestCommand(unittest.TestCase):
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'))
+		self.assertTrue(self.ex('loadModel('+model+')'),
+				msg=self.ex('getErrorString()'))
 
 		if os.path.isfile('TestCommandTouched'):
 			os.remove('TestCommandTouched')
 		ans = self.ex('simulate('+model+', stopTime=1)')
-		#print(self.ex('getErrorString()'))
-		self.assertEqual(ans['SimulationResults']['messages'], '""')
+		self.assertEqual(ans['SimulationResults']['messages'], '""',
+				msg=self.ex('getErrorString()'))
 
 	def test_touching(self):
 		self.assertEqual(self.ex('val(result, 0)'), 0)

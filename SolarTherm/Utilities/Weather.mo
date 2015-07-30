@@ -1,7 +1,14 @@
 within SolarTherm.Utilities;
-function WeatherFileChecker "Check and possibly convert weather file"
-	input String fileName(fixed=false);
-	output String newName(fixed=false);
+package Weather
+
+block WeatherTable "Weather data stored in table"
+	extends Modelica.Blocks.Sources.CombiTimeTable;
+end WeatherTable;
+
+function weatherFileChecker "Check and possibly convert weather file"
+	import Modelica.Utilities.System.command;
+	input String fileName;
+	output String newName;
 protected
 	String dir;
 	String name;
@@ -16,4 +23,6 @@ algorithm
 		assert(result == 0, "Failed to convert weather file " + fileName);
 		newName := dir + name + ".mo";
 	end if;
-end WeatherFileChecker;
+end weatherFileChecker;
+
+end Weather;

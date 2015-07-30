@@ -4,11 +4,11 @@ import argparse
 import os
 
 def load_file(fn):
-	print(fn)
 	return 0
 
 def save_file(dat, fn):
-	print(fn)
+	f = open(fn, 'w')
+	f.write('outputting')
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()

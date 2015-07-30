@@ -10,11 +10,12 @@ class TestWeatherTable(unittest.TestCase):
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'))
+		self.assertTrue(self.ex('loadModel('+model+')'),
+				msg=self.ex('getErrorString()'))
 
 		ans = self.ex('simulate('+model+', stopTime=3)')
-		#print(self.ex('getErrorString()'))
-		self.assertEqual(ans['SimulationResults']['messages'], '""')
+		self.assertEqual(ans['SimulationResults']['messages'], '""',
+				msg=self.ex('getErrorString()'))
 
 	def test_table(self):
 		#self.ex('plot({linear.y[1], cderiv.y[1], cseg.y[1]})')

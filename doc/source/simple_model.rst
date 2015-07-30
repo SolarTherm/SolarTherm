@@ -20,4 +20,4 @@ Simulate the model for 20 seconds and plot results::
 
 A simple python script has been written to call these commands through the python interface.  Call this from the source directory using::
 
-    python2 bin/run_simply.py
+    python2 src/python/examples/run_simple
