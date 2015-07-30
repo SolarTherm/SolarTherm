@@ -1,5 +1,3 @@
-add_subdirectory(utilities)
-
 # see http://bloerg.net/2012/11/10/cmake-and-distutils.html
 
 find_program(PYTHON "python2")

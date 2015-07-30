@@ -13,7 +13,8 @@ class TestCommand(unittest.TestCase):
 		self.assertTrue(self.ex('loadModel(Modelica)'))
 		self.assertTrue(self.ex('loadModel('+model+')'))
 
-		os.remove('TestCommandTouched')
+		if os.path.isfile('TestCommandTouched'):
+			os.remove('TestCommandTouched')
 		ans = self.ex('simulate('+model+', stopTime=1)')
 		#print(self.ex('getErrorString()'))
 		self.assertEqual(ans['SimulationResults']['messages'], '""')
