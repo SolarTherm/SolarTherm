@@ -2,8 +2,99 @@
 
 import argparse
 import os
+import datetime as dt
+
+# Create table for time series, and maybe a header for meta data.
+# Could have option to not overwrite .mo file if it already exists.
+
+class TMY3(object):
+	header = {
+		# See 43156.pdf
+		'id': 0, # USAF site identifier
+		'name': 1, # Station name
+		'state': 2, # Station state
+		'timezone': 3, # Site time zone (hours from Greenwich)
+		'lat': 4, # Site latitude (deicmal degree)
+		'lon': 5, # Site latitude (decimal degree)
+		'elev': 6, # Site elevation (m)
+		}
+	labels = {
+		# Labels
+		# Note that the labels units conflict with the specification in that
+		# one says powers are in Wh and the other in W.  Because the time
+		# resolution is 1 hour, these are the same, but care should be taken
+		# if trying to adapt this format for higher frequency data.
+		'Date (MM/DD/YYYY)': 0,
+		'Time (HH:MM)': 1, # Local standard time
+		'GHI (W/m^2)': 4, # Global horizontal irradiance *1
+		'DNI (W/m^2)': 7, # Direct nomal irradiance *1
+		'Dry-bulb (C)': 31, # Dry-bulb temperature *2
+		'Dew-point (C)': 34, # Dew-point temperature *2
+		'RHum (%)': 37, # Relative humidity *2
+		'Pressure (mbar)': 40, # Pressure *2
+		'Wdir (degrees)': 43, # Wind direction *2, 360=North, 0=calm
+		'Wspd (m/s)': 46, # Wind speed *2
+
+		# *1: during last hour ending in this timestamp
+		# *2: at time indicated
+		}
+	sources_to_check = [
+		5,
+		8,
+		9,
+		32,
+		35,
+		38,
+		41,
+		44,
+		47,
+		]
+	def parse(fn):
+		f = open(fn)
+		header = f.readline().strip().split(',')
+		labels = f.readline().strip().split(',')
+
+		# Check labels are as expected
+		for k in TMY3.labels:
+			assert k == labels[TMY3.labels[k]], 'Label ' + k + ' not matching'
+
+		dat = []
+		for line in f.readlines():
+			dat.append(line.strip().split(','))
+		
+		# Check data is expected length
+		assert(len(dat) == 8760)
+		
+		# Check first row to see if data missing.  Austela uses value of -9900,
+		# and a ? in the meteorological 'source flags' column is also often used
+		# to indicate missing data.
+		for c in TMY3.sources_to_check:
+			assert dat[0][c] != '?', 'Value ' + labels[c] + ' might be missing'
+		for k in TMY3.labels:
+			assert dat[0][TMY3.labels[k]] != '-9900', ('Value ' + k +
+					' might be missing')
+
+		# Using first data point for date.
+		# Different months can come from different years and supposedly the data
+		# only covers 365 days, so if a leap year is selected the days might be
+		# out of sync.
+		date_first = dt.datetime.strptime(dat[0][TMY3.labels['Date (MM/DD/YYYY)']]
+				+ ' ' + dat[0][TMY3.labels['Time (HH:MM)']], '%m/%d/%Y %H:%M')
+		date_year = dt.datetime.strptime(dat[0][TMY3.labels['Date (MM/DD/YYYY)']],
+				'%m/%d/%Y')
+		#print(date_first)
+		print((date_first - date_year).total_seconds())
+
+		#meta = 
+		#table =
 
 def load_file(fn):
+	# First identify then pass off to processor
+
+	parser = TMY3
+	
+	# Commenting out so that tests work while this is still in progress
+	#tab = parser.parse(fn)
 	return 0
 
 def save_file(dat, fn):
