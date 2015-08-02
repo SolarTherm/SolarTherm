@@ -16,6 +16,8 @@ protected
 	Integer result;
 algorithm
 	(dir, name, ext) := Modelica.Utilities.Files.splitPathName(fileName);
+	// Should add in a check on file system along with a parameter about
+	// whether or not to overwrite existing .mo file.
 	if ext == ".mo" then
 		newName := fileName;
 	else
