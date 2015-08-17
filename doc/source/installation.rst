@@ -64,7 +64,7 @@ Call ``cmake`` to build the library::
     cmake ..
     make
 
-Run tests::
+Run tests (may only work if first installed)::
 
     ctest -V
 
@@ -72,7 +72,7 @@ Install the library::
 
     sudo make install
 
-Note that the tests currently default to using the system installed libraries if they exist.  So after the first installation, any changes made to the source code can only be tested after building and installing.  A solution where the tests default to using the locally built copy is needed.
+Note that the tests currently default to using the system installed libraries if they exist.  So after the first installation, any changes made to the source code can only be tested after building and installing.  A solution where the tests default to using the locally built copy is desired.
 
 .. Add the SolarTherm libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the SolarTherm folder in the ``~/.openmodelica/libraries/`` folder.  On linux creating the symbolic link::
 .. 
