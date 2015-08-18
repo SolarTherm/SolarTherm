@@ -6,14 +6,55 @@ import OMPython
 
 from math import pi
 
-# For year 2015
 # http://www.esrl.noaa.gov/gmd/grad/solcalc/
+# Uses calculations from Astronomical Algorithms - Jean Meeus
+# Web-based calculator accurate for dates -2000 to +3000
+# Applies atmosphere refraction effects which are more significant the
+# lower the altitude.
+# The year 2015 is used below.
 
+# Zero position lat = 0, lon = 0, tz = 0
 # time (s), alt (deg), azi (deg)
 pnts_0 = [
-		((0*24 + 5)*3600, -14.51, 113.83),
+		((0*24 + 7)*3600, 13.09, 113.66),
 		((0*24 + 12)*3600, 66.99, 177.98),
-		((0*24 + 18)*3600, 1.2, 247.02),
+		((0*24 + 17)*3600, 14.65, 246.2),
+		(((31+28+31)*24 + 7)*3600, 14.02, 85.42),
+		#(((31+28+31)*24 + 12)*3600, 85.37, 12.25),
+		# Zenith angle getting close to zero so azimuth becomes very sensitive
+		# Could change azimuth tolerated error based on altitude
+		(((31+28+31)*24 + 17)*3600, 15.97, 274.79),
+		(((31+28+31+30+31+30)*24 + 7)*3600, 12.98, 66.25),
+		(((31+28+31+30+31+30)*24 + 12)*3600, 66.88, 2.23),
+		(((31+28+31+30+31+30)*24 + 17)*3600, 14.71, 293.91),
+		]
+
+# Canberra lat = -35.3, lon = 149.1, tz = 10
+# time (s), alt (deg), azi (deg)
+pnts_can = [
+		((0*24 + 7)*3600, 23.57, 102.41),
+		((0*24 + 12)*3600, 77.65, 7.37),
+		((0*24 + 17)*3600, 26.28, 259.34),
+		(((31+28+31)*24 + 7)*3600, 8.2, 78.86),
+		(((31+28+31)*24 + 12)*3600, 50.31, 2.99),
+		(((31+28+31)*24 + 17)*3600, 11.14, 283.6),
+		(((31+28+31+30+31+30)*24 + 8)*3600, 7.43, 54.81),
+		(((31+28+31+30+31+30)*24 + 12)*3600, 31.57, 1.98),
+		(((31+28+31+30+31+30)*24 + 16)*3600, 9.82, 307.56),
+		]
+
+# Denver lat = 39.74, lon = -104.99, tz = -7
+# time (s), alt (deg), azi (deg)
+pnts_den = [
+		((0*24 + 8)*3600, 5.6, 126.12),
+		((0*24 + 12)*3600, 27.31, 179.09),
+		((0*24 + 16)*3600, 6.69, 232.68),
+		(((31+28+31)*24 + 7)*3600, 13.75, 95.52),
+		(((31+28+31)*24 + 12)*3600, 54.9, 178.35),
+		(((31+28+31)*24 + 17)*3600, 15.31, 263.35),
+		(((31+28+31+30+31+30)*24 + 7)*3600, 25.03, 79.9),
+		(((31+28+31+30+31+30)*24 + 12)*3600, 73.33, 176.93),
+		(((31+28+31+30+31+30)*24 + 17)*3600, 26.46, 278.96),
 		]
 
 class TestSolarPosition(unittest.TestCase):
@@ -34,37 +75,33 @@ class TestSolarPosition(unittest.TestCase):
 				msg=self.ex('getErrorString()'))
 
 	def test_solarposition(self):
-		# Need to test against calculations on the web for one northern and one
-		# southern hemisphere location at various times throughout the year.
-		# Need to run the simulation at high enough resolution and check within
-		# accuracy of the given method.
-
 		#self.ex('plot({solp_0.zen, solp_0.dec, solp_0.azi, solp_0.alt})')
 
-		self.longMessage = True
+		#print(self.ex('val(solp_den.alt, '+str(pnts_den[7][0])+')')*180/pi)
+		#print(self.ex('val(solp_den.azi, '+str(pnts_den[7][0])+')')*180/pi)
+		#print(self.ex('val(solp_den.E, '+str(pnts_den[7][0])+')')*60)
+		#print(self.ex('val(solp_den.dec, '+str(pnts_den[7][0])+')')*180/pi)
+
+		self.longMessage = True # allow assert msg to be added to std msg
+		delta = 0.6 # error tolerated (deg)
+
 		for i, (t, alt, azi) in enumerate(pnts_0):
 			self.assertAlmostEqual(self.ex('val(solp_0.alt, '+str(t)+')')*180/pi,
-					alt, delta=1, msg='Alt of: ' + str(i))
+					alt, delta=delta, msg='Alt of 0: ' + str(i))
 			self.assertAlmostEqual(self.ex('val(solp_0.azi, '+str(t)+')')*180/pi,
-					azi, delta=1, msg='Azi of: ' + str(i))
+					azi, delta=delta, msg='Azi of 0: ' + str(i))
 
-		#time = 0*24*3600 + 12*3600
-		#self.assertAlmostEqual(self.ex('val(solp_0.alt, '+str(time)+')'),
-		#		66.99*pi/180, 2)
-		#self.assertAlmostEqual(self.ex('val(solp_0.azi, '+str(time)+')'),
-		#		177.98*pi/180, 2)
+		for i, (t, alt, azi) in enumerate(pnts_can):
+			self.assertAlmostEqual(self.ex('val(solp_can.alt, '+str(t)+')')*180/pi,
+					alt, delta=delta, msg='Alt of can: ' + str(i))
+			self.assertAlmostEqual(self.ex('val(solp_can.azi, '+str(t)+')')*180/pi,
+					azi, delta=delta, msg='Azi of can: ' + str(i))
 
-		#time = 0*24*3600 + 12*3600
-		#self.assertAlmostEqual(self.ex('val(solp_0.alt, '+str(time)+')'),
-		#		66.99*pi/180, 2)
-		#self.assertAlmostEqual(self.ex('val(solp_0.azi, '+str(time)+')'),
-		#		177.98*pi/180, 2)
-
-		#time = 0*24*3600 + 12*3600
-		#self.assertAlmostEqual(self.ex('val(solp_can.alt, '+str(time)+')'),
-		#		1.355, 2)
-		#self.assertAlmostEqual(self.ex('val(solp_can.azi, '+str(time)+')'),
-		#		0.128, 2)
+		for i, (t, alt, azi) in enumerate(pnts_den):
+			self.assertAlmostEqual(self.ex('val(solp_den.alt, '+str(t)+')')*180/pi,
+					alt, delta=delta, msg='Alt of den: ' + str(i))
+			self.assertAlmostEqual(self.ex('val(solp_den.azi, '+str(t)+')')*180/pi,
+					azi, delta=delta, msg='Azi of den: ' + str(i))
 
 if __name__ == '__main__':
 	unittest.main()

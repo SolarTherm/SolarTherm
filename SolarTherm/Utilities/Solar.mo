@@ -30,17 +30,17 @@ block SolarPositionDB "Sun position using Duffie and Beckman"
 	// http://www.pveducation.org/pvcdrom/properties-of-sunlight/suns-position
 	parameter SI.Time t_start = 0 "Local time difference between time=0 and start of year";
 	parameter nSI.Time_hour t_zone = 0 "Time zone wrt UTC";
+protected
+	constant Real ang_vel(quantity="AngularVelocity", unit="rad/hour") = pi/12
+		"Angular velocity of earh in orbit";
 	SI.Angle B "Approximate angle of earth in its orbit";
 	nSI.Time_hour E "Equation of time";
 	SI.Angle dec "Solar declination (+ve North)";
 	nSI.Time_hour t_solar "Local solar time (solar noon at 12hrs)";
 	SI.Angle hra "Hour angle (solar noon at 0)";
-	SI.Angle hra_s "Hour angle pulling out sign";
-	SI.Angle zen "Zenith angle";
+	SI.Angle hra_s "Hour angle sign";
 	Sign sign_hra;
-protected
-	constant Real ang_vel(quantity="AngularVelocity", unit="rad/hour") = pi/12
-		"Angular velocity of earh in orbit";
+	SI.Angle zen "Zenith angle";
 equation
 	// The approximate oribital angle is calculated taking noon UTC as zero
 	B = 2*pi*(to_hour(time + t_start) - t_zone - 12)/(24*365);
@@ -60,12 +60,13 @@ equation
 	// The hour angle converts the solar time to an angle and lines up solar
 	// noon with zero
 	hra = ang_vel*(t_solar - 12);
-	hra_s = sin(hra);
 	// Note that t_solar and hra are not modulous 1day
+	// hra_s gives the sign of hra relative to solar noon for each day
+	hra_s = sin(hra);
 
 	zen = acos(sin(dec)*sin(from_deg(lat)) + cos(dec)*cos(from_deg(lat))*cos(hra));
 	azi = pi + sign_hra.y*acos((cos(zen)*sin(from_deg(lat)) - sin(dec))/(sin(zen)*cos(from_deg(lat))));
-	//azi = atan(sin(hra)/(cos(hra)*sin(from_deg(lat)) - tan(dec)*cos(from_deg(lat))));
+	// The azimuth becomes very sensitive as zen approaches zero
 	alt = pi/2 - zen;
 	connect(sign_hra.u, hra_s);
 end SolarPositionDB;
