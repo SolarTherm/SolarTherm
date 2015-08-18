@@ -7,8 +7,76 @@ import datetime as dt
 # Create table for time series, and maybe a header for meta data.
 # Could have option to not overwrite .mo file if it already exists.
 
+class MO(object):
+	"""
+	Specifications and dumper for output .mo file format.
+	No need to construct this class.
+	If the orders or units of values change they should also be updated in
+	Weather.mo.
+	"""
+	metal = [
+		'name', # Identifier for station/file
+		'lat', # Latitude (degree)
+		'lon', # Longitude (degree)
+		'elev', # Elevation (m)
+		'tzone', # Time zone wrt to UTC +ve East (hours)
+		'tstart', # Time of first point relative to start of year using local time (s)
+		]
+	metau = [
+		'str',
+		'deg',
+		'deg',
+		'm',
+		'h',
+		's',
+		]
+	tabl = [
+		'time', # Time starting at zero for first point (s)
+		'ghi', # Global horizontal irradiance (W/m2)
+		'dni', # Direct normal irradiance (W/m2)
+		'dry', # Dry-bulb temperature (degC)
+		'dew', # Dew point temperature (degC)
+		'rhum', # Relative humidity (%)
+		'p', # Pressure (mbar)
+		'wdir', # Wind direction (deg)
+		'wspd', # Wind speed (m/s)
+		]
+	tabu = [
+		's',
+		'W/m2',
+		'W/m2',
+		'degC',
+		'degC',
+		'%',
+		'mbar',
+		'deg',
+		'm/s',
+		]
+	@classmethod
+	def dump(cls, fn, meta, data):
+		nrow = len(data['time'])
+		ncol = len(cls.tabl)
+		f = open(fn, 'w')
+		f.write('#1\n')
+		f.write('double weather('+str(nrow)+','+str(ncol)+')\n')
+		# Can check labels to make sure it is a compatible version
+		f.write('#METALABELS,'+','.join(cls.metal)+'\n')
+		f.write('#METAUNITS,'+','.join(cls.metau)+'\n')
+		f.write('#TABLELABELS,'+','.join(cls.tabl)+'\n')
+		f.write('#TABLEUNITS,'+','.join(cls.tabu)+'\n')
+		# Output metadata line
+		f.write('#METADATA,'+','.join(meta[k] for k in cls.metal)+'\n')
+		# Output table data
+		for i in range(nrow):
+			f.write(','.join(data[k][i] for k in cls.tabl)+'\n')
+		f.close()
+
 class TMY3(object):
-	header = {
+	"""
+	Secifications and loader for NREL TMY3 files
+	No need to construct this class
+	"""
+	headi = {
 		# See 43156.pdf
 		'id': 0, # USAF site identifier
 		'name': 1, # Station name
@@ -18,8 +86,7 @@ class TMY3(object):
 		'lon': 5, # Site latitude (decimal degree)
 		'elev': 6, # Site elevation (m)
 		}
-	labels = {
-		# Labels
+	labi = {
 		# Note that the labels units conflict with the specification in that
 		# one says powers are in Wh and the other in W.  Because the time
 		# resolution is 1 hour, these are the same, but care should be taken
@@ -49,18 +116,20 @@ class TMY3(object):
 		44,
 		47,
 		]
-	def parse(fn):
+	@classmethod
+	def load(cls, fn):
 		f = open(fn)
 		header = f.readline().strip().split(',')
 		labels = f.readline().strip().split(',')
 
 		# Check labels are as expected
-		for k in TMY3.labels:
-			assert k == labels[TMY3.labels[k]], 'Label ' + k + ' not matching'
+		for k in cls.labi:
+			assert k == labels[cls.labi[k]], 'Label ' + k + ' not matching'
 
 		dat = []
 		for line in f.readlines():
 			dat.append(line.strip().split(','))
+		f.close()
 		
 		# Check data is expected length
 		assert(len(dat) == 8760)
@@ -68,38 +137,52 @@ class TMY3(object):
 		# Check first row to see if data missing.  Austela uses value of -9900,
 		# and a ? in the meteorological 'source flags' column is also often used
 		# to indicate missing data.
-		for c in TMY3.sources_to_check:
+		for c in cls.sources_to_check:
 			assert dat[0][c] != '?', 'Value ' + labels[c] + ' might be missing'
-		for k in TMY3.labels:
-			assert dat[0][TMY3.labels[k]] != '-9900', ('Value ' + k +
+		for k in cls.labi:
+			assert dat[0][cls.labi[k]] != '-9900', ('Value ' + k +
 					' might be missing')
 
-		# Using first data point for date.
-		# Different months can come from different years and supposedly the data
-		# only covers 365 days, so if a leap year is selected the days might be
-		# out of sync.
-		date_first = dt.datetime.strptime(dat[0][TMY3.labels['Date (MM/DD/YYYY)']]
-				+ ' ' + dat[0][TMY3.labels['Time (HH:MM)']], '%m/%d/%Y %H:%M')
-		date_year = dt.datetime.strptime(dat[0][TMY3.labels['Date (MM/DD/YYYY)']],
+		# Different months can come from different years and the data only
+		# covers 365 days.
+		# Using first data point to get time from start of year
+		date_first = dt.datetime.strptime(dat[0][cls.labi['Date (MM/DD/YYYY)']]
+				+ ' ' + dat[0][cls.labi['Time (HH:MM)']], '%m/%d/%Y %H:%M')
+		date_year = dt.datetime.strptime(dat[0][cls.labi['Date (MM/DD/YYYY)']],
 				'%m/%d/%Y')
-		#print(date_first)
-		print((date_first - date_year).total_seconds())
+		t_start = (date_first - date_year).total_seconds()
 
-		#meta = 
-		#table =
+		meta = {}
+		meta['name'] = (header[cls.headi['id']]
+				+ '-' + header[cls.headi['name']])
+		meta['lat'] = header[cls.headi['lat']]
+		meta['lon'] = header[cls.headi['lon']]
+		meta['elev'] = header[cls.headi['elev']]
+		meta['tzone'] = header[cls.headi['timezone']]
+		meta['tstart'] = str(t_start)
+
+		tab = {k: [] for k in MO.tabl}
+		for i, row in enumerate(dat):
+			tab['time'].append(str(i*3600))
+			tab['ghi'].append(row[cls.labi['GHI (W/m^2)']])
+			tab['dni'].append(row[cls.labi['DNI (W/m^2)']])
+			tab['dry'].append(row[cls.labi['Dry-bulb (C)']])
+			tab['dew'].append(row[cls.labi['Dew-point (C)']])
+			tab['rhum'].append(row[cls.labi['RHum (%)']])
+			tab['p'].append(row[cls.labi['Pressure (mbar)']])
+			tab['wdir'].append(row[cls.labi['Wdir (degrees)']])
+			tab['wspd'].append(row[cls.labi['Wspd (m/s)']])
+
+		return (meta, tab)
 
 def load_file(fn):
 	# First identify then pass off to processor
-
 	parser = TMY3
-	
-	# Commenting out so that tests work while this is still in progress
-	#tab = parser.parse(fn)
-	return 0
 
-def save_file(dat, fn):
-	f = open(fn, 'w')
-	f.write('outputting')
+	return parser.load(fn)
+
+def save_file(fn, dat):
+	MO.dump(fn, dat[0], dat[1])
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -108,4 +191,4 @@ if __name__ == '__main__':
 
 	fn = args.file
 	dat = load_file(fn)
-	save_file(dat, os.path.splitext(fn)[0] + '.mo')
+	save_file(os.path.splitext(fn)[0] + '.motab', dat)

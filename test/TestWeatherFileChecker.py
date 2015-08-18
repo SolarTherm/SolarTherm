@@ -14,16 +14,17 @@ class TestWeatherFileChecker(unittest.TestCase):
 		self.assertTrue(self.ex('loadModel('+model+')'),
 				msg=self.ex('getErrorString()'))
 
-		if os.path.isfile('weather2.mo'):
-			os.remove('weather2.mo')
+		if os.path.isfile('resources/weatherfile2.motab'):
+			os.remove('resources/weatherfile2.motab')
 		ans = self.ex('simulate('+model+', stopTime=1)')
+		#print(ans)
 		self.assertEqual(ans['SimulationResults']['messages'], '""',
 				msg=self.ex('getErrorString()'))
 
 	def test_checker(self):
 		self.assertTrue(self.ex('val(fn1_correct, 0)'))
 		self.assertTrue(self.ex('val(fn2_correct, 0)'))
-		self.assertTrue(os.path.isfile('weather2.mo'))
+		self.assertTrue(os.path.isfile('resources/weatherfile2.motab'))
 
 if __name__ == '__main__':
 	unittest.main()
