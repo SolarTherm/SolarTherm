@@ -22,7 +22,8 @@ pnts_0 = [
 		(((31+28+31)*24 + 7)*3600, 14.02, 85.42),
 		#(((31+28+31)*24 + 12)*3600, 85.37, 12.25),
 		# Zenith angle getting close to zero so azimuth becomes very sensitive
-		# Could change azimuth tolerated error based on altitude
+		# Could increase number of intervals (this helped elsewhere)
+		# Otherwise could change azimuth tolerated error based on altitude
 		(((31+28+31)*24 + 17)*3600, 15.97, 274.79),
 		(((31+28+31+30+31+30)*24 + 7)*3600, 12.98, 66.25),
 		(((31+28+31+30+31+30)*24 + 12)*3600, 66.88, 2.23),

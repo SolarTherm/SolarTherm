@@ -15,7 +15,9 @@ class TestWeatherSource(unittest.TestCase):
 		self.assertTrue(self.ex('loadModel('+model+')'),
 				msg=self.ex('getErrorString()'))
 
-		ans = self.ex('simulate('+model+', stopTime=86400)')
+		# Azimuth can be very sensitive at high altitude so increasing number
+		# of intervals.
+		ans = self.ex('simulate('+model+', stopTime=86400, numberOfIntervals=2000)')
 		#print(ans)
 		self.assertEqual(ans['SimulationResults']['messages'], '""',
 				msg=self.ex('getErrorString()'))
@@ -31,7 +33,7 @@ class TestWeatherSource(unittest.TestCase):
 		self.assertAlmostEqual(self.ex('val(wea.alt, ' + solar_noon + ')')*180/pi,
 				78.8, delta=0.1)
 		self.assertAlmostEqual(self.ex('val(wea.azi, ' + solar_noon + ')')*180/pi,
-				360.0, delta=30) # very sensitive
+				360.0, delta=1.0) # very sensitive
 
 if __name__ == '__main__':
 	unittest.main()
