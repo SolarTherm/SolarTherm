@@ -28,8 +28,8 @@ block SolarPositionDB "Sun position using Duffie and Beckman"
 	// http://www.esrl.noaa.gov/gmd/grad/solcalc/solareqns.PDF
 	// http://ascend4.org/Calculation_of_sun_position
 	// http://www.pveducation.org/pvcdrom/properties-of-sunlight/suns-position
-	parameter SI.Time t_start = 0 "Local time difference between time=0 and start of year";
-	parameter nSI.Time_hour t_zone = 0 "Time zone wrt UTC";
+	parameter SI.Time tstart = 0 "Local time difference between time=0 and start of year";
+	parameter nSI.Time_hour tzone = 0 "Time zone wrt UTC";
 protected
 	constant Real ang_vel(quantity="AngularVelocity", unit="rad/hour") = pi/12
 		"Angular velocity of earh in orbit";
@@ -43,7 +43,7 @@ protected
 	SI.Angle zen "Zenith angle";
 equation
 	// The approximate oribital angle is calculated taking noon UTC as zero
-	B = 2*pi*(to_hour(time + t_start) - t_zone - 12)/(24*365);
+	B = 2*pi*(to_hour(time + tstart) - tzone - 12)/(24*365);
 	// The equation of time accounts for orbital eccentricity and axial tilt
 	E = (1/60)*229.2*(0.000075
 		+ 0.001868*cos(B) - 0.032077*sin(B)
@@ -56,7 +56,7 @@ equation
 	// The local solar time is calculated by applying the equation of time
 	// correction and correcting for the difference between the location and
 	// the time zone meridian
-	t_solar = to_hour(time + t_start) + from_deg(lon)/ang_vel - t_zone + E;
+	t_solar = to_hour(time + tstart) + from_deg(lon)/ang_vel - tzone + E;
 	// The hour angle converts the solar time to an angle and lines up solar
 	// noon with zero
 	hra = ang_vel*(t_solar - 12);
