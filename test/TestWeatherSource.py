@@ -17,6 +17,8 @@ class TestWeatherSource(unittest.TestCase):
 
 		# Azimuth can be very sensitive at high altitude so increasing number
 		# of intervals.
+		# Also because of val() interpolates between 0 and 360 at solar noon
+		# if not a sampled instant.
 		ans = self.ex('simulate('+model+', stopTime=86400, numberOfIntervals=2000)')
 		#print(ans)
 		self.assertEqual(ans['SimulationResults']['messages'], '""',
@@ -33,7 +35,7 @@ class TestWeatherSource(unittest.TestCase):
 		self.assertAlmostEqual(self.ex('val(wea.alt, ' + solar_noon + ')')*180/pi,
 				78.8, delta=0.1)
 		self.assertAlmostEqual(self.ex('val(wea.azi, ' + solar_noon + ')')*180/pi,
-				360.0, delta=1.0) # very sensitive
+				360.0, delta=1.0) # very sensitive around noon
 
 if __name__ == '__main__':
 	unittest.main()

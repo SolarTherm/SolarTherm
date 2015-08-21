@@ -1,7 +1,7 @@
-within SolarTherm;
+within SolarTherm.Storage;
 model TankSimple "Energy tank"
 	import SI = Modelica.SIunits;
-	import SolarTherm.PortSimple;
+	import SolarTherm.Interfaces.PortSimple;
 	parameter SI.Energy emax = 1000 "Maximum energy";
 	parameter SI.Energy e0 = 0 "Starting energy";
 	SI.Energy e(start=e0, fixed=true, min=0, max=emax) "Energy in tank";

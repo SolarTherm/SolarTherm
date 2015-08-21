@@ -1,4 +1,4 @@
-within SolarTherm;
+within SolarTherm.Interfaces;
 connector PortSimple "Energy Port"
 	import SI = Modelica.SIunits;
 	flow SI.Power p;

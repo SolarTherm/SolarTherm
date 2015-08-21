@@ -1,9 +1,9 @@
-within SolarTherm;
-model ControlSimple "Controller"
+within SolarTherm.Examples;
+model SystemSimple "Simple system with control"
 	import SI = Modelica.SIunits;
-	import SolarTherm.SolarSimple;
-	import SolarTherm.TankSimple;
-	import SolarTherm.GenSimple;
+	import SolarTherm.Optics.SolarSimple;
+	import SolarTherm.Storage.TankSimple;
+	import SolarTherm.PowerBlocks.GenSimple;
 	parameter Real upper(min=0, max=1, unit="1") = 0.8 "Frac for solar shutdown";
 	parameter Real lower (min=0, max=1, unit="1") = 0.2 "Frac for gen shutdown";
 	parameter Real band (min=0, max=1, unit="1") = 0.05 "Band for hysteresis";
@@ -31,4 +31,4 @@ algorithm
 	when tank.e < (lower - band)*tank.emax then
 		gen.on := false;
 	end when;
-end ControlSimple;
+end SystemSimple;

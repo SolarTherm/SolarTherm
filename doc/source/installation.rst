@@ -37,17 +37,17 @@ Clone the git repository::
 
     git clone https://openmodelica.org/git-readonly/OpenModelica.git --recursive
 
-Configure and build::
+Configure, build and install selecting a prefix for the installation target (here ``/usr/local``)::
 
     ./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB
     make
-    make install
+    sudo make install
 
 Install OMPython via pip::
 
     pip2 install git+git://github.com/OpenModelica/OMPython.git
 
-Add enviroment variable so python library can find OpenModelica::
+Add enviroment variable with installation prefix so that python library can find OpenModelica::
 
     export OPENMODELICAHOME="/usr/local/"
 
@@ -59,20 +59,21 @@ Change to the source directory and make a build folder::
     mkdir build
     cd build
 
-Call ``cmake`` to build the library::
+Call ``cmake`` to build the library using the same prefix where the modelica
+library is installed (typically either ``/usr/local`` or ``/usr``)::
 
-    cmake ..
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
     make
-
-Run tests (may only work if first installed)::
-
-    ctest -V
 
 Install the library::
 
     sudo make install
 
-Note that the tests currently default to using the system installed libraries if they exist.  So after the first installation, any changes made to the source code can only be tested after building and installing.  A solution where the tests default to using the locally built copy is desired.
+Run tests::
+
+    ctest -V
+
+Currently the tests can only be run after installing the libraries.  A solution where the tests default to using the locally built copy is desired.
 
 .. Add the SolarTherm libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the SolarTherm folder in the ``~/.openmodelica/libraries/`` folder.  On linux creating the symbolic link::
 .. 
