@@ -7,6 +7,7 @@ cmds = [
 	'loadModel(Modelica)',
 	'loadModel(SolarTherm.Examples.SystemSimple)',
 	'simulate(SolarTherm.Examples.SystemSimple, stopTime=20)',
+	'getErrorString()',
 	'plot({sol.port1.p, tank.e, gen.p})',
 	]
 

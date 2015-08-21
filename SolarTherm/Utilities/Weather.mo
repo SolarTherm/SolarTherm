@@ -2,21 +2,14 @@ within SolarTherm.Utilities;
 package Weather
 import SI = Modelica.SIunits;
 import nSI = Modelica.SIunits.Conversions.NonSIunits;
+import Modelica.SIunits.Conversions.from_degC;
 
 block WeatherSource "Weather source including tabular data and other calculators"
 	import SolarTherm.Utilities.Solar.SolarPositionDB;
 	parameter String weaFile "File containing TMY data";
 	parameter nSI.Angle_deg lat = meta.lat "Latitude";
 	parameter nSI.Angle_deg lon = meta.lon "Longitude";
-
-	output SI.Angle alt "Sun altitude";
-	output SI.Angle azi "Sun azimuth";
-	output SI.Irradiance ghi;
-	output SI.Irradiance dni;
-	output nSI.Temperature_degC Tdry;
-	output nSI.Temperature_degC Tdew;
-//#TABLELABELS,time,ghi,dni,dry,dew,rhum,p,wdir,wspd
-//#TABLEUNITS,s,W/m2,W/m2,degC,degC,%,mbar,deg,m/s
+	output SolarTherm.Interfaces.WeatherBus wbus;
 protected
 	parameter String weaFileAct = weatherFileChecker(weaFile);
 	parameter Metadata meta = getMetadata(weaFileAct);
@@ -26,12 +19,12 @@ protected
 	SolarPositionDB spos(lon=lon, lat=lat, tzone=meta.tzone,
 		tstart=meta.tstart);
 equation
-	connect(alt, spos.alt);
-	connect(azi, spos.azi);
-	connect(ghi, wtab.y[1]);
-	connect(dni, wtab.y[2]);
-	connect(Tdry, wtab.y[3]);
-	connect(Tdew, wtab.y[4]);
+	connect(wbus.alt, spos.alt);
+	connect(wbus.azi, spos.azi);
+	connect(wbus.ghi, wtab.y[1]);
+	connect(wbus.dni, wtab.y[2]);
+	wbus.Tdry = from_degC(wtab.y[3]);
+	wbus.Tdew = from_degC(wtab.y[4]);
 end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
