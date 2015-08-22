@@ -39,6 +39,7 @@ Clone the git repository::
 
 Configure, build and install selecting a prefix for the installation target (here ``/usr/local``)::
 
+    autoconf
     ./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB
     make
     sudo make install
@@ -50,6 +51,10 @@ Install OMPython via pip::
 Add enviroment variable with installation prefix so that python library can find OpenModelica::
 
     export OPENMODELICAHOME="/usr/local/"
+
+Notes & Troubleshooting
+"""""""""""""""""""""""
+* omniORB is a CORBA implementation required for python interface.
 
 SolarTherm Library
 ------------------
