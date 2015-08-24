@@ -25,10 +25,13 @@ equation
 	connect(tnk.p, pmp.p_i);
 	connect(pmp.p_o, gen.p);
 
+	con.track = true;
+
 	connect(ltrig.x, tnk.E);
 	connect(utrig.x, tnk.E);
-
-	con.track = true;
 	spl.frac = if utrig.y then 0.0 else 1.0; // Dump energy if hit top of tank
 	pmp.frac = if ltrig.y then 1.0 else 0.0; // Turn off gen when tank low
+	// When run whole year data looks weird after some point...
+	// Even for just dni
+	// Is this something wrong with plotting function?
 end EnergySystem;
