@@ -7,5 +7,7 @@ expandable connector WeatherBus "Bus for weather data"
 	SI.Irradiance dni "Direct normal irradiance";
 	SI.Temperature Tdry "Dry-bulb temperature";
 	SI.Temperature Tdew "Dew point temperature";
+	SI.Angle wdir "Wind direction";
+	SI.Velocity wspd "Wind speed";
 end WeatherBus;
 

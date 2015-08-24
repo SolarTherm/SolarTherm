@@ -3,6 +3,7 @@ package Weather
 import SI = Modelica.SIunits;
 import nSI = Modelica.SIunits.Conversions.NonSIunits;
 import Modelica.SIunits.Conversions.from_degC;
+import Modelica.SIunits.Conversions.from_deg;
 
 block WeatherSource "Weather source including tabular data and other calculators"
 	import SolarTherm.Utilities.Solar.SolarPositionDB;
@@ -25,6 +26,8 @@ equation
 	connect(wbus.dni, wtab.y[2]);
 	wbus.Tdry = from_degC(wtab.y[3]);
 	wbus.Tdew = from_degC(wtab.y[4]);
+	wbus.wdir = from_deg(wtab.y[7]);
+	connect(wbus.wspd, wtab.y[8]);
 end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
