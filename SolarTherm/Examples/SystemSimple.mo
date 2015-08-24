@@ -19,16 +19,16 @@ equation
 	//sol.on = (tank.e <= upper*tank.emax);
 	//gen.on = (tank.e >= lower*tank.emax);
 algorithm
-	when tank.e > (upper + band)*tank.emax then
+	when tank.E > (upper + band)*tank.E_max then
 		sol.on := false;
 	end when;
-	when tank.e < (upper - band)*tank.emax then
+	when tank.E < (upper - band)*tank.E_max then
 		sol.on := true;
 	end when;
-	when tank.e > (lower + band)*tank.emax then
+	when tank.E > (lower + band)*tank.E_max then
 		gen.on := true;
 	end when;
-	when tank.e < (lower - band)*tank.emax then
+	when tank.E < (lower - band)*tank.E_max then
 		gen.on := false;
 	end when;
 end SystemSimple;

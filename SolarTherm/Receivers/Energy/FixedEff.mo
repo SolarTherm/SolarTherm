@@ -6,5 +6,5 @@ model FixedEff "Solar receiver with fixed efficiency"
 	// p.p = 0 equation is invoked on unconnected flow variable
 	parameter SI.Efficiency eff = 1.0 "Efficiency of receiver";
 equation
-	p.p = -eff*R;
+	p.P = -eff*R;
 end FixedEff;

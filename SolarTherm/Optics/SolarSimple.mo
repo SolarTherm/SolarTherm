@@ -10,5 +10,5 @@ model SolarSimple "Simple sinusoidal solar source"
 	input Boolean on(start=false) "Whether or not solar source is on";
 	Port port1;
 equation
-	port1.p = if (on) then -(irmax/2)*area*(1 + sin(2*pi*freq*time)) else 0;
+	port1.P = if (on) then -(irmax/2)*area*(1 + sin(2*pi*freq*time)) else 0;
 end SolarSimple;

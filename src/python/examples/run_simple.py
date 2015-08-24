@@ -8,7 +8,7 @@ cmds = [
 	'loadModel(SolarTherm.Examples.SystemSimple)',
 	'simulate(SolarTherm.Examples.SystemSimple, stopTime=20)',
 	'getErrorString()',
-	'plot({sol.port1.p, tank.e, gen.p})',
+	'plot({sol.port1.P, tank.E, gen.P})',
 	]
 
 for c in cmds:

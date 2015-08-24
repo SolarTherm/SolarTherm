@@ -5,9 +5,9 @@ model GenSimple "Simple Generator"
 	parameter SI.Efficiency eff = 0.9 "Efficiency of generator";
 	parameter SI.Power pnom = 400 "Generator power";
 	input Boolean on(start=false) "Whether or not generator is on";
-	output SI.Power p;
+	output SI.Power P;
 	Port port1;
 equation
-	port1.p = if (on) then pnom else 0;
-	p = eff*port1.p;
+	port1.P = if (on) then pnom else 0;
+	P = eff*port1.P;
 end GenSimple;
