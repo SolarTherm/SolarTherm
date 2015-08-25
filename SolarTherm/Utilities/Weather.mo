@@ -32,6 +32,7 @@ end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
 	extends Modelica.Blocks.Sources.CombiTimeTable(verboseRead=false);
+	// The interpolation for things like wdir can be bad
 end WeatherTable;
 
 record Metadata "Metadata for weather file"
