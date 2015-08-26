@@ -23,6 +23,8 @@ https://github.com/OpenModelica/OpenModelica
 
 Archlinux Source
 ^^^^^^^^^^^^^^^^
+There is at least one AUR package for OpenModelica, but it was troublesome.  Here we have a manual installation so that we can get just what we need and easily keep it up to date.
+
 Install dependencies from pacman::
 
     pacman -S lapack blas lpsolve expat
@@ -44,17 +46,18 @@ Configure, build and install selecting a prefix for the installation target (her
     make
     sudo make install
 
-Install OMPython via pip::
-
-    pip2 install git+git://github.com/OpenModelica/OMPython.git
-
 Add enviroment variable with installation prefix so that python library can find OpenModelica::
 
     export OPENMODELICAHOME="/usr/local/"
 
+Install OMPython via pip::
+
+    pip2 install git+git://github.com/OpenModelica/OMPython.git
+
 Notes & Troubleshooting
 """""""""""""""""""""""
 * omniORB is a CORBA implementation required for python interface.
+* The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
 
 SolarTherm Library
 ------------------
