@@ -6,11 +6,12 @@ import OMPython
 
 class TestExternalC(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestExternalC'
+		modelfile = 'TestExternalC.mo'
+		model = 'TestExternalC'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'),
+		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
 				msg=self.ex('getErrorString()'))
 
 		ans = self.ex('simulate('+model+', stopTime=4)')

@@ -1,4 +1,3 @@
-within SolarTherm.Test;
 block TestCommand
 	function touch
 		import Modelica.Utilities.System.command;

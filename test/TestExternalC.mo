@@ -1,4 +1,3 @@
-within SolarTherm.Test;
 block TestExternalC
 	output Real y;
 

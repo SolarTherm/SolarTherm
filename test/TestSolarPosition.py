@@ -62,11 +62,14 @@ pnts_den = [
 
 class TestSolarPosition(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestSolarPosition'
+		modelfile = 'TestSolarPosition.mo'
+		model = 'TestSolarPosition'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'),
+		self.assertTrue(self.ex('loadModel(SolarTherm)'),
+				msg=self.ex('getErrorString()'))
+		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
 				msg=self.ex('getErrorString()'))
 
 		# One day 500 intervals:

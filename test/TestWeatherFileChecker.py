@@ -7,11 +7,14 @@ import os
 
 class TestWeatherFileChecker(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestWeatherFileChecker'
+		modelfile = 'TestWeatherFileChecker.mo'
+		model = 'TestWeatherFileChecker'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'),
+		self.assertTrue(self.ex('loadModel(SolarTherm)'),
+				msg=self.ex('getErrorString()'))
+		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
 				msg=self.ex('getErrorString()'))
 
 		if os.path.isfile('resources/weatherfile2.motab'):

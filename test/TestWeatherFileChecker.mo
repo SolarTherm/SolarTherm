@@ -1,4 +1,3 @@
-within SolarTherm.Test;
 block TestWeatherFileChecker
 	import SolarTherm.Utilities.Weather.weatherFileChecker;
 	parameter String fn1 = weatherFileChecker("resources/weatherfile1.motab");

@@ -7,11 +7,12 @@ import os
 
 class TestCommand(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestCommand'
+		modelfile = 'TestCommand.mo'
+		model = 'TestCommand'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'),
+		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
 				msg=self.ex('getErrorString()'))
 
 		if os.path.isfile('TestCommandTouched'):

@@ -8,11 +8,14 @@ from math import pi
 
 class TestWeatherSource(unittest.TestCase):
 	def setUp(self):
-		model = 'SolarTherm.Test.TestWeatherSource'
+		modelfile = 'TestWeatherSource.mo'
+		model = 'TestWeatherSource'
 		self.omc = OMPython.OMCSession()
 		self.ex = self.omc.execute
 		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel('+model+')'),
+		self.assertTrue(self.ex('loadModel(SolarTherm)'),
+				msg=self.ex('getErrorString()'))
+		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
 				msg=self.ex('getErrorString()'))
 
 		# Azimuth can be very sensitive at high altitude so increasing number

@@ -1,4 +1,3 @@
-within SolarTherm.Test;
 block TestSolarPosition
 	import SolarTherm.Utilities.Solar.SolarPositionDB;
 	SolarPositionDB solp_0(lat=0, lon=0, tzone=0);

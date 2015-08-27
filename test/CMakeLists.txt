@@ -1,5 +1,6 @@
 
 file(COPY ./ DESTINATION . FILES_MATCHING PATTERN "Test*.py")
+file(COPY ./ DESTINATION . FILES_MATCHING PATTERN "Test*.mo")
 file(COPY run_tests DESTINATION .)
 
 add_test(TestSolarTherm ./run_tests)

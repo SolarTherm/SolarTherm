@@ -1,4 +1,3 @@
-within SolarTherm.Test;
 block TestWeatherTable
 	import SolarTherm.Utilities.Weather.WeatherTable;
 	parameter Real tab[:,:] = [{0, 1, 2, 3}, {3, 2, 2, 3}];
