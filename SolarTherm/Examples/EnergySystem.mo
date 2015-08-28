@@ -1,5 +1,5 @@
 within SolarTherm.Examples;
-block EnergySystem
+model EnergySystem
 	import Modelica.Constants.pi;
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter Real A_con = 1;

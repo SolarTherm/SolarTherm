@@ -19,15 +19,26 @@ protected
 		columns=2:9);
 	SolarPositionDB spos(lon=lon, lat=lat, tzone=meta.tzone,
 		tstart=meta.tstart);
+	SI.Irradiance dni_l;
 equation
 	connect(wbus.alt, spos.alt);
 	connect(wbus.azi, spos.azi);
-	connect(wbus.ghi, wtab.y[1]);
-	connect(wbus.dni, wtab.y[2]);
+	//connect(wbus.ghi, wtab.y[1]);
+	wbus.ghi = noEvent(if wtab.y[1] < 0 then 0 else wtab.y[1]);
+	//connect(wbus.dni, wtab.y[2]); // must be used
+	//wbus.dni = if wtab.y[2] < 0 then 0 else wtab.y[2]; // under-determined
+	//wbus.dni = wtab.y[2]; // under-determined
+	//wbus.dni = 5.0;
+	// For some reason need to connect because otherwise these constraints
+	// don't show up...
+	//dni_l = noEvent(if wtab.y[2] < 0 then 0 else wtab.y[2]); // diff result
+	dni_l = if wtab.y[2] < 0 then 0 else wtab.y[2]; // diff result
+	connect(wbus.dni, dni_l);
 	wbus.Tdry = from_degC(wtab.y[3]);
 	wbus.Tdew = from_degC(wtab.y[4]);
 	wbus.wdir = from_deg(wtab.y[7]);
-	connect(wbus.wspd, wtab.y[8]);
+	//connect(wbus.wspd, wtab.y[8]);
+	wbus.wspd = noEvent(if wtab.y[8] < 0 then 0 else wtab.y[8]);
 end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
