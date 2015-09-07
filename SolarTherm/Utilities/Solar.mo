@@ -64,6 +64,8 @@ equation
 	hra_s = if noEvent(sin(hra) >= 0) then 1 else -1;
 	// The inbuilt Sign operator/block goes to 0 at 0, which is not what we want
 	// where used below
+	// Not sure if we hurt the solver by doing this or cause possible numerical
+	// trouble...
 
 	zen = acos(sin(dec)*sin(from_deg(lat)) + cos(dec)*cos(from_deg(lat))*cos(hra));
 	azi = pi + hra_s*acos((cos(zen)*sin(from_deg(lat)) - sin(dec))/(sin(zen)*cos(from_deg(lat))));

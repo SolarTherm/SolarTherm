@@ -6,20 +6,26 @@ block Trigger "Schmitt trigger"
 	input Real x;
 	//output Boolean y(start=y_0, fixed=true);
 	output Boolean y;
-initial algorithm
+//initial algorithm
+initial equation
 	assert(low < up, "Thresholds in wrong order");
 	if x > up then
-		y := true;
+		//y := true;
+		y = true;
 	elseif x < low then
-		y := false;
+		//y := false;
+		y = false;
 	else
-		y := y_0;
+		//y := y_0;
+		y = y_0;
 	end if;
-algorithm
+//algorithm
+equation
 	when x > up then
-		y := true;
-	end when;
-	when x < low then
-		y := false;
+		//y := true;
+		y = true;
+	elsewhen x < low then
+		//y := false;
+		y = false;
 	end when;
 end Trigger;
