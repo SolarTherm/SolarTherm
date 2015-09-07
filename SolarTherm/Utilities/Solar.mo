@@ -38,8 +38,7 @@ protected
 	SI.Angle dec "Solar declination (+ve North)";
 	nSI.Time_hour t_solar "Local solar time (solar noon at 12hrs)";
 	SI.Angle hra "Hour angle (solar noon at 0)";
-	SI.Angle hra_s "Hour angle sign";
-	Sign sign_hra;
+	Real hra_s "Hour angle sign";
 	SI.Angle zen "Zenith angle";
 equation
 	// The approximate oribital angle is calculated taking noon UTC as zero
@@ -62,13 +61,14 @@ equation
 	hra = ang_vel*(t_solar - 12);
 	// Note that t_solar and hra are not modulous 1day
 	// hra_s gives the sign of hra relative to solar noon for each day
-	hra_s = sin(hra);
+	hra_s = if noEvent(sin(hra) >= 0) then 1 else -1;
+	// The inbuilt Sign operator/block goes to 0 at 0, which is not what we want
+	// where used below
 
 	zen = acos(sin(dec)*sin(from_deg(lat)) + cos(dec)*cos(from_deg(lat))*cos(hra));
-	azi = pi + sign_hra.y*acos((cos(zen)*sin(from_deg(lat)) - sin(dec))/(sin(zen)*cos(from_deg(lat))));
+	azi = pi + hra_s*acos((cos(zen)*sin(from_deg(lat)) - sin(dec))/(sin(zen)*cos(from_deg(lat))));
 	// The azimuth becomes very sensitive as zen approaches zero
 	alt = pi/2 - zen;
-	connect(sign_hra.u, hra_s);
 end SolarPositionDB;
 
 end Solar;

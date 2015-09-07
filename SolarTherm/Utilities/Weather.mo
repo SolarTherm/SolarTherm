@@ -20,25 +20,31 @@ protected
 	SolarPositionDB spos(lon=lon, lat=lat, tzone=meta.tzone,
 		tstart=meta.tstart);
 	SI.Irradiance dni_l;
+	SI.Irradiance ghi_l;
+	SI.Velocity wspd_l;
 equation
 	connect(wbus.alt, spos.alt);
 	connect(wbus.azi, spos.azi);
 	//connect(wbus.ghi, wtab.y[1]);
-	wbus.ghi = noEvent(if wtab.y[1] < 0 then 0 else wtab.y[1]);
+	//ghi_l = if noEvent(wtab.y[1] > 0) then wtab.y[1] else 0;
+	ghi_l = if wtab.y[1] > 0 then wtab.y[1] else 0;
+	connect(wbus.ghi, ghi_l);
 	//connect(wbus.dni, wtab.y[2]); // must be used
+	// For some reason need to connect because otherwise these constraints
+	// don't show up...
 	//wbus.dni = if wtab.y[2] < 0 then 0 else wtab.y[2]; // under-determined
 	//wbus.dni = wtab.y[2]; // under-determined
 	//wbus.dni = 5.0;
-	// For some reason need to connect because otherwise these constraints
-	// don't show up...
-	//dni_l = noEvent(if wtab.y[2] < 0 then 0 else wtab.y[2]); // diff result
-	dni_l = if wtab.y[2] < 0 then 0 else wtab.y[2]; // diff result
+	//dni_l = if noEvent(wtab.y[2] > 0) then wtab.y[2] else 0; // diff result
+	dni_l = if wtab.y[2] > 0 then wtab.y[2] else 0; // diff result
 	connect(wbus.dni, dni_l);
 	wbus.Tdry = from_degC(wtab.y[3]);
 	wbus.Tdew = from_degC(wtab.y[4]);
 	wbus.wdir = from_deg(wtab.y[7]);
 	//connect(wbus.wspd, wtab.y[8]);
-	wbus.wspd = noEvent(if wtab.y[8] < 0 then 0 else wtab.y[8]);
+	//wspd_l = if noEvent(wtab.y[8] > 0) then wtab.y[8] else 0;
+	wspd_l = if wtab.y[8] > 0 then wtab.y[8] else 0;
+	connect(wbus.wspd, wspd_l);
 end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
