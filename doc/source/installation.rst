@@ -27,11 +27,11 @@ There is at least one AUR package for OpenModelica, but it was troublesome.  Her
 
 Install dependencies from pacman::
 
-    pacman -S lapack blas lpsolve expat
+    pacman -S lapack blas lpsolve expat boost
 
-Install dependencies for python interface from AUR (here using packer)::
+Install dependencies for python interface and sundials from AUR (here using packer)::
 
-    packer -S omniorb omniorbpy
+    packer -S omniorb omniorbpy sundials26
 
 Check you have the right build depedencies installed listed `here <https://github.com/OpenModelica/OpenModelica>`_ (e.g., clang, clang++, cmake, etc).
 
@@ -42,7 +42,7 @@ Clone the git repository::
 Configure, build and install selecting a prefix for the installation target (here ``/usr/local``)::
 
     autoconf
-    ./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB
+    ./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB --with-cppruntime --with-lapack='-llapack -lblas'
     make
     sudo make install
 
@@ -58,6 +58,7 @@ Notes & Troubleshooting
 """""""""""""""""""""""
 * omniORB is a CORBA implementation required for python interface.
 * The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
+* The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`_ for the simple diff to apply.
 
 SolarTherm Library
 ------------------
