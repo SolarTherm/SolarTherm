@@ -9,7 +9,8 @@ def res_plot_matplotlib(fn, var):
 	import matplotlib
 	#print(matplotlib.get_backend())
 	# Default QT5Agg is slow
-	matplotlib.use('GTKAgg')
+	matplotlib.use('QT4Agg')
+	#matplotlib.use('GTKAgg')
 	#matplotlib.use('GTK')
 	#matplotlib.use('TkAgg')
 	#matplotlib.use('QT4Agg')

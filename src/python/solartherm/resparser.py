@@ -1,20 +1,45 @@
 from __future__ import division
 import scipy.io
-import struct
 
 class Matv4(object):
+	"""
+	Class for loading OM mat-file (level 4) results.
+	Primary class method used is read(fn).
+	"""
+	@classmethod
+	def read(cls, fn):
+		"""
+		Read variables from mat-file results returning labels and data.
+		Uses the scipy mat-file loader.
+		Unfortunately OM has a different string representation which scipy mangles,
+		so applying a work around.
+		"""
+		mat = scipy.io.loadmat(fn, chars_as_strings=False)
+
+		# Use scipy to load data
+		data = mat['data_2']
+		name = mat['name']
+
+		labels = [str(''.join(name[:,j])) for j in range(name.shape[1])]
+
+		return labels, data
+
+class Matv4Manual(object):
 	"""
 	Class for loading OM mat-file results.
 	Primary class method used is read(fn).
 	The level 4 format specs are here: http://au.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf
 	See OMCompiler/SimulationRuntime/c/util/{read,write}_matlab4.{h,c} for more
 	details of what is stored.
+	This is a more manual approach written before relising different scipy option.
+	Keeping it to document the file format.
 	"""
 
 	p_bytes = [8, 4, 4, 2, 2, 1]
 
 	@classmethod
 	def read_mat_header(cls, f):
+		import struct
 		# Each matrix contains a 20 byte header consisting of 5 uint32_t
 		tp = struct.unpack('i', f.read(4))[0] # type
 		nr = struct.unpack('i', f.read(4))[0] # number of matrix rows
@@ -40,6 +65,7 @@ class Matv4(object):
 		OM instead encodes them as 8bit unsigned integers, with a row for each
 		character, and a column for each string.  So the number of rows is the
 		max length of any string (+1 for null char).
+		See https://bitbucket.org/jraedler/dymat/overview for another implementation.
 		"""
 		mat = scipy.io.loadmat(fn)
 
