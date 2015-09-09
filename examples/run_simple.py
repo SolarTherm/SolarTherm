@@ -5,8 +5,9 @@ OMPython = OMPython.OMCSession()
 
 cmds = [
 	'loadModel(Modelica)',
-	'loadModel(SolarTherm.Examples.SystemSimple)',
-	'simulate(SolarTherm.Examples.SystemSimple, stopTime=20)',
+	'loadModel(SolarTherm)',
+	'loadFile("SystemSimple.mo")',
+	'simulate(SystemSimple, stopTime=20)',
 	'getErrorString()',
 	'plot({sol.port1.P, tank.E, gen.P})',
 	]

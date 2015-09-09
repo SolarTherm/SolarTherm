@@ -1,4 +1,3 @@
-within SolarTherm.Examples;
 model EnergySystem
 	import Modelica.Constants.pi;
 	parameter String weaFile = "resources/weatherfile1.motab";

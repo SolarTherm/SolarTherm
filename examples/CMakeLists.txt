@@ -1,0 +1,4 @@
+file(COPY ./ DESTINATION . FILES_MATCHING PATTERN "*.py")
+file(COPY ./ DESTINATION . FILES_MATCHING PATTERN "*.mo")
+
+add_subdirectory(resources)

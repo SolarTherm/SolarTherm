@@ -6,8 +6,9 @@ OMPython = OMPython.OMCSession()
 cmds = [
 	'loadModel(Modelica)',
 	'loadModel(SolarTherm)',
+	'loadFile("EnergySystem.mo")',
 	#'setCommandLineOptions("+g=optdaedump")',
-	'simulate(SolarTherm.Examples.EnergySystem, stopTime=31536000, numberOfIntervals=730000)',
+	'simulate(EnergySystem, stopTime=31536000, numberOfIntervals=730000)',
 	#'simulate(SolarTherm.Examples.EnergySystem, stopTime=86400, numberOfIntervals=500)',
 	'getErrorString()',
 	#'plot({wea.wbus.dni})',

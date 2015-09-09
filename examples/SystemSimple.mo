@@ -1,4 +1,3 @@
-within SolarTherm.Examples;
 model SystemSimple "Simple system with control"
 	import SI = Modelica.SIunits;
 	import SolarTherm.Optics.SolarSimple;
