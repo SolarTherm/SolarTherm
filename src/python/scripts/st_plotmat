@@ -1,0 +1,82 @@
+#! /bin/env python2
+
+import argparse
+
+import solartherm.resparser
+
+def res_plot_matplotlib(fn, var):
+	# Poor performance
+	import matplotlib
+	#print(matplotlib.get_backend())
+	# Default QT5Agg is slow
+	matplotlib.use('GTKAgg')
+	#matplotlib.use('GTK')
+	#matplotlib.use('TkAgg')
+	#matplotlib.use('QT4Agg')
+	#matplotlib.use('QT5Agg')
+	#matplotlib.use('GTKCairo') # fails to draw long paths
+	import matplotlib.pyplot as plt
+
+	lab, dat = solartherm.resparser.Matv4.read(fn)
+
+	lmap = {l: i for i, l in enumerate(lab)}
+
+	fig = plt.figure()
+
+	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+	nsp = len(var)
+	for i_sp, v_sp in enumerate(var):
+		sp = fig.add_subplot(nsp, 1, i_sp+1)
+		v_ys = v_sp.split(':')
+		assert len(v_ys) < 3, 'Can only utilise at most 2 y-axes per subplot'
+		ax = [sp]
+		for i in range(1,len(v_ys)):
+			ax.append(sp.twinx())
+		pos = [0 for i in range(max(2, len(v_ys)))]
+		pos[0] = 2
+		pos[1] = 1
+		v_id = 0
+		for i_ax, v_y in enumerate(v_ys):
+			for v in v_y.split(','):
+				ax[i_ax].plot(dat[lmap[v]], label=v, color=co[v_id%len(co)])
+				v_id += 1
+			ax[i_ax].legend(loc=pos[i_ax])
+	plt.show()
+
+def res_plot_bokeh(fn, var):
+	# Too slow
+	from bokeh.plotting import figure, output_file, show
+
+	output_file('output.html', title='OM Results')
+
+	lab, dat = solartherm.resparser.Matv4.read(fn)
+
+	lmap = {l: i for i, l in enumerate(lab)}
+
+	fig = figure(title='Results', x_axis_label='time (s)')
+
+	fig.line(dat[0], dat[1])
+
+	show(fig)
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file',
+			help='result mat-file to read')
+	parser.add_argument('-n', '--names', action='store_true',
+			help='print out variable names and exit')
+	parser.add_argument('var', metavar='V', type=str, nargs='+',
+			help='v1,v2:v3 v4:v5 ...')
+	args = parser.parse_args()
+
+	fn = args.file
+	if args.names:
+		lab, dat = solartherm.resparser.Matv4.read(fn)
+		print(lab)
+	else:
+		res_plot_matplotlib(fn, args.var)
+		#res_plot_bokeh(fn, args.var)
+
+# example call:
+# st_plotmat EnergySystem_res.mat 'tnk.E:der(tnk.E)' 'pmp.frac'

@@ -4,5 +4,9 @@ setup(name='solartherm',
 		version='${PACKAGE_VERSION}',
 		package_dir={'': '${CMAKE_CURRENT_SOURCE_DIR}'},
 		packages=['solartherm'],
-		scripts=['${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_wea_to_mo'],
+		scripts=[
+			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_wea_to_mo',
+			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_plotmat',
+			],
+		requires=['scipy'],
 		)

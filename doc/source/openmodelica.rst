@@ -56,6 +56,10 @@ file contains model information and simulation parameters.  The
 C simulation runtime reads this file, so things like time intervals can be changed without
 recompiling the simulation executable.
 
+By default the simulation will output the results into a file named ``Class_res.mat``,
+which is a MAT-file version 4.  Another optional output is a CSV file, but this
+dramatically slows down the simulation.
+
 Listed below are the source files generated in this process and an initial
 attempt to explain their purpose.
 
