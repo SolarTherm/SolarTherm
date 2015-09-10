@@ -56,6 +56,11 @@ file contains model information and simulation parameters.  The
 C simulation runtime reads this file, so things like time intervals can be changed without
 recompiling the simulation executable.
 
+The simulation executable can accept a number of command line (call with ``-help``
+and ``-help=<flag>`` for more information).  For example to output events::
+
+    ./Class -lv=LOG_EVENTS
+
 By default the simulation will output the results into a file named ``Class_res.mat``,
 which is a MAT-file version 4.  Another optional output is a CSV file, but this
 dramatically slows down the simulation.
@@ -155,8 +160,11 @@ attempt to explain their purpose.
 
 ``_12jac.{h,c}``
     Contains functions for calculating and initialising the Jacobian.
-    Need to call compiler with ``-g=Optimica`` flag and
-    have an ``optimization`` class to get something interesting here.
+    It seems to always contain sparsity information.
+    The compiler flag ``--generateSymbolicJacobian`` needs to be set to produce
+    equations for the symbolic calculation of the jacobian.
+    Additionally a compiler call with ``-g=Optimica`` flag on an 
+    ``optimization`` class will produce stuff.
 
 ``_13opt.{h,c}``
     Contains functions needed in optimisation like the objective and Lagrangian
@@ -187,10 +195,12 @@ Interesting files include:
 ``simulation/solver/dassl.c``
     Contains the DASSL related functions including the ``dassl_step`` function.
     According to a comment in the file the integrated zero crossing method is disabled
-    and zero crossings are instead handled outside DASSL.  It has functions for
-    the symbolic or numeric calculations of Jacobians.  Not sure how this interacts
-    with the Jacobians in ``_12jac.{h,c}`` which only appear to be properly populated
-    for an optimisation.
+    and zero crossings are instead handled outside DASSL (not same thing as internal
+    root finding, which by default is turned on).  It has functions for
+    the symbolic or numeric calculations of Jacobians.  The method can be selected
+    with the ``-dasslJacobian`` flag, where ``coloredNumerical`` is the default.
+    See the ``_12jac.{h,c}`` files for where the symbolic jacobian comes from
+    (has to be enabled at during model compilation).
 
 C++ Simulation Runtime
 ----------------------

@@ -2,7 +2,7 @@
 
 import argparse
 
-import solartherm.resparser
+import DyMat
 
 def res_plot_matplotlib(fn, var, xlim):
 	# Poor performance
@@ -17,13 +17,7 @@ def res_plot_matplotlib(fn, var, xlim):
 	#matplotlib.use('GTKCairo') # fails to draw long paths
 	import matplotlib.pyplot as plt
 
-	lab, dat = solartherm.resparser.Matv4.read(fn)
-
-	lmap = {l: i for i, l in enumerate(lab)}
-
-	#print(len(lab))
-	#print(lmap)
-	#print(dat.shape)
+	mat = DyMat.DyMatFile(fn)
 
 	fig = plt.figure()
 
@@ -41,10 +35,10 @@ def res_plot_matplotlib(fn, var, xlim):
 		pos[0] = 2
 		pos[1] = 1
 		v_id = 0
-		time = dat[lmap['time']]
 		for i_ax, v_y in enumerate(v_ys):
 			for v in v_y.split(','):
-				ax[i_ax].plot(time, dat[lmap[v]], label=v, color=co[v_id%len(co)])
+				ax[i_ax].plot(mat.abscissa(v, valuesOnly=True), mat.data(v),
+						label=v, color=co[v_id%len(co)])
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax])
 		if xlim != []:
@@ -57,13 +51,11 @@ def res_plot_bokeh(fn, var):
 
 	output_file('output.html', title='OM Results')
 
-	lab, dat = solartherm.resparser.Matv4.read(fn)
-
-	lmap = {l: i for i, l in enumerate(lab)}
+	mat = DyMat.DyMatFile(fn)
 
 	fig = figure(title='Results', x_axis_label='time (s)')
 
-	fig.line(dat[0], dat[1])
+	fig.line(mat.abscissa('tnk.E'), mat.data('tnk.E'))
 
 	show(fig)
 
@@ -81,8 +73,8 @@ if __name__ == '__main__':
 
 	fn = args.file
 	if args.names:
-		lab, dat = solartherm.resparser.Matv4.read(fn)
-		print(lab)
+		mat = DyMat.DyMatFile(fn)
+		print(sorted(str(n) for n in mat.names()))
 	else:
 		res_plot_matplotlib(fn, args.var, args.xlim)
 		#res_plot_bokeh(fn, args.var)
