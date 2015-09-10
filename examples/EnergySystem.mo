@@ -9,7 +9,7 @@ model EnergySystem
 	SolarTherm.Receivers.Energy.FixedEff rec(A=A_rec, eff=0.8);
 	SolarTherm.Valves.Energy.Splitter spl;
 	SolarTherm.Storage.Energy.Infinite inf;
-	SolarTherm.Storage.Energy.Tank tnk(E_max=E_max, E_0=0);
+	SolarTherm.Storage.Energy.Tank tnk(E_max=E_max, E_0=0.1*E_max);
 	SolarTherm.Pumps.Energy.Pump pmp(P_max=0.7*gen.P_max);
 	SolarTherm.PowerBlocks.Energy.Generator gen(eff=0.9, P_max=500);
 	SolarTherm.Control.Trigger ltrig(low=0.1*tnk.E_max, up=0.2*tnk.E_max);

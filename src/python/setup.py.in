@@ -8,5 +8,10 @@ setup(name='solartherm',
 			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_wea_to_mo',
 			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_plotmat',
 			],
-		requires=['scipy'],
+		requires=[
+			'scipy',
+			'matplotlib',
+			'PyQt4',
+			'dymat',
+			],
 		)

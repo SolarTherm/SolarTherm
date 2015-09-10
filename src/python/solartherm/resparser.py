@@ -5,6 +5,9 @@ class Matv4(object):
 	"""
 	Class for loading OM mat-file (level 4) results.
 	Primary class method used is read(fn).
+	Found out that the storage structure is more complicated (some vars
+	point to same data).  Going to use DyMat instead:
+	https://bitbucket.org/jraedler/dymat/overview
 	"""
 	@classmethod
 	def read(cls, fn):
@@ -19,6 +22,7 @@ class Matv4(object):
 		# Use scipy to load data
 		data = mat['data_2']
 		name = mat['name']
+		# 'description' contains variable descriptions
 
 		labels = [str(''.join(name[:,j])) for j in range(name.shape[1])]
 

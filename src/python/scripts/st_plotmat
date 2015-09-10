@@ -4,7 +4,7 @@ import argparse
 
 import solartherm.resparser
 
-def res_plot_matplotlib(fn, var):
+def res_plot_matplotlib(fn, var, xlim):
 	# Poor performance
 	import matplotlib
 	#print(matplotlib.get_backend())
@@ -13,7 +13,6 @@ def res_plot_matplotlib(fn, var):
 	#matplotlib.use('GTKAgg')
 	#matplotlib.use('GTK')
 	#matplotlib.use('TkAgg')
-	#matplotlib.use('QT4Agg')
 	#matplotlib.use('QT5Agg')
 	#matplotlib.use('GTKCairo') # fails to draw long paths
 	import matplotlib.pyplot as plt
@@ -21,6 +20,10 @@ def res_plot_matplotlib(fn, var):
 	lab, dat = solartherm.resparser.Matv4.read(fn)
 
 	lmap = {l: i for i, l in enumerate(lab)}
+
+	#print(len(lab))
+	#print(lmap)
+	#print(dat.shape)
 
 	fig = plt.figure()
 
@@ -38,11 +41,14 @@ def res_plot_matplotlib(fn, var):
 		pos[0] = 2
 		pos[1] = 1
 		v_id = 0
+		time = dat[lmap['time']]
 		for i_ax, v_y in enumerate(v_ys):
 			for v in v_y.split(','):
-				ax[i_ax].plot(dat[lmap[v]], label=v, color=co[v_id%len(co)])
+				ax[i_ax].plot(time, dat[lmap[v]], label=v, color=co[v_id%len(co)])
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax])
+		if xlim != []:
+			sp.set_xlim(xlim)
 	plt.show()
 
 def res_plot_bokeh(fn, var):
@@ -67,7 +73,9 @@ if __name__ == '__main__':
 			help='result mat-file to read')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
-	parser.add_argument('var', metavar='V', type=str, nargs='+',
+	parser.add_argument('--xlim', nargs=2, type=float,
+			help='print out variable names and exit')
+	parser.add_argument('var', metavar='V', type=str, nargs='*',
 			help='v1,v2:v3 v4:v5 ...')
 	args = parser.parse_args()
 
@@ -76,7 +84,7 @@ if __name__ == '__main__':
 		lab, dat = solartherm.resparser.Matv4.read(fn)
 		print(lab)
 	else:
-		res_plot_matplotlib(fn, args.var)
+		res_plot_matplotlib(fn, args.var, args.xlim)
 		#res_plot_bokeh(fn, args.var)
 
 # example call:
