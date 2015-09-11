@@ -3,8 +3,27 @@ OpenModelica
 
 Solvers
 -------
-The different integration methods for the C runtime are listed `here <https://openmodelica.org/doc/OpenModelicaUsersGuide/latest/simulationflags.html#integration-methods>`_.  The primary solver used is DASSL.  The C++ runtime has support for
+The different integration methods for the C runtime are listed `here <https://openmodelica.org/doc/OpenModelicaUsersGuide/latest/simulationflags.html#integration-methods>`_.
+The default solver used is DASSL.  The C++ runtime has support for
 the IDA solver and other sundials packages.
+
+DASSL
+"""""
+This is a BDF method that selects its order (1-5) and step size at each step.
+It uses Newton's method to solve the resulting system of equations.  It provides
+Newton's method with an initial guess by evaluating a polynomial that interpolates
+the last few time steps.  These points are then used to calculate initial guesses
+for the derivatives.
+It has additional features like root finding functionality, and an initial 
+condition solver for when not all initial values are given explicitly.
+
+Runge-Kutta
+"""""""""""
+This is the classical 4-th order Range-Kutta method based on a fixed step.
+
+Euler
+"""""
+Standard Euler method with fixed step.
 
 Compiler
 --------
