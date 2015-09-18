@@ -8,4 +8,6 @@ partial model Receiver "Solar receiver with fluid interface"
 	input SolarTherm.Interfaces.WeatherBus wbus;
 	// Will typically use Tdry, Tdew, wdir, wspd.
 	input SI.RadiantPower R "Radiant power on aperture";
+equation
+	port_a.m_flow + port_b.m_flow = 0;
 end Receiver;
