@@ -5,7 +5,7 @@ model EnergySystem
 	parameter Real A_rec = 1;
 	parameter Real E_max = 1*3600*1000;
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Optics.IdealAzi con(A_con=A_con, A_foc=A_rec, alt=45*pi/180);
+	SolarTherm.Optics.IdealInc con(A_con=A_con, A_foc=A_rec, alt=45*pi/180);
 	SolarTherm.Receivers.Energy.FixedEff rec(A=A_rec, eff=0.8);
 	SolarTherm.Valves.Energy.Splitter spl;
 	SolarTherm.Storage.Energy.Infinite inf;

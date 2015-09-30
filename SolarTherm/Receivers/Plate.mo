@@ -1,9 +1,6 @@
 within SolarTherm.Receivers;
 model Plate "Single element plate receiver with fluid interface"
-	// Only setup for one way flow (might be overridden by system)
-	extends SolarTherm.Receivers.Receiver(port_a(m_flow(min=0)),
-		port_b(m_flow(max=0)));
-	// Contains medium, port_a and port_b and flow reversal switch
+	extends SolarTherm.Receivers.Receiver;
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 

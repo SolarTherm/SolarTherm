@@ -21,3 +21,8 @@ OpenModelica can only solve DAEs or ODEs, so one of a number of different approx
 Discrete Events
 ---------------
 Have to make sure the number of equations is equal to the number of variables at all times.
+
+Considerations
+--------------
+From Modelica.Fluid `documentation <https://build.openmodelica.org/Documentation/Modelica.Fluid.UsersGuide.Overview.html>`__:
+    "The resulting simulation performance however often strongly depends on the model structure and modeling assumptions made. In particular the direct connection of fluid volumes generally results in high-index DAEs for the pressures. The direct connection of flow models generally results in systems of implicit nonlinear algebraic equations."
