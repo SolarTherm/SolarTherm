@@ -1,36 +1,41 @@
 within SolarTherm.Receivers;
 model Plate "Single element plate receiver with fluid interface"
-	extends SolarTherm.Receivers.Receiver;
+	extends SolarTherm.Receivers.Receiver(port_b.h_outflow(start=0.0));
+	// port_b.h_outflow is used as iteration variable, so we should find a good
+	// initial guess for it.  Setting to zero here to silence warning.
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 
-	parameter SI.Mass m "Thermal mass of receiver";
-	parameter SI.SpecificHeatCapacity c "Heat capacity of thermal mass";
 	parameter Real em "Emissivity";
 	parameter SI.CoefficientOfHeatTransfer h_th "Heat transfer coeff with env";
-	parameter SI.Temperature T_0 = 300;
 
-	SI.Temperature T(start=T_0, fixed=true) "Temperature of receiver mass";
+	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.Lossless
+		constrainedby SolarTherm.Interfaces.FlowLoss.PartialFlowModel;
+
+	FlowModel flowmod;
+
+	SI.Temperature T_avg "Average temperature of receiver";
 	SI.HeatFlowRate Q_flow "Heat flow into receiver mass";
 protected
+	Medium.BaseProperties mprop_a;
 	Medium.BaseProperties mprop_b;
 equation
-	port_a.p = port_b.p;
+	//port_a.p = port_b.p;
+	flowmod.m_flow = port_a.m_flow;
+	flowmod.d_avg = mprop_a.d;
+	port_b.p - port_a.p = flowmod.dp;
 
-	mprop_b.T = T;
+	mprop_a.p = port_a.p;
+	mprop_a.h = inStream(port_a.h_outflow);
+	port_a.h_outflow = inStream(port_b.h_outflow); // shouldn't flow back
+
 	mprop_b.p = port_b.p;
-	port_b.h_outflow = mprop_b.h;
-	port_a.h_outflow = mprop_b.h; // set it as same, but shouldn't flow back
+	mprop_b.h = port_b.h_outflow;
+
+	T_avg = (mprop_a.T + mprop_b.T)/2;
+
+	Q_flow = port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow));
 	Q_flow = em*R // power from concentrator (em used for absorptivity)
-		- port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow))
-		- h_th*A*(T - wbus.Tdry) // convection losses (should add wind forcing)
-		- em*CN.sigma*A*(T^4 - wbus.Tdry^4); // radiative losses
-	c*m*der(T) = Q_flow;
-
-	// Could use actualStream above (should also probably mark it smooth)
-
-	// Think about adding pressure drop proportional to flow?
-
-	// How about we have a controller that draws away heat once rec temp
-	// passes a level, and only draws energy such that the rec temp is fixed.
+		- h_th*A*(T_avg - wbus.Tdry) // convection losses (should add wind forcing)
+		- em*CN.sigma*A*(T_avg^4 - wbus.Tdry^4); // radiative losses
 end Plate;

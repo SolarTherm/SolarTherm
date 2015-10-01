@@ -10,4 +10,4 @@ sp.call(['./'+model, '-override', 'startTime=0,stopTime=86400,stepSize=60',
 		#'-lv', 'LOG_EVENTS'
 		])
 #sp.call(['st_plotmat', model+'_res.mat', 'rec.T:rec.Q_flow'])
-sp.call(['st_plotmat', model+'_res.mat', 'rec.T:m_flow'])
+sp.call(['st_plotmat', model+'_res.mat', 'rec.mprop_b.T:htnk.medium.T'])
