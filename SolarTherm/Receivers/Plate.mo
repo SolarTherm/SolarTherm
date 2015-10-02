@@ -14,8 +14,12 @@ model Plate "Single element plate receiver with fluid interface"
 
 	FlowModel flowmod;
 
-	SI.Temperature T_avg "Average temperature of receiver";
-	SI.HeatFlowRate Q_flow "Heat flow into receiver mass";
+	input Boolean door_open(start=false) "If receiver door is open";
+
+	Medium.Temperature T_avg "Average temperature of receiver";
+	SI.HeatFlowRate Q_flow "Heat flow into fluid";
+	SI.HeatFlowRate Q_flow_loss "Convective losses";
+	SI.RadiantPower R_loss "Radiative losses";
 protected
 	Medium.BaseProperties mprop_a;
 	Medium.BaseProperties mprop_b;
@@ -35,7 +39,12 @@ equation
 	T_avg = (mprop_a.T + mprop_b.T)/2;
 
 	Q_flow = port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow));
-	Q_flow = em*R // power from concentrator (em used for absorptivity)
-		- h_th*A*(T_avg - wbus.Tdry) // convection losses (should add wind forcing)
-		- em*CN.sigma*A*(T_avg^4 - wbus.Tdry^4); // radiative losses
+	Q_flow_loss = h_th*A*(T_avg - wbus.Tdry);
+	R_loss = em*CN.sigma*A*(T_avg^4 - wbus.Tdry^4);
+	if door_open then
+		Q_flow + Q_flow_loss + R_loss = em*R; // (em used for absorptivity)
+	else
+		//Q_flow = 0;
+		port_b.h_outflow = inStream(port_a.h_outflow);
+	end if;
 end Plate;

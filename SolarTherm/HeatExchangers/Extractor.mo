@@ -14,11 +14,11 @@ model Extractor "Ideal heat extractor"
 
 	parameter Boolean use_input = true "Use input else parameter";
 
-	parameter SI.Temperature T_fixed = system.T_start "Fixed T when no input";
+	parameter Medium.Temperature T_fixed = system.T_start "Fixed T when no input";
 
-	input SI.Temperature T_set if use_input "Set T from input";
+	input Medium.Temperature T_set if use_input "Set T from input";
 	output SI.HeatFlowRate Q_flow "Heat from extractor";
-	output SI.Temperature T(start=system.T_start) "Delivered temperature";
+	output Medium.Temperature T(start=system.T_start) "Delivered temperature";
 protected
 	Medium.BaseProperties mprop_a;
 	Medium.BaseProperties mprop_b;
