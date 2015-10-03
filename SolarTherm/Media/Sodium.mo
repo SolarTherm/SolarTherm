@@ -15,8 +15,8 @@ package Sodium
 		eta_const=2.64e-4, // 700K
 		lambda_const=68.00, // 700K
 		a_const=2353, // 700K
-		//T_min=370.9,
-		T_min=100,
+		T_min=370.9,
+		//T_min=100,
 		T_max=1154.7,
 		T0=700,
 		MM_const=0.02298977,
