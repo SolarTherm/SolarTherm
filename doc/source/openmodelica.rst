@@ -271,3 +271,7 @@ Those that are undefined must be connected to a defined component, and the conne
 Expandable connectors cannot have flow components, but may contain non-expandable flow components.
 
 The direction (input/output) of an expandable connector component will be determined using the normal rules with respect to the direction of the component connected to.
+
+Discrete Equations
+""""""""""""""""""
+OpenModelica doesn't yet appear to fully support having systems of equations.  This error might be triggered by other issues.  If in doubt put all the ``when`` clauses in an algorithm section.
