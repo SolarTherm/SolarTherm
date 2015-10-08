@@ -1,0 +1,66 @@
+#! /bin/env python2
+import argparse
+import os
+import subprocess as sp
+import xml.etree.ElementTree as ET
+
+def compile_model(model_fn, model, n_proc=0):
+	sp.call(['omc', '-s', '-q', '-n='+str(n_proc),
+		model_fn, 'Modelica', 'SolarTherm'])
+	sp.call(['make', '-f', model+'.makefile'])
+
+def update_pars(et, pars):
+	root = et.getroot()
+
+	for k in pars:
+		root.find('*ScalarVariable[@name=\''+k+'\']/*[@start]').attrib['start'] = pars[k]
+
+def run_sim(model, args):
+	sp.call(['./'+model] + args)
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file',
+			help='model file name')
+	parser.add_argument('--nocomp', action='store_true',
+			help='no compilation')
+	parser.add_argument('--nosim', action='store_true',
+			help='no simulation')
+	parser.add_argument('--start', nargs=1, type=str, default='0',
+			help='simulation start time')
+	parser.add_argument('--stop', nargs=1, type=str, default='86400', # 1 day
+			help='simulation stop time')
+	parser.add_argument('--step', nargs=1, type=str, default='60',
+			help='simulation time step')
+	parser.add_argument('par', metavar='P', type=str, nargs='*',
+			help='parameters')
+	args = parser.parse_args()
+
+	sim_args = [
+		'-override', 'startTime='+args.start+',stopTime='+args.stop
+			+',stepSize='+args.step,
+		'-s', 'rungekutta', # not sure if multiple take last instance?
+		]
+
+	fn = args.file
+	model = os.path.splitext(os.path.split(fn)[1])[0]
+
+	pars = {}
+	for pp in args.par:
+		k, v = pp.split('=')
+		pars[k] = v
+	
+	if not args.nocomp:
+		compile_model(fn, model)
+
+	et = ET.parse(os.path.splitext(fn)[0]+'_init.xml')
+	update_pars(et, pars)
+	et.write('out.xml')
+
+	if not args.nosim:
+		run_sim(model, sim_args)
+
+	# Should be able to pass on any command line arguments to executable
+	# Can just generate xml
+	# Can save separate results file
+	# Pull together relevant results
