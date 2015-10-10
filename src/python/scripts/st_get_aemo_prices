@@ -4,6 +4,18 @@ import argparse
 import os
 import urllib.request
 
+def dump(fn, prices):
+	nrow = len(prices)
+	ncol = 2
+	step = 30*60 # 30min
+	assert(nrow == 17520 or nrow == 17568) # 365 or 366
+	f = open(fn, 'w')
+	f.write('#1\n')
+	f.write('double prices('+str(nrow)+','+str(ncol)+')\n')
+	for i, p in enumerate(prices):
+		f.write(str(i*step)+','+p+'\n')
+	f.close()
+
 def parse_resp(resp):
 	prices = []
 	resp.readline()
@@ -12,42 +24,22 @@ def parse_resp(resp):
 		prices.append(l[3])
 	return prices
 
-def download_files(year, state):
+def download_files(state, year):
 	prices = []
 	for i in range(1, 13):
 		url = 'http://www.nemweb.com.au/mms.GRAPHS/data/DATA'+year+('%02d'%(i,))+'_'+state+'1.csv'
 		#http://www.nemweb.com.au/mms.GRAPHS/data/DATA201401_NSW1.csv
 		resp = urllib.request.urlopen(url)
 		prices += parse_resp(resp)
-	print(len(prices))
+	return prices
 
 if __name__ == '__main__':
-	download_files('2014', 'NSW')
-	pass
-	# either get it from a folder or download it
-	
-	#parser = argparse.ArgumentParser()
-	#parser.add_argument('file',
-	#		help='model file name')
-	#parser.add_argument('--nocomp', action='store_true',
-	#		help='no compilation')
-	#parser.add_argument('--nosim', action='store_true',
-	#		help='no simulation')
-	#parser.add_argument('--start', nargs=1, type=str, default='0',
-	#		help='simulation start time')
-	#parser.add_argument('--stop', nargs=1, type=str, default='86400', # 1 day
-	#		help='simulation stop time')
-	#parser.add_argument('--step', nargs=1, type=str, default='60',
-	#		help='simulation time step')
-	#parser.add_argument('par', metavar='P', type=str, nargs='*',
-	#		help='parameters')
-	#args = parser.parse_args()
+	parser = argparse.ArgumentParser()
+	parser.add_argument('state',
+			help='state (NSW, VIC, etc)')
+	parser.add_argument('year',
+			help='year')
+	args = parser.parse_args()
 
-	#sim_args = [
-	#	'-override', 'startTime='+args.start+',stopTime='+args.stop
-	#		+',stepSize='+args.step,
-	#	'-s', 'rungekutta', # not sure if multiple take last instance?
-	#	]
-
-	#fn = args.file
-	#model = os.path.splitext(os.path.split(fn)[1])[0]
+	prices = download_files(args.state, args.year)
+	dump('aemo_'+args.state.lower()+'_'+args.year+'.motab', prices)

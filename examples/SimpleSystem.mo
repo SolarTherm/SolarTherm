@@ -23,13 +23,19 @@ model SimpleSystem
 	parameter SI.Time t_con_on_delay = 20*60;
 	parameter SI.Time t_blk_on_delay = 15*60;
 	parameter Integer n_sched_states = 3;
+
+	parameter SI.Power P_rate = P_nom;
+	parameter SolarTherm.Utilities.Finances.Money C_cap = 2e6;
+	parameter SolarTherm.Utilities.Finances.Money C_main = 1e5;
+	parameter Real r_disc = 0.05;
+	parameter Integer t_life(unit="year") = 20;
 	
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 
 	SI.HeatFlowRate Q_flow_rec "Heat flow into receiver";
 	SI.HeatFlowRate Q_flow_chg "Heat flow into tank";
 	SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
-	SI.Power P_blk "Output power of power block";
+	SI.Power P_elec "Output power of power block";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
@@ -42,6 +48,10 @@ model SimpleSystem
 	Real t_con_next "time of next concentrator event";
 	Real t_blk_next "time of next power block event";
 	Real t_sch_next "time of next schedule change";
+
+	//SolarTherm.Utilities.Finances.AverageEnergy aen;
+	//SolarTherm.Utilities.Finances.LCOE lcoe(C_cap=2e6, C_main=1e5, r=0.05, t=20);
+	//SolarTherm.Utilities.Finances.CapacityFactor capf(P_rate=P_nom);
 
 initial equation
 	E = 0;
@@ -103,7 +113,11 @@ equation
 
 	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
 
-	P_blk = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
+	P_elec = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
+
+	//connect(P_elec, aen.P);
+	//connect(aen.epy, lcoe.epy);
+	//connect(aen.epy, capf.epy);
 end SimpleSystem;
 
 
