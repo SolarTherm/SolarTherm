@@ -5,14 +5,16 @@ model SimpleSystem
 	import Modelica.Math.cos;
 
 	parameter String weaFile = "resources/weatherfile1.motab";
+	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-	parameter Real C = 300/1 "Concentration ratio";
+	parameter SI.Area A_con = 300 "Area of concentrator";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";
+	parameter Real C = A_con/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
 	parameter SI.Efficiency eff_blk = 0.2 "Power block efficiency";
 	parameter SI.Power P_nom = 50000 "Power block nominal power";
-	parameter SI.Time t_storage = 5*3600 "Time to empty tank at nominal";
-	parameter SI.Energy E_max = P_nom*t_storage/eff_blk "Maximum amount of stored energy";
+	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
+	parameter SI.Energy E_max = P_nom*t_storage*3600/eff_blk "Maximum amount of stored energy";
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
 	parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
 	parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
@@ -25,12 +27,20 @@ model SimpleSystem
 	parameter Integer n_sched_states = 3;
 
 	parameter SI.Power P_rate = P_nom;
-	parameter SolarTherm.Utilities.Finances.Money C_cap = 2e6;
-	parameter SolarTherm.Utilities.Finances.Money C_main = 1e5;
+	parameter SolarTherm.Utilities.Finances.Money C_cap =
+		1e3*A_con // field cost
+		+ 300*A_con // receiver cost
+		+ 2e-4*E_max // storage cost
+		+ 2*P_nom // power block cost
+		;
+	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
+		50*A_con // field cleaning/maintenance
+		;
 	parameter Real r_disc = 0.05;
 	parameter Integer t_life(unit="year") = 20;
 	
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
 	SI.HeatFlowRate Q_flow_rec "Heat flow into receiver";
 	SI.HeatFlowRate Q_flow_chg "Heat flow into tank";
@@ -49,12 +59,12 @@ model SimpleSystem
 	Real t_blk_next "time of next power block event";
 	Real t_sch_next "time of next schedule change";
 
-	//SolarTherm.Utilities.Finances.AverageEnergy aen;
-	//SolarTherm.Utilities.Finances.LCOE lcoe(C_cap=2e6, C_main=1e5, r=0.05, t=20);
-	//SolarTherm.Utilities.Finances.CapacityFactor capf(P_rate=P_nom);
+	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
+		"Spot market revenue";
+	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 
 initial equation
-	E = 0;
+	E = E_low_l;
 	Q_flow_sched = 0;
 	con_state = 1;
 	blk_state = 1;
@@ -114,6 +124,9 @@ equation
 	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
 
 	P_elec = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
+
+	der(E_elec) = P_elec;
+	der(R_spot) = P_elec*pri.price;
 
 	//connect(P_elec, aen.P);
 	//connect(aen.epy, lcoe.epy);

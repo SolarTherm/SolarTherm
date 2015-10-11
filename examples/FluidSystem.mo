@@ -24,8 +24,9 @@ model FluidSystem
 	// and the flow mass then a sizeable temperature creep (5deg) can occur...
 
 	parameter String weaFile = "resources/weatherfile1.motab";
+	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-	parameter SI.Power P_rated = 20e3 "Rating of power block";
+	parameter SI.Power P_rate = 20e3 "Rating of power block";
 	parameter SI.Efficiency eff_adj = 0.50 "Adjustment factor for power block efficiency";
 	parameter SI.Efficiency eff_est = 0.20 "Estimate of overall power block efficiency";
 
@@ -35,24 +36,36 @@ model FluidSystem
 	parameter Real em_steel = 0.85 "Emissivity of reciever";
 	parameter SI.CoefficientOfHeatTransfer h_th_rec = 10 "Receiver heat tran coeff";
 
-	parameter SI.Time t_storage = CV.from_hour(5) "Storage capacity as time at rated output";
+	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
 	parameter SI.Area A_tnk = 10 "Cross-sectional area of tanks";
-	parameter SI.Length L_tnk = (1/eff_est)*P_rated*t_storage/ // only works with PartialSimpleMedium
+	parameter SI.Length L_tnk = (1/eff_est)*P_rate*t_storage*3600/ // only works with PartialSimpleMedium
 		(MedRec.cp_const*MedRec.d_const*A_tnk*(T_hot_set - T_cold_set)) "Height of tanks";
 	parameter MedRec.Temperature T_cold_set = CV.from_degC(290) "Target cold tank T";
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
-	parameter Real split_cold = 0.8 "Starting fluid fraction in cold tank";
-
 	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
-	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rated/
+	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
 		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 	parameter SI.Length L_up_warn = 0.85*L_tnk;
 	parameter SI.Length L_up_stop = 0.95*L_tnk;
+	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
+
+	parameter SolarTherm.Utilities.Finances.Money C_cap =
+		1e3*A_con // field cost
+		+ 300*A_con // receiver cost
+		+ 2e3*A_tnk*L_tnk // receiver cost
+		+ 2*P_rate // power block cost
+		;
+	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
+		50*A_con // field cleaning/maintenance
+		;
+	parameter Real r_disc = 0.05;
+	parameter Integer t_life(unit="year") = 20;
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
 	SolarTherm.Optics.IdealInc con(A_con=A_con, A_foc=A_rec);
 
@@ -109,20 +122,27 @@ model FluidSystem
 		);
 
 	SolarTherm.PowerBlocks.HeatGen pblk(
-		P_rated=P_rated,
+		P_rate=P_rate,
 		eff_adj=eff_adj
 		);
 
 	SolarTherm.Control.Trigger hf_trig(
 		low=L_up_warn,
-		up=L_up_stop);
+		up=L_up_stop,
+		y_0=true);
 	SolarTherm.Control.Trigger cf_trig(
 		low=L_up_warn,
-		up=L_up_stop);
+		up=L_up_stop,
+		y_0=true);
 
 	Boolean radiance_good "Adequate radiant power on receiver";
 	Boolean fill_htnk "Hot tank can be filled";
 	Boolean fill_ctnk "Cold tank can be filled";
+
+	SI.Power P_elec;
+	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
+		"Spot market revenue";
+	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);
@@ -152,5 +172,9 @@ equation
 	pmp_exc.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
 
 	con.track = true;
+
+	P_elec = pblk.P_elec;
+	der(E_elec) = P_elec;
+	der(R_spot) = P_elec*pri.price;
 end FluidSystem;
 

@@ -4,6 +4,8 @@ model TankSimple "Energy tank"
 	import SolarTherm.Interfaces.Energy.Port;
 	parameter SI.Energy E_max = 1000 "Maximum energy";
 	parameter SI.Energy E_0 = 0 "Starting energy";
+	parameter SolarTherm.Utilities.Finances.Money C_cap = 0 "Capital costs";
+	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main = 0 "Maintenance costs";
 	SI.Energy E(start=E_0, fixed=true, min=0, max=E_max) "Energy in tank";
 	Port port1;
 	Port port2;

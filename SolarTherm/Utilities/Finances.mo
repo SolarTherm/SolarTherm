@@ -2,6 +2,7 @@ within SolarTherm.Utilities;
 package Finances
 
 type Money = Real(unit="$");
+type MoneyPerYear = Real(unit="$/year");
 type EnergyPerYear = Real(unit="J/year");
 type EnergyPrice = Real(unit="$/J");
 type PowerPrice = Real(unit="$/W");
@@ -61,13 +62,13 @@ type PowerPrice = Real(unit="$/W");
 
 block SpotPriceTable "Spot market electricity price table"
 	extends Modelica.Blocks.Sources.CombiTimeTable(verboseRead=false,
-		tableOnFile=true, tableName="price",
+		tableOnFile=true, tableName="prices",
 		smoothness=Modelica.Blocks.Types.Smoothness.ConstantSegments,
 		columns=2:2
 		);
-	PowerPrice price "Spot market electricity price";
+	EnergyPrice price "Spot market electricity price";
 equation
-	price = y[1];
+	price = y[1]/(1e6*3600);
 end SpotPriceTable;
 
 end Finances;

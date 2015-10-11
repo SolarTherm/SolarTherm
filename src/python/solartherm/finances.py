@@ -1,10 +1,9 @@
 from __future__ import division
 
-def energy_per_year(p):
-	return 365*24*3600*sum(p)/len(p)
+def energy_per_year(dt, e):
+	return 365*24*3600*e/dt
 
 def lcoe(c_cap, c_main, r, t_life, epy):
-	print(t_life)
 	nu = 0.
 	de = 0.
 
@@ -17,4 +16,3 @@ def lcoe(c_cap, c_main, r, t_life, epy):
 
 def capacity_factor(p_rate, epy):
 	return epy/(p_rate*365*24*3600)
-
