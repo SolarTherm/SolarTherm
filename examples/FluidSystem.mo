@@ -15,14 +15,6 @@ model FluidSystem
 		);
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
-	// When heat fluid is removed from cold tank (none entering), the temperature
-	// creeps up.  It seems link this might be a numerical error as the specific
-	// internal energy is calculated from the total internal energy of the tank.
-	// The latter can be a huge numerical value.
-	// The change in total internal energy is calculated from the mass flows
-	// in and out of the tank.  If there is some mismatch between the total mass
-	// and the flow mass then a sizeable temperature creep (5deg) can occur...
-
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
@@ -37,9 +29,8 @@ model FluidSystem
 	parameter SI.CoefficientOfHeatTransfer h_th_rec = 10 "Receiver heat tran coeff";
 
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Area A_tnk = 10 "Cross-sectional area of tanks";
-	parameter SI.Length L_tnk = (1/eff_est)*P_rate*t_storage*3600/ // only works with PartialSimpleMedium
-		(MedRec.cp_const*MedRec.d_const*A_tnk*(T_hot_set - T_cold_set)) "Height of tanks";
+	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/ // only works with PartialSimpleMedium
+		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
 	parameter MedRec.Temperature T_cold_set = CV.from_degC(290) "Target cold tank T";
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
@@ -48,14 +39,14 @@ model FluidSystem
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
 	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
 		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
-	parameter SI.Length L_up_warn = 0.85*L_tnk;
-	parameter SI.Length L_up_stop = 0.95*L_tnk;
+	parameter SI.Mass m_up_warn = 0.85*m_max;
+	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
 		1e3*A_con // field cost
 		+ 300*A_con // receiver cost
-		+ 2e3*A_tnk*L_tnk // receiver cost
+		+ 2*m_max // storage cost
 		+ 2*P_rate // power block cost
 		;
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
@@ -85,33 +76,17 @@ model FluidSystem
 		use_input=true
 		);
 
-	//parameter Modelica.Fluid.Vessels.BaseClasses.VesselPortsData port_dat(
-	//	diameter=0.1,
-	//	height=0.0
-	//	);
-	Modelica.Fluid.Vessels.OpenTank ctnk(
+	SolarTherm.Storage.FluidTank ctnk(
 		redeclare package Medium=MedRec,
-		height=L_tnk,
-		crossArea=A_tnk,
-		level_start=L_tnk*split_cold,
-		nPorts=2,
-		use_T_start=true,
-		T_start=T_cold_start,
-		use_HeatTransfer=false,
-		use_portsData=false
-		//portsData={port_dat, port_dat}
+		m_max=m_max,
+		m_start=m_max*split_cold,
+		T_start=T_cold_start
 		);
-	Modelica.Fluid.Vessels.OpenTank htnk(
+	SolarTherm.Storage.FluidTank htnk(
 		redeclare package Medium=MedRec,
-		height=L_tnk,
-		crossArea=A_tnk,
-		level_start=L_tnk*(1 - split_cold),
-		nPorts=2,
-		use_T_start=true,
-		T_start=T_hot_start,
-		use_HeatTransfer=false,
-		use_portsData=false
-		//portsData={port_dat, port_dat}
+		m_max=m_max,
+		m_start=m_max*(1 - split_cold),
+		T_start=T_hot_start
 		);
 
 	SolarTherm.HeatExchangers.Extractor ext(
@@ -127,12 +102,12 @@ model FluidSystem
 		);
 
 	SolarTherm.Control.Trigger hf_trig(
-		low=L_up_warn,
-		up=L_up_stop,
+		low=m_up_warn,
+		up=m_up_stop,
 		y_0=true);
 	SolarTherm.Control.Trigger cf_trig(
-		low=L_up_warn,
-		up=L_up_stop,
+		low=m_up_warn,
+		up=m_up_stop,
 		y_0=true);
 
 	Boolean radiance_good "Adequate radiant power on receiver";
@@ -148,19 +123,19 @@ equation
 	connect(wea.wbus, rec.wbus);
 	connect(wea.wbus, pblk.wbus);
 	connect(con.R_foc, rec.R);
-	connect(ctnk.ports[1], pmp_rec.port_a);
+	connect(ctnk.port_b, pmp_rec.port_a);
 	connect(pmp_rec.port_b, rec.port_a);
-	connect(rec.port_b, htnk.ports[1]);
+	connect(rec.port_b, htnk.port_a);
 
-	connect(htnk.ports[2], pmp_exc.port_a);
+	connect(htnk.port_b, pmp_exc.port_a);
 	connect(pmp_exc.port_b, ext.port_a);
-	connect(ext.port_b, ctnk.ports[2]);
+	connect(ext.port_b, ctnk.port_a);
 
 	connect(ext.Q_flow, pblk.Q_flow);
 	connect(ext.T, pblk.T);
 
-	connect(hf_trig.x, htnk.level);
-	connect(cf_trig.x, ctnk.level);
+	connect(hf_trig.x, htnk.m);
+	connect(cf_trig.x, ctnk.m);
 
 	radiance_good = rec.R >= R_go;
 

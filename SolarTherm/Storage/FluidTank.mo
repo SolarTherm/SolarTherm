@@ -6,11 +6,11 @@ model FluidTank "Fluid tank"
 	parameter SI.Mass m_max = 0 "Maximum mass";
 	parameter SI.Mass m_start = 0 "Starting mass";
 	parameter Medium.Temperature T_start = system.T_start "Starting temperature";
-	parameter Medium.Pressure p_fixed = system.p_ambient "Fixed pressure";
+	parameter SI.Pressure p_fixed = system.p_ambient "Fixed pressure";
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap = 0 "Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main = 0 "Maintenance costs";
-	SI.Mass m(min=0, max=m_mass) "Mass in tank";
+	SI.Mass m(min=0, max=m_max) "Mass in tank";
 
 	Medium.BaseProperties mprop;
 initial equation
@@ -19,8 +19,10 @@ initial equation
 equation
 	mprop.p = p_fixed;
 	der(m) = port_a.m_flow + port_b.m_flow;
-	port_b.h_outflow = mprop.h;
 	port_a.h_outflow = mprop.h;
+	port_b.h_outflow = mprop.h;
 	der(m*mprop.h) = port_a.m_flow*inStream(port_a.h_outflow)
 					+ port_b.m_flow*port_b.h_outflow;
-end FluidSimple;
+	port_a.p = mprop.p;
+	port_b.p = mprop.p;
+end FluidTank;
