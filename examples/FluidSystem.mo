@@ -19,8 +19,8 @@ model FluidSystem
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
 	parameter SI.Power P_rate = 20e3 "Rating of power block";
-	parameter SI.Efficiency eff_adj = 0.50 "Adjustment factor for power block efficiency";
-	parameter SI.Efficiency eff_est = 0.20 "Estimate of overall power block efficiency";
+	parameter SI.Efficiency eff_adj = 0.80 "Adjustment factor for power block efficiency";
+	parameter SI.Efficiency eff_est = 0.40 "Estimate of overall power block efficiency";
 
 	parameter SI.Area A_con = 500 "Concentrator area";
 
@@ -44,13 +44,13 @@ model FluidSystem
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
-		1e3*A_con // field cost
-		+ 300*A_con // receiver cost
-		+ 2*m_max // storage cost
-		+ 2*P_rate // power block cost
+		120*A_con // field cost
+		+ 135*A_con // receiver cost
+		+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
+		+ (1440/1e3)*P_rate // power block cost
 		;
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
-		50*A_con // field cleaning/maintenance
+		10*A_con // field cleaning/maintenance
 		;
 	parameter Real r_disc = 0.05;
 	parameter Integer t_life(unit="year") = 20;

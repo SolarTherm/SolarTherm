@@ -7,14 +7,14 @@ model SimpleSystem
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-	parameter SI.Area A_con = 300 "Area of concentrator";
+	parameter SI.Area A_con = 500 "Area of concentrator";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";
-	parameter Real C = A_con/A_rec "Concentration ratio";
+	parameter Real C = 0.65*A_con/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
-	parameter SI.Efficiency eff_blk = 0.2 "Power block efficiency";
-	parameter SI.Power P_nom = 50000 "Power block nominal power";
+	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
+	parameter SI.Power P_rate = 100000 "Power block nominal power";
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Energy E_max = P_nom*t_storage*3600/eff_blk "Maximum amount of stored energy";
+	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Maximum amount of stored energy";
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
 	parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
 	parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
@@ -26,15 +26,14 @@ model SimpleSystem
 	parameter SI.Time t_blk_on_delay = 15*60;
 	parameter Integer n_sched_states = 3;
 
-	parameter SI.Power P_rate = P_nom;
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
-		1e3*A_con // field cost
-		+ 300*A_con // receiver cost
-		+ 2e-4*E_max // storage cost
-		+ 2*P_nom // power block cost
+		120*A_con // field cost
+		+ 135*C*A_rec // receiver cost
+		+ (30/(1e3*3600))*E_max // storage cost
+		+ (1440/1e3)*P_rate // power block cost
 		;
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
-		50*A_con // field cleaning/maintenance
+		10*A_con // field cleaning/maintenance
 		;
 	parameter Real r_disc = 0.05;
 	parameter Integer t_life(unit="year") = 20;
@@ -104,13 +103,13 @@ algorithm
 	end when;
 
 	when sch_state == 1 then
-		Q_flow_sched := 0.4*P_nom/eff_blk;
+		Q_flow_sched := 0.4*P_rate/eff_blk;
 		t_sch_next := time + 9*3600;
 	elsewhen sch_state == 2 then
-		Q_flow_sched := P_nom/eff_blk;
+		Q_flow_sched := P_rate/eff_blk;
 		t_sch_next := time + 3*3600;
 	elsewhen sch_state == 3 then
-		Q_flow_sched := 0.5*P_nom/eff_blk;
+		Q_flow_sched := 0.5*P_rate/eff_blk;
 		t_sch_next := time + 12*3600;
 	end when;
 equation
