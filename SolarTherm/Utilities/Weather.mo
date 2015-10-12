@@ -33,7 +33,8 @@ equation
 	//connect(wbus.ghi, wtab.y[1]);
 	//ghi_l = noEvent(if wtab.y[1] > 0 then wtab.y[1] else 0);
 	//ghi_l = if noEvent(wtab.y[1] > 0) then wtab.y[1] else 0;
-	ghi_l = if wtab.y[1] >= 0 then wtab.y[1] else 0;
+	//ghi_l = if wtab.y[1] >= 0 then wtab.y[1] else 0;
+	ghi_l = max(wtab.y[1], 0);
 	connect(wbus.ghi, ghi_l);
 	//connect(wbus.dni, wtab.y[2]); // must be used
 	// For some reason need to connect because otherwise these constraints
@@ -44,7 +45,8 @@ equation
 	//dni_l = noEvent(if wtab.y[2] > 0 then wtab.y[2] else 0); // diff result
 	//dni_l = if noEvent(wtab.y[2] > 0) then wtab.y[2] else 0; // diff result
 
-	dni_l = if wtab.y[2] >= 0 then wtab.y[2] else 0; // diff result
+	//dni_l = if wtab.y[2] >= 0 then wtab.y[2] else 0; // diff result
+	dni_l = max(wtab.y[2], 0);
 	connect(wbus.dni, dni_l);
 	Tdry_K = from_degC(wtab.y[3]);
 	connect(wbus.Tdry, Tdry_K);
@@ -55,7 +57,8 @@ equation
 	//connect(wbus.wspd, wtab.y[8]);
 	//wspd_l = noEvent(if wtab.y[8] > 0 then wtab.y[8] else 0);
 	//wspd_l = if noEvent(wtab.y[8] > 0) then wtab.y[8] else 0;
-	wspd_l = if wtab.y[8] >= 0 then wtab.y[8] else 0;
+	//wspd_l = if wtab.y[8] >= 0 then wtab.y[8] else 0;
+	wspd_l = max(wtab.y[8], 0);
 	connect(wbus.wspd, wspd_l);
 end WeatherSource;
 

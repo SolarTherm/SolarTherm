@@ -7,7 +7,7 @@ model SimpleSystem
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-	parameter SI.Area A_con = 500 "Area of concentrator";
+	parameter SI.Area A_con = 700 "Area of concentrator";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";
 	parameter Real C = 0.65*A_con/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
@@ -24,20 +24,42 @@ model SimpleSystem
 
 	parameter SI.Time t_con_on_delay = 20*60;
 	parameter SI.Time t_blk_on_delay = 15*60;
-	parameter Integer n_sched_states = 3;
+
+	parameter Integer n_sched_states = 1;
+	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1;
+	parameter SI.Time t_sch_next_start = 0;
+	parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
+			P_rate/eff_blk
+			};
+	parameter SI.Time t_delta[n_sched_states] = {
+			24*3600
+			};
+	//parameter Integer n_sched_states = 3;
+	//parameter Integer sch_state_start(min=1, max=n_sched_states) = 3;
+	//parameter SI.Time t_sch_next_start = 8*3600;
+	//parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
+	//		0.4*P_rate/eff_blk,
+	//		P_rate/eff_blk,
+	//		0.5*P_rate/eff_blk
+	//		};
+	//parameter SI.Time t_delta[n_sched_states] = {
+	//		9*3600,
+	//		3*3600,
+	//		12*3600
+	//		};
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
-		120*A_con // field cost
-		+ 135*C*A_rec // receiver cost
-		+ (30/(1e3*3600))*E_max // storage cost
-		+ (1440/1e3)*P_rate // power block cost
-		;
+			120*A_con // field cost
+			+ 135*C*A_rec // receiver cost
+			+ (30/(1e3*3600))*E_max // storage cost
+			+ (1440/1e3)*P_rate // power block cost
+			;
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
-		10*A_con // field cleaning/maintenance
-		;
+			10*A_con // field cleaning/maintenance
+			;
 	parameter Real r_disc = 0.05;
 	parameter Integer t_life(unit="year") = 20;
-	
+
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
@@ -64,13 +86,13 @@ model SimpleSystem
 
 initial equation
 	E = E_low_l;
-	Q_flow_sched = 0;
+	Q_flow_sched = Q_flow_sched_val[sch_state_start];
 	con_state = 1;
 	blk_state = 1;
-	sch_state = 3;
+	sch_state = sch_state_start;
 	t_con_next = 0;
 	t_blk_next = 0;
-	t_sch_next = 8*3600;
+	t_sch_next = t_sch_next_start;
 algorithm
 	// Discrete equation system not yet supported (even though correct)
 	// Putting in algorithm section instead
@@ -102,18 +124,13 @@ algorithm
 		t_blk_next := time + t_blk_on_delay;
 	end when;
 
-	when sch_state == 1 then
-		Q_flow_sched := 0.4*P_rate/eff_blk;
-		t_sch_next := time + 9*3600;
-	elsewhen sch_state == 2 then
-		Q_flow_sched := P_rate/eff_blk;
-		t_sch_next := time + 3*3600;
-	elsewhen sch_state == 3 then
-		Q_flow_sched := 0.5*P_rate/eff_blk;
-		t_sch_next := time + 12*3600;
-	end when;
+	for i in 1:n_sched_states loop
+		when sch_state == i then
+			Q_flow_sched := Q_flow_sched_val[i];
+			t_sch_next := time + t_delta[i];
+		end when;
+	end for;
 equation
-	//Q_flow_sched = 200000;
 	Q_flow_chg = eff_rec*Q_flow_rec;
 
 	der(E) = Q_flow_chg - Q_flow_dis;
@@ -126,10 +143,6 @@ equation
 
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
-
-	//connect(P_elec, aen.P);
-	//connect(aen.epy, lcoe.epy);
-	//connect(aen.epy, capf.epy);
 end SimpleSystem;
 
 

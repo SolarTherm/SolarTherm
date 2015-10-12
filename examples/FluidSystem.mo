@@ -18,19 +18,20 @@ model FluidSystem
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-	parameter SI.Power P_rate = 20e3 "Rating of power block";
-	parameter SI.Efficiency eff_adj = 0.80 "Adjustment factor for power block efficiency";
-	parameter SI.Efficiency eff_est = 0.40 "Estimate of overall power block efficiency";
+	parameter SI.Power P_rate = 100000 "Rating of power block";
+	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
+	parameter SI.Efficiency eff_est = 0.48 "Estimate of overall power block efficiency";
 
-	parameter SI.Area A_con = 500 "Concentrator area";
+	parameter SI.Area A_con = 700 "Concentrator area";
 
 	parameter SI.Area A_rec = 1 "Receiver area";
 	parameter Real em_steel = 0.85 "Emissivity of reciever";
 	parameter SI.CoefficientOfHeatTransfer h_th_rec = 10 "Receiver heat tran coeff";
 
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/ // only works with PartialSimpleMedium
+	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
 		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
+		// only works with PartialSimpleMedium
 	parameter MedRec.Temperature T_cold_set = CV.from_degC(290) "Target cold tank T";
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
@@ -39,19 +40,21 @@ model FluidSystem
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
 	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
 		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
+		// only works with PartialSimpleMedium
 	parameter SI.Mass m_up_warn = 0.85*m_max;
 	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
-		120*A_con // field cost
-		+ 135*A_con // receiver cost
-		+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
-		+ (1440/1e3)*P_rate // power block cost
-		;
+			120*A_con // field cost
+			+ 135*A_con // receiver cost
+			+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
+			// only works with PartialSimpleMedium
+			+ (1440/1e3)*P_rate // power block cost
+			;
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
-		10*A_con // field cleaning/maintenance
-		;
+			10*A_con // field cleaning/maintenance
+			;
 	parameter Real r_disc = 0.05;
 	parameter Integer t_life(unit="year") = 20;
 

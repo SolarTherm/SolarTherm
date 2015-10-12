@@ -6,5 +6,5 @@ partial block Concentrator "Solar concentrator"
 	input SolarTherm.Interfaces.WeatherBus wbus;
 	// Will typically use alt, azi and dni
 	input Boolean track "Set to true to start tracking";
-	output SI.RadiantPower R_foc "Radiant power on focal aperture";
+	output SI.RadiantPower R_foc(min=0) "Radiant power on focal aperture";
 end Concentrator;
