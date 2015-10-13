@@ -66,7 +66,7 @@ if __name__ == '__main__':
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
 	parser.add_argument('--xlim', nargs=2, type=float,
-			help='print out variable names and exit')
+			help='domain of x axis')
 	parser.add_argument('var', metavar='V', type=str, nargs='*',
 			help='v1,v2:v3 v4:v5 ...')
 	args = parser.parse_args()

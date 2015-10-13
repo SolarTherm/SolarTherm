@@ -6,9 +6,11 @@ import xml.etree.ElementTree as ET
 import itertools
 import solartherm.postproc
 
-def compile_model(model_fn, model, n_proc=0):
+def compile_model(model_fn, n_proc=0):
 	sp.call(['omc', '-s', '-q', '-n='+str(n_proc),
 		model_fn, 'Modelica', 'SolarTherm'])
+
+def compile_simulation(model, n_proc=0):
 	sp.call(['make', '-f', model+'.makefile'])
 
 def update_pars(et, pars):
@@ -33,8 +35,12 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
 			help='model file name')
-	parser.add_argument('--nocomp', action='store_true',
-			help='no compilation')
+	parser.add_argument('--nomc', action='store_true',
+			help='no model compilation')
+	parser.add_argument('--nosc', action='store_true',
+			help='no simulation compilation')
+	parser.add_argument('--noc', action='store_true',
+			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--nosim', action='store_true',
 			help='no simulation')
 	parser.add_argument('--start', nargs=1, type=str, default=['0'],
@@ -63,8 +69,11 @@ if __name__ == '__main__':
 		par_n.append(k)
 		par_v.append(v.split(','))
 	
-	if not args.nocomp:
-		compile_model(fn, model)
+	if not args.noc:
+		if not args.nomc:
+			compile_model(fn)
+		if not args.nosc:
+			compile_simulation(model)
 
 	init_fns = []
 	init_log_fn = model+'_init.log'

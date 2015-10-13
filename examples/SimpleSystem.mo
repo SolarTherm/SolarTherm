@@ -2,7 +2,6 @@ model SimpleSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
-	import Modelica.Math.cos;
 
 	parameter String weaFile = "resources/weatherfile1.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
@@ -14,16 +13,16 @@ model SimpleSystem
 	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
 	parameter SI.Power P_rate = 100000 "Power block nominal power";
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Maximum amount of stored energy";
+	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Max stored energy";
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
 	parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
 	parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
 	parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
-	parameter SI.Irradiance dni_stop = 100;
-	parameter SI.Irradiance dni_start = 200;
+	parameter SI.Irradiance dni_stop = 100 "DNI at which concentrator stops";
+	parameter SI.Irradiance dni_start = 200 "DNI at which concentrator starts";
 
-	parameter SI.Time t_con_on_delay = 20*60;
-	parameter SI.Time t_blk_on_delay = 15*60;
+	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
+	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
 
 	parameter Integer n_sched_states = 1;
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1;
@@ -144,5 +143,3 @@ equation
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
 end SimpleSystem;
-
-

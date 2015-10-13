@@ -60,10 +60,15 @@ Notes & Troubleshooting
 * The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
 * The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`_ for the simple diff to apply.
 
-SolarTherm Library
-------------------
-Change to the source directory and make a build folder::
+steep
+-----
+Install `DyMat <https://bitbucket.org/jraedler/dymat>`_ via pip (and its prerequisit scipy) to enable result files to be read from python::
+
+    pip2 install dymat
+
+Clone the steep source code, change to the steep source directory and make a build folder::
     
+    git clone https://github.com/paul-scott/steep.git steep
     cd steep
     mkdir build
     cd build

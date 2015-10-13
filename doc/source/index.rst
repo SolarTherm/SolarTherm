@@ -1,4 +1,4 @@
-steep Documentation
+Steep Documentation
 ===================
 
 User Guide
@@ -7,8 +7,10 @@ User Guide
 .. toctree::
    :maxdepth: 2
 
+   introduction
    installation
-   simple_model
+   usage
+   tutorial
 
 Development
 -----------
@@ -20,9 +22,9 @@ Development
    modelling
    models 
 
-Indices and Tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. Indices and Tables
+.. ------------------
+.. 
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
