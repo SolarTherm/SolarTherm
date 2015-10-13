@@ -33,7 +33,7 @@ Install dependencies for python interface and sundials from AUR (here using pack
 
     packer -S omniorb omniorbpy sundials26
 
-Check you have the right build depedencies installed listed `here <https://github.com/OpenModelica/OpenModelica>`_ (e.g., clang, clang++, cmake, etc).
+Check you have the right build depedencies installed listed `here <https://github.com/OpenModelica/OpenModelica>`__ (e.g., clang, clang++, cmake, etc).
 
 Clone the git repository::
 
@@ -58,7 +58,7 @@ Notes & Troubleshooting
 """""""""""""""""""""""
 * omniORB is a CORBA implementation required for python interface.
 * The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
-* The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`_ for the simple diff to apply.
+* The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`__ for the simple diff to apply.
 
 steep
 -----

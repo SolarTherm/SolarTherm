@@ -46,11 +46,34 @@ The parameters are:
 
 - :math:`E_{max}`: Maximum amount of stored energy
 
-The main equations describing the system are:
+The equations describing the system are:
 
 .. math::
     
-    \dot{Q}_{rec} = C A_{rec} I_{dni}
+    \dot{Q}_{rec} &= \begin{cases}
+        C A_{rec} I_{dni} & \text{if}~S_{con} = 3\\
+        0 & \text{otherwise}
+    \end{cases}\\
+    \dot{Q}_{chg} &= \eta_{rec}\dot{Q}_{chg}\\
+    \frac{dE}{dt} &= \dot{Q}_{chg} - \dot{Q}_{dis}\\
+    \dot{Q}_{dis} &= \begin{cases}
+        \dot{Q}_{sch} & \text{if}~S_{blk} \geq 2\\
+        0 & \text{otherwise}
+    \end{cases}\\
+    P_{elec} &= \begin{cases}
+        \eta_{blk}\dot{Q}_{dis} & \text{if}~S_{blk} = 3\\
+        0 & \text{otherwise}
+    \end{cases}
+
+The state diagram for the concentrator is:
+
+.. image:: images/state_con.svg
+    :align: center
+
+The state diagram for the power block is:
+
+.. image:: images/state_blk.svg
+    :align: center
 
 Model
 """""
@@ -123,3 +146,9 @@ The use of colons, commas and spaces in the above command highlights the simple 
 
 Results
 -------
+
+The following plot shows how the LCOE, spot market revenue and capacity factor vary with storage size for the SimpleSystem model.
+
+.. plot:: plots/storage_simple.py
+    :align: center
+
