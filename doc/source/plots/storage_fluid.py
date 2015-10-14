@@ -13,8 +13,8 @@ def proc_csv(fn):
 	
 	return header, vals
 
-hr, vr = proc_csv('storage_simple.csv')
-hl, vl = proc_csv('storage_simple.log')
+hr, vr = proc_csv('storage_fluid.csv')
+hl, vl = proc_csv('storage_fluid.log')
 
 x = vl[1]
 

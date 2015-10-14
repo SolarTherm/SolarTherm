@@ -4,7 +4,7 @@ import argparse
 
 import DyMat
 
-def res_plot_matplotlib(fn, var, xlim):
+def res_plot_matplotlib(fn, var, xlim, out=None):
 	# Poor performance
 	import matplotlib
 	#print(matplotlib.get_backend())
@@ -43,7 +43,11 @@ def res_plot_matplotlib(fn, var, xlim):
 			ax[i_ax].legend(loc=pos[i_ax])
 		if xlim != []:
 			sp.set_xlim(xlim)
-	plt.show()
+	plt.tight_layout()
+	if not out is None:
+		fig.savefig(out)
+	else:
+		plt.show()
 
 def res_plot_bokeh(fn, var):
 	# Too slow
@@ -65,6 +69,8 @@ if __name__ == '__main__':
 			help='result mat-file to read')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
+	parser.add_argument('-o', '--outfile',  nargs=1, type=str, default=[None],
+			help='save figure to outfile instead of displaying')
 	parser.add_argument('--xlim', nargs=2, type=float,
 			help='domain of x axis')
 	parser.add_argument('var', metavar='V', type=str, nargs='*',
@@ -76,7 +82,7 @@ if __name__ == '__main__':
 		mat = DyMat.DyMatFile(fn)
 		print(sorted(str(n) for n in mat.names()))
 	else:
-		res_plot_matplotlib(fn, args.var, args.xlim)
+		res_plot_matplotlib(fn, args.var, args.xlim, args.outfile[0])
 		#res_plot_bokeh(fn, args.var)
 
 # example call:

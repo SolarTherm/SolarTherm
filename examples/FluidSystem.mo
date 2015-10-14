@@ -2,7 +2,6 @@ model FluidSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
-	import Modelica.Math.cos;
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
 	replaceable package MedRec = SolarTherm.Media.Sodium;
 
@@ -11,11 +10,10 @@ model FluidSystem
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.SteadyStateInitial,
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.SteadyState,
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.DynamicFreeInitial,
-		allowFlowReversal=false
-		);
+		allowFlowReversal=false);
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
-	parameter String weaFile = "resources/weatherfile1.motab";
+	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
 	parameter SI.Power P_rate = 100000 "Rating of power block";
@@ -53,12 +51,12 @@ model FluidSystem
 			+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (1440/1e3)*P_rate // power block cost
-			;
+			"Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
 			10*A_con // field cleaning/maintenance
-			;
-	parameter Real r_disc = 0.05;
-	parameter Integer t_life(unit="year") = 20;
+			"Maintenance costs for each year";
+	parameter Real r_disc = 0.05 "Discount rate";
+	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
@@ -72,39 +70,32 @@ model FluidSystem
 	SolarTherm.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
-		use_input=true
-		);
-
-	SolarTherm.Pumps.IdealPump pmp_exc(
+		use_input=true);
+	SolarTherm.Pumps.IdealPump pmp_ext(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
-		use_input=true
-		);
+		use_input=true);
 
 	SolarTherm.Storage.FluidTank ctnk(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
-		T_start=T_cold_start
-		);
+		T_start=T_cold_start);
 	SolarTherm.Storage.FluidTank htnk(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),
-		T_start=T_hot_start
-		);
+		T_start=T_hot_start);
 
 	SolarTherm.HeatExchangers.Extractor ext(
 		redeclare package Medium=MedRec,
 		eff = eff_ext,
 		use_input=false,
-		T_fixed=T_cold_set
-		);
+		T_fixed=T_cold_set);
 
 	SolarTherm.PowerBlocks.HeatGen pblk(
 		P_rate=P_rate,
-		eff_adj=eff_adj
-		);
+		eff_adj=eff_adj);
 
 	SolarTherm.Control.Trigger hf_trig(
 		low=m_up_warn,
@@ -132,8 +123,8 @@ equation
 	connect(pmp_rec.port_b, rec.port_a);
 	connect(rec.port_b, htnk.port_a);
 
-	connect(htnk.port_b, pmp_exc.port_a);
-	connect(pmp_exc.port_b, ext.port_a);
+	connect(htnk.port_b, pmp_ext.port_a);
+	connect(pmp_ext.port_b, ext.port_a);
 	connect(ext.port_b, ctnk.port_a);
 
 	connect(ext.Q_flow, pblk.Q_flow);
@@ -149,7 +140,7 @@ equation
 
 	rec.door_open = radiance_good and fill_htnk;
 	pmp_rec.m_flow_set = if radiance_good and fill_htnk then m_flow_fac*rec.R/(A_con*1000) else 0;
-	pmp_exc.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
+	pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
 
 	con.track = true;
 

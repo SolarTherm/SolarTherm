@@ -36,6 +36,10 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
 ]
 
+# Turn off showing links
+plot_html_show_source_link = False
+plot_html_show_formats = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

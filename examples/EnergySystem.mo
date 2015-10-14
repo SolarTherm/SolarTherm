@@ -1,6 +1,6 @@
 model EnergySystem
 	import Modelica.Constants.pi;
-	parameter String weaFile = "resources/weatherfile1.motab";
+	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
 	parameter Real A_con = 1;
 	parameter Real A_rec = 1;
 	parameter Real E_max = 1*3600*1000;

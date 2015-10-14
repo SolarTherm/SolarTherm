@@ -1,9 +1,11 @@
 model SimpleSystem
+	// Imports
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 
-	parameter String weaFile = "resources/weatherfile1.motab";
+	// Parameters
+	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
 	parameter SI.Area A_con = 700 "Area of concentrator";
@@ -14,6 +16,7 @@ model SimpleSystem
 	parameter SI.Power P_rate = 100000 "Power block nominal power";
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
 	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Max stored energy";
+
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
 	parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
 	parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
@@ -24,15 +27,15 @@ model SimpleSystem
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
 	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
 
-	parameter Integer n_sched_states = 1;
-	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1;
-	parameter SI.Time t_sch_next_start = 0;
+	parameter Integer n_sched_states = 1 "Number of schedule states";
+	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
+	parameter SI.Time t_sch_next_start = 0 "Time to next schedule change";
 	parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
 			P_rate/eff_blk
-			};
+			} "Heat flow at schedule states";
 	parameter SI.Time t_delta[n_sched_states] = {
 			24*3600
-			};
+			} "Time differences between schedule states";
 	//parameter Integer n_sched_states = 3;
 	//parameter Integer sch_state_start(min=1, max=n_sched_states) = 3;
 	//parameter SI.Time t_sch_next_start = 8*3600;
@@ -52,13 +55,14 @@ model SimpleSystem
 			+ 135*C*A_rec // receiver cost
 			+ (30/(1e3*3600))*E_max // storage cost
 			+ (1440/1e3)*P_rate // power block cost
-			;
+			"Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
 			10*A_con // field cleaning/maintenance
-			;
-	parameter Real r_disc = 0.05;
-	parameter Integer t_life(unit="year") = 20;
+			"Maintenance costs for each year";
+	parameter Real r_disc = 0.05 "Discount rate";
+	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 
+	// Variables/Models
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
@@ -75,14 +79,13 @@ model SimpleSystem
 	Integer blk_state(min=1, max=3) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
-	Real t_con_next "time of next concentrator event";
-	Real t_blk_next "time of next power block event";
-	Real t_sch_next "time of next schedule change";
+	Real t_con_next "Time of next concentrator event";
+	Real t_blk_next "Time of next power block event";
+	Real t_sch_next "Time of next schedule change";
 
 	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
-
 initial equation
 	E = E_low_l;
 	Q_flow_sched = Q_flow_sched_val[sch_state_start];
