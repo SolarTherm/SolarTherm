@@ -454,12 +454,19 @@ The plots below show the operation of the plants for 10 consecutive days out of 
 
 Both models have approximately equivalent values for storage hours and power block ratings.  The collector, receiver and heat transfer components of SimpleSystem are more efficient than for FluidSystem.  This results in more energy being captured and the tank filling up faster.  It also results in more switching events to prevent the tank from overflowing.  The power blocks in both models run at full power when there is available energy in the tank.  This will prevent as much energy being spilt as possible, however a more financially rewarding control strategy would also take into consideration prices on the spot market.
 
+The next plot focuses in on the control state of SimpleSystem for a single day.  It shows transitions between the different control states and how it relates to the transfers of energy.  The concentrator switches from the off state (``con_state = 1``) to the start tracking state (``con_state = 2``) in the morning once the solar DNI gets strong enough.  It takes some time for the concentrator to fully focus and for the receiver to heat up, which is approximated by a delay before power actually starts to come out of the receiver (``con_state = 3``).  At one point in the day the tank reaches near its upper limit, and the concentrator momentarily switches off to avoid overflowing the tank.  The power block state follows a similar behaviour, but switches on and off in response to the tank energy being above/below a certain threshold.
+
+.. image:: images/state_simple.svg
+    :align: center
+    :height: 400px
+
 The commands to produce and plot the above results are::
 
     st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=6 P_rate=75000
     st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
     st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=6 P_rate=75000
     st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
+    st_plotmat --xlim 2.25e6 2.34e6 SimpleSystem_res.mat wea.wbus.dni:con_state,blk_state E:Q_flow_chg,Q_flow_dis
 
 Parameter Sweeps
 """"""""""""""""
