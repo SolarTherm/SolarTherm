@@ -426,6 +426,8 @@ It is easy to produce a time-series plot of variables in the model, here DNI, ou
 
     st_plotmat SimpleSystem_res.mat wea.wbus.dni:P_elec,Q_flow_chg E
 
+One day of operation in this time series is shown below.
+
 .. image:: images/plot_example.svg
     :align: center
     :height: 400px
@@ -436,6 +438,31 @@ The use of colons, commas and spaces in the above command highlights the simple 
 
 Results
 -------
+
+Control Switching
+"""""""""""""""""
+
+The plots below show the operation of the plants for 10 consecutive days out of the year.  The top two plots are for SimpleSystem and the bottom two for FluidSystem.  SimpleSystem is displayed in terms of stored energy and power charging and discharging the storage tank.  FluidSystem represents these as the hot tank mass and mass flows instead.  The charging and discharging powers and mass flows are directly controlled in response to the fluid levels in the tanks and the current solar DNI.
+
+.. image:: images/switch_simple.svg
+    :align: center
+    :height: 400px
+
+.. image:: images/switch_fluid.svg
+    :align: center
+    :height: 400px
+
+Both models have approximately equivalent values for storage hours and power block ratings.  The collector, receiver and heat transfer components of SimpleSystem are more efficient than for FluidSystem.  This results in more energy being captured and the tank filling up faster.  It also results in more switching events to prevent the tank from overflowing.  The power blocks in both models run at full power when there is available energy in the tank.  This will prevent as much energy being spilt as possible, however a more financially rewarding control strategy would also take into consideration prices on the spot market.
+
+The commands to produce and plot the above results are::
+
+    st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=6 P_rate=75000
+    st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
+    st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=6 P_rate=75000
+    st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
+
+Parameter Sweeps
+""""""""""""""""
 
 The following plot shows how the LCOE, spot market revenue and capacity factor vary with storage size for the SimpleSystem model.
 
@@ -461,11 +488,9 @@ The same thing for the FluidSystem.
     :align: center
     :height: 400px
 
-The commands to produce the results for the above plots are respectively:
-
-.. code-block:: shell
+The commands to produce the results for the above plots are respectively::
     
-   st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=3,4,6,7,8,9,10,11,12,13,14,15 
-   st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8
-   st_simulate --stop 31536000 --step 300 SimpleSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
-   st_simulate --stop 31536000 --step 300 FluidSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=3,4,6,7,8,9,10,11,12,13,14,15 
+    st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8
+    st_simulate --stop 31536000 --step 300 SimpleSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 31536000 --step 300 FluidSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
