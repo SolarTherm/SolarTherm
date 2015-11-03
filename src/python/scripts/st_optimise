@@ -1,0 +1,101 @@
+#! /bin/env python
+import argparse
+import os
+import subprocess as sp
+import xml.etree.ElementTree as ET
+import itertools
+import functools
+import solartherm.postproc
+from scipy import optimize
+
+def update_pars(et, pars):
+	root = et.getroot()
+
+	for k in pars:
+		root.find('*ScalarVariable[@name=\''+k+'\']/*[@start]').attrib['start'] = pars[k]
+
+def run_sim(model, args):
+	sp.call(['./'+model] + args)
+
+def analyse_results(fn):
+	perf = solartherm.postproc.get_performance(fn)
+	return perf
+
+def cost_function(model, ini_fn, mat_fn, sim_args, et, quan, par_n, par_val):
+	print(par_val)
+	pars = {k: str(v) for k, v in zip(par_n, par_val)}
+	update_pars(et, pars)
+	et.write(ini_fn)
+	run_sim(model, sim_args + ['-f', ini_fn])
+	perf = analyse_results(mat_fn)
+
+	print(perf[quan])
+
+	return perf[quan]
+
+if __name__ == '__main__':
+	"""
+	Should make sure parameters are not final (protected), or that other
+	derived parameters are final.
+	"""
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file',
+			help='model file name')
+	parser.add_argument('--start', nargs=1, type=str, default=['0'],
+			help='simulation start time')
+	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
+			help='simulation stop time')
+	parser.add_argument('--step', nargs=1, type=str, default=['60'],
+			help='simulation time step')
+	parser.add_argument('--method', nargs=1, type=str, default=['Nelder-Mead'],
+			help='scipy optimisation method')
+	parser.add_argument('--maxiter', nargs=1, type=int, default=[20],
+			help='maximum number of iterations')
+	parser.add_argument('--cost', nargs=1, type=str, default=['lcoe ($/MWh)'],
+			help='quantity to minimise (produced by post processing)')
+	parser.add_argument('par', metavar='P', type=str, nargs='*',
+			help='parameters with bounds and optional starting value')
+	args = parser.parse_args()
+
+	sim_args = [
+		'-override', 'startTime='+args.start[0]+',stopTime='+args.stop[0]
+			+',stepSize='+args.step[0],
+		'-s', 'rungekutta', # not sure if multiple take last instance?
+		]
+
+	fn = args.file
+	model = os.path.splitext(os.path.split(fn)[1])[0]
+
+	par_n = [] # names
+	par_b = [] # bounds
+	par_0 = [] # start
+	# Don't need bounds (pass None for variable to minimize)
+	for pp in args.par:
+		k, v = pp.split('=')
+		par_n.append(k)
+		vals = v.split(',')
+		assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
+		lb = float(vals[0])
+		ub = float(vals[1])
+		assert lb <= ub, 'Lower bound greater than upper bound'
+		par_b.append([lb, ub])
+		if len(vals) == 3:
+			par_0.append(float(vals[2]))
+		else:
+			par_0.append((ub - lb)/2)
+
+	ini_fn = model + '_init_opt.xml'
+	mat_fn = model + '_res.mat'
+
+	et = ET.parse(model + '_init.xml')
+
+	cfunc = functools.partial(cost_function, model, ini_fn, mat_fn, sim_args,
+				et, args.cost[0], par_n)
+
+	print(par_n)
+	res = optimize.minimize(cfunc, par_0, method=args.method[0], bounds=par_b,
+			options={
+				'maxiter': args.maxiter[0],
+				'disp': True,
+			})
+	print(res)

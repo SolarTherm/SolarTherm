@@ -18,6 +18,9 @@ solartherm
 st_simulate
     A python script for simulating a plant model.  It compiles the model, calls the simulation, and post processes the results.  It can also be used for performing parameter sweeps or just changing individual parameters without having to recompile the model each time.
 
+st_optimisation
+    A python script for optimising model parameters according to some cost.  Currently this supports the unconstrained methods provided in the scipy library.
+
 st_plotmat
     A python script for easily plotting the results from a simulation.  Behind the scenes it uses the common `matplotlib <http://matplotlib.org>`_ library.
 
