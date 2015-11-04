@@ -505,8 +505,8 @@ The commands to produce the results for the above plots are respectively::
 Optimisation
 """"""""""""
 
-We can apply simple search techniques to optimise model parameters.  For example, the following call will search for a value that minimises the LCOE for SimpleSystem over the power block rate and storage parameters::
+We can apply simple search techniques to optimise model parameters.  For example, the following call will search (using the default method) for a value that minimises the LCOE for SimpleSystem over the power block rate and storage parameters::
 
-    st_optimise --maxiter 20 --stop 31536000 --step 300 SimpleSystem.mo P_rate=50000,150000,100000 t_storage=3,15,5
+    st_optimise --maxiter 20 --stop 31536000 --step 300 -v SimpleSystem.mo P_rate=50000,150000,100000 t_storage=3,15,5
 
-After 20 iterations the best solution it has found is for a power block rate of 68kW and storage time of 14hrs.  The same approach for the FluidSystem finds a the best solution after 20 iterations of 53kW and 17hrs.
+After 20 iterations the best solution it has found is for a power block rate of 69kW and storage time of 14hrs.  The same approach for the FluidSystem produces a solution of 68kW and 8hrs.  Note that both system models don't have any thermal losses from the storage vessels, and the power block costs are much higher than the storage costs, this tends to favour a very large storage system so that the power block size can be reduced.
