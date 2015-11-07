@@ -3,11 +3,11 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = sphinx-build2
 PAPER         =
 BUILDDIR      = build
 
-# User-friendly check for sphinx-build
+# User-friendly check for sphinx-build2
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
 $(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
 endif
@@ -87,9 +87,9 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/steep.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/SolarTherm.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/steep.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/SolarTherm.qhc"
 
 applehelp:
 	$(SPHINXBUILD) -b applehelp $(ALLSPHINXOPTS) $(BUILDDIR)/applehelp
@@ -104,8 +104,8 @@ devhelp:
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/steep"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/steep"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/SolarTherm"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/SolarTherm"
 	@echo "# devhelp"
 
 epub:

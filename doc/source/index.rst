@@ -1,5 +1,5 @@
-Steep Documentation
-===================
+SolarTherm Documentation
+========================
 
 User Guide
 ----------
