@@ -1,0 +1,17 @@
+language: python
+python:
+  - "2.7"
+before_install:
+  - for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` stable"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+  - wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add -
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq -y openmodelica
+  - pip2 install git+git://github.com/OpenModelica/OMPython.git 
+  - pip2 install scipy matplolib dymat pyswarm cma
+install:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+script:
+  - ctest -V
