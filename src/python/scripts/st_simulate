@@ -1,26 +1,9 @@
 #! /bin/env python
 import argparse
 import os
-import subprocess as sp
-import xml.etree.ElementTree as ET
 import itertools
 import solartherm.postproc
-
-def compile_model(model_fn, n_proc=0):
-	sp.call(['omc', '-s', '-q', '-n='+str(n_proc),
-		model_fn, 'Modelica', 'SolarTherm'])
-
-def compile_simulation(model, n_proc=0):
-	sp.call(['make', '-f', model+'.makefile'])
-
-def update_pars(et, pars):
-	root = et.getroot()
-
-	for k in pars:
-		root.find('*ScalarVariable[@name=\''+k+'\']/*[@start]').attrib['start'] = pars[k]
-
-def run_sim(model, args):
-	sp.call(['./'+model] + args)
+from solartherm import simulation as sim
 
 def analyse_results(fn):
 	perf = solartherm.postproc.get_performance(fn)
@@ -71,21 +54,19 @@ if __name__ == '__main__':
 	
 	if not args.noc:
 		if not args.nomc:
-			compile_model(fn)
+			sim.compile_model(fn)
 		if not args.nosc:
-			compile_simulation(model)
+			sim.compile_sim(model)
 
 	init_fns = []
 	init_log_fn = model+'_init.log'
 	f_ilog = open(init_log_fn, 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
-	#et = ET.parse(os.path.splitext(fn)[0]+'_init.xml')
-	et = ET.parse(model+'_init.xml')
+	et = sim.load_xml(model+'_init.xml')
 	for i, val in enumerate(itertools.product(*par_v)):
-		pars = dict(zip(par_n, val))
-		update_pars(et, pars)
+		sim.update_pars(et, par_n, val)
 		init_fn = model+'_init_'+str(i)+'.xml'
-		et.write(init_fn)
+		sim.write_xml(et, init_fn)
 		init_fns.append(init_fn)
 		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
 
@@ -93,7 +74,7 @@ if __name__ == '__main__':
 		mat_fn = model + '_res.mat'
 		perf = []
 		for init_fn in init_fns:
-			run_sim(model, sim_args + ['-f', init_fn])
+			sim.run_sim(model, sim_args + ['-f', init_fn])
 			perf.append(analyse_results(mat_fn))
 		perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
 		print(','.join(['index']+perf_names))

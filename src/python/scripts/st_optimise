@@ -2,10 +2,9 @@
 from __future__ import division
 import argparse
 import os
-import subprocess as sp
-import xml.etree.ElementTree as ET
 import functools
 import solartherm.postproc
+from solartherm import simulation as sim
 
 try:
 	from scipy import optimize as sciopt
@@ -20,15 +19,6 @@ try:
 except ImportError:
 	cma = None
 
-def update_pars(et, par_n, par_v):
-	root = et.getroot()
-
-	for i, n in enumerate(par_n):
-		root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = par_v[i]
-
-def run_sim(model, args):
-	sp.call(['./'+model] + args)
-
 def analyse_results(fn):
 	perf = solartherm.postproc.get_performance(fn)
 	return perf
@@ -36,9 +26,9 @@ def analyse_results(fn):
 def cost_function(model, ini_fn, mat_fn, sim_args, et, verb, scale, offset,
 		cost_n, par_n, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
-	update_pars(et, par_n, par_v)
-	et.write(ini_fn)
-	run_sim(model, sim_args + ['-f', ini_fn])
+	sim.update_pars(et, par_n, par_v)
+	sim.write_xml(et, ini_fn)
+	sim.run_sim(model, sim_args + ['-f', ini_fn])
 	perf = analyse_results(mat_fn)
 
 	if verb:
@@ -109,7 +99,7 @@ if __name__ == '__main__':
 	ini_fn = model + '_init_opt.xml'
 	mat_fn = model + '_res.mat'
 
-	et = ET.parse(model + '_init.xml')
+	et = sim.load_xml(model + '_init.xml')
 
 	cfunc = functools.partial(cost_function, model, ini_fn, mat_fn, sim_args,
 				et, args.v, scale, offset, args.cost[0], par_n)
