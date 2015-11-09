@@ -1,4 +1,7 @@
 language: python
+# Note that should use pip for all python libraries not apt-get
+# We can install the system scipy and matplotlib because we only target 2.7
+# (the system default)
 python:
   - "2.7"
 sudo: required
@@ -8,7 +11,8 @@ before_install:
   - wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add -
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y openmodelica
-  - pip2 install scipy matplotlib dymat pyswarm cma
+  - sudo apt-get install -qq -y python-scipy python-matplotlib
+  - pip2 install dymat pyswarm cma
   #- pip2 install git+git://github.com/OpenModelica/OMPython.git 
 install:
   - mkdir build
