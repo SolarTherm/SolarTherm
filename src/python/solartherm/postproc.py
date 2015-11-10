@@ -75,4 +75,7 @@ class SimResult(object):
 		vl = self.mat.data(name)[il]
 		vu = self.mat.data(name)[iu]
 
-		return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
+		if ab[il] == ab[iu]:
+			return vl
+		else:
+			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl

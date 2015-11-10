@@ -6,6 +6,7 @@ import multiprocessing as mp
 #import DyMat
 
 # TODO: Add in option for different result file output
+# TODO: Need to add in error checking for calls (possibly use in tests)
 
 class Simulator(object):
 	"""Compilation and simulation of a modelica model.
@@ -31,10 +32,11 @@ class Simulator(object):
 		else:
 			return self.model + '_init_' + self.suffix + '.xml'
 	
-	def compile_model(self, libs=[], n_proc=0):
+	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""
-		sp.call(['omc', '-s', '-q', '-n='+str(n_proc), '-i='+self.model,
-			self.fn, 'Modelica', 'SolarTherm']
+		sp.call(['omc', '-s', '-q', '-n='+str(n_proc)]
+			+ args
+			+ ['-i='+self.model, self.fn]
 			+ libs)
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
