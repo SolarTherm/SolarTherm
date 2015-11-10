@@ -3,8 +3,8 @@ from __future__ import division
 import argparse
 import os
 import functools
-import solartherm.postproc
-from solartherm import simulation as sim
+from solartherm import postproc
+from solartherm import simulation
 
 try:
 	from scipy import optimize as sciopt
@@ -20,15 +20,13 @@ except ImportError:
 	cma = None
 
 def analyse_results(fn):
-	perf = solartherm.postproc.get_performance(fn)
+	perf = postproc.get_performance(fn)
 	return perf
 
-def cost_function(model, ini_fn, mat_fn, sim_args, et, verb, scale, offset,
-		cost_n, par_n, par_val):
+def cost_function(sim, mat_fn, stime, verb, scale, offset, cost_n, par_n, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
-	sim.update_pars(et, par_n, par_v)
-	sim.write_xml(et, ini_fn)
-	sim.run_sim(model, sim_args + ['-f', ini_fn])
+	sim.update_pars(par_n, par_v)
+	sim.simulate(start=stime[0], stop=stime[1], step=stime[2])
 	perf = analyse_results(mat_fn)
 
 	if verb:
@@ -45,6 +43,14 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
 			help='model file name')
+	parser.add_argument('-v', action='store_true',
+			help='verbose')
+	parser.add_argument('--nomc', action='store_true',
+			help='no model compilation')
+	parser.add_argument('--nosc', action='store_true',
+			help='no simulation compilation')
+	parser.add_argument('--noc', action='store_true',
+			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--start', nargs=1, type=str, default=['0'],
 			help='simulation start time')
 	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
@@ -57,17 +63,19 @@ if __name__ == '__main__':
 			help='maximum number of iterations (not necessarily number of simulations)')
 	parser.add_argument('--cost', nargs=1, type=str, default=['lcoe ($/MWh)'],
 			help='quantity to minimise (produced by post processing)')
-	parser.add_argument('-v', action='store_true',
-			help='verbose printing of simulator calls')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='parameters with bounds and optional starting value')
 	args = parser.parse_args()
 
-	sim_args = [
-		'-override', 'startTime='+args.start[0]+',stopTime='+args.stop[0]
-			+',stepSize='+args.step[0],
-		'-s', 'rungekutta', # not sure if multiple take last instance?
-		]
+	sim = simulation.Simulator(args.file);
+
+	if not args.noc:
+		if not args.nomc:
+			print('Compiling model')
+			sim.compile_model()
+		if not args.nosc:
+			print('Compiling simulator')
+			sim.compile_sim(args=([] if args.v else ['-s']))
 
 	fn = args.file
 	model = os.path.splitext(os.path.split(fn)[1])[0]
@@ -96,13 +104,13 @@ if __name__ == '__main__':
 		par_b.append([0, 1])
 		par_0.append((p0 - lb)/(ub - lb))
 
-	ini_fn = model + '_init_opt.xml'
-	mat_fn = model + '_res.mat'
+	mat_fn = sim.model + '_res.mat'
 
-	et = sim.load_xml(model + '_init.xml')
+	sim.load_init()
 
-	cfunc = functools.partial(cost_function, model, ini_fn, mat_fn, sim_args,
-				et, args.v, scale, offset, args.cost[0], par_n)
+	cfunc = functools.partial(cost_function, sim, mat_fn,
+			(args.start[0], args.stop[0], args.step[0]), args.v, scale, offset,
+			args.cost[0], par_n)
 
 	print(par_n)
 	if args.method[0] == 'pso':

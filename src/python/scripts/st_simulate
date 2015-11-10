@@ -2,11 +2,11 @@
 import argparse
 import os
 import itertools
-import solartherm.postproc
-from solartherm import simulation as sim
+from solartherm import postproc
+from solartherm import simulation
 
 def analyse_results(fn):
-	perf = solartherm.postproc.get_performance(fn)
+	perf = postproc.get_performance(fn)
 	return perf
 
 if __name__ == '__main__':
@@ -18,6 +18,8 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
 			help='model file name')
+	parser.add_argument('-v', action='store_true',
+			help='verbose')
 	parser.add_argument('--nomc', action='store_true',
 			help='no model compilation')
 	parser.add_argument('--nosc', action='store_true',
@@ -36,14 +38,15 @@ if __name__ == '__main__':
 			help='parameters')
 	args = parser.parse_args()
 
-	sim_args = [
-		'-override', 'startTime='+args.start[0]+',stopTime='+args.stop[0]
-			+',stepSize='+args.step[0],
-		'-s', 'rungekutta', # not sure if multiple take last instance?
-		]
+	sim = simulation.Simulator(args.file);
 
-	fn = args.file
-	model = os.path.splitext(os.path.split(fn)[1])[0]
+	if not args.noc:
+		if not args.nomc:
+			print('Compiling model')
+			sim.compile_model()
+		if not args.nosc:
+			print('Compiling simulator')
+			sim.compile_sim(args=([] if args.v else ['-s']))
 
 	par_n = [] # names
 	par_v = [] # values
@@ -51,37 +54,27 @@ if __name__ == '__main__':
 		k, v = pp.split('=')
 		par_n.append(k)
 		par_v.append(v.split(','))
-	
-	if not args.noc:
-		if not args.nomc:
-			sim.compile_model(fn)
-		if not args.nosc:
-			sim.compile_sim(model)
 
-	init_fns = []
-	init_log_fn = model+'_init.log'
-	f_ilog = open(init_log_fn, 'w')
-	f_ilog.write(','.join(['index']+par_n) + '\n')
-	et = sim.load_xml(model+'_init.xml')
-	for i, val in enumerate(itertools.product(*par_v)):
-		sim.update_pars(et, par_n, val)
-		init_fn = model+'_init_'+str(i)+'.xml'
-		sim.write_xml(et, init_fn)
-		init_fns.append(init_fn)
-		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
-
+	mat_fn = sim.model + '_res.mat'
+	perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
 	if not args.nosim:
-		mat_fn = model + '_res.mat'
-		perf = []
-		for init_fn in init_fns:
-			sim.run_sim(model, sim_args + ['-f', init_fn])
-			perf.append(analyse_results(mat_fn))
-		perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
+		print('Starting simulation')
 		print(','.join(['index']+perf_names))
-		for i, p in enumerate(perf):
-			print(','.join([str(i)]+list(str(p[k]) for k in perf_names)))
+
+	sim.load_init()
+	f_ilog = open(sim.model+'_init.log', 'w')
+	f_ilog.write(','.join(['index']+par_n) + '\n')
+	perf = []
+	for i, val in enumerate(itertools.product(*par_v)):
+		sim.suffix = str(i)
+		sim.update_pars(par_n, val)
+		f_ilog.write(','.join([sim.suffix]+list(val)) + '\n')
+
+		if not args.nosim:
+			sim.simulate(start=args.start[0], stop=args.stop[0], step=args.step[0])
+			perf = analyse_results(mat_fn)
+			print(','.join([str(i)]+list(str(perf[k]) for k in perf_names)))
 
 	# Should be able to pass on any command line arguments to executable
-	# Can just generate xml
 	# Can save separate results file
 	# Pull together relevant results
