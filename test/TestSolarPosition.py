@@ -2,7 +2,8 @@
 
 import unittest
 
-import OMPython
+from solartherm import simulation
+from solartherm import postproc
 
 from math import pi
 
@@ -62,51 +63,34 @@ pnts_den = [
 
 class TestSolarPosition(unittest.TestCase):
 	def setUp(self):
-		modelfile = 'TestSolarPosition.mo'
-		model = 'TestSolarPosition'
-		self.omc = OMPython.OMCSession()
-		self.ex = self.omc.execute
-		self.assertTrue(self.ex('loadModel(Modelica)'))
-		self.assertTrue(self.ex('loadModel(SolarTherm)'),
-				msg=self.ex('getErrorString()'))
-		self.assertTrue(self.ex('loadFile("'+modelfile+'")'),
-				msg=self.ex('getErrorString()'))
-
-		# One day 500 intervals:
-		#ans = self.ex('simulate('+model+', stopTime=86400)')
-		# One year 500 intervals per day:
-		ans = self.ex('simulate('+model+
-				', stopTime=31536000, numberOfIntervals=182500)')
-		self.assertEqual(ans['SimulationResults']['messages'], '""',
-				msg=self.ex('getErrorString()'))
+		fn = 'TestSolarPosition.mo'
+		sim = simulation.Simulator(fn)
+		sim.compile_model()
+		sim.compile_sim(args=['-s'])
+		# One year ~500 intervals per day:
+		sim.simulate(start=0, stop=31536000, step=170)
+		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_solarposition(self):
-		#self.ex('plot({solp_0.zen, solp_0.dec, solp_0.azi, solp_0.alt})')
-
-		#print(self.ex('val(solp_den.alt, '+str(pnts_den[7][0])+')')*180/pi)
-		#print(self.ex('val(solp_den.azi, '+str(pnts_den[7][0])+')')*180/pi)
-		#print(self.ex('val(solp_den.E, '+str(pnts_den[7][0])+')')*60)
-		#print(self.ex('val(solp_den.dec, '+str(pnts_den[7][0])+')')*180/pi)
-
 		self.longMessage = True # allow assert msg to be added to std msg
 		delta = 0.6 # error tolerated (deg)
 
 		for i, (t, alt, azi) in enumerate(pnts_0):
-			self.assertAlmostEqual(self.ex('val(solp_0.alt, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_0.alt', t)*180/pi,
 					alt, delta=delta, msg='Alt of 0: ' + str(i))
-			self.assertAlmostEqual(self.ex('val(solp_0.azi, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_0.azi', t)*180/pi,
 					azi, delta=delta, msg='Azi of 0: ' + str(i))
 
 		for i, (t, alt, azi) in enumerate(pnts_can):
-			self.assertAlmostEqual(self.ex('val(solp_can.alt, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_can.alt', t)*180/pi,
 					alt, delta=delta, msg='Alt of can: ' + str(i))
-			self.assertAlmostEqual(self.ex('val(solp_can.azi, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_can.azi', t)*180/pi,
 					azi, delta=delta, msg='Azi of can: ' + str(i))
 
 		for i, (t, alt, azi) in enumerate(pnts_den):
-			self.assertAlmostEqual(self.ex('val(solp_den.alt, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_den.alt', t)*180/pi,
 					alt, delta=delta, msg='Alt of den: ' + str(i))
-			self.assertAlmostEqual(self.ex('val(solp_den.azi, '+str(t)+')')*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_den.azi', t)*180/pi,
 					azi, delta=delta, msg='Azi of den: ' + str(i))
 
 if __name__ == '__main__':

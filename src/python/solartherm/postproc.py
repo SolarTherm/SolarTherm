@@ -26,3 +26,53 @@ def get_performance(fn):
 			'capf (%)': capf,
 			'srev ($)': srev,
 			}
+
+class SimResult(object):
+	def __init__(self, fn):
+		self.fn = fn
+		self.mat = None
+		self.load_res()
+	
+	def load_res(self):
+		self.mat = DyMat.DyMatFile(self.fn)
+	
+	def get_lower_ind(self, ab, t):
+		"""Get index for point just below or equal to the requested time.
+		"""
+		assert ab[0] <= t <= ab[-1], "Time outside range"
+
+		il = int(len(ab)*t/(ab[-1] - ab[0]))
+		il = min(len(ab)-2, max(0, il))
+
+		while t < ab[il]:
+			il -= 1
+		while t > ab[il+1]:
+			il += 1
+
+		return il
+	
+	def get_closest(self, name, t):
+		"""Closest point in interval.
+		"""
+		ab = self.mat.abscissa(name, valuesOnly=True)
+
+		il = self.get_lower_ind(ab, t)
+		iu = il + 1
+
+		if t <= ((ab[ul] + ab[il])/2):
+			return self.mat.data(name)[il]
+		else:
+			return self.mat.data(name)[ul]
+
+	def get_interp(self, name, t):
+		"""Linear interpolation of point.
+		"""
+		ab = self.mat.abscissa(name, valuesOnly=True)
+
+		il = self.get_lower_ind(ab, t)
+		iu = il + 1
+
+		vl = self.mat.data(name)[il]
+		vu = self.mat.data(name)[iu]
+
+		return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
