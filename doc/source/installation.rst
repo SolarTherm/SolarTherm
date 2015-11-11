@@ -38,11 +38,13 @@ Call ``cmake`` to build the library using the same prefix where the modelica
 library is installed (typically either ``/usr/local`` or ``/usr``)::
 
     cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+
+By default it puts the SolarTherm modelica library in ``lib/omlibrary`` beneath the current install prefix.  If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``-DMODELICA_LIBRARY_INSTALL_DIR`` variable.  This variable can also be set to ``$HOME/.openmodelica/libraries/`` to install it locally for the user.
+
+Make and install the library (use ``sudo`` if installing it under root)::
+
     make
-
-Install the library::
-
-    sudo make install
+    make install
 
 Run tests::
 
@@ -64,20 +66,59 @@ OpenModelica::
 
     sudo apt-get install openmodelica
 
-
 SolarTherm dependencies::
 
-    sudo apt-get install python-scipy python-matplotlib
+    sudo apt-get install git cmake
+
     sudo apt-get install python-pip
+    sudo apt-get install python-scipy python-matplotlib
 
     sudo pip2 install dymat
     sudo pip2 install pyswarm cma
 
-    sudo apt-get install git cmake
-
 .. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
 
 Continue onto :ref:`build-section`.
+
+Ubuntu 14.04 and 15.10 Local Install
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you don't want to install SolarTherm under root, then it can be installed locally under a user account.  As prerequisites we still require:
+
+* ``openmodelica``
+* ``git``
+* ``cmake``
+* ``pip``
+* ``scipy``
+* ``matplotlib`` (optionally)
+
+In addition we need ``virtualenv``::
+
+    sudo apt-get install python-virtualenv
+
+Additional dependencies can now be installed under a virtual python environment, for example in a new directory ``~/st_env``::
+
+    virtualenv --system-site-packages ~/st_env
+    source ~/st_env/bin/activate
+    pip2 install dymat
+    pip2 install pyswarm cma
+    deactivate
+
+Checkout the repository and change into a new build directory as outlined in :ref:`build-section`.  The build process proceeds::
+
+    source ~/st_env/bin/activate
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/st_env -DMODELICA_LIBRARY_INSTALL_DIR=$HOME/.openmodelica/libraries/
+    make
+    make install
+    deactivate
+
+Now in order to run the tests or use SolarTherm a different environment is required.  This is turned on and off with (note the ``st_`` prefix)::
+
+    source ~/st_env/bin/st_activate
+    ctests -V
+    st_deactivate
+
+In addition to calling the ``virtualenv`` environment, it sets up paths to linked non-Modelica libraries.  Note that for this local installation ``omc`` will produce additional warnings when compiling code that links to external C libraries.  This is because it doesn't find the libraries in one of the default locations, but they still get linked in correctly later on in the process.
 
 Archlinux Source
 ^^^^^^^^^^^^^^^^
@@ -87,9 +128,13 @@ Install dependencies from pacman::
 
     sudo pacman -S lapack blas lpsolve expat boost
 
-Install dependencies for python interface and sundials from AUR (here using packer)::
+.. Install dependencies for python interface and sundials from AUR (here using packer)::
 
-    sudo packer -S omniorb omniorbpy sundials26
+Install dependencies sundials from AUR (here using packer)::
+
+    sudo packer -S sundials26
+
+..    sudo packer -S omniorb omniorbpy
 
 Check you have the right build depedencies installed listed `here <https://github.com/OpenModelica/OpenModelica>`__ (e.g., clang, clang++, cmake, etc).
 
@@ -110,13 +155,13 @@ Configure, build and install selecting a prefix for the installation target (her
 
 SolarTherm dependencies::
 
-    sudo pacman -S python2-scipy python2-matplotlib
+    sudo pacman -S git cmake
+
     sudo pacman -S python2-pip
+    sudo pacman -S python2-scipy python2-matplotlib
 
     sudo pip2 install dymat
     sudo pip2 install pyswarm cma
-
-    sudo pacman -S git cmake
 
 .. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
 
@@ -124,7 +169,8 @@ Continue onto :ref:`build-section`.
 
 Notes & Troubleshooting
 """""""""""""""""""""""
-* omniORB is a CORBA implementation required for python interface.
+.. * omniORB is a CORBA implementation required for python interface.
+
 * The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
 * The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`__ for the simple diff to apply.
 
