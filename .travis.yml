@@ -13,7 +13,6 @@ before_install:
   - sudo apt-get install -qq -y openmodelica
   - sudo apt-get install -qq -y python-scipy python-matplotlib
   - pip2 install dymat pyswarm cma
-  #- pip2 install git+git://github.com/OpenModelica/OMPython.git 
 install:
   - mkdir build
   - cd build

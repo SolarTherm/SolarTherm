@@ -59,10 +59,10 @@ class SimResult(object):
 		il = self.get_lower_ind(ab, t)
 		iu = il + 1
 
-		if t <= ((ab[ul] + ab[il])/2):
+		if t <= ((ab[iu] + ab[il])/2):
 			return self.mat.data(name)[il]
 		else:
-			return self.mat.data(name)[ul]
+			return self.mat.data(name)[iu]
 
 	def get_interp(self, name, t):
 		"""Linear interpolation of point.

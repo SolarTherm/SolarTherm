@@ -19,7 +19,6 @@ SolarTherm requires a number of python packages (some optional):
 
 * `scipy <http://www.scipy.org/>`_ prerequisite
 * `DyMat <https://bitbucket.org/jraedler/dymat>`_ read in result files
-* `OMPython <https://github.com/OpenModelica/OMPython.git>`_ for testing interface (optional)
 * `matplotlib <http://matplotlib.org/>`_ for plotting (optional)
 * `pyswarm <http://pythonhosted.org/pyswarm/>`_ optimisation (optional)
 * `cma <https://www.lri.fr/~hansen/cmaes_inmatlab.html>`_ optimisation (optimal)
@@ -71,12 +70,12 @@ SolarTherm dependencies::
     sudo apt-get install python-scipy python-matplotlib
     sudo apt-get install python-pip
 
-    sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
-
     sudo pip2 install dymat
     sudo pip2 install pyswarm cma
 
     sudo apt-get install git cmake
+
+.. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
 
 Continue onto :ref:`build-section`.
 
@@ -114,12 +113,12 @@ SolarTherm dependencies::
     sudo pacman -S python2-scipy python2-matplotlib
     sudo pacman -S python2-pip
 
-    sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
-
     sudo pip2 install dymat
     sudo pip2 install pyswarm cma
 
     sudo pacman -S git cmake
+
+.. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
 
 Continue onto :ref:`build-section`.
 

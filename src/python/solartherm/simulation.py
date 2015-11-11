@@ -76,7 +76,11 @@ class Simulator(object):
 		self.write_init()
 
 	def simulate(self, start='0', stop='86400', step='60', solver='rungekutta', args=[]):
-		"""Run simulation."""
+		"""Run simulation.
+		
+		If running an optimisation then 'optimization' needs to be used as
+		solver type.
+		"""
 		sim_args = [
 			'-override', 'startTime='+str(start)+',stopTime='+str(stop)
 				+',stepSize='+str(step),
