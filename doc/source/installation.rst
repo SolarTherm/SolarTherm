@@ -104,9 +104,9 @@ Configure, build and install selecting a prefix for the installation target (her
     make
     sudo make install
 
-Add enviroment variable with installation prefix so that python library can find OpenModelica::
-
-    export OPENMODELICAHOME="/usr/local/"
+.. Add enviroment variable with installation prefix so that python library can find OpenModelica::
+.. 
+..     export OPENMODELICAHOME="/usr/local/"
 
 SolarTherm dependencies::
 

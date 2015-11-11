@@ -16,7 +16,10 @@ before_install:
 install:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV -DMODELICA_LIBRARY_INSTALL_DIR=$HOME/.openmodelica/libraries/
   - make
+  - make install
+  - export LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+  - export LIBRARY_PATH="$VIRTUAL_ENV/lib:$LIBRARY_PATH"
 script:
   - ctest -V

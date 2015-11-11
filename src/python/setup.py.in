@@ -2,14 +2,13 @@ from distutils.core import setup
 
 setup(name='solartherm',
 		version='${PACKAGE_VERSION}',
-		package_dir={'': '${CMAKE_CURRENT_SOURCE_DIR}'},
 		packages=['solartherm'],
 		scripts=[
-			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_wea_to_mo',
-			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_plotmat',
-			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_simulate',
-			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_optimise',
-			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_get_aemo_prices',
+			'scripts/st_wea_to_mo',
+			'scripts/st_plotmat',
+			'scripts/st_simulate',
+			'scripts/st_optimise',
+			'scripts/st_get_aemo_prices',
 			],
 		requires=[
 			'scipy',

@@ -1,0 +1,29 @@
+# This file must be used with "source bin/activate" *from bash*
+# you cannot run it directly
+
+source @CMAKE_INSTALL_PREFIX@/bin/activate
+
+st_deactivate () {
+
+	deactivate
+
+    # reset old environment variables
+    if [ -n "${_OLD_VIRTUAL_LD_PATH-}" ] ; then
+        LD_LIBRARY_PATH="$_OLD_VIRTUAL_LD_PATH"
+        export LD_LIBRARY_PATH
+        unset _OLD_VIRTUAL_LD_PATH
+    fi
+    if [ -n "${_OLD_VIRTUAL_LIB_PATH-}" ] ; then
+        LIBRARY_PATH="$_OLD_VIRTUAL_LIB_PATH"
+        export LIBRARY_PATH
+        unset _OLD_VIRTUAL_LIB_PATH
+    fi
+}
+
+_OLD_VIRTUAL_LD_PATH="$LD_LIBRARY_PATH"
+LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
+
+_OLD_VIRTUAL_LIB_PATH="$LIBRARY_PATH"
+LIBRARY_PATH="$VIRTUAL_ENV/lib:$LIBRARY_PATH"
+export LIBRARY_PATH
