@@ -1,0 +1,10 @@
+examples/*.o
+examples/SimpleSystem_*.c
+examples/SimpleSystem_*.h
+examples/FluidSystem_*.c
+examples/FluidSystem_*.h
+examples/*_res.mat
+examples/*.xml
+*~
+Makefile
+*.cmake
