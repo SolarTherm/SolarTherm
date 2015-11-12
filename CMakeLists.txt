@@ -7,8 +7,15 @@ enable_testing()
 if (DEFINED MODELICA_LIBRARY_INSTALL_DIR)
 else()
 	set(MODELICA_LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/omlibrary/")
+	#set(MODELICA_LIBRARY_INSTALL_DIR "${HOME}/.openmodelica/libraries/")
 endif()
-#set(MODELICA_LIBRARY_INSTALL_DIR "${HOME}/.openmodelica/libraries/")
+
+if (DEFINED FORCE_PYTHON_PREFIX)
+else()
+	#set(FORCE_PYTHON_PREFIX 0)
+	set(FORCE_PYTHON_PREFIX 1)
+endif()
+
 # Commenting out because could be trouble with different prefixes
 #set(CTEST_ENVIRONMENT "OPENMODELICALIBRARY=${CMAKE_BINARY_DIR}:$ENV{OPENMODELICAHOME}/lib/omlibrary:$ENV{HOME}/.openmodelica/libraries;LD_LIBRARY_PATH=${LIBRARY_OUTPUT_DIR};../src;LIBRARY_PATH=${LIBRARY_OUTPUT_DIR}")
 
