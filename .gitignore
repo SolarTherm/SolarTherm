@@ -1,4 +1,6 @@
-examples/*.o
+*.o
+*.so
+*.os
 examples/SimpleSystem_*.c
 examples/SimpleSystem_*.h
 examples/FluidSystem_*.c
