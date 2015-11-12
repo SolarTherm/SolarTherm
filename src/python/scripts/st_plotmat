@@ -15,9 +15,9 @@ if __name__ == '__main__':
 			help='turn off sharing of subplot x-axes')
 	parser.add_argument('-o', '--outfile',  nargs=1, type=str, default=[None],
 			help='save figure to outfile instead of displaying')
-	parser.add_argument('--xlim', nargs=2, type=float,
-			help='domain of x axis')
-	parser.add_argument('var', metavar='V', type=str, nargs='*',
+	parser.add_argument('--xlim', nargs=2, type=str, default=[],
+			help='domain of x axis, e.g., 0 86400 or 5d 6d or 0 1y')
+	parser.add_argument('var', metavar='V', type=str, nargs='+',
 			help='variables to plot, e.g.: v1,v2:v3 v4:v5 ...')
 	args = parser.parse_args()
 

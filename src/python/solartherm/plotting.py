@@ -10,6 +10,8 @@ matplotlib.use('QT4Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
 import matplotlib.pyplot as plt
 
+from solartherm import simulation
+
 def plot_res(res, fmt, xlim=[], out=None, share=True):
 	"""Plot variables from a SimResult.
 
@@ -25,12 +27,14 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 
 		["var1,var2:var3", "var4:var5", "var6"]
 	
-	An optional pair that represents bounds on the domain can be provided to
+	An optional pair that represents bounds on the domain can be provided as
 	xlim.
 
 	If a filename is provided to out, then the plot will be saved to that file,
 	otherwise the plot will be output to a new window.
 	"""
+
+	xlim = [simulation.parse_time(x) for x in xlim]
 
 	fig = plt.figure()
 
@@ -64,7 +68,7 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 						color=co[v_id%len(co)])
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax])
-		if xlim != []:
+		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 	plt.tight_layout()
 	if out is not None:
