@@ -10,7 +10,7 @@ matplotlib.use('QT4Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
 import matplotlib.pyplot as plt
 
-def plot_res(res, fmt, xlim=[], out=None):
+def plot_res(res, fmt, xlim=[], out=None, share=True):
 	"""Plot variables from a SimResult.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -38,8 +38,11 @@ def plot_res(res, fmt, xlim=[], out=None):
 	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 	nsp = len(fmt)
+	sharex = None
 	for i_sp, v_sp in enumerate(fmt):
-		sp = fig.add_subplot(nsp, 1, i_sp+1)
+		sp = fig.add_subplot(nsp, 1, i_sp+1, sharex=sharex)
+		if sharex is None and share:
+			sharex = sp
 		v_ys = v_sp.split(':')
 		assert len(v_ys) < 3, 'Can only utilise at most 2 y-axes per subplot'
 		ax = [sp]

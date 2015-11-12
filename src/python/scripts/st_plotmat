@@ -11,6 +11,8 @@ if __name__ == '__main__':
 			help='result mat-file to read')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
+	parser.add_argument('--noshare', action='store_false',
+			help='turn off sharing of subplot x-axes')
 	parser.add_argument('-o', '--outfile',  nargs=1, type=str, default=[None],
 			help='save figure to outfile instead of displaying')
 	parser.add_argument('--xlim', nargs=2, type=float,
@@ -24,7 +26,8 @@ if __name__ == '__main__':
 	if args.names:
 		print(sorted(str(n) for n in res.mat.names()))
 	else:
-		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile[0])
+		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile[0],
+				share=args.noshare)
 
 # example call:
 # st_plotmat EnergySystem_res.mat 'tnk.E:der(tnk.E)' 'pmp.frac'
