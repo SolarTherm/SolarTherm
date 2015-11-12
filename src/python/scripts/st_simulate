@@ -5,8 +5,8 @@ import itertools
 from solartherm import postproc
 from solartherm import simulation
 
-# TODO: Should be able to pass on any command line arguments to executable
-# TODO: Can save separate results file
+# TODO: Pass on any command line arguments to simulation executable
+# TODO: Save separate results files
 # TODO: Pull together relevant results
 
 if __name__ == '__main__':
@@ -34,6 +34,8 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', nargs=1, type=str, default=['60'],
 			help='simulation time step: <number>[,y,d,m,s]')
+	parser.add_argument('--plot', nargs=1, type=str, default=[],
+			help='plot given quantity (at most 2 parameter dimensions)')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	args = parser.parse_args()
@@ -48,15 +50,19 @@ if __name__ == '__main__':
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))
 
+	dims = [] # dimensions
 	par_n = [] # names
 	par_v = [] # values
 	for pp in args.par:
 		k, v = pp.split('=')
 		par_n.append(k)
-		par_v.append(v.split(','))
+		vspl = v.split(',')
+		par_v.append(vspl)
+
+		if len(vspl) >= 2:
+			dims.append(len(par_n) - 1)
 
 	mat_fn = sim.model + '_res.mat'
-	#perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
 	perf_names = [n + ' (' + u + ')' for n, u in
 			zip(postproc.SimResult.perf_n, postproc.SimResult.perf_u)]
 
@@ -67,8 +73,10 @@ if __name__ == '__main__':
 	sim.load_init()
 	f_ilog = open(sim.model+'_init.log', 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
-	perf = []
+	var_vals = []
+	perfs = []
 	for i, val in enumerate(itertools.product(*par_v)):
+		var_vals.append(val)
 		sim.suffix = str(i)
 		sim.update_pars(par_n, val)
 		f_ilog.write(','.join([sim.suffix]+list(val)) + '\n')
@@ -80,4 +88,21 @@ if __name__ == '__main__':
 			perf = res.calc_perf()
 			print(','.join([str(i)]+list(str(perf[j])
 				for j, n in enumerate(perf_names))))
+			perfs.append(perf)
+
+	if len(args.plot) > 0:
+		from solartherm import plotting
+		try:
+			perf_i = postproc.SimResult.perf_n.index(args.plot[0])
+		except ValueError:
+			raise ValueError('Value to plot should be one of '
+					+ str(postproc.SimResult.perf_n))
+		if len(dims) == 1:
+			x1 = [v[dims[0]] for v in var_vals]
+			y = [p[perf_i] for p in perfs]
+			plotting.plot_par1(x1, y, args.plot[0])
+		elif len(dims) == 2:
+			print('Plots over 2 parameter dimensions not handled yet')
+		else:
+			print('Cannot plot problem with ' + str(len(dims)) + ' dimensions')
 

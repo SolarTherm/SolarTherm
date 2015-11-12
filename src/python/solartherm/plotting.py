@@ -67,8 +67,21 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 		if xlim != []:
 			sp.set_xlim(xlim)
 	plt.tight_layout()
-	if not out is None:
+	if out is not None:
 		fig.savefig(out)
 	else:
 		plt.show()
 
+def plot_par1(x1, y, name, out=None):
+	fig = plt.figure()
+
+	# Colours for our lines
+	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+	sp = fig.add_subplot(1, 1, 1)
+	sp.plot(x1, y, color=co[0%len(co)])
+
+	if out is not None:
+		fig.savefig(out)
+	else:
+		plt.show()
