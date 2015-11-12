@@ -29,5 +29,5 @@ if (PIP)
 
 	configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
-	install(CODE "execute_process(COMMAND ${PIP} install --upgrade ${CMAKE_CURRENT_BINARY_DIR})")
+	install(CODE "execute_process(COMMAND ${PIP} install --install-option=--prefix=${CMAKE_INSTALL_PREFIX} --upgrade ${CMAKE_CURRENT_BINARY_DIR})")
 endif()
