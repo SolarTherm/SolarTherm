@@ -8,3 +8,8 @@ examples/*.xml
 *~
 Makefile
 *.cmake
+*.json
+*.log
+install_manifest.txt
+CMakeCache.txt
+CMakeFiles
