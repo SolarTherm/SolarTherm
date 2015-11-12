@@ -5,30 +5,6 @@ import DyMat
 import xml.etree.ElementTree as ET
 import re
 
-def get_performance(fn):
-	mat = DyMat.DyMatFile(fn)
-	# Note that values are provided before and after event for quantities
-
-	# Work in SI units
-	epy = fin.energy_per_year(
-			mat.abscissa('E_elec')[0][-1] - mat.abscissa('E_elec')[0][0],
-			mat.data('E_elec')[-1])
-	lcoe = fin.lcoe(mat.data('C_cap')[0], mat.data('C_main')[0],
-			mat.data('r_disc')[0], int(mat.data('t_life')[0]), epy)
-	capf = fin.capacity_factor(mat.data('P_rate')[0], epy)
-	srev = mat.data('R_spot')[-1]
-
-	# Convert to useful units
-	epy = epy/(1e6*3600) # convert from J to MWh
-	lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
-	capf = 100*capf
-
-	return {'epy (MWh/year)': epy,
-			'lcoe ($/MWh)': lcoe,
-			'capf (%)': capf,
-			'srev ($)': srev,
-			}
-
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
 		self.fn = fn
@@ -72,6 +48,7 @@ class SimResult(object):
 	def get_lower_ind(self, ab, t):
 		"""Get index for point just below or equal to the requested time.
 		"""
+		# Note that values are provided before and after events for quantities
 		assert ab[0] <= t <= ab[-1], "Time outside range"
 
 		il = int(len(ab)*t/(ab[-1] - ab[0]))
@@ -112,3 +89,31 @@ class SimResult(object):
 			return vl
 		else:
 			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
+	
+	def calc_perf(self):
+		"""Calculate plant performance.
+		"""
+		eng_t = self.mat.abscissa('E_elec', valuesOnly=True)
+		eng_v = self.mat.data('E_elec') # cumulative electricity generated
+		cap_v = self.mat.data('C_cap') # capital costs
+		main_v = self.mat.data('C_main') # maintenance costs
+		disc_v = self.mat.data('r_disc') # discount factor
+		life_v = self.mat.data('t_life') # plant lifetime
+		rate_v = self.mat.data('P_rate') # generator rating
+		rev_v = self.mat.data('R_spot') # cumulative revenue
+
+		epy = fin.energy_per_year(eng_t[-1] - eng_t[0], eng_v[-1])
+		lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]), epy)
+		capf = fin.capacity_factor(rate_v[0], epy)
+		srev = rev_v[-1]
+
+		# Convert to useful units
+		epy = epy/(1e6*3600) # convert from J/year to MWh/year
+		lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
+		capf = 100*capf
+
+		return [epy, lcoe, capf, srev,]
+
+	# Static class variables
+	perf_n = ['epy', 'lcoe', 'capf', 'srev']
+	perf_u = ['MWh/year', '$/MWh', '%', '$']

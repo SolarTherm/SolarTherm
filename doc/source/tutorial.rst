@@ -462,9 +462,9 @@ The next plot focuses in on the control state of SimpleSystem for a single day. 
 
 The commands to produce and plot the above results are::
 
-    st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=6 P_rate=75000
+    st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=6 P_rate=75000
     st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
-    st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=6 P_rate=75000
+    st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=6 P_rate=75000
     st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
     st_plotmat --xlim 2.25e6 2.34e6 SimpleSystem_res.mat wea.wbus.dni:con_state,blk_state E:Q_flow_chg,Q_flow_dis
 
@@ -497,16 +497,16 @@ The same thing for the FluidSystem.
 
 The commands to produce the results for the above plots are respectively::
     
-    st_simulate --stop 31536000 --step 300 SimpleSystem.mo t_storage=3,4,6,7,8,9,10,11,12,13,14,15 
-    st_simulate --stop 31536000 --step 300 FluidSystem.mo t_storage=2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8
-    st_simulate --stop 31536000 --step 300 SimpleSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
-    st_simulate --stop 31536000 --step 300 FluidSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=3,4,6,7,8,9,10,11,12,13,14,15 
+    st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8
+    st_simulate --stop 1y --step 5m SimpleSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 1y --step 5m FluidSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
 
 Optimisation
 """"""""""""
 
 We can apply simple search techniques to optimise model parameters.  For example, the following call will search (using the default method) for a value that minimises the LCOE for SimpleSystem over the power block rate and storage parameters::
 
-    st_optimise --maxiter 20 --stop 31536000 --step 300 -v SimpleSystem.mo P_rate=50000,150000,100000 t_storage=3,15,5
+    st_optimise --maxiter 20 --stop 1y --step 5m -v SimpleSystem.mo P_rate=50000,150000,100000 t_storage=3,15,5
 
 After 20 iterations the best solution it has found is for a power block rate of 69kW and storage time of 14hrs.  The same approach for the FluidSystem produces a solution of 68kW and 8hrs.  Note that both system models don't have any thermal losses from the storage vessels, and the power block costs are much higher than the storage costs, this tends to favour a very large storage system so that the power block size can be reduced.

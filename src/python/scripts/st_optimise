@@ -19,21 +19,22 @@ try:
 except ImportError:
 	cma = None
 
-def analyse_results(fn):
-	perf = postproc.get_performance(fn)
-	return perf
+# TODO: add flag for maximisation (e.g., to use capacity factor)
 
-def cost_function(sim, mat_fn, stime, verb, scale, offset, cost_n, par_n, par_val):
+def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n,
+		par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2])
-	perf = analyse_results(mat_fn)
+
+	res = postproc.SimResult(mat_fn)
+	cost = res.calc_perf()[perf_i]
 
 	if verb:
 		print(par_v)
-		print(perf[cost_n])
+		print(cost)
 
-	return perf[cost_n]
+	return cost
 
 if __name__ == '__main__':
 	"""
@@ -52,16 +53,16 @@ if __name__ == '__main__':
 	parser.add_argument('--noc', action='store_true',
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--start', nargs=1, type=str, default=['0'],
-			help='simulation start time')
+			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
-			help='simulation stop time')
+			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', nargs=1, type=str, default=['60'],
-			help='simulation time step')
+			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--method', nargs=1, type=str, default=['Nelder-Mead'],
 			help='cma, pso or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', nargs=1, type=int, default=[20],
 			help='maximum number of iterations (not necessarily number of simulations)')
-	parser.add_argument('--cost', nargs=1, type=str, default=['lcoe ($/MWh)'],
+	parser.add_argument('--cost', nargs=1, type=str, default=['lcoe'],
 			help='quantity to minimise (produced by post processing)')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='parameters with bounds and optional starting value')
@@ -108,9 +109,15 @@ if __name__ == '__main__':
 
 	sim.load_init()
 
+	try:
+		perf_i = postproc.SimResult.perf_n.index(args.cost[0])
+	except ValueError:
+		raise ValueError('Cost value should be one of '
+				+ str(postproc.SimResult.perf_n))
+
 	cfunc = functools.partial(cost_function, sim, mat_fn,
-			(args.start[0], args.stop[0], args.step[0]), args.v, scale, offset,
-			args.cost[0], par_n)
+			(args.start[0], args.stop[0], args.step[0]),
+			args.v, scale, offset, perf_i, par_n)
 
 	print(par_n)
 	if args.method[0] == 'pso':

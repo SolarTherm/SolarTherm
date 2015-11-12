@@ -3,10 +3,41 @@ import os
 import subprocess as sp
 import xml.etree.ElementTree as ET
 import multiprocessing as mp
-#import DyMat
 
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
+
+def parse_time(tstr):
+	"""Convert time from string to seconds.
+
+	The string tstr must be a number which has an optional suffix as follows:
+	
+		'<number>' second
+		'<number>y' year
+		'<number>d' day
+		'<number>m' minute
+		'<number>s' second
+	"""
+	try:
+		return float(tstr)
+	except ValueError:
+		pass
+
+	try:
+		if tstr[-1] == 'y':
+			return 31536000*float(tstr[:-1]) # year
+		elif tstr[-1] == 'd':
+			return 86400*float(tstr[:-1]) # day
+		elif tstr[-1] == 'h':
+			return 3600*float(tstr[:-1]) # hour
+		elif tstr[-1] == 'm':
+			return 60*float(tstr[:-1]) # minute
+		elif tstr[-1] == 's':
+			return float(tstr[:-1]) # second
+		else:
+			raise ValueError('Cannot convert string to time.')
+	except ValueError:
+		raise ValueError('Cannot convert string to time.')
 
 class Simulator(object):
 	"""Compilation and simulation of a modelica model.
@@ -81,9 +112,12 @@ class Simulator(object):
 		If running an optimisation then 'optimization' needs to be used as
 		solver type.
 		"""
+		start = str(parse_time(start))
+		stop = str(parse_time(stop))
+		step = str(parse_time(step))
 		sim_args = [
-			'-override', 'startTime='+str(start)+',stopTime='+str(stop)
-				+',stepSize='+str(step),
+			'-override',
+			'startTime='+start+',stopTime='+stop+',stepSize='+step,
 			'-s', solver,
 			'-f', self.get_init_out_fn(),
 			]

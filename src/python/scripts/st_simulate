@@ -5,9 +5,9 @@ import itertools
 from solartherm import postproc
 from solartherm import simulation
 
-def analyse_results(fn):
-	perf = postproc.get_performance(fn)
-	return perf
+# TODO: Should be able to pass on any command line arguments to executable
+# TODO: Can save separate results file
+# TODO: Pull together relevant results
 
 if __name__ == '__main__':
 	"""
@@ -29,13 +29,13 @@ if __name__ == '__main__':
 	parser.add_argument('--nosim', action='store_true',
 			help='no simulation')
 	parser.add_argument('--start', nargs=1, type=str, default=['0'],
-			help='simulation start time')
+			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
-			help='simulation stop time')
+			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', nargs=1, type=str, default=['60'],
-			help='simulation time step')
+			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
-			help='parameters')
+			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	args = parser.parse_args()
 
 	sim = simulation.Simulator(args.file);
@@ -56,7 +56,10 @@ if __name__ == '__main__':
 		par_v.append(v.split(','))
 
 	mat_fn = sim.model + '_res.mat'
-	perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
+	#perf_names = ['epy (MWh/year)', 'capf (%)', 'lcoe ($/MWh)', 'srev ($)']
+	perf_names = [n + ' (' + u + ')' for n, u in
+			zip(postproc.SimResult.perf_n, postproc.SimResult.perf_u)]
+
 	if not args.nosim:
 		print('Starting simulation')
 		print(','.join(['index']+perf_names))
@@ -71,10 +74,10 @@ if __name__ == '__main__':
 		f_ilog.write(','.join([sim.suffix]+list(val)) + '\n')
 
 		if not args.nosim:
-			sim.simulate(start=args.start[0], stop=args.stop[0], step=args.step[0])
-			perf = analyse_results(mat_fn)
-			print(','.join([str(i)]+list(str(perf[k]) for k in perf_names)))
+			sim.simulate(start=args.start[0], stop=args.stop[0],
+					step=args.step[0])
+			res = postproc.SimResult(mat_fn)
+			perf = res.calc_perf()
+			print(','.join([str(i)]+list(str(perf[j])
+				for j, n in enumerate(perf_names))))
 
-	# Should be able to pass on any command line arguments to executable
-	# Can save separate results file
-	# Pull together relevant results
