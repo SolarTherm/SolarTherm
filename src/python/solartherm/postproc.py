@@ -2,6 +2,8 @@ from __future__ import division
 
 import solartherm.finances as fin
 import DyMat
+import xml.etree.ElementTree as ET
+import re
 
 def get_performance(fn):
 	mat = DyMat.DyMatFile(fn)
@@ -28,13 +30,44 @@ def get_performance(fn):
 			}
 
 class SimResult(object):
-	def __init__(self, fn):
+	def __init__(self, fn, init_fn=None):
 		self.fn = fn
+		self.init_fn = init_fn
 		self.mat = None
+		self.units = None
 		self.load_res()
 	
 	def load_res(self):
 		self.mat = DyMat.DyMatFile(self.fn)
+		self.load_units()
+
+	def load_units(self):
+		self.units = None
+		init_fn = self.init_fn
+
+		if init_fn is None:
+			# Try version based off result file
+			res_re = re.compile('(\S+)_res\.mat')
+			ps = res_re.match(self.fn)
+			if ps is not None:
+				init_fn = ps.groups()[0] + '_init.xml'
+
+		# Can fail
+		et = None
+		if init_fn is not None:
+			try:
+				et = ET.parse(init_fn)
+			except IOError:
+				pass
+
+		if et is not None:
+			root = et.getroot()
+
+			self.units = {}
+			for n in self.mat.names():
+				ns = str(n)
+				node = root.find('*ScalarVariable[@name=\''+ns+'\']/*[@unit]')
+				self.units[ns] = '' if node is None else node.attrib['unit']
 	
 	def get_lower_ind(self, ab, t):
 		"""Get index for point just below or equal to the requested time.
