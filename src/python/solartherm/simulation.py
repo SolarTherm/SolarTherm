@@ -105,6 +105,12 @@ class Simulator(object):
 		
 		self.update_et_pars(par_n, par_v)
 		self.write_init()
+	
+	def get_unit(self, var_n):
+		root = self.init_et.getroot()
+
+		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
+		return '' if node is None else node.attrib['unit']
 
 	def simulate(self, start='0', stop='86400', step='60', solver='rungekutta', args=[]):
 		"""Run simulation.

@@ -36,6 +36,8 @@ if __name__ == '__main__':
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--plot', nargs=1, type=str, default=[],
 			help='plot given quantity (at most 2 parameter dimensions)')
+	parser.add_argument('--plot3d', action='store_true',
+			help='plot in 3d')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	args = parser.parse_args()
@@ -92,17 +94,34 @@ if __name__ == '__main__':
 
 	if len(args.plot) > 0:
 		from solartherm import plotting
-		try:
-			perf_i = postproc.SimResult.perf_n.index(args.plot[0])
-		except ValueError:
-			raise ValueError('Value to plot should be one of '
-					+ str(postproc.SimResult.perf_n))
+		ys = []
+		ylabels = []
+		for name in args.plot[0].split(','):
+			try:
+				pei = postproc.SimResult.perf_n.index(name)
+			except ValueError:
+				raise ValueError('Value to plot should be one of '
+						+ str(postproc.SimResult.perf_n))
+			ys.append([p[pei] for p in perfs])
+			ylabels.append(name + ' (' + postproc.SimResult.perf_u[pei] + ')')
 		if len(dims) == 1:
 			x1 = [v[dims[0]] for v in var_vals]
-			y = [p[perf_i] for p in perfs]
-			plotting.plot_par1(x1, y, args.plot[0])
-		elif len(dims) == 2:
-			print('Plots over 2 parameter dimensions not handled yet')
+			xlabel = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
+			plotting.plot_par1(x1, ys, xlabel=xlabel, ylabels=ylabels)
+		elif len(dims) == 2 and not args.plot3d:
+			x1 = [v[dims[0]] for v in var_vals]
+			x2 = [v[dims[1]] for v in var_vals]
+			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
+			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
+			plotting.plot_par2(x1, x2, ys, x1label=x1label, x2label=x2label,
+					ylabels=ylabels)
+		elif len(dims) == 2 and args.plot3d:
+			x1 = [float(v[dims[0]]) for v in var_vals]
+			x2 = [float(v[dims[1]]) for v in var_vals]
+			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
+			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
+			plotting.plot_3d(x1, x2, ys[0], xlabel=x1label, ylabel=x2label,
+					zlabel=ylabels[0])
 		else:
 			print('Cannot plot problem with ' + str(len(dims)) + ' dimensions')
 

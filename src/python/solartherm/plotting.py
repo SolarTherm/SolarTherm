@@ -76,14 +76,75 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 	else:
 		plt.show()
 
-def plot_par1(x1, y, name, out=None):
+def plot_par1(x1, ys, xlabel='', ylabels=[], out=None):
 	fig = plt.figure()
 
 	# Colours for our lines
 	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
-	sp = fig.add_subplot(1, 1, 1)
-	sp.plot(x1, y, color=co[0%len(co)])
+	for j in range(len(ys)):
+		sp = fig.add_subplot(len(ys), 1, j+1)
+		sp.plot(x1, ys[j], color=co[0%len(co)])
+		sp.set_xlabel(xlabel)
+		if ylabels != []:
+			sp.set_ylabel(ylabels[j])
+
+	plt.tight_layout()
+	if out is not None:
+		fig.savefig(out)
+	else:
+		plt.show()
+
+def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None):
+	x1g = []
+	ysg = [[] for i in range(len(ys))]
+	x1v = []
+	x = None
+	for i in range(len(x1)):
+		if x != x1[i]:
+			x1g.append([])
+			for j in range(len(ys)):
+				ysg[j].append([])
+			x = x1[i]
+			x1v.append(x)
+		x1g[-1].append(x2[i])
+		for j in range(len(ys)):
+			ysg[j][-1].append(ys[j][i])
+
+	fig = plt.figure()
+
+	# Colours for our lines
+	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+	for j in range(len(ys)):
+		sp = fig.add_subplot(len(ys), 1, j+1)
+		for i in range(len(x1v)):
+			sp.plot(x1g[i], ysg[j][i], label=(str(x1v[i]) + ' ' + x1label),
+					color=co[i%len(co)])
+
+		sp.set_xlabel(x2label)
+		if ylabels != []:
+			sp.set_ylabel(ylabels[j])
+		sp.legend(loc=1, frameon=False)
+
+	plt.tight_layout()
+	if out is not None:
+		fig.savefig(out)
+	else:
+		plt.show()
+
+def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None):
+	from mpl_toolkits.mplot3d import Axes3D
+	fig = plt.figure()
+
+	ax = fig.gca(projection='3d')
+	#ax.plot_surface(x, y, z)
+	#ax.plot_wireframe(x, y, z)
+	ax.scatter(x, y, z, marker='o')
+
+	ax.set_xlabel(xlabel)
+	ax.set_ylabel(ylabel)
+	ax.set_zlabel(zlabel)
 
 	if out is not None:
 		fig.savefig(out)
