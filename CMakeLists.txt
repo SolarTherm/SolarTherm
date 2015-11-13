@@ -16,16 +16,13 @@ else()
 	set(FORCE_PYTHON_PREFIX 1)
 endif()
 
-# Commenting out because could be trouble with different prefixes
-#set(CTEST_ENVIRONMENT "OPENMODELICALIBRARY=${CMAKE_BINARY_DIR}:$ENV{OPENMODELICAHOME}/lib/omlibrary:$ENV{HOME}/.openmodelica/libraries;LD_LIBRARY_PATH=${LIBRARY_OUTPUT_DIR};../src;LIBRARY_PATH=${LIBRARY_OUTPUT_DIR}")
-
-#set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
-#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+# Used to correctly set PYTHONPATH in local enviroment setup source file.
+# Should work out how to do this more intelligently.
+set(PYTHON_LIBRARY_VERSION "python2.7")
 
 add_subdirectory(src)
 add_subdirectory(test)
 add_subdirectory(examples)
 
 #file(COPY SolarTherm DESTINATION .)
-
 install(DIRECTORY SolarTherm DESTINATION ${MODELICA_LIBRARY_INSTALL_DIR})

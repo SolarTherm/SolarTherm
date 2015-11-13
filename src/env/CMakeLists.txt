@@ -4,3 +4,5 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/bin/activate")
 
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/st_activate" DESTINATION "bin/")
 endif()
+
+configure_file("st_local_env.in" "st_local_env" @ONLY)
