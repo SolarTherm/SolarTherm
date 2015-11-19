@@ -3,7 +3,8 @@ model FluidSystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
-	replaceable package MedRec = SolarTherm.Media.Sodium;
+	replaceable package MedRec = SolarTherm.Media.SodiumConst;
+	//replaceable package MedRec = SolarTherm.Media.Sodium;
 
 	inner Modelica.Fluid.System system(
 		energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
@@ -29,18 +30,22 @@ model FluidSystem
 	parameter SI.Efficiency eff_ext = 0.9 "Extractor efficiency";
 
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
-		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
+	//parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
+	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
 		// only works with PartialSimpleMedium
+	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
+		(1277*(T_hot_set - T_cold_set)) "Max mass in tanks";
 	parameter MedRec.Temperature T_cold_set = CV.from_degC(290) "Target cold tank T";
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
 	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
-	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
-		(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
+	//parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
+	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 		// only works with PartialSimpleMedium
+	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
+		(1277*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 	parameter SI.Mass m_up_warn = 0.85*m_max;
 	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
@@ -48,8 +53,9 @@ model FluidSystem
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
 			120*A_con // field cost
 			+ 135*A_con // receiver cost
-			+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
+			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
+			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
 			+ (1440/1e3)*P_rate // power block cost
 			"Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
@@ -94,6 +100,7 @@ model FluidSystem
 		T_fixed=T_cold_set);
 
 	SolarTherm.PowerBlocks.HeatGen pblk(
+		redeclare package Medium=MedRec,
 		P_rate=P_rate,
 		eff_adj=eff_adj);
 

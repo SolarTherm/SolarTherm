@@ -18,7 +18,7 @@ model Extractor "Ideal heat extractor"
 
 	input Medium.Temperature T_set if use_input "Set T from input";
 	output SI.HeatFlowRate Q_flow "Heat from extractor";
-	output Medium.Temperature T(start=system.T_start) "Delivered temperature";
+	output Medium.Temperature T "Delivered temperature";
 protected
 	Medium.BaseProperties mprop_a;
 	Medium.BaseProperties mprop_b;

@@ -332,7 +332,7 @@ The Modelica standard library makes it easy to define different fluids and use t
 
 .. code-block:: modelica
 
-	replaceable package MedRec = SolarTherm.Media.Sodium;
+	replaceable package MedRec = SolarTherm.Media.SodiumConst;
 
 	inner Modelica.Fluid.System system(
 		energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,

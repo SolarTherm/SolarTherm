@@ -1,9 +1,6 @@
 within SolarTherm.Pumps;
 model IdealPump "Solar receiver with fluid interface"
-	extends Modelica.Fluid.Interfaces.PartialTwoPortTransport(
-		show_V_flow=false,
-		show_T=false
-		);
+	extends Modelica.Fluid.Interfaces.PartialTwoPort;
 	import SI = Modelica.SIunits;
 
 	parameter Boolean cont_m_flow = true "Control m_flow else control dp";
@@ -15,13 +12,13 @@ model IdealPump "Solar receiver with fluid interface"
 	input SI.MassFlowRate m_flow_set if cont_m_flow and use_input;
 	input SI.Pressure dp_set if (not cont_m_flow) and use_input;
 equation
-	// Mass and substance balance already taken care of by parent
 	port_b.h_outflow = inStream(port_a.h_outflow);
 	port_a.h_outflow = inStream(port_b.h_outflow);
+	port_a.m_flow + port_b.m_flow = 0;
 
 	if cont_m_flow then
-		m_flow = if use_input then m_flow_set else m_flow_fixed;
+		port_a.m_flow = if use_input then m_flow_set else m_flow_fixed;
 	else
-		dp = if use_input then dp_set else dp_fixed;
+		port_a.p - port_b.p = if use_input then dp_set else dp_fixed;
 	end if;
 end IdealPump;

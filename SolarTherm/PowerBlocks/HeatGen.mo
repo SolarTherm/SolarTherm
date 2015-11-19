@@ -2,12 +2,14 @@ within SolarTherm.PowerBlocks;
 model HeatGen "Basic power block that takes input heat at a temperature"
 	import SI = Modelica.SIunits;
 
+	replaceable package Medium = Modelica.Media.Interfaces.PartialMedium;
+
 	parameter SI.Power P_rate = 1e3 "Rated power of power block";
 	parameter SI.Efficiency eff_adj = 1 "Adjustment factor for Chambadal-Novikov eff";
 
 	input SolarTherm.Interfaces.WeatherBus wbus;
 	input SI.HeatFlowRate Q_flow "Input heat";
-	input SI.Temperature T "Delivered temperature";
+	input Medium.Temperature T "Delivered temperature";
 
 	output SI.Power P_elec;
 equation
