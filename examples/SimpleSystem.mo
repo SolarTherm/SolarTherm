@@ -14,7 +14,7 @@ model SimpleSystem
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
 	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
 	parameter SI.Power P_rate = 100000 "Power block nominal power";
-	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
+	parameter Real t_storage(unit="h") = 5 "Hours of storage";
 	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Max stored energy";
 
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";

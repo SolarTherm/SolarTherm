@@ -78,8 +78,7 @@ if __name__ == '__main__':
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))
 
-	fn = args.file
-	model = os.path.splitext(os.path.split(fn)[1])[0]
+	sim.load_init()
 
 	par_n = [] # names
 	par_b = [] # bounds
@@ -90,15 +89,16 @@ if __name__ == '__main__':
 	for pp in args.par:
 		k, v = pp.split('=')
 		par_n.append(k)
-		vals = v.split(',')
+		vals = [simulation.parse_var_val(vv, sim.get_unit(k))
+			for vv in v.split(',')]
 		assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
-		lb = float(vals[0])
-		ub = float(vals[1])
+		lb = vals[0]
+		ub = vals[1]
 		assert lb <= ub, 'Lower bound greater than upper bound'
 		#par_b.append([lb, ub])
-		p0 = (ub - lb)/2
+		p0 = (ub + lb)/2
 		if len(vals) == 3:
-			p0 = float(vals[2])
+			p0 = vals[2]
 		#par_0.append(p0)
 		offset.append(lb)
 		scale.append((ub - lb))
@@ -106,8 +106,6 @@ if __name__ == '__main__':
 		par_0.append((p0 - lb)/(ub - lb))
 
 	mat_fn = sim.model + '_res.mat'
-
-	sim.load_init()
 
 	try:
 		perf_i = postproc.SimResult.perf_n.index(args.cost[0])

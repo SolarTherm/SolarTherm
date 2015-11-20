@@ -3,41 +3,79 @@ import os
 import subprocess as sp
 import xml.etree.ElementTree as ET
 import multiprocessing as mp
+import re
 
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
 
-def parse_time(tstr):
-	"""Convert time from string to seconds.
+var_re = re.compile('([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(\S+)')
+# Assuming all linear relations between units (factor, offset)
+unit_conv = {
+		'm': {
+				's': (60,0),
+			},
+		'h': {
+				's': (60*60,0),
+				'm': (60,0),
+			},
+		'd': {
+				's': (24*60*60,0),
+				'm': (24*60,0),
+				'h': (24,0),
+			},
+		'y': {
+				's': (365*24*60*60,0),
+				'm': (365*24*60,0),
+				'h': (365*24,0),
+				'd': (365,0),
+			},
+		'kW': {
+				'W': (1000,0),
+			},
+		'kWh': {
+				'J': (3.6e6,0),
+			},
+		}
 
-	The string tstr must be a number which has an optional suffix as follows:
-	
-		'<number>' second
-		'<number>y' year
-		'<number>d' day
-		'<number>m' minute
-		'<number>s' second
-	"""
+def convert_val(v1, u1, u2):
 	try:
-		return float(tstr)
+		fac, off = unit_conv[u1][u2]
+		return fac*v1 + off
+	except KeyError:
+		fac, off = unit_conv[u2][u1]
+		return (v1 - off)/fac
+
+def parse_var_val(vstr, unit):
+	"""Convert variable value from string with unit to target unit.
+
+	The string valstr must be a number which has an optional suffix:
+	
+		'<number>[unit]'
+	
+	Raises an exception if not in the correct format or if there is no known
+	conversion between the unit types.
+	"""
+	# First we assume it has no suffix, and hence already in the target units
+	try:
+		return float(vstr)
 	except ValueError:
 		pass
 
+	# Try to get the unit suffix and convert the first part to a number
+	res = var_re.match(vstr)
+	if res is None:
+		raise ValueError('Cannot parse variable value ' + vstr)
+
+	unit_old = res.group(2) # original unit
+	val_old = float(res.group(1)) # original value
+
+	if unit == unit_old:
+		return val_old
+
 	try:
-		if tstr[-1] == 'y':
-			return 31536000*float(tstr[:-1]) # year
-		elif tstr[-1] == 'd':
-			return 86400*float(tstr[:-1]) # day
-		elif tstr[-1] == 'h':
-			return 3600*float(tstr[:-1]) # hour
-		elif tstr[-1] == 'm':
-			return 60*float(tstr[:-1]) # minute
-		elif tstr[-1] == 's':
-			return float(tstr[:-1]) # second
-		else:
-			raise ValueError('Cannot convert string to time.')
-	except ValueError:
-		raise ValueError('Cannot convert string to time.')
+		return convert_val(val_old, unit_old, unit)
+	except KeyError:
+		raise ValueError('Can\'t convert from unit ' + unit_old + ' to ' + unit)
 
 class Simulator(object):
 	"""Compilation and simulation of a modelica model.
@@ -118,9 +156,9 @@ class Simulator(object):
 		If running an optimisation then 'optimization' needs to be used as
 		solver type.
 		"""
-		start = str(parse_time(start))
-		stop = str(parse_time(stop))
-		step = str(parse_time(step))
+		start = str(parse_var_val(start, 's'))
+		stop = str(parse_var_val(stop, 's'))
+		step = str(parse_var_val(step, 's'))
 		sim_args = [
 			'-override',
 			'startTime='+start+',stopTime='+stop+',stepSize='+step,

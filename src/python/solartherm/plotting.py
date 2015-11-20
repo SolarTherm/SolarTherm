@@ -34,7 +34,7 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 	otherwise the plot will be output to a new window.
 	"""
 
-	xlim = [simulation.parse_time(x) for x in xlim]
+	xlim = [simulation.parse_var_val(x, 's') for x in xlim]
 
 	fig = plt.figure()
 

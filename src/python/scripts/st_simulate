@@ -52,16 +52,19 @@ if __name__ == '__main__':
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))
 
+	sim.load_init()
+
 	dims = [] # dimensions
 	par_n = [] # names
 	par_v = [] # values
 	for pp in args.par:
 		k, v = pp.split('=')
 		par_n.append(k)
-		vspl = v.split(',')
-		par_v.append(vspl)
+		vals = [str(simulation.parse_var_val(vv, sim.get_unit(k)))
+			for vv in v.split(',')]
+		par_v.append(vals)
 
-		if len(vspl) >= 2:
+		if len(vals) >= 2:
 			dims.append(len(par_n) - 1)
 
 	mat_fn = sim.model + '_res.mat'
@@ -72,7 +75,6 @@ if __name__ == '__main__':
 		print('Starting simulation')
 		print(','.join(['index']+perf_names))
 
-	sim.load_init()
 	f_ilog = open(sim.model+'_init.log', 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
 	var_vals = []

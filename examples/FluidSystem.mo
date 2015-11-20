@@ -29,7 +29,7 @@ model FluidSystem
 
 	parameter SI.Efficiency eff_ext = 0.9 "Extractor efficiency";
 
-	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
+	parameter Real t_storage(unit="h") = 5 "Hours of storage";
 	//parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
 		// only works with PartialSimpleMedium
