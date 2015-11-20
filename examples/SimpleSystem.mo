@@ -61,6 +61,7 @@ model SimpleSystem
 			"Maintenance costs for each year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
+	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
 	// Variables/Models
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);

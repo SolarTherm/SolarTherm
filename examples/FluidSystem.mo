@@ -63,6 +63,7 @@ model FluidSystem
 			"Maintenance costs for each year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
+	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
