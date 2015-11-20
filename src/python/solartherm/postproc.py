@@ -99,11 +99,13 @@ class SimResult(object):
 		main_v = self.mat.data('C_main') # maintenance costs
 		disc_v = self.mat.data('r_disc') # discount factor
 		life_v = self.mat.data('t_life') # plant lifetime
+		cons_v = self.mat.data('t_cons') # construction time
 		rate_v = self.mat.data('P_rate') # generator rating
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
 		epy = fin.energy_per_year(eng_t[-1] - eng_t[0], eng_v[-1])
-		lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]), epy)
+		lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]),
+				int(cons_v[0]), epy)
 		capf = fin.capacity_factor(rate_v[0], epy)
 		srev = rev_v[-1]
 
