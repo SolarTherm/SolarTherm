@@ -34,23 +34,28 @@ Clone the SolarTherm source code, change to the SolarTherm source directory and 
     mkdir build
     cd build
 
-Call ``cmake`` to build the library using the same prefix where the modelica
-library is installed (typically either ``/usr/local`` or ``/usr``)::
+Call ``cmake`` to build the library using a prefix to indicate where you would like to install SolarTherm.  If installing with root permissions, this will typically be either ``/usr/local`` or ``/usr``, otherwise if installing locally this will be a local directory, possibly ``~/.local`` or ``~/SolarTherm``::
 
-    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+    cmake .. -DCMAKE_INSTALL_PREFIX=~/.local
 
-By default it puts the SolarTherm modelica library in ``lib/omlibrary`` beneath the current install prefix.  If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``-DMODELICA_LIBRARY_INSTALL_DIR`` variable.  This variable can also be set to ``$HOME/.openmodelica/libraries/`` to install it locally for the user.
+.. By default it puts the SolarTherm modelica library in ``lib/omlibrary`` beneath the current install prefix.  If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``-DMODELICA_LIBRARY_INSTALL_DIR`` variable.  This variable can also be set to ``$HOME/.openmodelica/libraries/`` to install it locally for the user.
 
-Make and install the library (use ``sudo`` if installing it under root)::
+Make and install the library (use ``sudo`` if installing it as root)::
 
     make
     make install
 
-Run tests::
+The final step is to set up the correct environment variables for the command line to find SolarTherm.  Some or all of these might already be correctly set up if SolarTherm was installed under one of the ``/usr/local``, ``/usr`` or ``~/.local`` prefixes.  Otherwise a script has been create to automatically set the correct environment for the current terminal.  This script ``st_local_env`` is located in ``build/src/env/`` and can be activated from the build directory by::
+    
+    source src/env/st_local_env
+
+The command ``st_deactive`` deactivates the environment again.  The ``st_local_env`` file can be moved to a more convenient location or the environment variables can be made permanent for the user by copying them into a suitable file, e.g., ``~/.bashrc``.
+
+Once the environment is correctly set up tests can be run from the build directory with the command::
 
     ctest -V
 
-Currently the tests can only be run after installing the libraries.  A solution where the tests default to using the locally built copy is desired.
+.. Currently the tests can only be run after installing the libraries.  A solution where the tests default to using the locally built copy is desired.
 
 Full Instructions
 -----------------
@@ -80,45 +85,45 @@ SolarTherm dependencies::
 
 Continue onto :ref:`build-section`.
 
-Ubuntu 14.04 and 15.10 Local Install
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you don't want to install SolarTherm under root, then it can be installed locally under a user account.  As prerequisites we still require:
-
-* ``openmodelica``
-* ``git``
-* ``cmake``
-* ``pip``
-* ``scipy``
-* ``matplotlib`` (optionally)
-
-In addition we need ``virtualenv``::
-
-    sudo apt-get install python-virtualenv
-
-Additional dependencies can now be installed under a virtual python environment, for example in a new directory ``~/st_env``::
-
-    virtualenv --system-site-packages ~/st_env
-    source ~/st_env/bin/activate
-    pip2 install dymat
-    pip2 install pyswarm cma
-    deactivate
-
-Checkout the repository and change into a new build directory as outlined in :ref:`build-section`.  The build process proceeds::
-
-    source ~/st_env/bin/activate
-    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/st_env -DMODELICA_LIBRARY_INSTALL_DIR=$HOME/.openmodelica/libraries/
-    make
-    make install
-    deactivate
-
-Now in order to run the tests or use SolarTherm a different environment is required.  This is turned on and off with (note the ``st_`` prefix)::
-
-    source ~/st_env/bin/st_activate
-    ctests -V
-    st_deactivate
-
-In addition to calling the ``virtualenv`` environment, it sets up paths to linked non-Modelica libraries.  Note that for this local installation ``omc`` will produce additional warnings when compiling code that links to external C libraries.  This is because it doesn't find the libraries in one of the default locations, but they still get linked in correctly later on in the process.
+.. Ubuntu 14.04 and 15.10 Local Install
+.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. 
+.. If you don't want to install SolarTherm under root, then it can be installed locally under a user account.  As prerequisites we still require:
+.. 
+.. * ``openmodelica``
+.. * ``git``
+.. * ``cmake``
+.. * ``pip``
+.. * ``scipy``
+.. * ``matplotlib`` (optionally)
+.. 
+.. In addition we need ``virtualenv``::
+.. 
+..     sudo apt-get install python-virtualenv
+.. 
+.. Additional dependencies can now be installed under a virtual python environment, for example in a new directory ``~/st_env``::
+.. 
+..     virtualenv --system-site-packages ~/st_env
+..     source ~/st_env/bin/activate
+..     pip2 install dymat
+..     pip2 install pyswarm cma
+..     deactivate
+.. 
+.. Checkout the repository and change into a new build directory as outlined in :ref:`build-section`.  The build process proceeds::
+.. 
+..     source ~/st_env/bin/activate
+..     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/st_env -DMODELICA_LIBRARY_INSTALL_DIR=$HOME/.openmodelica/libraries/
+..     make
+..     make install
+..     deactivate
+.. 
+.. Now in order to run the tests or use SolarTherm a different environment is required.  This is turned on and off with (note the ``st_`` prefix)::
+.. 
+..     source ~/st_env/bin/st_activate
+..     ctests -V
+..     st_deactivate
+.. 
+.. In addition to calling the ``virtualenv`` environment, it sets up paths to linked non-Modelica libraries.  Note that for this local installation ``omc`` will produce additional warnings when compiling code that links to external C libraries.  This is because it doesn't find the libraries in one of the default locations, but they still get linked in correctly later on in the process.
 
 Archlinux Source
 ^^^^^^^^^^^^^^^^
