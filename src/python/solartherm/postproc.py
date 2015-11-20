@@ -92,6 +92,9 @@ class SimResult(object):
 	
 	def calc_perf(self):
 		"""Calculate plant performance.
+
+		Some of the metrics will be returned as none if simulation runtime is
+		not a multiple of a year.
 		"""
 		eng_t = self.mat.abscissa('E_elec', valuesOnly=True)
 		eng_v = self.mat.data('E_elec') # cumulative electricity generated
@@ -103,16 +106,25 @@ class SimResult(object):
 		rate_v = self.mat.data('P_rate') # generator rating
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
-		epy = fin.energy_per_year(eng_t[-1] - eng_t[0], eng_v[-1])
-		lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]),
-				int(cons_v[0]), epy)
-		capf = fin.capacity_factor(rate_v[0], epy)
-		srev = rev_v[-1]
+		dur = eng_t[-1] - eng_t[0]
+		years = dur/31536000
+		# Only provide certain metrics if runtime is a multiple of a year
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+		epy = fin.energy_per_year(dur, eng_v[-1]) # energy expected in a year
+		srev = rev_v[-1] # spot market revenue
+		lcoe = None # levelised cost of electricity
+		capf = None # capacity factor
+		if close_to_year: 
+			lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]),
+					int(cons_v[0]), epy)
+			capf = fin.capacity_factor(rate_v[0], epy)
 
 		# Convert to useful units
 		epy = epy/(1e6*3600) # convert from J/year to MWh/year
-		lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
-		capf = 100*capf
+		if close_to_year: 
+			lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
+			capf = 100*capf
 
 		return [epy, lcoe, capf, srev,]
 
