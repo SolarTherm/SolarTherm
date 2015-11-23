@@ -8,5 +8,5 @@ block IdealInc "Concentrator with fixed incline that tracks sun azimuth"
 	import Modelica.Math.cos;
 	parameter SI.Angle alt = CN.pi/2 "Fixed concentrator altitude";
 equation
-	R_foc = if track then max(wbus.dni*A_con*cos(alt - wbus.alt), 0) else 0;
+	R_foc[1] = if track then max(wbus.dni*A_con*cos(alt - wbus.alt), 0) else 0;
 end IdealInc;

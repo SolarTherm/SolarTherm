@@ -15,13 +15,15 @@ model PlateMass "Single element plate receiver with fluid interface"
 protected
 	Medium.BaseProperties mprop_b;
 equation
+	port_a.m_flow + port_b.m_flow = 0;
+
 	port_a.p = port_b.p;
 
 	mprop_b.T = T;
 	mprop_b.p = port_b.p;
 	port_b.h_outflow = mprop_b.h;
 	port_a.h_outflow = mprop_b.h; // set it as same, but shouldn't flow back
-	Q_flow = em*R // power from concentrator (em used for absorptivity)
+	Q_flow = em*R[1] // power from concentrator (em used for absorptivity)
 		- port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow))
 		- h_th*A*(T - wbus.Tdry) // convection losses (should add wind forcing)
 		- em*CN.sigma*A*(T^4 - wbus.Tdry^4); // radiative losses

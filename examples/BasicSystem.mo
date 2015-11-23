@@ -1,4 +1,4 @@
-model SystemSimple "Simple system with control"
+model BasicSystem "Simple system with control"
 	import SI = Modelica.SIunits;
 	import SolarTherm.Optics.SolarSimple;
 	import SolarTherm.Storage.TankSimple;
@@ -30,4 +30,4 @@ algorithm
 	when tank.E < (lower - band)*tank.E_max then
 		gen.on := false;
 	end when;
-end SystemSimple;
+end BasicSystem;
