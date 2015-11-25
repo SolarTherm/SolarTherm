@@ -1,6 +1,6 @@
 within SolarTherm.Optics;
 block IdealInc "Concentrator with fixed incline that tracks sun azimuth"
-	extends SolarTherm.Optics.Concentrator;
+	extends SolarTherm.Optics.Concentrator(final nelem=1);
 	// Tracks sun azimuth perfectly and conentrates all received energy into
 	// focal aperture.
 	import SI = Modelica.SIunits;

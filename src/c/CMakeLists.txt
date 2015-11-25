@@ -7,3 +7,10 @@ add_library(solartherm_test SHARED
 
 install(TARGETS solartherm_test
 	LIBRARY DESTINATION lib)
+
+add_library(st_table SHARED
+	table.c
+	)
+
+install(TARGETS st_table
+	LIBRARY DESTINATION lib)
