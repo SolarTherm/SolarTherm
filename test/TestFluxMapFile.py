@@ -17,7 +17,7 @@ class TestFluxMapFile(unittest.TestCase):
 		sim.simulate(start=0, stop=10, step=0.1)
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
-	def test_source(self):
+	def test_flux_interp(self):
 		self.assertAlmostEqual(self.res.get_interp('fluxmap.flux[1]', 0.1), 0)
 		self.assertAlmostEqual(self.res.get_interp('fluxmap.flux[1]', 1.1), 10)
 		self.assertAlmostEqual(self.res.get_interp('fluxmap.flux[1]', 2.1), 20)
