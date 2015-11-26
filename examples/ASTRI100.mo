@@ -142,7 +142,12 @@ model ASTRI100
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
-	SolarTherm.Optics.IdealInc con(A_con=A_con, A_foc=A_rec);
+	//SolarTherm.Optics.IdealInc con(A_con=A_con);
+	SolarTherm.Optics.SteeredConc con(
+		redeclare model FluxMap=SolarTherm.Optics.FluxMapIdealInc(A_con=A_con),
+		steer_rate=0.001,
+		target_error=0.001
+		);
 
 	SolarTherm.Receivers.Plate rec(
 		redeclare package Medium=MedRec,
@@ -225,7 +230,8 @@ equation
 		m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
 	pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
 
-	con.track = true;
+	//con.track = true;
+	con.target = 1;
 
 	P_elec = pblk.P_elec;
 	der(E_elec) = P_elec;

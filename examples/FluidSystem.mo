@@ -68,7 +68,7 @@ model FluidSystem
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
-	SolarTherm.Optics.IdealInc con(A_con=A_con, A_foc=A_rec);
+	SolarTherm.Optics.IdealInc con(A_con=A_con);
 
 	SolarTherm.Receivers.Plate rec(
 		redeclare package Medium=MedRec,
