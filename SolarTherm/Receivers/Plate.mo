@@ -6,6 +6,7 @@ model Plate "Single element plate receiver with fluid interface"
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 
+	parameter SI.Area A "Area of aperture";
 	parameter Real em "Emissivity";
 	parameter SI.CoefficientOfHeatTransfer h_th "Heat transfer coeff with env";
 
@@ -20,10 +21,15 @@ model Plate "Single element plate receiver with fluid interface"
 	SI.HeatFlowRate Q_flow "Heat flow into fluid";
 	SI.HeatFlowRate Q_flow_loss "Convective losses";
 	SI.RadiantPower R_loss "Radiative losses";
+	Medium.Temperature T_a "Temperature at inlet";
+	Medium.Temperature T_b "Temperature at outlet";
 protected
 	Medium.BaseProperties mprop_a;
 	Medium.BaseProperties mprop_b;
 equation
+	T_a = mprop_a.T;
+	T_b = mprop_b.T;
+
 	port_a.m_flow + port_b.m_flow = 0;
 
 	//port_a.p = port_b.p;

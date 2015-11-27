@@ -4,6 +4,7 @@ model PlateMass "Single element plate receiver with fluid interface"
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 
+	parameter SI.Area A "Area of aperture";
 	parameter SI.Mass m "Thermal mass of receiver";
 	parameter SI.SpecificHeatCapacity c "Heat capacity of thermal mass";
 	parameter Real em "Emissivity";

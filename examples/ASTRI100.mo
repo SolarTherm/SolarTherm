@@ -5,6 +5,7 @@ model ASTRI100
 
 	// Salt is 60% NaNO3 40% KNO3
 	replaceable package MedRec = SolarTherm.Media.Sodium;
+	//replaceable package MedRec = SolarTherm.Media.SodiumConst;
 
 	inner Modelica.Fluid.System system(
 		energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
@@ -149,9 +150,19 @@ model ASTRI100
 		target_error=0.001
 		);
 
-	SolarTherm.Receivers.Plate rec(
+	//SolarTherm.Receivers.Plate rec(
+	//	redeclare package Medium=MedRec,
+	//	A=A_rec, em=em_steel, h_th=h_th_rec);
+
+	SolarTherm.Receivers.OnePipe rec(
 		redeclare package Medium=MedRec,
-		A=A_rec, em=em_steel, h_th=h_th_rec);
+		redeclare model Elem=SolarTherm.Receivers.EndTElem(
+			each em=em_steel,
+			each ab=em_steel,
+			each h_th=h_th_rec,
+			each A=A_rec
+			)
+		);
 
 	SolarTherm.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
@@ -220,18 +231,57 @@ equation
 	connect(hf_trig.x, htnk.m);
 	connect(cf_trig.x, ctnk.m);
 
-	radiance_good = sum(rec.R) >= R_go;
+	//radiance_good = sum(rec.R) >= R_go;
+
+	//fill_htnk = not hf_trig.y;
+	//fill_ctnk = not cf_trig.y;
+
+	//rec.door_open = radiance_good and fill_htnk;
+	//pmp_rec.m_flow_set = if radiance_good and fill_htnk then
+	//	m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
+	//pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
+
+	////con.track = true;
+	//con.target = 1;
+
+	//radiance_good = wea.wbus.dni >= 200;
+	radiance_good = sum(con.tflux.R) >= R_go;
+	//radiance_good = sum(rec.R) >= R_go;
 
 	fill_htnk = not hf_trig.y;
 	fill_ctnk = not cf_trig.y;
 
-	rec.door_open = radiance_good and fill_htnk;
-	pmp_rec.m_flow_set = if radiance_good and fill_htnk then
-		m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
-	pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
+	//rec.door_open = radiance_good and fill_htnk;
 
-	//con.track = true;
-	con.target = 1;
+	// m_flow_rate max is (T_hot_set - 50) - T_cold_set
+
+	if (htnk.m >= 0.7*m_max) and radiance_good and fill_htnk then
+		//pmp_rec.m_flow_set = pmp_rec.m_flow_set;
+		//con.target = max(min(T_hot_set, 1), 0);
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
+		con.target = 1;
+	elseif radiance_good and fill_htnk then
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
+		con.target = 1;
+	else
+		//pmp_rec.m_flow_set = 0.01; // Should recirculate back to cold tank...
+		// Should keep flow rate high until off sun
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
+		con.target = 0;
+	end if;
+
+	// Fails to correctly get receiver temperature when turning off, even when
+	// equaions are linear.  Something is wrong...
+
+//  printf("time: %f\n", data->localData[0]->timeValue);
+//  printf("m_flow: %f\n", $Phtnk$Pport_a$Pm_flow);
+//  printf("h_a: %f\n", $Pctnk$Pmprop$Ph);
+//  printf("h_b: %f\n", $Prec$Pport_b$Ph_outflow);
+//  printf("T_b: %f\n", $Prec$Pelem$lB1$rB$Pmprop_b$PT);
+//  printf("Q_flow: %f\n", $Prec$Pelem$lB1$rB$PQ_flow);
+//  printf("res: %f\n", res[0]);
+
+	pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
 
 	P_elec = pblk.P_elec;
 	der(E_elec) = P_elec;
