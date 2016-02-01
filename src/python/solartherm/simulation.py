@@ -92,14 +92,22 @@ class Simulator(object):
 			self.model = model
 		self.suffix = suffix
 		self.makefile_fn = self.model + '.makefile'
-		self.init_fn = self.model + '_init.xml'
+		self.init_in_fn = self.model + '_init.xml'
 		self.init_et = None
-	
-	def get_init_out_fn(self):
+
+	@property
+	def init_out_fn(self):
 		if self.suffix is None:
-			return self.init_fn
+			return self.init_in_fn
 		else:
 			return self.model + '_init_' + self.suffix + '.xml'
+	
+	@property
+	def res_fn(self):
+		if self.suffix is None:
+			return self.model + '_res.mat'
+		else:
+			return self.model + '_res_' + self.suffix + '.xml'
 	
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""
@@ -114,11 +122,11 @@ class Simulator(object):
 
 	def load_init(self):
 		"""Load in init XML."""
-		self.init_et = ET.parse(self.init_fn)
+		self.init_et = ET.parse(self.init_in_fn)
 
 	def write_init(self):
 		"""Write new init XML with optional suffix."""
-		self.init_et.write(self.get_init_out_fn())
+		self.init_et.write(self.init_out_fn)
 
 	def clear_init(self):
 		"""Clear init XML."""
@@ -163,6 +171,7 @@ class Simulator(object):
 			'-override',
 			'startTime='+start+',stopTime='+stop+',stepSize='+step,
 			'-s', solver,
-			'-f', self.get_init_out_fn(),
+			'-f', self.init_out_fn,
+			'-r', self.res_fn,
 			]
 		sp.call(['./'+self.model] + sim_args + args)

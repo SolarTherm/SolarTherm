@@ -52,17 +52,17 @@ if __name__ == '__main__':
 			help='no simulation compilation')
 	parser.add_argument('--noc', action='store_true',
 			help='no compilation at all (--nomc and --nosc)')
-	parser.add_argument('--start', nargs=1, type=str, default=['0'],
+	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
-	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
+	parser.add_argument('--stop', type=str, default='86400', # 1 day
 			help='simulation stop time: <number>[,y,d,m,s]')
-	parser.add_argument('--step', nargs=1, type=str, default=['60'],
+	parser.add_argument('--step', type=str, default='60',
 			help='simulation time step: <number>[,y,d,m,s]')
-	parser.add_argument('--method', nargs=1, type=str, default=['Nelder-Mead'],
+	parser.add_argument('--method', type=str, default='Nelder-Mead',
 			help='cma, pso or one of the scipy optimisation methods')
-	parser.add_argument('--maxiter', nargs=1, type=int, default=[20],
+	parser.add_argument('--maxiter', type=int, default=20,
 			help='maximum number of iterations (not necessarily number of simulations)')
-	parser.add_argument('--cost', nargs=1, type=str, default=['lcoe'],
+	parser.add_argument('--cost', type=str, default='lcoe',
 			help='quantity to minimise (produced by post processing)')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='parameters with bounds and optional starting value')
@@ -108,44 +108,44 @@ if __name__ == '__main__':
 	mat_fn = sim.model + '_res.mat'
 
 	try:
-		perf_i = postproc.SimResult.perf_n.index(args.cost[0])
+		perf_i = postproc.SimResult.perf_n.index(args.cost)
 	except ValueError:
 		raise ValueError('Cost value should be one of '
 				+ str(postproc.SimResult.perf_n))
 
 	cfunc = functools.partial(cost_function, sim, mat_fn,
-			(args.start[0], args.stop[0], args.step[0]),
+			(args.start, args.stop, args.step),
 			args.v, scale, offset, perf_i, par_n)
 
 	print(par_n)
-	if args.method[0] == 'pso':
+	if args.method == 'pso':
 		assert pso is not None, 'Library for pso is not installed'
 		swarmsize=5
 		lb = [v[0] for v in par_b]
 		ub = [v[1] for v in par_b]
-		res = pso(cfunc, lb, ub, maxiter=args.maxiter[0], swarmsize=5)
+		res = pso(cfunc, lb, ub, maxiter=args.maxiter, swarmsize=5)
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
 		print(cand)
 		print(res[1])
-	elif args.method[0] == 'cma':
+	elif args.method == 'cma':
 		assert cma is not None, 'Library for cma is not installed'
 		sigma0 = 0.2 # "step size", should be around 1/4 of search domain
 		popsize = 5
 		res = cma.fmin(cfunc, par_0, sigma0,
 				restarts=0,
 				options={
-						#'maxfevals': args.maxiter[0],
-						'maxiter': args.maxiter[0],
+						#'maxfevals': args.maxiter,
+						'maxiter': args.maxiter,
 						'popsize': popsize,
 				})
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
 		print(cand)
 		print(res[1])
 	else:
-		res = sciopt.minimize(cfunc, par_0, method=args.method[0], bounds=par_b,
+		res = sciopt.minimize(cfunc, par_0, method=args.method, bounds=par_b,
 				options={
-					#'maxfev': args.maxiter[0],
-					'maxiter': args.maxiter[0],
+					#'maxfev': args.maxiter,
+					'maxiter': args.maxiter,
 					'disp': True,
 				})
 		print(res)

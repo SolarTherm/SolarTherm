@@ -2,12 +2,39 @@
 import argparse
 import os
 import itertools
+from multiprocessing import Pool
+from functools import partial
 from solartherm import postproc
 from solartherm import simulation
 
 # TODO: Pass on any command line arguments to simulation executable
 # TODO: Save separate results files
 # TODO: Pull together relevant results
+
+def simulation_worker(fn, start, stop, step, args, par_n, suff, val):
+	sim = simulation.Simulator(fn, suffix=suff);
+	sim.load_init()
+	sim.update_pars(par_n, val)
+	sim.simulate(start=start, stop=stop, step=step, args=args)
+	res = postproc.SimResult(sim.res_fn)
+	perf = res.calc_perf()
+	return perf
+
+class LoggerPerf(object):
+	perf_names = [n + ' (' + u + ')' for n, u in
+			zip(postproc.SimResult.perf_n, postproc.SimResult.perf_u)]
+	@classmethod
+	def header(cls):
+		print('Starting simulation')
+		print(','.join(['index']+cls.perf_names))
+	@classmethod
+	def entry(cls, suff, perf):
+		print(','.join([suff]+list(str(perf[j])
+			for j, n in enumerate(cls.perf_names))))
+
+def simulation_callback(perfs, i, perf):
+	perfs[i] = perf
+	LoggerPerf.entry(str(i), perf)
 
 if __name__ == '__main__':
 	"""
@@ -28,20 +55,24 @@ if __name__ == '__main__':
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--nosim', action='store_true',
 			help='no simulation')
-	parser.add_argument('--start', nargs=1, type=str, default=['0'],
+	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
-	parser.add_argument('--stop', nargs=1, type=str, default=['86400'], # 1 day
+	parser.add_argument('--stop', type=str, default='86400', # 1 day
 			help='simulation stop time: <number>[,y,d,m,s]')
-	parser.add_argument('--step', nargs=1, type=str, default=['60'],
+	parser.add_argument('--step', type=str, default='60',
 			help='simulation time step: <number>[,y,d,m,s]')
-	parser.add_argument('--plot', nargs=1, type=str, default=[],
+	parser.add_argument('--plot', type=str, default=None,
 			help='plot given quantity (at most 2 parameter dimensions)')
 	parser.add_argument('--plot3d', action='store_true',
 			help='plot in 3d')
 	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
 	#		help='model compilation arguments')
-	parser.add_argument('--sargs', nargs=1, type=str, default=[],
+	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
+	parser.add_argument('--nth', type=int, default=None,
+			help='number of threads')
+	#parser.add_argument('--nthsim', type=int, default=None,
+	#		help='number of threads per simulation')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	args = parser.parse_args()
@@ -53,7 +84,7 @@ if __name__ == '__main__':
 	#	mcargs = args.mcargs[0].split(' ')
 
 	sargs = []
-	if len(args.sargs) == 1:
+	if args.sargs is not None:
 		sargs = args.sargs[0].split(' ')
 
 	if not args.noc:
@@ -79,38 +110,36 @@ if __name__ == '__main__':
 		if len(vals) >= 2:
 			dims.append(len(par_n) - 1)
 
-	mat_fn = sim.model + '_res.mat'
-	perf_names = [n + ' (' + u + ')' for n, u in
-			zip(postproc.SimResult.perf_n, postproc.SimResult.perf_u)]
-
-	if not args.nosim:
-		print('Starting simulation')
-		print(','.join(['index']+perf_names))
-
 	f_ilog = open(sim.model+'_init.log', 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
 	var_vals = []
-	perfs = []
 	for i, val in enumerate(itertools.product(*par_v)):
 		var_vals.append(val)
-		sim.suffix = str(i)
-		sim.update_pars(par_n, val)
-		f_ilog.write(','.join([sim.suffix]+list(val)) + '\n')
+		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
 
-		if not args.nosim:
-			sim.simulate(start=args.start[0], stop=args.stop[0],
-					step=args.step[0], args=sargs)
-			res = postproc.SimResult(mat_fn)
-			perf = res.calc_perf()
-			print(','.join([str(i)]+list(str(perf[j])
-				for j, n in enumerate(perf_names))))
-			perfs.append(perf)
+	perfs = [None]*len(var_vals)
+	if not args.nosim:
+		LoggerPerf.header()
+		worker_enc = partial(simulation_worker, args.file, args.start,
+				args.stop, args.step, sargs, par_n)
+		pool = Pool(processes=args.nth)
+		# using apply instead of map because have more than 1 arg to pass
+		for i, val in enumerate(var_vals):
+			pool.apply_async(worker_enc, args=(str(i), val),
+					callback=partial(simulation_callback, perfs, i))
+		pool.close()
+		pool.join()
+		#for i, val in enumerate(var_vals):
+		#	perf = worker_enc(str(i), sval)
+		#	print(','.join([str(i)]+list(str(perf[j])
+		#		for j, n in enumerate(perf_names))))
+		#	perfs.append(perf)
 
-	if len(args.plot) > 0:
+	if args.plot is not None:
 		from solartherm import plotting
 		ys = []
 		ylabels = []
-		for name in args.plot[0].split(','):
+		for name in args.plot.split(','):
 			try:
 				pei = postproc.SimResult.perf_n.index(name)
 			except ValueError:
