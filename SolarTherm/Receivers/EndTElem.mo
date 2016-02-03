@@ -12,11 +12,8 @@ model EndTElem "Losses at outlet fluid temperature"
 	parameter Real ab "Absorbtivity";
 	parameter Real em "Emissivity";
 	parameter SI.CoefficientOfHeatTransfer h_th "Heat transfer coeff with env";
-protected
-	SI.HeatFlowRate Q_flow "Heat flow into fluid";
 equation
-	Q_flow = port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow));
-	Q_flow_loss = h_th*A*(mprop_b.T - wbus.Tdry);
-	R_loss = em*CN.sigma*A*(mprop_b.T^4 - wbus.Tdry^4);
-	Q_flow + Q_flow_loss + R_loss = ab*R;
+	Q_flow_loss = h_th*A*(hfluid.mprop_b.T - wbus.Tdry);
+	R_loss = em*CN.sigma*A*(hfluid.mprop_b.T^4 - wbus.Tdry^4);
+	hfluid.Q_flow + Q_flow_loss + R_loss = ab*R;
 end EndTElem;

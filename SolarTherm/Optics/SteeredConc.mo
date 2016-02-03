@@ -1,5 +1,5 @@
 within SolarTherm.Optics;
-block SteeredConc "Concentrator that can be partially steered on and off sun"
+block SteeredConc "Concentrator that can be partially steered on sun"
 	extends SolarTherm.Optics.Concentrator;
 	import SI = Modelica.SIunits;
 
@@ -7,13 +7,15 @@ block SteeredConc "Concentrator that can be partially steered on and off sun"
 
 	parameter Real steer_rate(min=0) "Speed of mirror steer as fraction of total mirrors per second";
 	parameter Real target_error(min=0, max=1) = 0.01 "Allowed error between target and actual";
+	parameter Boolean use_input_eff = false "Used adjustable efficiency";
 
 	input Real target(min=0, max=1) "Target fraction of mirrors on sun";
 	Real actual(min=0, max=1) "Actual fraction of mirrors on sun";
 
 	TrackingFlux tflux(
 		redeclare model FluxMap=FluxMap,
-		nelem=nelem
+		nelem=nelem,
+		use_input_eff=use_input_eff
 		);
 initial equation
 	actual = 0;

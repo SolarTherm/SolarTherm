@@ -9,23 +9,14 @@ model RecAll "Receiver accepts all power given"
 	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.Lossless
 		constrainedby SolarTherm.Interfaces.FlowLoss.PartialFlowModel;
 
-	FlowModel flowmod;
-protected
-	Medium.BaseProperties mprop_a;
-	Medium.BaseProperties mprop_b;
+	SolarTherm.Receivers.HeatedFluid hfluid(
+		redeclare package Medium=Medium,
+		redeclare model FlowModel=FlowModel
+		);
+
 equation
-	port_a.m_flow + port_b.m_flow = 0;
+	connect(port_a, hfluid.port_a);
+	connect(hfluid.port_b, port_b);
 
-	flowmod.m_flow = port_a.m_flow;
-	flowmod.d_avg = mprop_a.d;
-	port_b.p - port_a.p = flowmod.dp;
-
-	mprop_a.p = port_a.p;
-	mprop_a.h = inStream(port_a.h_outflow);
-	port_a.h_outflow = inStream(port_b.h_outflow); // shouldn't flow back
-
-	mprop_b.p = port_b.p;
-	mprop_b.h = port_b.h_outflow;
-
-	R[1] = port_a.m_flow*(port_b.h_outflow - inStream(port_a.h_outflow));
+	hfluid.Q_flow = R[1];
 end RecAll;
