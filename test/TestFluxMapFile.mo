@@ -1,7 +1,7 @@
 block TestFluxMapFile
 	import CN = Modelica.Constants;
 	import SolarTherm.Optics.FluxMapFile;
-	FluxMapFile fluxmap(nelem=2, fileName="resources/flux.motab");
+	FluxMapFile fluxmap(nelem=2, R_des=1, fileName="resources/flux.motab");
 initial equation
 	fluxmap.alt = 0.0;
 	fluxmap.azi = 0.0;

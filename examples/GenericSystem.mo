@@ -52,10 +52,32 @@ model GenericSystem
 	SolarTherm.Storage.TankGeneric tnk(
 		E_max=E_max,
 		E_0=0,
-		Q_flow_max=Q_flow_max
+		Q_flow_max=Q_flow_max,
+		Q_flow_loss_des=0.05*E_max/(t_storage*3600),
+		T_amb_des=293,
+		cf0=0,
+		cf1=1,
+		cf2=0,
+		cf3=0,
+		ca0=1,
+		ca1=0,
+		ca2=0,
+		ca3=0
 		);
 	SolarTherm.PowerBlocks.PBGeneric blk(
-		eff=eff_cyc
+		eff_des=eff_cyc,
+		Q_flow_max=Q_flow_max,
+		T_amb_des=293,
+		cf0=0.5628,
+		cf1=0.8685,
+		cf2=-0.5164,
+		cf3=0.0844,
+		cf4=0,
+		ca0=1,
+		ca1=-0.002,
+		ca2=0,
+		ca3=0,
+		ca4=0
 		);
 	SolarTherm.Control.Trigger full_trig(
 		low=0.9*E_max,
@@ -69,6 +91,8 @@ model GenericSystem
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);
+	connect(wea.wbus, tnk.wbus);
+	connect(wea.wbus, blk.wbus);
 	connect(con.R_foc, rec.R);
 	connect(rec.Q_flow, tnk.Q_flow_in);
 	connect(tnk.Q_flow_out, blk.Q_flow);

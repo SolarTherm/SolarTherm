@@ -3,7 +3,7 @@ block FluxMapFile "Read in flux maps from file"
 	extends SolarTherm.Optics.FluxMap;
 	import SI = Modelica.SIunits;
 	parameter String fileName "Flux table normalised to design output";
-	parameter SI.RadiantPower R_des "Radiant power from field at 1 sun and 1 flux from file";
+	parameter SI.RadiantPower R_des = 1 "Radiant power from field at 1 sun and 1 flux from file";
 
 	parameter String tableNames[nelem] = {"flux" + String(i) for i in 1:nelem};
 	Modelica.Blocks.Tables.CombiTable2D table[nelem](
