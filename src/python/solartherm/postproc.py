@@ -23,10 +23,13 @@ class SimResult(object):
 
 		if init_fn is None:
 			# Try version based off result file
-			res_re = re.compile('(\S+)_res\.mat')
+			res_re = re.compile('(\S+)_res_?(\S+)?\.mat')
 			ps = res_re.match(self.fn)
 			if ps is not None:
-				init_fn = ps.groups()[0] + '_init.xml'
+				if ps.groups()[1] is not None:
+					init_fn = ps.groups()[0] + '_init_' + ps.groups()[1] + '.xml'
+				else:
+					init_fn = ps.groups()[0] + '_init.xml'
 
 		# Can fail
 		et = None

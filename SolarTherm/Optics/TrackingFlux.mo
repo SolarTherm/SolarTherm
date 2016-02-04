@@ -16,6 +16,6 @@ equation
 	connect(alt, fluxmap.alt);
 	connect(azi, fluxmap.azi);
 	for i in 1:nelem loop
-		R[i] = if use_input_eff then eff*dni*fluxmap.flux[i] else eff_fixed*dni*fluxmap.flux[i];
+		R[i] = if use_input_eff then eff*(dni/1000)*fluxmap.flux[i] else eff_fixed*(dni/1000)*fluxmap.flux[i];
 	end for;
 end TrackingFlux;

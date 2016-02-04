@@ -8,6 +8,7 @@ block SteeredConc "Concentrator that can be partially steered on sun"
 	parameter Real steer_rate(min=0) "Speed of mirror steer as fraction of total mirrors per second";
 	parameter Real target_error(min=0, max=1) = 0.01 "Allowed error between target and actual";
 	parameter Boolean use_input_eff = false "Used adjustable efficiency";
+	parameter Real actual_0(min=0, max=1) = 0 "Start position";
 
 	input Real target(min=0, max=1) "Target fraction of mirrors on sun";
 	Real actual(min=0, max=1) "Actual fraction of mirrors on sun";
@@ -18,7 +19,7 @@ block SteeredConc "Concentrator that can be partially steered on sun"
 		use_input_eff=use_input_eff
 		);
 initial equation
-	actual = 0;
+	actual = actual_0;
 equation
 	connect(wbus.alt, tflux.alt);
 	connect(wbus.azi, tflux.azi);

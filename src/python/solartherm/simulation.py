@@ -107,7 +107,7 @@ class Simulator(object):
 		if self.suffix is None:
 			return self.model + '_res.mat'
 		else:
-			return self.model + '_res_' + self.suffix + '.xml'
+			return self.model + '_res_' + self.suffix + '.mat'
 	
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""

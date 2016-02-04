@@ -424,7 +424,7 @@ At the end of the simulation some performance metrics are produced for the syste
 
 It is easy to produce a time-series plot of variables in the model, here DNI, output electricity, storage charging and stored energy::
 
-    st_plotmat SimpleSystem_res.mat wea.wbus.dni:P_elec,Q_flow_chg E
+    st_plotmat SimpleSystem_res_0.mat wea.wbus.dni:P_elec,Q_flow_chg E
 
 One day of operation in this time series is shown below.
 
@@ -434,7 +434,7 @@ One day of operation in this time series is shown below.
 
 The use of colons, commas and spaces in the above command highlights the simple notation used to indicate where to place each curve.  The names of the variables that may be plotted can be identified by either examining the original model, or alternatively listing them::
 
-    st_plotmat -n SimpleSystem_res.mat
+    st_plotmat -n SimpleSystem_res_0.mat
 
 Results
 -------
@@ -463,10 +463,10 @@ The next plot focuses in on the control state of SimpleSystem for a single day. 
 The commands to produce and plot the above results are::
 
     st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=6 P_rate=75000
-    st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
+    st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res_0.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
     st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=6 P_rate=75000
-    st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
-    st_plotmat --xlim 2.25e6 2.34e6 SimpleSystem_res.mat wea.wbus.dni:con_state,blk_state E:Q_flow_chg,Q_flow_dis
+    st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res_0.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
+    st_plotmat --xlim 2.25e6 2.34e6 SimpleSystem_res_0.mat wea.wbus.dni:con_state,blk_state E:Q_flow_chg,Q_flow_dis
 
 Parameter Sweeps
 """"""""""""""""
