@@ -6,27 +6,19 @@ model PBGeneric "Generic power block model"
 	parameter SI.HeatFlowRate Q_flow_max "Maximum energy out to power block";
 	parameter SI.Temperature T_amb_des "Design point ambient temperature";
 
-	parameter Real cf0 "Fraction operation factor coefficient";
-	parameter Real cf1 "Fraction operation factor coefficient";
-	parameter Real cf2 "Fraction operation factor coefficient";
-	parameter Real cf3 "Fraction operation factor coefficient";
-	parameter Real cf4 "Fraction operation factor coefficient";
-	parameter Real ca0 "Ambient temperature factor coefficient";
-	parameter Real ca1 "Ambient temperature factor coefficient";
-	parameter Real ca2 "Ambient temperature factor coefficient";
-	parameter Real ca3 "Ambient temperature factor coefficient";
-	parameter Real ca4 "Ambient temperature factor coefficient";
+	parameter Real cf[:] "Fraction operation factor coefficients";
+	parameter Real ca[:] "Ambient temperature factor coefficients";
 
 	input SI.HeatFlowRate Q_flow "Heat flow entering power block";
 	input SolarTherm.Interfaces.WeatherBus wbus;
 	SI.Power P_out "Electrical output power";
 protected
 	SI.Efficiency eff "Efficiency";
-	Real fac_fra "Fraction charged loss factor";
-	Real fac_amb "Ambient temperature thermal loss factor";
+	SolarTherm.Utilities.Polynomial.Poly fac_fra(c=cf);
+	SolarTherm.Utilities.Polynomial.Poly fac_amb(c=ca);
 equation
 	P_out = eff*Q_flow;
-	eff = eff_des*fac_fra*fac_amb;
-	fac_fra = cf0 + cf1*(Q_flow/Q_flow_max) + cf2*(Q_flow/Q_flow_max)^2 + cf3*(Q_flow/Q_flow_max)^3 + cf4*(Q_flow/Q_flow_max)^4;
-	fac_amb = ca0 + ca1*(wbus.Tdry - T_amb_des) + ca2*(wbus.Tdry - T_amb_des)^2 + ca3*(wbus.Tdry - T_amb_des)^3 + ca4*(wbus.Tdry - T_amb_des)^4;
+	eff = eff_des*fac_fra.y*fac_amb.y;
+	fac_fra.x = Q_flow/Q_flow_max;
+	fac_amb.x = wbus.Tdry - T_amb_des;
 end PBGeneric;

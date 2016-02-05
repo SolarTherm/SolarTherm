@@ -1,27 +1,30 @@
+within SolarTherm.Systems;
 model GenericSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 
-	//parameter String weaFile = "resources/Alice_Springs_Real2000_Created20130430.motab";
-	// Alice springs insolation looks out of time with altitude/azimuth
-	// Also Mildura:
-	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
-	// Might have to deactivate price calcs if not connected to NEM
-	parameter String priFile = "resources/aemo_vic_2014.motab";
-	parameter String fluxFile = "resources/field_flux.motab";
+	parameter String weaFile "Weather file";
+	parameter String fluxFile "Field flux file";
 
-	parameter Real sm = 2.5 "Solar multiple";
-	parameter SI.Power P_nom = 100e6 "Nominal power output";
-	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle";
-	parameter Real t_storage(unit="h") = 6 "Hours of storage";
+	parameter Real sm "Solar multiple";
+	parameter SI.Power P_nom "Nominal power output";
+	parameter SI.Efficiency eff_cyc "Efficiency of power cycle";
+	parameter Real t_storage(unit="h") "Hours of storage";
+
+	parameter Real rec_ci[:] "Receiver coefficients";
+	parameter Real rec_ca[:] "Receiver coefficients";
+	parameter Real rec_cw[:] "Receiver coefficients";
+	parameter Real tnk_cf[:] "Tank coefficients";
+	parameter Real tnk_ca[:] "Tank coefficients";
+	parameter Real blk_cf[:] "Power block coefficients";
+	parameter Real blk_ca[:] "Power block coefficients";
 
 	parameter SI.HeatFlowRate Q_flow_max = P_nom/eff_cyc "Max energy to power block";
 	parameter SI.RadiantPower R_des = sm*Q_flow_max "Design power for receiver";
 	parameter SI.Energy E_max = t_storage*3600*R_des "Maximum tank stored energy";
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
 	SolarTherm.Optics.SteeredConc con(
 		redeclare model FluxMap=SolarTherm.Optics.FluxMapFile(
@@ -36,18 +39,9 @@ model GenericSystem
 		Q_flow_loss_des=0.03*R_des,
 		R_des=R_des,
 		T_amb_des=293,
-		ci0=4.75,
-		ci1=-8,
-		ci2=4.5,
-		ci3=-0.25,
-		ca0=1,
-		ca1=0,
-		ca2=0,
-		ca3=0,
-		cw0=1,
-		cw1=0,
-		cw2=0,
-		cw3=0
+		ci=rec_ci,
+		ca=rec_ca,
+		cw=rec_cw
 		);
 	SolarTherm.Storage.TankGeneric tnk(
 		E_max=E_max,
@@ -55,29 +49,15 @@ model GenericSystem
 		Q_flow_max=Q_flow_max,
 		Q_flow_loss_des=0.05*E_max/(t_storage*3600),
 		T_amb_des=293,
-		cf0=0,
-		cf1=1,
-		cf2=0,
-		cf3=0,
-		ca0=1,
-		ca1=0,
-		ca2=0,
-		ca3=0
+		cf=tnk_cf,
+		ca=tnk_ca
 		);
 	SolarTherm.PowerBlocks.PBGeneric blk(
 		eff_des=eff_cyc,
 		Q_flow_max=Q_flow_max,
 		T_amb_des=293,
-		cf0=0.5628,
-		cf1=0.8685,
-		cf2=-0.5164,
-		cf3=0.0844,
-		cf4=0,
-		ca0=1,
-		ca1=-0.002,
-		ca2=0,
-		ca3=0,
-		ca4=0
+		cf=blk_cf,
+		ca=blk_ca
 		);
 	SolarTherm.Control.Trigger full_trig(
 		low=0.9*E_max,
