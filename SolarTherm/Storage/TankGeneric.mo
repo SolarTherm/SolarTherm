@@ -3,7 +3,7 @@ model TankGeneric "Generic energy tank"
 	import SI = Modelica.SIunits;
 	parameter SI.Energy E_max = 1000 "Maximum energy";
 	parameter SI.Energy E_0 = 0 "Starting energy";
-	parameter SI.HeatFlowRate Q_flow_max "Maximum energy out to power block";
+	parameter SI.HeatFlowRate Q_flow_rate "Rated heat out to power block";
 	parameter SI.HeatFlowRate Q_flow_loss_des "Design point heat loss";
 	parameter SI.Temperature T_amb_des "Design point ambient temperature";
 
@@ -22,7 +22,7 @@ protected
 	SolarTherm.Utilities.Polynomial.Poly fac_amb(c=ca);
 equation
 	der(E) = fac_in*Q_flow_in - Q_flow_out - Q_flow_loss;
-	Q_flow_out = fac_out*Q_flow_max;
+	Q_flow_out = fac_out*Q_flow_rate;
 	Q_flow_loss = Q_flow_loss_des*fac_fra.y*fac_amb.y;
 	fac_fra.x = E/E_max;
 	fac_amb.x = wbus.Tdry - T_amb_des;
