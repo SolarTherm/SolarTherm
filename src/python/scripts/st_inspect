@@ -1,0 +1,42 @@
+#! /bin/env python
+
+import argparse
+
+from solartherm import postproc
+from solartherm import simulation
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file',
+			help='result mat-file to read')
+	parser.add_argument('var', type=str,
+			help='variable to inspect')
+	parser.add_argument('time', type=str,
+			help='time in simulation')
+	parser.add_argument('--type', type=str, default='linear',
+			help='type of interpolation: linear, closest')
+	args = parser.parse_args()
+
+	fn = args.file
+	res = postproc.SimResult(fn)
+
+	unit = ''
+	try:
+		unit = res.units[args.var]
+	except:
+		pass
+
+	time = simulation.parse_var_val(args.time, 's')
+
+	val = None
+	if args.type == 'linear':
+		val = res.get_closest(args.var, time)
+	elif args.type == 'closest':
+		val = res.get_interp(args.var, time)
+	else:
+		print('Interpolation type not recognised')
+
+	print(str(val) + ' ' + unit)
+
+# example call:
+# st_inspect EnergySystem_res.mat 'tnk.E' 7d

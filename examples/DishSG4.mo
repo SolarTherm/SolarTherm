@@ -4,14 +4,15 @@ model DishSG4
 		fluxFile="resources/sg4_flux.motab",
 		priFile="resources/aemo_vic_2014.motab",
 		SM=1.2,
-		P_rate=133.89e3,
+		P_gross=133.89e3,
+		P_rate=0.9065*133.89e3,
 		eff_cyc=0.37,
 		t_storage=0, // *
 		rec_T_amb_des=298.15,
 		blk_T_amb_des=294.15, //
 		par_T_amb_des=294.15, // *
 		rec_fr=0.02822,
-		par_fr=0.10, // *
+		par_fr=0.08, // *
 		rec_ci={0, 8.6081, -23.7695, 25.0621, -8.9007}, // Our formulation is more generic, raising power to get equivalent
 		rec_ca={1, -0.00228, 0.00012905, -4.8891e-07},
 		rec_cw={1},
@@ -25,9 +26,9 @@ model DishSG4
 		t_life= 20,
 		t_cons=1
 		);
-	// Parasitics constant term...
-	// Different design point temperatures
-	// Starting charge
+	// Don't have parasitics constant term.
+	// It is silly having it separate because it could be accounted for
+	// in the in polynomials...
 
 	// From SAM:
 	// Field and receiver
@@ -54,6 +55,12 @@ model DishSG4
 	// Capacity factor 31.3987
 
 	// Total annual dni for site 2636.5kWh/m2
+
+	// Our calcs:
+	// Annual energy 328.82MW/year
+	// Total annual dni for site 2637.29kWh/m2
+	// Capacity factor 28.035
+
 	Real dni_annual(unit="kWh/m2");
 	initial equation
 		dni_annual = 0;

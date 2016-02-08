@@ -4,7 +4,8 @@ model TroughWagner
 		fluxFile="resources/field_flux.motab", // *
 		priFile="resources/aemo_vic_2014.motab", // *
 		SM=2.5, // *
-		P_rate=111e6,
+		P_gross=111e6,
+		P_rate=100e6,
 		eff_cyc=0.3774,
 		t_storage=6,
 		rec_T_amb_des=298.15, // *

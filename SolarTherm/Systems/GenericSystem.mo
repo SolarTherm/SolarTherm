@@ -9,7 +9,8 @@ model GenericSystem
 	parameter String priFile "Electricity price file";
 
 	parameter Real SM "Solar multiple";
-	parameter SI.Power P_rate "Rating of power block";
+	parameter SI.Power P_gross "Gross rating of power block";
+	parameter SI.Power P_rate "Net rating of power block";
 	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle at design point";
 	parameter Real t_storage(unit="h") = 6 "Hours of storage";
 	parameter Real ini_frac(min=0, max=1) = 0.0 "Initial fraction charged";
@@ -21,6 +22,8 @@ model GenericSystem
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter Real par_fr = 0.01 "Parasitics fraction of power block rating at design point";
 
+	// If using SAM values for rec_ci, then convert according to:
+	// {c0, c1, c2, c3} -> {0, c0, c1, c2, c3}
 	parameter Real rec_ci[:] = {1} "Receiver coefficients";
 	parameter Real rec_ca[:] = {1} "Receiver coefficients";
 	parameter Real rec_cw[:] = {1} "Receiver coefficients";
@@ -38,7 +41,7 @@ model GenericSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	parameter SI.HeatFlowRate Q_flow_rate = P_rate/eff_cyc "Rated heat to power block";
+	parameter SI.HeatFlowRate Q_flow_rate = P_gross/eff_cyc "Rated heat to power block";
 	parameter SI.RadiantPower R_des = SM*Q_flow_rate "Design power for receiver";
 	parameter SI.Energy E_max = t_storage*3600*Q_flow_rate "Maximum tank stored energy";
 	parameter Boolean storage = (t_storage > 0) "Storage component present";
@@ -111,9 +114,9 @@ equation
 		connect(rec.Q_flow, blk.Q_flow);
 	end if;
 
-	par_fac_fra.x = blk.P_out/P_rate;
+	par_fac_fra.x = blk.P_out/P_gross;
 	par_fac_amb.x = wea.wbus.Tdry - par_T_amb_des;
-	P_elec = blk.P_out - par_fr*P_rate*par_fac_fra.y*par_fac_amb.y;
+	P_elec = blk.P_out - par_fr*P_gross*par_fac_fra.y*par_fac_amb.y;
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
 
