@@ -7,7 +7,10 @@ model TroughWagner
 		P_rate=111e6,
 		eff_cyc=0.3774,
 		t_storage=6,
-		T_amb_des=293, // *
+		rec_T_amb_des=298.15, // *
+		tnk_T_amb_des=298.15, // *
+		blk_T_amb_des=298.15, // *
+		par_T_amb_des=298.15, // *
 		rec_fr=0.03, // *
 		tnk_fr=0.05, // *
 		par_fr=0.10, // *
@@ -16,10 +19,10 @@ model TroughWagner
 		rec_cw={1},
 		tnk_cf={0, 1}, // *
 		tnk_ca={1}, // *
-		par_cf={0.0636, 0.803, -1.58, 1.7134},
-		par_ca={1, 0.0025},
 		blk_cf={0.5628, 0.8685, -0.5164, 0.0844},
 		blk_ca={1, -0.002},
+		par_cf={0.0636, 0.803, -1.58, 1.7134},
+		par_ca={1, 0.0025},
 		C_cap=100e6, // *  Should probably calculate these from file
 		C_main=100e3, // *
 		r_disc=0.05, // *

@@ -16,7 +16,7 @@ protected
 	SolarTherm.Utilities.Polynomial.Poly fac_fra(c=cf);
 	SolarTherm.Utilities.Polynomial.Poly fac_amb(c=ca);
 equation
-	P_out = Q_flow*eff_cyc*fac_fra.y*fac_amb.y;
+	P_out = min(Q_flow, Q_flow_rate)*eff_cyc*fac_fra.y*fac_amb.y;
 	fac_fra.x = Q_flow/Q_flow_rate;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 end PBGeneric;

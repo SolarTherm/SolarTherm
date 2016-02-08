@@ -1,5 +1,6 @@
 #! /bin/env python
 
+from __future__ import division
 import argparse
 import os
 import datetime as dt
@@ -175,9 +176,131 @@ class TMY3(object):
 
 		return (meta, tab)
 
+class EPW(object):
+	"""
+	Secifications and loader for EnergyPlus EPW files
+	No need to construct this class
+	"""
+	head_names = [
+		'LOCATION',
+		'DESIGN CONDITIONS',
+		'TYPICAL/EXTREME PERIODS',
+		'GROUND TEMPERATURES',
+		'HOLIDAYS/DAYLIGHT SAVINGS',
+		'COMMENTS 1',
+		'COMMENTS 2',
+		'DATA PERIODS',
+		]
+	headi = {
+		'name': 1, # Station name
+		'lat': 6, # Site latitude (deicmal degree)
+		'lon': 7, # Site latitude (decimal degree)
+		'timezone': 8, # Site time zone (hours from Greenwich)
+		'elev': 9, # Site elevation (m)
+		}
+	labi = {
+		'year': 0,
+		'month': 1, # 1-12
+		'day': 2,
+		'hour': 3, # 1-24, where 1 is for region : 00:01 - 01:00
+		'minute': 4, # 1-60
+		'dry': 6, # (degC) -70-70 Dry bulb temperature
+		'dew': 7, # (degC) -70-70 Dew point temperature
+		'rhum': 8, # (%) 0-110 Relative humidity
+		'p': 9, # (Pa) 31,000-120,000 Pressure
+		'ghi': 13, # (Wh/m2) >=0 Global horizontal radiation *1
+		'dni': 14, # (Wh/m2) >=0 Direct normal radiation *1
+		'wdir': 20, # (deg) 0-360 Wind direction 360=North, 0=calm
+		'wspd': 21, # (m/s) 0-40 Wind speed
+
+		# *1: during last hour ending in this timestamp
+		# *2: at time indicated
+		}
+	missv = {
+		# Values that are used if data is missing
+		'year': None,
+		'month': None,
+		'day': None,
+		'hour': None,
+		'minute': None,
+		'dry': 99.9,
+		'dew': 99.9,
+		'rhum': 999,
+		'p': 999999,
+		'ghi': 9999,
+		'dni': 9999,
+		'wdir': 999,
+		'wspd': 999,
+		}
+	@classmethod
+	def load(cls, fn):
+		f = open(fn)
+		header = {}
+		for n in cls.head_names:
+			header[n] = f.readline().strip().split(',')
+			assert n == header[n][0]
+
+		
+
+		dat = []
+		for line in f.readlines():
+			dat.append(line.strip().split(','))
+		f.close()
+		
+		# Only currently know to handle 1 data period (not sure what it means)
+		assert int(header['DATA PERIODS'][1]) == 1
+
+		pnts_per_hour = int(header['DATA PERIODS'][2])
+		# Check data is expected length
+		assert len(dat) == 8760*pnts_per_hour
+		
+		# Check no missing data
+		for d in dat:
+			for n in cls.missv:
+				if cls.missv[n] is not None:
+					assert float(d[cls.labi[n]]) != cls.missv[n], ('Value ' + n +
+							' is missing')
+
+		# Using first data point to get time from start of year
+		date_first = dt.datetime(
+					int(dat[0][cls.labi['year']]),
+					int(dat[0][cls.labi['month']]),
+					int(dat[0][cls.labi['day']]),
+					int(dat[0][cls.labi['hour']])-1 # convert from 1-24 to 0-23
+					)
+		date_first += dt.timedelta(minutes=int(dat[0][cls.labi['minute']]))
+		date_year = dt.datetime(int(dat[0][cls.labi['year']]), 1, 1)
+
+		t_start = (date_first - date_year).total_seconds()
+
+		meta = {}
+		meta['name'] = header['LOCATION'][cls.headi['name']]
+		meta['lat'] = header['LOCATION'][cls.headi['lat']]
+		meta['lon'] = header['LOCATION'][cls.headi['lon']]
+		meta['elev'] = header['LOCATION'][cls.headi['elev']]
+		meta['tzone'] = header['LOCATION'][cls.headi['timezone']]
+		meta['tstart'] = str(t_start)
+
+		tab = {k: [] for k in MO.tabl}
+		for i, row in enumerate(dat):
+			tab['time'].append(str(i*(3600//pnts_per_hour)))
+			tab['ghi'].append(str(float(row[cls.labi['ghi']])/pnts_per_hour)) # convert Wh/m2 to W/m2
+			tab['dni'].append(str(float(row[cls.labi['dni']])/pnts_per_hour)) # convert Wh/m2 to W/m2
+			tab['dry'].append(row[cls.labi['dry']])
+			tab['dew'].append(row[cls.labi['dew']])
+			tab['rhum'].append(row[cls.labi['rhum']])
+			tab['p'].append(str(float(row[cls.labi['p']])*0.01)) # convert Pa to mbar
+			tab['wdir'].append(row[cls.labi['wdir']])
+			tab['wspd'].append(row[cls.labi['wspd']])
+
+		return (meta, tab)
+
 def load_file(fn):
 	# First identify then pass off to processor
+	name, ext = os.path.splitext(fn)
 	parser = TMY3
+	if ext == '.epw' or ext == '.EPW':
+		parser = EPW
 
 	return parser.load(fn)
 
