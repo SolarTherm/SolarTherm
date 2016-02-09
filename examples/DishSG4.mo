@@ -7,12 +7,12 @@ model DishSG4
 		P_gross=133.89e3,
 		P_rate=0.9065*133.89e3,
 		eff_cyc=0.37,
-		t_storage=0, // *
+		t_storage=0,
 		rec_T_amb_des=298.15,
-		blk_T_amb_des=294.15, //
-		par_T_amb_des=294.15, // *
+		blk_T_amb_des=294.15,
+		par_T_amb_des=294.15, // Assuming
 		rec_fr=0.02822,
-		par_fr=0.08, // *
+		par_fr=0.08, // Not accounting for fixed parasitics
 		rec_ci={0, 8.6081, -23.7695, 25.0621, -8.9007}, // Our formulation is more generic, raising power to get equivalent
 		rec_ca={1, -0.00228, 0.00012905, -4.8891e-07},
 		rec_cw={1},
@@ -20,16 +20,14 @@ model DishSG4
 		blk_ca={1, -0.002},
 		par_cf={0.0636, 0.803, -1.58, 1.7134},
 		par_ca={1, 0.0025},
-		C_cap=100e6,
-		C_main=100e3,
-		r_disc=0.05,
-		t_life= 20,
-		t_cons=1
+		C_cap=(500*484.222 + 1.347*133.89e3)*1.07*1.11 + 0.17962*10000,
+		C_main=0.065*(0.9065*133.89e3), // Don't have cost per generated energy
+		r_disc=0.076,
+		t_life= 25,
+		t_cons=0
 		);
-	// Don't have parasitics constant term.
-	// It is silly having it separate because it could be accounted for
-	// in the in polynomials...
 
+	// SG4 250deg
 	// From SAM:
 	// Field and receiver
 	// Solar field design output 0.434MWt
@@ -50,16 +48,42 @@ model DishSG4
 	// Production based parasitic 0.08MWe/MWe
 	// Design point parasitic load 0.000738236MWe (approx 0.13389 * 0.0055)
 
-	// LCOE real 11.7346c/kWh
-	// Annual energy 333 835kWh
-	// Capacity factor 31.3987
+	// Direct costs
+	// Field cost 500$/m2 (484.222)
+	// Power plant cost 1347$/kWe
+	// Contingency 7%
 
+	// Indirect costs
+	// EPC and owner cost 11%
+	// Total land cost 10000$/acre (1acre, in spreadsheet 0.17962acre)
+
+	// O&M costs
+	// Fixed capacity costs 65$/kWe/year 
+	// Variable cost by generation 4$/MWh
+
+	// Commercial load parameters
+	// Debt fraction 60%
+	// Load term 15years
+	// Loan rate 7.78%
+
+	// Analysis parameters
+	// Analysis period 25years
+	// Inflation rate 2.50%/year
+	// Real discount rate 7.60%/year
+	// Nominal discount rate 10.29%/year (=(1+real)*(1+infl) - 1)
+
+	// Calculations:
+	// LCOE real 11.7346c/kWh
+	// LCOE nominal 14.60c/kWh
+	// Annual energy 333 835kWh
+	// Capacity factor 31.3987%
 	// Total annual dni for site 2636.5kWh/m2
 
 	// Our calcs:
+	// LCOE (real) 15.279c/kWh
 	// Annual energy 328.82MW/year
+	// Capacity factor 30.93%
 	// Total annual dni for site 2637.29kWh/m2
-	// Capacity factor 28.035
 
 	Real dni_annual(unit="kWh/m2");
 	initial equation
