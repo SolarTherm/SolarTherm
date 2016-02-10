@@ -23,7 +23,7 @@ model DishSG4
 		C_cap=(500*484.222 + 1.347*133.89e3)*1.07*1.11 + 0.17962*10000,
 		C_main=0.065*(0.9065*133.89e3), // Don't have cost per generated energy
 		r_disc=0.076,
-		t_life= 25,
+		t_life=25,
 		t_cons=0
 		);
 

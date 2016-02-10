@@ -11,12 +11,14 @@ model PBGeneric "Generic power block model"
 
 	input SI.HeatFlowRate Q_flow "Heat flow entering power block";
 	input SolarTherm.Interfaces.WeatherBus wbus;
+	input SI.HeatFlowRate Q_flow_cyc "Heat flow to power cycle";
 	SI.Power P_out "Electrical output power";
 protected
 	SolarTherm.Utilities.Polynomial.Poly fac_fra(c=cf);
 	SolarTherm.Utilities.Polynomial.Poly fac_amb(c=ca);
 equation
-	P_out = min(Q_flow, Q_flow_rate)*eff_cyc*fac_fra.y*fac_amb.y;
-	fac_fra.x = Q_flow/Q_flow_rate;
+	Q_flow_cyc = min(Q_flow, Q_flow_rate);
+	P_out = Q_flow_cyc*eff_cyc*fac_fra.y*fac_amb.y;
+	fac_fra.x = Q_flow_cyc/Q_flow_rate;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 end PBGeneric;

@@ -8,6 +8,7 @@ model TroughWagner
 		P_rate=100e6,
 		eff_cyc=0.3774,
 		t_storage=6,
+		ini_frac=0.1,
 		rec_T_amb_des=298.15, // *
 		tnk_T_amb_des=298.15, // *
 		blk_T_amb_des=298.15, // *
