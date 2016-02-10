@@ -1,6 +1,6 @@
 model TroughWagner
 	extends SolarTherm.Systems.GenericSystem(
-		weaFile="resources/Mildura_Real2010_Created20130430.motab", //*
+		weaFile="resources/AUS_NT.Alice.Springs.Airport.943260_RMY.motab", //*
 		fluxFile="resources/field_flux.motab", // *
 		priFile="resources/aemo_vic_2014.motab", // *
 		SM=2.5, // *
@@ -29,7 +29,18 @@ model TroughWagner
 		C_main=100e3, // *
 		r_disc=0.05, // *
 		t_life= 20, // *
-		t_cons=1 // *
+		t_cons=1, // *
+		//const_dispatch=true
+		const_dispatch=false,
+		sch(
+			file="resources/daily_sch_0.motab",
+			ndaily=5, // needs to match file
+			wmap={
+				{2,2,2,2,2,3,3},
+				{4,4,4,4,4,5,5}
+				},
+			mmap={1,1,1,2,2,2,2,2,2,1,1,1}
+			)
 		);
 	// Adapted data from:
 	// Wagner, M. J.; Zhu, G. (2011). "Generic CSP Performance Model for NREL's System Advisor Model", SolarPACES 2011

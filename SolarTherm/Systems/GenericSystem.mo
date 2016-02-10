@@ -14,6 +14,7 @@ model GenericSystem
 	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle at design point";
 	parameter Real t_storage(unit="h") = 6 "Hours of storage";
 	parameter Real ini_frac(min=0, max=1) = 0.0 "Initial fraction charged";
+	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
@@ -41,7 +42,9 @@ model GenericSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	parameter Real tnk_empty_lb(min=0, max=1) = 0.01;
+	parameter Real tnk_crit_lb(min=0, max=1) = 0.01;
+	parameter Real tnk_crit_ub(min=0, max=1) = 0.05;
+	parameter Real tnk_empty_lb(min=0, max=1) = 0.03;
 	parameter Real tnk_empty_ub(min=0, max=1) = 0.05;
 	parameter Real tnk_full_lb(min=0, max=1) = 0.95;
 	parameter Real tnk_full_ub(min=0, max=1) = 0.99;
@@ -91,16 +94,24 @@ model GenericSystem
 		up=tnk_full_ub*E_max,
 		y_0=true
 		) if storage;
-	SolarTherm.Control.Trigger not_crit_empty_trig(
+	SolarTherm.Control.Trigger not_empty_trig(
 		low=tnk_empty_lb*E_max,
 		up=tnk_empty_ub*E_max,
 		y_0=false
 		) if storage;
+	SolarTherm.Control.Trigger not_crit_trig(
+		low=tnk_crit_lb*E_max,
+		up=tnk_crit_ub*E_max,
+		y_0=false
+		) if storage;
+	// Needs to be configured in instantiation if not const_dispatch
+	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;
+	
 	Real sched;
 	SI.HeatFlowRate Q_flow_sch "Scheduled heat flow";
 	Boolean full if storage;
 	Boolean empty if storage;
-	Boolean crit_empty if storage;
+	Boolean crit if storage;
 	SI.Power P_elec "Net electrical power out";
 	SI.Energy E_elec(start=0, fixed=true) "Generated electricity";
 	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
@@ -120,7 +131,8 @@ equation
 		connect(rec.Q_flow, tnk.Q_flow_in);
 		connect(tnk.Q_flow_out, blk.Q_flow);
 		connect(tnk.E, full_trig.x);
-		connect(tnk.E, not_crit_empty_trig.x);
+		connect(tnk.E, not_empty_trig.x);
+		connect(tnk.E, not_crit_trig.x);
 	else
 		connect(rec.Q_flow, blk.Q_flow);
 	end if;
@@ -132,17 +144,22 @@ equation
 	der(R_spot) = P_elec*pri.price;
 
 	con.target = 1;
-	sched = 1;
+
+	if const_dispatch then
+		sched = 1;
+	else
+		sched = sch.v;
+	end if;
 
 	Q_flow_sch = sched*Q_flow_rate;
 
 	if storage then
 		full = full_trig.y;
-		empty = tnk.E <= tnk_empty_ub*E_max;
-		crit_empty = not not_crit_empty_trig.y;
+		empty = not not_empty_trig.y;
+		crit = not not_crit_trig.y;
 		if full then
 			tnk.Q_flow_out = max(tnk.Q_flow_in, Q_flow_sch);
-		elseif crit_empty then
+		elseif crit then
 			tnk.Q_flow_out = 0;
 		elseif empty then
 			tnk.Q_flow_out = min(tnk.Q_flow_in, Q_flow_sch);
