@@ -1,6 +1,10 @@
 within SolarTherm.Control;
 block TankDispatch "Tank dispatch controller"
-	// Takes
+	// The tank is in one of 4 states, full, empty, critically empty or nominal.
+	// When nominal, the tank is dispatched at the target flow rate.
+	// When full (empty), the tank is dispatched at either the tank input
+	// flow or the target flow, which ever is larger (smaller).
+	// The critically empty state completely shuts off all dispatch.
 	parameter Real full_lb;
 	parameter Real full_ub;
 	parameter Real empty_lb;

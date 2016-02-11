@@ -106,6 +106,9 @@ model GenericSystem
 	SI.Energy E_elec(start=0, fixed=true) "Generated electricity";
 	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
+	SI.Energy E_sch(start=0, fixed=true) "Energy scheduled";
+	SI.Energy E_under(start=0, fixed=true) "Energy under schedule";
+	SI.Energy E_over(start=0, fixed=true) "Energy over schedule";
 protected
 	SolarTherm.Utilities.Polynomial.Poly par_fac_fra(c=par_cf);
 	SolarTherm.Utilities.Polynomial.Poly par_fac_amb(c=par_ca);
@@ -143,4 +146,8 @@ equation
 		sched = sch.v;
 	end if;
 	Q_flow_sch = sched*Q_flow_rate;
+
+	der(E_sch) = sched*P_rate;
+	der(E_under) = max(sched*P_rate - P_elec, 0);
+	der(E_over) = max(P_elec - sched*P_rate, 0);
 end GenericSystem;
