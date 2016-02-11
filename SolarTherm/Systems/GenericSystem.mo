@@ -89,29 +89,19 @@ model GenericSystem
 		cf=blk_cf,
 		ca=blk_ca
 		);
-	SolarTherm.Control.Trigger full_trig(
-		low=tnk_full_lb*E_max,
-		up=tnk_full_ub*E_max,
-		y_0=true
-		) if storage;
-	SolarTherm.Control.Trigger not_empty_trig(
-		low=tnk_empty_lb*E_max,
-		up=tnk_empty_ub*E_max,
-		y_0=false
-		) if storage;
-	SolarTherm.Control.Trigger not_crit_trig(
-		low=tnk_crit_lb*E_max,
-		up=tnk_crit_ub*E_max,
-		y_0=false
+	SolarTherm.Control.TankDispatch dis(
+		full_lb=tnk_full_lb*E_max,
+		full_ub=tnk_full_ub*E_max,
+		empty_lb=tnk_empty_lb*E_max,
+		empty_ub=tnk_empty_ub*E_max,
+		crit_lb=tnk_crit_lb*E_max,
+		crit_ub=tnk_crit_ub*E_max
 		) if storage;
 	// Needs to be configured in instantiation if not const_dispatch
 	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;
 	
 	Real sched;
 	SI.HeatFlowRate Q_flow_sch "Scheduled heat flow";
-	Boolean full if storage;
-	Boolean empty if storage;
-	Boolean crit if storage;
 	SI.Power P_elec "Net electrical power out";
 	SI.Energy E_elec(start=0, fixed=true) "Generated electricity";
 	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
@@ -130,9 +120,11 @@ equation
 	if storage then
 		connect(rec.Q_flow, tnk.Q_flow_in);
 		connect(tnk.Q_flow_out, blk.Q_flow);
-		connect(tnk.E, full_trig.x);
-		connect(tnk.E, not_empty_trig.x);
-		connect(tnk.E, not_crit_trig.x);
+
+		connect(tnk.Q_flow_in, dis.flow_in);
+		connect(Q_flow_sch, dis.flow_tar);
+		connect(tnk.E, dis.level);
+		connect(dis.flow_dis, tnk.Q_flow_set);
 	else
 		connect(rec.Q_flow, blk.Q_flow);
 	end if;
@@ -150,21 +142,5 @@ equation
 	else
 		sched = sch.v;
 	end if;
-
 	Q_flow_sch = sched*Q_flow_rate;
-
-	if storage then
-		full = full_trig.y;
-		empty = not not_empty_trig.y;
-		crit = not not_crit_trig.y;
-		if full then
-			tnk.Q_flow_out = max(tnk.Q_flow_in, Q_flow_sch);
-		elseif crit then
-			tnk.Q_flow_out = 0;
-		elseif empty then
-			tnk.Q_flow_out = min(tnk.Q_flow_in, Q_flow_sch);
-		else
-			tnk.Q_flow_out = Q_flow_sch;
-		end if;
-	end if;
 end GenericSystem;
