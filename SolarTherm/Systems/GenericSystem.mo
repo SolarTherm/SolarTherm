@@ -6,7 +6,7 @@ model GenericSystem
 
 	parameter String weaFile "Weather file";
 	parameter String fluxFile "Field flux file";
-	parameter String priFile "Electricity price file";
+	parameter String priFile = "" "Electricity price file";
 
 	parameter Real SM "Solar multiple";
 	parameter SI.Power P_gross "Gross rating of power block";
@@ -55,8 +55,6 @@ model GenericSystem
 	parameter Boolean storage = (t_storage > 0) "Storage component present";
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
-
 	SolarTherm.Optics.SteeredConc con(
 		redeclare model FluxMap=SolarTherm.Optics.FluxMapFile(
 			fileName=fluxFile,
@@ -89,6 +87,13 @@ model GenericSystem
 		cf=blk_cf,
 		ca=blk_ca
 		);
+	SolarTherm.PowerBlocks.ParasiticsGeneric par(
+		P_par_des=par_fr*P_gross,
+		P_gross_des=P_gross,
+		T_amb_des=par_T_amb_des,
+		cf=par_cf,
+		ca=par_ca
+		);
 	SolarTherm.Control.TankDispatch dis(
 		full_lb=tnk_full_lb*E_max,
 		full_ub=tnk_full_ub*E_max,
@@ -99,19 +104,15 @@ model GenericSystem
 		) if storage;
 	// Needs to be configured in instantiation if not const_dispatch
 	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;
+	SolarTherm.Utilities.Performance.EnergyPerf per(
+		schedule=true,
+		priFile=priFile
+		);
 	
 	Real sched;
-	SI.HeatFlowRate Q_flow_sch "Scheduled heat flow";
 	SI.Power P_elec "Net electrical power out";
-	SI.Energy E_elec(start=0, fixed=true) "Generated electricity";
-	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
-		"Spot market revenue";
-	SI.Energy E_sch(start=0, fixed=true) "Energy scheduled";
-	SI.Energy E_under(start=0, fixed=true) "Energy under schedule";
-	SI.Energy E_over(start=0, fixed=true) "Energy over schedule";
-protected
-	SolarTherm.Utilities.Polynomial.Poly par_fac_fra(c=par_cf);
-	SolarTherm.Utilities.Polynomial.Poly par_fac_amb(c=par_ca);
+	SI.Energy E_elec "Generated electricity";
+	SolarTherm.Utilities.Finances.Money R_spot "Spot market revenue";
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);
@@ -119,24 +120,27 @@ equation
 		connect(wea.wbus, tnk.wbus);
 	end if;
 	connect(wea.wbus, blk.wbus);
+	connect(wea.wbus, par.wbus);
+
 	connect(con.R_foc, rec.R);
 	if storage then
 		connect(rec.Q_flow, tnk.Q_flow_in);
 		connect(tnk.Q_flow_out, blk.Q_flow);
 
 		connect(tnk.Q_flow_in, dis.flow_in);
-		connect(Q_flow_sch, dis.flow_tar);
+		dis.flow_tar = sched*Q_flow_rate;
 		connect(tnk.E, dis.level);
 		connect(dis.flow_dis, tnk.Q_flow_set);
 	else
 		connect(rec.Q_flow, blk.Q_flow);
 	end if;
+	connect(blk.P_gen, par.P_gen);
 
-	par_fac_fra.x = blk.P_out/P_gross;
-	par_fac_amb.x = wea.wbus.Tdry - par_T_amb_des;
-	P_elec = blk.P_out - par_fr*P_gross*par_fac_fra.y*par_fac_amb.y;
-	der(E_elec) = P_elec;
-	der(R_spot) = P_elec*pri.price;
+	P_elec = blk.P_gen - par.P_par;
+	connect(P_elec, per.P_elec);
+	per.P_sch = sched*P_rate;
+	connect(per.E_elec, E_elec);
+	connect(per.R_spot, R_spot);
 
 	con.target = 1;
 
@@ -145,9 +149,4 @@ equation
 	else
 		sched = sch.v;
 	end if;
-	Q_flow_sch = sched*Q_flow_rate;
-
-	der(E_sch) = sched*P_rate;
-	der(E_under) = max(sched*P_rate - P_elec, 0);
-	der(E_over) = max(P_elec - sched*P_rate, 0);
 end GenericSystem;
