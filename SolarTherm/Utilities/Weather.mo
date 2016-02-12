@@ -3,7 +3,6 @@ package Weather
 import SI = Modelica.SIunits;
 import nSI = Modelica.SIunits.Conversions.NonSIunits;
 import Modelica.SIunits.Conversions.from_degC;
-import Modelica.SIunits.Conversions.from_deg;
 
 block WeatherSource "Weather source including tabular data and other calculators"
 	import SolarTherm.Utilities.Solar.SolarPositionDB;
@@ -24,7 +23,6 @@ protected
 	SI.Velocity wspd_l;
 	SI.Temperature Tdry_K;
 	SI.Temperature Tdew_K;
-	SI.Angle wdir_r;
 equation
 	// In order for connections to expandable connector to work outside here,
 	// the values needed to be connected here (so they are registered)
@@ -52,8 +50,7 @@ equation
 	connect(wbus.Tdry, Tdry_K);
 	Tdew_K = from_degC(wtab.y[4]);
 	connect(wbus.Tdew, Tdew_K);
-	wdir_r = from_deg(wtab.y[7]);
-	connect(wbus.wdir, wdir_r);
+	connect(wbus.wdir, wtab.y[7]);
 	//connect(wbus.wspd, wtab.y[8]);
 	//wspd_l = noEvent(if wtab.y[8] > 0 then wtab.y[8] else 0);
 	//wspd_l = if noEvent(wtab.y[8] > 0) then wtab.y[8] else 0;

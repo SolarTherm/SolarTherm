@@ -15,8 +15,8 @@ import Modelica.Constants.pi;
 import Modelica.Blocks.Math.Sign;
 
 partial block SolarPosition "Sun position"
-	output SI.Angle alt "Altitude";
-	output SI.Angle azi "Azimuth (Clockwise from North=0)";
+	output nSI.Angle_deg alt "Altitude";
+	output nSI.Angle_deg azi "Azimuth (Clockwise from North=0)";
 	parameter nSI.Angle_deg lon "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat "Latitude (+ve North)";
 equation
@@ -68,9 +68,10 @@ equation
 	// trouble...
 
 	zen = acos(sin(dec)*sin(from_deg(lat)) + cos(dec)*cos(from_deg(lat))*cos(hra));
-	azi = pi + hra_s*acos((cos(zen)*sin(from_deg(lat)) - sin(dec))/(sin(zen)*cos(from_deg(lat))));
+	azi = to_deg(pi + hra_s*acos((cos(zen)*sin(from_deg(lat))
+			- sin(dec))/(sin(zen)*cos(from_deg(lat)))));
 	// The azimuth becomes very sensitive as zen approaches zero
-	alt = pi/2 - zen;
+	alt = to_deg(pi/2 - zen);
 end SolarPositionDB;
 
 end Solar;

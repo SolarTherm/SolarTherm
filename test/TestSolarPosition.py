@@ -77,21 +77,21 @@ class TestSolarPosition(unittest.TestCase):
 		delta = 0.6 # error tolerated (deg)
 
 		for i, (t, alt, azi) in enumerate(pnts_0):
-			self.assertAlmostEqual(self.res.get_interp('solp_0.alt', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_0.alt', t),
 					alt, delta=delta, msg='Alt of 0: ' + str(i))
-			self.assertAlmostEqual(self.res.get_interp('solp_0.azi', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_0.azi', t),
 					azi, delta=delta, msg='Azi of 0: ' + str(i))
 
 		for i, (t, alt, azi) in enumerate(pnts_can):
-			self.assertAlmostEqual(self.res.get_interp('solp_can.alt', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_can.alt', t),
 					alt, delta=delta, msg='Alt of can: ' + str(i))
-			self.assertAlmostEqual(self.res.get_interp('solp_can.azi', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_can.azi', t),
 					azi, delta=delta, msg='Azi of can: ' + str(i))
 
 		for i, (t, alt, azi) in enumerate(pnts_den):
-			self.assertAlmostEqual(self.res.get_interp('solp_den.alt', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_den.alt', t),
 					alt, delta=delta, msg='Alt of den: ' + str(i))
-			self.assertAlmostEqual(self.res.get_interp('solp_den.azi', t)*180/pi,
+			self.assertAlmostEqual(self.res.get_interp('solp_den.azi', t),
 					azi, delta=delta, msg='Azi of den: ' + str(i))
 
 if __name__ == '__main__':

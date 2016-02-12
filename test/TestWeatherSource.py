@@ -27,9 +27,9 @@ class TestWeatherSource(unittest.TestCase):
 		self.assertAlmostEqual(self.res.get_closest('wea.lon', 0), 142.087)
 		tstart = 6600
 		solar_noon = 12*60*60 + 34*60 + 54 - tstart
-		self.assertAlmostEqual(self.res.get_interp('wea.wbus.alt', solar_noon)*180/pi,
+		self.assertAlmostEqual(self.res.get_interp('wea.wbus.alt', solar_noon),
 				78.8, delta=0.1)
-		self.assertAlmostEqual(self.res.get_interp('wea.wbus.azi', solar_noon)*180/pi,
+		self.assertAlmostEqual(self.res.get_interp('wea.wbus.azi', solar_noon),
 				360.0, delta=1.0) # very sensitive around noon
 
 if __name__ == '__main__':
