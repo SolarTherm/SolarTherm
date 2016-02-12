@@ -13,16 +13,28 @@ model EnergyPerf "Energy performance calculations"
 	input SI.Power P_elec "Net output electricity";
 	input SI.Power P_sch if schedule "Scheduled electricity";
 
-	output SI.Energy E_elec(start=0, fixed=true) "Generated electricity";
-	output SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
+	output SI.Energy E_elec "Generated electricity";
+	output SolarTherm.Utilities.Finances.Money R_spot
 		"Spot market revenue";
-	output SI.Energy E_sch(start=0, fixed=true) "Energy scheduled";
-	output SI.Energy E_under(start=0, fixed=true) "Energy under schedule";
-	output SI.Energy E_over(start=0, fixed=true) "Energy over schedule";
+	output SI.Energy E_sch "Energy scheduled";
+	output SI.Energy E_under "Energy under schedule";
+	output SI.Energy E_over "Energy over schedule";
 
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(
 		fileName=priFile
 		) if prices;
+initial equation
+	E_elec = 0;
+
+	if prices then
+		R_spot = 0;
+	end if;
+
+	if schedule then
+		E_sch = 0;
+		E_under = 0;
+		E_over = 0;
+	end if;
 equation
 	der(E_elec) = P_elec;
 

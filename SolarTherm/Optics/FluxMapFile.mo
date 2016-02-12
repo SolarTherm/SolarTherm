@@ -20,6 +20,6 @@ equation
 	for i in 1:nelem loop
 		connect(alt, table[i].u1);
 		connect(azi, table[i].u2);
-		flux[i] = R_des*table[i].y;
+		flux[i] = R_des*max(table[i].y,0); // Needed because of interpolation below horizon
 	end for;
 end FluxMapFile;
