@@ -1,10 +1,9 @@
 model TroughWagner
 	extends SolarTherm.Systems.GenericSystem(
-		weaFile="resources/AUS_NT.Alice.Springs.Airport.943260_RMY.motab", //*
-		// USA CA Daggett (TMY2).csv
-		// Need to get weather data above and also to handle switching between
-		// hemispheres.  Maybe have an alignment parameter or automatically calc
-		// this from the latitude.  Assume all flux are aligned north.
+		weaFile="resources/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
+		//weaFile="resources/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
+		// Numerical problem with daggett solar position calcs
+		// The TMY2 Daggett data was actually used, but don't have conversion yet
 		fluxFile="resources/troughwagner_flux.motab",
 		SM=1.9343,
 		P_gross=111e6,

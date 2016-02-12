@@ -58,7 +58,8 @@ model GenericSystem
 	SolarTherm.Optics.SteeredConc con(
 		redeclare model FluxMap=SolarTherm.Optics.FluxMapFile(
 			fileName=fluxFile,
-			R_des=R_des
+			R_des=R_des,
+			orient_north=if wea.lat < 0 then true else false
 			),
 		steer_rate=0.001,
 		target_error=0.001,

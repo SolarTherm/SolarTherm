@@ -62,6 +62,14 @@ pnts_den = [
 		(((31+28+31+30+31+30)*24 + 17)*3600, 26.46, 278.96),
 		]
 
+# Daggett lat = 34.85, lon = -116.8, tz = -8
+# time (s), alt (deg), azi (deg)
+pnts_dag = [
+		((0*24 + 8)*3600, 10.5, 127.72),
+		((0*24 + 12)*3600, 32.16, 182.5),
+		((0*24 + 16)*3600, 7.5, 235.28),
+		]
+
 class TestSolarPosition(unittest.TestCase):
 	def setUp(self):
 		fn = 'TestSolarPosition.mo'
@@ -93,6 +101,12 @@ class TestSolarPosition(unittest.TestCase):
 					alt, delta=delta, msg='Alt of den: ' + str(i))
 			self.assertAlmostEqual(self.res.get_interp('solp_den.azi', t),
 					azi, delta=delta, msg='Azi of den: ' + str(i))
+
+		for i, (t, alt, azi) in enumerate(pnts_dag):
+			self.assertAlmostEqual(self.res.get_interp('solp_dag.alt', t),
+					alt, delta=delta, msg='Alt of dag: ' + str(i))
+			self.assertAlmostEqual(self.res.get_interp('solp_dag.azi', t),
+					azi, delta=delta, msg='Azi of dag: ' + str(i))
 
 if __name__ == '__main__':
 	unittest.main()
