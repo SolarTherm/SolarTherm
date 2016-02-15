@@ -13,9 +13,9 @@ model SimpleSystem
 	parameter Real C = 0.65*A_con/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
 	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
-	parameter SI.Power P_rate = 100000 "Power block nominal power";
+	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter Real t_storage(unit="h") = 5 "Hours of storage";
-	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Max stored energy";
+	parameter SI.Energy E_max = P_name*t_storage*3600/eff_blk "Max stored energy";
 
 	parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
 	parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
@@ -31,7 +31,7 @@ model SimpleSystem
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
 	parameter SI.Time t_sch_next_start = 0 "Time to next schedule change";
 	parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
-			P_rate/eff_blk
+			P_name/eff_blk
 			} "Heat flow at schedule states";
 	parameter SI.Time t_delta[n_sched_states] = {
 			24*3600
@@ -40,9 +40,9 @@ model SimpleSystem
 	//parameter Integer sch_state_start(min=1, max=n_sched_states) = 3;
 	//parameter SI.Time t_sch_next_start = 8*3600;
 	//parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
-	//		0.4*P_rate/eff_blk,
-	//		P_rate/eff_blk,
-	//		0.5*P_rate/eff_blk
+	//		0.4*P_name/eff_blk,
+	//		P_name/eff_blk,
+	//		0.5*P_name/eff_blk
 	//		};
 	//parameter SI.Time t_delta[n_sched_states] = {
 	//		9*3600,
@@ -54,11 +54,12 @@ model SimpleSystem
 			120*A_con // field cost
 			+ 135*C*A_rec // receiver cost
 			+ (30/(1e3*3600))*E_max // storage cost
-			+ (1440/1e3)*P_rate // power block cost
-			"Capital costs";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
+			+ (1440/1e3)*P_name // power block cost
+			"Capital cost";
+	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
 			10*A_con // field cleaning/maintenance
-			"Maintenance costs for each year";
+			"Cost per year";
+	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";

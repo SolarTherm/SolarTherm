@@ -102,11 +102,12 @@ class SimResult(object):
 		eng_t = self.mat.abscissa('E_elec', valuesOnly=True)
 		eng_v = self.mat.data('E_elec') # cumulative electricity generated
 		cap_v = self.mat.data('C_cap') # capital costs
-		main_v = self.mat.data('C_main') # maintenance costs
+		om_y_v = self.mat.data('C_year') # O&M costs per year
+		om_p_v = self.mat.data('C_prod') # O&M costs per production per year
 		disc_v = self.mat.data('r_disc') # discount factor
 		life_v = self.mat.data('t_life') # plant lifetime
 		cons_v = self.mat.data('t_cons') # construction time
-		rate_v = self.mat.data('P_rate') # generator rating
+		name_v = self.mat.data('P_name') # generator nameplate
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
 		dur = eng_t[-1] - eng_t[0]
@@ -119,9 +120,9 @@ class SimResult(object):
 		lcoe = None # levelised cost of electricity
 		capf = None # capacity factor
 		if close_to_year: 
-			lcoe = fin.lcoe(cap_v[0], main_v[0], disc_v[0], int(life_v[0]),
-					int(cons_v[0]), epy)
-			capf = fin.capacity_factor(rate_v[0], epy)
+			lcoe = fin.lcoe(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+					int(life_v[0]), int(cons_v[0]), epy)
+			capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
 		epy = epy/(1e6*3600) # convert from J/year to MWh/year

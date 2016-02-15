@@ -37,7 +37,7 @@ model ASTRI100
 	// Minimum restart time 1h
 	// Start time 0.5h
 	// Rated conversion efficiency 0.3774
-	parameter SI.Power P_rate = 100000 "Rating of power block";
+	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
 	parameter SI.Efficiency eff_est = 0.48 "Estimate of overall power block efficiency";
 
@@ -105,10 +105,10 @@ model ASTRI100
 	// Tank height 20m
 	// Tank min fluid height 1m
 	parameter Real t_storage(unit="h") = 5 "Hours of storage";
-	//parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
+	//parameter SI.Mass m_max = (1/eff_est)*P_name*t_storage*3600/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Max mass in tanks";
 		// only works with PartialSimpleMedium
-	parameter SI.Mass m_max = (1/eff_est)*P_rate*t_storage*3600/
+	parameter SI.Mass m_max = (1/eff_est)*P_name*t_storage*3600/
 		(1277*(T_hot_set - T_cold_set)) "Max mass in tanks";
 	parameter MedRec.Temperature T_cold_set = CV.from_degC(290) "Target cold tank T";
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
@@ -116,10 +116,10 @@ model ASTRI100
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
 	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
-	//parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
+	//parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_name/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 		// only works with PartialSimpleMedium
-	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_rate/
+	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_name/
 		(1277*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 	parameter SI.Mass m_up_warn = 0.85*m_max;
 	parameter SI.Mass m_up_stop = 0.95*m_max;
@@ -131,11 +131,12 @@ model ASTRI100
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
-			+ (1440/1e3)*P_rate // power block cost
+			+ (1440/1e3)*P_name // power block cost
 			"Capital costs";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
+	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
 			10*A_con // field cleaning/maintenance
 			"Maintenance costs for each year";
+	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
@@ -193,7 +194,7 @@ model ASTRI100
 
 	SolarTherm.PowerBlocks.HeatGen pblk(
 		redeclare package Medium=MedRec,
-		P_rate=P_rate,
+		P_rate=P_name,
 		eff_adj=eff_adj);
 
 	SolarTherm.Control.Trigger hf_trig(

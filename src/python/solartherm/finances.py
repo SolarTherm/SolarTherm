@@ -3,11 +3,11 @@ from __future__ import division
 def energy_per_year(dt, e):
 	return 365*24*3600*e/dt
 
-def lcoe(c_cap, c_main, r, t_life, t_cons, epy):
+def lcoe(c_cap, c_om, r, t_life, t_cons, epy):
 	"""Levelised cost of electricity.
 
 	We take the convention that payments made or energy produced during a year
-	are discounted at the start of that year.  For example, the maintenance
+	are discounted at the start of that year.  For example, the O&M
 	costs M paid during the second year has a present value of M/(1 + r).  This
 	will tend to overestimate costs but also overestimate the value of the
 	energy produced.  These will tend to cancel out so the affect on the LCOE
@@ -25,7 +25,7 @@ def lcoe(c_cap, c_main, r, t_life, t_cons, epy):
 			nu += (c_cap/t_cons)/((1 + r)**i)
 
 	for i in range(t_cons, t_cons+t_life):
-		nu += c_main/((1 + r)**i)
+		nu += c_om/((1 + r)**i)
 		de += epy/((1 + r)**i)
 
 	return nu/de

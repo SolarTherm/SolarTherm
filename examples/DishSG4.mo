@@ -4,9 +4,10 @@ model DishSG4
 		optFile="resources/sg4_opt_eff.motab",
 		priFile="resources/aemo_vic_2014.motab",
 		SM=1.2,
-		P_gross=133.89e3,
-		P_rate=0.9065*133.89e3,
+		P_gro=133.89e3,
+		P_net=0.9065*133.89e3,
 		eff_cyc=0.37,
+		eff_opt=0.9506, // Should be max value in optFile
 		t_storage=0,
 		rec_T_amb_des=298.15,
 		blk_T_amb_des=294.15,
@@ -20,14 +21,14 @@ model DishSG4
 		blk_ca={1, -0.002},
 		par_cf={0.0636, 0.803, -1.58, 1.7134},
 		par_ca={1, 0.0025},
-		land_mult = 1.5,
-		pri_field = 500*1.07, // 7% contingency
-		pri_land = 10000/4046.86, // 10,000$/acre
-		pri_receiver = 0,
-		pri_storage = 0,
-		pri_block = (1347/1e3)*1.07, // 1347$/kWe, 7% contingency
-		//C_cap=(500*484.222 + 1.347*133.89e3)*1.07*1.11 + 0.17962*10000,
-		C_main=0.065*(0.9065*133.89e3), // Don't have cost per generated energy
+		land_mult=1.5,
+		pri_field=500*1.07, // 7% contingency
+		pri_land=10000/4046.86, // 10,000$/acre
+		pri_receiver=0,
+		pri_storage=0,
+		pri_block=(1347/1e3)*1.07, // 1347$/kWe, 7% contingency
+		pri_om_name=0.065,
+		pri_om_prod=4/(1e6*3600),
 		r_disc=0.076,
 		t_life=25,
 		t_cons=0
@@ -86,9 +87,9 @@ model DishSG4
 	// Total annual dni for site 2636.5kWh/m2
 
 	// Our calcs:
-	// LCOE (real) 15.279c/kWh
-	// Annual energy 328.82MW/year
-	// Capacity factor 30.93%
+	// LCOE (real) 13.7c/kWh
+	// Annual energy 340.97MW/year
+	// Capacity factor 32.07%
 	// Total annual dni for site 2637.29kWh/m2
 
 	Real dni_annual(unit="kWh/m2");
