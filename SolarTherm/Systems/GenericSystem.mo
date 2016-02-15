@@ -6,7 +6,7 @@ model GenericSystem
 	import FIN = SolarTherm.Utilities.Finances;
 
 	parameter String weaFile "Weather file";
-	parameter String fluxFile "Field flux file";
+	parameter String optFile "Optical efficiency file";
 	parameter String priFile = "" "Electricity price file";
 
 	parameter Real SM "Solar multiple";
@@ -70,15 +70,14 @@ model GenericSystem
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Optics.SteeredConc con(
-		redeclare model FluxMap=SolarTherm.Optics.FluxMapFile(
-			fileName=fluxFile,
-			R_des=R_des,
+		redeclare model OptEff=SolarTherm.Optics.OptEffFile(
+			fileName=optFile,
 			orient_north=if wea.lat < 0 then true else false
 			),
+		A_con=A_field,
 		steer_rate=0.001,
 		target_error=0.001,
-		actual_0=1.0,
-		dni_des=dni_des
+		actual_0=1.0
 		);
 	SolarTherm.Receivers.RecGeneric rec(
 		Q_flow_loss_des=rec_fr*R_des,

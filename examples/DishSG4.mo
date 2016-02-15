@@ -1,7 +1,7 @@
 model DishSG4
 	extends SolarTherm.Systems.GenericSystem(
 		weaFile="resources/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
-		fluxFile="resources/sg4_flux.motab",
+		optFile="resources/sg4_opt_eff.motab",
 		priFile="resources/aemo_vic_2014.motab",
 		SM=1.2,
 		P_gross=133.89e3,

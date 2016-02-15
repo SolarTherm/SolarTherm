@@ -4,7 +4,7 @@ model TroughWagner
 		//weaFile="resources/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
 		// Numerical problem with daggett solar position calcs
 		// The TMY2 Daggett data was actually used, but don't have conversion yet
-		fluxFile="resources/troughwagner_flux.motab",
+		optFile="resources/troughwagner_opt_eff.motab",
 		SM=1.9343,
 		P_gross=111e6,
 		P_rate=100e6,

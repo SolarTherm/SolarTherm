@@ -145,7 +145,8 @@ model ASTRI100
 
 	//SolarTherm.Optics.IdealInc con(A_con=A_con);
 	SolarTherm.Optics.SteeredConc con(
-		redeclare model FluxMap=SolarTherm.Optics.FluxMapIdealInc(A_con=A_con),
+		redeclare model OptEff=SolarTherm.Optics.OptEffIdealInc,
+		A_con=A_con,
 		steer_rate=0.001,
 		target_error=0.001
 		);

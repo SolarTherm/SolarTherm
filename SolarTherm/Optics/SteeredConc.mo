@@ -3,29 +3,23 @@ block SteeredConc "Concentrator that can be partially steered on sun"
 	extends SolarTherm.Optics.Concentrator;
 	import SI = Modelica.SIunits;
 
-	replaceable model FluxMap = SolarTherm.Optics.FluxMap; // should replace FluxMap
+	replaceable model OptEff = SolarTherm.Optics.OptEff; // should replace
+
+	parameter SI.Area A_con "Area of concentrator aperture";
 
 	parameter Real steer_rate(min=0) "Speed of mirror steer as fraction of total mirrors per second";
 	parameter Real target_error(min=0, max=1) = 0.01 "Allowed error between target and actual";
-	parameter Boolean use_input_eff = false "Used adjustable efficiency";
 	parameter Real actual_0(min=0, max=1) = 0 "Start position";
-	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 
 	input Real target(min=0, max=1) "Target fraction of mirrors on sun";
 	Real actual(min=0, max=1) "Actual fraction of mirrors on sun";
 
-	TrackingFlux tflux(
-		redeclare model FluxMap=FluxMap,
-		nelem=nelem,
-		use_input_eff=use_input_eff,
-		dni_des=dni_des
-		);
+	OptEff oeff(nelem=nelem);
 initial equation
 	actual = actual_0;
 equation
-	connect(wbus.alt, tflux.alt);
-	connect(wbus.azi, tflux.azi);
-	connect(wbus.dni, tflux.dni);
+	connect(wbus.alt, oeff.alt);
+	connect(wbus.azi, oeff.azi);
 
 	if actual > target + target_error then
 		der(actual) = -steer_rate;
@@ -35,5 +29,5 @@ equation
 		der(actual) = 0;
 	end if;
 
-	R_foc = actual*tflux.R;
+	R_foc = actual*oeff.eff*wbus.dni*A_con;
 end SteeredConc;
