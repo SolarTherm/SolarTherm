@@ -1,9 +1,8 @@
 model TroughWagner
 	extends SolarTherm.Systems.GenericSystem(
-		weaFile="resources/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
-		//weaFile="resources/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
-		// Numerical problem with daggett solar position calcs
-		// The TMY2 Daggett data was actually used, but don't have conversion yet
+		weaFile="resources/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
+		// The TMY2 Daggett was originally used, but don't have conversion yet
+		// so changed it to TMY3 Daggett
 		optFile="resources/troughwagner_opt_eff.motab",
 		SM=1.9343,
 		P_gro=111e6,
@@ -56,17 +55,19 @@ model TroughWagner
 	// * indicates where substitute data was used (either missing or replacement)
 
 	// SAM:
-	// Annual energy 387.538GWh
-	// Capacity factor 44.3%
-	// LCOE (nominal) 14.95c/kWh
-	// Average DNI 7.65kWh/m2/day
+	// Annual energy 392.2GWh
+	// Capacity factor 44.8%
+	// LCOE (nominal) 14.77c/kWh
+	// Average DNI 7.46kWh/m2/day
+
+	// SAM trying to turn everythin off
+	// LCOE (nominal) 15.01c/kWh
 
 	// Ours:
-	// ALICE SPRINGS!
-	// Annual energy 415.334GWh
-	// Capacity factor 47.6%
-	// LCOE (real) 12.0c/kWh
-	// Average DNI 2637.35/365 = 7.23kWh/m2/day
+	// Annual energy 401.3GWh
+	// Capacity factor 45.9%
+	// LCOE (real) 12.4c/kWh
+	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 	Real dni_annual(unit="kWh/m2");
 	initial equation
 		dni_annual = 0;

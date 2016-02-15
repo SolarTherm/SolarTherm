@@ -85,6 +85,10 @@ model DishSG4
 	// Capacity factor 31.3987%
 	// Total annual dni for site 2636.5kWh/m2
 
+	// All financing stuff we do not have turned off
+	// LCOE real 15.1c/kWh
+	// LCOE nominal 18.8c/kWh
+
 	// Our calcs:
 	// LCOE (real) 13.8c/kWh
 	// Annual energy 340.97MW/year

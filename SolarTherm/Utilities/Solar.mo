@@ -67,9 +67,12 @@ equation
 	// Not sure if we hurt the solver by doing this or cause possible numerical
 	// trouble...
 
-	zen = acos(sin(dec)*sin(from_deg(lat)) + cos(dec)*cos(from_deg(lat))*cos(hra));
-	azi = to_deg(pi + hra_s*acos((cos(zen)*sin(from_deg(lat))
-			- sin(dec))/(sin(zen)*cos(from_deg(lat)))));
+	// min and max applied to acos arguments because have had numerical
+	// problems where the interval [-1, 1] is slightly overshot.
+	zen = acos(min(max(sin(dec)*sin(from_deg(lat))
+		+ cos(dec)*cos(from_deg(lat))*cos(hra),-1),1));
+	azi = to_deg(pi + hra_s*acos(min(max((cos(zen)*sin(from_deg(lat))
+		- sin(dec))/(sin(zen)*cos(from_deg(lat))),-1),1)));
 	// The azimuth becomes very sensitive as zen approaches zero
 	alt = to_deg(pi/2 - zen);
 end SolarPositionDB;
