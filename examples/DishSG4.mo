@@ -5,7 +5,6 @@ model DishSG4
 		priFile="resources/aemo_vic_2014.motab",
 		SM=1.2,
 		P_gro=133.89e3,
-		P_net=0.9065*133.89e3,
 		eff_cyc=0.37,
 		eff_opt=0.9506, // Should be max value in optFile
 		t_storage=0,
@@ -87,9 +86,9 @@ model DishSG4
 	// Total annual dni for site 2636.5kWh/m2
 
 	// Our calcs:
-	// LCOE (real) 13.7c/kWh
+	// LCOE (real) 13.8c/kWh
 	// Annual energy 340.97MW/year
-	// Capacity factor 32.07%
+	// Capacity factor 31.60%
 	// Total annual dni for site 2637.29kWh/m2
 
 	Real dni_annual(unit="kWh/m2");

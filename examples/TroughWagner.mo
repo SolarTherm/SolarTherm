@@ -7,7 +7,6 @@ model TroughWagner
 		optFile="resources/troughwagner_opt_eff.motab",
 		SM=1.9343,
 		P_gro=111e6,
-		P_net=100e6,
 		eff_cyc=0.3774,
 		eff_opt=0.7449, // Should be max value in optFile
 		t_storage=6,
@@ -65,7 +64,7 @@ model TroughWagner
 	// Ours:
 	// ALICE SPRINGS!
 	// Annual energy 415.334GWh
-	// Capacity factor 47.4%
+	// Capacity factor 47.6%
 	// LCOE (real) 12.0c/kWh
 	// Average DNI 2637.35/365 = 7.23kWh/m2/day
 	Real dni_annual(unit="kWh/m2");

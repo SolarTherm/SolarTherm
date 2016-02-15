@@ -13,7 +13,6 @@ model GenericSystem
 
 	parameter Real SM "Solar multiple";
 	parameter SI.Power P_gro "Power block gross rating at design";
-	parameter SI.Power P_net "Power block net rating at design (nameplate)";
 	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle at design point";
 	parameter SI.Efficiency eff_opt = 1 "Efficiency of optics at design point (max in optFile)";
 	parameter Real t_storage(unit="h") = 6 "Hours of storage";
@@ -73,6 +72,7 @@ model GenericSystem
 	parameter SI.Area A_field = (R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
 
+	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
 	parameter FIN.Money C_cap = A_field*pri_field + A_land*pri_land
 		+ R_des*pri_receiver + E_max*pri_storage + P_gro*pri_block
