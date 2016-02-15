@@ -6,6 +6,7 @@ type MoneyPerYear = Real(unit="$/year");
 type EnergyPerYear = Real(unit="J/year");
 type EnergyPrice = Real(unit="$/J");
 type PowerPrice = Real(unit="$/W");
+type AreaPrice = Real(unit="$/m2");
 
 // For each component should have a capital cost and a maintenance cost
 // per year.

@@ -5,6 +5,7 @@ block TrackingFlux "Flux on elements when tracking sun"
 	parameter Integer nelem = 1 "Number of aperture elements";
 	parameter Boolean use_input_eff = false "Used adjustable efficiency";
 	parameter SI.Efficiency eff_fixed(min=0, max=1) = 1 "Fixed efficiency when no input used";
+	parameter SI.Irradiance dni_des = 1000 "DNI at desing point";
 	input nSI.Angle_deg alt "Sun altitude";
 	input nSI.Angle_deg azi "Sun azimuth";
 	input SI.Irradiance dni(min=0) "Direct normal irradiance";
@@ -18,9 +19,9 @@ equation
 	connect(azi, fluxmap.azi);
 	for i in 1:nelem loop
 		if use_input_eff then
-			R[i] = eff*(dni/1000)*fluxmap.flux[i];
+			R[i] = eff*(dni/dni_des)*fluxmap.flux[i];
 		else
-			R[i] = eff_fixed*(dni/1000)*fluxmap.flux[i];
+			R[i] = eff_fixed*(dni/dni_des)*fluxmap.flux[i];
 		end if;
 	end for;
 end TrackingFlux;

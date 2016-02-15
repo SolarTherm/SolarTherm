@@ -3,6 +3,7 @@ model GenericSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
+	import FIN = SolarTherm.Utilities.Finances;
 
 	parameter String weaFile "Weather file";
 	parameter String fluxFile "Field flux file";
@@ -20,12 +21,13 @@ model GenericSystem
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature blk_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature par_T_amb_des = 298.15 "Ambient temperature at design point";
+	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real rec_fr = 0.01 "Receiver loss fraction of radiance at design point";
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter Real par_fr = 0.01 "Parasitics fraction of power block rating at design point";
-	// If using SAM values for rec_ci, then convert according to:
+	// If using SAM values for rec_cf, then convert according to:
 	// {c0, c1, c2, c3} -> {0, c0, c1, c2, c3}
-	parameter Real rec_ci[:] = {1} "Receiver coefficients";
+	parameter Real rec_cf[:] = {1} "Receiver coefficients";
 	parameter Real rec_ca[:] = {1} "Receiver coefficients";
 	parameter Real rec_cw[:] = {1} "Receiver coefficients";
 	parameter Real tnk_cf[:] = {1} "Tank coefficients";
@@ -35,9 +37,14 @@ model GenericSystem
 	parameter Real par_cf[:] = {1} "Parasitics coefficients";
 	parameter Real par_ca[:] = {1} "Parasitics coefficients";
 
-	parameter SolarTherm.Utilities.Finances.Money C_cap "Capital costs";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main
-		"Maintenance costs for each year";
+	// Contingencies should be included
+	parameter Real land_mult = 1 "Land area multiplier";
+	parameter FIN.AreaPrice pri_field = 0 "Field cost per design aperture area";
+	parameter FIN.AreaPrice pri_land = 0 "Land cost per area";
+	parameter FIN.PowerPrice pri_receiver = 0 "Receiver cost per design power";
+	parameter FIN.EnergyPrice pri_storage = 0 "Storage cost per energy capacity";
+	parameter FIN.PowerPrice pri_block = 0 "Power block cost per gross rated power";
+
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
@@ -50,9 +57,16 @@ model GenericSystem
 	parameter Real tnk_full_ub(min=0, max=1) = 0.99;
 
 	parameter SI.HeatFlowRate Q_flow_rate = P_gross/eff_cyc "Rated heat to power block";
-	parameter SI.RadiantPower R_des = SM*Q_flow_rate "Design power for receiver";
+	parameter SI.RadiantPower R_des = SM*Q_flow_rate/(1 - rec_fr) "Design power for receiver";
 	parameter SI.Energy E_max = t_storage*3600*Q_flow_rate "Maximum tank stored energy";
 	parameter Boolean storage = (t_storage > 0) "Storage component present";
+
+	parameter SI.Area A_field = R_des/dni_des;
+	parameter SI.Area A_land = land_mult*A_field;
+	parameter FIN.Money C_cap = A_field*pri_field + A_land*pri_land
+		+ R_des*pri_receiver + E_max*pri_storage + P_gross*pri_block
+		"Capital costs";
+	parameter FIN.MoneyPerYear C_main "Maintenance costs for each year";
 
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Optics.SteeredConc con(
@@ -63,13 +77,14 @@ model GenericSystem
 			),
 		steer_rate=0.001,
 		target_error=0.001,
-		actual_0=1.0
+		actual_0=1.0,
+		dni_des=dni_des
 		);
 	SolarTherm.Receivers.RecGeneric rec(
 		Q_flow_loss_des=rec_fr*R_des,
 		R_des=R_des,
 		T_amb_des=rec_T_amb_des,
-		ci=rec_ci,
+		cf=rec_cf,
 		ca=rec_ca,
 		cw=rec_cw
 		);
@@ -113,7 +128,7 @@ model GenericSystem
 	Real sched;
 	SI.Power P_elec "Net electrical power out";
 	SI.Energy E_elec "Generated electricity";
-	SolarTherm.Utilities.Finances.Money R_spot "Spot market revenue";
+	FIN.Money R_spot "Spot market revenue";
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);
