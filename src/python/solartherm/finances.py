@@ -7,11 +7,15 @@ def lcoe(c_cap, c_om, r, t_life, t_cons, epy):
 	"""Levelised cost of electricity.
 
 	We take the convention that payments made or energy produced during a year
-	are discounted at the start of that year.  For example, the O&M
-	costs M paid during the second year has a present value of M/(1 + r).  This
-	will tend to overestimate costs but also overestimate the value of the
-	energy produced.  These will tend to cancel out so the affect on the LCOE
-	should be minimal.
+	are discounted at the end of that year.  For example, the O&M
+	costs M paid during the first year has a present value of M/(1 + r).  This
+	will tend to underestimate costs but also underestimate the value of the
+	energy produced.  These will tend to cancel out, but there will remain a 
+	difference between LCOE calculated using the start of the year.
+
+	The capital costs are discounted at the start of the year instead, and are
+	split over each year of construction.  This should probably be handled with
+	loans.
 	"""
 	nu = 0.
 	de = 0.
@@ -24,7 +28,7 @@ def lcoe(c_cap, c_om, r, t_life, t_cons, epy):
 		for i in range(t_cons):
 			nu += (c_cap/t_cons)/((1 + r)**i)
 
-	for i in range(t_cons, t_cons+t_life):
+	for i in range(t_cons+1, t_cons+t_life+1):
 		nu += c_om/((1 + r)**i)
 		de += epy/((1 + r)**i)
 

@@ -60,13 +60,14 @@ model TroughWagner
 	// LCOE (nominal) 14.77c/kWh
 	// Average DNI 7.46kWh/m2/day
 
-	// SAM trying to turn everythin off
-	// LCOE (nominal) 15.01c/kWh
+	// SAM trying to turn everything off
+	// LCOE (nominal) 13.24c/kWh
+	// LCOE (real) 13.24c/kWh
 
 	// Ours:
 	// Annual energy 401.3GWh
 	// Capacity factor 45.9%
-	// LCOE (real) 12.4c/kWh
+	// LCOE (real) 13.0c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 	Real dni_annual(unit="kWh/m2");
 	initial equation
