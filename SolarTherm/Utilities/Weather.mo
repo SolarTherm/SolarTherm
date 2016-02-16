@@ -9,13 +9,22 @@ block WeatherSource "Weather source including tabular data and other calculators
 	parameter String weaFile "File containing TMY data";
 	parameter nSI.Angle_deg lat = meta.lat "Latitude";
 	parameter nSI.Angle_deg lon = meta.lon "Longitude";
+	// Delay could be added to metadata.
+	// By default we assume no delay as it appears to depend on the weather file
+	// whether or not it lines up better.
+	parameter SI.Time delay[8] = {0,0,0,0,0,0,0,0} "Time delay of table columns";
 	output SolarTherm.Interfaces.WeatherBus wbus;
 protected
 	parameter String weaFileAct = weatherFileChecker(weaFile);
 	parameter Metadata meta = getMetadata(weaFileAct);
-	WeatherTable wtab(tableOnFile=true, fileName=weaFileAct, tableName="weather",
-		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
-		columns=2:9);
+	WeatherTable wtab(
+		each tableOnFile=true,
+		each fileName=weaFileAct,
+		each tableName="weather",
+		each smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+		each columns=2:9,
+		delay=delay
+		);
 	SolarPositionDB spos(lon=lon, lat=lat, tzone=meta.tzone,
 		tstart=meta.tstart);
 	SI.Irradiance dni_l;
@@ -60,8 +69,13 @@ equation
 end WeatherSource;
 
 block WeatherTable "Weather data stored in table"
-	extends Modelica.Blocks.Sources.CombiTimeTable(verboseRead=false);
+	extends Modelica.Blocks.Tables.CombiTable1D(verboseRead=false);
 	// The interpolation for things like wdir can be bad
+	parameter SI.Time delay[:] = zeros(size(columns, 1)) "Delay in table time";
+equation
+	for i in 1:size(columns, 1) loop
+		u[i] = time + delay[i];
+	end for;
 end WeatherTable;
 
 record Metadata "Metadata for weather file"
