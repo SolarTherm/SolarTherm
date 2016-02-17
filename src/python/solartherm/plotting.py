@@ -67,7 +67,7 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 						res.mat.data(v), label=v+' ('+unit+')',
 						color=co[v_id%len(co)])
 				v_id += 1
-			ax[i_ax].legend(loc=pos[i_ax])
+			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 	plt.tight_layout()

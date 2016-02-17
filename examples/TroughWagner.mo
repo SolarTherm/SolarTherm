@@ -10,6 +10,8 @@ model TroughWagner
 		eff_opt=0.7449, // Should be max value in optFile
 		t_storage=6,
 		ini_frac=0.1,
+		deploy_angle=10,
+		stow_angle=10,
 		rec_T_amb_des=298.15,
 		tnk_T_amb_des=298.15,
 		blk_T_amb_des=293.15,
@@ -65,9 +67,9 @@ model TroughWagner
 	// LCOE (real) 13.24c/kWh
 
 	// Ours:
-	// Annual energy 401.3GWh
-	// Capacity factor 45.9%
-	// LCOE (real) 13.0c/kWh
+	// Annual energy 395.2GWh
+	// Capacity factor 45.1%
+	// LCOE (real) 13.2c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 	Real dni_annual(unit="kWh/m2");
 	initial equation

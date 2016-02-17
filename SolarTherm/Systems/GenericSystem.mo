@@ -1,6 +1,7 @@
 within SolarTherm.Systems;
 model GenericSystem
 	import SI = Modelica.SIunits;
+	import nSI = Modelica.SIunits.Conversions.NonSIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FIN = SolarTherm.Utilities.Finances;
@@ -18,6 +19,8 @@ model GenericSystem
 	parameter Real t_storage(unit="h") = 6 "Hours of storage";
 	parameter Real ini_frac(min=0, max=1) = 0.0 "Initial fraction charged";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
+	parameter nSI.Angle_deg deploy_angle = 0 "Altitude angle to start tracking";
+	parameter nSI.Angle_deg stow_angle = 0 "Altitude angle to stop tracking";
 
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
@@ -87,9 +90,9 @@ model GenericSystem
 			orient_north=if wea.lat < 0 then true else false
 			),
 		A_con=A_field,
-		steer_rate=0.001,
-		target_error=0.001,
-		actual_0=1.0
+		steer_rate=0.002, // ~8 minutes till fully on sun
+		target_error=0.0001, // if large can be large source of missing energy
+		actual_0=0.0
 		);
 	SolarTherm.Receivers.RecGeneric rec(
 		Q_flow_loss_des=rec_fr*R_des,
@@ -169,7 +172,12 @@ equation
 	connect(per.E_elec, E_elec);
 	connect(per.R_spot, R_spot);
 
-	con.target = 1;
+	if (wea.wbus.azi <= 180 and wea.wbus.alt >= deploy_angle) or 
+			(wea.wbus.azi > 180 and wea.wbus.alt >= stow_angle) then
+		con.target = 1;
+	else
+		con.target = 0;
+	end if;
 
 	if const_dispatch then
 		sched = 1;

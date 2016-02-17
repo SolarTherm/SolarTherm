@@ -8,6 +8,8 @@ model DishSG4
 		eff_cyc=0.37,
 		eff_opt=0.9506, // Should be max value in optFile
 		t_storage=0,
+		deploy_angle=5,
+		stow_angle=5,
 		rec_T_amb_des=298.15,
 		blk_T_amb_des=294.15,
 		par_T_amb_des=294.15, // Assuming
@@ -91,8 +93,8 @@ model DishSG4
 
 	// Our calcs:
 	// LCOE (real) 14.6c/kWh
-	// Annual energy 340.97MW/year
-	// Capacity factor 31.60%
+	// Annual energy 340.2MW/year
+	// Capacity factor 31.5%
 	// Total annual dni for site 2637.29kWh/m2
 
 	Real dni_annual(unit="kWh/m2");
