@@ -8,9 +8,12 @@ add_library(solartherm_test SHARED
 install(TARGETS solartherm_test
 	LIBRARY DESTINATION lib)
 
-add_library(st_table SHARED
-	table.c
+add_library(st_tables SHARED
+	st_tables.c
+	solinterp/tables.c
+	solinterp/symmetries.c
+	solinterp/interpolation.c
 	)
 
-install(TARGETS st_table
+install(TARGETS st_tables
 	LIBRARY DESTINATION lib)

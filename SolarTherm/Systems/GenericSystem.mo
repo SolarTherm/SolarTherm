@@ -116,6 +116,8 @@ model GenericSystem
 		T_amb_des=blk_T_amb_des,
 		cf=blk_cf,
 		ca=blk_ca
+		//E_start=Q_flow_des*3600*1.5,
+		//Q_flow_leak=Q_flow_des*0.5
 		);
 	SolarTherm.PowerBlocks.ParasiticsGeneric par(
 		P_par_des=par_fr*P_gro,
@@ -173,7 +175,7 @@ equation
 	connect(per.R_spot, R_spot);
 
 	if (wea.wbus.azi <= 180 and wea.wbus.alt >= deploy_angle) or 
-			(wea.wbus.azi > 180 and wea.wbus.alt >= stow_angle) then
+			(wea.wbus.azi >= 180 and wea.wbus.alt >= stow_angle) then
 		con.target = 1;
 	else
 		con.target = 0;
