@@ -15,10 +15,12 @@ import Modelica.Constants.pi;
 import Modelica.Blocks.Math.Sign;
 
 partial block SolarPosition "Sun position"
-	output nSI.Angle_deg alt "Altitude";
-	output nSI.Angle_deg azi "Azimuth (Clockwise from North=0)";
 	parameter nSI.Angle_deg lon "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat "Latitude (+ve North)";
+	output nSI.Angle_deg alt "Altitude";
+	output nSI.Angle_deg azi "Azimuth (Clockwise from North=0)";
+	output nSI.Angle_deg elo "Ecliptic longitude (reduced to range [-90, 90])";
+	output nSI.Angle_deg hra "Solar hour angle (solar noon at 0)";
 equation
 end SolarPosition;
 
@@ -31,13 +33,13 @@ block SolarPositionDB "Sun position using Duffie and Beckman"
 	parameter SI.Time tstart = 0 "Local time difference between time=0 and start of year";
 	parameter nSI.Time_hour tzone = 0 "Time zone wrt UTC";
 protected
-	constant Real ang_vel(quantity="AngularVelocity", unit="rad/hour") = pi/12
-		"Angular velocity of earh in orbit";
+	constant Real ang_vel(quantity="AngularVelocity", unit="deg/hour") = 360./24
+		"Angular velocity of earth";
+	constant nSI.Angle_deg axial_tilt = 23.4354 "Axial tilt (ecliptic obliquity)";
 	SI.Angle B "Approximate angle of earth in its orbit";
 	nSI.Time_hour E "Equation of time";
-	SI.Angle dec "Solar declination (+ve North)";
+	SI.Angle dec "Solar declination (+ve North of equator)";
 	nSI.Time_hour t_solar "Local solar time (solar noon at 12hrs)";
-	SI.Angle hra "Hour angle (solar noon at 0)";
 	Real hra_s "Hour angle sign";
 	SI.Angle zen "Zenith angle";
 equation
@@ -55,13 +57,12 @@ equation
 	// The local solar time is calculated by applying the equation of time
 	// correction and correcting for the difference between the location and
 	// the time zone meridian
-	t_solar = to_hour(time + tstart) + from_deg(lon)/ang_vel - tzone + E;
+	t_solar = to_hour(time + tstart) + lon/ang_vel - tzone + E;
 	// The hour angle converts the solar time to an angle and lines up solar
 	// noon with zero
-	hra = ang_vel*(t_solar - 12);
-	// Note that t_solar and hra are not modulous 1day
+	hra = ang_vel*(mod(t_solar, 24) - 12);
 	// hra_s gives the sign of hra relative to solar noon for each day
-	hra_s = if noEvent(sin(hra) >= 0) then 1 else -1;
+	hra_s = if noEvent(hra >= 0) then 1 else -1;
 	// The inbuilt Sign operator/block goes to 0 at 0, which is not what we want
 	// where used below
 	// Not sure if we hurt the solver by doing this or cause possible numerical
@@ -70,11 +71,20 @@ equation
 	// min and max applied to acos arguments because have had numerical
 	// problems where the interval [-1, 1] is slightly overshot.
 	zen = acos(min(max(sin(dec)*sin(from_deg(lat))
-		+ cos(dec)*cos(from_deg(lat))*cos(hra),-1),1));
+		+ cos(dec)*cos(from_deg(lat))*cos(from_deg(hra)),-1),1));
 	azi = to_deg(pi + hra_s*acos(min(max((cos(zen)*sin(from_deg(lat))
 		- sin(dec))/(sin(zen)*cos(from_deg(lat))),-1),1)));
 	// The azimuth becomes very sensitive as zen approaches zero
 	alt = to_deg(pi/2 - zen);
+	// To fully calculate the ecliptic longitude from dec, also need right
+	// ascension (which we can calc from solar time) and then to apply an atan2:
+	//ra = ???
+	//elo = to_deg(atan2(sin(ra)*cos(from_deg(axial_tilt))
+	//			 + tan(dec)*sin(from_deg(axial_tilt)), cos(ra)));
+	// Using the fact that the ecliptic latitude is zero, we can calculate it
+	// for just the range -90 to 90.  This is all that matters anyway for solar
+	// efficiency calcs as it should be symmetric in the other quadrants.
+	elo = to_deg(asin(min(max(sin(dec)/sin(from_deg(axial_tilt)),-1),1)));
 end SolarPositionDB;
 
 end Solar;

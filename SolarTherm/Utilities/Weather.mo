@@ -37,6 +37,8 @@ equation
 	// the values needed to be connected here (so they are registered)
 	connect(wbus.alt, spos.alt);
 	connect(wbus.azi, spos.azi);
+	connect(wbus.elo, spos.elo);
+	connect(wbus.hra, spos.hra);
 	//connect(wbus.ghi, wtab.y[1]);
 	//ghi_l = noEvent(if wtab.y[1] > 0 then wtab.y[1] else 0);
 	//ghi_l = if noEvent(wtab.y[1] > 0) then wtab.y[1] else 0;

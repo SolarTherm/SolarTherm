@@ -18,8 +18,7 @@ block SteeredConc "Concentrator that can be partially steered on sun"
 initial equation
 	actual = actual_0;
 equation
-	connect(wbus.alt, oeff.alt);
-	connect(wbus.azi, oeff.azi);
+	connect(wbus, oeff.wbus);
 
 	if actual > target + target_error then
 		der(actual) = -steer_rate;

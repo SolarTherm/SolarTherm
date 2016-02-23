@@ -21,12 +21,12 @@ block OptEffFile "Read in optical efficiency from file"
 		);
 equation
 	for i in 1:nelem loop
-		table[i].u1 = max(alt, 0); // Needed because of interpolation below horizon
+		table[i].u1 = max(wbus.alt, 0); // Needed because of interpolation below horizon
 
 		if orient_north then
-			table[i].u2 = azi;
+			table[i].u2 = wbus.azi;
 		else
-			table[i].u2 = mod(azi + 180.0, 360);
+			table[i].u2 = mod(wbus.azi + 180.0, 360.);
 		end if;
 		eff[i] = table[i].y;
 	end for;

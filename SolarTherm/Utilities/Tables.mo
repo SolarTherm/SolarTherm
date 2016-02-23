@@ -18,7 +18,7 @@ class STTable "Table"
 	end destructor;
 end STTable;
 
-function table_grid "Perform symmetry and grid transform to table"
+function tableGrid "Perform symmetry and grid transform to table"
 	input STTable table;
 	input Integer n;
 	input Integer m;
@@ -26,9 +26,10 @@ function table_grid "Perform symmetry and grid transform to table"
 	output Integer res;
 	external "C" res = st_table_grid_transform(table, n, m, sym)
 			annotation(Library="st_tables");
-end table_grid;
+end tableGrid;
 
-function table_catrom_interp "Perform Catmull-Rom interpolation"
+// Should add in derivative for this interpolation
+function tableCatromInterp "Perform Catmull-Rom interpolation"
 	input STTable table;
 	input Real x;
 	input Real y;
@@ -37,6 +38,6 @@ function table_catrom_interp "Perform Catmull-Rom interpolation"
 	output Real p;
 	external "C" p = st_table_catrom_interp(table, x, y, x_step, y_step)
 			annotation(Library="st_tables");
-end table_catrom_interp;
+end tableCatromInterp;
 
 end Tables;

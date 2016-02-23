@@ -4,6 +4,8 @@ expandable connector WeatherBus "Bus for weather data"
 	import nSI = Modelica.SIunits.Conversions.NonSIunits;
 	nSI.Angle_deg alt "Sun altitude";
 	nSI.Angle_deg azi "Sun azimuth (Clockwise from North=0)";
+	nSI.Angle_deg elo "Ecliptic longitude (reduced to range [-90, 90])";
+	nSI.Angle_deg hra "Solar hour angle (solar noon at 0)";
 	SI.Irradiance ghi(min=0) "Global horizontal irradiance";
 	SI.Irradiance dni(min=0) "Direct normal irradiance";
 	SI.Temperature Tdry "Dry-bulb temperature";
