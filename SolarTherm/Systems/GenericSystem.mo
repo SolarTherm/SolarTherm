@@ -21,6 +21,8 @@ model GenericSystem
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter nSI.Angle_deg deploy_angle = 0 "Altitude angle to start tracking";
 	parameter nSI.Angle_deg stow_angle = 0 "Altitude angle to stop tracking";
+	parameter Real t_blk_heat(unit="h") = 0 "Hours equivalent to heat up power block";
+	parameter Real t_blk_diss(unit="h") = 1 "Hours equivalent to cool power block";
 
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
@@ -75,6 +77,9 @@ model GenericSystem
 	parameter SI.Area A_field = (R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
 
+	parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/(3600*t_blk_heat*t_blk_diss + 1);
+	parameter SI.Energy E_blk_heat = Q_flow_blk_leak*3600*t_blk_diss;
+
 	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
 	parameter FIN.Money C_cap = A_field*pri_field + A_land*pri_land
@@ -115,9 +120,9 @@ model GenericSystem
 		Q_flow_des=Q_flow_des,
 		T_amb_des=blk_T_amb_des,
 		cf=blk_cf,
-		ca=blk_ca
-		//E_start=Q_flow_des*3600*1.5,
-		//Q_flow_leak=Q_flow_des*0.5
+		ca=blk_ca,
+		E_start=E_blk_heat,
+		Q_flow_leak=Q_flow_blk_leak
 		);
 	SolarTherm.PowerBlocks.ParasiticsGeneric par(
 		P_par_des=par_fr*P_gro,

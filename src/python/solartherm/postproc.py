@@ -93,6 +93,51 @@ class SimResult(object):
 		else:
 			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
 	
+	def get_integration(self, name, t0, t1):
+		"""Integration of linear interpolation over interval
+		"""
+		ab = self.mat.abscissa(name, valuesOnly=True)
+		val = self.mat.data(name)
+
+		il = self.get_lower_ind(ab, t0)
+		iu = self.get_lower_ind(ab, t1) + 1
+
+		vsum = 0.
+		for i in range(il, iu):
+			vl = val[i]
+			vu = val[i+1]
+
+			tl = ab[i]
+			tu = ab[i+1]
+
+			if tl == tu:
+				continue
+
+			if tl < t0:
+				vl = (vu - vl)*(t0 - tl)/(tu - tl) + vl
+				tl = t0
+			if tu > t1:
+				vu = (vu - vl)*(t1 - tl)/(tu - tl) + vl
+				tu = t1
+
+			vsum += 0.5*(vu + vl)*(tu - tl)
+
+		return vsum
+
+	def sample(self, name, step):
+		ab = self.mat.abscissa(name, valuesOnly=True)
+		n = int((ab[-1] - ab[0])/step)
+
+		t = []
+		v = []
+		for i in range(n):
+			t0 = step*i + ab[0]
+			t1 = step*(i + 1) + ab[0]
+			t.append((t0 + t1)/2)
+			v.append(self.get_integration(name, t0, t1)/step)
+
+		return t, v
+	
 	def calc_perf(self):
 		"""Calculate plant performance.
 

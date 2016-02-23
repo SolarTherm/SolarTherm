@@ -12,9 +12,9 @@ if __name__ == '__main__':
 	parser.add_argument('var', type=str,
 			help='variable to inspect')
 	parser.add_argument('time', type=str,
-			help='time in simulation')
+			help='time in simulation, or time step for sampling')
 	parser.add_argument('--type', type=str, default='linear',
-			help='type of interpolation: linear, closest')
+			help='type of interpolation: linear, closest, sample')
 	args = parser.parse_args()
 
 	fn = args.file
@@ -33,10 +33,18 @@ if __name__ == '__main__':
 		val = res.get_closest(args.var, time)
 	elif args.type == 'closest':
 		val = res.get_interp(args.var, time)
+	elif args.type == 'sample':
+		val = res.sample(args.var, time)
 	else:
 		print('Interpolation type not recognised')
 
-	print(str(val) + ' ' + unit)
+	if args.type == 'sample':
+		t, v = val
+		print('Time (sec), ' + args.var + ' (' + unit + ')')
+		for i in range(len(t)): 
+			print(str(t[i]) + ', ' + str(v[i]))
+	else:
+		print(str(val) + ' ' + unit)
 
 # example call:
 # st_inspect EnergySystem_res.mat 'tnk.E' 7d

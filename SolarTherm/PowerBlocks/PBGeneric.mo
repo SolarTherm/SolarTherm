@@ -29,10 +29,9 @@ initial equation
 	end if;
 equation
 	if startup_energy then
-		if E_st >= buffer*E_start then
-			der(E_st) = min(0, Q_flow_cyc - Q_flow_leak);
-		elseif E_st <= 0 then
-			der(E_st) = max(0, Q_flow_cyc - Q_flow_leak);
+		if (E_st > buffer*E_start and Q_flow_cyc - Q_flow_leak >= 0)
+				or (E_st < 0 and Q_flow_cyc - Q_flow_leak <= 0) then
+			der(E_st) = 0;
 		else
 			der(E_st) = Q_flow_cyc - Q_flow_leak;
 		end if;

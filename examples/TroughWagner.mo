@@ -12,6 +12,8 @@ model TroughWagner
 		ini_frac=0.1,
 		deploy_angle=10,
 		stow_angle=10,
+		t_blk_heat=1.5,
+		t_blk_diss=6.,
 		rec_T_amb_des=298.15,
 		tnk_T_amb_des=298.15,
 		blk_T_amb_des=293.15,
