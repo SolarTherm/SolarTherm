@@ -1,12 +1,13 @@
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
 
-add_library(solartherm_test SHARED
+add_library(st_test_ext SHARED
 	TestExternalC.c
 	)
 
-install(TARGETS solartherm_test
-	LIBRARY DESTINATION lib)
+install(TARGETS st_test_ext
+	LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/tests/Resources/Library/
+	)
 
 add_library(st_tables SHARED
 	st_tables.c
@@ -16,4 +17,5 @@ add_library(st_tables SHARED
 	)
 
 install(TARGETS st_tables
-	LIBRARY DESTINATION lib)
+	LIBRARY DESTINATION ${SOLARTHERM_CLIB_INSTALL_DIR}
+	)

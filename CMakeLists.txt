@@ -6,8 +6,14 @@ enable_testing()
 
 if (DEFINED MODELICA_LIBRARY_INSTALL_DIR)
 else()
-	set(MODELICA_LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/omlibrary/")
-	#set(MODELICA_LIBRARY_INSTALL_DIR "${HOME}/.openmodelica/libraries/")
+	set(MODELICA_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/omlibrary/)
+	#set(MODELICA_LIBRARY_INSTALL_DIR ${HOME}/.openmodelica/libraries/)
+endif()
+
+if (DEFINED SOLARTHERM_CLIB_INSTALL_DIR)
+else()
+	set(SOLARTHERM_CLIB_INSTALL_DIR ${MODELICA_LIBRARY_INSTALL_DIR}/SolarTherm/Resources/Library/)
+	#set(SOLARTHERM_CLIB_INSTALL_DIR lib)
 endif()
 
 if (DEFINED FORCE_PYTHON_PREFIX)
@@ -21,8 +27,9 @@ endif()
 set(PYTHON_LIBRARY_VERSION "python2.7")
 
 add_subdirectory(src)
-add_subdirectory(test)
+add_subdirectory(tests)
 add_subdirectory(examples)
+add_subdirectory(resources)
 
 #file(COPY SolarTherm DESTINATION .)
 install(DIRECTORY SolarTherm DESTINATION ${MODELICA_LIBRARY_INSTALL_DIR})

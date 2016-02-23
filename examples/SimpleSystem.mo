@@ -5,8 +5,8 @@ model SimpleSystem
 	import CV = Modelica.SIunits.Conversions;
 
 	// Parameters
-	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
-	parameter String priFile = "resources/aemo_vic_2014.motab";
+	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
+	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
 
 	parameter SI.Area A_con = 700 "Area of concentrator";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";

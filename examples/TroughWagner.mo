@@ -1,9 +1,9 @@
 model TroughWagner
 	extends SolarTherm.Systems.GenericSystem(
-		weaFile="resources/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
+		weaFile="resources/weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
 		// The TMY2 Daggett was originally used, but don't have conversion yet
 		// so changed it to TMY3 Daggett
-		optFile="resources/troughwagner_opt_eff.motab",
+		optFile="resources/optics/troughwagner_opt_eff.motab",
 		SM=1.9343,
 		P_gro=111e6,
 		eff_cyc=0.3774,

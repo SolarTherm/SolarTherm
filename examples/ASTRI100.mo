@@ -14,9 +14,9 @@ model ASTRI100
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.DynamicFreeInitial,
 		allowFlowReversal=false);
 
-	parameter String weaFile = "resources/Alice_Springs_Real2000_Created20130430.motab";
+	parameter String weaFile = "resources/weather/Alice_Springs_Real2000_Created20130430.motab";
 	// Might have to deactivate price calcs if not connected to NEM
-	parameter String priFile = "resources/aemo_vic_2014.motab";
+	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
 
 	// Power block
 	// Boiler operating pressure 100Bar

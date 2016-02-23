@@ -4,7 +4,7 @@ block TestSteeredConc
 	import SolarTherm.Optics.OptEffIdealInc;
 	import SolarTherm.Utilities.Weather.WeatherSource;
 
-	parameter String weaFile = "resources/weatherfile1.motab";
+	parameter String weaFile = "resources/tests/weatherfile1.motab";
 	WeatherSource wea(weaFile=weaFile);
 
 	SteeredConc conc(

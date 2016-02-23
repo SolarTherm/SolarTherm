@@ -14,8 +14,8 @@ model FluidSystem
 		allowFlowReversal=false);
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
-	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
-	parameter String priFile = "resources/aemo_vic_2014.motab";
+	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
+	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
 
 	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";

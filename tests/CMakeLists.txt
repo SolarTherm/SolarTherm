@@ -7,5 +7,3 @@ add_test(TestSolarTherm ./run_tests)
 # Commenting out because could be trouble with different prefixes
 #set_tests_properties(TestSolarTherm PROPERTIES
 #	ENVIRONMENT "${CTEST_ENVIRONMENT}")
-
-add_subdirectory(resources)

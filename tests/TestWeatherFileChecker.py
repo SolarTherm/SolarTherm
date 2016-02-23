@@ -10,8 +10,8 @@ import os
 
 class TestWeatherFileChecker(unittest.TestCase):
 	def setUp(self):
-		if os.path.isfile('resources/weatherfile2.motab'):
-			os.remove('resources/weatherfile2.motab')
+		if os.path.isfile('resources/tests/weatherfile2.motab'):
+			os.remove('resources/tests/weatherfile2.motab')
 
 		fn = 'TestWeatherFileChecker.mo'
 		sim = simulation.Simulator(fn)
@@ -23,7 +23,7 @@ class TestWeatherFileChecker(unittest.TestCase):
 	def test_checker(self):
 		self.assertTrue(self.res.get_closest('fn1_correct', 0))
 		self.assertTrue(self.res.get_closest('fn2_correct', 0))
-		self.assertTrue(os.path.isfile('resources/weatherfile2.motab'))
+		self.assertTrue(os.path.isfile('resources/tests/weatherfile2.motab'))
 
 if __name__ == '__main__':
 	unittest.main()

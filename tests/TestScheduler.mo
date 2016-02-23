@@ -1,6 +1,6 @@
 block TestScheduler
 	import SolarTherm.Utilities.Schedule.Scheduler;
-	parameter String file = "resources/daily_schedule.motab";
+	parameter String file = "resources/tests/daily_schedule.motab";
 	Scheduler sch1(
 		file=file,
 		ndaily=2, // needs to match file (only load first two tables)
