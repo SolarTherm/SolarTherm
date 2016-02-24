@@ -1,6 +1,7 @@
 #! /bin/env python
 
 import argparse
+import os
 
 from solartherm import postproc
 from solartherm import plotting
@@ -8,25 +9,31 @@ from solartherm import plotting
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
-			help='result mat-file to read')
+			help='colon separated result mat or csv files')
+	parser.add_argument('var', metavar='V', type=str, nargs='+',
+			help='variables to plot, e.g.: v1,v2:v3 v4:v5 ...')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
 	parser.add_argument('--noshare', action='store_false',
 			help='turn off sharing of subplot x-axes')
-	parser.add_argument('-o', '--outfile',  nargs=1, type=str, default=[None],
+	parser.add_argument('-o', '--outfile',  type=str, default=None,
 			help='save figure to outfile instead of displaying')
 	parser.add_argument('--xlim', nargs=2, type=str, default=[],
 			help='domain of x axis, e.g., 0 86400 or 5d 6d or 0 1y')
-	parser.add_argument('var', metavar='V', type=str, nargs='+',
-			help='variables to plot, e.g.: v1,v2:v3 v4:v5 ...')
 	args = parser.parse_args()
 
-	fn = args.file
-	res = postproc.SimResult(fn)
+	res = []
+	for fn in args.file.split(':'):
+		ext = os.path.splitext(fn)[1]
+		if ext == '.csv':
+			res.append(postproc.CSVResult(fn))
+		else:
+			res.append(postproc.SimResult(fn))
 	if args.names:
-		print(sorted(str(n) for n in res.mat.names()))
+		for r in res:
+			print(sorted(str(n) for n in r.get_names()))
 	else:
-		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile[0],
+		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile,
 				share=args.noshare)
 
 # example call:

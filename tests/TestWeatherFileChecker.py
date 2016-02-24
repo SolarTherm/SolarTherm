@@ -21,8 +21,8 @@ class TestWeatherFileChecker(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_checker(self):
-		self.assertTrue(self.res.get_closest('fn1_correct', 0))
-		self.assertTrue(self.res.get_closest('fn2_correct', 0))
+		self.assertTrue(self.res.closest('fn1_correct', 0))
+		self.assertTrue(self.res.closest('fn2_correct', 0))
 		self.assertTrue(os.path.isfile('resources/tests/weatherfile2.motab'))
 
 if __name__ == '__main__':

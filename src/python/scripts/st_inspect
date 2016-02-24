@@ -30,9 +30,9 @@ if __name__ == '__main__':
 
 	val = None
 	if args.type == 'linear':
-		val = res.get_closest(args.var, time)
+		val = res.closest(args.var, time)
 	elif args.type == 'closest':
-		val = res.get_interp(args.var, time)
+		val = res.interpolate(args.var, time)
 	elif args.type == 'sample':
 		val = res.sample(args.var, time)
 	else:

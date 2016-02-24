@@ -3,6 +3,7 @@ model TroughWagner
 		weaFile="resources/weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
 		// The TMY2 Daggett was originally used, but don't have conversion yet
 		// so changed it to TMY3 Daggett
+		// wdelay={1800,1800,0,0,0,0,0,0},
 		optFile="resources/optics/troughwagner_opt_eff.motab",
 		SM=1.9343,
 		P_gro=111e6,
@@ -12,8 +13,8 @@ model TroughWagner
 		ini_frac=0.1,
 		deploy_angle=10,
 		stow_angle=10,
-		t_blk_heat=1.5,
-		t_blk_diss=6.,
+		//t_blk_heat=1.5,
+		//t_blk_diss=6.,
 		rec_T_amb_des=298.15,
 		tnk_T_amb_des=298.15,
 		blk_T_amb_des=293.15,

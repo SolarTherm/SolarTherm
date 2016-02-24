@@ -21,7 +21,7 @@ class TestCommand(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_touching(self):
-		self.assertEqual(self.res.get_interp('result', 0), 0)
+		self.assertEqual(self.res.interpolate('result', 0), 0)
 		self.assertTrue(os.path.isfile('TestCommandTouched'))
 
 if __name__ == '__main__':

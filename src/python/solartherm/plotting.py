@@ -9,23 +9,25 @@ matplotlib.use('QT4Agg')
 #matplotlib.use('QT5Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
 import matplotlib.pyplot as plt
+import re
 
 from solartherm import simulation
 
 def plot_res(res, fmt, xlim=[], out=None, share=True):
-	"""Plot variables from a SimResult.
+	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
-	fmt.  It is a list of subplots, where each subplot is representated by a
+	in fmt.  It is a list of subplots, where each subplot is representated by a
 	string with the format:
 		
-		"var1,var2:var3"
+		"var1,2var2:var3"
 	
 	The optional colon separates the names of variables to be plotted on the
-	left y-axis, from the variables to be plotted on the right y-axis.  A full
-	fmt might look like:
+	left y-axis, from the variables to be plotted on the right y-axis.  An
+	optional integer prefix to a name indicates to which results object the
+	variable belongs (defaults to the first). A full fmt might look like:
 
-		["var1,var2:var3", "var4:var5", "var6"]
+		["var1,1var2:2var3", "var4:2var5", "2var6"]
 	
 	An optional pair that represents bounds on the domain can be provided as
 	xlim.
@@ -37,6 +39,8 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 	xlim = [simulation.parse_var_val(x, 's') for x in xlim]
 
 	fig = plt.figure()
+
+	vre = re.compile('(\d+)?(\S+)')
 
 	# Colours for our lines
 	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -57,15 +61,29 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 		pos[1] = 1
 		v_id = 0
 		for i_ax, v_y in enumerate(v_ys):
-			for v in v_y.split(','):
+			for var in v_y.split(','):
+				vre_res = vre.match(var)
+				if vre_res is None:
+					raise ValueError('Cannot parse variable name ' + var)
+				ri = vre_res.group(1)
+				v = vre_res.group(2)
+				if ri is None:
+					ri = 0
+				else:
+					ri = int(ri) - 1
+				if ri < 0 or ri >= len(res):
+					raise ValueError('Result file index out of range (1,...,'
+							+ str(len(res)) + ') ' + str(ri + 1))
 				unit = ''
 				try:
-					unit = res.units[v]
+					unit = res[ri].get_unit(v)
 				except:
 					pass
-				ax[i_ax].plot(res.mat.abscissa(v, valuesOnly=True),
-						res.mat.data(v), label=v+' ('+unit+')',
-						color=co[v_id%len(co)])
+				label = v + ' (' + unit + ')'
+				if len(res) > 1:
+					label = str(ri+1) + ': ' + label
+				ax[i_ax].plot(res[ri].get_time(v), res[ri].get_values(v),
+						label=label, color=co[v_id%len(co)])
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
 		if len(xlim) == 2:

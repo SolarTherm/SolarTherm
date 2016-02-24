@@ -48,7 +48,19 @@ class SimResult(object):
 				node = root.find('*ScalarVariable[@name=\''+ns+'\']/*[@unit]')
 				self.units[ns] = '' if node is None else node.attrib['unit']
 	
-	def get_lower_ind(self, ab, t):
+	def get_names(self):
+		return self.mat.names()
+
+	def get_time(self, name):
+		return self.mat.abscissa(name, valuesOnly=True)
+
+	def get_values(self, name):
+		return self.mat.data(name)
+
+	def get_unit(self, name):
+		return self.units[name]
+
+	def lower_ind(self, ab, t):
 		"""Get index for point just below or equal to the requested time.
 		"""
 		# Note that values are provided before and after events for quantities
@@ -64,12 +76,12 @@ class SimResult(object):
 
 		return il
 	
-	def get_closest(self, name, t):
+	def closest(self, name, t):
 		"""Closest point in interval.
 		"""
 		ab = self.mat.abscissa(name, valuesOnly=True)
 
-		il = self.get_lower_ind(ab, t)
+		il = self.lower_ind(ab, t)
 		iu = il + 1
 
 		if t <= ((ab[iu] + ab[il])/2):
@@ -77,12 +89,12 @@ class SimResult(object):
 		else:
 			return self.mat.data(name)[iu]
 
-	def get_interp(self, name, t):
+	def interpolate(self, name, t):
 		"""Linear interpolation of point.
 		"""
 		ab = self.mat.abscissa(name, valuesOnly=True)
 
-		il = self.get_lower_ind(ab, t)
+		il = self.lower_ind(ab, t)
 		iu = il + 1
 
 		vl = self.mat.data(name)[il]
@@ -93,14 +105,14 @@ class SimResult(object):
 		else:
 			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
 	
-	def get_integration(self, name, t0, t1):
+	def integrate(self, name, t0, t1):
 		"""Integration of linear interpolation over interval
 		"""
 		ab = self.mat.abscissa(name, valuesOnly=True)
 		val = self.mat.data(name)
 
-		il = self.get_lower_ind(ab, t0)
-		iu = self.get_lower_ind(ab, t1) + 1
+		il = self.lower_ind(ab, t0)
+		iu = self.lower_ind(ab, t1) + 1
 
 		vsum = 0.
 		for i in range(il, iu):
@@ -134,7 +146,7 @@ class SimResult(object):
 			t0 = step*i + ab[0]
 			t1 = step*(i + 1) + ab[0]
 			t.append((t0 + t1)/2)
-			v.append(self.get_integration(name, t0, t1)/step)
+			v.append(self.integrate(name, t0, t1)/step)
 
 		return t, v
 	
@@ -180,3 +192,46 @@ class SimResult(object):
 	# Static class variables
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
+
+class CSVResult(object):
+	"""Results from a CSV file.
+	Assumes first row is a header.
+	Assumes first column is time.
+	"""
+	def __init__(self, fn, delim=','):
+		self.fn = fn
+		self.delim = delim
+		self.names = []
+		self.data = {}
+		self.units = {}
+		self.load_res()
+	
+	def load_res(self):
+		f = open(self.fn)
+		header = f.readline().split(self.delim)
+		for label in header:
+			l = label.split('(')
+			name = l[0].strip()
+			self.names.append(name)
+			if len(l) > 1:
+				self.units[name] = l[1].strip().strip(')')
+			else:
+				self.units[name] = ''
+			self.data[name] = []
+
+		for line in f.readlines():
+			l = line.split(self.delim)
+			for i, val in enumerate(l):
+				self.data[self.names[i]].append(float(val))
+
+	def get_names(self):
+		return self.names
+
+	def get_time(self, name):
+		return self.data[self.names[0]] # assume first
+
+	def get_values(self, name):
+		return self.data[name]
+
+	def get_unit(self, name):
+		return self.units[name]

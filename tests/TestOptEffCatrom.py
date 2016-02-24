@@ -19,7 +19,7 @@ class TestOptEffCatrom(unittest.TestCase):
 
 	def test_opt_eff_interp(self):
 		pass
-		#self.assertAlmostEqual(self.res.get_interp('oeff.eff[1]', 0.1), 0)
+		#self.assertAlmostEqual(self.res.interpolate('oeff.eff[1]', 0.1), 0)
 
 if __name__ == '__main__':
 	unittest.main()

@@ -16,8 +16,8 @@ class TestSTTable(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_interp(self):
-		self.assertEqual(self.res.get_interp('res', 0), 0)
-		self.assertEqual(self.res.get_interp('val', 0), 3.)
+		self.assertEqual(self.res.interpolate('res', 0), 0)
+		self.assertEqual(self.res.interpolate('val', 0), 3.)
 
 if __name__ == '__main__':
 	unittest.main()

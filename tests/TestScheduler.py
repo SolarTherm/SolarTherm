@@ -18,14 +18,14 @@ class TestScheduler(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_sched(self):
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 0), 0)
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 6*3600), 0)
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 18*3600), 1)
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 0), 0)
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 30*3600), 2)
-		self.assertAlmostEqual(self.res.get_closest('sch1.v', 42*3600), 3)
-		self.assertAlmostEqual(self.res.get_closest('sch2.v', 15*24*3600), 10)
-		self.assertAlmostEqual(self.res.get_closest('sch2.v', 45*24*3600), 20)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 0), 0)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 6*3600), 0)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 18*3600), 1)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 0), 0)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 30*3600), 2)
+		self.assertAlmostEqual(self.res.closest('sch1.v', 42*3600), 3)
+		self.assertAlmostEqual(self.res.closest('sch2.v', 15*24*3600), 10)
+		self.assertAlmostEqual(self.res.closest('sch2.v', 45*24*3600), 20)
 
 if __name__ == '__main__':
 	unittest.main()

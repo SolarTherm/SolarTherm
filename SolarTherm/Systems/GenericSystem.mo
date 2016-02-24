@@ -12,6 +12,7 @@ model GenericSystem
 	parameter String optFile "Optical efficiency file";
 	parameter String priFile = "" "Electricity price file";
 
+	parameter Real wdelay[8] = {0,0,0,0,0,0,0,0} "Weather file delays";
 	parameter Real SM "Solar multiple";
 	parameter SI.Power P_gro "Power block gross rating at design";
 	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle at design point";
@@ -88,7 +89,10 @@ model GenericSystem
 	parameter FIN.MoneyPerYear C_year = P_name*pri_om_name "Cost per year";
 	parameter Real C_prod(unit="$/W/year") = pri_om_prod "Cost per production per year";
 
-	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Utilities.Weather.WeatherSource wea(
+		weaFile=weaFile,
+		delay = wdelay
+		);
 	SolarTherm.Optics.SteeredConc con(
 		redeclare model OptEff=SolarTherm.Optics.OptEffFile(
 			fileName=optFile,

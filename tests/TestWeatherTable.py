@@ -15,17 +15,17 @@ class TestWeatherTable(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_table(self):
-		self.assertAlmostEqual(self.res.get_interp('linear.y[1]', 0.5), 2.5)
-		self.assertAlmostEqual(self.res.get_interp('linear.y[1]', 0.5), 2.5)
-		self.assertAlmostEqual(self.res.get_interp('linear.y[1]', 1.5), 2)
-		self.assertAlmostEqual(self.res.get_interp('linear.y[1]', 2.5), 2.5)
-		self.assertAlmostEqual(self.res.get_interp('cderiv.y[1]', 0), 3)
-		self.assertAlmostEqual(self.res.get_interp('cderiv.y[1]', 1), 2)
-		self.assertAlmostEqual(self.res.get_interp('cderiv.y[1]', 2), 2)
-		self.assertAlmostEqual(self.res.get_interp('cderiv.y[1]', 3), 3)
-		self.assertAlmostEqual(self.res.get_interp('cseg.y[1]', 0.5), 3)
-		self.assertAlmostEqual(self.res.get_interp('cseg.y[1]', 1.5), 2)
-		self.assertAlmostEqual(self.res.get_interp('cseg.y[1]', 2.5), 2)
+		self.assertAlmostEqual(self.res.interpolate('linear.y[1]', 0.5), 2.5)
+		self.assertAlmostEqual(self.res.interpolate('linear.y[1]', 0.5), 2.5)
+		self.assertAlmostEqual(self.res.interpolate('linear.y[1]', 1.5), 2)
+		self.assertAlmostEqual(self.res.interpolate('linear.y[1]', 2.5), 2.5)
+		self.assertAlmostEqual(self.res.interpolate('cderiv.y[1]', 0), 3)
+		self.assertAlmostEqual(self.res.interpolate('cderiv.y[1]', 1), 2)
+		self.assertAlmostEqual(self.res.interpolate('cderiv.y[1]', 2), 2)
+		self.assertAlmostEqual(self.res.interpolate('cderiv.y[1]', 3), 3)
+		self.assertAlmostEqual(self.res.interpolate('cseg.y[1]', 0.5), 3)
+		self.assertAlmostEqual(self.res.interpolate('cseg.y[1]', 1.5), 2)
+		self.assertAlmostEqual(self.res.interpolate('cseg.y[1]', 2.5), 2)
 
 if __name__ == '__main__':
 	unittest.main()

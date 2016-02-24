@@ -23,13 +23,13 @@ class TestWeatherSource(unittest.TestCase):
 		# if not a sampled instant.
 
 	def test_source(self):
-		self.assertAlmostEqual(self.res.get_closest('wea.lat', 0), -34.236)
-		self.assertAlmostEqual(self.res.get_closest('wea.lon', 0), 142.087)
+		self.assertAlmostEqual(self.res.closest('wea.lat', 0), -34.236)
+		self.assertAlmostEqual(self.res.closest('wea.lon', 0), 142.087)
 		tstart = 6600
 		solar_noon = 12*60*60 + 34*60 + 54 - tstart
-		self.assertAlmostEqual(self.res.get_interp('wea.wbus.alt', solar_noon),
+		self.assertAlmostEqual(self.res.interpolate('wea.wbus.alt', solar_noon),
 				78.8, delta=0.1)
-		self.assertAlmostEqual(self.res.get_interp('wea.wbus.azi', solar_noon),
+		self.assertAlmostEqual(self.res.interpolate('wea.wbus.azi', solar_noon),
 				360.0, delta=1.0) # very sensitive around noon
 
 if __name__ == '__main__':
