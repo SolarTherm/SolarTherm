@@ -33,6 +33,7 @@ model GenericSystem
 	parameter Real rec_fr = 0.01 "Receiver loss fraction of radiance at design point";
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter Real par_fr = 0.01 "Parasitics fraction of power block rating at design point";
+	parameter Real par_fix_fr = 0.0 "Fixed parasitics as fraction of net rating";
 
 	// If using SAM values for rec_cf, then convert according to:
 	// {c0, c1, c2, c3} -> {0, c0, c1, c2, c3}
@@ -182,7 +183,7 @@ equation
 	end if;
 	connect(blk.P, par.P_gen);
 
-	P_elec = blk.P - par.P_par;
+	P_elec = blk.P - par.P_par - par_fix_fr*P_net;
 	connect(P_elec, per.P_elec);
 	per.P_sch = sched*P_name;
 	connect(per.E_elec, E_elec);

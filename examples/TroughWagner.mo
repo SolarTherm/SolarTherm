@@ -3,7 +3,7 @@ model TroughWagner
 		weaFile="resources/weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
 		// The TMY2 Daggett was originally used, but don't have conversion yet
 		// so changed it to TMY3 Daggett
-		//wdelay={1800,1800,0,0,0,0,0,0},
+		wdelay={1800,1800,0,0,0,0,0,0},
 		optFile="resources/optics/troughwagner_opt_eff.motab",
 		eff_opt=0.7449, // Should be max value in optFile
 		SM=1.9343,
@@ -22,7 +22,8 @@ model TroughWagner
 		dni_des=950,
 		rec_fr=0.071,
 		tnk_fr=0.7*24*1e-3, // 0.7kWt/MW-hr-cap converted to capacity frac per day
-		par_fr=0.10, // not accounting for fixed parasitic load of 0.0055MWe/MWcap
+		par_fr=0.10,
+		par_fix_fr=0.0055, // fixed parasitic load of 0.0055MWe/MWcap
 		rec_cf={0, 4.75, -8, 4.5, -0.25}, // Our formulation is more generic, raising power to get equivalent
 		rec_ca={1},
 		rec_cw={1},

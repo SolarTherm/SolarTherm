@@ -14,7 +14,8 @@ model DishSG4
 		blk_T_amb_des=294.15,
 		par_T_amb_des=294.15, // Assuming
 		rec_fr=0.02822,
-		par_fr=0.08, // Not accounting for fixed parasitics
+		par_fr=0.08,
+		par_fix_fr=0.0055, // fixed parasitic load of 0.0055MWe/MWcap
 		rec_cf={0, 8.6081, -23.7695, 25.0621, -8.9007}, // Our formulation is more generic, raising power to get equivalent
 		rec_ca={1, -0.00228, 0.00012905, -4.8891e-07},
 		rec_cw={1},

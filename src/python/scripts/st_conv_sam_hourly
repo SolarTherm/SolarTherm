@@ -82,7 +82,7 @@ def remove_quoted_delim(s, quote, delim):
 			ns += s[0:]
 	return ns
 
-def sam_csv_conv(fn):
+def sam_csv_conv(fn, t_offset=0., t_step=3600.):
 	f = open(fn)
 	delim = ','
 	header = remove_quoted_delim(f.readline(), '"', ',').split(delim)
@@ -114,8 +114,6 @@ def sam_csv_conv(fn):
 	
 	print(','.join(nheader))
 
-	t_offset = 0.
-	t_step = 3600.
 	for i, line in enumerate(f.readlines()):
 		l = remove_quoted_delim(line, '"', ',').split(delim)
 		vals = []
@@ -130,6 +128,12 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
 			help='SAM hourly data csv file to convert')
+	parser.add_argument('--offset', type=float, default=-1800.,
+			help='Time offset to apply to data (-1800 default)')
+	# A default of -1800 works for comparing with SolarTherm data that uses
+	# TMY files that start at 3600 from start of year.  This is because even
+	# though the first time point is 0, the solar positions are actually
+	# calculated at 1800.
 	args = parser.parse_args()
 
-	sam_csv_conv(args.file)
+	sam_csv_conv(args.file, t_offset=args.offset)
