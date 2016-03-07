@@ -3,12 +3,12 @@ model TroughWagner
 		weaFile="resources/weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
 		// The TMY2 Daggett was originally used, but don't have conversion yet
 		// so changed it to TMY3 Daggett
-		// wdelay={1800,1800,0,0,0,0,0,0},
+		//wdelay={1800,1800,0,0,0,0,0,0},
 		optFile="resources/optics/troughwagner_opt_eff.motab",
+		eff_opt=0.7449, // Should be max value in optFile
 		SM=1.9343,
 		P_gro=111e6,
 		eff_cyc=0.3774,
-		eff_opt=0.7449, // Should be max value in optFile
 		t_storage=6,
 		ini_frac=0.1,
 		deploy_angle=10,
@@ -56,8 +56,8 @@ model TroughWagner
 		//	)
 		);
 	// Adapted data from:
-	// Wagner, M. J.; Zhu, G. (2011). "Generic CSP Performance Model for NREL's System Advisor Model", SolarPACES 2011
-	// * indicates where substitute data was used (either missing or replacement)
+	// Wagner, M. J.; Zhu, G. (2011). "Generic CSP Performance Model for NREL's
+	// System Advisor Model", SolarPACES 2011
 
 	// SAM:
 	// Annual energy 392.2GWh
@@ -74,6 +74,15 @@ model TroughWagner
 	// Capacity factor 45.1%
 	// LCOE (real) 13.2c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
+
+	// Here should create apply solar delays so that part lines up with SAM
+	// keeping data file at 3600, and ignore instantaneous data mismatch
+
+	// Modifications to SAM model
+	// Daggett.Barstow-Daggett TMY3 weather data
+	// Max overdesign operation 1
+	// Dry bulb power block reference temperature
+
 	Real dni_annual(unit="kWh/m2");
 	initial equation
 		dni_annual = 0;

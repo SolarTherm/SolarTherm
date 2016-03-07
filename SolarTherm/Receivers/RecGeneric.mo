@@ -7,6 +7,7 @@ model RecGeneric "Polynomial factors around design point"
 
 	parameter SI.HeatFlowRate Q_flow_loss_des "Design heat loss";
 	parameter SI.RadiantPower R_des "Design radiant power";
+	//parameter SI.Irradiance I_des "Design radiant power";
 	parameter SI.Temperature T_amb_des "Design ambient temperature";
 
 	parameter Real cf[:] "Fraction irradiance factor coefficients";
@@ -25,6 +26,7 @@ equation
 	Q_flow = max(sum(R) - Q_flow_loss, 0);
 	Q_flow_loss = Q_flow_loss_des*fac_fra.y*fac_amb.y*fac_wnd.y;
 	fac_fra.x = sum(R)/R_des;
+	//fac_fra.x = wbus.dni/I_des;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 	fac_wnd.x = wbus.wspd;
 end RecGeneric;

@@ -49,9 +49,6 @@ end MonthMap;
 block Scheduler "Scheduler"
 	parameter String file;
 	parameter Integer ndaily "Number of daily schedules in file";
-	parameter SI.Time todoffset = 0 "Time from start of day at time=0";
-	parameter SI.Time dowoffset = 0 "Time from start of week at time=0";
-	parameter SI.Time moyoffset = 0 "Time from start of year at time=0";
 
 	parameter Integer wmap[:,7] "Week schedules that map to daily schedules";
 	parameter Integer mmap[12] "Mapping from month to week schedule";
@@ -68,20 +65,15 @@ block Scheduler "Scheduler"
 	MonthMap month(
 		map=mmap
 		);
-	Real tod;
-	Integer dow;
-	Integer moy;
+	input SolarTherm.Interfaces.WeatherBus wbus;
 	output Real v "Output value";
 equation
-	tod = mod(time + todoffset, 24*3600);
-	dow = integer(mod((time + dowoffset)/(24*3600), 7)) + 1;
-	moy = integer(mod((time + moyoffset)/(365*24*3600/12), 12)) + 1; // Not accounting for varying month lengths
-	month.i = moy;
+	month.i = wbus.moy;
 	for i in 1:nweek loop
-		week[i].i = dow;
+		week[i].i = wbus.dow;
 	end for;
 	for i in 1:ndaily loop
-		daily[i].t = tod;
+		daily[i].t = wbus.tod;
 	end for;
 	v = daily[week[month.j].j].v;
 end Scheduler;

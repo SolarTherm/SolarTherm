@@ -1,6 +1,8 @@
 block TestScheduler
 	import SolarTherm.Utilities.Schedule.Scheduler;
 	parameter String file = "resources/tests/daily_schedule.motab";
+	SolarTherm.Interfaces.WeatherBus wbus;
+	SolarTherm.Utilities.Date.SimpleDate date;
 	Scheduler sch1(
 		file=file,
 		ndaily=2, // needs to match file (only load first two tables)
@@ -16,4 +18,10 @@ block TestScheduler
 			},
 		mmap={1,2,2,2,2,2,2,2,2,2,2,2}
 		);
+equation
+	connect(date.tod, wbus.tod);
+	connect(date.dow, wbus.dow);
+	connect(date.moy, wbus.moy);
+	connect(wbus, sch1.wbus);
+	connect(wbus, sch2.wbus);
 end TestScheduler;

@@ -72,13 +72,16 @@ model GenericSystem
 	// *********************
 	parameter SI.HeatFlowRate Q_flow_des = P_gro/eff_cyc "Heat to power block at design";
 	parameter SI.RadiantPower R_des = SM*Q_flow_des/(1 - rec_fr) "Input power for receiver at design";
+	//parameter SI.RadiantPower R_des = SM*Q_flow_des*(1 + rec_fr) "Input power for receiver at design";
 	parameter SI.Energy E_max = t_storage*3600*Q_flow_des "Maximum tank stored energy";
 	parameter Boolean storage = (t_storage > 0) "Storage component present";
 
 	parameter SI.Area A_field = (R_des/eff_opt)/dni_des "Field area";
+	//parameter SI.Area A_field = 1.0273*(R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
 
-	parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/(3600*t_blk_heat*t_blk_diss + 1);
+	parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/
+												(3600*t_blk_heat*t_blk_diss + 1);
 	parameter SI.Energy E_blk_heat = Q_flow_blk_leak*3600*t_blk_diss;
 
 	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
@@ -105,7 +108,9 @@ model GenericSystem
 		);
 	SolarTherm.Receivers.RecGeneric rec(
 		Q_flow_loss_des=rec_fr*R_des,
+		//Q_flow_loss_des=rec_fr*SM*Q_flow_des,
 		R_des=R_des,
+		//I_des=dni_des,
 		T_amb_des=rec_T_amb_des,
 		cf=rec_cf,
 		ca=rec_ca,
@@ -193,6 +198,7 @@ equation
 	if const_dispatch then
 		sched = 1;
 	else
+		connect(wea.wbus, sch.wbus);
 		sched = sch.v;
 	end if;
 end GenericSystem;

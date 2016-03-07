@@ -12,5 +12,9 @@ expandable connector WeatherBus "Bus for weather data"
 	SI.Temperature Tdew "Dew point temperature";
 	nSI.Angle_deg wdir "Wind direction";
 	SI.Velocity wspd(min=0) "Wind speed";
+	SI.Time t "Time of year";
+	SI.Time tod "Time of day";
+	SolarTherm.Utilities.Date.DayOfWeek dow "Day of week";
+	SolarTherm.Utilities.Date.MonOfYear moy "Month of year";
 end WeatherBus;
 

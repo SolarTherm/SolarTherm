@@ -23,6 +23,7 @@ word_map = {
 		'Resource': 'r',
 		'efficiency': 'eff',
 		'temperature': 'T',
+		'temp.': 'T',
 		'thermal': 'th',
 		'electrical': 'ele',
 		'power': 'P',
