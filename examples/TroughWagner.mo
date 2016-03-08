@@ -13,8 +13,12 @@ model TroughWagner
 		ini_frac=0.1,
 		deploy_angle=10,
 		stow_angle=10,
+		t_blk_heat=0.5*0.2,
+		t_blk_diss=6.,
 		//t_blk_heat=1.5,
 		//t_blk_diss=6.,
+		tnk_min_start=0.1,
+		blk_min_disp=0.25,
 		rec_T_amb_des=298.15,
 		tnk_T_amb_des=298.15,
 		blk_T_amb_des=293.15,
@@ -60,7 +64,7 @@ model TroughWagner
 	// Wagner, M. J.; Zhu, G. (2011). "Generic CSP Performance Model for NREL's
 	// System Advisor Model", SolarPACES 2011
 
-	// SAM:
+	// SAM original:
 	// Annual energy 392.2GWh
 	// Capacity factor 44.8%
 	// LCOE (nominal) 14.77c/kWh
@@ -70,19 +74,52 @@ model TroughWagner
 	// LCOE (nominal) 13.24c/kWh
 	// LCOE (real) 13.24c/kWh
 
-	// Ours:
+	// SAM modified
+	// 371GWh
+	// Capf 42.4%
+	// LCOE (nominal) 13.98c/kWh
+	// $588M
+
+	// Ours new:
+	// Annual energy 392.7GWh
+	// Annual energy 387.7GWh
+	// Capacity factor 44.9%
+	// LCOE (real) 13.3c/kWh
+	// Average DNI 2723.71/365 = 7.46kWh/m2/day
+	// $590M
+
+	// Ours old:
 	// Annual energy 395.2GWh
 	// Capacity factor 45.1%
 	// LCOE (real) 13.2c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 
-	// Here should create apply solar delays so that part lines up with SAM
-	// keeping data file at 3600, and ignore instantaneous data mismatch
-
 	// Modifications to SAM model
 	// Daggett.Barstow-Daggett TMY3 weather data
 	// Max overdesign operation 1
 	// Dry bulb power block reference temperature
+	// PC and owner cost % of direct cost: 0%
+	// Sales tax applied to: 0%
+	// IRR target: 0%
+	// IRR target year: 25
+	// PPA price excalation: 0%/year
+	// Inflation rate: 0%
+	// Federal income tax rate: 0%/year
+	// State income tax rate: 0%/year
+	// Assessed percentage: 0%
+	// Sales tax: 0%
+	// Insurance rate: 0%
+	// Property tax rate: 0%
+	// Debt percent: 0%
+	// Debt closing costs: $0
+	// Load 1 
+	// Up-front fee: 0%
+	// Months prior to operation: 0
+	// Annual interest rate: 5.5%
+	// Interest on reserves: 0%
+	// Working capital reserve: 0mon
+	// Debt service reserve accound: 0mon
+	// Investment tax credit federal: 0%
 
 	Real dni_annual(unit="kWh/m2");
 	initial equation

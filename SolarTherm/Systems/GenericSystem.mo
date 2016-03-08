@@ -47,12 +47,15 @@ model GenericSystem
 	parameter Real par_cf[:] = {1} "Parasitics coefficients";
 	parameter Real par_ca[:] = {1} "Parasitics coefficients";
 
-	parameter Real tnk_crit_lb(min=0, max=1) = 0.01;
-	parameter Real tnk_crit_ub(min=0, max=1) = 0.05;
-	parameter Real tnk_empty_lb(min=0, max=1) = 0.03;
-	parameter Real tnk_empty_ub(min=0, max=1) = 0.05;
-	parameter Real tnk_full_lb(min=0, max=1) = 0.95;
+	parameter Real tnk_crit_lb(min=0, max=1) = 0.001;
+	parameter Real tnk_crit_ub(min=0, max=1) = 0.02;
+	parameter Real tnk_empty_lb(min=0, max=1) = 0.01;
+	parameter Real tnk_empty_ub(min=0, max=1) = 0.02;
+	parameter Real tnk_full_lb(min=0, max=1) = 0.98;
 	parameter Real tnk_full_ub(min=0, max=1) = 0.99;
+
+	parameter Real tnk_min_start = 0.1 "Minimum fraction of tank to start dispatch";
+	parameter Real blk_min_disp = 0.1 "Minimum dispatch for power block";
 
 	// Contingencies should be included
 	parameter Real land_mult = 1 "Land area multiplier";
@@ -147,7 +150,9 @@ model GenericSystem
 		empty_lb=tnk_empty_lb*E_max,
 		empty_ub=tnk_empty_ub*E_max,
 		crit_lb=tnk_crit_lb*E_max,
-		crit_ub=tnk_crit_ub*E_max
+		crit_ub=tnk_crit_ub*E_max,
+		level_start=tnk_min_start*E_max,
+		disp_min=blk_min_disp*Q_flow_des
 		) if storage;
 	// Needs to be configured in instantiation if not const_dispatch
 	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;

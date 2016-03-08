@@ -12,6 +12,9 @@ block TankDispatch "Tank dispatch controller"
 	parameter Real crit_lb;
 	parameter Real crit_ub;
 
+	parameter Real level_start;
+	parameter Real disp_min;
+
 	input Real flow_in(min=0) "Flow into tank";
 	input Real flow_tar(min=0) "Target dispatched flow";
 	input Real level(min=0) "Level of tank";
@@ -35,6 +38,20 @@ block TankDispatch "Tank dispatch controller"
 	Boolean full "Tank full";
 	Boolean empty "Tank empty";
 	Boolean crit "Tank critically empty";
+	Boolean run "Run dispatch";
+initial algorithm
+	assert(level_start > empty_ub, " Starting level is lower than empty");
+	if level > level_start then
+		run := true;
+	else
+		run := false;
+	end if;
+algorithm
+	when level > level_start and flow_tar > disp_min then
+		run := true;
+	elsewhen flow_dis < disp_min then
+		run := false;
+	end when;
 equation
 	connect(level, f_trig.x);
 	connect(level, ne_trig.x);
@@ -45,6 +62,8 @@ equation
 	if full then
 		flow_dis = max(flow_in, flow_tar);
 	elseif crit then
+		flow_dis = 0;
+	elseif not run then
 		flow_dis = 0;
 	elseif empty then
 		flow_dis = min(flow_in, flow_tar);
