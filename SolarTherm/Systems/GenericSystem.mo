@@ -22,8 +22,11 @@ model GenericSystem
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter nSI.Angle_deg deploy_angle = 0 "Altitude angle to start tracking";
 	parameter nSI.Angle_deg stow_angle = 0 "Altitude angle to stop tracking";
-	parameter Real t_blk_heat(unit="h") = 0 "Hours equivalent to heat up power block";
-	parameter Real t_blk_diss(unit="h") = 1 "Hours equivalent to cool power block";
+	parameter Real t_blk_heat(unit="h") = 0 "Hours to heat up power block at blk_heat";
+	parameter Real t_blk_cool(unit="h") = 1 "Hours to cool power block";
+	parameter Real blk_disp = 0.2 "Min fraction of power to power block";
+	parameter Real blk_heat = 0.1 "Fraction of power to block for heating";
+	parameter Real tnk_min_start = 0.1 "Minimum fraction of tank to start dispatch";
 
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
@@ -54,9 +57,6 @@ model GenericSystem
 	parameter Real tnk_full_lb(min=0, max=1) = 0.98;
 	parameter Real tnk_full_ub(min=0, max=1) = 0.99;
 
-	parameter Real tnk_min_start = 0.1 "Minimum fraction of tank to start dispatch";
-	parameter Real blk_min_disp = 0.1 "Minimum dispatch for power block";
-
 	// Contingencies should be included
 	parameter Real land_mult = 1 "Land area multiplier";
 	parameter FIN.AreaPrice pri_field = 0 "Field cost per design aperture area";
@@ -84,9 +84,9 @@ model GenericSystem
 	//parameter SI.Area A_field = 1.0273*(R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
 
-	parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/
-												(3600*t_blk_heat*t_blk_diss + 1);
-	parameter SI.Energy E_blk_heat = Q_flow_blk_leak*3600*t_blk_diss;
+	//parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/
+	//											(3600*t_blk_heat*t_blk_diss + 1);
+	//parameter SI.Energy E_blk_heat = Q_flow_blk_leak*3600*t_blk_diss;
 
 	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
@@ -128,14 +128,18 @@ model GenericSystem
 		cf=tnk_cf,
 		ca=tnk_ca
 		) if storage;
-	SolarTherm.PowerBlocks.PBGeneric blk(
+	SolarTherm.PowerBlocks.PBGenericStart blk(
 		eff_des=eff_cyc,
 		Q_flow_des=Q_flow_des,
 		T_amb_des=blk_T_amb_des,
 		cf=blk_cf,
 		ca=blk_ca,
-		E_start=E_blk_heat,
-		Q_flow_leak=Q_flow_blk_leak
+		//E_start=E_blk_heat,
+		//Q_flow_leak=Q_flow_blk_leak
+		Q_flow_disp=blk_disp*Q_flow_des,
+		Q_flow_heat=blk_heat*Q_flow_des,
+		t_heat=t_blk_heat*3600,
+		t_cool=t_blk_cool*3600
 		);
 	SolarTherm.PowerBlocks.ParasiticsGeneric par(
 		P_par_des=par_fr*P_gro,
@@ -152,7 +156,8 @@ model GenericSystem
 		crit_lb=tnk_crit_lb*E_max,
 		crit_ub=tnk_crit_ub*E_max,
 		level_start=tnk_min_start*E_max,
-		disp_min=blk_min_disp*Q_flow_des
+		disp_min=blk_disp*Q_flow_des,
+		heat_rate=blk_heat*Q_flow_des
 		) if storage;
 	// Needs to be configured in instantiation if not const_dispatch
 	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;
@@ -182,6 +187,7 @@ equation
 		connect(tnk.Q_flow_in, dis.flow_in);
 		dis.flow_tar = sched*Q_flow_des;
 		connect(tnk.E, dis.level);
+		connect(blk.heated, dis.heated);
 		connect(dis.flow_dis, tnk.Q_flow_set);
 	else
 		connect(rec.Q_flow, blk.Q_flow);

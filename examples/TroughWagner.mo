@@ -13,12 +13,13 @@ model TroughWagner
 		ini_frac=0.1,
 		deploy_angle=10,
 		stow_angle=10,
-		t_blk_heat=0.5*0.2,
-		t_blk_diss=6.,
+		t_blk_heat=0.5,
+		t_blk_cool=1.,
 		//t_blk_heat=1.5,
-		//t_blk_diss=6.,
+		//t_blk_cool=6.,
+		blk_disp=0.25,
+		blk_heat=0.2,
 		tnk_min_start=0.1,
-		blk_min_disp=0.25,
 		rec_T_amb_des=298.15,
 		tnk_T_amb_des=298.15,
 		blk_T_amb_des=293.15,
@@ -81,10 +82,9 @@ model TroughWagner
 	// $588M
 
 	// Ours new:
-	// Annual energy 392.7GWh
-	// Annual energy 387.7GWh
-	// Capacity factor 44.9%
-	// LCOE (real) 13.3c/kWh
+	// Annual energy 382.2GWh
+	// Capacity factor 43.7%
+	// LCOE (real) 13.6c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 	// $590M
 

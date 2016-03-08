@@ -12,12 +12,14 @@ block TankDispatch "Tank dispatch controller"
 	parameter Real crit_lb;
 	parameter Real crit_ub;
 
-	parameter Real level_start;
-	parameter Real disp_min;
+	parameter Real level_start "Min tank level before run attempt";
+	parameter Real disp_min "Min dispatch level";
+	parameter Real heat_rate "Heating before start";
 
 	input Real flow_in(min=0) "Flow into tank";
 	input Real flow_tar(min=0) "Target dispatched flow";
 	input Real level(min=0) "Level of tank";
+	input Boolean heated "Generator heated";
 	output Real flow_dis(min=0) "Dispatched flow";
 
 	SolarTherm.Control.Trigger f_trig(
@@ -39,6 +41,7 @@ block TankDispatch "Tank dispatch controller"
 	Boolean empty "Tank empty";
 	Boolean crit "Tank critically empty";
 	Boolean run "Run dispatch";
+	Real flow_set(min=0) "Set point for dispatched flow";
 initial algorithm
 	assert(level_start > empty_ub, " Starting level is lower than empty");
 	if level > level_start then
@@ -60,14 +63,19 @@ equation
 	empty = not ne_trig.y;
 	crit = not nc_trig.y;
 	if full then
-		flow_dis = max(flow_in, flow_tar);
+		flow_dis = max(flow_in, flow_set);
 	elseif crit then
 		flow_dis = 0;
 	elseif not run then
 		flow_dis = 0;
 	elseif empty then
-		flow_dis = min(flow_in, flow_tar);
+		flow_dis = min(flow_in, flow_set);
 	else
-		flow_dis = flow_tar;
+		flow_dis = flow_set;
+	end if;
+	if heated then
+		flow_set = flow_tar;
+	else
+		flow_set = min(flow_tar, heat_rate);
 	end if;
 end TankDispatch;
