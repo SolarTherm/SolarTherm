@@ -124,7 +124,7 @@ The first two parameters provide the file names for tabulated weather data and s
 	parameter String weaFile = "resources/Mildura_Real2010_Created20130430.motab";
 	parameter String priFile = "resources/aemo_vic_2014.motab";
 
-The next group of parameters describe physical values of the system.  Of particular interest are ``t_storage`` and ``P_rate`` which we will modify for different experiments.
+The next group of parameters describe physical values of the system.  Of particular interest are ``t_storage`` and ``P_name`` which we will modify for different experiments.
 
 .. code-block:: modelica
 
@@ -133,9 +133,9 @@ The next group of parameters describe physical values of the system.  Of particu
 	parameter Real C = 0.65*A_con/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
 	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
-	parameter SI.Power P_rate = 100000 "Power block nominal power";
+	parameter SI.Power P_name = 100000 "Power block nominal power";
 	parameter Real t_storage(unit="hour") = 5 "Hours of storage";
-	parameter SI.Energy E_max = P_rate*t_storage*3600/eff_blk "Max stored energy";
+	parameter SI.Energy E_max = P_name*t_storage*3600/eff_blk "Max stored energy";
 
 This group of parameters define some trips for the control.
 
@@ -159,7 +159,7 @@ These parameters provide a way for defining a schedule for operating the power b
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
 	parameter SI.Time t_sch_next_start = 0 "Time to next schedule change";
 	parameter SI.HeatFlowRate Q_flow_sched_val[n_sched_states] = {
-			P_rate/eff_blk
+			P_name/eff_blk
 			} "Heat flow at schedule states";
 	parameter SI.Time t_delta[n_sched_states] = {
 			24*3600
@@ -173,7 +173,7 @@ The last group of parameters calculate the capital and maintenance costs of the 
 			120*A_con // field cost
 			+ 135*C*A_rec // receiver cost
 			+ (30/(1e3*3600))*E_max // storage cost
-			+ (1440/1e3)*P_rate // power block cost
+			+ (1440/1e3)*P_name // power block cost
 			"Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main =
 			10*A_con // field cleaning/maintenance
@@ -462,9 +462,9 @@ The next plot focuses in on the control state of SimpleSystem for a single day. 
 
 The commands to produce and plot the above results are::
 
-    st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=6 P_rate=75000
+    st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=6 P_name=75000
     st_plotmat --xlim 2.25e6 3.1e6 SimpleSystem_res_0.mat wea.wbus.dni:P_elec E:Q_flow_chg,Q_flow_dis
-    st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=6 P_rate=75000
+    st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=6 P_name=75000
     st_plotmat --xlim 2.25e6 3.1e6 FluidSystem_res_0.mat wea.wbus.dni:P_elec htnk.m:pmp_rec.m_flow_set,pmp_ext.m_flow_set
     st_plotmat --xlim 2.25e6 2.34e6 SimpleSystem_res_0.mat wea.wbus.dni:con_state,blk_state E:Q_flow_chg,Q_flow_dis
 
@@ -499,14 +499,14 @@ The commands to produce the results for the above plots are respectively::
     
     st_simulate --stop 1y --step 5m SimpleSystem.mo t_storage=3,4,6,7,8,9,10,11,12,13,14,15 
     st_simulate --stop 1y --step 5m FluidSystem.mo t_storage=2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8
-    st_simulate --stop 1y --step 5m SimpleSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
-    st_simulate --stop 1y --step 5m FluidSystem.mo P_rate=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 1y --step 5m SimpleSystem.mo P_name=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
+    st_simulate --stop 1y --step 5m FluidSystem.mo P_name=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12 
 
 Optimisation
 """"""""""""
 
 We can apply simple search techniques to optimise model parameters.  For example, the following call will search (using the default method) for a value that minimises the LCOE for SimpleSystem over the power block rate and storage parameters::
 
-    st_optimise --maxiter 20 --stop 1y --step 5m -v SimpleSystem.mo P_rate=50000,150000,100000 t_storage=3,15,5
+    st_optimise --maxiter 20 --stop 1y --step 5m -v SimpleSystem.mo P_name=50000,150000,100000 t_storage=3,15,5
 
 After 20 iterations the best solution it has found is for a power block rate of 69kW and storage time of 14hrs.  The same approach for the FluidSystem produces a solution of 68kW and 8hrs.  Note that both system models don't have any thermal losses from the storage vessels, and the power block costs are much higher than the storage costs, this tends to favour a very large storage system so that the power block size can be reduced.

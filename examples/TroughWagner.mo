@@ -76,23 +76,18 @@ model TroughWagner
 	// LCOE (real) 13.24c/kWh
 
 	// SAM modified
-	// 371GWh
+	// Annual energy 371GWh
 	// Capf 42.4%
 	// LCOE (nominal) 13.98c/kWh
+	// Average DNI 7.46kWh/m2/day
 	// $588M
 
-	// Ours new:
+	// Ours:
 	// Annual energy 382.2GWh
 	// Capacity factor 43.7%
 	// LCOE (real) 13.6c/kWh
 	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 	// $590M
-
-	// Ours old:
-	// Annual energy 395.2GWh
-	// Capacity factor 45.1%
-	// LCOE (real) 13.2c/kWh
-	// Average DNI 2723.71/365 = 7.46kWh/m2/day
 
 	// Modifications to SAM model
 	// Daggett.Barstow-Daggett TMY3 weather data

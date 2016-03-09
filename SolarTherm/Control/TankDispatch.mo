@@ -20,7 +20,7 @@ block TankDispatch "Tank dispatch controller"
 	input Real flow_tar(min=0) "Target dispatched flow";
 	input Real level(min=0) "Level of tank";
 	input Boolean heated "Generator heated";
-	output Real flow_dis(min=0) "Dispatched flow";
+	output Real flow_dis(min=-1e20) "Dispatched flow"; // slight numerical overshoot 
 
 	SolarTherm.Control.Trigger f_trig(
 		low=full_lb,
@@ -41,7 +41,7 @@ block TankDispatch "Tank dispatch controller"
 	Boolean empty "Tank empty";
 	Boolean crit "Tank critically empty";
 	Boolean run "Run dispatch";
-	Real flow_set(min=0) "Set point for dispatched flow";
+	Real flow_set(min=0) "Set point for dispatched flow"; // slight 
 initial algorithm
 	assert(level_start > empty_ub, " Starting level is lower than empty");
 	if level > level_start then

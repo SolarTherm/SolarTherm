@@ -57,9 +57,9 @@ if __name__ == '__main__':
 			help='no simulation')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
-	parser.add_argument('--stop', type=str, default='86400', # 1 day
+	parser.add_argument('--stop', type=str, default='1y',
 			help='simulation stop time: <number>[,y,d,m,s]')
-	parser.add_argument('--step', type=str, default='60',
+	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--plot', type=str, default=None,
 			help='plot given quantity (at most 2 parameter dimensions)')
