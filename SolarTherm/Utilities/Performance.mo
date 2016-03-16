@@ -14,8 +14,7 @@ model EnergyPerf "Energy performance calculations"
 	input SI.Power P_sch if schedule "Scheduled electricity";
 
 	output SI.Energy E_elec "Generated electricity";
-	output SolarTherm.Utilities.Finances.Money R_spot
-		"Spot market revenue";
+	output SolarTherm.Utilities.Finances.Money R_spot "Spot market revenue";
 	output SI.Energy E_sch "Energy scheduled";
 	output SI.Energy E_under "Energy under schedule";
 	output SI.Energy E_over "Energy over schedule";

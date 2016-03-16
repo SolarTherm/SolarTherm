@@ -8,6 +8,7 @@ model GenericSystem
 
 	// Input Parameters
 	// ****************
+	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter String weaFile "Weather file";
 	parameter String optFile "Optical efficiency file";
 	parameter String priFile = "" "Electricity price file";
@@ -75,18 +76,15 @@ model GenericSystem
 	// Calculated Parameters
 	// *********************
 	parameter SI.HeatFlowRate Q_flow_des = P_gro/eff_cyc "Heat to power block at design";
-	parameter SI.RadiantPower R_des = SM*Q_flow_des/(1 - rec_fr) "Input power for receiver at design";
-	//parameter SI.RadiantPower R_des = SM*Q_flow_des*(1 + rec_fr) "Input power for receiver at design";
+	parameter SI.RadiantPower R_des = if match_sam then 
+		SM*Q_flow_des*(1 + rec_fr)
+		else SM*Q_flow_des/(1 - rec_fr)
+		"Input power for receiver at design";
 	parameter SI.Energy E_max = t_storage*3600*Q_flow_des "Maximum tank stored energy";
 	parameter Boolean storage = (t_storage > 0) "Storage component present";
 
 	parameter SI.Area A_field = (R_des/eff_opt)/dni_des "Field area";
-	//parameter SI.Area A_field = 1.0273*(R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
-
-	//parameter SI.HeatFlowRate Q_flow_blk_leak = Q_flow_des*3600*t_blk_heat^2/
-	//											(3600*t_blk_heat*t_blk_diss + 1);
-	//parameter SI.Energy E_blk_heat = Q_flow_blk_leak*3600*t_blk_diss;
 
 	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
@@ -105,16 +103,16 @@ model GenericSystem
 			fileName=optFile,
 			orient_north=if wea.lat < 0 then true else false
 			),
-		A_con=A_field,
+		A_con=if match_sam then 1.0273*A_field else A_field,
 		steer_rate=0.002, // ~8 minutes till fully on sun
 		target_error=0.0001, // if large can be large source of missing energy
 		actual_0=0.0
 		);
 	SolarTherm.Receivers.RecGeneric rec(
-		Q_flow_loss_des=rec_fr*R_des,
-		//Q_flow_loss_des=rec_fr*SM*Q_flow_des,
+		match_sam=match_sam,
+		Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
 		R_des=R_des,
-		//I_des=dni_des,
+		I_des=dni_des,
 		T_amb_des=rec_T_amb_des,
 		cf=rec_cf,
 		ca=rec_ca,
@@ -134,8 +132,6 @@ model GenericSystem
 		T_amb_des=blk_T_amb_des,
 		cf=blk_cf,
 		ca=blk_ca,
-		//E_start=E_blk_heat,
-		//Q_flow_leak=Q_flow_blk_leak
 		Q_flow_disp=blk_disp*Q_flow_des,
 		Q_flow_heat=blk_heat*Q_flow_des,
 		t_heat=t_blk_heat*3600,
