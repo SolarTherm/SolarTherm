@@ -53,7 +53,8 @@ int vectorv_init(VectorV *vec)
 
 void vectorv_free(VectorV *vec)
 {
-	for (size_t i=0; i<vec->len; i++)
+	size_t i;
+	for (i=0; i<vec->len; i++)
 		vector_free(&(vec->v[i]));
 	free(vec->v);
 }
@@ -84,6 +85,7 @@ Vector *vectorv_get(const VectorV *vec, size_t i)
 
 int table_init(Table *table, size_t nr, size_t nc)
 {
+	size_t i;
 	table->nr = nr;
 	table->nc = nc;
 
@@ -91,7 +93,7 @@ int table_init(Table *table, size_t nr, size_t nc)
 	if (!table->v)
 		return -1;
 
-	for (size_t i=0; i<nr; i++) {
+	for (i=0; i<nr; i++) {
 		table->v[i] = malloc(nc*sizeof(double));
 		if (!table->v[i])
 			return -1;
@@ -108,6 +110,8 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 {
 	const size_t BUFFLEN = 2048;
 	char line[BUFFLEN];
+	size_t i;
+	size_t j;
 
 	VectorV rows;
 	if (vectorv_init(&rows))
@@ -146,7 +150,7 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 
 	if (nr > 0)
 		nc = vectorv_get(&rows, 0)->len;
-	for (size_t i=0; i<nr; i++)
+	for (i=0; i<nr; i++)
 		rect = rect && (vectorv_get(&rows, i)->len == nc);
 
 	if (rect) {
@@ -155,11 +159,11 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 		table->v = malloc(nr*sizeof(double *));
 		if (!table->v)
 			return -1;
-		for (size_t i=0; i<nr; i++) {
+		for (i=0; i<nr; i++) {
 			table->v[i] = malloc(nc*sizeof(double));
 			if (!table->v[i])
 				return -1;
-			for (size_t j=0; j<nc; j++)
+			for (j=0; j<nc; j++)
 				table->v[i][j] = vector_get(vectorv_get(&rows, i), j);
 		}
 	} else {
@@ -174,8 +178,10 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 
 void table_print(const Table *table)
 {
-	for (size_t i=0; i<table->nr; i++) {
-		for (size_t j=0; j<table->nc; j++) {
+	size_t i;
+	size_t j;
+	for (i=0; i<table->nr; i++) {
+		for (j=0; j<table->nc; j++) {
 			printf("%.1f", table->v[i][j]);
 			if (j < table->nc-1)
 				printf(", ");
@@ -186,9 +192,10 @@ void table_print(const Table *table)
 
 void table_free(Table *table)
 {
+	size_t i;
 	if (!table)
 		return;
-	for (size_t i=0; i<table->nr; i++)
+	for (i=0; i<table->nr; i++)
 		free(table->v[i]);
 	free(table->v);
 }

@@ -14,6 +14,9 @@
 int grid_transform(Table *table, size_t n, size_t m, const char *sym)
 {
 	Table tab; // working table for grided data
+	size_t i;
+	size_t j;
+	size_t r;
 	size_t nr = n + 1; // extra rows for hour angles
 	size_t nc = m + 1; // extra cols for eclip longs
 	double el_step = 360./n; // ecliptic longitude grid step
@@ -26,18 +29,18 @@ int grid_transform(Table *table, size_t n, size_t m, const char *sym)
 
 	// Setting values for grid axes
 	tab.v[0][0] = 0.; // top left point not used
-	for (size_t i=1; i<nr; i++)
+	for (i=1; i<nr; i++)
 		tab.v[i][0] = -180.0 + (i-1)*el_step;
-	for (size_t j=1; j<nc; j++)
+	for (j=1; j<nc; j++)
 		tab.v[0][j] = -180.0 +(j-1)*ha_step;
 
 	// Some positions don't get written to below.  Initialising the table so
 	// that these values end up as zero.
-	for (size_t i=1; i<nr; i++)
-		for (size_t j=1; j<nc; j++)
+	for (i=1; i<nr; i++)
+		for (j=1; j<nc; j++)
 			tab.v[i][j] = 0.;
 	
-	for (size_t r=0; r<table->nr; r++) {
+	for (r=0; r<table->nr; r++) {
 		double el = table->v[r][0];
 		double ha = table->v[r][1];
 		double val = table->v[r][2];

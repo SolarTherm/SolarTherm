@@ -38,6 +38,10 @@ double catrom_spline_2d(double pnts[4][4], double u, double v)
  */
 double catrom_interp(const Table *table, double x, double y, double x_step, double y_step)
 {
+	size_t i;
+	size_t j;
+	size_t ii;
+	size_t jj;
 	size_t nx = table->nr - 1; // don't count grid position row
 	size_t ny = table->nc - 1; // don't count grid position col
 	double xoff = table->v[1][0];
@@ -51,10 +55,10 @@ double catrom_interp(const Table *table, double x, double y, double x_step, doub
 	//printf("%f, %f\n", u, v);
 	double pnts[4][4];
 
-	for (size_t ii=0; ii<4; ii++) {
-		for (size_t jj=0; jj<4; jj++) {
-			size_t i = (nx + ii - 1 + i_l) % nx;
-			size_t j = (ny + jj - 1 + j_l) % ny;
+	for (ii=0; ii<4; ii++) {
+		for (jj=0; jj<4; jj++) {
+			i = (nx + ii - 1 + i_l) % nx;
+			j = (ny + jj - 1 + j_l) % ny;
 			pnts[ii][jj] = table->v[i+1][j+1];
 			//printf("%lu, %lu: %lu, %lu, %f\n", ii, jj, i, j, pnts[ii][jj]);
 		}

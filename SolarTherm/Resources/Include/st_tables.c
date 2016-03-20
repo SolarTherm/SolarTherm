@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 #include <errno.h>
-#include <omc/c/ModelicaUtilities.h>
+//#include <omc/c/ModelicaUtilities.h>
+#include <ModelicaUtilities.h>
 
 #include "solinterp/tables.h"
 #include "solinterp/symmetries.h"
