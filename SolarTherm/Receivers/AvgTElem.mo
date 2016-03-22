@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
 model AvgTElem "Losses at average fluid temperature"
-	extends SolarTherm.Receivers.RecElem(
+	extends SolarTherm.Receivers.Elem(
 		redeclare model FlowModel=SolarTherm.Fluid.Flows.LosslessFlow,
 		port_b.h_outflow(start=0.0)
 		);

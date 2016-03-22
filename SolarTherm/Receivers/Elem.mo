@@ -1,10 +1,11 @@
 within SolarTherm.Receivers;
-partial model RecElem "Flat receiver element used to build up geometry"
+partial model Elem "Flat receiver element used to build up geometry"
 	extends Modelica.Fluid.Interfaces.PartialTwoPort(
 		allowFlowReversal=false);
 	import SI = Modelica.SIunits;
 
-	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.PartialFlowModel;
+	replaceable model FlowModel = SolarTherm.Fluid.Flows.LosslessFlow
+		constrainedby SolarTherm.Fluid.Flows.Flow;
 
 	parameter SI.Area A "Area of aperture";
 
@@ -18,10 +19,8 @@ partial model RecElem "Flat receiver element used to build up geometry"
 
 	output SI.RadiantPower R_loss "Thermal loss";
 	output SI.HeatFlowRate Q_flow_loss "Thermal convective loss";
-protected
-	FlowModel flowmod;
 equation
 	connect(port_a, hfluid.port_a);
 	connect(hfluid.port_b, port_b);
 	// Extended models need to define what hfluid.Q_flow is
-end RecElem;
+end Elem;

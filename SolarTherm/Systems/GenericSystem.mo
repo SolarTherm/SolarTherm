@@ -108,7 +108,7 @@ model GenericSystem
 		target_error=0.0001, // if large can be large source of missing energy
 		actual_0=0.0
 		);
-	SolarTherm.Receivers.RecGeneric rec(
+	SolarTherm.Receivers.GenericRC rec(
 		match_sam=match_sam,
 		Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
 		R_des=R_des,

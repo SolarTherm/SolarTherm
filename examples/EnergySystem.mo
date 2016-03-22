@@ -2,14 +2,13 @@ model EnergySystem
 	import Modelica.Constants.pi;
 	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
 	parameter Real A_con = 1;
-	parameter Real A_rec = 1;
 	parameter Real E_max = 1*3600*1000;
 	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Collectors.SwitchedCL con(
 		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
 		A_con=A_con
 		);
-	SolarTherm.Receivers.FixedEff rec(A=A_rec, eff=0.8);
+	SolarTherm.Receivers.FixedEffRC rec(eff=0.8);
 	SolarTherm.Fluid.Valves.EnergySplitter spl;
 	SolarTherm.Storage.EnergyInfinite inf;
 	SolarTherm.Storage.EnergyTank tnk(E_max=E_max, E_0=0.1*E_max);

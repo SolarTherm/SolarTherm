@@ -75,7 +75,7 @@ model FluidSystem
 		A_con=A_con
 		);
 
-	SolarTherm.Receivers.Plate rec(
+	SolarTherm.Receivers.PlateRC rec(
 		redeclare package Medium=MedRec,
 		A=A_rec, em=em_steel, h_th=h_th_rec);
 

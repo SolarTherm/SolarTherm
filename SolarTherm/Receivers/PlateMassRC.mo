@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
-model PlateMass "Single element plate receiver with fluid interface"
-	extends SolarTherm.Receivers.FluidReceiver;
+model PlateMassRC "Single element plate receiver with fluid interface"
+	extends SolarTherm.Receivers.FluidRC;
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 
@@ -36,4 +36,4 @@ equation
 
 	// How about we have a controller that draws away heat once rec temp
 	// passes a level, and only draws energy such that the rec temp is fixed.
-end PlateMass;
+end PlateMassRC;

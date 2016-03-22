@@ -152,11 +152,11 @@ model ASTRI100
 		target_error=0.001
 		);
 
-	//SolarTherm.Receivers.Plate rec(
+	//SolarTherm.Receivers.PlateRC rec(
 	//	redeclare package Medium=MedRec,
 	//	A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	SolarTherm.Receivers.OnePipe rec(
+	SolarTherm.Receivers.OnePipeRC rec(
 		redeclare package Medium=MedRec,
 		redeclare model Elem=SolarTherm.Receivers.EndTElem(
 			each em=em_steel,

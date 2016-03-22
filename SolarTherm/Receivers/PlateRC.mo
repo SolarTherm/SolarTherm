@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
-model Plate "Single element plate receiver with fluid interface"
-	extends SolarTherm.Receivers.FluidReceiver(port_b.h_outflow(start=0.0));
+model PlateRC "Single element plate receiver with fluid interface"
+	extends SolarTherm.Receivers.FluidRC(port_b.h_outflow(start=0.0));
 	// port_b.h_outflow is used as iteration variable, so we should find a good
 	// initial guess for it.  Setting to zero here to silence warning.
 	import SI = Modelica.SIunits;
@@ -55,4 +55,4 @@ equation
 		//Q_flow = 0;
 		port_b.h_outflow = inStream(port_a.h_outflow);
 	end if;
-end Plate;
+end PlateRC;

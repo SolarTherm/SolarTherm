@@ -1,10 +1,10 @@
 within SolarTherm.Receivers;
-model RecGeneric "Polynomial factors around design point"
+model GenericRC "Polynomial factors around design point"
+	extends SolarTherm.Receivers.Receiver;
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter Integer nelem = 1 "Number of aperture elements";
 
 	parameter SI.HeatFlowRate Q_flow_loss_des "Design heat loss";
 	parameter SI.RadiantPower R_des "Design radiant power";
@@ -15,8 +15,6 @@ model RecGeneric "Polynomial factors around design point"
 	parameter Real ca[:] "Ambient temperature factor coefficients";
 	parameter Real cw[:] "Wind factor coefficients";
 
-	input SolarTherm.Interfaces.WeatherBus wbus;
-	input SI.RadiantPower R[nelem] "Radiant power on aperture";
 	output SI.HeatFlowRate Q_flow "Heat flow leaving receiver";
 	SI.HeatFlowRate Q_flow_loss "Heat loss";
 protected
@@ -29,4 +27,4 @@ equation
 	fac_fra.x = if match_sam then wbus.dni/I_des else sum(R)/R_des;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 	fac_wnd.x = wbus.wspd;
-end RecGeneric;
+end GenericRC;

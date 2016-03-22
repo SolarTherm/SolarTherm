@@ -4,7 +4,6 @@ model HeatedFluid "Section of fluid that is heated"
 		allowFlowReversal=false);
 	import SI = Modelica.SIunits;
 
-	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.PartialFlowModel;
 	replaceable model FlowModel = SolarTherm.Fluid.Flows.LosslessFlow
 		constrainedby SolarTherm.Fluid.Flows.Flow;
 
