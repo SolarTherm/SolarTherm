@@ -1,5 +1,5 @@
 within SolarTherm.Collectors;
-block OptEffCatrom "Read in optical efficiency from file"
+block CatromOE "Read in optical efficiency from file"
 	extends SolarTherm.Collectors.OptEff(nelem=1);
 	// Expects data in file to be for a particular location
 	// Currently only set up to work with a single element
@@ -20,4 +20,4 @@ initial algorithm
 	res := Tables.tableGrid(table, n, m, sym);
 equation
 	eff[1] = max(Tables.tableCatromInterp(table, wbus.elo, wbus.hra, x_step, y_step), 0);
-end OptEffCatrom;
+end CatromOE;

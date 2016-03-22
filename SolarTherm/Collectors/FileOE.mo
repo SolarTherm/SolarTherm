@@ -1,5 +1,5 @@
 within SolarTherm.Collectors;
-block OptEffFile "Read in optical efficiency from file"
+block FileOE "Read in optical efficiency from file"
 	extends SolarTherm.Collectors.OptEff;
 	// Expects data in file to be oriented north (i.e. as for system in Southern
 	// hemisphere).  When running simulations in the Northern hemisphere, the
@@ -30,4 +30,4 @@ equation
 		end if;
 		eff[i] = table[i].y;
 	end for;
-end OptEffFile;
+end FileOE;

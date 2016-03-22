@@ -8,9 +8,9 @@ from solartherm import postproc
 
 from math import pi
 
-class TestOptEffCatrom(unittest.TestCase):
+class TestCatromOE(unittest.TestCase):
 	def setUp(self):
-		fn = 'TestOptEffCatrom.mo'
+		fn = 'TestCatromOE.mo'
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])

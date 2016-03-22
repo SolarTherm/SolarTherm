@@ -1,6 +1,6 @@
-block TestOptEffCatrom
+block TestCatromOE
 	import CN = Modelica.Constants;
-	SolarTherm.Collectors.OptEffCatrom oeff(
+	SolarTherm.Collectors.CatromOE oeff(
 		fileName="resources/optics/AliceSprings_N10M24_ext.csv",
 		n = 10,
 		m = 24,
@@ -11,5 +11,4 @@ block TestOptEffCatrom
 		);
 equation
 	connect(wea.wbus, oeff.wbus);
-end TestOptEffCatrom;
-
+end TestCatromOE;

@@ -1,5 +1,5 @@
 within SolarTherm.Collectors;
-block SteeredConc "Collector that can be partially steered on sun"
+block SteeredCL "Collector that can be partially steered on sun"
 	extends SolarTherm.Collectors.Collector;
 	import SI = Modelica.SIunits;
 
@@ -29,4 +29,4 @@ equation
 	end if;
 
 	R_foc = actual*oeff.eff*wbus.dni*A_con;
-end SteeredConc;
+end SteeredCL;

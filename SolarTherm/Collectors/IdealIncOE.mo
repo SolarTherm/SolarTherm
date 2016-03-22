@@ -1,5 +1,5 @@
 within SolarTherm.Collectors;
-block OptEffIdealInc "Collector with fixed incline that tracks sun azimuth"
+block IdealIncOE "Collector with fixed incline that tracks sun azimuth"
 	extends SolarTherm.Collectors.OptEff;
 	import SI = Modelica.SIunits;
 	import nSI = Modelica.SIunits.Conversions.NonSIunits;
@@ -11,4 +11,4 @@ equation
 	for i in 1:nelem loop
 		eff[i] = max(cos(from_deg(alt_fixed - wbus.alt))/nelem, 0);
 	end for;
-end OptEffIdealInc;
+end IdealIncOE;

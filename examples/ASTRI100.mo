@@ -144,9 +144,9 @@ model ASTRI100
 	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
 
-	//SolarTherm.Optics.IdealInc con(A_con=A_con);
-	SolarTherm.Optics.SteeredConc con(
-		redeclare model OptEff=SolarTherm.Optics.OptEffIdealInc,
+	//SolarTherm.Collectors.IdealIncCL con(A_con=A_con);
+	SolarTherm.Collectors.SteeredCL con(
+		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE,
 		A_con=A_con,
 		steer_rate=0.001,
 		target_error=0.001

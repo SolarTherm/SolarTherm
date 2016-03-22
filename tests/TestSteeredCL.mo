@@ -1,14 +1,14 @@
-block TestSteeredConc
+block TestSteeredCL
 	import CN = Modelica.Constants;
-	import SolarTherm.Collectors.SteeredConc;
-	import SolarTherm.Collectors.OptEffIdealInc;
+	import SolarTherm.Collectors.SteeredCL;
+	import SolarTherm.Collectors.IdealIncOE;
 	import SolarTherm.Sources.Weather.WeatherSource;
 
 	parameter String weaFile = "resources/tests/weatherfile1.motab";
 	WeatherSource wea(weaFile=weaFile);
 
-	SteeredConc conc(
-		redeclare model OptEff=OptEffIdealInc,
+	SteeredCL conc(
+		redeclare model OptEff=IdealIncOE,
 		A_con=100,
 		steer_rate=0.01,
 		target_error=0.001
@@ -22,4 +22,4 @@ equation
 	elsewhen time >= 100 then
 		conc.target = 0.2;
 	end when;
-end TestSteeredConc;
+end TestSteeredCL;

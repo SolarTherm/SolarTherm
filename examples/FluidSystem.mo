@@ -70,7 +70,10 @@ model FluidSystem
 	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
 	SolarTherm.Analysis.Finances.SpotPriceTable pri(fileName=priFile);
 
-	SolarTherm.Collectors.IdealInc con(A_con=A_con);
+	SolarTherm.Collectors.SwitchedCL con(
+		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
+		A_con=A_con
+		);
 
 	SolarTherm.Receivers.Plate rec(
 		redeclare package Medium=MedRec,

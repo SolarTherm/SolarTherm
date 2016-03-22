@@ -8,9 +8,9 @@ from solartherm import postproc
 
 from math import pi
 
-class TestOptEffFile(unittest.TestCase):
+class TestFileOE(unittest.TestCase):
 	def setUp(self):
-		fn = 'TestOptEffFile.mo'
+		fn = 'TestFileOE.mo'
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])

@@ -5,7 +5,10 @@ model EnergySystem
 	parameter Real A_rec = 1;
 	parameter Real E_max = 1*3600*1000;
 	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Collectors.IdealInc con(A_con=A_con, alt_fixed=45);
+	SolarTherm.Collectors.SwitchedCL con(
+		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
+		A_con=A_con
+		);
 	SolarTherm.Receivers.FixedEff rec(A=A_rec, eff=0.8);
 	SolarTherm.Fluid.Valves.EnergySplitter spl;
 	SolarTherm.Storage.EnergyInfinite inf;

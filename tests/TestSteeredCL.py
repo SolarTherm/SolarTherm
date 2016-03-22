@@ -8,9 +8,9 @@ from solartherm import postproc
 
 from math import pi
 
-class TestSteeredConc(unittest.TestCase):
+class TestSteeredCL(unittest.TestCase):
 	def setUp(self):
-		fn = 'TestSteeredConc.mo'
+		fn = 'TestSteeredCL.mo'
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])

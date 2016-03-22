@@ -98,8 +98,8 @@ model GenericSystem
 		weaFile=weaFile,
 		delay = wdelay
 		);
-	SolarTherm.Collectors.SteeredConc con(
-		redeclare model OptEff=SolarTherm.Collectors.OptEffFile(
+	SolarTherm.Collectors.SteeredCL con(
+		redeclare model OptEff=SolarTherm.Collectors.FileOE(
 			fileName=optFile,
 			orient_north=if wea.lat < 0 then true else false
 			),
