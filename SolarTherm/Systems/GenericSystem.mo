@@ -118,7 +118,7 @@ model GenericSystem
 		ca=rec_ca,
 		cw=rec_cw
 		);
-	SolarTherm.Storage.TankGeneric tnk(
+	SolarTherm.Storage.GenericST tnk(
 		E_max=E_max,
 		E_0=E_max*ini_frac,
 		Q_flow_loss_des=tnk_fr*E_max/(24*3600),

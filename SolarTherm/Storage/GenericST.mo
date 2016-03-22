@@ -1,5 +1,5 @@
 within SolarTherm.Storage;
-model TankGeneric "Generic energy tank"
+model GenericST "Generic energy storage tank"
 	import SI = Modelica.SIunits;
 	parameter SI.Energy E_max = 1000 "Maximum energy";
 	parameter SI.Energy E_0 = 0 "Starting energy";
@@ -24,4 +24,4 @@ equation
 	Q_flow_loss = Q_flow_loss_des*fac_fra.y*fac_amb.y;
 	fac_fra.x = E/E_max;
 	fac_amb.x = wbus.Tdry - T_amb_des;
-end TankGeneric;
+end GenericST;

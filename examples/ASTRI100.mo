@@ -175,12 +175,12 @@ model ASTRI100
 		cont_m_flow=true,
 		use_input=true);
 
-	SolarTherm.Storage.FluidTank ctnk(
+	SolarTherm.Storage.FluidST ctnk(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
-	SolarTherm.Storage.FluidTank htnk(
+	SolarTherm.Storage.FluidST htnk(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),

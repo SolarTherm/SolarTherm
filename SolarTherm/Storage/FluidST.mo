@@ -1,5 +1,5 @@
 within SolarTherm.Storage;
-model FluidTank "Fluid tank"
+model FluidST "Fluid storage tank"
 	extends Modelica.Fluid.Interfaces.PartialTwoPort(
 		allowFlowReversal=false);
 	import SI = Modelica.SIunits;
@@ -26,4 +26,4 @@ equation
 					+ port_b.m_flow*port_b.h_outflow;
 	port_a.p = mprop.p;
 	port_b.p = mprop.p;
-end FluidTank;
+end FluidST;

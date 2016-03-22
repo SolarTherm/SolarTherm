@@ -1,4 +1,4 @@
-within SolarTherm.Interfaces;
+within SolarTherm.Fluid.Interfaces;
 connector EnergyPort "Energy Port"
 	// Will through warnings because it has no "potential" variable
 	import SI = Modelica.SIunits;
