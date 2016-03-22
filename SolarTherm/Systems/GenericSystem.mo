@@ -126,7 +126,7 @@ model GenericSystem
 		cf=tnk_cf,
 		ca=tnk_ca
 		) if storage;
-	SolarTherm.PowerBlocks.PBGenericStart blk(
+	SolarTherm.PowerBlocks.GenericStartPB blk(
 		eff_des=eff_cyc,
 		Q_flow_des=Q_flow_des,
 		T_amb_des=blk_T_amb_des,
@@ -137,7 +137,7 @@ model GenericSystem
 		t_heat=t_blk_heat*3600,
 		t_cool=t_blk_cool*3600
 		);
-	SolarTherm.PowerBlocks.ParasiticsGeneric par(
+	SolarTherm.PowerBlocks.GenericParasitics par(
 		P_par_des=par_fr*P_gro,
 		P_gross_des=P_gro,
 		T_amb_des=par_T_amb_des,

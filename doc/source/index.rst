@@ -17,6 +17,7 @@ Development
 .. toctree::
    :maxdepth: 2
 
+   codestyle
    openmodelica
    libraries
    modelling

@@ -1,6 +1,6 @@
 within SolarTherm.PowerBlocks;
-model BasicPB "Basic power block model"
-	extends SolarTherm.PowerBlocks.PowerBlock;
+model FixedOutletPB "Basic power block model"
+	extends SolarTherm.PowerBlocks.FluidPB;
 	import SI = Modelica.SIunits;
 
 	parameter SI.Pressure p_set_outlet = 100000 "Set point p of outlet";
@@ -14,7 +14,7 @@ equation
 	port_b.h_outflow = mprop_b.h;
 	port_a.h_outflow = inStream(port_b.h_outflow);
 
-	P_out = port_a.m_flow*(inStream(port_a.h_outflow) - port_b.h_outflow);
+	P = port_a.m_flow*(inStream(port_a.h_outflow) - port_b.h_outflow);
 
 	port_b.p = port_a.p; // Need to build pressure drop into PB
-end BasicPB;
+end FixedOutletPB;

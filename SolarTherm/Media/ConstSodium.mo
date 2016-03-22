@@ -1,6 +1,6 @@
 within SolarTherm.Media;
-package SodiumConst "Sodium model with constant properties"
-	constant Modelica.Media.Interfaces.Types.Basic.FluidConstants[1] sodium_const(
+package ConstSodium "Sodium model with constant properties"
+	constant Modelica.Media.Interfaces.Types.Basic.FluidConstants[1] const_sodium(
 		each chemicalFormula="Na",
 		each structureFormula="Na",
 		each casRegistryNumber="",
@@ -20,7 +20,6 @@ package SodiumConst "Sodium model with constant properties"
 		T_max=1154.7,
 		T0=700,
 		MM_const=0.02298977,
-		fluidConstants=sodium_const
+		fluidConstants=const_sodium
 		);
-
-end SodiumConst;
+end ConstSodium;

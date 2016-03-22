@@ -4,7 +4,7 @@ model FluidSystem
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Analysis.Finances;
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
-	replaceable package MedRec = SolarTherm.Media.SodiumConst;
+	replaceable package MedRec = SolarTherm.Media.ConstSodium;
 	//replaceable package MedRec = SolarTherm.Media.Sodium;
 
 	inner Modelica.Fluid.System system(
@@ -42,10 +42,10 @@ model FluidSystem
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
 	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
-	//parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_name/
+	//parameter SI.MassFlowRate m_flow_blk = (1/eff_est)*P_name/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 		// only works with PartialSimpleMedium
-	parameter SI.MassFlowRate m_flow_pblk = (1/eff_est)*P_name/
+	parameter SI.MassFlowRate m_flow_blk = (1/eff_est)*P_name/
 		(1277*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
 	parameter SI.Mass m_up_warn = 0.85*m_max;
 	parameter SI.Mass m_up_stop = 0.95*m_max;
@@ -105,7 +105,7 @@ model FluidSystem
 		use_input=false,
 		T_fixed=T_cold_set);
 
-	SolarTherm.PowerBlocks.HeatGen pblk(
+	SolarTherm.PowerBlocks.HeatPB blk(
 		redeclare package Medium=MedRec,
 		P_rate=P_name,
 		eff_adj=eff_adj);
@@ -129,7 +129,7 @@ model FluidSystem
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);
-	connect(wea.wbus, pblk.wbus);
+	connect(wea.wbus, blk.wbus);
 	connect(con.R_foc, rec.R);
 	connect(ctnk.port_b, pmp_rec.port_a);
 	connect(pmp_rec.port_b, rec.port_a);
@@ -139,8 +139,8 @@ equation
 	connect(pmp_ext.port_b, ext.port_a);
 	connect(ext.port_b, ctnk.port_a);
 
-	connect(ext.Q_flow, pblk.Q_flow);
-	connect(ext.T, pblk.T);
+	connect(ext.Q_flow, blk.Q_flow);
+	connect(ext.T, blk.T);
 
 	connect(hf_trig.x, htnk.m);
 	connect(cf_trig.x, ctnk.m);
@@ -153,11 +153,11 @@ equation
 	rec.door_open = radiance_good and fill_htnk;
 	pmp_rec.m_flow_set = if radiance_good and fill_htnk then
 		m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
-	pmp_ext.m_flow_set = if fill_ctnk then m_flow_pblk else 0;
+	pmp_ext.m_flow_set = if fill_ctnk then m_flow_blk else 0;
 
 	con.track = true;
 
-	P_elec = pblk.P_elec;
+	P_elec = blk.P;
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
 end FluidSystem;

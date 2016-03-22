@@ -1,5 +1,5 @@
 within SolarTherm.PowerBlocks;
-model ParasiticsGeneric "Generic parasitics model"
+model GenericParasitics "Generic parasitics model"
 	import SI = Modelica.SIunits;
 
 	parameter SI.Power P_par_des "Parasitic power at design";
@@ -19,4 +19,4 @@ equation
 	fac_fra.x = P_gen/P_gross_des;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 	P_par = P_par_des*fac_fra.y*fac_amb.y;
-end ParasiticsGeneric;
+end GenericParasitics;
