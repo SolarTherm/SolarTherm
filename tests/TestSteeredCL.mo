@@ -9,7 +9,7 @@ block TestSteeredCL
 
 	SteeredCL conc(
 		redeclare model OptEff=IdealIncOE,
-		A_con=100,
+		A=100,
 		steer_rate=0.01,
 		target_error=0.001
 		);

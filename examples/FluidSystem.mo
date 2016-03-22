@@ -22,7 +22,7 @@ model FluidSystem
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
 	parameter SI.Efficiency eff_est = 0.48 "Estimate of overall power block efficiency";
 
-	parameter SI.Area A_con = 700 "Concentrator area";
+	parameter SI.Area A_col = 700 "Collector area";
 
 	parameter SI.Area A_rec = 1 "Receiver area";
 	parameter Real em_steel = 0.85 "Emissivity of reciever";
@@ -40,7 +40,7 @@ model FluidSystem
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
-	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
+	parameter SI.RadiantPower R_go = 200*A_col "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
 	//parameter SI.MassFlowRate m_flow_blk = (1/eff_est)*P_name/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
@@ -52,15 +52,15 @@ model FluidSystem
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
 	parameter FI.Money C_cap =
-			120*A_con // field cost
-			+ 135*A_con // receiver cost
+			120*A_col // field cost
+			+ 135*A_col // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital cost";
 	parameter FI.MoneyPerYear C_year =
-			10*A_con // field cleaning/maintenance
+			10*A_col // field cleaning/maintenance
 			"Cost per year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
@@ -70,12 +70,12 @@ model FluidSystem
 	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
 	SolarTherm.Analysis.Finances.SpotPriceTable pri(file=pri_file);
 
-	SolarTherm.Collectors.SwitchedCL con(
+	SolarTherm.Collectors.SwitchedCL CL(
 		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
-		A_con=A_con
+		A=A_col
 		);
 
-	SolarTherm.Receivers.PlateRC rec(
+	SolarTherm.Receivers.PlateRC RC(
 		redeclare package Medium=MedRec,
 		A=A_rec, em=em_steel, h_th=h_th_rec);
 
@@ -88,12 +88,12 @@ model FluidSystem
 		cont_m_flow=true,
 		use_input=true);
 
-	SolarTherm.Storage.FluidST ctnk(
+	SolarTherm.Storage.FluidST STC(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
-	SolarTherm.Storage.FluidST htnk(
+	SolarTherm.Storage.FluidST STH(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),
@@ -105,7 +105,7 @@ model FluidSystem
 		use_input=false,
 		T_fixed=T_cold_set);
 
-	SolarTherm.PowerBlocks.HeatPB blk(
+	SolarTherm.PowerBlocks.HeatPB PB(
 		redeclare package Medium=MedRec,
 		P_rate=P_name,
 		eff_adj=eff_adj);
@@ -127,37 +127,37 @@ model FluidSystem
 	FI.Money R_spot(start=0, fixed=true) "Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 equation
-	connect(wea.wbus, con.wbus);
-	connect(wea.wbus, rec.wbus);
-	connect(wea.wbus, blk.wbus);
-	connect(con.R_foc, rec.R);
-	connect(ctnk.port_b, pmp_rec.port_a);
-	connect(pmp_rec.port_b, rec.port_a);
-	connect(rec.port_b, htnk.port_a);
+	connect(wea.wbus, CL.wbus);
+	connect(wea.wbus, RC.wbus);
+	connect(wea.wbus, PB.wbus);
+	connect(CL.R_foc, RC.R);
+	connect(STC.port_b, pmp_rec.port_a);
+	connect(pmp_rec.port_b, RC.port_a);
+	connect(RC.port_b, STH.port_a);
 
-	connect(htnk.port_b, pmp_ext.port_a);
+	connect(STH.port_b, pmp_ext.port_a);
 	connect(pmp_ext.port_b, ext.port_a);
-	connect(ext.port_b, ctnk.port_a);
+	connect(ext.port_b, STC.port_a);
 
-	connect(ext.Q_flow, blk.Q_flow);
-	connect(ext.T, blk.T);
+	connect(ext.Q_flow, PB.Q_flow);
+	connect(ext.T, PB.T);
 
-	connect(hf_trig.x, htnk.m);
-	connect(cf_trig.x, ctnk.m);
+	connect(hf_trig.x, STH.m);
+	connect(cf_trig.x, STC.m);
 
-	radiance_good = sum(rec.R) >= R_go;
+	radiance_good = sum(RC.R) >= R_go;
 
 	fill_htnk = not hf_trig.y;
 	fill_ctnk = not cf_trig.y;
 
-	rec.door_open = radiance_good and fill_htnk;
+	RC.door_open = radiance_good and fill_htnk;
 	pmp_rec.m_flow_set = if radiance_good and fill_htnk then
-		m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
+		m_flow_fac*sum(RC.R)/(A_col*1000) else 0;
 	pmp_ext.m_flow_set = if fill_ctnk then m_flow_blk else 0;
 
-	con.track = true;
+	CL.track = true;
 
-	P_elec = blk.P;
+	P_elec = PB.P;
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
 end FluidSystem;

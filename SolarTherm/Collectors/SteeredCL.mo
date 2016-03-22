@@ -5,8 +5,6 @@ block SteeredCL "Collector that can be partially steered on sun"
 
 	replaceable model OptEff = SolarTherm.Collectors.OptEff; // should replace
 
-	parameter SI.Area A_con "Area of concentrator aperture";
-
 	parameter Real steer_rate(min=0) "Speed of mirror steer as fraction of total mirrors per second";
 	parameter Real target_error(min=0, max=1) = 0.01 "Allowed error between target and actual";
 	parameter Real actual_0(min=0, max=1) = 0 "Start position";
@@ -28,5 +26,5 @@ equation
 		der(actual) = 0;
 	end if;
 
-	R_foc = actual*oeff.eff*wbus.dni*A_con;
+	R_foc = actual*oeff.eff*wbus.dni*A;
 end SteeredCL;

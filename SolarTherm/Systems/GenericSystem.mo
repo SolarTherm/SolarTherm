@@ -98,17 +98,17 @@ model GenericSystem
 		file=wea_file,
 		delay = wdelay
 		);
-	SolarTherm.Collectors.SteeredCL con(
+	SolarTherm.Collectors.SteeredCL CL(
 		redeclare model OptEff=SolarTherm.Collectors.FileOE(
 			file=opt_file,
 			orient_north=if wea.lat < 0 then true else false
 			),
-		A_con=if match_sam then 1.0273*A_field else A_field,
+		A=if match_sam then 1.0273*A_field else A_field,
 		steer_rate=0.002, // ~8 minutes till fully on sun
 		target_error=0.0001, // if large can be large source of missing energy
 		actual_0=0.0
 		);
-	SolarTherm.Receivers.GenericRC rec(
+	SolarTherm.Receivers.GenericRC RC(
 		match_sam=match_sam,
 		Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
 		R_des=R_des,
@@ -118,7 +118,7 @@ model GenericSystem
 		ca=rec_ca,
 		cw=rec_cw
 		);
-	SolarTherm.Storage.GenericST tnk(
+	SolarTherm.Storage.GenericST ST(
 		E_max=E_max,
 		E_0=E_max*ini_frac,
 		Q_flow_loss_des=tnk_fr*E_max/(24*3600),
@@ -126,7 +126,7 @@ model GenericSystem
 		cf=tnk_cf,
 		ca=tnk_ca
 		) if storage;
-	SolarTherm.PowerBlocks.GenericStartPB blk(
+	SolarTherm.PowerBlocks.GenericStartPB PB(
 		eff_des=eff_cyc,
 		Q_flow_des=Q_flow_des,
 		T_amb_des=blk_T_amb_des,
@@ -167,30 +167,30 @@ model GenericSystem
 	SI.Energy E_elec "Generated electricity";
 	FI.Money R_spot "Spot market revenue";
 equation
-	connect(wea.wbus, con.wbus);
-	connect(wea.wbus, rec.wbus);
+	connect(wea.wbus, CL.wbus);
+	connect(wea.wbus, RC.wbus);
 	if storage then
-		connect(wea.wbus, tnk.wbus);
+		connect(wea.wbus, ST.wbus);
 	end if;
-	connect(wea.wbus, blk.wbus);
+	connect(wea.wbus, PB.wbus);
 	connect(wea.wbus, par.wbus);
 
-	connect(con.R_foc, rec.R);
+	connect(CL.R_foc, RC.R);
 	if storage then
-		connect(rec.Q_flow, tnk.Q_flow_in);
-		connect(tnk.Q_flow_out, blk.Q_flow);
+		connect(RC.Q_flow, ST.Q_flow_in);
+		connect(ST.Q_flow_out, PB.Q_flow);
 
-		connect(tnk.Q_flow_in, dis.flow_in);
+		connect(ST.Q_flow_in, dis.flow_in);
 		dis.flow_tar = sched*Q_flow_des;
-		connect(tnk.E, dis.level);
-		connect(blk.heated, dis.heated);
-		connect(dis.flow_dis, tnk.Q_flow_set);
+		connect(ST.E, dis.level);
+		connect(PB.heated, dis.heated);
+		connect(dis.flow_dis, ST.Q_flow_set);
 	else
-		connect(rec.Q_flow, blk.Q_flow);
+		connect(RC.Q_flow, PB.Q_flow);
 	end if;
-	connect(blk.P, par.P_gen);
+	connect(PB.P, par.P_gen);
 
-	P_elec = blk.P - par.P_par - par_fix_fr*P_net;
+	P_elec = PB.P - par.P_par - par_fix_fr*P_net;
 	connect(P_elec, per.P_elec);
 	per.P_sch = sched*P_name;
 	connect(per.E_elec, E_elec);
@@ -198,9 +198,9 @@ equation
 
 	if (wea.wbus.azi <= 180 and wea.wbus.alt >= deploy_angle) or 
 			(wea.wbus.azi >= 180 and wea.wbus.alt >= stow_angle) then
-		con.target = 1;
+		CL.target = 1;
 	else
-		con.target = 0;
+		CL.target = 0;
 	end if;
 
 	if const_dispatch then

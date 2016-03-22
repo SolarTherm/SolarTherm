@@ -52,7 +52,7 @@ model ASTRI100
 	// Mirror reflectance 0.9
 	// Number of heliostats 6377 (calc)
 
-	parameter SI.Area A_con = 700 "Concentrator area";
+	parameter SI.Area A_col = 700 "Collector area";
 
 	// Receiver
 	// Aperture height 18m (calc)
@@ -114,7 +114,7 @@ model ASTRI100
 	parameter MedRec.Temperature T_hot_set = CV.from_degC(565) "Target hot tank T";
 	parameter MedRec.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting T";
 	parameter MedRec.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting T";
-	parameter SI.RadiantPower R_go = 200*A_con "Receiver radiant power for running";
+	parameter SI.RadiantPower R_go = 200*A_col "Receiver radiant power for running";
 	parameter SI.MassFlowRate m_flow_fac = 1.2 "Mass flow factor for receiver";
 	//parameter SI.MassFlowRate m_flow_blk = (1/eff_est)*P_name/
 	//	(MedRec.cp_const*(T_hot_set - T_cold_set)) "Mass flow rate for power block";
@@ -126,15 +126,15 @@ model ASTRI100
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
 	parameter SolarTherm.Utilities.Finances.Money C_cap =
-			120*A_con // field cost
-			+ 135*A_con // receiver cost
+			120*A_col // field cost
+			+ 135*A_col // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital costs";
 	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
-			10*A_con // field cleaning/maintenance
+			10*A_col // field cleaning/maintenance
 			"Maintenance costs for each year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
@@ -144,10 +144,9 @@ model ASTRI100
 	SolarTherm.Utilities.Weather.WeatherSource wea(file=wea_file);
 	SolarTherm.Utilities.Finances.SpotPriceTable pri(file=pri_file);
 
-	//SolarTherm.Collectors.IdealIncCL con(A_con=A_con);
-	SolarTherm.Collectors.SteeredCL con(
+	SolarTherm.Collectors.SteeredCL CL(
 		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE,
-		A_con=A_con,
+		A=A_col,
 		steer_rate=0.001,
 		target_error=0.001
 		);
@@ -156,7 +155,7 @@ model ASTRI100
 	//	redeclare package Medium=MedRec,
 	//	A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	SolarTherm.Receivers.OnePipeRC rec(
+	SolarTherm.Receivers.OnePipeRC RC(
 		redeclare package Medium=MedRec,
 		redeclare model Elem=SolarTherm.Receivers.EndTElem(
 			each em=em_steel,
@@ -175,12 +174,12 @@ model ASTRI100
 		cont_m_flow=true,
 		use_input=true);
 
-	SolarTherm.Storage.FluidST ctnk(
+	SolarTherm.Storage.FluidST STC(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
-	SolarTherm.Storage.FluidST htnk(
+	SolarTherm.Storage.FluidST STH(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),
@@ -192,7 +191,7 @@ model ASTRI100
 		use_input=false,
 		T_fixed=T_cold_set);
 
-	SolarTherm.PowerBlocks.HeatPB blk(
+	SolarTherm.PowerBlocks.HeatPB PB(
 		redeclare package Medium=MedRec,
 		P_rate=P_name,
 		eff_adj=eff_adj);
@@ -215,61 +214,61 @@ model ASTRI100
 		"Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 equation
-	connect(wea.wbus, con.wbus);
-	connect(wea.wbus, rec.wbus);
-	connect(wea.wbus, blk.wbus);
-	connect(con.R_foc, rec.R);
-	connect(ctnk.port_b, pmp_rec.port_a);
-	connect(pmp_rec.port_b, rec.port_a);
-	connect(rec.port_b, htnk.port_a);
+	connect(wea.wbus, CL.wbus);
+	connect(wea.wbus, RC.wbus);
+	connect(wea.wbus, PB.wbus);
+	connect(CL.R_foc, RC.R);
+	connect(STC.port_b, pmp_rec.port_a);
+	connect(pmp_rec.port_b, RC.port_a);
+	connect(RC.port_b, STH.port_a);
 
-	connect(htnk.port_b, pmp_ext.port_a);
+	connect(STH.port_b, pmp_ext.port_a);
 	connect(pmp_ext.port_b, ext.port_a);
-	connect(ext.port_b, ctnk.port_a);
+	connect(ext.port_b, STC.port_a);
 
-	connect(ext.Q_flow, blk.Q_flow);
-	connect(ext.T, blk.T);
+	connect(ext.Q_flow, PB.Q_flow);
+	connect(ext.T, PB.T);
 
-	connect(hf_trig.x, htnk.m);
-	connect(cf_trig.x, ctnk.m);
+	connect(hf_trig.x, STH.m);
+	connect(cf_trig.x, STC.m);
 
-	//radiance_good = sum(rec.R) >= R_go;
+	//radiance_good = sum(RC.R) >= R_go;
 
 	//fill_htnk = not hf_trig.y;
 	//fill_ctnk = not cf_trig.y;
 
-	//rec.door_open = radiance_good and fill_htnk;
+	//RC.door_open = radiance_good and fill_htnk;
 	//pmp_rec.m_flow_set = if radiance_good and fill_htnk then
-	//	m_flow_fac*sum(rec.R)/(A_con*1000) else 0;
+	//	m_flow_fac*sum(RC.R)/(A_col*1000) else 0;
 	//pmp_ext.m_flow_set = if fill_ctnk then m_flow_blk else 0;
 
-	////con.track = true;
-	//con.target = 1;
+	////CL.track = true;
+	//CL.target = 1;
 
 	//radiance_good = wea.wbus.dni >= 200;
-	radiance_good = sum(con.tflux.R) >= R_go;
-	//radiance_good = sum(rec.R) >= R_go;
+	radiance_good = sum(CL.tflux.R) >= R_go;
+	//radiance_good = sum(RC.R) >= R_go;
 
 	fill_htnk = not hf_trig.y;
 	fill_ctnk = not cf_trig.y;
 
-	//rec.door_open = radiance_good and fill_htnk;
+	//RC.door_open = radiance_good and fill_htnk;
 
 	// m_flow_rate max is (T_hot_set - 50) - T_cold_set
 
-	if (htnk.m >= 0.7*m_max) and radiance_good and fill_htnk then
+	if (STH.m >= 0.7*m_max) and radiance_good and fill_htnk then
 		//pmp_rec.m_flow_set = pmp_rec.m_flow_set;
-		//con.target = max(min(T_hot_set, 1), 0);
-		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
-		con.target = 1;
+		//CL.target = max(min(T_hot_set, 1), 0);
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(CL.R_foc)/(A_col*1000), 0.01);
+		CL.target = 1;
 	elseif radiance_good and fill_htnk then
-		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
-		con.target = 1;
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(CL.R_foc)/(A_col*1000), 0.01);
+		CL.target = 1;
 	else
 		//pmp_rec.m_flow_set = 0.01; // Should recirculate back to cold tank...
 		// Should keep flow rate high until off sun
-		pmp_rec.m_flow_set = max(m_flow_fac*sum(con.R_foc)/(A_con*1000), 0.01);
-		con.target = 0;
+		pmp_rec.m_flow_set = max(m_flow_fac*sum(CL.R_foc)/(A_col*1000), 0.01);
+		CL.target = 0;
 	end if;
 
 	// Fails to correctly get receiver temperature when turning off, even when
@@ -285,7 +284,7 @@ equation
 
 	pmp_ext.m_flow_set = if fill_ctnk then m_flow_blk else 0;
 
-	P_elec = blk.P;
+	P_elec = PB.P;
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
 end ASTRI100;

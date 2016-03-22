@@ -9,9 +9,9 @@ model SimpleSystem
 	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
 	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
 
-	parameter SI.Area A_con = 700 "Area of concentrator";
+	parameter SI.Area A_col = 700 "Area of collector";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";
-	parameter Real C = 0.65*A_con/A_rec "Concentration ratio";
+	parameter Real C = 0.65*A_col/A_rec "Concentration ratio";
 	parameter SI.Efficiency eff_rec = 0.9 "Receiver efficiency";
 	parameter SI.Efficiency eff_blk = 0.48 "Power block efficiency";
 	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
@@ -52,13 +52,13 @@ model SimpleSystem
 	//		};
 
 	parameter FI.Money C_cap =
-			120*A_con // field cost
+			120*A_col // field cost
 			+ 135*C*A_rec // receiver cost
 			+ (30/(1e3*3600))*E_max // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital cost";
 	parameter FI.MoneyPerYear C_year =
-			10*A_con // field cleaning/maintenance
+			10*A_col // field cleaning/maintenance
 			"Cost per year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
