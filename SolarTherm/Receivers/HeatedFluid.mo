@@ -5,6 +5,8 @@ model HeatedFluid "Section of fluid that is heated"
 	import SI = Modelica.SIunits;
 
 	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.PartialFlowModel;
+	replaceable model FlowModel = SolarTherm.Fluid.Flows.LosslessFlow
+		constrainedby SolarTherm.Fluid.Flows.Flow;
 
 	input SI.HeatFlowRate Q_flow "Fluid heat gain";
 

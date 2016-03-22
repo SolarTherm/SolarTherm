@@ -3,13 +3,14 @@ model FluidTank "Fluid tank"
 	extends Modelica.Fluid.Interfaces.PartialTwoPort(
 		allowFlowReversal=false);
 	import SI = Modelica.SIunits;
+	import FI = SolarTherm.Analysis.Finances;
 	parameter SI.Mass m_max = 0 "Maximum mass";
 	parameter SI.Mass m_start = 0 "Starting mass";
 	parameter Medium.Temperature T_start = system.T_start "Starting temperature";
 	parameter SI.Pressure p_fixed = system.p_ambient "Fixed pressure";
 
-	parameter SolarTherm.Utilities.Finances.Money C_cap = 0 "Capital costs";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_main = 0 "Maintenance costs";
+	parameter FI.Money C_cap = 0 "Capital costs";
+	parameter FI.MoneyPerYear C_main = 0 "Maintenance costs";
 	SI.Mass m(min=0, max=m_max) "Mass in tank";
 
 	Medium.BaseProperties mprop;

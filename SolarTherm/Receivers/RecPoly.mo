@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
 model RecPoly "Polynomial factors around design point"
-	extends SolarTherm.Receivers.Receiver(port_b.h_outflow(start=0.0));
+	extends SolarTherm.Receivers.FluidReceiver(port_b.h_outflow(start=0.0));
 	// port_b.h_outflow is used as iteration variable, so we should find a good
 	// initial guess for it.  Setting to zero here to silence warning.
 	import SI = Modelica.SIunits;
@@ -23,8 +23,8 @@ model RecPoly "Polynomial factors around design point"
 	parameter Real cw2 "Wind factor coefficient";
 	parameter Real cw3 "Wind factor coefficient";
 
-	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.Lossless
-		constrainedby SolarTherm.Interfaces.FlowLoss.PartialFlowModel;
+	replaceable model FlowModel = SolarTherm.Fluid.Flows.LosslessFlow
+		constrainedby SolarTherm.Fluid.Flows.Flow;
 
 	SolarTherm.Receivers.HeatedFluid hfluid(
 		redeclare package Medium=Medium,

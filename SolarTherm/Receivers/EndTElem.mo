@@ -1,7 +1,7 @@
 within SolarTherm.Receivers;
 model EndTElem "Losses at outlet fluid temperature"
 	extends SolarTherm.Receivers.RecElem(
-		redeclare model FlowModel=SolarTherm.Interfaces.FlowModels.Lossless,
+		redeclare model FlowModel=SolarTherm.Fluid.Flows.LosslessFlow,
 		port_b.h_outflow(start=0.0)
 		);
 	// port_b.h_outflow is used as iteration variable, so we should find a good

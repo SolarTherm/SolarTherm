@@ -1,6 +1,6 @@
 block TestOptEffFile
 	import CN = Modelica.Constants;
-	import SolarTherm.Optics.OptEffFile;
+	import SolarTherm.Collectors.OptEffFile;
 	OptEffFile oeff(nelem=2, fileName="resources/tests/opt_eff.motab");
 initial equation
 	oeff.wbus.alt = 0.0;

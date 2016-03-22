@@ -14,7 +14,7 @@ expandable connector WeatherBus "Bus for weather data"
 	SI.Velocity wspd(min=0) "Wind speed";
 	SI.Time t "Time of year";
 	SI.Time tod "Time of day";
-	SolarTherm.Utilities.Date.DayOfWeek dow "Day of week";
-	SolarTherm.Utilities.Date.MonOfYear moy "Month of year";
+	SolarTherm.Sources.Date.DayOfWeek dow "Day of week";
+	SolarTherm.Sources.Date.MonOfYear moy "Month of year";
 end WeatherBus;
 

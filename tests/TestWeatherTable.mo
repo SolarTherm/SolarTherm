@@ -1,5 +1,5 @@
 block TestWeatherTable
-	import SolarTherm.Utilities.Weather.WeatherTable;
+	import SolarTherm.Sources.Weather.WeatherTable;
 	parameter Real tab[:,:] = [{0, 1, 2, 3}, {3, 2, 2, 3}];
 	WeatherTable linear(table=tab,
 		smoothness=Modelica.Blocks.Types.Smoothness.LinearSegments);

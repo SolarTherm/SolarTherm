@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
 model PlateMass "Single element plate receiver with fluid interface"
-	extends SolarTherm.Receivers.Receiver;
+	extends SolarTherm.Receivers.FluidReceiver;
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 

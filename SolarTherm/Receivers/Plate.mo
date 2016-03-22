@@ -1,6 +1,6 @@
 within SolarTherm.Receivers;
 model Plate "Single element plate receiver with fluid interface"
-	extends SolarTherm.Receivers.Receiver(port_b.h_outflow(start=0.0));
+	extends SolarTherm.Receivers.FluidReceiver(port_b.h_outflow(start=0.0));
 	// port_b.h_outflow is used as iteration variable, so we should find a good
 	// initial guess for it.  Setting to zero here to silence warning.
 	import SI = Modelica.SIunits;
@@ -10,8 +10,8 @@ model Plate "Single element plate receiver with fluid interface"
 	parameter Real em "Emissivity";
 	parameter SI.CoefficientOfHeatTransfer h_th "Heat transfer coeff with env";
 
-	replaceable model FlowModel = SolarTherm.Interfaces.FlowModels.Lossless
-		constrainedby SolarTherm.Interfaces.FlowLoss.PartialFlowModel;
+	replaceable model FlowModel = SolarTherm.Fluid.Flows.LosslessFlow
+		constrainedby SolarTherm.Fluid.Flows.Flow;
 
 	FlowModel flowmod;
 

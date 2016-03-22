@@ -4,7 +4,7 @@ model GenericSystem
 	import nSI = Modelica.SIunits.Conversions.NonSIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
-	import FIN = SolarTherm.Utilities.Finances;
+	import FI = SolarTherm.Analysis.Finances;
 
 	// Input Parameters
 	// ****************
@@ -60,11 +60,11 @@ model GenericSystem
 
 	// Contingencies should be included
 	parameter Real land_mult = 1 "Land area multiplier";
-	parameter FIN.AreaPrice pri_field = 0 "Field cost per design aperture area";
-	parameter FIN.AreaPrice pri_land = 0 "Land cost per area";
-	parameter FIN.PowerPrice pri_receiver = 0 "Receiver cost per design power";
-	parameter FIN.EnergyPrice pri_storage = 0 "Storage cost per energy capacity";
-	parameter FIN.PowerPrice pri_block = 0 "Power block cost per gross rated power";
+	parameter FI.AreaPrice pri_field = 0 "Field cost per design aperture area";
+	parameter FI.AreaPrice pri_land = 0 "Land cost per area";
+	parameter FI.PowerPrice pri_receiver = 0 "Receiver cost per design power";
+	parameter FI.EnergyPrice pri_storage = 0 "Storage cost per energy capacity";
+	parameter FI.PowerPrice pri_block = 0 "Power block cost per gross rated power";
 
 	parameter Real pri_om_name(unit="$/W/year") = 0 "O&M cost per nameplate per year";
 	parameter Real pri_om_prod(unit="$/J/year") = 0 "O&M cost per production per year";
@@ -88,18 +88,18 @@ model GenericSystem
 
 	parameter SI.Power P_net = (1 - par_fr)*P_gro "Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
-	parameter FIN.Money C_cap = A_field*pri_field + A_land*pri_land
+	parameter FI.Money C_cap = A_field*pri_field + A_land*pri_land
 		+ R_des*pri_receiver + E_max*pri_storage + P_gro*pri_block
 		"Capital cost";
-	parameter FIN.MoneyPerYear C_year = P_name*pri_om_name "Cost per year";
+	parameter FI.MoneyPerYear C_year = P_name*pri_om_name "Cost per year";
 	parameter Real C_prod(unit="$/W/year") = pri_om_prod "Cost per production per year";
 
-	SolarTherm.Utilities.Weather.WeatherSource wea(
+	SolarTherm.Sources.Weather.WeatherSource wea(
 		weaFile=weaFile,
 		delay = wdelay
 		);
-	SolarTherm.Optics.SteeredConc con(
-		redeclare model OptEff=SolarTherm.Optics.OptEffFile(
+	SolarTherm.Collectors.SteeredConc con(
+		redeclare model OptEff=SolarTherm.Collectors.OptEffFile(
 			fileName=optFile,
 			orient_north=if wea.lat < 0 then true else false
 			),
@@ -156,8 +156,8 @@ model GenericSystem
 		heat_rate=blk_heat*Q_flow_des
 		) if storage;
 	// Needs to be configured in instantiation if not const_dispatch
-	SolarTherm.Utilities.Schedule.Scheduler sch if not const_dispatch;
-	SolarTherm.Utilities.Performance.EnergyPerf per(
+	SolarTherm.Sources.Schedule.Scheduler sch if not const_dispatch;
+	SolarTherm.Analysis.Performance per(
 		schedule=true,
 		priFile=priFile
 		);
@@ -165,7 +165,7 @@ model GenericSystem
 	Real sched;
 	SI.Power P_elec "Net electrical power out";
 	SI.Energy E_elec "Generated electricity";
-	FIN.Money R_spot "Spot market revenue";
+	FI.Money R_spot "Spot market revenue";
 equation
 	connect(wea.wbus, con.wbus);
 	connect(wea.wbus, rec.wbus);

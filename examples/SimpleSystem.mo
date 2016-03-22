@@ -3,6 +3,7 @@ model SimpleSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
+	import FI = SolarTherm.Analysis.Finances;
 
 	// Parameters
 	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
@@ -50,13 +51,13 @@ model SimpleSystem
 	//		12*3600
 	//		};
 
-	parameter SolarTherm.Utilities.Finances.Money C_cap =
+	parameter FI.Money C_cap =
 			120*A_con // field cost
 			+ 135*C*A_rec // receiver cost
 			+ (30/(1e3*3600))*E_max // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital cost";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
+	parameter FI.MoneyPerYear C_year =
 			10*A_con // field cleaning/maintenance
 			"Cost per year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
@@ -65,8 +66,8 @@ model SimpleSystem
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
 	// Variables/Models
-	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
+	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Analysis.Finances.SpotPriceTable pri(fileName=priFile);
 
 	SI.HeatFlowRate Q_flow_rec "Heat flow into receiver";
 	SI.HeatFlowRate Q_flow_chg "Heat flow into tank";
@@ -85,7 +86,7 @@ model SimpleSystem
 	Real t_blk_next "Time of next power block event";
 	Real t_sch_next "Time of next schedule change";
 
-	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
+	FI.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 initial equation

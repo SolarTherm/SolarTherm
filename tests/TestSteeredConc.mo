@@ -1,8 +1,8 @@
 block TestSteeredConc
 	import CN = Modelica.Constants;
-	import SolarTherm.Optics.SteeredConc;
-	import SolarTherm.Optics.OptEffIdealInc;
-	import SolarTherm.Utilities.Weather.WeatherSource;
+	import SolarTherm.Collectors.SteeredConc;
+	import SolarTherm.Collectors.OptEffIdealInc;
+	import SolarTherm.Sources.Weather.WeatherSource;
 
 	parameter String weaFile = "resources/tests/weatherfile1.motab";
 	WeatherSource wea(weaFile=weaFile);

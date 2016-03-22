@@ -4,14 +4,14 @@ model EnergySystem
 	parameter Real A_con = 1;
 	parameter Real A_rec = 1;
 	parameter Real E_max = 1*3600*1000;
-	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Optics.IdealInc con(A_con=A_con, A_foc=A_rec, alt=45);
-	SolarTherm.Receivers.Energy.FixedEff rec(A=A_rec, eff=0.8);
-	SolarTherm.Valves.Energy.Splitter spl;
-	SolarTherm.Storage.Energy.Infinite inf;
-	SolarTherm.Storage.Energy.Tank tnk(E_max=E_max, E_0=0.1*E_max);
-	SolarTherm.Pumps.Energy.Pump pmp(P_max=0.7*gen.P_max);
-	SolarTherm.PowerBlocks.Energy.Generator gen(eff=0.9, P_max=500);
+	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Collectors.IdealInc con(A_con=A_con, alt_fixed=45);
+	SolarTherm.Receivers.FixedEff rec(A=A_rec, eff=0.8);
+	SolarTherm.Fluid.Valves.EnergySplitter spl;
+	SolarTherm.Storage.EnergyInfinite inf;
+	SolarTherm.Storage.EnergyTank tnk(E_max=E_max, E_0=0.1*E_max);
+	SolarTherm.Fluid.Pumps.EnergyPump pmp(P_max=0.7*gen.P_max);
+	SolarTherm.PowerBlocks.EnergyGenerator gen(eff=0.9, P_max=500);
 	SolarTherm.Control.Trigger ltrig(low=0.1*tnk.E_max, up=0.2*tnk.E_max);
 	SolarTherm.Control.Trigger utrig(low=0.8*tnk.E_max, up=0.9*tnk.E_max);
 equation

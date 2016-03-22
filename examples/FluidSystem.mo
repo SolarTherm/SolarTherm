@@ -2,6 +2,7 @@ model FluidSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
+	import FI = SolarTherm.Analysis.Finances;
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
 	replaceable package MedRec = SolarTherm.Media.SodiumConst;
 	//replaceable package MedRec = SolarTherm.Media.Sodium;
@@ -50,7 +51,7 @@ model FluidSystem
 	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
-	parameter SolarTherm.Utilities.Finances.Money C_cap =
+	parameter FI.Money C_cap =
 			120*A_con // field cost
 			+ 135*A_con // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
@@ -58,7 +59,7 @@ model FluidSystem
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital cost";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
+	parameter FI.MoneyPerYear C_year =
 			10*A_con // field cleaning/maintenance
 			"Cost per year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
@@ -66,20 +67,20 @@ model FluidSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
+	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Analysis.Finances.SpotPriceTable pri(fileName=priFile);
 
-	SolarTherm.Optics.IdealInc con(A_con=A_con);
+	SolarTherm.Collectors.IdealInc con(A_con=A_con);
 
 	SolarTherm.Receivers.Plate rec(
 		redeclare package Medium=MedRec,
 		A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	SolarTherm.Pumps.IdealPump pmp_rec(
+	SolarTherm.Fluid.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
-	SolarTherm.Pumps.IdealPump pmp_ext(
+	SolarTherm.Fluid.Pumps.IdealPump pmp_ext(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
@@ -95,7 +96,7 @@ model FluidSystem
 		m_start=m_max*(1 - split_cold),
 		T_start=T_hot_start);
 
-	SolarTherm.HeatExchangers.Extractor ext(
+	SolarTherm.Fluid.HeatExchangers.Extractor ext(
 		redeclare package Medium=MedRec,
 		eff = eff_ext,
 		use_input=false,
@@ -120,8 +121,7 @@ model FluidSystem
 	Boolean fill_ctnk "Cold tank can be filled";
 
 	SI.Power P_elec;
-	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
-		"Spot market revenue";
+	FI.Money R_spot(start=0, fixed=true) "Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 equation
 	connect(wea.wbus, con.wbus);
