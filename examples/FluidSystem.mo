@@ -15,8 +15,8 @@ model FluidSystem
 		allowFlowReversal=false);
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
-	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
-	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
+	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
+	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
 
 	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
@@ -67,8 +67,8 @@ model FluidSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Analysis.Finances.SpotPriceTable pri(fileName=priFile);
+	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
+	SolarTherm.Analysis.Finances.SpotPriceTable pri(file=pri_file);
 
 	SolarTherm.Collectors.SwitchedCL con(
 		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),

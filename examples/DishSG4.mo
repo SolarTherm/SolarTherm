@@ -1,8 +1,8 @@
 model DishSG4
 	extends SolarTherm.Systems.GenericSystem(
-		weaFile="resources/weather/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
-		optFile="resources/optics/sg4_opt_eff.motab",
-		priFile="resources/prices/aemo_vic_2014.motab",
+		wea_file="resources/weather/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
+		opt_file="resources/optics/sg4_opt_eff.motab",
+		pri_file="resources/prices/aemo_vic_2014.motab",
 		SM=1.2,
 		P_gro=133.89e3,
 		eff_cyc=0.37,

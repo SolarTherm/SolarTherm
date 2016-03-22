@@ -5,14 +5,14 @@ block FileOE "Read in optical efficiency from file"
 	// hemisphere).  When running simulations in the Northern hemisphere, the
 	// the field can be turned around be setting orient_north = false.
 	import SI = Modelica.SIunits;
-	parameter String fileName "Optical efficiency table (relative to aperture area)";
+	parameter String file "Optical efficiency table (relative to aperture area)";
 	parameter Boolean orient_north = true "Orient system toward north else south";
 
 	parameter String tableNames[nelem] = {"eff" + String(i) for i in 1:nelem};
 	Modelica.Blocks.Tables.CombiTable2D table[nelem](
 		each verboseRead=false,
 		each tableOnFile=true,
-		each fileName=fileName,
+		each fileName=file,
 		each smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
 		//each extrapolation=Modelica.Blocks.Types.Extrapolation.HoldLastPoint,
 		// Could also try Periodic table extrapolation

@@ -6,8 +6,8 @@ model SimpleSystem
 	import FI = SolarTherm.Analysis.Finances;
 
 	// Parameters
-	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
-	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
+	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
+	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
 
 	parameter SI.Area A_con = 700 "Area of concentrator";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";
@@ -66,8 +66,8 @@ model SimpleSystem
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
 	// Variables/Models
-	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Analysis.Finances.SpotPriceTable pri(fileName=priFile);
+	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
+	SolarTherm.Analysis.Finances.SpotPriceTable pri(file=pri_file);
 
 	SI.HeatFlowRate Q_flow_rec "Heat flow into receiver";
 	SI.HeatFlowRate Q_flow_chg "Heat flow into tank";

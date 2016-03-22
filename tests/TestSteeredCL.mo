@@ -4,8 +4,8 @@ block TestSteeredCL
 	import SolarTherm.Collectors.IdealIncOE;
 	import SolarTherm.Sources.Weather.WeatherSource;
 
-	parameter String weaFile = "resources/tests/weatherfile1.motab";
-	WeatherSource wea(weaFile=weaFile);
+	parameter String file = "resources/tests/weatherfile1.motab";
+	WeatherSource wea(file=file);
 
 	SteeredCL conc(
 		redeclare model OptEff=IdealIncOE,

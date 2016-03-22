@@ -9,15 +9,15 @@ model GenericSystem
 	// Input Parameters
 	// ****************
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter String weaFile "Weather file";
-	parameter String optFile "Optical efficiency file";
-	parameter String priFile = "" "Electricity price file";
+	parameter String wea_file "Weather file";
+	parameter String opt_file "Optical efficiency file";
+	parameter String pri_file = "" "Electricity price file";
 
 	parameter Real wdelay[8] = {0,0,0,0,0,0,0,0} "Weather file delays";
 	parameter Real SM "Solar multiple";
 	parameter SI.Power P_gro "Power block gross rating at design";
 	parameter SI.Efficiency eff_cyc = 0.37 "Efficiency of power cycle at design point";
-	parameter SI.Efficiency eff_opt = 1 "Efficiency of optics at design point (max in optFile)";
+	parameter SI.Efficiency eff_opt = 1 "Efficiency of optics at design point (max in opt_file)";
 	parameter Real t_storage(unit="h") = 6 "Hours of storage";
 	parameter Real ini_frac(min=0, max=1) = 0.0 "Initial fraction charged";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
@@ -95,12 +95,12 @@ model GenericSystem
 	parameter Real C_prod(unit="$/W/year") = pri_om_prod "Cost per production per year";
 
 	SolarTherm.Sources.Weather.WeatherSource wea(
-		weaFile=weaFile,
+		file=wea_file,
 		delay = wdelay
 		);
 	SolarTherm.Collectors.SteeredCL con(
 		redeclare model OptEff=SolarTherm.Collectors.FileOE(
-			fileName=optFile,
+			file=opt_file,
 			orient_north=if wea.lat < 0 then true else false
 			),
 		A_con=if match_sam then 1.0273*A_field else A_field,
@@ -159,7 +159,7 @@ model GenericSystem
 	SolarTherm.Sources.Schedule.Scheduler sch if not const_dispatch;
 	SolarTherm.Analysis.Performance per(
 		schedule=true,
-		priFile=priFile
+		pri_file=pri_file
 		);
 	
 	Real sched;

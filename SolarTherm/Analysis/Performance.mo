@@ -2,9 +2,9 @@ within SolarTherm.Analysis;
 model Performance "Energy performance calculations"
 	import SI = Modelica.SIunits;
 	parameter Boolean schedule = false;
-	parameter String priFile = "" "Electricity price file";
+	parameter String pri_file = "" "Electricity price file";
 
-	parameter Boolean prices = (priFile <> "");
+	parameter Boolean prices = (pri_file <> "");
 
 	input SI.Power P_elec "Net output electricity";
 	input SI.Power P_sch if schedule "Scheduled electricity";
@@ -16,7 +16,7 @@ model Performance "Energy performance calculations"
 	output SI.Energy E_over "Energy over schedule";
 
 	SolarTherm.Analysis.Finances.SpotPriceTable pri(
-		fileName=priFile
+		file=pri_file
 		) if prices;
 initial equation
 	E_elec = 0;

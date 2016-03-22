@@ -62,8 +62,9 @@ type AreaPrice = Real(unit="$/m2");
 //end CapacityFactor;
 
 block SpotPriceTable "Spot market electricity price table"
+	parameter String file "Prices file";
 	extends Modelica.Blocks.Sources.CombiTimeTable(verboseRead=false,
-		tableOnFile=true, tableName="prices",
+		fileName=file, tableOnFile=true, tableName="prices",
 		smoothness=Modelica.Blocks.Types.Smoothness.ConstantSegments,
 		columns=2:2
 		);

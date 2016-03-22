@@ -4,10 +4,10 @@ package Tables
 class STTable "Table"
 	extends ExternalObject;
 	function constructor
-		input String fn "Name of file to load";
+		input String file "Name of file to load";
 		input String delim "Delimiter used in file";
 		output STTable table;
-		external "C" table = st_table_init_csv(fn, delim)
+		external "C" table = st_table_init_csv(file, delim)
 			//annotation(Library="st_tables");
 			annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
 						Include="#include \"st_tables.c\"");

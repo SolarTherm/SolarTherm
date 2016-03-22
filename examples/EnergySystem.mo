@@ -1,9 +1,9 @@
 model EnergySystem
 	import Modelica.Constants.pi;
-	parameter String weaFile = "resources/weather/Mildura_Real2010_Created20130430.motab";
+	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
 	parameter Real A_con = 1;
 	parameter Real E_max = 1*3600*1000;
-	SolarTherm.Sources.Weather.WeatherSource wea(weaFile=weaFile);
+	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
 	SolarTherm.Collectors.SwitchedCL con(
 		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
 		A_con=A_con

@@ -14,9 +14,9 @@ model ASTRI100
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.DynamicFreeInitial,
 		allowFlowReversal=false);
 
-	parameter String weaFile = "resources/weather/Alice_Springs_Real2000_Created20130430.motab";
+	parameter String wea_file = "resources/weather/Alice_Springs_Real2000_Created20130430.motab";
 	// Might have to deactivate price calcs if not connected to NEM
-	parameter String priFile = "resources/prices/aemo_vic_2014.motab";
+	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
 
 	// Power block
 	// Boiler operating pressure 100Bar
@@ -141,8 +141,8 @@ model ASTRI100
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	SolarTherm.Utilities.Weather.WeatherSource wea(weaFile=weaFile);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(fileName=priFile);
+	SolarTherm.Utilities.Weather.WeatherSource wea(file=wea_file);
+	SolarTherm.Utilities.Finances.SpotPriceTable pri(file=pri_file);
 
 	//SolarTherm.Collectors.IdealIncCL con(A_con=A_con);
 	SolarTherm.Collectors.SteeredCL con(

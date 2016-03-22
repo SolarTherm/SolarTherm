@@ -1,5 +1,5 @@
 block TestWeatherSource
 	import SolarTherm.Sources.Weather.WeatherSource;
-	parameter String weaFile = "resources/tests/weatherfile1.motab";
-	WeatherSource wea(weaFile=weaFile);
+	parameter String file = "resources/tests/weatherfile1.motab";
+	WeatherSource wea(file=file);
 end TestWeatherSource;
