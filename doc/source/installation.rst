@@ -1,6 +1,6 @@
 Installation
 ============
-This section goes through the installation process for SolarTherm.  More detailed instructions are provided for two Linux distributions at the end.  SolarTherm has currently only been tested on Linux, however there is no reason why it can't be run on Mac or Windows.
+This section goes through the installation process for SolarTherm.  More detailed instructions are provided for two Linux distributions and Windows at the end.  The scripting and other tools in SolarTherm have currently only been tested on Linux, although they should also run on Mac.  On Windows currently only the Modelica library part of the project can be used.
 
 OpenModelica
 ------------
@@ -124,6 +124,20 @@ Continue onto :ref:`build-section`.
 ..     st_deactivate
 .. 
 .. In addition to calling the ``virtualenv`` environment, it sets up paths to linked non-Modelica libraries.  Note that for this local installation ``omc`` will produce additional warnings when compiling code that links to external C libraries.  This is because it doesn't find the libraries in one of the default locations, but they still get linked in correctly later on in the process.
+
+Windows
+^^^^^^^
+The python scripts are currently not set up to run on a windows environment, but the Modelica library in the project can still be run through OMEdit.  The financial calculations are currently handled externally so will not be performed under Windows, but this might change in future versions.
+
+Download and run the OpenModelica installer located `here <https://www.openmodelica.org/download/download-windows>`_.
+
+Install git (and a GUI client if required) from `here <https://git-scm.com/download/win>`_.  Clone the SolarTherm github repository.
+
+Open OMEdit and load the ``SolarTherm/SolarTherm`` Modelica library (``File->Load Library``).  Load one of the examples under ``SolarTherm/examples/`` (``File->Open Model/Library File(s)``).  Change the working directory to the repository directory ``SolarTherm`` (``Tools->Options``), so that the resources files can be correctly located.
+
+Double click on the example on the left-hand list that you want to simulate.  Open up the simulation settings (``Simulation->Simulation Setup``).  Change the stop time to 31536000 seconds (1 year), the method from ``dassl`` to ``rungekutta``, and the number of intervals to 105120 (5 minute steps) (on the Output tab).
+
+Press the simulate button.
 
 Archlinux Source
 ^^^^^^^^^^^^^^^^
