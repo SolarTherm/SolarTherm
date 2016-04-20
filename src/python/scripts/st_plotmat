@@ -14,6 +14,8 @@ if __name__ == '__main__':
 			help='variables to plot, e.g.: v1,v2:v3 v4:v5 ...')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
+	parser.add_argument('--bw', action='store_true',
+			help='black and white plot')
 	parser.add_argument('--noshare', action='store_false',
 			help='turn off sharing of subplot x-axes')
 	parser.add_argument('-o', '--outfile',  type=str, default=None,
@@ -34,7 +36,7 @@ if __name__ == '__main__':
 			print(sorted(str(n) for n in r.get_names()))
 	else:
 		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile,
-				share=args.noshare)
+				share=args.noshare, bw=args.bw)
 
 # example call:
 # st_plotmat EnergySystem_res.mat 'tnk.E:der(tnk.E)' 'pmp.frac'

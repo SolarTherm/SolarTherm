@@ -13,7 +13,7 @@ import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], out=None, share=True):
+def plot_res(res, fmt, xlim=[], out=None, share=True, bw=False):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -44,6 +44,16 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 
 	# Colours for our lines
 	co = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+	ls = ['-']
+	if bw:
+		co = ['#000000']
+		ls = [
+			'-',
+			['--', [5,5]],
+			'-.',
+			['--', [1,3]],
+			['--', [5,3,1,2,1,10]],
+			]
 
 	nsp = len(fmt)
 	sharex = None
@@ -83,7 +93,10 @@ def plot_res(res, fmt, xlim=[], out=None, share=True):
 				if len(res) > 1:
 					label = str(ri+1) + ': ' + label
 				ax[i_ax].plot(res[ri].get_time(v), res[ri].get_values(v),
-						label=label, color=co[v_id%len(co)])
+						label=label, color=co[v_id%len(co)],
+						linestyle=ls[v_id%len(ls)],
+						#linewidth=2
+						)
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
 		if len(xlim) == 2:
