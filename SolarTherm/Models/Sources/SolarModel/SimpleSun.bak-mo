@@ -1,0 +1,27 @@
+within SolarTherm.Models.Sources.SolarModel;
+model SimpleSun "Sun model"
+  extends Interfaces.Models.Sun;
+  parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)";
+  parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)";
+  parameter nSI.Time_hour t_zone=9.5 "Local time zone (UCT=0)";
+
+  SI.Angle dec "Solar declination angle";
+  SI.Angle hra "Solar hour angle";
+nSI.Time_hour t_solar;
+  Modelica.Blocks.Interfaces.RealInput dni
+    annotation (Placement(transformation(extent={{-126,-22},{-86,18}})));
+equation
+  (dec,hra,t_solar) = SolarTherm.Models.Sources.SolarPosition.DuffieBeckman(
+    time,
+    t_zone,
+    lon,
+    lat);
+
+  solar.dec=dec;
+  solar.hra=hra;
+  solar.dni=dni;
+  annotation (Documentation(info="<html>
+</html>"),
+    experiment(StopTime=100000, Interval=60),
+    __Dymola_experimentSetupOutput);
+end SimpleSun;

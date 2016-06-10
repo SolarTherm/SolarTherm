@@ -1,0 +1,25 @@
+within SolarTherm.Models.Storage.Tank;
+model TankSimple2
+  extends Interfaces.Models.StorageFluid;
+  parameter SI.Mass m_start=1000;
+  SI.Mass m(start=m_start);
+  parameter SI.Temperature T_start=from_degC(500);
+  Medium.BaseProperties medium;
+  SI.AbsolutePressure p "Pressure";
+protected
+  Medium.ThermodynamicState state_i=Medium.setState_pTX(p,T_start);
+initial equation
+  medium.p=p;
+  medium.h=Medium.specificEnthalpy(state_i);
+equation
+  fluid_a.p=p;
+  fluid_b.p=p;
+  medium.p=p;
+  fluid_a.h_outflow=medium.h;
+  fluid_b.h_outflow=medium.h;
+  der(m)=fluid_a.m_flow+fluid_b.m_flow;
+  m*der(medium.h)+der(m)*medium.h=fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
+
+  annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+        coordinateSystem(preserveAspectRatio=false)));
+end TankSimple2;

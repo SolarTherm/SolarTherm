@@ -4,7 +4,7 @@ model GenericSystem
  import nSI = Modelica.SIunits.Conversions.NonSIunits;
  import CN = Modelica.Constants;
  import CV = Modelica.SIunits.Conversions;
- import FI = SolarTherm.Analysis.Finances;
+ import FI = SolarTherm.Models.Analysis.Finances;
 
  // Input Parameters
  // ****************
@@ -109,67 +109,64 @@ model GenericSystem
  parameter Real C_prod(unit="$/W/year") = pri_om_prod
     "Cost per production per year";
 
- SolarTherm.Sources.Weather.WeatherSource wea(
-  file=wea_file,
-  delay = wdelay);
- SolarTherm.Collectors.SteeredCL CL(
-  redeclare model OptEff=SolarTherm.Collectors.FileOE (
-   file=opt_file,
-   orient_north=if wea.lat < 0 then true else false),
-  A=if match_sam then 1.0273*A_field else A_field,
-  steer_rate=0.002,
-  target_error=0.0001,
-  actual_0=0.0);    // ~8 minutes till fully on sun
+  SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file, delay=
+        wdelay);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL CL(
+    redeclare model OptEff = SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE (
+          file=opt_file, orient_north=if wea.lat < 0 then true else false),
+    A=if match_sam then 1.0273*A_field else A_field,
+    steer_rate=0.002,
+    target_error=0.0001,
+    actual_0=0.0);  // ~8 minutes till fully on sun
                        // if large can be large source of missing energy
- SolarTherm.Receivers.GenericRC RC(
-  match_sam=match_sam,
-  Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
-  R_des=R_des,
-  I_des=dni_des,
-  T_amb_des=rec_T_amb_des,
-  cf=rec_cf,
-  ca=rec_ca,
-  cw=rec_cw);
- SolarTherm.Storage.GenericST ST(
-  E_max=E_max,
-  E_0=E_max*ini_frac,
-  Q_flow_loss_des=tnk_fr*E_max/(24*3600),
-  T_amb_des=tnk_T_amb_des,
-  cf=tnk_cf,
-  ca=tnk_ca) if
+  Models.CSP.CRS.Receivers.GenericRC RC(
+    match_sam=match_sam,
+    Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
+    R_des=R_des,
+    I_des=dni_des,
+    T_amb_des=rec_T_amb_des,
+    cf=rec_cf,
+    ca=rec_ca,
+    cw=rec_cw);
+  SolarTherm.Models.Storage.GenericST ST(
+    E_max=E_max,
+    E_0=E_max*ini_frac,
+    Q_flow_loss_des=tnk_fr*E_max/(24*3600),
+    T_amb_des=tnk_T_amb_des,
+    cf=tnk_cf,
+    ca=tnk_ca) if
        storage;
- SolarTherm.PowerBlocks.GenericStartPB PB(
-  eff_des=eff_cyc,
-  Q_flow_des=Q_flow_des,
-  T_amb_des=blk_T_amb_des,
-  cf=blk_cf,
-  ca=blk_ca,
-  Q_flow_disp=blk_disp*Q_flow_des,
-  Q_flow_heat=blk_heat*Q_flow_des,
-  t_heat=t_blk_heat*3600,
-  t_cool=t_blk_cool*3600);
- SolarTherm.PowerBlocks.GenericParasitics par(
-  P_par_des=par_fr*P_gro,
-  P_gross_des=P_gro,
-  T_amb_des=par_T_amb_des,
-  cf=par_cf,
-  ca=par_ca);
- SolarTherm.Control.TankDispatch dis(
-  full_lb=tnk_full_lb*E_max,
-  full_ub=tnk_full_ub*E_max,
-  empty_lb=tnk_empty_lb*E_max,
-  empty_ub=tnk_empty_ub*E_max,
-  crit_lb=tnk_crit_lb*E_max,
-  crit_ub=tnk_crit_ub*E_max,
-  level_start=tnk_min_start*E_max,
-  disp_min=blk_disp*Q_flow_des,
-  heat_rate=blk_heat*Q_flow_des) if
+  SolarTherm.Models.PowerBlocks.GenericStartPB PB(
+    eff_des=eff_cyc,
+    Q_flow_des=Q_flow_des,
+    T_amb_des=blk_T_amb_des,
+    cf=blk_cf,
+    ca=blk_ca,
+    Q_flow_disp=blk_disp*Q_flow_des,
+    Q_flow_heat=blk_heat*Q_flow_des,
+    t_heat=t_blk_heat*3600,
+    t_cool=t_blk_cool*3600);
+  SolarTherm.Models.PowerBlocks.GenericParasitics par(
+    P_par_des=par_fr*P_gro,
+    P_gross_des=P_gro,
+    T_amb_des=par_T_amb_des,
+    cf=par_cf,
+    ca=par_ca);
+  SolarTherm.Models.Control.TankDispatch dis(
+    full_lb=tnk_full_lb*E_max,
+    full_ub=tnk_full_ub*E_max,
+    empty_lb=tnk_empty_lb*E_max,
+    empty_ub=tnk_empty_ub*E_max,
+    crit_lb=tnk_crit_lb*E_max,
+    crit_ub=tnk_crit_ub*E_max,
+    level_start=tnk_min_start*E_max,
+    disp_min=blk_disp*Q_flow_des,
+    heat_rate=blk_heat*Q_flow_des) if
        storage;
  // Needs to be configured in instantiation if not const_dispatch
- SolarTherm.Sources.Schedule.Scheduler sch if not const_dispatch;
- SolarTherm.Analysis.Performance per(
-  schedule=true,
-  pri_file=pri_file);
+  SolarTherm.Models.Sources.Schedule.Scheduler sch if
+                                              not const_dispatch;
+  Models.Analysis.Performance per(schedule=true, pri_file=pri_file);
 
  Real sched;
  SI.Power P_elec "Net electrical power out";

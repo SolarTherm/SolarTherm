@@ -1,0 +1,53 @@
+within SolarTherm.Icons;
+partial class PumpIcon
+
+  annotation (Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+        Polygon(
+          points={{20,-70},{60,-85},{20,-100},{20,-70}},
+          lineColor={0,128,255},
+          smooth=Smooth.None,
+          fillColor={0,128,255},
+          fillPattern=FillPattern.Solid,
+          visible=showDesignFlowDirection),
+        Polygon(
+          points={{20,-75},{50,-85},{20,-95},{20,-75}},
+          lineColor={255,255,255},
+          smooth=Smooth.None,
+          fillColor={255,255,255},
+          fillPattern=FillPattern.Solid,
+          visible=allowFlowReversal),
+        Line(
+          points={{55,-85},{-60,-85}},
+          color={0,128,255},
+          smooth=Smooth.None,
+          visible=showDesignFlowDirection),
+        Ellipse(
+          extent={{90,25},{110,-25}},
+          lineColor={0,0,0},
+          fillColor={0,0,0},
+          fillPattern=FillPattern.Solid,
+          visible=port_b_exposesState),
+          Rectangle(
+            extent={{-100,46},{100,-46}},
+            lineColor={0,0,0},
+            fillColor={0,127,255},
+            fillPattern=FillPattern.HorizontalCylinder),
+          Polygon(
+            points={{-48,-60},{-72,-100},{72,-100},{48,-60},{-48,-60}},
+            lineColor={0,0,255},
+            pattern=LinePattern.None,
+            fillColor={0,0,0},
+            fillPattern=FillPattern.VerticalCylinder),
+          Ellipse(
+            extent={{-80,80},{80,-80}},
+            lineColor={0,0,0},
+            fillPattern=FillPattern.Sphere,
+            fillColor={0,100,199}),
+          Polygon(
+            points={{-28,30},{-28,-30},{50,-2},{-28,30}},
+            lineColor={0,0,0},
+            pattern=LinePattern.None,
+            fillPattern=FillPattern.HorizontalCylinder,
+            fillColor={255,255,255})}), Diagram(coordinateSystem(
+          preserveAspectRatio=false)));
+end PumpIcon;
