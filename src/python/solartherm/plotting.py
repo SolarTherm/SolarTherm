@@ -2,7 +2,8 @@ import matplotlib
 # Poor performance
 #print(matplotlib.get_backend())
 # Default QT5Agg is slow
-matplotlib.use('QT4Agg')
+# preferred:
+#matplotlib.use('QT4Agg')
 #matplotlib.use('GTKAgg')
 #matplotlib.use('GTK')
 #matplotlib.use('TkAgg')
