@@ -2,15 +2,6 @@
 *.o
 *.so
 *.os
-/examples/SimpleSystem*.c
-/examples/SimpleSystem_*.h
-/examples/FluidSystem_*.c
-/examples/FluidSystem_*.h
-/examples/*_res.mat
-/examples/*.xml
-/examples/Modelica_Utilities_Strings_Advanced_scanInteger*
-/examples/SimpleSystem
-/examples/FluidSysttem
 Makefile
 *.cmake
 *.makefile
