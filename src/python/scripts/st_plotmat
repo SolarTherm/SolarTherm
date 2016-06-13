@@ -10,7 +10,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('file',
 			help='colon separated result mat or csv files')
-	parser.add_argument('var', metavar='V', type=str, nargs='+',
+	parser.add_argument('var', metavar='V', type=str, nargs='*',
 			help='variables to plot, e.g.: v1,v2:v3 v4:v5 ...')
 	parser.add_argument('-n', '--names', action='store_true',
 			help='print out variable names and exit')
@@ -35,8 +35,11 @@ if __name__ == '__main__':
 		for r in res:
 			print(sorted(str(n) for n in r.get_names()))
 	else:
-		plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile,
-				share=args.noshare, bw=args.bw)
+		if len(args.var) > 0:
+			plotting.plot_res(res, args.var, xlim=args.xlim, out=args.outfile,
+					share=args.noshare, bw=args.bw)
+		else:
+			print('No variables provided, nothing to plot')
 
 # example call:
 # st_plotmat EnergySystem_res.mat 'tnk.E:der(tnk.E)' 'pmp.frac'
