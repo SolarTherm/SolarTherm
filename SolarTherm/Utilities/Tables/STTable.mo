@@ -5,7 +5,7 @@ class STTable "Table"
   input String file "Name of file to load";
   input String delim "Delimiter used in file";
   output STTable table;
-  external "C" table=  st_table_init_csv(file, delim)
+  external "C" table = st_table_init_csv(file, delim)
    annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="#include \"st_tables.c\"");
    //annotation(Library="st_tables");

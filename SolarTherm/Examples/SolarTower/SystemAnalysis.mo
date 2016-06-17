@@ -1,22 +1,23 @@
-within SolarTherm.Examples.CSP.CRS.Step_by_step;
-model ControlSystem2
+within SolarTherm.Examples.SolarTower;
+model SystemAnalysis
   extends Modelica.Icons.Example;
-  parameter String file = "C:/Users/del155/Documents/Dymola/SolarTherm/SolarTherm/Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
-
-  SI.Energy E_el(start=0);
-  SI.Energy E_sf_raw(start=1e-8);
-  SI.Energy E_sf_net(start=1e-8);
+  parameter String file = "Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
+  SolarTherm.Types.Energy_MWh E_el_MWh=SolarTherm.Types.to_MWh(E_el);
+  SI.Energy E_el(start=0,displayUnit="kWh");
+  SI.Energy E_sf_raw(start=1e-8,displayUnit="kWh");
+  SI.Energy E_sf_net(start=1e-8,displayUnit="kWh");
   Real sf_damping= (1-(E_sf_net/E_sf_raw))*100;
   Real sf_damping_instant= (1-(max(1e-8,heliostatsField.Q_net)/max(1e-8,heliostatsField.Q_raw)))*100;
 
-  Models.Sources.SolarModel.Sun sun(
+  Models.Sources.SolarModel.Sun       sun(
     lon=data.lon,
     lat=data.lat,
     t_zone=data.t_zone,
     year=data.year,
     redeclare function solarPosition =
-        Models.Sources.SolarFunctions.PSA_Algorithm)
-    annotation (Placement(transformation(extent={{-82,60},{-62,80}})));
+        Models.Sources.SolarFunctions.DuffieBeckman_Algorithm)
+                                          annotation(Placement(transformation(extent={{-82,60},
+            {-62,80}})));
   Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
     A_h=144.375,
     Q_defocus=3.24e8,
@@ -26,9 +27,9 @@ model ControlSystem2
     ele_min(displayUnit="deg") = 0.13962634015955,
     Wspd_max=15,
     use_wind=true,
-    use_defocus=true,
     he_av=0.99,
     use_on=true,
+    use_defocus=true,
     redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table (
           file=data.file))
     annotation (Placement(transformation(extent={{-88,2},{-56,36}})));
@@ -76,9 +77,11 @@ model ControlSystem2
     DNI_min=0,
     L_off=5) annotation (Placement(transformation(extent={{26,-2},{12,12}})));
   Models.PowerBlocks.PBregresion powerBlock
-    annotation (Placement(transformation(extent={{92,2},{128,40}})));
+    annotation (Placement(transformation(extent={{86,4},{122,42}})));
   Modelica.Blocks.Sources.RealExpression Wspd_input(y=data.Wspd) annotation(Placement(transformation(extent={{-136,20},
             {-110,40}})));
+  Models.Analysis.PriceMarket priceMarket(price=80)
+    annotation (Placement(transformation(extent={{130,12},{150,32}})));
 equation
   der(E_el)=powerBlock.W_cy;
   der(E_sf_raw)=heliostatsField.Q_raw;
@@ -115,10 +118,10 @@ equation
           {-10,45.82},{-10,22},{38,22},{38,9.2},{26.7,9.2}}, color={0,0,127}));
   connect(controlCold.L_mea, tankCold.L) annotation (Line(points={{26.56,5},{38,
           5},{38,-13.6},{43.8,-13.6}}, color={0,0,127}));
-  connect(tankCold.fluid_a, powerBlock.fluid_b) annotation (Line(points={{64,
-          -13},{81,-13},{81,12.64},{99.56,12.64}}, color={0,127,255}));
+  connect(tankCold.fluid_a, powerBlock.fluid_b) annotation (Line(points={{64,-13},
+          {81,-13},{81,14.64},{93.56,14.64}},      color={0,127,255}));
   connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation (Line(points={{78,44},
-          {86,44},{86,42},{86,27.46},{102.08,27.46}}, color={0,127,255}));
+          {86,44},{86,42},{86,29.46},{96.08,29.46}},  color={0,127,255}));
   connect(tankHot.L,controlHot. L_mea) annotation (Line(points={{36.2,54.4},{
           38,54.4},{38,63},{43.52,63}}, color={0,0,127}));
   connect(heliostatsField.on, controlCold.sf_on) annotation (Line(points={{-72,2},
@@ -130,8 +133,10 @@ equation
           255,0,255}));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation (Line(points={{
           -108.7,30},{-87.68,30},{-87.68,29.54}}, color={0,0,127}));
+  connect(powerBlock.W_cy, priceMarket.W_el) annotation (Line(points={{113.18,22.05},
+          {120.59,22.05},{120.59,21.8},{130,21.8}}, color={0,0,127}));
   annotation(Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}})), Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})), experiment(
       StopTime=3.1536e+007,
       Interval=60,
       __Dymola_Algorithm="Lsodar"),                                                                                         __Dymola_experimentSetupOutput);
-end ControlSystem2;
+end SystemAnalysis;

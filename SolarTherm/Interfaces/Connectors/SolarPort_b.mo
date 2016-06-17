@@ -12,8 +12,8 @@ connector SolarPort_b "Generic solar connector at design outlet"
           extent={{-30,30},{30,-30}},
           lineColor={161,80,0},
           fillColor={255,255,255},
-          fillPattern=FillPattern.Solid)}),                                                                                                    Icon(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1), graphics={  Ellipse(lineColor=  {0, 127, 255}, fillColor=  {0, 127, 255},
-            fillPattern=                                                                                                    FillPattern.Solid, extent=  {{-100, 100}, {100, -100}}, endAngle=  360), Ellipse(
+          fillPattern=FillPattern.Solid)}),                                                                                                    Icon(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1), graphics={  Ellipse(lineColor = {0, 127, 255}, fillColor = {0, 127, 255},
+            fillPattern =                                                                                                   FillPattern.Solid, extent = {{-100, 100}, {100, -100}}, endAngle = 360), Ellipse(
           fillColor={255,170,0},
           fillPattern=FillPattern.Solid,
           extent={{-100,100},{100,-100}},

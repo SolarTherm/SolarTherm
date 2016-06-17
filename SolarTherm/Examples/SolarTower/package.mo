@@ -1,4 +1,4 @@
 within SolarTherm.Examples;
-package CSP 
+package SolarTower 
 extends Modelica.Icons.ExamplesPackage;
-end CSP;
+end SolarTower;

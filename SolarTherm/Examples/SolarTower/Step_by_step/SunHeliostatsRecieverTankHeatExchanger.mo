@@ -1,7 +1,7 @@
-within SolarTherm.Examples.CSP.CRS.Step_by_step;
+within SolarTherm.Examples.SolarTower.Step_by_step;
 model SunHeliostatsRecieverTankHeatExchanger
   extends Modelica.Icons.Example;
-  parameter String file = "C:/Users/del155/Documents/Dymola/SolarTherm/SolarTherm/Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
+  parameter String file = "Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
 //  parameter String file = "Alice_Springs_Real2000_Created20130430.motab";
 //  input SI.Irradiance DNI;
 //  input SI.Temp_C Tdew;

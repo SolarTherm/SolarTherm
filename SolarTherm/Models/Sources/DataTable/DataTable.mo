@@ -35,7 +35,7 @@ protected
 
 equation
   GHI=table.y[1];
-  DNI=table.y[2];
+  DNI=max(table.y[2],0);
   DHI=table.y[3];
   Tdry=from_degC(table.y[4]);
   Tdew=from_degC(table.y[5]);

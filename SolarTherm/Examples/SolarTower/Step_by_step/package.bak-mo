@@ -1,4 +1,4 @@
-within SolarTherm.Examples.CSP.CRS;
+within SolarTherm.Examples.SolarTower;
 package Step_by_step 
 extends Modelica.Icons.ExamplesPackage;
 

@@ -1,6 +1,6 @@
-within SolarTherm.Examples.CSP.CRS.Step_by_step;
+within SolarTherm.Examples.SolarTower.Step_by_step;
 model Sun
-    parameter String file = "C:/Users/del155/Documents/Dymola/SolarTherm/SolarTherm/Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
+    parameter String file = "Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";
   extends Modelica.Icons.Example;
   Models.Sources.SolarModel.Sun simpleSun(
     lon=data.lon,

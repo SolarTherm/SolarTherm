@@ -120,7 +120,7 @@ equation
           fillColor={192,192,192},
           fillPattern=FillPattern.Solid,
           points={{90.0,-80.0},{68.0,-72.0},{68.0,-88.0},{90.0,-80.0}}),
-      Line(visible=  true, points=  {{-80,-80},{-80,-20},{60,80}}, color=  {0,0,127}),
+      Line(visible = true, points = {{-80,-80},{-80,-20},{60,80}}, color = {0,0,127}),
       Text(visible=true,
           lineColor={192,192,192},
           extent={{-20.0,-60.0},{80.0,-20.0}},
