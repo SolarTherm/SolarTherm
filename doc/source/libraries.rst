@@ -49,7 +49,7 @@ ThermoSysPro_ is an EDF library that provides common components for the static a
 
 It has models of combustion chambers, boilers, heat exchangers and machines.  It also has models for `molten salt <https://build.openmodelica.org/Documentation/ThermoSysPro.Properties.MoltenSalt.html>`_ and a `solar collector <https://build.openmodelica.org/Documentation/ThermoSysPro.Solar.SolarCollector.html>`_.  There is a paper from SolarPACES 2013 on using this library for modelling three types of solar plant by `Baligh El Hefni 2013 <http://www.sciencedirect.com/science/article/pii/S1876610214005761>`_.
 
-It is open source, but the only access I have found to the library is from checking out the OpenModelica fork `here <https://github.com/dmikurube/OpenModelica/tree/master/testsuite/uncertainties/TestModels/ThermoSysPro>`__.
+It is open source, but the only access I have found to the library is from checking out the OpenModelica fork `here <https://github.com/OpenModelica/OpenModelica-testsuite/tree/master/openmodelica/uncertainties/TestModels/ThermoSysPro>`__.
 
 .. _ThermoSysPro: http://www.eurosyslib.com/
 
