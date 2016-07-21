@@ -1,9 +1,12 @@
 within SolarTherm.Models.Control;
-model ColdPumpControl4
+model ColdPumpControl5
   extends Icons.Control;
   parameter SI.Temperature T_ref=from_degC(570) "Setpoint of temperature";
+  parameter SI.Temperature T_ref0=from_degC(290) "Setpoint of initial temperature";
+  parameter SI.Time delay=from_hour(0.25) "Receiver start-up delay time";
   parameter SI.MassFlowRate m_flow_max=1400 "Maximum mass flow rate";
   parameter SI.MassFlowRate m_flow_min=0 "Mass flow rate when control off";
+  parameter SI.Irradiance DNI_min=623 "Minimum DNI for starting discharge";
   parameter Real L_off=10 "Level of stop discharge";
   parameter Real y_start=300 "Initial value of output";
 
@@ -19,8 +22,6 @@ model ColdPumpControl4
     initType=Modelica.Blocks.Types.InitPID.InitialOutput,
     y_start=y_start)                                                                                                 annotation(Placement(transformation(extent={{14,18},
             {34,38}})));
-  Modelica.Blocks.Sources.RealExpression T_ref_input(y=T_ref)
-    annotation (Placement(transformation(extent={{-62,18},{-42,38}})));
   Modelica.Blocks.Interfaces.RealInput L_mea
     annotation (Placement(transformation(extent={{-128,-20},{-88,20}})));
   Modelica.Blocks.Interfaces.RealOutput m_flow
@@ -35,12 +36,15 @@ model ColdPumpControl4
     annotation (Placement(transformation(extent={{-74,-10},{-54,10}})));
   Modelica.Blocks.Logical.And and1
     annotation (Placement(transformation(extent={{-34,-22},{-14,-2}})));
+  StartUpLogic       startUpTemperature(
+    delay=delay,
+    y_ref=T_ref,
+    y_0=T_ref0)
+    annotation (Placement(transformation(extent={{-64,24},{-44,44}})));
 equation
   connect(m_flow_off_input.y, switch.u3) annotation (Line(points={{33.3,-22},{44,
           -22},{44,-4.8},{52.8,-4.8}}, color={0,0,127}));
   connect(PI.u,feedback. y) annotation(Line(points={{12,28},{12,28},{-9,28}},              color = {0, 0, 127}));
-  connect(T_ref_input.y, feedback.u1)
-    annotation (Line(points={{-41,28},{-28,28},{-26,28}}, color={0,0,127}));
   connect(PI.y, switch.u1) annotation (Line(points={{35,28},{46,28},{46,16},{46,
           4.8},{52.8,4.8}},         color={0,0,127}));
   connect(T_mea, feedback.u2)
@@ -54,11 +58,15 @@ equation
   connect(max.u2, switch.u3) annotation (Line(points={{74.6,-7.2},{74.6,-22},{
           44,-22},{44,-4.8},{52.8,-4.8}}, color={0,0,127}));
   connect(L_mea, hotTankLogic.level_ref)
-    annotation (Line(points={{-108,0},{-74,0},{-74,0}},   color={0,0,127}));
+    annotation (Line(points={{-108,0},{-74,0}},           color={0,0,127}));
   connect(hotTankLogic.y, and1.u1) annotation (Line(points={{-53.2,0},{-44,0},{
           -44,-12},{-36,-12}}, color={255,0,255}));
   connect(and1.y, switch.u2) annotation (Line(points={{-13,-12},{-6,-12},{-6,0},
           {52.8,0}}, color={255,0,255}));
   connect(and1.u2, sf_on) annotation (Line(points={{-36,-20},{-64,-20},{-64,-60},
           {-110,-60}}, color={255,0,255}));
-end ColdPumpControl4;
+  connect(startUpTemperature.y, feedback.u1) annotation (Line(points={{-44.8,34},
+          {-36,34},{-36,28},{-26,28}}, color={0,0,127}));
+  connect(startUpTemperature.u, switch.u2) annotation (Line(points={{-64.8,34},
+          {-74,34},{-74,14},{0,14},{0,0},{52.8,0}}, color={255,0,255}));
+end ColdPumpControl5;

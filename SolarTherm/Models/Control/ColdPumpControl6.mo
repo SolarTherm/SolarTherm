@@ -1,11 +1,12 @@
 within SolarTherm.Models.Control;
-model ColdPumpControl4
+model ColdPumpControl6
   extends Icons.Control;
   parameter SI.Temperature T_ref=from_degC(570) "Setpoint of temperature";
   parameter SI.MassFlowRate m_flow_max=1400 "Maximum mass flow rate";
   parameter SI.MassFlowRate m_flow_min=0 "Mass flow rate when control off";
   parameter Real L_off=10 "Level of stop discharge";
   parameter Real y_start=300 "Initial value of output";
+  parameter SI.Time delay=from_hour(0.25) "Start-up delay time";
 
   Modelica.Blocks.Logical.Switch switch
     annotation (Placement(transformation(extent={{54,-6},{66,6}})));
@@ -34,7 +35,9 @@ model ColdPumpControl4
   Level2Logic hotTankLogic(level_max=30, level_min=L_off)
     annotation (Placement(transformation(extent={{-74,-10},{-54,10}})));
   Modelica.Blocks.Logical.And and1
-    annotation (Placement(transformation(extent={{-34,-22},{-14,-2}})));
+    annotation (Placement(transformation(extent={{-44,-20},{-24,0}})));
+  Modelica.Blocks.MathBoolean.OnDelay onDelay(delayTime=delay)
+    annotation (Placement(transformation(extent={{-14,-12},{-6,-4}})));
 equation
   connect(m_flow_off_input.y, switch.u3) annotation (Line(points={{33.3,-22},{44,
           -22},{44,-4.8},{52.8,-4.8}}, color={0,0,127}));
@@ -55,10 +58,12 @@ equation
           44,-22},{44,-4.8},{52.8,-4.8}}, color={0,0,127}));
   connect(L_mea, hotTankLogic.level_ref)
     annotation (Line(points={{-108,0},{-74,0},{-74,0}},   color={0,0,127}));
-  connect(hotTankLogic.y, and1.u1) annotation (Line(points={{-53.2,0},{-44,0},{
-          -44,-12},{-36,-12}}, color={255,0,255}));
-  connect(and1.y, switch.u2) annotation (Line(points={{-13,-12},{-6,-12},{-6,0},
-          {52.8,0}}, color={255,0,255}));
-  connect(and1.u2, sf_on) annotation (Line(points={{-36,-20},{-64,-20},{-64,-60},
+  connect(hotTankLogic.y, and1.u1) annotation (Line(points={{-53.2,0},{-50,0},{-50,
+          -10},{-46,-10}},     color={255,0,255}));
+  connect(and1.u2, sf_on) annotation (Line(points={{-46,-18},{-64,-18},{-64,-60},
           {-110,-60}}, color={255,0,255}));
-end ColdPumpControl4;
+  connect(and1.y, onDelay.u) annotation (Line(points={{-23,-10},{-20,-10},{-20,-8},
+          {-15.6,-8}}, color={255,0,255}));
+  connect(onDelay.y, switch.u2) annotation (Line(points={{-5.2,-8},{-2,-8},{-2,0},
+          {52.8,0}}, color={255,0,255}));
+end ColdPumpControl6;

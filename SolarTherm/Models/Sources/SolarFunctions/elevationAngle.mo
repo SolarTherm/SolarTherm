@@ -6,5 +6,5 @@ function elevationAngle
   input nSI.Angle_deg lat=-23.795 "Latitude (+ve North)";
   output SI.Angle ele "Solar elevation angle";
 algorithm
-  ele :=asin(sin(from_deg(lat))*sin(dec) + cos(from_deg(lat))*cos(dec)*cos(hra));
+  ele :=max(0,asin(sin(from_deg(lat))*sin(dec) + cos(from_deg(lat))*cos(dec)*cos(hra)));
 end elevationAngle;

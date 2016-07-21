@@ -17,3 +17,12 @@ ColdTankLogic4
 LevelLogic
 ColdPumpControl4
 HotPumpControl2
+ColdPumpControl5
+HotPumpControl3
+StartUpLogic
+ColdPumpControl6
+HotPumpControl4
+M_flow_calculator
+HotPumpControl5
+HotPumpControl6
+hotLogic

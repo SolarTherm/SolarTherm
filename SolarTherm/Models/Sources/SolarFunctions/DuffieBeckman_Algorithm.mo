@@ -8,7 +8,7 @@ protected
  SI.Angle B "Approximate angle of earth in its orbit";
  Real E "Equation of time";
  Real t_solar "Local solar time (solar noon at 12hrs)";
- parameter nSI.Angle_deg lon_st=ang_vel*(t_zone) "Standard meridian for 
+ parameter nSI.Angle_deg lon_st=ang_vel*(t_zone_int) "Standard meridian for 
 
    the local time zone";
     Real time_offset;
@@ -26,7 +26,7 @@ algorithm
  // the time zone meridian
  // eq. 1.5.2 from [1] in hours
 
- time_offset:=-4*lon + 60*t_zone + E;
+ time_offset:=-4*lon + 60*t_zone_int + E;
  t_solar :=t/60 - time_offset;
 
  // The hour angle converts the solar time to an angle and lines up solar

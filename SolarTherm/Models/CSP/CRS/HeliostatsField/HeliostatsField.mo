@@ -43,9 +43,11 @@ model HeliostatsField
         transformation(extent={{-120,50},{-80,90}}), iconTransformation(extent={
             {-110,50},{-86,74}})));
 
-protected
+
   SI.Angle elo;
   SI.Angle ele;
+  SI.Angle zen;
+protected
   Modelica.Blocks.Interfaces.BooleanInput on_internal
     "Needed to connect to conditional connector";
   Modelica.Blocks.Interfaces.BooleanInput defocus_internal
@@ -81,4 +83,5 @@ equation
     solar.dec,
     solar.hra,
     lat);
+    zen=pi/2-ele;
 end HeliostatsField;

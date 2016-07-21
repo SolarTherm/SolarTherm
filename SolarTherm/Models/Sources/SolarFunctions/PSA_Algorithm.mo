@@ -1,19 +1,11 @@
 within SolarTherm.Models.Sources.SolarFunctions;
 function PSA_Algorithm "Sun position using Blanco et al."
   extends SolarTherm.Models.Sources.SolarFunctions.solarPosition;
-
-//   input Real julianday;
-//   input Real longitude;
-//   input Real latitude;
-//   output Real declination;
-//   output Real hourangle;
-//   output Real zenithangle;
-//   output Real azimuth;
 protected
   Real longitude=lon;
   Real latitude=lat;
-  Real julianday=julianDay(                                         year,
-    1,1,(t/3600) - t_zone);
+  Real julianday=julianDay(year,
+    1,1,(t/3600) - t_zone_int);
   Real declination;
   Real hourangle;
   Real zenithangle;

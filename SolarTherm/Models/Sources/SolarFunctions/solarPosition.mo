@@ -8,4 +8,5 @@ partial function solarPosition
   input Integer year=1996 "Year";
   output SI.Angle dec "Solar declination (+ve North of equator)";
   output SI.Angle hra "Solar hour angle (solar noon at 0)";
+  nSI.Time_hour t_zone_int=sign(t_zone)*integer(abs(t_zone)) "Integer local time zone";
 end solarPosition;

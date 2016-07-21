@@ -1,5 +1,5 @@
 within SolarTherm.UsersGuide.ReleaseNotes;
-model Version_0_1 "Version 0.1 (Before 26 April, 2016)"
+model Version_0_1 "Version 0.1 (Before 26 April 2016)"
                                                      extends
     Modelica.Icons.ReleaseNotes;
 

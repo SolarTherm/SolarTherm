@@ -7,17 +7,28 @@ model PBregresion
     "HTF outlet temperature (design)";
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure";
   parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power";
-  parameter SI.HeatFlowRate W_des=100e6 "Estimated net output at design ";
-  SI.HeatFlowRate Q_flow(start=0) "Cycle heat addition";
+  parameter SI.HeatFlowRate W_des=111e6 "Design turbine gross output";
+  parameter Real nu_min=0.25 "Minimum turbine operation";
+  SI.HeatFlowRate Q_flow( final start=0)
+                                        "Cycle heat addition";
 //protected
   parameter SI.Temperature Tsat_ref=Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_bo);
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
   Real T_ND;
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
+  Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
+  parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);
+  parameter Medium.ThermodynamicState state_out_ref=Medium.setState_pTX(1e5,T_out_ref);
+  parameter SI.SpecificEnthalpy h_in_ref=Medium.specificEnthalpy(state_in_ref);
+  parameter SI.SpecificEnthalpy h_out_ref=Medium.specificEnthalpy(state_out_ref);
   SI.Temperature T_in=Medium.temperature(state_in);
-  Boolean logic=fluid_a.m_flow>10;
+  SI.Temperature T_out=Medium.temperature(state_out);
+  Boolean logic;
+  parameter SI.MassFlowRate m_flow_min= Q_flow_ref*nu_min/(h_in_ref-h_out_ref);
 equation
+
+  logic=fluid_a.m_flow>m_flow_min;
   T_ND=(T_in-Tsat_ref)/(T_in_ref-Tsat_ref);
   h_in=inStream(fluid_a.h_outflow);
   h_out=fluid_b.h_outflow;
@@ -32,6 +43,9 @@ equation
   else
     Q_flow/Q_flow_ref=0;
     W_cy/W_des=0;
-    h_out=h_in;
+    h_out=h_out_ref;
   end if;
+
+
+
 end PBregresion;
