@@ -4,7 +4,7 @@ partial model Pump
   replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_base
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
-      annotation (choicesAllMatching = true);
+      annotation (choicesAllMatching = true,Dialog(group="Working fluid"));
   Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium =
         Medium)
     "Fluid connector a (positive design flow direction is from port_a to port_b)"

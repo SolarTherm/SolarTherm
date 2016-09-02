@@ -9,7 +9,6 @@ model Tank
 
 //protected
 
-
   parameter Boolean use_p_top = false
     "= true to get p_top from an input connector"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -27,6 +26,12 @@ model Tank
   parameter Real L_start=70 "Start value of level in %" annotation (Dialog(group="Initialization"));
   parameter SI.Temperature T_start=from_degC(500) "Start value of temperature" annotation (Dialog(group="Initialization"));
 
+  parameter SI.Temperature T_set=from_degC(500) "Tank Heater Temperature Set-Point" annotation (Dialog(group="Heater"));
+  parameter SI.Power W_max= 30e8 "Hot Tank Heater Capacity"
+                                                           annotation (Dialog(group="Heater"));
+  parameter SI.Efficiency e_ht=0.99 "Tank Heater Efficiency"
+                                                            annotation (Dialog(group="Heater"));
+
   SI.Volume V;
 
   SI.Mass m;
@@ -37,6 +42,9 @@ model Tank
   SI.Area A;
   SI.HeatFlowRate Q_losses;
   Medium.ThermodynamicState state_i=Medium.setState_pTX(medium.p,T_start);
+
+  SI.Power W_net;
+  SI.Power W_loss;
 
   Modelica.Blocks.Interfaces.RealOutput L if use_L "Tank level in %"
                                           annotation (Placement(transformation(
@@ -91,14 +99,19 @@ equation
   fluid_a.h_outflow=medium.h;
   fluid_b.h_outflow=medium.h;
   der(m)=fluid_a.m_flow+fluid_b.m_flow;
-  m*der(medium.h)+der(m)*medium.h=Q_losses+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
+  m*der(medium.h)+der(m)*medium.h=Q_losses+W_net+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
 
   V=m/medium.d;
   L_internal=100*V/V_t;
   A=2*pi*(D/2)*H*(L_internal/100);
 
+  if medium.T<T_set then
+    W_net=min(-Q_losses,W_max);
+  else
+    W_net=0;
+  end if;
 
-
+ W_loss=W_net/e_ht;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
         coordinateSystem(preserveAspectRatio=false)));

@@ -7,9 +7,8 @@ model Function "From function"
                                                                                                         constrainedby
     SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Correlation.opticalCorrelation
     annotation (choicesAllMatching=true);
-  SI.Angle elo;
+
 
 equation
-  elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
-  nu=fun(hra,elo);
+  nu=fun(hra,dec);
 end Function;

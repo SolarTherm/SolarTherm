@@ -4,11 +4,11 @@ partial model HeatExchangerFluid
 
   replaceable package MA = Modelica.Media.Water.StandardWater constrainedby
     Modelica.Media.Interfaces.PartialMedium "Medium in one side"
-      annotation (choicesAllMatching = true,Dialog(__Dymola_label="Medium A"));
+      annotation (choicesAllMatching = true,Dialog(group="Working fluid",__Dymola_label="Medium A"));
   replaceable package MB = Modelica.Media.Water.StandardWater
   constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the other side"
-      annotation (choicesAllMatching = true,Dialog(__Dymola_label="Medium B"));
+      annotation (choicesAllMatching = true,Dialog(group="Working fluid",__Dymola_label="Medium B"));
   Modelica.Fluid.Interfaces.FluidPort_a port_a_in(redeclare package Medium =
         MA)
     annotation (Placement(transformation(extent={{-96,20},{-76,40}}),

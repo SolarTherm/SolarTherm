@@ -32,10 +32,6 @@ partial class Control
           extent={{38,50},{74,30}},
           lineColor={0,0,0},
           fillColor={0,0,0},
-          fillPattern=FillPattern.Solid),
-        Text(
-          extent={{-144,152},{146,112}},
-          textString="%name",
-          lineColor={0,0,255})}),           Diagram(coordinateSystem(
+          fillPattern=FillPattern.Solid)}), Diagram(coordinateSystem(
           preserveAspectRatio=false)));
 end Control;

@@ -6,4 +6,5 @@ GenericPB
 GenericStartPB
 HeatPB
 PowerBlock
-PBregresion
+PowerBlockModel
+Correlation

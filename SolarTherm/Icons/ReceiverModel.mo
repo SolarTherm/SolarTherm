@@ -12,19 +12,19 @@ partial class ReceiverModel
           origin={-56,44},
           points={{-40,-24},{20,0}},
           color={255,170,0},
-          thickness=1,
+          thickness=0.5,
           arrow={Arrow.None,Arrow.Filled}),
         Line(
           origin={-56,54},
           points={{-40,0},{20,0}},
           color={255,170,0},
-          thickness=1,
+          thickness=0.5,
           arrow={Arrow.None,Arrow.Filled}),
         Line(
           origin={-56,32},
           points={{-40,-40},{20,0}},
           color={255,170,0},
-          thickness=1,
+          thickness=0.5,
           arrow={Arrow.None,Arrow.Filled}),
         Rectangle(
           extent={{-20,20},{20,-100}},

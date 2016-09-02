@@ -12,10 +12,12 @@ model SHE "Simplified Heat Exchanger"
   MB.ThermodynamicState state_b1=MB.setState_phX(port_b_in.p,inStream(port_b_in.h_outflow),inStream(port_b_in.Xi_outflow));
   MA.ThermodynamicState state_a2=MA.setState_pTX(port_a_out.p,T_a2,actualStream(port_a_out.Xi_outflow));
   MB.ThermodynamicState state_b2=MB.setState_pTX(port_b_out.p,T_b2,actualStream(port_b_out.Xi_outflow));
+
   SI.Temperature T_a1=MA.temperature(state_a1);
   SI.Temperature T_b1=MB.temperature(state_b1);
   SI.Temperature T_a2;
   SI.Temperature T_b2;
+
   SI.SpecificHeatCapacity Cp_a=MA.specificHeatCapacityCp(state_a1);
   SI.SpecificHeatCapacity Cp_b=MB.specificHeatCapacityCp(state_b1);
   SI.MassFlowRate m_flow_a=port_a_in.m_flow;

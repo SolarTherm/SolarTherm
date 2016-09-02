@@ -33,10 +33,7 @@ partial class Data
           extent={{-40,-48},{40,-54}},
           lineColor={0,0,0},
           fillColor={0,0,0},
-          fillPattern=FillPattern.Solid),
-        Text(
-          extent={{-146,106},{144,66}},
-          textString="%name",
-          lineColor={0,0,255})}),  Diagram(
+          fillPattern=FillPattern.Solid)}),
+                                   Diagram(
         coordinateSystem(preserveAspectRatio=false)));
 end Data;

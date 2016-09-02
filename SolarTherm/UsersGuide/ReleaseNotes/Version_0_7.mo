@@ -13,6 +13,6 @@ model Version_0_7 "Version 0.7 (21 July 2016)"
 <li>Improvements in DataTable, Sun and PowerBlock.</li>
 <li>Changes in Examples package (the obsoleted version was deleted).</li>
 </ul>
-<p><i><span style=\"font-family: MS Shell Dlg 2;\">by Alberto de la Calle (21 July 2016).</span></i></p>
+<p><i>by Alberto de la Calle (21 July 2016).</i></p>
 </html>"));
 end Version_0_7;

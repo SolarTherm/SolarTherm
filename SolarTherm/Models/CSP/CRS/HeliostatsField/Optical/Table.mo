@@ -10,7 +10,8 @@ model Table "From table"
   Modelica.Blocks.Tables.CombiTable2D nu_table(
     tableOnFile=true,
     tableName="optics",
-    fileName=file)
+    fileName=file,
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative)
     annotation (Placement(transformation(extent={{12,12},{32,32}})));
   Modelica.Blocks.Sources.RealExpression hra_input(y=to_deg(hra))
     annotation (Placement(transformation(extent={{-36,6},{-8,26}})));
@@ -19,7 +20,7 @@ model Table "From table"
 
 equation
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
-  nu=nu_table.y;
+  nu=max(0,nu_table.y);
   connect(hra_input.y,nu_table. u2)
     annotation (Line(points={{-6.6,16},{10,16}},
                                                color={0,0,127}));

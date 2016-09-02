@@ -3,6 +3,7 @@ function AliceSprings_N10M24
   extends
     SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Correlation.opticalCorrelation;
 protected
+       SI.Angle elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
        Real x=to_deg(hra);
        Real y=to_deg(elo);
        parameter Real p00 =       0.643;//  (0.6151, 0.6709)
@@ -27,8 +28,8 @@ protected
        parameter Real p14 = -7.117e-026;//  (-7.505e-011, 7.505e-011)
 
 algorithm
-  nu :=p00 + p10*x + p01*y + p20*x^2 + p11*x*y + p02*y^2 + p30*x^3 + p21*x^2*y +
+  nu :=max(0,p00 + p10*x + p01*y + p20*x^2 + p11*x*y + p02*y^2 + p30*x^3 + p21*x^2*y +
     p12*x*y^2 + p03*y^3 + p40*x^4 + p31*x^3*y + p22*x^2*y^2 + p13*x*y^3 + p04*y^
-    4 + p50*x^5 + p41*x^4*y + p32*x^3*y^2 + p23*x^2*y^3 + p14*x*y^4;
+    4 + p50*x^5 + p41*x^4*y + p32*x^3*y^2 + p23*x^2*y^3 + p14*x*y^4);
 
 end AliceSprings_N10M24;

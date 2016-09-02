@@ -134,8 +134,7 @@ model GenericSystem
     Q_flow_loss_des=tnk_fr*E_max/(24*3600),
     T_amb_des=tnk_T_amb_des,
     cf=tnk_cf,
-    ca=tnk_ca) if
-       storage;
+    ca=tnk_ca) if storage;
   SolarTherm.Models.PowerBlocks.GenericStartPB PB(
     eff_des=eff_cyc,
     Q_flow_des=Q_flow_des,
@@ -161,11 +160,9 @@ model GenericSystem
     crit_ub=tnk_crit_ub*E_max,
     level_start=tnk_min_start*E_max,
     disp_min=blk_disp*Q_flow_des,
-    heat_rate=blk_heat*Q_flow_des) if
-       storage;
+    heat_rate=blk_heat*Q_flow_des) if storage;
  // Needs to be configured in instantiation if not const_dispatch
-  SolarTherm.Models.Sources.Schedule.Scheduler sch if
-                                              not const_dispatch;
+  SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   Models.Analysis.Performance per(schedule=true, pri_file=pri_file);
 
  Real sched;

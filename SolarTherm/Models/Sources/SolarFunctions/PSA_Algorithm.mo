@@ -2,6 +2,7 @@ within SolarTherm.Models.Sources.SolarFunctions;
 function PSA_Algorithm "Sun position using Blanco et al."
   extends SolarTherm.Models.Sources.SolarFunctions.solarPosition;
 protected
+  nSI.Time_hour t_zone_int=sign(t_zone)*integer(abs(t_zone)) "Integer local time zone";
   Real longitude=lon;
   Real latitude=lat;
   Real julianday=julianDay(year,

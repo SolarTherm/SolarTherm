@@ -10,7 +10,7 @@ partial model PowerBlock
   replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_base
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
-      annotation (choicesAllMatching = true);
+      annotation (choicesAllMatching = true,Dialog(group="Working fluid"));
   Modelica.Blocks.Interfaces.RealOutput W_cy "Cycle electric power output" annotation (Placement(
         transformation(extent={{44,-24},{64,-4}}), iconTransformation(extent={{46,-10},
             {56,0}})));
