@@ -1,0 +1,591 @@
+#1
+char Aclass(3,24)
+Adymosim
+1.4
+Modelica experiment file
+
+
+#    Experiment parameters
+double experiment(7,1)
+       0                   # StartTime    Time at which integration starts
+                           #              (and linearization and trimming time)
+       1                   # StopTime     Time at which integration stops
+       0                   # Increment    Communication step size, if > 0
+     500                   # nInterval    Number of communication intervals, if > 0
+ 1.0000000000000000E-004   # Tolerance    Relative precision of signals for
+                           #              simulation, linearization and trimming
+       0                   # MaxFixedStep Maximum step size of fixed step size
+                           #              integrators, if > 0.0
+       8                   # Algorithm    Integration algorithm as integer (1...28)
+                           #
+                           #             | model|       |        | dense | state |
+                           # Algorithm   | typ  | stiff | order  | output| event |
+                           # ------------+------+-------+--------+-------+-------+
+                           #  1 | deabm  |  ode |   no  |  1-12  |  yes  |   no  |
+                           #  2 | lsode1 |  ode |   no  |  1-12  |  yes  |   no  |
+                           #  3 | lsode2 |  ode |  yes  |  1-5   |  yes  |   no  |
+                           #  4 | lsodar |  ode |  both |1-12,1-5|  yes  |  yes  |
+                           #  5 | dopri5 |  ode |   no  |   5    |   no  |   no  |
+                           #  6 | dopri8 |  ode |   no  |   8    |   no  |   no  |
+                           #  7 | grk4t  |  ode |  yes  |   4    |   no  |   no  |
+                           #  8 | dassl  |  dae |  yes  |  1-5   |  yes  |  yes  |
+                           #  9 | odassl | hdae |  yes  |  1-5   |  yes  |  yes  |
+                           # 10 | mexx   | hdae |   no  |  2-24  |   no  |   no  |
+                           # 11 | euler  |  ode |   no  |   1    |   no  |  yes  |
+                           # 12 | rkfix2 |  ode |   no  |   2    |   no  |  yes  |
+                           # 13 | rkfix3 |  ode |   no  |   3    |   no  |  yes  |
+                           # 14 | rkfix4 |  ode |   no  |   4    |   no  |  yes  |
+                           #>=14| others |  ode |yes/no |  2-5   |   yes |  yes  |
+                           # ---+--------+------+-------+--------+-------+-------+
+                           # euler and rkfix have fixed stepsize.
+
+
+#    Method tuning parameters
+double method(27,1)
+       1                   # grid     type of communication time grid, defined by
+                           #          = 1: equidistant points ("Increment/nInterval")
+                           #          = 2: vector of grid points ("tgrid")
+                           #          = 3: variable step integrator (automatically)
+                           #          = 4: model (call of "increment" in Dymola, e.g.
+                           #                      incr=Time > 2 then 0 else 0.1
+                           #                      dummy=increment(incr))
+                           #          grid = 1,3 is stopped by "StopTime"
+                           #          grid = 2   is stopped by "tgrid(last)"
+                           #          grid = 4   runs forever (stopped by model)
+       1                   # nt       Use every NT time instant, if grid = 3
+       3                   # dense    1/2/3 restart/step/interpolate GRID points
+       1                   # evgrid   0/1 do not/save event points in comm. time grid
+       1                   # evu      0/1 U-discontinuity does not/trigger events
+       0                   # evuord       U-discontinuity order to consider (0,1,...)
+       0                   # error    0/1/2 One message/warning/error messages
+       0                   # jac      0/1 Compute jacobian numerically/by BLOCKJ
+       0                   # xd0c     0/1 Compute/set XD0
+       0                   # f3       0/1 Ignore/use F3 of HDAE (= index 1)
+       0                   # f4       0/1 Ignore/use F4 of HDAE (= index 2)
+       0                   # f5       0/1 Ignore/use F5 of HDAE (= invar.)
+       0                   # debug    flags for debug information (1<<0 uses pdebug) 
+     100                   # pdebug       priority of debug information (1...100)
+       0                   # fmax     Maximum number of evaluations of BLOCKF, if > 0
+       0                   # ordmax   Maximum allowed integration order, if > 0
+       0                   # hmax     Maximum absolute stepsize, if > 0
+       0                   # hmin     Minimum absolute stepsize, if > 0 (use with care!)
+       0                   # h0       Stepsize to be attempted on first step, if > 0
+ 2.0000000000000000E-014   # teps     Bound to check, if 2 equal time instants
+ 1.0000000000000000E-010   # eveps    Hysteresis epsilon at event points
+      20                   # eviter   Maximum number of event iterations
+ 9.9999999999999995E-007   # delaym   Minimum time increment in delay buffers
+       1                   # fexcep   0/1 floating exception crashes/stops dymosim
+       1                   # tscale   clock-time = tscale*simulation-time, if grid = 5
+                           #          > 1: simulation too slow
+                           #          = 1: simulation-time = real-time
+                           #          < 1: simulation too fast
+       1                   # shared   (not used)
+    2473                   # memkey   (not used)
+
+
+#    Output parameters
+int settings(13,1)
+ 0                         # lprec    0/1 do not/store result data in double
+ 1                         # lx       0/1 do not/store x  (state variables)
+ 1                         # lxd      0/1 do not/store xd (derivative of states)
+ 1                         # lu       0/1 do not/store u  (input     signals)
+ 1                         # ly       0/1 do not/store y  (output    signals)
+ 0                         # lz       0/1 do not/store z  (indicator signals)
+ 1                         # lw       0/1 do not/store w  (auxiliary signals)
+ 1                         # la       0/1 do not/store a  (alias     signals)
+ 0                         # lperf    0/1 do not/store performance indicators
+ 0                         # levent   0/1 do not/store event point
+ 1                         # lres     0/1 do not/store results on result file
+ 0                         # lshare   0/1 do not/store info data for shared memory on dsshare.txt
+ 1                         # lform    0/1 ASCII/Matlab-binary storage format of results
+                           #              (for simulation/linearization; not for trimming)
+
+
+#    Names of initial variables
+char initialName(108,25)
+driveAngle
+PI.y
+PI.controlError
+PI.controllerType
+PI.k
+PI.Ti
+PI.Td
+PI.yMax
+PI.yMin
+PI.wp
+PI.wd
+PI.Ni
+PI.Nd
+PI.initType
+PI.limitsAtInit
+PI.xi_start
+PI.xd_start
+PI.y_start
+PI.strict
+PI.unitTime
+PI.addP.y
+PI.addP.k1
+PI.addP.k2
+PI.P.k
+PI.P.y
+PI.gainPID.k
+PI.gainPID.u
+PI.gainPID.y
+PI.addPID.k1
+PI.addPID.k2
+PI.addPID.k3
+PI.limiter.uMax
+PI.limiter.uMin
+PI.limiter.strict
+PI.limiter.limitsAtInit
+PI.with_I
+PI.with_D
+PI.Dzero.k
+inertia1.flange_b.tau
+inertia1.J
+inertia1.stateSelect
+inertia1.phi
+inertia1.der(phi)
+inertia1.w
+inertia1.der(w)
+inertia1.a
+torque.useSupport
+torque.phi_support
+spring.c
+spring.d
+spring.phi_rel0
+spring.phi_rel
+spring.der(phi_rel)
+spring.w_rel
+spring.der(w_rel)
+spring.phi_nominal
+spring.stateSelect
+spring.useHeatPort
+spring.lossPower
+spring.tau_c
+spring.tau_d
+inertia2.J
+inertia2.stateSelect
+inertia2.phi
+inertia2.w
+inertia2.der(w)
+kinematicPTP.deltaq[1]
+kinematicPTP.qd_max[1]
+kinematicPTP.qdd_max[1]
+kinematicPTP.startTime
+kinematicPTP.nout
+kinematicPTP.y[1]
+kinematicPTP.p_deltaq[1]
+kinematicPTP.p_qd_max[1]
+kinematicPTP.p_qdd_max[1]
+kinematicPTP.sd_max
+kinematicPTP.sdd_max
+kinematicPTP.sdd
+kinematicPTP.aux1[1]
+kinematicPTP.aux2[1]
+kinematicPTP.Ta1
+kinematicPTP.Ta2
+kinematicPTP.Tv
+kinematicPTP.Te
+kinematicPTP.noWphase
+integrator.k
+integrator.initType
+integrator.y_start
+integrator.y
+integrator.der(y)
+speedSensor.flange.tau
+loadTorque.useSupport
+loadTorque.phi_support
+loadTorque.tau_constant
+PI.I.k
+PI.I.initType
+PI.I.y_start
+PI.I.u
+PI.I.y
+PI.I.der(y)
+PI.addI.k1
+PI.addI.k2
+PI.addI.k3
+PI.addI.u3
+PI.addSat.y
+PI.addSat.k1
+PI.addSat.k2
+PI.gainTrack.k
+
+double initialValue(108,6)
+ -1 1.5700000000000001E+000       0                       0                
+  1   280   # driveAngle
+  0       0                       0                       0                
+  6   256   # PI.y
+  0       0                       0                       0                
+  6   256   # PI.controlError
+  0       2                       1                       4                
+  6   258   # PI.controllerType
+ -1     100                       0                 1.0000000000000000E+100
+  1   280   # PI.k
+ -1 1.0000000000000001E-001 9.9999999999999997E-061 1.0000000000000000E+100
+  1   280   # PI.Ti
+ -1 1.0000000000000001E-001       0                 1.0000000000000000E+100
+  1   280   # PI.Td
+ -1      12                       0                       0                
+  1   280   # PI.yMax
+  0       0                       0                       0                
+  6   256   # PI.yMin
+ -1       1                       0                 1.0000000000000000E+100
+  1   280   # PI.wp
+ -1       0                       0                 1.0000000000000000E+100
+  1   280   # PI.wd
+ -1 1.0000000000000001E-001 1.0000000000000000E-013 1.0000000000000000E+100
+  1   280   # PI.Ni
+ -1      10                 1.0000000000000000E-013 1.0000000000000000E+100
+  1   280   # PI.Nd
+  0       2                       1                       5                
+  6   258   # PI.initType
+  0       0                       0                       0                
+  6   257   # PI.limitsAtInit
+ -1       0                       0                       0                
+  1   280   # PI.xi_start
+ -1       0                       0                       0                
+  1   280   # PI.xd_start
+ -1       0                       0                       0                
+  1   280   # PI.y_start
+  0       0                       0                       0                
+  6   257   # PI.strict
+  0       1                       0                       0                
+  6   768   # PI.unitTime
+  0       0                       0                       0                
+  6   256   # PI.addP.y
+  0       0                       0                       0                
+  6   256   # PI.addP.k1
+ -1      -1                       0                       0                
+  1   280   # PI.addP.k2
+ -1       1                       0                       0                
+  1   280   # PI.P.k
+  0       0                       0                       0                
+  6   256   # PI.P.y
+  0       1                       0                       0                
+  6   256   # PI.gainPID.k
+  0       0                       0                       0                
+  6   256   # PI.gainPID.u
+  0       0                       0                       0                
+  6   288   # PI.gainPID.y
+ -1       1                       0                       0                
+  1   280   # PI.addPID.k1
+ -1       1                       0                       0                
+  1   280   # PI.addPID.k2
+ -1       1                       0                       0                
+  1   280   # PI.addPID.k3
+  0       1                       0                       0                
+  6   256   # PI.limiter.uMax
+  0       0                       0                       0                
+  6   256   # PI.limiter.uMin
+  0       0                       0                       0                
+  6   257   # PI.limiter.strict
+  0       0                       0                       0                
+  6   257   # PI.limiter.limitsAtInit
+  0       1                       0                       0                
+  6   769   # PI.with_I
+  0       0                       0                       0                
+  6   769   # PI.with_D
+ -1       0                       0                       0                
+  1   280   # PI.Dzero.k
+  0       0                       0                       0                
+  6   388   # inertia1.flange_b.tau
+ -1       1                       0                 1.0000000000000000E+100
+  1   280   # inertia1.J
+  0       3                       1                       5                
+  6   770   # inertia1.stateSelect
+ -1       0                       0                       0                
+  2   280   # inertia1.phi
+  0       0                       0                       0                
+  3   256   # inertia1.der(phi)
+ -1       0                       0                       0                
+  2   272   # inertia1.w
+  0       0                       0                       0                
+  3   256   # inertia1.der(w)
+  0       0                       0                       0                
+  6   264   # inertia1.a
+  0       0                       0                       0                
+  6   769   # torque.useSupport
+  0       0                       0                       0                
+  6  1280   # torque.phi_support
+ -1   10000                       0                 1.0000000000000000E+100
+  1   280   # spring.c
+ -1     100                       0                 1.0000000000000000E+100
+  1   280   # spring.d
+ -1       0                       0                       0                
+  1   280   # spring.phi_rel0
+ -1       0                       0                       0                
+  2   272   # spring.phi_rel
+  0       0                       0                       0                
+  3   256   # spring.der(phi_rel)
+ -1       0                       0                       0                
+  2   280   # spring.w_rel
+  0       0                       0                       0                
+  3   256   # spring.der(w_rel)
+  0 1.0000000000000000E-004       0                 1.0000000000000000E+100
+  6   256   # spring.phi_nominal
+  0       4                       1                       5                
+  6   770   # spring.stateSelect
+  0       0                       0                       0                
+  6   769   # spring.useHeatPort
+  0       0                       0                       0                
+  6   256   # spring.lossPower
+  0       0                       0                       0                
+  6  1280   # spring.tau_c
+  0       0                       0                       0                
+  6  1280   # spring.tau_d
+ -1       2                       0                 1.0000000000000000E+100
+  1   280   # inertia2.J
+  0       3                       1                       5                
+  6   770   # inertia2.stateSelect
+  0       0                       0                       0                
+  6   256   # inertia2.phi
+  0       0                       0                       0                
+  6   256   # inertia2.w
+  0       0                       0                       0                
+  6   256   # inertia2.der(w)
+  0       0                       0                       0                
+  6   256   # kinematicPTP.deltaq[1]
+ -1       1                 9.9999999999999997E-061 1.0000000000000000E+100
+  1   280   # kinematicPTP.qd_max[1]
+ -1       1                 9.9999999999999997E-061 1.0000000000000000E+100
+  1   280   # kinematicPTP.qdd_max[1]
+ -1 5.0000000000000000E-001       0                       0                
+  1   280   # kinematicPTP.startTime
+  0       1                       1                 1.0000000000000000E+100
+  6   258   # kinematicPTP.nout
+  0       0                       0                       0                
+  6   320   # kinematicPTP.y[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.p_deltaq[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.p_qd_max[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.p_qdd_max[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.sd_max
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.sdd_max
+  0       0                       0                       0                
+  6  1344   # kinematicPTP.sdd
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.aux1[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.aux2[1]
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.Ta1
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.Ta2
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.Tv
+  0       0                       0                       0                
+  6  1280   # kinematicPTP.Te
+  0       0                       0                       0                
+  6  1281   # kinematicPTP.noWphase
+ -1       1                       0                       0                
+  1   280   # integrator.k
+  0       3                       1                       4                
+  6   258   # integrator.initType
+ -1       0                       0                       0                
+  1   280   # integrator.y_start
+ -1       0                       0                       0                
+  2   272   # integrator.y
+  0       0                       0                       0                
+  3   256   # integrator.der(y)
+  0       0                       0                       0                
+  6   388   # speedSensor.flange.tau
+  0       0                       0                       0                
+  6   769   # loadTorque.useSupport
+  0       0                       0                       0                
+  6  1280   # loadTorque.phi_support
+ -1      10                       0                       0                
+  1   280   # loadTorque.tau_constant
+  0       0                       0                       0                
+  6   256   # PI.I.k
+  0       2                       1                       4                
+  6   258   # PI.I.initType
+  0       0                       0                       0                
+  6   256   # PI.I.y_start
+  0       0                       0                       0                
+  6   256   # PI.I.u
+ -1       0                       0                       0                
+  2   272   # PI.I.y
+  0       0                       0                       0                
+  3   256   # PI.I.der(y)
+ -1       1                       0                       0                
+  1   280   # PI.addI.k1
+ -1      -1                       0                       0                
+  1   280   # PI.addI.k2
+ -1       1                       0                       0                
+  1   280   # PI.addI.k3
+  0       0                       0                       0                
+  6   256   # PI.addI.u3
+  0       0                       0                       0                
+  6   256   # PI.addSat.y
+ -1       1                       0                       0                
+  1   280   # PI.addSat.k1
+ -1      -1                       0                       0                
+  1   280   # PI.addSat.k2
+  0       1                       0                       0                
+  6   256   # PI.gainTrack.k
+
+
+# Matrix with 6 columns defining the initial value calculation
+# (columns 5 and 6 are not utilized for the calculation but are
+#  reported by dymosim via dymosim -i for user convenience):
+#
+# column 1: Type of initial value
+#           = -2: special case: for continuing simulation (column 2 = value)
+#           = -1: fixed value (column 2 = fixed value)
+#           =  0: free value, i.e., no restriction (column 2 = initial value)
+#           >  0: desired value (column 1 = weight for optimization
+#                                column 2 = desired value)
+#                 use weight=1, since automatic scaling usually
+#                 leads to equally weighted terms
+# column 2: fixed, free or desired value according to column 1.
+# column 3: Minimum value (ignored, if Minimum >= Maximum).
+# column 4: Maximum value (ignored, if Minimum >= Maximum).
+#           Minimum and maximum restrict the search range in initial
+#           value calculation. They might also be used for scaling.
+# column 5: Category of variable.
+#           = 1: parameter.
+#           = 2: state.
+#           = 3: state derivative.
+#           = 4: output.
+#           = 5: input.
+#           = 6: auxiliary variable.
+# column 6: Data type of variable and flags according to dsBaseType
+#  <value>&3= 0: real.
+#  <value>&3= 1: boolean.
+#  <value>&3= 2: integer.
+#
+# Initial values are calculated according to the following procedure:
+#
+# - If parameters, states and inputs are FIXED, and other variables
+#   are FREE, no special action takes place (default setting).
+#
+# - If there are only FIXED and FREE variables and the number of
+#   FREE parameters, states and inputs is IDENTICAL to the number of
+#   FIXED state derivatives, outputs and auxiliary variables, a non-linear
+#   equation is solved to determine a consistent set of initial conditions.
+#
+# - In all other cases the following optimization problem is solved:
+#      min( sum( weight(i)*( (value(i) - DESIRED(i))/scale(i) )^2 ) )
+#   under the constraint that the differential equation is fulfilled
+#   at the initial time. In most cases weight(i)=1 is sufficient, due
+#   to the automatic scaling (if DESIRED(i) is not close to zero,
+#   scale(i) = DESIRED(i). Otherwise, the scaling is based on the
+#   nominal value (and maybe minimum and maximum values given in 
+#   column 3 and 4). If these values are zero, scale(i)=1 is used).
+#
+char initialDescription(108,139)
+Reference distance to move [rad|deg]
+Connector of actuator output signal [N.m]
+Control error (set point - measurement)
+Type of controller [:#(type=Modelica.Blocks.Types.SimpleController)]
+Gain of controller [1]
+Time constant of Integrator block [s]
+Time constant of Derivative block [s]
+Upper limit of output
+Lower limit of output
+Set-point weight for Proportional block (0..1)
+Set-point weight for Derivative block (0..1)
+Ni*Ti is time constant of anti-windup compensation
+The higher Nd, the more ideal the derivative block
+Type of initialization (1: no init, 2: steady state, 3: initial state, 4: initial output) [:#(type=Modelica.Blocks.Types.InitPID)]
+= false, if limits are ignored during initialization [:#(type=Boolean)]
+Initial or guess value value for integrator output (= integrator state)
+Initial or guess value for state of derivative block
+Initial value of output
+= true, if strict limits with noEvent(..) [:#(type=Boolean)]
+[s]
+Connector of Real output signal
+Gain of upper input
+Gain of lower input
+Gain value multiplied with input signal [1]
+Output signal connector
+Gain value multiplied with input signal [1]
+Input signal connector
+Output signal connector
+Gain of upper input
+Gain of middle input
+Gain of lower input
+Upper limits of input signals
+Lower limits of input signals
+= true, if strict limits with noEvent(..) [:#(type=Boolean)]
+Has no longer an effect and is only kept for backwards compatibility (the implementation uses now the homotopy operator) [:#(type=Boolean)]
+[:#(type=Boolean)]
+[:#(type=Boolean)]
+Constant output value
+Cut torque in the flange [N.m]
+Moment of inertia [kg.m2]
+Priority to use phi and w as states [:#(type=StateSelect)]
+Absolute rotation angle of component [rad|deg]
+der(Absolute rotation angle of component) [rad/s]
+Absolute angular velocity of component (= der(phi)) [rad/s]
+der(Absolute angular velocity of component (= der(phi))) [rad/s2]
+Absolute angular acceleration of component (= der(w)) [rad/s2]
+= true, if support flange enabled, otherwise implicitly grounded [:#(type=Boolean)]
+Absolute angle of support flange [rad|deg]
+Spring constant [N.m/rad]
+Damping constant [N.m.s/rad]
+Unstretched spring angle [rad|deg]
+Relative rotation angle (= flange_b.phi - flange_a.phi) [rad|deg]
+der(Relative rotation angle (= flange_b.phi - flange_a.phi)) [rad/s]
+Relative angular velocity (= der(phi_rel)) [rad/s]
+der(Relative angular velocity (= der(phi_rel))) [rad/s2]
+Nominal value of phi_rel (used for scaling) [rad|rad]
+Priority to use phi_rel and w_rel as states [:#(type=StateSelect)]
+=true, if heatPort is enabled [:#(type=Boolean)]
+Loss power leaving component via heatPort (> 0, if heat is flowing out of component) [W]
+Spring torque [N.m]
+Damping torque [N.m]
+Moment of inertia [kg.m2]
+Priority to use phi and w as states [:#(type=StateSelect)]
+Absolute rotation angle of component [rad|deg]
+Absolute angular velocity of component (= der(phi)) [rad/s]
+der(Absolute angular velocity of component (= der(phi))) [rad/s2]
+Distance to move [rad]
+Maximum velocities der(q)
+Maximum accelerations der(qd)
+Time instant at which movement starts [s]
+Number of outputs [:#(type=Integer)]
+Connector of Real output signals
+[rad]
+
+
+
+
+
+
+
+[s]
+[s]
+[s]
+[s]
+[:#(type=Boolean)]
+Integrator gain [1]
+Type of initialization (1: no init, 2: steady state, 3,4: initial output) [:#(type=Modelica.Blocks.Types.Init)]
+Initial or guess value of output (= state)
+Connector of Real output signal
+der(Connector of Real output signal)
+Cut torque in the flange [N.m]
+= true, if support flange enabled, otherwise implicitly grounded [:#(type=Boolean)]
+Absolute angle of support flange [rad|deg]
+Constant torque (if negative, torque is acting as load in positive direction of rotation) [N.m]
+Integrator gain [1]
+Type of initialization (1: no init, 2: steady state, 3,4: initial output) [:#(type=Modelica.Blocks.Types.Init)]
+Initial or guess value of output (= state)
+Connector of Real input signal
+Connector of Real output signal
+der(Connector of Real output signal)
+Gain of upper input
+Gain of middle input
+Gain of lower input
+Connector 3 of Real input signals
+Connector of Real output signal
+Gain of upper input
+Gain of lower input
+Gain value multiplied with input signal [1]
+

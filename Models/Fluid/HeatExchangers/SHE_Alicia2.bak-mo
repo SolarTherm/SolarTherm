@@ -1,0 +1,64 @@
+within SolarTherm.Models.Fluid.HeatExchangers;
+model SHE_Alicia2 "Simplified Heat Exchanger"
+  extends SolarTherm.Interfaces.Models.HeatExchangerFluid;
+  constant Real pi = Modelica.Constants.pi;
+  //constant Real g_n = Modelica.Constants.g_n;
+  //parameter SI.Area A = 5 "Exchanger area" annotation(Dialog(group = "Heat transfer parameters"));
+  //parameter SI.CoefficientOfHeatTransfer U = 2500 "Overall heat-transfer coefficient" annotation(Dialog(group = "Heat transfer parameters"));
+  parameter SI.MassFlowRate tol = 1e-7 "Minimun mass flow rate tolerance" annotation(Dialog(group = "Heat transfer parameters"));
+
+  SI.Temperature T_a2_min = T_b1 "Minimun temperature A fluid";
+  SI.Temperature T_b2_max = T_a1 "Maximun temperature B fluid";
+  //Fijamos los estados termodinamicos maximos para cada fluido. In stream entrada y actual stream la salida
+   MA.ThermodynamicState state_a2_min = MA.setState_pTX(port_a_out.p, T_a2_min, actualStream(port_a_out.Xi_outflow));
+   MB.ThermodynamicState state_b2_max = MB.setState_pTX(port_b_out.p, T_b2_max, actualStream(port_b_out.Xi_outflow));
+  parameter SI.Efficiency eff = 0.8 "Heat Exchanger Efficiency";
+  //1 es la entrada, 2 es la salida. Fluido A es el caliente y el B el frio.
+  //Se definen los estados termodinamicos de los fluidos
+  MA.ThermodynamicState state_a1 = MA.setState_phX(port_a_in.p, inStream(port_a_in.h_outflow), inStream(port_a_in.Xi_outflow));
+  MB.ThermodynamicState state_b1 = MB.setState_phX(port_b_in.p, inStream(port_b_in.h_outflow), inStream(port_b_in.Xi_outflow));
+  MA.ThermodynamicState state_a2= MA.setState_phX(port_a_in.p, h_a2, inStream(port_a_in.Xi_outflow));
+  MB.ThermodynamicState state_b2=MB.setState_phX(port_b_in.p,h_b2, inStream(port_b_in.Xi_outflow));
+
+  SI.SpecificEnthalpy h_a2;
+  SI.SpecificEnthalpy h_b2;
+
+  SI.Temperature T_a1=MA.temperature(state_a1);
+  SI.Temperature T_b1=MB.temperature(state_b1);
+  SI.Temperature T_a2=MA.temperature(state_a2);
+  SI.Temperature T_b2=MB.temperature(state_b2);
+
+  //Q maximo de intercambio de ambos fluidos
+  SI.HeatFlowRate Q_a_max = m_flow_a*(state_a1.h-state_a2_min.h);
+  SI.HeatFlowRate Q_b_max = m_flow_b*(state_b2_max.h-state_b1.h);
+  //Xi es la concentracion. Que es 1 en este caso cuando no hay mezclas.
+
+  SI.MassFlowRate m_flow_a = port_a_in.m_flow;
+  SI.MassFlowRate m_flow_b = port_b_in.m_flow;
+
+   SI.HeatFlowRate Q_a = m_flow_a*(state_a1.h-h_a2);
+   SI.HeatFlowRate Q_b = m_flow_b*(h_b2-state_b1.h);
+equation
+  port_a_in.m_flow + port_a_out.m_flow = 0;
+  port_b_in.m_flow + port_b_out.m_flow = 0;
+  port_a_in.h_outflow = inStream(port_a_out.h_outflow);
+  port_a_out.h_outflow = state_a2.h;
+  port_b_in.h_outflow = inStream(port_b_out.h_outflow);
+  port_b_out.h_outflow = state_b2.h;
+  port_a_in.p = port_a_out.p;
+  port_b_in.p = port_b_out.p;
+  port_a_in.Xi_outflow = inStream(port_a_out.Xi_outflow);
+  port_a_out.Xi_outflow = inStream(port_a_in.Xi_outflow);
+  port_b_in.Xi_outflow = inStream(port_b_out.Xi_outflow);
+  port_b_out.Xi_outflow = inStream(port_b_in.Xi_outflow);
+
+     if Q_a_max > Q_b_max then
+       Q_b=eff*Q_b_max;
+       Q_b = Q_a;
+     else
+       Q_a=eff*Q_a_max;
+       Q_a = Q_b;
+     end if;
+
+  annotation(Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-100, -100}, {100, 100}})));
+end SHE_Alicia2;
