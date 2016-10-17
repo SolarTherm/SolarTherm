@@ -111,14 +111,14 @@ class Simulator(object):
 	
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""
-		sp.call(['omc', '-s', '-q', '-n='+str(n_proc)]
+		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
 			+ args
 			+ ['-i='+self.model, self.fn]
 			+ libs)
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
-		sp.call(['make', '-j', str(n_jobs), '-f', self.makefile_fn] + args)
+		sp.check_call(['make', '-j', str(n_jobs), '-f', self.makefile_fn] + args)
 
 	def load_init(self):
 		"""Load in init XML."""
@@ -174,4 +174,4 @@ class Simulator(object):
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
 			]
-		sp.call(['./'+self.model] + sim_args + args)
+		sp.check_call(['./'+self.model] + sim_args + args)

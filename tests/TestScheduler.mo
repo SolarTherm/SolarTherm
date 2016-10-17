@@ -1,8 +1,8 @@
 block TestScheduler
-	import SolarTherm.Sources.Schedule.Scheduler;
+	import SolarTherm.Models.Sources.Schedule.Scheduler;
 	parameter String file = "resources/tests/daily_schedule.motab";
-	SolarTherm.Interfaces.WeatherBus wbus;
-	SolarTherm.Sources.Date.SimpleDate date;
+	SolarTherm.Interfaces.Connectors.WeatherBus wbus;
+	SolarTherm.Models.Sources.Date.SimpleDate date;
 	Scheduler sch1(
 		file=file,
 		ndaily=2, // needs to match file (only load first two tables)

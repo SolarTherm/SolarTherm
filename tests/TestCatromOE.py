@@ -1,12 +1,7 @@
 #! /bin/env python2
-
 from __future__ import division
 import unittest
-
-from solartherm import simulation
-from solartherm import postproc
-
-from math import pi
+from solartherm import simulation, postproc
 
 class TestCatromOE(unittest.TestCase):
 	def setUp(self):

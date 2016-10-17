@@ -1,8 +1,8 @@
 block TestSteeredCL
 	import CN = Modelica.Constants;
-	import SolarTherm.Collectors.SteeredCL;
-	import SolarTherm.Collectors.IdealIncOE;
-	import SolarTherm.Sources.Weather.WeatherSource;
+	import SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL;
+	import SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE;
+	import SolarTherm.Models.Sources.Weather.WeatherSource;
 
 	parameter String file = "resources/tests/weatherfile1.motab";
 	WeatherSource wea(file=file);

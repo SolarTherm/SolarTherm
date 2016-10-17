@@ -2,7 +2,10 @@ model FluidSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
-	import FI = SolarTherm.Analysis.Finances;
+	import FI = SolarTherm.Models.Analysis.Finances;
+	import RC = SolarTherm.Models.CSP.CRS.Receivers;
+	import PU = SolarTherm.Models.Fluid.Pumps;
+
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
 	replaceable package MedRec = SolarTherm.Media.ConstSodium;
 	//replaceable package MedRec = SolarTherm.Media.Sodium;
@@ -67,54 +70,54 @@ model FluidSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
-	SolarTherm.Analysis.Finances.SpotPriceTable pri(file=pri_file);
+	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
+	SolarTherm.Models.Analysis.Finances.SpotPriceTable pri(file=pri_file);
 
-	SolarTherm.Collectors.SwitchedCL CL(
-		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
+	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL CL(
+		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
 		A=A_col
 		);
 
-	SolarTherm.Receivers.PlateRC RC(
+	SolarTherm.Models.CSP.CRS.Receivers.PlateRC RC(
 		redeclare package Medium=MedRec,
 		A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	SolarTherm.Fluid.Pumps.IdealPump pmp_rec(
+	PU.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
-	SolarTherm.Fluid.Pumps.IdealPump pmp_ext(
+	PU.IdealPump pmp_ext(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
 
-	SolarTherm.Storage.FluidST STC(
+	SolarTherm.Models.Storage.Tank.FluidST STC(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
-	SolarTherm.Storage.FluidST STH(
+	SolarTherm.Models.Storage.Tank.FluidST STH(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),
 		T_start=T_hot_start);
 
-	SolarTherm.Fluid.HeatExchangers.Extractor ext(
+	SolarTherm.Models.Fluid.HeatExchangers.Extractor ext(
 		redeclare package Medium=MedRec,
 		eff = eff_ext,
 		use_input=false,
 		T_fixed=T_cold_set);
 
-	SolarTherm.PowerBlocks.HeatPB PB(
+	SolarTherm.Models.PowerBlocks.HeatPB PB(
 		redeclare package Medium=MedRec,
 		P_rate=P_name,
 		eff_adj=eff_adj);
 
-	SolarTherm.Control.Trigger hf_trig(
+	SolarTherm.Models.Control.Trigger hf_trig(
 		low=m_up_warn,
 		up=m_up_stop,
 		y_0=true);
-	SolarTherm.Control.Trigger cf_trig(
+	SolarTherm.Models.Control.Trigger cf_trig(
 		low=m_up_warn,
 		up=m_up_stop,
 		y_0=true);
