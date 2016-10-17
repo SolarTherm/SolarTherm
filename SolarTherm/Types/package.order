@@ -10,3 +10,6 @@ EnergyPrice_MWh
 Energy_MWh
 to_dollarperMWh
 from_dollarperMWh
+AreaPrice
+PowerPrice
+solar_angles

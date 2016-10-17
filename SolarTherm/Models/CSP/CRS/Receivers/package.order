@@ -10,6 +10,5 @@ OnePipeRC
 PlateMassRC
 PlateRC
 Receiver
-ReceiverConstant
+ReceiverFluid
 ReceiverSimple
-ReceiverSimple3

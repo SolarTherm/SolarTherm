@@ -24,6 +24,10 @@ equation
   solar.hra=hra;
   solar.dni=dni;
   annotation (Documentation(info="<html>
+</html>", revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
 </html>"),
     experiment(StopTime=100000, Interval=60),
     __Dymola_experimentSetupOutput);

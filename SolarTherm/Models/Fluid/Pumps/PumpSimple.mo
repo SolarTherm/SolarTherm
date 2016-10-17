@@ -20,4 +20,9 @@ equation
   fluid_b.Xi_outflow=inStream(fluid_a.Xi_outflow);
   //fluid_a.p=fluid_b.p;
   W_loss=k_loss*m_flow;
+  annotation (Documentation(revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
+</html>"));
 end PumpSimple;

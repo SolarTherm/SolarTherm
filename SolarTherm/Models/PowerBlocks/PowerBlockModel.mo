@@ -14,11 +14,16 @@ model PowerBlockModel
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
 
-
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter SI.Temperature T_des=from_degC(43) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
+
+  parameter Boolean external_parasities = false
+    "= true enable parasities as an input"
+      annotation (Dialog(group="Parasities energy losses"), Evaluate=true, HideResult=true, choices(checkBox=true));
+  parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
+  parameter Real W_base=0.0055*294.188e6 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -26,17 +31,36 @@ model PowerBlockModel
         origin={1.77636e-015,80}),                  iconTransformation(
         extent={{-6,-6},{6,6}},
         rotation=-90,
-        origin={0,60})));
-
+        origin={-20,60})));
   replaceable model Cycle =
      SolarTherm.Models.PowerBlocks.Correlation.Rankine constrainedby
     SolarTherm.Models.PowerBlocks.Correlation.Cycle
     annotation (Dialog(group="Regresion"),choicesAllMatching=true);
-    Cycle cycle;
+  Cycle cycle(T_ND=T_ND);
+  Real load;
+  SI.HeatFlowRate W_gross "Parasitic losses power";
+  SI.HeatFlowRate W_loss "Parasitic losses power";
+  //SI.HeatFlowRate W_net "Estimated net output at design";
+  SI.Energy E_gross(final start=0,displayUnit="MWh");
+  SI.Energy E_net(final start=0,displayUnit="MWh");
+
+   Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
+        transformation(extent={{-12,-12},{12,12}},
+        rotation=-90,
+        origin={1.77636e-015,80}),                  iconTransformation(
+        extent={{-6,-6},{6,6}},
+        rotation=-90,
+        origin={20,60})));
 protected
-  parameter SI.Temperature Tsat_ref=Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_bo);
-  SI.SpecificEnthalpy h_in;
+  Modelica.Blocks.Interfaces.RealInput parasities_internal;
+  Real k_q;
+  Real k_w;
+    SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
+    parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
+
+  parameter SI.Temperature Tsat_ref=Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_bo);
+
   Real T_ND;
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
@@ -45,21 +69,26 @@ protected
   parameter SI.SpecificEnthalpy h_in_ref=Medium.specificEnthalpy(state_in_ref);
   parameter SI.SpecificEnthalpy h_out_ref=Medium.specificEnthalpy(state_out_ref);
   Boolean logic;
-  parameter SI.MassFlowRate m_flow_min= Q_flow_ref*nu_min/(h_in_ref-h_out_ref);
+  //parameter SI.MassFlowRate m_flow_min= nu_minm_flow_ref*nu_min;
   Real nu_cool;
-  Real k_q;
-  Real k_w;
 
   Modelica.Blocks.Interfaces.RealInput T_amb_internal;
+
 equation
   if enable_losses then
     connect(T_amb_internal,T_amb);
   else
     T_amb_internal=T_des;
   end if;
-  cycle.T_ND=T_ND;
+  if external_parasities then
+    connect(parasities_internal,parasities);
+  else
+    parasities_internal=0;
+  end if;
 
-  logic=fluid_a.m_flow>m_flow_min;
+  //cycle.T_ND=T_ND;
+
+  logic=load>nu_min;
   T_ND=(T_in-Tsat_ref)/(T_in_ref-Tsat_ref);
   h_in=inStream(fluid_a.h_outflow);
   h_out=fluid_b.h_outflow;
@@ -67,6 +96,8 @@ equation
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
   nu_cool=1+0.075*(T_des-T_amb_internal)/20;
+
+  load=max(nu_min,fluid_a.m_flow/m_flow_ref);//load=1 if it is no able partial load
 
   if logic then
     k_q=cycle.k_q;
@@ -78,7 +109,12 @@ equation
     h_out=h_out_ref;
   end if;
 
-    Q_flow/Q_flow_ref=k_q;
-    W_cy/(nu_cool*W_des)=k_w;
+  Q_flow/(Q_flow_ref*load)=k_q;
+  W_gross/(nu_cool*W_des*load)=k_w;
+
+  der(E_gross)=W_gross;
+  der(E_net)=W_net;
+  W_loss=(1-nu_net)*W_gross+W_base+parasities_internal;
+  W_net = W_gross - W_loss;
 
 end PowerBlockModel;

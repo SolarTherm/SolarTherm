@@ -21,3 +21,4 @@ CMakeCache.txt
 CMakeFiles
 /src/python/setup.py
 /src/python/solartherm.egg-info
+SolarTherm/Models/Control/reference_1.mat

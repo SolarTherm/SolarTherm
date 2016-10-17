@@ -59,5 +59,10 @@ equation
         Line(
           points={{0,100},{0,70}},
           color={0,0,0},
-          smooth=Smooth.None)}));
+          smooth=Smooth.None)}),
+    Documentation(revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
+</html>"));
 end Valve;

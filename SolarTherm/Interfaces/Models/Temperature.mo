@@ -16,7 +16,8 @@ partial model Temperature
     "Fluid connector b (positive design flow direction is from port_a to port_b)"
     annotation (Placement(transformation(extent={{110,-10},{90,10}}, rotation=0),
         iconTransformation(extent={{110,-10},{90,10}})));
-  Modelica.Blocks.Interfaces.RealOutput T annotation (Placement(transformation(
+  Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature",
+                                          final unit = "K", displayUnit = "degC", min=0) annotation (Placement(transformation(
         extent={{-10,-10},{10,10}},
         rotation=90,
         origin={0,94}), iconTransformation(

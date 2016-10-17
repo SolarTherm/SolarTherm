@@ -114,5 +114,10 @@ equation
  W_loss=W_net/e_ht;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-        coordinateSystem(preserveAspectRatio=false)));
+        coordinateSystem(preserveAspectRatio=false)),
+    Documentation(revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
+</html>"));
 end Tank;

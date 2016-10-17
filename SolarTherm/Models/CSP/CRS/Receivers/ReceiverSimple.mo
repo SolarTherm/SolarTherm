@@ -5,10 +5,19 @@ model ReceiverSimple
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out( start=h_0);
   //SI.MassFlowRate m_flow;
-  parameter SI.Efficiency ab=1 "Absortance";
-  parameter SI.Efficiency em=1 "Emitance";
-  parameter SI.Area A=1 "Area";
-  parameter SI.Temperature T_0=from_degC(290);
+  parameter SI.Length H_rcv=1 "Receiver height"
+                                               annotation(Dialog(group="Technical data"));
+  parameter SI.Diameter D_rcv=1 "Receiver diameter"
+                                                   annotation(Dialog(group="Technical data"));
+  parameter Integer N_pa = 1 "Number of panels" annotation(Dialog(group="Technical data"));
+  parameter SI.Diameter D_tb=1 "Tube outer diameter"
+                                                    annotation(Dialog(group="Technical data"));
+  parameter SI.Thickness t_tb=1 "Tube wall thickness"
+                                                     annotation(Dialog(group="Technical data"));
+  parameter SI.Efficiency ab=1 "Coating absortance"
+                                                   annotation(Dialog(group="Technical data"));
+  parameter SI.Efficiency em=1 "Coating Emitance"
+                                                 annotation(Dialog(group="Technical data"));
 
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rcv;
@@ -21,8 +30,13 @@ model ReceiverSimple
         rotation=-90,
         origin={0,78})));
 protected
+  parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
+  parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
+  parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
+  parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
   parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
   parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
+  parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
 equation
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
@@ -39,5 +53,9 @@ equation
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
 
   annotation (Documentation(info="<html>
+</html>", revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
 </html>"));
 end ReceiverSimple;

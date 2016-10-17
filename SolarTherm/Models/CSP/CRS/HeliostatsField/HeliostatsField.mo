@@ -19,16 +19,17 @@ model HeliostatsField
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter Boolean use_wind = false "= true to use Wind-stop strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-  parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_min=529.412e6*0.25 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_defocus=6.39804e8
-    "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
 
-  Optical optical;
+  Optical optical(hra=solar.hra, dec=solar.dec, lat=lat);
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
 
@@ -44,7 +45,7 @@ model HeliostatsField
             -72},{-86,-48}})));
 
   Modelica.Blocks.Interfaces.RealInput Wspd if use_wind annotation (Placement(
-        transformation(extent={{-120,50},{-80,90}}), iconTransformation(extent={
+        transformation(extent={{-126,50},{-86,90}}), iconTransformation(extent={
             {-110,50},{-86,74}})));
 
   SI.Angle elo;
@@ -60,14 +61,18 @@ model HeliostatsField
 protected
   SI.Power W_loss1;
   SI.Power W_loss2;
-  SI.Time t_start=30*60;
-  discrete Modelica.SIunits.Time entryTime "Time instant when u became true";
+  //SI.Time t_start=30*60;
+  parameter SI.Time t_start=3600 "Start-up traking delay";
+  discrete Modelica.SIunits.Time t_on "Sunrise time instant";
   Modelica.Blocks.Interfaces.BooleanInput on_internal
     "Needed to connect to conditional connector";
   Modelica.Blocks.Interfaces.BooleanInput defocus_internal
     "Needed to connect to conditional connector";
   Modelica.Blocks.Interfaces.RealInput Wspd_internal
     "Needed to connect to conditional connector";
+  parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 equation
   if use_on then
     connect(on,on_internal);
@@ -87,13 +92,18 @@ equation
                      (Wspd_internal<Wspd_max);
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
 
-  on_internal=Q_raw>Q_min;
+  when Q_raw>Q_start then
+    on_internal=true;
+  elsewhen Q_raw<Q_min then
+    on_internal=false;
+  end when;
+
   Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
 
   heat.Q_flow= -Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
-  optical.hra=solar.hra;
-  optical.dec=solar.dec;
+//   optical.hra=solar.hra;
+//   optical.dec=solar.dec;
 
   ele=SolarTherm.Models.Sources.SolarFunctions.elevationAngle(
     solar.dec,
@@ -109,13 +119,17 @@ equation
     solar.hra,
     lat);
 
-  damping= Q_net/(Q_raw+1e-3);
-  W_loss1=if on_internal then n_h*he_av*damping*W_track else 0;
-  when on_internal then
-    entryTime=time;
+  damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;
+  W_loss1=if ele>1e-2 then n_h*he_av*damping*W_track else 0;
+  when ele>1e-2 then
+    t_on=time;
   end when;
-  W_loss2= if time<entryTime+t_start then n_h*he_av*damping*E_start/t_start else 0;
+  W_loss2= if time<t_on+t_start then n_h*he_av*damping*E_start/t_start else 0;
   W_loss=W_loss1+W_loss2;
   annotation (Documentation(info="<html>
+</html>", revisions="<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
 </html>"));
 end HeliostatsField;

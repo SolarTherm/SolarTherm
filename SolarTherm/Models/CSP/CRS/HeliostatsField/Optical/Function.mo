@@ -10,5 +10,5 @@ model Function "From function"
 
 
 equation
-  nu=fun(hra,dec);
+  nu=fun(hra=hra,dec=dec,lat=lat);
 end Function;

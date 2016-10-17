@@ -11,7 +11,10 @@ partial model PowerBlock
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
       annotation (choicesAllMatching = true,Dialog(group="Working fluid"));
-  Modelica.Blocks.Interfaces.RealOutput W_cy "Cycle electric power output" annotation (Placement(
-        transformation(extent={{44,-24},{64,-4}}), iconTransformation(extent={{46,-10},
-            {56,0}})));
+  Modelica.Blocks.Interfaces.RealOutput W_net(
+    quantity="Power",
+    unit="W",
+    displayUnit="MW") "Net electric power output" annotation (Placement(
+        transformation(extent={{44,-24},{64,-4}}), iconTransformation(extent={{
+            46,-10},{56,0}})));
 end PowerBlock;
