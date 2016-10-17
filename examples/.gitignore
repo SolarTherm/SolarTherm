@@ -10,4 +10,4 @@ SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
 Modelica_Utilities_*
-
+resources
