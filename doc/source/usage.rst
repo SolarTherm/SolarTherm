@@ -24,6 +24,9 @@ st_optimisation
 st_plotmat
     A python script for easily plotting the results from a simulation.  Behind the scenes it uses the common `matplotlib <http://matplotlib.org>`_ library.
 
+st_inspect
+    A python script for converting simulation results into CSV data. Results are output to the console (standard output) but can also be directed into a file (eg `st_inspect myfile.res > output.csv`)
+
 st_wea_to_mo
     A python script for converting TMY3 weather data into a format that is suitable for import into a simulation table.
 
