@@ -4,7 +4,7 @@ model Table "Price from a table"
   parameter String file "File where price data matrix is stored" annotation (Dialog(
       group="Technical data",
       enable=tableOnFile,
-      loadSelector(filter="MATLAB MAT-files (*.mat)",
+      loadSelector(filter="TMY3 custom-built files (*.motab);;MATLAB MAT-files (*.mat)",
           caption="Open file in which optical data is present")));
   Modelica.Blocks.Sources.CombiTimeTable table(tableOnFile=true, columns={2}, tableName="price",smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file)

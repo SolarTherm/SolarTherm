@@ -4,8 +4,9 @@ model Table "From table"
   parameter String file "File where optical data matrix is stored" annotation (Dialog(
       group="Technical data",
       enable=tableOnFile,
-      loadSelector(caption="Open file in which optical data is present")));
-  parameter SolarTherm.Types.solar_angles angles=SolarTherm.Types.solar_angles.elo_hra
+      loadSelector(filter="TMY3 custom-built files (*.motab);;MATLAB MAT-files (*.mat)",
+                   caption="Open file in which optical data is present")));
+  parameter SolarTherm.Types.Solar_angles angles=SolarTherm.Types.Solar_angles.elo_hra
     "Table angles"
     annotation (Dialog(group="Table data interpretation"));
   SI.Angle angle1;
@@ -21,13 +22,13 @@ model Table "From table"
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 equation
-  if angles==SolarTherm.Types.solar_angles.elo_hra then
+  if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
     angle2=hra;
-  elseif angles==SolarTherm.Types.solar_angles.dec_hra then
+  elseif angles==SolarTherm.Types.Solar_angles.dec_hra then
     angle1=dec;
     angle2=hra;
-  elseif angles==SolarTherm.Types.solar_angles.ele_azi then
+  elseif angles==SolarTherm.Types.Solar_angles.ele_azi then
     angle1=SolarTherm.Models.Sources.SolarFunctions.elevationAngle(dec,hra,lat);
     angle2=SolarTherm.Models.Sources.SolarFunctions.solarAzimuth(dec,hra,lat);
   else

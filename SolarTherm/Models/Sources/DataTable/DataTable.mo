@@ -11,7 +11,7 @@ model DataTable
     annotation (Dialog(
       group="Table data definition",
       enable=tableOnFile,
-      loadSelector(caption="Open file in which table is present")));
+      loadSelector(filter="TMY3 custom-built files (*.motab);;MATLAB MAT-files (*.mat)",caption="Open file in which table is present")));
   output SI.Irradiance GHI;
   output SI.Irradiance DNI;
   output SI.Irradiance DHI;
