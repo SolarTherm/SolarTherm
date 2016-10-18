@@ -29,7 +29,7 @@ model reference_1
     Q_design=330000000,
     nu_start=0.6,
     redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table (
-          angles=SolarTherm.Types.solar_angles.elo_hra, file=file_optics))
+          angles=SolarTherm.Types.Solar_angles.elo_hra, file=file_optics))
     annotation (Placement(transformation(extent={{-88,2},{-56,36}})));
 
   Models.CSP.CRS.Receivers.ReceiverSimple receiver(
@@ -271,10 +271,7 @@ Control"),
           extent={{-146,-26},{-98,-46}},
           lineColor={0,0,0},
           fontSize=10,
-          textString="Data Source")}),                                       Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})), experiment(
-      StopTime=3.1536e+007,
-      __Dymola_NumberOfIntervals=100000,
-      __Dymola_Algorithm="Dassl"),                                                                                          __Dymola_experimentSetupOutput,
+          textString="Data Source")}), Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60),                                                                                          __Dymola_experimentSetupOutput,
     Documentation(revisions="<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
