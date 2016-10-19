@@ -1,5 +1,7 @@
-within SolarTherm.Examples.SolarTower;
 model reference_1
+  import SolarTherm.{Models,Media};
+  import Modelica.SIunits.Conversions.from_degC;
+
   extends Modelica.Icons.Example;
   parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_TMY3.motab");
   parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_optics.motab");

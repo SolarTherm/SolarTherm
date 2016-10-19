@@ -5,9 +5,11 @@ DishSG4*.[cho]
 SimpleSystem
 SimpleSystem*.[ch]
 FluidSysttem
+reference_1
 FluidSystem*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
+reference_1*.[ch]
 *.xml
 Modelica_Utilities_*
 resources
