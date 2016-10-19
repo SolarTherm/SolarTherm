@@ -1,5 +1,5 @@
 within SolarTherm.Examples.SolarTower;
-model reference_1
+model reference_1_fluid
   extends Modelica.Icons.Example;
   parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_TMY3.motab");
   parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_optics.motab");
@@ -32,7 +32,7 @@ model reference_1
           angles=SolarTherm.Types.Solar_angles.elo_hra, file=file_optics))
     annotation (Placement(transformation(extent={{-88,2},{-56,36}})));
 
-  Models.CSP.CRS.Receivers.ReceiverSimple receiver(
+  Models.CSP.CRS.Receivers.ReceiverFluid  receiver(
     em=0.88,
     redeclare package Medium = Media.MoltenSalt.MoltenSalt_base,
     H_rcv=18.67,
@@ -208,6 +208,9 @@ equation
       pattern=LinePattern.Dot));
   connect(powerBlock.W_net, market.W_net) annotation (Line(points={{115.18,
           22.05},{119.59,22.05},{119.59,21.8},{126,21.8}}, color={0,0,127}));
+  connect(receiver.on, controlCold.sf_on) annotation (Line(points={{-31.24,5.44},
+          {-44,5.44},{-44,-18},{-72,-18},{-72,-36},{28,-36},{28,-6},{24.7,-6},{
+          24.7,-7.2}}, color={255,0,255}));
   annotation(Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}),
         graphics={
         Text(
@@ -271,10 +274,10 @@ Control"),
           extent={{-146,-26},{-98,-46}},
           lineColor={0,0,0},
           fontSize=10,
-          textString="Data Source")}), Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60),                                                                                          __Dymola_experimentSetupOutput,
+          textString="Data Source")}),                                       Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60),                                                                                          __Dymola_experimentSetupOutput,
     Documentation(revisions="<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
 </html>"));
-end reference_1;
+end reference_1_fluid;

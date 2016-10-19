@@ -44,6 +44,8 @@ model PowerBlockModel
   SI.Energy E_gross(final start=0,displayUnit="MWh");
   SI.Energy E_net(final start=0,displayUnit="MWh");
 
+  Boolean logic;
+
    Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
         rotation=-90,
@@ -51,13 +53,14 @@ model PowerBlockModel
         extent={{-6,-6},{6,6}},
         rotation=-90,
         origin={20,60})));
+
 protected
   Modelica.Blocks.Interfaces.RealInput parasities_internal;
   Real k_q;
   Real k_w;
     SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
-    parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
+  parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
 
   parameter SI.Temperature Tsat_ref=Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_bo);
 
@@ -68,11 +71,13 @@ protected
   parameter Medium.ThermodynamicState state_out_ref=Medium.setState_pTX(1e5,T_out_ref);
   parameter SI.SpecificEnthalpy h_in_ref=Medium.specificEnthalpy(state_in_ref);
   parameter SI.SpecificEnthalpy h_out_ref=Medium.specificEnthalpy(state_out_ref);
-  Boolean logic;
+
   //parameter SI.MassFlowRate m_flow_min= nu_minm_flow_ref*nu_min;
   Real nu_cool;
 
   Modelica.Blocks.Interfaces.RealInput T_amb_internal;
+
+  parameter Real nu_eps=0.1;
 
 equation
   if enable_losses then
@@ -97,7 +102,7 @@ equation
   fluid_a.p=fluid_b.p;
   nu_cool=1+0.075*(T_des-T_amb_internal)/20;
 
-  load=max(nu_min,fluid_a.m_flow/m_flow_ref);//load=1 if it is no able partial load
+  load=max(nu_eps,fluid_a.m_flow/m_flow_ref);//load=1 if it is no able partial load
 
   if logic then
     k_q=cycle.k_q;
