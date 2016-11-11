@@ -32,7 +32,6 @@ package MoltenSalt_Utilities
   algorithm
     //h:=(1443-0.172*273.15)*T+(0.172/2)*T^2;
     h:=1396.0182*T+0.086*T^2;
-    annotation(derivative=h_T_der);
   end h_T;
 
   function T_h "Temperature as a function of specific enthalpy"
@@ -114,15 +113,5 @@ package MoltenSalt_Utilities
   algorithm
     rho:=2090;
   end drho_dT_T;
-
-  function h_T_der "Specific enthalpy as a function of temperature"
-    extends Modelica.Icons.Function;
-    input Modelica.SIunits.Temperature T "Temperature";
-    input Real der_T;
-    output Real der_h "Specific enthalpy";
-  algorithm
-    //h:=(1443-0.172*273.15)*T+(0.172/2)*T^2;
-    der_h:=dh_dT(T)*der_T;
-  end h_T_der;
   annotation ();
 end MoltenSalt_Utilities;

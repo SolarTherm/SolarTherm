@@ -17,16 +17,17 @@ algorithm
  assert(i > 0, "Metadata cannot be read " + file);
  assert(Strings.substring(line, 1, i-1) == "#METADATA",
   "Metadata cannot be read " + file);
+
  j := Strings.find(line, ",", i+1);
  meta.name := Strings.substring(line, i+1, j-1);
- (meta.lat, j) := Strings.scanReal(line, j+1,
-  message="Metadata cannot be read " + file);
- (meta.lon, j) := Strings.scanReal(line, j+1,
-  message="Metadata cannot be read " + file);
- (meta.elev, j) := Strings.scanReal(line, j+1,
-  message="Metadata cannot be read " + file);
- (meta.tzone, j) := Strings.scanReal(line, j+1,
-  message="Metadata cannot be read " + file);
- (meta.tstart, j) := Strings.scanReal(line, j+1,
-  message="Metadata cannot be read " + file);
+ (meta.lat, j) := Strings.scanReal(line, j+1
+   , message="Metadata cannot be read " + file);
+ (meta.lon, j) := Strings.scanReal(line, j+1
+   , message="Metadata cannot be read " + file);
+ (meta.elev, j) := Strings.scanReal(line, j+1
+   , message="Metadata cannot be read " + file);
+ (meta.tzone, j) := Strings.scanReal(line, j+1
+   , message="Metadata cannot be read " + file);
+ (meta.tstart, j) := Strings.scanReal(line, j+1
+   , message="Metadata cannot be read " + file);
 end getMetadata;

@@ -4,6 +4,7 @@ import subprocess as sp
 import xml.etree.ElementTree as ET
 import multiprocessing as mp
 import re
+import tempfile
 
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
@@ -78,22 +79,47 @@ def parse_var_val(vstr, unit):
 		raise ValueError('Can\'t convert from unit ' + unit_old + ' to ' + unit)
 
 class Simulator(object):
-	"""Compilation and simulation of a modelica model.
+	"""Compilation and simulation of a modelica model."""
+	def __init__(self, fn, model=None, suffix=None, tempdir=None):
+		"""Constructor. `fn` is a .mo filename, `suffix` is a init file suffix,
+		`tempdir` is FIXME the location where temporary files should be stored,
+		`True` if a machine-generated temporary location should be generated and
+		used, or `None` if the current directory should be used.
 
-	The suffix is applied to the init file names written and read by the
-	simulator.  This can be changed after construction and thereafter changes
-	calls to `write_init`, `update_pars` and `simulate`.
-	"""
-	def __init__(self, fn, model=None, suffix=None):
-		self.fn = fn
+		The suffix is applied to the init file names written and read by the
+		simulator.  This can be changed after construction and thereafter changes
+		calls to `write_init`, `update_pars` and `simulate`.
+
+		TODO: under what conditions is `suffix` used?
+		"""
+		self.fn = os.path.abspath(fn)
+		if not os.path.exists(fn):
+			raise RuntimeError("Model file '%s' does not exist"%fn)
+
 		if model is None:
 			self.model = os.path.splitext(os.path.split(self.fn)[1])[0]
 		else:
 			self.model = model
-		self.suffix = suffix
+
 		self.makefile_fn = self.model + '.makefile'
 		self.init_in_fn = self.model + '_init.xml'
+		if tempdir is True:
+			tempdir = tempfile.mkdtemp(prefix="solartherm-")
+			print "Creating temporary directory '%s'"%tempdir
+		if tempdir is not None:
+			if not os.path.exists(tempdir):
+				raise RuntimeError("Temporary directory '%s' does not exist"%tempdir)
+			self.makefile_fn = os.path.join(tempdir,self.makefile_fn)
+			self.init_in_fn = os.path.join(tempdir,self.init_in_fn)
+		else:
+			tempdir = ""
+		self.tempdir = tempdir
+		self.suffix = suffix
 		self.init_et = None
+
+#	def __del__(self):
+#		if hasattr(self,'tempdir'):
+#			print "Cleaning up '%s'... [not implemented]"%self.tempdir
 
 	@property
 	def init_out_fn(self):
@@ -111,14 +137,29 @@ class Simulator(object):
 	
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""
-		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
-			+ args
-			+ ['-i='+self.model, self.fn]
-			+ libs)
+		try:
+			if self.tempdir:
+				cwd = os.getcwd()
+				os.chdir(self.tempdir)
+			sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
+				+ args
+				+ ['-i='+self.model, self.fn]
+				+ libs)
+		finally:
+			if self.tempdir:
+				os.chdir(cwd)
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
-		sp.check_call(['make', '-j', str(n_jobs), '-f', self.makefile_fn] + args)
+		try:
+			if self.tempdir:
+				cwd = os.getcwd()
+				os.chdir(self.tempdir)
+			sp.check_call(['make', '-j', str(n_jobs), '-f', self.makefile_fn] 
+				+ args)
+		finally:
+			if self.tempdir:
+				os.chdir(cwd)
 
 	def load_init(self):
 		"""Load in init XML."""
@@ -174,4 +215,12 @@ class Simulator(object):
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
 			]
-		sp.check_call(['./'+self.model] + sim_args + args)
+		try:
+			if self.tempdir:
+				cwd = os.getcwd()
+				os.chdir(self.tempdir)
+			sp.check_call(['./'+self.model] + sim_args + args)
+		finally:
+			if self.tempdir:
+				os.chdir(cwd)
+

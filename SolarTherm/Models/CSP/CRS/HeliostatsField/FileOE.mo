@@ -1,3 +1,5 @@
+// file created by Paul Scott, used initially as part of GenericSystem model
+
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
 block FileOE "Read in optical efficiency from file"
  extends SolarTherm.Models.CSP.CRS.HeliostatsField.OptEff;
