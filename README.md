@@ -5,3 +5,9 @@ Solar thermal power station performance simulation and optimisation.
 [![Build Status](https://travis-ci.org/SolarTherm/SolarTherm.svg)](https://travis-ci.org/SolarTherm/SolarTherm)
 
 [Documentation](http://solartherm.readthedocs.org/en/latest/)
+
+See also our wiki, which includes
+* Instructions on [Building SolarTherm](https://github.com/SolarTherm/SolarTherm/wiki/Building-SolarTherm)
+* Instrucitons on how to [use SolarTherm from OMEdit](https://github.com/SolarTherm/SolarTherm/wiki/Running-SolarTherm-via-OMEdit)
+* A description of our [continuous integration and automated testing](https://github.com/SolarTherm/SolarTherm/wiki/Automated-testing-of-SolarTherm-code) setup.
+* 
