@@ -1,4 +1,4 @@
-within ;
+within Examples;
 model TroughWagner
   //wea_file="C:/Users/del155/Documents/Git/SolarTherm/resources/weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab",
   //opt_file="C:/Users/del155/Documents/Git/SolarTherm/resources/optics/troughwagner_opt_eff.motab",

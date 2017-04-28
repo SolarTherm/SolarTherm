@@ -1,3 +1,4 @@
+within Examples;
 model FluidSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;

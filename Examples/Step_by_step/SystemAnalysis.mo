@@ -1,4 +1,4 @@
-within SolarTherm.Examples.SolarTower.Step_by_step;
+within Examples.Step_by_step;
 model SystemAnalysis
   extends Modelica.Icons.Example;
   parameter String file = "Data/mat_Australia NT Alice Springs Airport 1996 (TMY3).mat";

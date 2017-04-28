@@ -1,3 +1,4 @@
+within Examples;
 model DishSG4
 	extends SolarTherm.Systems.GenericSystem(
 		wea_file="resources/weather/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",

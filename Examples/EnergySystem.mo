@@ -1,3 +1,4 @@
+within Examples;
 model EnergySystem
 	import Modelica.Constants.pi;
 	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
