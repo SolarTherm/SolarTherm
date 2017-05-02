@@ -1,0 +1,17 @@
+BaseProperties
+ThermodynamicState
+setState_pTX
+setState_phX
+setState_psX
+setState_dTX
+pressure
+temperature
+specificEnthalpy
+density
+dynamicViscosity
+thermalConductivity
+specificEntropy
+specificHeatCapacityCp
+specificHeatCapacityCv
+isentropicExponent
+velocityOfSound
