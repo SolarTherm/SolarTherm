@@ -1,5 +1,6 @@
-within SolarTherm.Media.ConstSodium;
-package ConstSodium "Sodium model with constant properties"
+within SolarTherm.Media.Sodium;
+package ConstSodium "Liquid sodium model with constant properties"
+ extends Modelica.Icons.VariantsPackage;
  constant Modelica.Media.Interfaces.Types.Basic.FluidConstants[1] const_sodium(
   each chemicalFormula="Na",
   each structureFormula="Na",
@@ -27,3 +28,4 @@ package ConstSodium "Sodium model with constant properties"
                 // 700K
   //T_min=100,
 end ConstSodium;
+

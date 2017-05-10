@@ -1,5 +1,5 @@
-BaseProperties
 ThermodynamicState
+BaseProperties
 setState_pTX
 setState_phX
 setState_psX
@@ -8,10 +8,18 @@ pressure
 temperature
 specificEnthalpy
 density
+specificInternalEnergy
 dynamicViscosity
 thermalConductivity
 specificEntropy
+specificGibbsEnergy
+specificHelmholtzEnergy
 specificHeatCapacityCp
 specificHeatCapacityCv
 isentropicExponent
+isentropicEnthalpy
 velocityOfSound
+isobaricExpansionCoefficient
+isothermalCompressibility
+enthalpyOfVaporization
+density_derT_p
