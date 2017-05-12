@@ -4,9 +4,9 @@ function p_v "Vapour pressure of saturated sodium"
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
 protected
-	Real a = 11.9463;
-	Real b = -12633.7;
-	Real c = -0.4672;
+	constant Real a = 11.9463;
+	constant Real b = -12633.7;
+	constant Real c = -0.4672;
 algorithm
 	//Ref. ANL/RE-95/2, pp. 55
 	p := (1e+6) * exp(a + b / T + c * log(T));
