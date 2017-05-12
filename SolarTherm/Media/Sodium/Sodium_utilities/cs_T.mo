@@ -1,5 +1,6 @@
 within SolarTherm.Media.Sodium.Sodium_utilities;
 function cs_T "Specific heat capacity of liquid sodium along the saturation curve"
+	import SolarTherm.Media.Sodium.Sodium_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.SpecificHeatCapacity cs "Specific heat capacity along the saturation curve";

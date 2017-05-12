@@ -1,5 +1,6 @@
 within SolarTherm.Media.Sodium.Sodium_utilities;
 function helmholtz_pT "Specific Helmholtz energy of liquid sodium"
+	import SolarTherm.Media.Sodium.Sodium_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	input Modelica.SIunits.AbsolutePressure p "Pressure";

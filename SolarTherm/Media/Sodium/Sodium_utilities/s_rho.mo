@@ -21,15 +21,3 @@ algorithm
   x := (rho - rho_mean) / rho_std; //rho_norm
   s := 1000 * (p1 * x ^ 7 + p2 * x ^ 6 + p3 * x ^ 5 + p4 * x ^ 4 + p5 * x ^ 3 + p6 * x ^ 2 + p7 * x + p8);
 end s_rho;
-
-
-
-
-
-
-
-
-
-  
-
-

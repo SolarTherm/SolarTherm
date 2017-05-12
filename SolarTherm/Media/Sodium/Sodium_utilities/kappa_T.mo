@@ -1,5 +1,6 @@
 within SolarTherm.Media.Sodium.Sodium_utilities;
 function kappa_T "Isothermal compressibility of lquid sodium"
+	import SolarTherm.Media.Sodium.Sodium_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.IsothermalCompressibility kappa_ist "Isothermal compressibility";

@@ -1,5 +1,6 @@
 within SolarTherm.Media.Sodium.Sodium_utilities;
 function beta_T "Isobaric expansion coefficient of liquid sodium"
+	import SolarTherm.Media.Sodium.Sodium_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.Media.Interfaces.Types.IsobaricExpansionCoefficient beta_isb "Isobaric expansion coefficient";

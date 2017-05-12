@@ -1,5 +1,6 @@
 within SolarTherm.Media.Sodium.Sodium_utilities;
 function h_s "Specific enthalpy of liquid sodium as a function of Specific entropy"
+  import SolarTherm.Media.Sodium.Sodium_utilities.*;
   extends Modelica.Icons.Function;
   input Modelica.SIunits.SpecificEntropy s "Specific entropy";
   output Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
