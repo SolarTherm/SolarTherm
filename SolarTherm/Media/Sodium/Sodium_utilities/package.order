@@ -5,6 +5,7 @@ cv_T
 dp_v_dT_T
 drho_dT_T
 eta_T
+eta_v_T
 gamma_T
 gibbs_T
 helmholtz_pT
@@ -16,11 +17,13 @@ h_T_der
 kappa_s_T
 kappa_T
 lamda_T
+lamda_v_T
 p_rho
 p_v
 p_v_T_der
 rho_T
 rho_T_der
+rho_v_T
 s_rho
 s_T
 T_h
