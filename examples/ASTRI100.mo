@@ -1,4 +1,3 @@
-within Examples;
 model ASTRI100
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;

@@ -1,4 +1,3 @@
-within Examples;
 model SimpleSystem
 	// Imports
 	import SI = Modelica.SIunits;
