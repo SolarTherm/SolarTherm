@@ -6,6 +6,7 @@ AO
 *_res.mat
 resources
 !*.py
+Test*
 FluidSystem
 TroughWagner
 optimizeInput.csv
