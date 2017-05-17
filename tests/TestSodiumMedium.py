@@ -35,12 +35,12 @@ class TestSodiumMedium(unittest.TestCase):
 		self.assertLessEqual(self.res.interpolate('err_avg_p_v_T_test', 1), delta)
 		self.assertLessEqual(self.res.interpolate('err_avg_rho_T_test', 1), delta)
 		self.assertLessEqual(self.res.interpolate('err_avg_rho_v_T_test', 1), delta)
-    	self.assertLessEqual(self.res.interpolate('err_avg_s_rho_test', 1), delta)
+		self.assertLessEqual(self.res.interpolate('err_avg_s_rho_test', 1), delta)
     	self.assertLessEqual(self.res.interpolate('err_avg_s_T_test', 1), delta)
     	self.assertLessEqual(self.res.interpolate('err_avg_T_h_test', 1), delta)
-    	self.assertLessEqual(self.res.interpolate('err_avg_T_p_test', 1), delta)    
-      	self.assertLessEqual(self.res.interpolate('err_avg_T_s_test', 1), delta)  
-      	self.assertLessEqual(self.res.interpolate('err_avg_vs_T_test', 1), delta) 
+    	self.assertLessEqual(self.res.interpolate('err_avg_T_p_test', 1), delta)
+    	self.assertLessEqual(self.res.interpolate('err_avg_T_s_test', 1), delta)
+    	self.assertLessEqual(self.res.interpolate('err_avg_vs_T_test', 1), delta)
     		
 if __name__ == '__main__':
 	unittest.main()

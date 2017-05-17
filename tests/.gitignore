@@ -5,7 +5,6 @@ AO
 *.xml
 *_res.mat
 resources
-Test*
 !*.py
 FluidSystem
 TroughWagner
