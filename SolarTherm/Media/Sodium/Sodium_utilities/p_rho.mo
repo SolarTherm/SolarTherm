@@ -34,11 +34,11 @@ algorithm
   //Bases on data in Ref. ANL/RE-95/2
   x1 := (rho - rho_mean1) / rho_std1; //rho_norm from 1200K to 2503.7K
   x2 := (rho - rho_mean2) / rho_std2; //rho_norm from 400K to 1200K
-  if  rho <= 732 then
-  	// Valid for rho from 732[kg/m3] to 919[kg/m3] (T: 400K to 1200K):
-  	p := 1e6 * (q1 * x2 ^ 6 + q2 * x2 ^ 5 + q3 * x2 ^ 4 + q4 * x2 ^ 3 + q5 * x2 ^ 2 + q6 * x2 + q7);
-  else
+  if rho < 732 then
 	// Valid for rho from 219 [kg/m3] to 732 [kg/m3] (T:1200K to 2503.7K)
 	p := 1e6 * (p1 * x1 ^ 8 + p2 * x1 ^ 7 + p3 * x1 ^ 6 + p4 * x1 ^ 5 + p5 * x1 ^ 4 + p6 * x1 ^ 3 + p7 * x1 ^ 2 + p8 * x1 + p9);
+  else
+	// Valid for rho from 732[kg/m3] to 919[kg/m3] (T: 400K to 1200K):
+  	p := 1e6 * (q1 * x2 ^ 6 + q2 * x2 ^ 5 + q3 * x2 ^ 4 + q4 * x2 ^ 3 + q5 * x2 ^ 2 + q6 * x2 + q7);
   end if;
 end p_rho;
