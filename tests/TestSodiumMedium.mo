@@ -1,4 +1,4 @@
-function TestSodiumMedium
+block TestSodiumMedium
 
 	import SolarTherm.Media.Sodium.Sodium_utilities.*;
   

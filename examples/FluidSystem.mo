@@ -7,7 +7,7 @@ model FluidSystem
 	import PU = SolarTherm.Models.Fluid.Pumps;
 
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
-	replaceable package MedRec = SolarTherm.Media.ConstSodium;
+	replaceable package MedRec = SolarTherm.Media.Sodium.ConstSodium;
 	//replaceable package MedRec = SolarTherm.Media.Sodium;
 
 	inner Modelica.Fluid.System system(
