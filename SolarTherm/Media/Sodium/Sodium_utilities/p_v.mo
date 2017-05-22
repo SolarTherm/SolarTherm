@@ -12,5 +12,3 @@ algorithm
 	p := (1e+6) * exp(a + b / T + c * log(T));
 	annotation(derivative = p_v_T_der);
 end p_v;
-
-

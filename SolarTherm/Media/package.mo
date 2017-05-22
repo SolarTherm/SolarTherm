@@ -1,5 +1,4 @@
 within SolarTherm;
 package Media 
-    extends Icons.MediaPackage;
-
+	extends Icons.MediaPackage;
 end Media;

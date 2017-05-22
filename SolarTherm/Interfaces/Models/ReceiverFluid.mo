@@ -8,7 +8,7 @@ partial model ReceiverFluid
   Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = Medium) annotation (Placement(
         transformation(extent={{24,38},{44,58}}), iconTransformation(extent={{24,
             38},{44,58}})));
-  replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_base
+  replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
       annotation (choicesAllMatching = true,Dialog(group="Working fluid"));

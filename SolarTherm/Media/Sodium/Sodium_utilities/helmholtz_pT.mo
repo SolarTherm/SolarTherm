@@ -8,6 +8,3 @@ function helmholtz_pT "Specific Helmholtz energy of liquid sodium"
 algorithm
 	helmholtz := h_T(T) - p / rho_T(T) - T * s_T(T);
 end helmholtz_pT;
-
-
-

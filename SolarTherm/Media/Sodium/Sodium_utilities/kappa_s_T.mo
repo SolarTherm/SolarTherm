@@ -10,7 +10,7 @@ protected
 	constant Modelica.SIunits.Temperature T_c = 2503.7 "Critical temperature";
 	Real theta "Temperature ratio";
 algorithm
-  //Ref. ANL/RE-95/2, pp. 122
+	//Ref. ANL/RE-95/2, pp. 122
 	theta := (T - T_m) /(T_c - T_m);
 	kappa_s := kappa_sm * (1 + theta / b) / (1 - theta);
 end kappa_s_T;
