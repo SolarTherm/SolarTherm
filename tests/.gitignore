@@ -5,11 +5,9 @@ AO
 *.xml
 *_res.mat
 resources
+Test*
 !*.py
-Test*.c
-Test*.o
 FluidSystem
 TroughWagner
 optimizeInput.csv
 *.libs
-reference_1
