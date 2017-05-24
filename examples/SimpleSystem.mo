@@ -3,7 +3,7 @@ model SimpleSystem
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
-	import FI = SolarTherm.Analysis.Finances;
+	import FI = SolarTherm.Models.Analysis.Finances;
 
 	// Parameters
 	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
@@ -66,8 +66,8 @@ model SimpleSystem
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
 	// Variables/Models
-	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
-	SolarTherm.Analysis.Finances.SpotPriceTable pri(file=pri_file);
+	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
+	FI.SpotPriceTable pri(file=pri_file);
 
 	SI.HeatFlowRate Q_flow_rec "Heat flow into receiver";
 	SI.HeatFlowRate Q_flow_chg "Heat flow into tank";

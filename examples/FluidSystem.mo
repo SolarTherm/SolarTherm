@@ -3,8 +3,6 @@ model FluidSystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
-	import RC = SolarTherm.Models.CSP.CRS.Receivers;
-	import PU = SolarTherm.Models.Fluid.Pumps;
 
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
 	replaceable package MedRec = SolarTherm.Media.Sodium.ConstSodium;
@@ -82,11 +80,11 @@ model FluidSystem
 		redeclare package Medium=MedRec,
 		A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	PU.IdealPump pmp_rec(
+	SolarTherm.Models.Fluid.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
-	PU.IdealPump pmp_ext(
+	SolarTherm.Models.Fluid.Pumps.IdealPump pmp_ext(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);

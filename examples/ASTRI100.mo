@@ -2,9 +2,10 @@ model ASTRI100
 	import SI = Modelica.SIunits;
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
+	import FI = SolarTherm.Models.Analysis.Finances;
 
 	// Salt is 60% NaNO3 40% KNO3
-	replaceable package MedRec = SolarTherm.Media.Sodium;
+	replaceable package MedRec = SolarTherm.Media.Sodium.Sodium_pT;
 	//replaceable package MedRec = SolarTherm.Media.ConstSodium;
 
 	inner Modelica.Fluid.System system(
@@ -125,7 +126,7 @@ model ASTRI100
 	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
-	parameter SolarTherm.Utilities.Finances.Money C_cap =
+	parameter FI.Money C_cap =
 			120*A_col // field cost
 			+ 135*A_col // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
@@ -133,7 +134,7 @@ model ASTRI100
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
 			+ (1440/1e3)*P_name // power block cost
 			"Capital costs";
-	parameter SolarTherm.Utilities.Finances.MoneyPerYear C_year =
+	parameter FI.MoneyPerYear C_year =
 			10*A_col // field cleaning/maintenance
 			"Maintenance costs for each year";
 	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
@@ -141,11 +142,11 @@ model ASTRI100
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
-	SolarTherm.Utilities.Weather.WeatherSource wea(file=wea_file);
-	SolarTherm.Utilities.Finances.SpotPriceTable pri(file=pri_file);
+	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
+	FI.SpotPriceTable pri(file=pri_file);
 
-	SolarTherm.Collectors.SteeredCL CL(
-		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE,
+	SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL CL(
+		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE,
 		A=A_col,
 		steer_rate=0.001,
 		target_error=0.001
@@ -155,9 +156,9 @@ model ASTRI100
 	//	redeclare package Medium=MedRec,
 	//	A=A_rec, em=em_steel, h_th=h_th_rec);
 
-	SolarTherm.Receivers.OnePipeRC RC(
+	SolarTherm.Models.CSP.CRS.Receivers.OnePipeRC RC(
 		redeclare package Medium=MedRec,
-		redeclare model Elem=SolarTherm.Receivers.EndTElem(
+		redeclare model Elem=SolarTherm.Models.CSP.CRS.Receivers.EndTElem(
 			each em=em_steel,
 			each ab=em_steel,
 			each h_th=h_th_rec,
@@ -165,42 +166,43 @@ model ASTRI100
 			)
 		);
 
-	SolarTherm.Pumps.IdealPump pmp_rec(
+	SolarTherm.Models.Fluid.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
-	SolarTherm.Pumps.IdealPump pmp_ext(
+	SolarTherm.Models.Fluid.Pumps.IdealPump pmp_ext(
 		redeclare package Medium=MedRec,
 		cont_m_flow=true,
 		use_input=true);
 
-	SolarTherm.Storage.FluidST STC(
+	SolarTherm.Models.Storage.Tank.FluidST STC(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
-	SolarTherm.Storage.FluidST STH(
+
+	SolarTherm.Models.Storage.Tank.FluidST STH(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
 		m_start=m_max*(1 - split_cold),
 		T_start=T_hot_start);
 
-	SolarTherm.HeatExchangers.Extractor ext(
+	SolarTherm.Models.Fluid.HeatExchangers.Extractor ext(
 		redeclare package Medium=MedRec,
 		eff = eff_ext,
 		use_input=false,
 		T_fixed=T_cold_set);
 
-	SolarTherm.PowerBlocks.HeatPB PB(
+	SolarTherm.Models.PowerBlocks.HeatPB PB(
 		redeclare package Medium=MedRec,
 		P_rate=P_name,
 		eff_adj=eff_adj);
 
-	SolarTherm.Control.Trigger hf_trig(
+	SolarTherm.Models.Control.Trigger hf_trig(
 		low=m_up_warn,
 		up=m_up_stop,
 		y_0=true);
-	SolarTherm.Control.Trigger cf_trig(
+	SolarTherm.Models.Control.Trigger cf_trig(
 		low=m_up_warn,
 		up=m_up_stop,
 		y_0=true);
@@ -210,7 +212,7 @@ model ASTRI100
 	Boolean fill_ctnk "Cold tank can be filled";
 
 	SI.Power P_elec;
-	SolarTherm.Utilities.Finances.Money R_spot(start=0, fixed=true)
+	FI.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
 equation
