@@ -248,7 +248,7 @@ equation
 	//CL.target = 1;
 
 	//radiance_good = wea.wbus.dni >= 200;
-	radiance_good = sum(CL.tflux.R) >= R_go;
+	radiance_good = sum(CL.R_foc) >= R_go;
 	//radiance_good = sum(RC.R) >= R_go;
 
 	fill_htnk = not hf_trig.y;
