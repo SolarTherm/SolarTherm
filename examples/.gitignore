@@ -6,6 +6,8 @@ SimpleSystem
 SimpleSystem*.[ch]
 FluidSysttem
 FluidSystem*.[ch]
+ASTRI100
+ASTRI100*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
