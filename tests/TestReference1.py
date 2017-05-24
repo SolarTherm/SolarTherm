@@ -10,7 +10,7 @@ from math import pi
 
 class TestScheduler(unittest.TestCase):
 	def setUp(self):
-		fn = '../examples/reference_1.mo'
+		fn = '../examples/Reference_1.mo'
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])

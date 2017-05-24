@@ -1,4 +1,4 @@
-model reference_1
+model Reference_1
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;
 
@@ -292,4 +292,4 @@ Control"),
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
 </html>"));
-end reference_1;
+end Reference_1;

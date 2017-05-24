@@ -4,6 +4,7 @@ model FluidSystem
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
 
+	extends Modelica.Icons.Example;
 	//replaceable package MedRec = Modelica.Media.Water.ConstantPropertyLiquidWater;
 	replaceable package MedRec = SolarTherm.Media.Sodium.ConstSodium;
 	//replaceable package MedRec = SolarTherm.Media.Sodium;

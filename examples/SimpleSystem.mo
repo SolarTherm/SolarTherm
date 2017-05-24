@@ -5,6 +5,8 @@ model SimpleSystem
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
 
+	extends Modelica.Icons.Example;
+
 	// Parameters
 	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
 	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
