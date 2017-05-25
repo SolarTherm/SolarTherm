@@ -1,8 +1,10 @@
-within SolarTherm.Examples.SolarTower;
 model Reference_1_fluid
+  import SolarTherm.{Models,Media};
+  import Modelica.SIunits.Conversions.from_degC;
+  
   extends Modelica.Icons.Example;
-  parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_TMY3.motab");
-  parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_optics.motab");
+  parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
+  parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
 
   Models.Sources.SolarModel.Sun       sun(
     lon=data.lon,
@@ -34,7 +36,7 @@ model Reference_1_fluid
 
   Models.CSP.CRS.Receivers.ReceiverFluid  receiver(
     em=0.88,
-    redeclare package Medium = Media.MoltenSalt.MoltenSalt_base,
+    redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
     H_rcv=18.67,
     D_rcv=15,
     N_pa=20,
@@ -46,7 +48,7 @@ model Reference_1_fluid
   Modelica.Blocks.Sources.RealExpression Tamb_input(y=data.Tdry)   annotation(Placement(transformation(extent={{140,70},
             {120,90}})));
   Models.Storage.Tank.Tank tankHot(
-    redeclare package Medium = Media.MoltenSalt.MoltenSalt_base,
+    redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
     T_start=from_degC(574),
     L_start=30,
     alpha=3,
@@ -56,10 +58,10 @@ model Reference_1_fluid
     T_set=from_degC(500))
     annotation (Placement(transformation(extent={{16,54},{36,74}})));
   Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium =
-        Media.MoltenSalt.MoltenSalt_base)                                                            annotation(Placement(transformation(extent={{66,38},
+        Media.MoltenSalt.MoltenSalt_ph)                                                            annotation(Placement(transformation(extent={{66,38},
             {78,50}})));
   Models.Storage.Tank.Tank tankCold(
-    redeclare package Medium = Media.MoltenSalt.MoltenSalt_base,
+    redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
     T_start=from_degC(290),
     L_start=70,
     alpha=3,
@@ -69,13 +71,13 @@ model Reference_1_fluid
     T_set=from_degC(280))
     annotation (Placement(transformation(extent={{64,-28},{44,-8}})));
   Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium =
-        Media.MoltenSalt.MoltenSalt_base, k_loss=0.15e3)                                              annotation(Placement(transformation(extent={{10,-30},
+        Media.MoltenSalt.MoltenSalt_ph, k_loss=0.15e3)                                              annotation(Placement(transformation(extent={{10,-30},
             {-2,-18}})));
   Models.Sources.DataTable.DataTable data(             t_zone=9.5, file=
         file_weather)                                  annotation(Placement(
         transformation(extent={{-138,-30},{-108,-2}})));
   Models.Fluid.Sensors.Temperature          temperature(redeclare package
-      Medium = Media.MoltenSalt.MoltenSalt_base)                                                                            annotation(Placement(transformation(extent={{-14,74},
+      Medium = Media.MoltenSalt.MoltenSalt_ph)                                                                            annotation(Placement(transformation(extent={{-14,74},
             {-4,64}})));
   Modelica.Blocks.Sources.RealExpression Pres_input(y=data.Pres)
     annotation (Placement(transformation(extent={{76,18},{56,38}})));

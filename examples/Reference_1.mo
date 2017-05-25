@@ -3,8 +3,8 @@ model Reference_1
 	import Modelica.SIunits.Conversions.from_degC;
 
 	extends Modelica.Icons.Example;
-	parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_TMY3.motab");
-	parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/example_optics.motab");
+	parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
+	parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
 
 	Models.Sources.SolarModel.Sun			sun(
 		lon=data.lon,

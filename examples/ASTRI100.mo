@@ -4,6 +4,7 @@ model ASTRI100
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
 
+	extends Modelica.Icons.Example;
 	// Salt is 60% NaNO3 40% KNO3
 	replaceable package MedRec = SolarTherm.Media.Sodium.Sodium_pT;
 	//replaceable package MedRec = SolarTherm.Media.ConstSodium;
@@ -15,9 +16,13 @@ model ASTRI100
 		//energyDynamics=Modelica.Fluid.Types.Dynamics.DynamicFreeInitial,
 		allowFlowReversal=false);
 
-	parameter String wea_file = "resources/weather/Alice_Springs_Real2000_Created20130430.motab";
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Alice_Springs_Real2000_Created20130430.motab");
+	
+
 	// Might have to deactivate price calcs if not connected to NEM
-	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
+	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
+
+
 
 	// Power block
 	// Boiler operating pressure 100Bar

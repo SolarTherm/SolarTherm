@@ -8,8 +8,10 @@ model SimpleSystem
 	extends Modelica.Icons.Example;
 
 	// Parameters
-	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
-	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+
+	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
+
 
 	parameter SI.Area A_col = 700 "Area of collector";
 	parameter SI.Area A_rec = 1 "Area of receiver aperture";

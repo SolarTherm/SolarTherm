@@ -3,8 +3,12 @@ model EnergySystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
+
+	extends Modelica.Icons.Example;
 	
-	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
+
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+	
 	parameter SI.Area A_col = 1 "Collector area";
 	parameter SI.Energy E_max = 1*3600*1000 "Max stored energy";
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);

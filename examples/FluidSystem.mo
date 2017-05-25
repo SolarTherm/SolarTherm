@@ -17,9 +17,9 @@ model FluidSystem
 		allowFlowReversal=false);
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
-	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
-	parameter String pri_file = "resources/prices/aemo_vic_2014.motab";
-
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
+	
 	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
 	parameter SI.Efficiency eff_est = 0.48 "Estimate of overall power block efficiency";
