@@ -7,7 +7,10 @@ AO
 resources
 Test*
 !*.py
+SimpleSystem
 FluidSystem
 TroughWagner
+Reference_1
+Reference_1_fluid
 optimizeInput.csv
 *.libs
