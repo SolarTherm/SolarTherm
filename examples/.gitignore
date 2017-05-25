@@ -4,10 +4,16 @@ DishSG4*.[cho]
 *_res.mat
 SimpleSystem
 SimpleSystem*.[ch]
+EnergySystem
+EnergySystem*.[ch]
 FluidSysttem
 FluidSystem*.[ch]
 ASTRI100
 ASTRI100*.[ch]
+Reference_1
+Reference_1*.[ch]
+TroughWagner
+TroughWagner*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
