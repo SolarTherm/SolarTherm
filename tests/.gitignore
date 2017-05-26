@@ -12,5 +12,6 @@ FluidSystem
 TroughWagner
 Reference_1
 Reference_1_fluid
+TestTMY3WeatherFileChecker
 optimizeInput.csv
 *.libs
