@@ -4,7 +4,6 @@ model SimpleSystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
-
 	extends Modelica.Icons.Example;
 
 	// Parameters
