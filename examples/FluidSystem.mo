@@ -18,7 +18,7 @@ model FluidSystem
 	// Can provide details of modelling accuracy, assumptions and initialisation
 
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
-   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
+	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
 	
 	parameter SI.Power P_name = 100000 "Nameplate rating of power block";
 	parameter SI.Efficiency eff_adj = 0.9 "Adjustment factor for power block efficiency";
@@ -55,7 +55,7 @@ model FluidSystem
 
 	parameter FI.Money C_cap =
 			120*A_col // field cost
-			+ 135*A_col // receiver cost
+			+ 135*A_rec // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
@@ -95,6 +95,7 @@ model FluidSystem
 		m_max=m_max,
 		m_start=m_max*split_cold,
 		T_start=T_cold_start);
+
 	SolarTherm.Models.Storage.Tank.FluidST STH(
 		redeclare package Medium=MedRec,
 		m_max=m_max,
