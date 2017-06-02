@@ -1,7 +1,6 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 partial model EnergyRC "Solar receiver with energy interface"
- extends SolarTherm.Models.CSP.CRS.Receivers.Receiver;
- import SI = Modelica.SIunits;
-
-  SolarTherm.Models.Fluid.Interfaces.EnergyPort p;
+	import SI = Modelica.SIunits;
+	extends SolarTherm.Models.CSP.CRS.Receivers.Receiver;
+	SolarTherm.Models.Fluid.Interfaces.EnergyPort p;
 end EnergyRC;

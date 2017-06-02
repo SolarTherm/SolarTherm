@@ -5,13 +5,14 @@ model EnergySystem
 	import FI = SolarTherm.Models.Analysis.Finances;
 
 	extends Modelica.Icons.Example;
-	
 
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
-	
+
 	parameter SI.Area A_col = 1 "Collector area";
 	parameter SI.Energy E_max = 1*3600*1000 "Max stored energy";
+
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
+
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL CL(
 		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
 		A=A_col
