@@ -55,7 +55,7 @@ model FluidSystem
 
 	parameter FI.Money C_cap =
 			120*A_col // field cost
-			+ 135*A_rec // receiver cost
+			+ 135*A_col // receiver cost
 			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
 			// only works with PartialSimpleMedium
 			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
