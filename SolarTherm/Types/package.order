@@ -8,6 +8,7 @@ to_MWh
 from_MWh
 EnergyPrice_MWh
 Energy_MWh
+SurfaceEnergyDensity
 to_dollarperMWh
 from_dollarperMWh
 AreaPrice
