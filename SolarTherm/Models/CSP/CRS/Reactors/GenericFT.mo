@@ -7,7 +7,9 @@ model GenericFT
 
 	//Parameters:
 	//****************
-	parameter SI.EnergyFlowRate E_sg_min = 4.66797176141589e6 "Minimum syngas energy flow rate to start FT"; // the lower band used in regression to get the polynomial equation
+	parameter SI.EnergyFlowRate E_sg_des "Energy flow to fischer tropsch reactor at design";
+	parameter SI.EnergyFlowRate E_sg_min "Minimum syngas energy flow rate to start FT"; // the lower band used in regression to get the polynomial equation
+	parameter Real fuel_conv_ratio "Conversion ratio of diesel to petrol";
 
 	parameter SI.Time t_FT_on_delay = 60*60 "Delay until FT starts";
 	parameter SI.Time t_FT_off_delay = 90*60 "Delay until FT shuts off";
@@ -26,6 +28,11 @@ model GenericFT
 	input SI.EnergyFlowRate E_sg "Syngas energy flow rate to FT";
 	output SI.VolumeFlowRate v_flow_petrol "Volumetric flow rate of petrol produced in FT";
 	output SI.VolumeFlowRate v_flow_diesel "Volumetric flow rate of diesel produced in FT";
+
+
+	SI.VolumeFlowRate v_flow_petrol_des "Volumetric flow rate of petrol produced in FT at design";
+	SI.VolumeFlowRate v_flow_diesel_des "Volumetric flow rate of diesel produced in FT at design";
+	SI.VolumeFlowRate v_flow_fuel_des "Volumetric flow rate of fuel produced in FT at design";
 
 	SI.Power P_C "Compressor power consumption";
 	SI.Power P_T "Turbine power production";
@@ -61,10 +68,14 @@ protected
 	constant SI.SpecificEnthalpy h_petrol = 2.165930736319661e6 "Specific enthalpy of petrol at 35C & 3bar";
 	constant SI.SpecificEnthalpy h_diesel = 1.974827449313822e6 "Specific enthalpy of diesel at 35C & 3bar";
 
+	parameter SI.MassFlowRate m_flow_sg_des = E_sg_des / LHV_sg;
 	parameter SI.MassFlowRate m_flow_sg_min = E_sg_min / LHV_sg;
 
 	SolarTherm.Utilities.Polynomial.Poly vf_petrol(c=cvf_petrol);
 	SolarTherm.Utilities.Polynomial.Poly vf_diesel(c=cvf_diesel);
+
+	SolarTherm.Utilities.Polynomial.Poly vf_petrol_des(c=cvf_petrol);
+	SolarTherm.Utilities.Polynomial.Poly vf_diesel_des(c=cvf_diesel);
 
 	SolarTherm.Utilities.Polynomial.Poly p_c(c=cwc_FT);
 	SolarTherm.Utilities.Polynomial.Poly p_t(c=cwt_FT);
@@ -106,6 +117,14 @@ algorithm
 	end when;
 
 equation
+	v_flow_petrol_des = vf_petrol_des.y;
+	vf_petrol_des.x = m_flow_sg_des;
+
+	v_flow_diesel_des = vf_diesel_des.y;
+	vf_diesel_des.x = m_flow_sg_des;
+
+v_flow_fuel_des = v_flow_petrol_des + (fuel_conv_ratio * v_flow_diesel_des);
+
 	if FT_state <= 2 or FT_state > 3 then
 		cd.u = E_sg / LHV_sg;
 		m_flow_sg = cd.y;

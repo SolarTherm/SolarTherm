@@ -2,6 +2,11 @@ Money
 MoneyPerYear
 EnergyPerYear
 EnergyPrice
+EnergyPrice_kWh
 PowerPrice
 AreaPrice
+VolumePrice
+MassPrice
 SpotPriceTable
+gasTankCost_V
+fischerTropschCost_m_sg
