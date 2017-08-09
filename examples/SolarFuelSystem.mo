@@ -104,6 +104,7 @@ model SolarFuelSystem
 	parameter FI.EnergyPrice_kWh pri_elec = 0.25 "Cost of grid electricity per kWh";
 
 	parameter Real fuel_conv_ratio = 0.9 "Conversion ratio of diesel to petrol for price calculation";
+	parameter FI.VolumePrice pri_spot = 1.31e3 "Fuel spot price";
 
 	parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
 	parameter FI.Money C_land = pri_land * A_land "Land cost";
@@ -213,7 +214,12 @@ model SolarFuelSystem
 	SolarTherm.Types.SurfaceEnergyDensity dni_int(start=0, fixed=true);
 	SI.Irradiance dni_mean (start=0, fixed=true);
 	SI.Volume V_fuel(start=0);
+	FI.Money C_water(start=0) "Cost of water";
+	FI.Money C_algae(start=0) "Cost of algae";
+	FI.Money C_H2(start=0) "Cost of hydrogen";
+	FI.Money C_elec(start=0) "Cost of electricity consumption";
 	FI.Money C_op(start=0) "Operating costs";
+	FI.Money R_spot(start=0) "Spot market revenue";
 
 	// Equations
 	// *********************
@@ -264,7 +270,13 @@ equation
 	V_fuel = v_petr_prod.y + (fuel_conv_ratio * v_dies_prod.y);
 	E_elec_cons.u = FT.P_C - FT.P_T + RX.P_pump + FT.P_pumps;
 
-	C_op = (m_w_req.y * pri_water) + (m_alg_req.y * pri_algae) + (m_H2_req.y * pri_H2) + (((E_elec_cons.y)/(3.6e6)) * pri_elec);
+	C_water = m_w_req.y * pri_water;
+	C_algae = m_alg_req.y * pri_algae;
+	C_H2 = m_H2_req.y * pri_H2;
+	C_elec = ((E_elec_cons.y)/(3.6e6)) * pri_elec;
+	C_op = C_water + C_algae + C_H2 + C_elec;
+
+	R_spot = V_fuel * pri_spot;
 
 	der(dni_int) = wea.wbus.dni;
 	when terminal() then
