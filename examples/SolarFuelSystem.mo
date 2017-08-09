@@ -45,6 +45,7 @@ model SolarFuelSystem
 	parameter SI.MassFlowRate m_flow_rx_des = 3.63 "Mass flow rate from RX at design point"; // i.e. the size of RX
 
 	parameter Real fr_min_ft = 0.2 "Minium fraction of the nominal mass flow to start the FT";
+	parameter SI.Time t_trans = 60*60 "Ramp-up/down time in FT";
 
 	constant SI.SpecificEnthalpy LHV_sg = 24.549487292924592e06 "Lower heating value of syngas";
 	constant SI.Density rho_sg = 0.420504 "Syngas density at 25C & 1bar";
@@ -168,7 +169,8 @@ model SolarFuelSystem
 			cwc_FT=cwc_FT,
 			cwp_FT=cwp_FT,
 			cwt_FT=cwt_FT,
-			cq_FT=cq_FT);
+			cq_FT=cq_FT,
+			t_trans=t_trans);
 
 	SolarTherm.Models.Control.SyngasTankDispatch dis(
 		full_lb=tnk_full_lb*E_max,
