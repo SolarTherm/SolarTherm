@@ -86,14 +86,16 @@ model SolarFuelSystem
 	parameter SI.Volume V_max = E_max / (LHV_sg * rho_sg) "Tank volume";
 
 	// Cost information
-	parameter Real r_disc = 0.08 "Discount rate";
+	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 	parameter Integer t_life(unit="year") = 30 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 2 "Years of construction";
 	parameter Real fi_rx = 0.02 "Maintenance factor of the reactor";
 	parameter Real fi_ft = 0.02 "Maintenance factor of the fischer tropsch reactor";
-	parameter Real f_instl = 0.0 "Installation, integration, piping, service and contractor fees factor of the plant";
+	parameter Real f_instl = 1.255 "Installation, integration, piping, service and contractor fees factor of the plant";
 	parameter Real f_Subs = 0.0 "Subsidies on initial investment costs";
+	parameter Real f_bm_sf = 1.25 "Bare module factor for the solar field";
+	parameter Real f_bm_st = 1.83 "Bare module factor for the syngas storage tank";
 
 	parameter FI.MassPrice pri_catalyst_rx = 15 "Cost of catalyst per kilogram in reactor";
 	parameter FI.MassPrice pri_catalyst_ft = 26.4 "Cost of catalyst per kilogram in fischer tropsch reactor";
@@ -107,22 +109,27 @@ model SolarFuelSystem
 	parameter Real fuel_conv_ratio = 0.9 "Conversion ratio of diesel to petrol for price calculation";
 	parameter FI.VolumePrice pri_spot = 1.31e3 "Fuel spot price";
 
-	parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
-	parameter FI.Money C_land = pri_land * A_land "Land cost";
+	//parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
+	//parameter FI.Money C_land = pri_land * A_land "Land cost";
 
-	parameter FI.AreaPrice pri_field = 120 "Field cost per design aperture area";
-	parameter FI.Money C_field = pri_field * A_field "Field cost";
+	parameter FI.AreaPrice pri_field = 240+15 "Field cost per design aperture area";
+	parameter FI.Money C_field = f_bm_sf * (pri_field * A_field) "Field cost";
+
+	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
+	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower cost";
 
 	parameter FI.PowerPrice pri_rx = 0.4233 "Receiver cost per design power";
 	parameter FI.Money C_rx = pri_rx * R_des "Receiver cost";
 
-	parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
-	parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
-	parameter FI.Money C_st = integer(V_max/V_ub) * FI.gasTankCost_V(V_ub) + FI.gasTankCost_V(V_max - integer(V_max/V_ub) * V_ub) "Storage tanks cost";
+	//parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
+	//parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
+	//parameter FI.Money C_st = integer(V_max/V_ub) * FI.gasTankCost_V(V_ub) + FI.gasTankCost_V(V_max - integer(V_max/V_ub) * V_ub) "Storage tanks cost";
+	parameter FI.EnergyPrice pri_st = 19589/1e9 "Syngas storage cost per unit of energy";
+	parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks cost";
 
 	parameter FI.Money C_ft = FI.fischerTropschCost_m_sg(m_flow_ft_des) "fischer tropsch reactor cost";
 
-	parameter FI.Money C_pur = (1 - f_Subs) * (C_land + C_field + C_rx + C_st + C_ft) "Purchased equipment cost";
+	parameter FI.Money C_pur = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ft) "Purchased equipment cost";
 	parameter FI.Money C_instl = f_instl * C_pur "Total engineering, installation, integration, and piping costs of the plant";
 	parameter FI.Money C_cap = C_pur + C_instl "Total capital cost of the plant";
 
