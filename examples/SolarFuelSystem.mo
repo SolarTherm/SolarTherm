@@ -96,6 +96,7 @@ model SolarFuelSystem
 	parameter Real f_Subs = 0.0 "Subsidies on initial investment costs";
 	parameter Real f_bm_sf = 1.25 "Bare module factor for the solar field";
 	parameter Real f_bm_st = 1.83 "Bare module factor for the syngas storage tank";
+	parameter Real f_ins = 0.02 "Insurance and local taxes factor";
 
 	parameter FI.MassPrice pri_catalyst_rx = 15 "Cost of catalyst per kilogram in reactor";
 	parameter FI.MassPrice pri_catalyst_ft = 26.4 "Cost of catalyst per kilogram in fischer tropsch reactor";
@@ -141,7 +142,8 @@ model SolarFuelSystem
 
 	parameter FI.MoneyPerYear C_om = (10 * A_field) // field cleaning/maintenance
 				+ (fi_rx * (C_rx + C_st))
-				+ (fi_ft * C_ft) "Maintenance costs for each year";
+				+ (fi_ft * C_ft)
+				+ (f_ins * C_pur) "Maintenance costs for each year";
 
 	// System components
 	// *********************

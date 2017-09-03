@@ -21,13 +21,16 @@ except ImportError:
 
 # TODO: add flag for maximisation (e.g., to use capacity factor)
 
-def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n,
-		par_val):
+#	cfunc = functools.partial(cost_function, sim, mat_fn,
+#			(args.start, args.stop, args.step),
+#			args.v, scale, offset, perf_i, par_n)
+
+def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, resultclass, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2])
 
-	res = postproc.SimResult(mat_fn)
+	res = resultclass(mat_fn)
 	cost = res.calc_perf()[perf_i]
 
 	if verb:
@@ -65,7 +68,9 @@ if __name__ == '__main__':
 	parser.add_argument('--cost', type=str, default='lcoe',
 			help='quantity to minimise (produced by post processing)')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
-			help='parameters with bounds and optional starting value')
+			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
+	parser.add_argument('--fuel', action='store_true',
+			help='run post-processing calculations for levelised cost of fuel')			
 	args = parser.parse_args()
 
 	sim = simulation.Simulator(args.file);
@@ -77,6 +82,11 @@ if __name__ == '__main__':
 		if not args.nosc:
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))
+
+	if args.fuel:
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
 
 	sim.load_init()
 
@@ -108,14 +118,14 @@ if __name__ == '__main__':
 	mat_fn = sim.model + '_res.mat'
 
 	try:
-		perf_i = postproc.SimResult.perf_n.index(args.cost)
+		perf_i = resultclass.perf_n.index(args.cost)
 	except ValueError:
 		raise ValueError('Cost value should be one of '
-				+ str(postproc.SimResult.perf_n))
+				+ str(resultclass.perf_n))
 
 	cfunc = functools.partial(cost_function, sim, mat_fn,
 			(args.start, args.stop, args.step),
-			args.v, scale, offset, perf_i, par_n)
+			args.v, scale, offset, perf_i, par_n, resultclass)
 
 	print(par_n)
 	if args.method == 'pso':

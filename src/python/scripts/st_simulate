@@ -11,30 +11,32 @@ from solartherm import simulation
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, args, par_n, suff, val):
+def simulation_worker(fn, start, stop, step, args, par_n, resultclass, suff, val):
 	sim = simulation.Simulator(fn, suffix=suff);
 	sim.load_init()
 	sim.update_pars(par_n, val)
 	sim.simulate(start=start, stop=stop, step=step, args=args)
-	res = postproc.SimResult(sim.res_fn)
+	res = resultclass(sim.res_fn)
 	perf = res.calc_perf()
 	return perf
 
 class LoggerPerf(object):
-	perf_names = [n + ' (' + u + ')' for n, u in
-			zip(postproc.SimResult.perf_n, postproc.SimResult.perf_u)]
-	@classmethod
-	def header(cls):
-		print('Starting simulation')
-		print(','.join(['index']+cls.perf_names))
-	@classmethod
-	def entry(cls, suff, perf):
-		print(','.join([suff]+list(str(perf[j])
-			for j, n in enumerate(cls.perf_names))))
+	def __init__(self,resultclass):
+		self.resultclass = resultclass
+		self.perf_names = [n + ' (' + u + ')' for n, u in
+			zip(resultclass.perf_n, resultclass.perf_u)]
 
-def simulation_callback(perfs, i, perf):
+	def header(self):
+		print('Starting simulation')
+		print(','.join(['index']+self.perf_names))
+
+	def entry(self, suff, perf):
+		print(','.join([suff]+list(str(perf[j])
+			for j, n in enumerate(self.perf_names))))
+
+def simulation_callback(perfs, i, logger, perf):
 	perfs[i] = perf
-	LoggerPerf.entry(str(i), perf)
+	logger.entry(str(i), perf)
 
 if __name__ == '__main__':
 	"""
@@ -75,6 +77,8 @@ if __name__ == '__main__':
 	#		help='number of threads per simulation')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
+	parser.add_argument('--fuel', action='store_true',
+			help='run post-processing calculations for levelised cost of fuel')
 	args = parser.parse_args()
 
 	sim = simulation.Simulator(args.file);
@@ -94,6 +98,11 @@ if __name__ == '__main__':
 		if not args.nosc:
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))
+
+	if args.fuel:
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
 
 	sim.load_init()
 
@@ -116,17 +125,18 @@ if __name__ == '__main__':
 	for i, val in enumerate(itertools.product(*par_v)):
 		var_vals.append(val)
 		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
-
+		
+	logger = LoggerPerf(resultclass)
 	perfs = [None]*len(var_vals)
 	if not args.nosim:
-		LoggerPerf.header()
+		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
-				args.stop, args.step, sargs, par_n)
+				args.stop, args.step, sargs, par_n, resultclass)
 		pool = Pool(processes=args.nth)
 		# using apply instead of map because have more than 1 arg to pass
 		for i, val in enumerate(var_vals):
 			pool.apply_async(worker_enc, args=(str(i), val),
-					callback=partial(simulation_callback, perfs, i))
+					callback=partial(simulation_callback, perfs, i, logger))
 		pool.close()
 		pool.join()
 		#for i, val in enumerate(var_vals):
@@ -141,12 +151,12 @@ if __name__ == '__main__':
 		ylabels = []
 		for name in args.plot.split(','):
 			try:
-				pei = postproc.SimResult.perf_n.index(name)
+				pei = resultclass.perf_n.index(name)
 			except ValueError:
 				raise ValueError('Value to plot should be one of '
-						+ str(postproc.SimResult.perf_n))
+						+ str(resultclass.perf_n))
 			ys.append([p[pei] for p in perfs])
-			ylabels.append(name + ' (' + postproc.SimResult.perf_u[pei] + ')')
+			ylabels.append(name + ' (' + resultclass.perf_u[pei] + ')')
 		if len(dims) == 1:
 			x1 = [v[dims[0]] for v in var_vals]
 			xlabel = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'

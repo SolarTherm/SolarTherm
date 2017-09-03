@@ -7,6 +7,10 @@ import re
 
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
+		"""
+		fn: results file (*_res*.mat)
+		init_fn: input paramet file (*_init*.xml)
+		"""
 		self.fn = fn
 		self.init_fn = init_fn
 		self.mat = None
@@ -22,7 +26,7 @@ class SimResult(object):
 		init_fn = self.init_fn
 
 		if init_fn is None:
-			# Try version based off result file
+			# Find the .xml file with the name matching the .mat file.
 			res_re = re.compile('(\S+)_res_?(\S+)?\.mat')
 			ps = res_re.match(self.fn)
 			if ps is not None:
@@ -149,49 +153,106 @@ class SimResult(object):
 			v.append(self.integrate(name, t0, t1)/step)
 
 		return t, v
-	
-	def calc_perf(self):
-		"""Calculate plant performance.
 
+class SimResultElec(SimResult):
+	def calc_perf(self):
+		"""Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
 		"""
-		eng_t = self.mat.abscissa('E_elec', valuesOnly=True)
-		eng_v = self.mat.data('E_elec') # cumulative electricity generated
-		cap_v = self.mat.data('C_cap') # capital costs
-		om_y_v = self.mat.data('C_year') # O&M costs per year
-		om_p_v = self.mat.data('C_prod') # O&M costs per production per year
-		disc_v = self.mat.data('r_disc') # discount factor
-		life_v = self.mat.data('t_life') # plant lifetime
-		cons_v = self.mat.data('t_cons') # construction time
-		name_v = self.mat.data('P_name') # generator nameplate
-		rev_v = self.mat.data('R_spot') # cumulative revenue
+		var_names = self.get_names()
+		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
 
-		dur = eng_t[-1] - eng_t[0]
-		years = dur/31536000
+		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
+		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
+		cap_v = self.mat.data('C_cap') # Capital costs [$]
+		om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
+		om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/W/year]
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = self.mat.data('t_cons') # Construction time [year]
+		name_v = self.mat.data('P_name') # Generator nameplate [W]
+		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
 
-		epy = fin.energy_per_year(dur, eng_v[-1]) # energy expected in a year
-		srev = rev_v[-1] # spot market revenue
-		lcoe = None # levelised cost of electricity
-		capf = None # capacity factor
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+		srev = rev_v[-1] # spot market revenue [$]
+		lcoe = None # Levelised cost of electricity
+		capf = None # Capacity factor
 		if close_to_year: 
-			lcoe = fin.lcoe(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
-		epy = epy/(1e6*3600) # convert from J/year to MWh/year
+		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year: 
-			lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
+			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 
 		return [epy, lcoe, capf, srev,]
 
-	# Static class variables
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
+
+
+class SimResultFuel(SimResult):
+	def calc_perf(self):
+		"""Calculate solar fuels plant performance.
+		Some of the metrics will be returned as none if simulation runtime is
+		not a multiple of a year.
+		"""
+		var_names = self.get_names()
+
+		assert('V_fuel' in var_names), "For a fuel_calc calculation, it is expected to see V_fuel variable in the results file!"
+
+		V_fuel_t = self.mat.abscissa('V_fuel', valuesOnly=True) # Time [s]
+		V_fuel_v = self.mat.data('V_fuel') # Cumulative produced fuel [m3]
+		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
+		C_labor_v = self.mat.data('C_labor') # Labor cost [$/year]
+		C_catalyst_v = self.mat.data('C_catalyst') # Catalysts cost [$/year]
+		C_om_v = self.mat.data('C_om') # Maintenance cost [$/year]
+		C_water_v = self.mat.data('C_water') # Cost of water [$/year]
+		C_algae_v = self.mat.data('C_algae') # Cost of algae [$/year]
+		C_H2_v = self.mat.data('C_H2')  # Cost of hydrogen [$/year]
+		C_elec_v = self.mat.data('C_elec') # Cost of electricity consumption [$/year]
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		infl_v = self.mat.data('r_i') # Inflation rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = self.mat.data('t_cons') # Construction time [year]
+		name_v = self.mat.data('FT.v_flow_fuel_des') # Nominal fuel volumetric flow rate [m3/s]
+		rev_v = self.mat.data('R_spot') # cumulative revenue
+
+		C_op_v = C_water_v + C_algae_v + C_H2_v + C_elec_v # Operating costs [$/year]
+		C_year = C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
+
+		dur = V_fuel_t[-1] - V_fuel_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
+		# Only provide certain metrics if runtime is a multiple of a year
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+		fpy = fin.fuel_per_year(dur, V_fuel_v[-1]) # Fuel produced in a year [m3/year]
+		srev = rev_v[-1] # Spot market revenue [$/year]
+		lcof = None # Levelised cost of fuel
+		capf = None # Capacity factor
+		if close_to_year: 
+			lcof = fin.lcof_r(C_cap_v[0], C_year, disc_v[0], int(life_v[0]), int(cons_v[0]), fpy)
+			capf = fin.capacity_factor_f(name_v[0], fpy)
+
+		# Convert to useful units
+		fpy = fpy*1e3 # convert from m3/year to L/year
+		if close_to_year: 
+			lcof = lcof/1e3 # convert from $/m3 to $/L
+			capf = 100*capf
+
+		return [fpy, lcof, capf, srev,]
+
+	perf_n = ['fpy', 'lcof', 'capf', 'srev']
+	perf_u = ['L/year', '$/L', '%', '$']
 
 class CSVResult(object):
 	"""Results from a CSV file.
