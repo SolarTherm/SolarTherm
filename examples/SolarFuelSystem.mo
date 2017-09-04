@@ -55,7 +55,7 @@ model SolarFuelSystem
 
 	parameter Real tnk_min_start = 0.1 "Minimum fraction of tank to start dispatch";
 
-	parameter Boolean storage = (t_storage > 0) "Storage component present";
+	parameter Boolean storage = true "Storage component present";
 
 	parameter Real ft_disp = 0.18 "Min fraction of energy flow to FT";// i.e. 0.19 kg/s of syngas, the minimum flow rate to start the FT
 	parameter Boolean const_dispatch = false "Constant dispatch of energy"; // if true, FT operates either at 0 or full load
