@@ -35,7 +35,7 @@ model SolarFuelSystem
 	parameter Real cq_FT[:] = {4.594760856107130e-05, 5.604462712309293} "Heat flow coefficients in FT";
 
 	// Info for sizing the solar field
-	parameter SI.Efficiency eff_opt = 1
+	parameter SI.Efficiency eff_opt = 0.578161677
 	"Efficiency of optics at design point (max in opt_file)";
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
@@ -113,10 +113,10 @@ model SolarFuelSystem
 	//parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
 	//parameter FI.Money C_land = pri_land * A_land "Land cost";
 
-	parameter FI.AreaPrice pri_field = 240+15 "Field cost per design aperture area";
+	parameter FI.AreaPrice pri_field = 120+15 "Field cost per design aperture area";
 	parameter FI.Money C_field = f_bm_sf * (pri_field * A_field) "Field cost";
 
-	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
+	parameter FI.PowerPrice pri_tower = 0.050 "Tower cost per design power";
 	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower cost";
 
 	parameter FI.PowerPrice pri_rx = 0.4233 "Receiver cost per design power";
