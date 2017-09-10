@@ -15,7 +15,7 @@ class TestScheduler(unittest.TestCase):
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
 		sim.simulate(start=0, stop='1y', step='5m')
-		self.res = postproc.SimResult(sim.res_fn)
+		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
 
 	def test_sched(self):
