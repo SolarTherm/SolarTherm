@@ -6,6 +6,8 @@ import functools
 from solartherm import postproc
 from solartherm import simulation
 
+import pylab as pl
+
 try:
 	from scipy import optimize as sciopt
 except ImportError:
@@ -18,6 +20,11 @@ try:
 	import cma
 except ImportError:
 	cma = None
+try:
+	import pyevolve as pe
+	from pyevolve import GSimpleGA, G1DList, Initializators, Crossovers, Selectors, Mutators, Scaling, Consts
+except ImportError:
+	pe = None
 
 # TODO: add flag for maximisation (e.g., to use capacity factor)
 
@@ -62,7 +69,7 @@ if __name__ == '__main__':
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
-			help='cma, pso or one of the scipy optimisation methods')
+			help='cma, pso, ga or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', type=int, default=20,
 			help='maximum number of iterations (not necessarily number of simulations)')
 	parser.add_argument('--cost', type=str, default='lcoe',
@@ -127,7 +134,7 @@ if __name__ == '__main__':
 			(args.start, args.stop, args.step),
 			args.v, scale, offset, perf_i, par_n, resultclass)
 
-	print(par_n)
+	print"Optimisation parameter(s) name is ", par_n
 	if args.method == 'pso':
 		assert pso is not None, 'Library for pso is not installed'
 		swarmsize=5
@@ -151,6 +158,45 @@ if __name__ == '__main__':
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
 		print(cand)
 		print(res[1])
+	elif args.method == 'ga':
+		assert pe is not None, 'Library for pyevolve is not installed'
+
+		lb = [v[0] for v in par_b] # Normalised lower bound
+		ub = [v[1] for v in par_b] # Normalised upper bound
+		
+		pop_size = 100 # Set number of individuals in population
+		ngen = 2 # Total number of generation to run
+		cxpb = 0.98 # Crossover probability
+		mutpb = 0.01 # Mutation probability
+		freq_stats = 10 # Frequency of stats
+
+		pl.ion()
+		numpoints = len(par_n) # Number of design parameters
+
+		genome = G1DList.G1DList(numpoints) # Genome instance
+		genome.setParams(rangemin = lb[0], rangemax = ub[0]) # Set the range min and max of the 1D List
+		genome.evaluator.set(cfunc) # The evaluator function (fitness/objective function)	
+		genome.initializator.set(Initializators.G1DListInitializatorReal) # Real initialization function of G1DList
+		genome.crossover.set(Crossovers.G1DListCrossoverUniform) # The G1DList Uniform Crossover
+		genome.mutator.set(Mutators.G1DListMutatorRealRange) # Simple real range mutator for G1DList
+
+		ga = GSimpleGA.GSimpleGA(genome) # Genetic algorithm instance
+		ga.selector.set(Selectors.GTournamentSelector) # Set the selector method
+		ga.setMinimax(Consts.minimaxType["minimize"])
+		#ga.setMinimax(0)
+		ga.setPopulationSize(pop_size) # Set the population size for each generation
+		ga.setGenerations(ngen) # Set the number of generation
+		ga.setCrossoverRate(cxpb) # Set the crossover rate  
+		ga.setMutationRate(mutpb) # Set the mutation rate
+		ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria) # Terminate the evolution when the population have converged
+		pop = ga.getPopulation() # Return the internal population of GA Engine
+		pop.scaleMethod.set(Scaling.SigmaTruncScaling) # Sigma Truncation scaling scheme, allows negative scores
+		ga.evolve(freq_stats=freq_stats) # Run the optimisation and print the stats of the ga every 10 generations
+
+		res = ga.bestIndividual() # Best individual in normalised form
+		cand = [scale[i]*v + offset[i] for i, v in enumerate(res.genomeList)] # Denormalised best individual
+		print(cand)
+		print(res.score) # Print the optimal value of the objective
 	else:
 		res = sciopt.minimize(cfunc, par_0, method=args.method, bounds=par_b,
 				options={
