@@ -169,6 +169,7 @@ if __name__ == '__main__':
 		cxpb = 0.98 # Crossover probability
 		mutpb = 0.01 # Mutation probability
 		freq_stats = 10 # Frequency of stats
+		paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
 
 		pl.ion()
 		numpoints = len(par_n) # Number of design parameters
@@ -191,7 +192,8 @@ if __name__ == '__main__':
 		ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria) # Terminate the evolution when the population have converged
 		pop = ga.getPopulation() # Return the internal population of GA Engine
 		pop.scaleMethod.set(Scaling.SigmaTruncScaling) # Sigma Truncation scaling scheme, allows negative scores
-		ga.evolve(freq_stats=freq_stats) # Run the optimisation and print the stats of the ga every 10 generations
+		ga.evolve(freq_stats=freq_stats) # Run the optimisation and print the stats of the ga every n generation
+		ga.setMultiProcessing(flag=paral_eval, full_copy=False) # Set the flag to enable/disable the use of python multiprocessing module
 
 		res = ga.bestIndividual() # Best individual in normalised form
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res.genomeList)] # Denormalised best individual
