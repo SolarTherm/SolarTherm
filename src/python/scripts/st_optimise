@@ -7,6 +7,13 @@ from solartherm import postproc
 from solartherm import simulation
 
 import pylab as pl
+import random
+import time
+#import multiprocessing
+import scoop
+from scoop import futures
+
+t_start = time.time()
 
 try:
 	from scipy import optimize as sciopt
@@ -26,13 +33,20 @@ try:
 except ImportError:
 	pe = None
 
+try:
+	import deap
+	from deap import algorithms, base, creator, tools
+except ImportError:
+	deap = None
+
 # TODO: add flag for maximisation (e.g., to use capacity factor)
+# TODO: add flag for multi-objective optimisation (e.g., to minimse lcoe and maximise capacity factor)
 
 #	cfunc = functools.partial(cost_function, sim, mat_fn,
 #			(args.start, args.stop, args.step),
 #			args.v, scale, offset, perf_i, par_n)
 
-def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, resultclass, par_val):
+def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, resultclass, op_meth, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2])
@@ -44,7 +58,11 @@ def cost_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, result
 		print(par_v)
 		print(cost)
 
-	return cost
+	if op_meth == 'ga2':
+		return cost,
+	else:
+		return cost
+
 
 if __name__ == '__main__':
 	"""
@@ -69,7 +87,7 @@ if __name__ == '__main__':
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
-			help='cma, pso, ga or one of the scipy optimisation methods')
+			help='cma, pso, ga1, ga2 or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', type=int, default=20,
 			help='maximum number of iterations (not necessarily number of simulations)')
 	parser.add_argument('--cost', type=str, default='lcoe',
@@ -79,6 +97,9 @@ if __name__ == '__main__':
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')			
 	args = parser.parse_args()
+	parser.add_argument('--framework', type=str, default='SOO_min',
+			help='SOO_min, SOO_max or MOO, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
+
 
 	sim = simulation.Simulator(args.file);
 
@@ -94,6 +115,8 @@ if __name__ == '__main__':
 		resultclass = postproc.SimResultFuel
 	else:
 		resultclass = postproc.SimResultElec
+
+	op_meth = args.method
 
 	sim.load_init()
 
@@ -132,9 +155,10 @@ if __name__ == '__main__':
 
 	cfunc = functools.partial(cost_function, sim, mat_fn,
 			(args.start, args.stop, args.step),
-			args.v, scale, offset, perf_i, par_n, resultclass)
+			args.v, scale, offset, perf_i, par_n, resultclass, op_meth)
 
-	print"Optimisation parameter(s) name is ", par_n
+	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
+
 	if args.method == 'pso':
 		assert pso is not None, 'Library for pso is not installed'
 		swarmsize=5
@@ -142,8 +166,13 @@ if __name__ == '__main__':
 		ub = [v[1] for v in par_b]
 		res = pso(cfunc, lb, ub, maxiter=args.maxiter, swarmsize=5)
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
-		print(cand)
-		print(res[1])
+
+		t_end = time.time() # NOTE: the clock does not work on the multicored version!
+		t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+
+		print "\n\nTotal time elapsed: ", t_dur, "seconds."
+		print "Optimal design parameters: ", (cand)
+		print "Optimal objective function: ", (res[1])
 	elif args.method == 'cma':
 		assert cma is not None, 'Library for cma is not installed'
 		sigma0 = 0.2 # "step size", should be around 1/4 of search domain
@@ -156,14 +185,19 @@ if __name__ == '__main__':
 						'popsize': popsize,
 				})
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
-		print(cand)
-		print(res[1])
-	elif args.method == 'ga':
+
+		t_end = time.time() # NOTE: the clock does not work on the multicored version!
+		t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+
+		print "\n\n\Total time elapsed: ", t_dur, "seconds."
+		print "Optimal design parameters: ", (cand)
+		print "Optimal objective function: ", (res[1])
+	elif args.method == 'ga1':
 		assert pe is not None, 'Library for pyevolve is not installed'
 
 		lb = [v[0] for v in par_b] # Normalised lower bound
 		ub = [v[1] for v in par_b] # Normalised upper bound
-		
+
 		pop_size = 100 # Set number of individuals in population
 		ngen = 2 # Total number of generation to run
 		cxpb = 0.98 # Crossover probability
@@ -197,8 +231,125 @@ if __name__ == '__main__':
 
 		res = ga.bestIndividual() # Best individual in normalised form
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res.genomeList)] # Denormalised best individual
-		print(cand)
-		print(res.score) # Print the optimal value of the objective
+		print "Optimal design parameters: ", (cand)
+		print "Optimal objective function: ", (res.score)
+	elif args.method == 'ga2':
+		assert deap is not None, 'Library for deap is not installed'
+
+		lb = [v[0] for v in par_b] # Normalised lower bound
+		ub = [v[1] for v in par_b] # Normalised upper bound
+
+		ind_size = len(par_n) # Number of design parameters
+		pop_size = 100 # Set number of individuals in population
+		ngen = 2 # Total number of generation to run
+		cxpb = 0.98 # Crossover probability
+		cxpb_in = 0.5 # Probability of crossover within individual
+		mutpb = 0.02 # Mutation probability
+		mutpb_in = 0.01 # Probability of mutation within individual
+		paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
+		n_cores = 4 # Number of cores for parallel evaluation of the fitness function
+
+		creator.create("FitnessMin", base.Fitness, weights=(-1.0,)) 
+		creator.create("Individual", list, fitness=creator.FitnessMin)
+
+		toolbox = base.Toolbox() # Attribute generator
+		toolbox.register("attr_float", random.uniform, lb[0], ub[0]) # Generate a vector of uniform random numbers within the lower and upper bounds of the design variables
+		toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, ind_size) # Structure initializer for individuals
+		toolbox.register("population", tools.initRepeat, list, toolbox.individual) # Structure initializer for the population
+
+		# Decorator to obtain a constrained domain that is applied to the mutation and crossover
+		#def checkBounds(min, max):
+			#def decorator(func):
+				#def wrappper(*args, **kargs):
+					#offspring = func(*args, **kargs)
+					#for child in offspring:
+						#for i in range(len(child)):
+							#if child[i] > max:
+								#child[i] = max
+							#elif child[i] < min:
+								#child[i] = min
+					#return offspring
+				#return wrappper
+			#return decorator
+
+		# NOTE: For penalty function-based constraint handling see: http://deap.readthedocs.io/en/master/tutorials/advanced/constraints.html
+
+		# Register the GA operators
+		toolbox.register("evaluate", cfunc) # Set the evaluation function
+		toolbox.register("mate", tools.cxUniform, indpb=cxpb_in) # Set the crossover type
+		toolbox.register("mutate", tools.mutFlipBit, indpb=mutpb_in) # Set the mutation type
+		#toolbox.register("select", tools.selNSGA2) # Set the selector method
+		toolbox.register("select", tools.selTournament, tournsize=3) # Set the selector method
+
+		#toolbox.decorate("mate", checkBounds(lb[0], ub[0])) # Check bounds for a constrained domain
+		#toolbox.decorate("mutate", checkBounds(lb[0], ub[0])) # Check bounds for a constrained domain
+
+		# Parallel evaluation by running the computation multicore
+		if paral_eval:
+			#pool = multiprocessing.Pool(processes=n_cores)
+			#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+			toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+
+		pop = toolbox.population(n=pop_size) # Set the size of population (individuals)
+
+		fitnesses = list(toolbox.map(toolbox.evaluate, pop)) # Evaluate the entire population
+
+		for ind, fit in zip(pop, fitnesses):
+			ind.fitness.values = fit  # Run the fitness (min mean on each of the individuals)
+
+		fits = [ind.fitness.values[0] for ind in pop] # # Gather all the fitnesses in one list
+
+		# Begin the evolution
+		for g in range(ngen):
+			print("-- Generation %i --" % g)
+
+			# Select the next generation individuals
+			offspring = toolbox.select(pop, len(pop)) # Select the best individuals in the population
+
+			# Clone the selected individuals
+			offspring = list(toolbox.map(toolbox.clone, offspring)) #Create the offspring
+
+			# Apply crossover on the offspring
+			for child1, child2 in zip(offspring[::2], offspring[1::2]):
+				if random.random() < cxpb:
+					toolbox.mate(child1, child2)
+					del child1.fitness.values
+					del child2.fitness.values
+
+			# Apply mutation on the offspring
+			for mutant in offspring:
+				# mutate an individual with probability mutpb
+				if random.random() < mutpb:
+					toolbox.mutate(mutant)
+					del mutant.fitness.values
+
+			# Evaluate the individuals with an invalid fitness
+			invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+			fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+			for ind, fit in zip(invalid_ind, fitnesses):
+				ind.fitness.values = fit
+
+			# Replace the enitre population with the offspring
+			pop[:] = offspring
+			fits = [ind.fitness.values[0] for ind in pop]
+
+			print(tools.selBest(pop, 1)[0]) # Best individual in the current generation
+			print(tools.selBest(pop, 1)[0].fitness.values[0]) # Best fitness in the current generation
+
+		# For parallel evaluation using multiprocessing
+		#if paral_eval:
+			#pool.close()
+			#pool.join()
+
+		res = tools.selBest(pop, 1)[0] # Best individual in normalised form
+		cand = [scale[i]*v + offset[i] for i, v in enumerate(res)] # Denormalised best individual
+
+		t_end = time.time() # NOTE: the clock does not work on the multicored version!
+		t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+
+		print "\n\nTotal time elapsed: ", t_dur, "seconds."
+		print "Optimal design parameters: ", (cand)
+		print "Optimal objective function: ", (res.fitness.values[0])
 	else:
 		res = sciopt.minimize(cfunc, par_0, method=args.method, bounds=par_b,
 				options={
@@ -208,5 +359,10 @@ if __name__ == '__main__':
 				})
 		print(res)
 		cand = [scale[i]*v + offset[i] for i, v in enumerate(res.x)]
-		print(cand)
-		print(res.fun)
+
+		t_end = time.time() # NOTE: the clock does not work on the multicored version!
+		t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+
+		print "\n\nTotal time elapsed: ", t_dur, "seconds."
+		print "Optimal design parameters: ", (cand)
+		print "Optimal objective function: ", (res.fun)

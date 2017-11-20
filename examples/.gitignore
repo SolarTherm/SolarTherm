@@ -21,5 +21,6 @@ SolarFuelSystem*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
+*.dat
 Modelica_Utilities_*
 resources
