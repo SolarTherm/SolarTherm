@@ -22,7 +22,14 @@ if __name__ == '__main__':
 			help='save figure to outfile instead of displaying')
 	parser.add_argument('--xlim', nargs=2, type=str, default=[],
 			help='domain of x axis, e.g., 0 86400 or 5d 6d or 0 1y')
+	parser.add_argument('--fuel', action='store_true',
+			help='run post-processing calculations for levelised cost of fuel')
 	args = parser.parse_args()
+
+	if args.fuel:
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
 
 	res = []
 	for fn in args.file.split(':'):
@@ -30,7 +37,7 @@ if __name__ == '__main__':
 		if ext == '.csv':
 			res.append(postproc.CSVResult(fn))
 		else:
-			res.append(postproc.SimResult(fn))
+			res.append(resultclass(fn))
 	if args.names:
 		for r in res:
 			print(sorted(str(n) for n in r.get_names()))
