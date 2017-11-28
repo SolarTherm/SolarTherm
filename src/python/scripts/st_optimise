@@ -6,12 +6,14 @@ import functools
 from solartherm import postproc
 from solartherm import simulation
 
+import numpy as np
 import pylab as pl
 import random
 import time
 #import multiprocessing
 import scoop
 from scoop import futures
+import matplotlib.pyplot as plt
 
 t_start = time.time()
 
@@ -39,7 +41,7 @@ try:
 except ImportError:
 	deap = None
 
-# TODO: add flag for multi-objective optimisation (e.g., to minimse lcoe/lcof and maximise epy/capf/srev)
+# TODO: add decision making methods for multi-objective optimisation
 
 #	objfunc = functools.partial(objective_function, sim, mat_fn,
 #			(args.start, args.stop, args.step),
@@ -52,7 +54,7 @@ def objective_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, r
 
 	res = resultclass(mat_fn)
 
-	if frwk == "SOO_min": # Single-objective optimisation to minimise an objective
+	if frwk == "soo_min": # Single-objective optimisation to minimise an objective
 		obj_min = res.calc_perf()[perf_i[0]] # The objective to be minimised (i.e. lcoe or lcof)
 
 		if verb:
@@ -63,7 +65,7 @@ def objective_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, r
 			return obj_min,
 		else:
 			return obj_min
-	elif frwk == "SOO_max": # Single-objective optimisation to maximise an objective
+	elif frwk == "soo_max": # Single-objective optimisation to maximise an objective
 		obj_max = res.calc_perf()[perf_i[0]] # The objective to be maximised (i.e. epy, capf or srev)
 
 		if verb:
@@ -75,7 +77,7 @@ def objective_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, r
 		else:
 			return sign * obj_max
 	else: # Multi-objective optimisation
-		assert(frwk == "MOO"), "The framework specified for optimisation must be one of SOO_min, SOO_max, or MOO!"
+		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
 		if perf_i[0] == 1:
 			obj_min = res.calc_perf()[perf_i[0]]
 			obj_max = res.calc_perf()[perf_i[1]]
@@ -85,8 +87,7 @@ def objective_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, r
 
 		if verb:
 			print(par_v)
-			print(obj_min)
-			print(obj_max)
+			print(obj_min, obj_max)
 
 		return obj_min, \
 		obj_max
@@ -124,8 +125,12 @@ if __name__ == '__main__':
 			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
-	parser.add_argument('--framework', type=str, default='SOO_min',
-			help='SOO_min, SOO_max or MOO, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
+	parser.add_argument('--framework', type=str, default='soo_min',
+			help='soo_min, soo_max or moo, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
+	parser.add_argument('--outfig',  type=str, default=None,
+			help='save figure to outfig instead of displaying')
+	parser.add_argument('--outtxt',  type=str, default=None,
+			help='save optimal solutions to outtxt')
 	args = parser.parse_args()
 
 
@@ -148,7 +153,7 @@ if __name__ == '__main__':
 	op_meth = args.method
 	frwk = args.framework
 
-	if args.framework == "SOO_max" and op_meth not in ["ga1", "ga2"]:
+	if args.framework == "soo_max" and op_meth not in ["ga1", "ga2"]:
 		sign = -1.0
 	else:
 		sign = 1.0
@@ -198,7 +203,7 @@ if __name__ == '__main__':
 
 	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
 
-	if args.framework in ['SOO_min', 'SOO_max']:
+	if args.framework in ['soo_min', 'soo_max']:
 		if args.method == 'pso':
 			assert pso is not None, 'Library for pso is not installed'
 			swarmsize=5
@@ -211,7 +216,7 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			if args.framework == 'SOO_min':
+			if args.framework == 'soo_min':
 				print "Optimal design parameters: ", (cand)
 				print "Optimal objective function: ", (res[1])
 			else:
@@ -237,7 +242,7 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\n\Total time elapsed: ", t_dur, "seconds."
-			if args.framework == 'SOO_min':
+			if args.framework == 'soo_min':
 				print "Optimal design parameters: ", (cand)
 				print "Optimal objective function: ", (res[1])
 			else:
@@ -268,7 +273,7 @@ if __name__ == '__main__':
 
 			ga = GSimpleGA.GSimpleGA(genome) # Genetic algorithm instance
 			ga.selector.set(Selectors.GTournamentSelector) # Set the selector method
-			if args.framework == 'SOO_min':
+			if args.framework == 'soo_min':
 				ga.setMinimax(Consts.minimaxType["minimize"])
 			else:
 				ga.setMinimax(Consts.minimaxType["maximize"])
@@ -302,7 +307,7 @@ if __name__ == '__main__':
 			paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
 			n_cores = 4 # Number of cores for parallel evaluation of the fitness function
 
-			if args.framework == 'SOO_min':
+			if args.framework == 'soo_min':
 				creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 			else:
 				creator.create("FitnessMin", base.Fitness, weights=(1.0,))
@@ -407,7 +412,7 @@ if __name__ == '__main__':
 			print "Optimal design parameters: ", (cand)
 			print "Optimal objective function: ", (res.fitness.values[0])
 		else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
-			if args.framework == 'SOO_max':
+			if args.framework == 'soo_max':
 				assert sciopt is not None, 'Library for scipy is not installed'
 				op_meth = "L-BFGS-B" # Because the Nelder_Mead method does not take bounds, thereby leading to negative domains
 			res = sciopt.minimize(objfunc, par_0, method=op_meth, bounds=par_b,
@@ -423,12 +428,178 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			if args.framework == 'SOO_min':
+			if args.framework == 'soo_min':
 				print "Optimal design parameters: ", (cand)
 				print "Optimal objective function: ", (res.fun)
 			else:
 				print "Optimal design parameters: ", (cand)
 				print "Optimal objective function: ", (sign * res.fun)
 	else:
-		assert(frwk == "MOO"), "The framework specified for optimisation must be one of SOO_min, SOO_max, or MOO!"
-		print "MOO is to be implemented soon!"
+		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
+		if args.method == 'nsga2':
+			assert deap is not None, 'Library for deap is not installed'
+
+			lb = [v[0] for v in par_b] # Normalised lower bound
+			ub = [v[1] for v in par_b] # Normalised upper bound
+
+			ind_size = len(par_n) # Number of design parameters
+			pop_size = 100 # Set number of individuals in population
+			ngen = 20 # Total number of generation to run
+			cxpb = 0.98 # Crossover probability
+			#cxpb_in = 0.5 # Probability of crossover within individual
+			#mutpb = 0.02 # Mutation probability
+			#mutpb_in = 0.01 # Probability of mutation within individual
+			paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
+			n_cores = 4 # Number of cores for parallel evaluation of the fitness function
+
+			creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
+			creator.create("Individual", list, fitness=creator.FitnessMulti)
+
+			toolbox = base.Toolbox() # Attribute generator
+			toolbox.register("attr_float", random.uniform, lb[0], ub[0]) # Generate a vector of uniform random numbers within the lower and upper bounds of the design variables
+			toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, ind_size) # Structure initializer for individuals
+			toolbox.register("population", tools.initRepeat, list, toolbox.individual) # Structure initializer for the population 
+
+						# Decorator to obtain a constrained domain that is applied to the mutation and crossover
+			#def checkBounds(min, max):
+				#def decorator(func):
+					#def wrappper(*args, **kargs):
+						#offspring = func(*args, **kargs)
+						#for child in offspring:
+							#for i in range(len(child)):
+								#if child[i] > max:
+									#child[i] = max
+								#elif child[i] < min:
+									#child[i] = min
+						#return offspring
+					#return wrappper
+				#return decorator
+
+			# NOTE: For penalty function-based constraint handling see: http://deap.readthedocs.io/en/master/tutorials/advanced/constraints.html
+
+			# Register the GA operators
+			toolbox.register("evaluate", objfunc) # Set the evaluation function
+			#toolbox.register("mate", tools.cxUniform, indpb=cxpb_in) # Set the crossover type
+			toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=lb[0], up=ub[0], eta=20.0) # Set the crossover type
+			#toolbox.register("mutate", tools.mutFlipBit, indpb=mutpb_in) # Set the mutation type
+			toolbox.register("mutate", tools.mutPolynomialBounded, low=lb[0], up=ub[0], eta=20.0, indpb=1.0/ind_size) # Set the mutation type
+			toolbox.register("select", tools.selNSGA2) # Set the selector method
+
+			#toolbox.decorate("mate", checkBounds(lb[0], ub[0])) # Check bounds for a constrained domain
+			#toolbox.decorate("mutate", checkBounds(lb[0], ub[0])) # Check bounds for a constrained domain
+
+			# Parallel evaluation by running the computation multicore
+			if paral_eval:
+				#pool = multiprocessing.Pool(processes=n_cores)
+				#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+				toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+
+			stats = tools.Statistics(lambda ind: ind.fitness.values) # Set the optimisation statistics
+			stats.register("avg", np.mean, axis=0)
+			stats.register("std", np.std, axis=0)
+			stats.register("min", np.min, axis=0)
+			stats.register("max", np.max, axis=0)
+
+			logbook = tools.Logbook() # Logging data
+			logbook.header = "gen", "evals", "std", "min", "avg", "max"
+
+			pop = toolbox.population(n=pop_size) # Set the size of population (individuals)
+			hof = tools.ParetoFront() # The Pareto front hall of fame containing all the non-dominated individuals that ever lived in the population
+
+			# Evaluate the individuals with an invalid fitness
+			invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+			fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+			for ind, fit in zip(invalid_ind, fitnesses):
+				ind.fitness.values = fit
+
+			# This is just to assign the crowding distance to the individuals
+			# no actual selection is done
+			pop = toolbox.select(pop, len(pop))
+
+			record = stats.compile(pop)
+			logbook.record(gen=0, evals=len(invalid_ind), **record)
+			#print(logbook.stream)
+
+			# Begin the generational process
+			print "Starting optimisation..."
+			for gen in range(ngen):
+				print("-- Generation %i --" % gen)
+				# Vary the population
+				offspring = tools.selTournamentDCD(pop, len(pop))
+				offspring = [toolbox.clone(ind) for ind in offspring]
+
+				for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+					if random.random() <= cxpb:
+						toolbox.mate(ind1, ind2)
+
+						toolbox.mutate(ind1)
+						toolbox.mutate(ind2)
+						del ind1.fitness.values, ind2.fitness.values
+
+				# Evaluate the individuals with an invalid fitness
+				invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+				fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+				for ind, fit in zip(invalid_ind, fitnesses):
+					ind.fitness.values = fit
+
+				# Select the next generation population
+				pop = toolbox.select(pop + offspring, pop_size)
+				record = stats.compile(pop)
+				logbook.record(gen=gen, evals=len(invalid_ind), **record)
+				#print(logbook.stream)
+
+			# For parallel evaluation using multiprocessing
+			#if paral_eval:
+				#pool.close()
+				#pool.join()
+
+			pop.sort(key=lambda x: x.fitness.values)
+
+			best_ind = pop # Normalised non-dominated optimal individuals
+			fitnesss = [ind.fitness.values for ind in pop] # optimal values of objective functions
+
+			cand = []
+			for ind in pop:
+				cand.append([scale[i]*v + offset[i] for i, v in enumerate(ind)]) # Denormalised non-dominated optimal individuals
+
+			cands = np.array(cand)
+			front = np.array(fitnesss)
+
+			t_end = time.time() # NOTE: the clock does not work on the multicored version!
+			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+
+			# Save the optimal solutions to a text file
+			if args.outtxt is not None:
+				f = open(args.outtxt, 'w') # Example: outtxt = ../examples/result.txt
+				for nn in par_n:
+					f.write("%s " % nn)
+				for ii in obj_n:
+					f.write("%s " % ii)
+				f.write("\n")
+				np.savetxt(f, np.c_[cands,front],delimiter=' ')
+				f.close()
+
+			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+
+			# Plot the Pareto Front
+			fig = plt.figure()
+			fig.add_subplot(111)
+
+			plt.scatter(front[:,0], front[:,1], c="b", marker='*')
+			plt.title('Pareto Front', loc='center')
+			plt.axis("tight")
+			if perf_i[0] == 1:
+				obj_min_u = resultclass.perf_u[perf_i[0]] # objective unit
+				obj_max_u = resultclass.perf_u[perf_i[1]] # objective unit
+			else:
+				obj_min_u = resultclass.perf_u[perf_i[1]] # objective unit
+				obj_max_u = resultclass.perf_u[perf_i[0]] # objective unit
+			plt.xlabel(obj_n[0] + " (" + obj_min_u + ")")
+			plt.ylabel(obj_n[1] + " (" + obj_max_u + ")")
+			plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
+			if args.outfig is not None:
+				fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
+			else:
+				plt.show(block=True)
+		else:
+			print "nsga2 is the only optimisation method implemented for the multi-objective optimisation framework"
