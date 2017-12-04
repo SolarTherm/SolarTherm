@@ -4,6 +4,7 @@ import solartherm.finances as fin
 import DyMat
 import xml.etree.ElementTree as ET
 import re
+import numpy as np
 
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
@@ -253,6 +254,75 @@ class SimResultFuel(SimResult):
 
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']
+
+class DecisionMaker(object):
+	"""
+	This class is used to select the final optimum point amongs a list of optimal solutions in a multi-objective optimisation problem.
+	"""
+	def __init__(self, cand, fitness):
+		self.cand = cand
+		self.fitness = fitness
+
+	def linmap(self):
+		""" LINMAP decision-making method for multi-objective optimisation. This method is used to select a final optimal point amongs a list of optimal solutions.
+		It is assumed that obj1(e.g. lcoe) was minimised and obj2(e.g. epy) was maximised.
+		cand is the list of optimal individuals (design variables) and fitness is the list of optimal fitness (objective functions), where each objective set (i.e. obj1 and obj2) are nested in the list as a tuple
+		"""
+		obj1 = np.array([vv[0] for vv in self.fitness]) # Objective 1 that has been minimised
+		obj2 = np.array([vv[1] for vv in self.fitness]) # Objective 2 that has been maximised
+
+		obj1_n = obj1 / np.sqrt(np.sum(obj1**2)) # Normalised version of objective 1
+		obj2_n = obj2 / np.sqrt(np.sum(obj2**2)) # Normalised version of objective 2
+
+		obj1_n_min = obj1_n.min() # The minimum value of normalised objective 1 (i.e the x coordinate for the ideal point)
+		i1, = np.where(obj1_n==obj1_n_min) # x coordinate index of the ideal point
+
+		obj2_n_max = obj2_n.max() # The maximum value of normalised objective 2 (i.e the y coordinate for the ideal point)
+		i2, = np.where(obj2_n==obj2_n_max) # y coordinate index of the ideal point
+
+		d_plus = np.sqrt((obj1_n - obj1_n[i1[0]])**2 + (obj2_n - obj2_n[i2[0]])**2) # Distance of each optimal solution from the ideal point
+		d_plus_min = d_plus.min() # Minimum distance form the ideal point
+		ind_opt, = np.where(d_plus==d_plus_min) # Index of the point that has the minimum distance from the ideal point
+
+		best_ind = self.cand[ind_opt[0]] # Final optimal solution
+		best_fitness = list(self.fitness[ind_opt[0]]) # Final optimal objective
+
+		return best_ind, best_fitness
+
+	def topsis(self):
+		""" TOPSIS decision-making method for multi-objective optimisation. This method is used to select a final optimal point amongs a list of optimal solutions.
+		It is assumed that obj1(e.g. lcoe) was minimised and obj2(e.g. epy) was maximised.
+		cand is the list of optimal individuals (design variables) and fitness is the list of optimal fitness (objective functions), where each objective set (i.e. obj1 and obj2) are nested in the list as a tuple
+		"""
+		obj1 = np.array([vv[0] for vv in self.fitness]) # Objective 1 that has been minimised
+		obj2 = np.array([vv[1] for vv in self.fitness])  # Objective 2 that has been maximised
+
+		obj1_n = obj1 / np.sqrt(np.sum(obj1**2))  # Normalised version of objective 1
+		obj2_n = obj2 / np.sqrt(np.sum(obj2**2))  # Normalised version of objective 12 
+
+		obj1_n_min = obj1_n.min() # The minimum value of normalised objective 1 (i.e the x coordinate for the ideal point)
+		i1, = np.where(obj1_n==obj1_n_min) # x coordinate index of the ideal point
+
+		obj2_n_max = obj2_n.max() # The maximum value of normalised objective 2 (i.e the y coordinate for the ideal point)
+		i2, = np.where(obj2_n==obj2_n_max) # y coordinate index of the ideal point
+
+		obj1_n_max = obj1_n.max() # The maximum value of normalised objective 1 (i.e the x coordinate for the mon-ideal point)
+		ni1, = np.where(obj1_n==obj1_n_max) # x coordinate index of the non-ideal point
+
+		obj2_n_min = obj2_n.min() # The minimum value of normalised objective 2 (i.e the y coordinate for the non-ideal point)
+		ni2, = np.where(obj2_n==obj2_n_min) # y coordinate index of the non-ideal point
+
+		d_plus = np.sqrt((obj1_n - obj1_n[i1[0]])**2 + (obj2_n - obj2_n[i2[0]])**2) # Distance of each optimal solution from the ideal point
+		d_minus = np.sqrt((obj1_n - obj1_n[ni1[0]])**2 + (obj2_n - obj2_n[ni2[0]])**2) # Distance of each optimal solution from the non-ideal point
+
+		cl = d_minus/(d_plus+d_minus)
+		cl_max = cl.max()
+
+		ind_opt, = np.where(cl==cl_max) # Index of the point that has the minimum distance from the ideal point and maximum distance from the non-ideal point
+		best_ind = self.cand[ind_opt[0]] # Final optimal solution
+		best_fitness = list(self.fitness[ind_opt[0]]) # Final optimal objective
+
+		return best_ind, best_fitness
 
 class CSVResult(object):
 	"""Results from a CSV file.

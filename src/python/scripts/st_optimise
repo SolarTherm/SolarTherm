@@ -131,6 +131,8 @@ if __name__ == '__main__':
 			help='save figure to outfig instead of displaying')
 	parser.add_argument('--outtxt',  type=str, default=None,
 			help='save optimal solutions to outtxt')
+	parser.add_argument('--dm',  type=str, default='linmap',
+			help='Decision-making methods for the multi-objective optimisation framework: linmap, topsis')
 	args = parser.parse_args()
 
 
@@ -158,6 +160,9 @@ if __name__ == '__main__':
 	else:
 		sign = 1.0
 
+	if args.framework == "moo":
+		decisionmaker= postproc.DecisionMaker # Decision-maker classs instance
+		dm_method = args.dm
 
 	sim.load_init()
 
@@ -555,7 +560,7 @@ if __name__ == '__main__':
 
 			pop.sort(key=lambda x: x.fitness.values)
 
-			best_ind = pop # Normalised non-dominated optimal individuals
+			solutions = pop # Normalised non-dominated optimal individuals
 			fitnesss = [ind.fitness.values for ind in pop] # optimal values of objective functions
 
 			cand = []
@@ -579,7 +584,16 @@ if __name__ == '__main__':
 				np.savetxt(f, np.c_[cands,front],delimiter=' ')
 				f.close()
 
+			dm = decisionmaker(cand,fitnesss) # Decision-making class instance
+			if dm_method == 'linmap':
+				best_ind, best_fitness = dm.linmap()
+			else:
+				assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
+				best_ind, best_fitness = dm.topsis()
+
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+			print "Final optimal design parameters: ", (best_ind)
+			print "Final optimal objective functions: ", (best_fitness)
 
 			# Plot the Pareto Front
 			fig = plt.figure()
