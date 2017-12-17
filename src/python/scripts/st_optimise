@@ -116,7 +116,7 @@ if __name__ == '__main__':
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
-			help='pso,  cma, ga1, ga2 or one of the scipy optimisation methods')
+			help='pso,  cma, ga1, ga2, nsga2 or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', type=int, default=20,
 			help='maximum number of iterations (not necessarily number of simulations)')
 	parser.add_argument('--objective', type=str, default='lcoe',
