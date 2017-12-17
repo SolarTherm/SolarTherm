@@ -50,15 +50,15 @@ In order to utilise our optimisation tool, one should be familiar with a number 
 
     --method=pso
 
-- The ``-- fuel`` flag: for those systems producing fuel rather than electricity the ``-- fuel`` flag must be mentioned after the ``st_optimise`` command.
+- The ``--fuel`` flag: for those systems producing fuel rather than electricity the ``-- fuel`` flag must be mentioned after the ``st_optimise`` command.
 
-- The ``-- par`` flag: this flag takes the parameters with bounds and optional starting value in form of PNAME=LOW, HIGH [, START]
-- The ``-- maxiter`` flag: this flag defines the maximum number of iterations (not necessarily number of simulations).  It should be noted that this flag is only for ``pso``, ``cma`` and SciPye optimisation methods.
+- The ``--par`` flag: this flag takes the parameters with bounds and optional starting value in form of PNAME=LOW, HIGH [, START]
+- The ``--maxiter`` flag: this flag defines the maximum number of iterations (not necessarily number of simulations).  It should be noted that this flag is only for ``pso``, ``cma`` and SciPye optimisation methods.
 
-- The ``-- dm`` flag: this flag is used to specify the decision-making methods for the multi-objective optimisation framework. The options are ``linmap`` or ``topsis``. In LINMAP method, a solution on the Pareto front curve with the minimum spacial distance from an ideal point (the point at which each single objective has its optimum value regardless of satisfaction of other objectives) is selected as the best optimum design point. In TOPSIS method, in addition to the ideal point, a non-ideal point (the point at which each objective has its worst value) is defined. In fact, the basic principle of this method is that the selected final optimal point must have the shortest distance from the ideal point and the farthest distance from the non-ideal point. Below is this format that this flag is used::
+- The ``--dm`` flag: this flag is used to specify the decision-making methods for the multi-objective optimisation framework. The options are ``linmap`` or ``topsis``. In LINMAP method, a solution on the Pareto front curve with the minimum spacial distance from an ideal point (the point at which each single objective has its optimum value regardless of satisfaction of other objectives) is selected as the best optimum design point. In TOPSIS method, in addition to the ideal point, a non-ideal point (the point at which each objective has its worst value) is defined. In fact, the basic principle of this method is that the selected final optimal point must have the shortest distance from the ideal point and the farthest distance from the non-ideal point. Below is this format that this flag is used::
 
     --dm=linmap
 
-- The ``-- outtxt`` and ``-- outfig`` flags: these flags are used to save the optimal solutions and Pareto front graph in a multi-objective optimisation into files. The arguments given to these flags are the paths at which these files are going to be saved. For instance::
+- The ``--outtxt`` and ``-- outfig`` flags: these flags are used to save the optimal solutions and Pareto front graph in a multi-objective optimisation into files. The arguments given to these flags are the paths at which these files are going to be saved. For instance::
 
     --outtxt=../examples/result.txt
