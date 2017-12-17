@@ -45,3 +45,7 @@ In order to utilise our optimisation tool, one should be familiar with a number 
 - The ``--objective`` flag: this flag is used to select the objective function(s) that are going to be optimised. At the moment, these objectives can be the levelised cost of electricity/fuel (i.e. ``lcoe`` or ``lcof``),  the capacity factor(i.e. ``capf``), the annual electricity/fuel produced per year (``epy`` or ``fpy``) and/or the market spot revenue (``srev``). It is evident that the nature of some of these functions is for minimisation, while the others must be maximised in order to make logical sense. The following example shows how this flag can be used after the ``st_optimise`` command::
 
     --objective=lcoe,epy
+
+- The ``--method`` flag: this flag specifies which optimisation method is going to be used to conduct the optimisation process. The options can be one of ``pso``, ``cma``, GA from PyEvolve or DEAP packages (i.e. ``ga1`` or ``ga2`` respectively), ``nsga2`` or one of the SciPy optimisation methods. Note that nsga2 is only for multi-objective optimisation problems. The following example shows how this flag can be used after the ``st_optimise`` command::
+
+    --method=pso
