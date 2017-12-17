@@ -41,3 +41,6 @@ In order to utilise our optimisation tool, one should be familiar with a number 
 
     --framework=soo_min
 
+- The ``--objective`` flag: this flag is used to select the objective function(s) that are going to be optimised. At the moment, these objectives can be the levelised cost of electricity/fuel (i.e. ``lcoe`` or ``lcof``),  the capacity factor(i.e. ``capf``), the annual electricity/fuel produced per year (``epy`` or ``fpy``) and/or the market spot revenue (``srev``). It is evident that the nature of some of these functions is for minimisation, while the others must be maximised in order to make logical sense. The following example shows how this flag can be used after the ``st_optimise`` command::
+
+    --objective=lcoe,epy
