@@ -51,3 +51,6 @@ In order to utilise our optimisation tool, one should be familiar with a number 
     --method=pso
 
 - The ``-- fuel`` flag: for those systems producing fuel rather than electricity the ``-- fuel`` flag must be mentioned after the ``st_optimise`` command.
+
+- The ``-- par`` flag: this flag takes the parameters with bounds and optional starting value in form of PNAME=LOW, HIGH [, START]
+- The ``-- maxiter`` flag: this flag defines the maximum number of iterations (not necessarily number of simulations).  It should be noted that this flag is only for `` pso``, ``cma`` and SciPye optimisation methods.
