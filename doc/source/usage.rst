@@ -49,3 +49,5 @@ In order to utilise our optimisation tool, one should be familiar with a number 
 - The ``--method`` flag: this flag specifies which optimisation method is going to be used to conduct the optimisation process. The options can be one of ``pso``, ``cma``, GA from PyEvolve or DEAP packages (i.e. ``ga1`` or ``ga2`` respectively), ``nsga2`` or one of the SciPy optimisation methods. Note that nsga2 is only for multi-objective optimisation problems. The following example shows how this flag can be used after the ``st_optimise`` command::
 
     --method=pso
+
+- The ``-- fuel `` flag: for those systems producing fuel rather than electricity the ``-- fuel `` flag must be mentioned after the ``st_optimise`` command.
