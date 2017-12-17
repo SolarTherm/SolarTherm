@@ -50,4 +50,4 @@ In order to utilise our optimisation tool, one should be familiar with a number 
 
     --method=pso
 
-- The ``-- fuel `` flag: for those systems producing fuel rather than electricity the ``-- fuel `` flag must be mentioned after the ``st_optimise`` command.
+- The ``-- fuel`` flag: for those systems producing fuel rather than electricity the ``-- fuel`` flag must be mentioned after the ``st_optimise`` command.
