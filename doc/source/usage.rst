@@ -37,6 +37,7 @@ The optimisation tool
 ----------
 Our optimisation tool (i.e. the ``st_optimise`` script) is capable of handling a wide range of optimisation problems in concentrating solar thermal applications. In particular, there are three frameworks implemented for this purpose, namely a single-objective optimisation to either minimise or maximise an objective function and a multi-objective optimisation platform that can handle two or more objectives (the latter can be done with a little bit of tweaking in the codes). For each optimisation framework, our optimisation tool offers several optimisation methods such as Particle Swarm Optimization (PSO), Covariance Matrix Adaptation (CMA), Genetic Algorithm (GA) and one of the SciPy optimisation methods (e.g.  Nelder-Mead, L-BFGS-B, TNC, SLSQP, etc.). It should be noted that the Non-Dominated Sorting Genetic Algorithm II (NSGAII) method is the only optimisation method implemented at the moment for the multi-objective optimisation platform.
 In order to utilise our optimisation tool, one should be familiar with a number of key flags defined in the st_optimise command. These flags are:
+
 - The ``--framework`` flag: this flag simply defines which optimisation framework is going to be used, which can be one of single-objective minimisation (``soo_min``), single-objective maximisation (``soo_max``) or multi-objective optimisation (``moo``). One can follow the following format to use this flag after the ``st_optimise`` command::
 
     --framework=soo_min
