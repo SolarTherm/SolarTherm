@@ -61,7 +61,7 @@ def move_overwrite(src,dst):
 	if os.path.exists(dst):
 		assert os.access(dst,os.W_OK) and not os.path.isdir(dst)
 		os.unlink(dst)
-	print "Moving '%s' to '%s'"%(src,dst)
+	#print "Moving '%s' to '%s'"%(src,dst)
 	shutil.move(src,dst)
 
 def parse_var_val(vstr, unit):
@@ -209,7 +209,7 @@ class Simulator(object):
 			print "init_out file: ",self.init_out_fn
 			shutil.move(os.path.join(self.tempdir,self.init_out_fn),self.init_cwd)
 		else:			
-			print "Cleaning up tempdir '%s'" % self.tempdir
+			#print "Cleaning up tempdir '%s'" % self.tempdir
 			move_overwrite(os.path.join(self.tempdir,self.res_fn),self.init_cwd)
 			move_overwrite(os.path.join(self.tempdir,self.init_out_fn),self.init_cwd)
 			assert(self.tempdir[0:4]=="/tmp") # just being cautious!
@@ -222,6 +222,14 @@ class Simulator(object):
 			return (self.mountdir,self.tempdir,self.init_cwd)
 		else:
 			return None
+
+	def realpath(self,fn):
+		"""Return the fuse-mounted version of a local path, if required"""
+		if self.fusemount:
+			assert self.entered_fuse
+			return os.path.join(self.mountdir,fn)
+		else:
+			return fn
 
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""

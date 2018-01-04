@@ -18,11 +18,12 @@ class TestCommand(unittest.TestCase):
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
 		sim.simulate(start=0, stop=1, step=0.1)
+		self.sim = sim
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_touching(self):
 		self.assertEqual(self.res.interpolate('result', 0), 0)
-		self.assertTrue(os.path.isfile('TestCommandTouched'))
+		self.assertTrue(os.path.isfile(self.sim.realpath('TestCommandTouched')))
 
 if __name__ == '__main__':
 	unittest.main()

@@ -18,12 +18,13 @@ class TestWeatherFileChecker(unittest.TestCase):
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
 		sim.simulate(start=0, stop=1, step=0.01)
+		self.sim = sim
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_checker(self):
 		self.assertTrue(self.res.closest('fn1_correct', 0))
 		self.assertTrue(self.res.closest('fn2_correct', 0))
-		self.assertTrue(os.path.isfile('resources/tests/weatherfile2.motab'))
+		self.assertTrue(os.path.isfile(self.sim.realpath('resources/tests/weatherfile2.motab')))
 
 if __name__ == '__main__':
 	unittest.main()
