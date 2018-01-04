@@ -11,8 +11,8 @@ from solartherm import simulation
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, args, par_n, resultclass, suff, val):
-	sim = simulation.Simulator(fn, suffix=suff);
+def simulation_worker(fn, start, stop, step, args, par_n, resultclass, reuse, suff, val):
+	sim = simulation.Simulator(fn, suffix=suff, reuse=reuse);
 	sim.load_init()
 	sim.update_pars(par_n, val)
 	sim.simulate(start=start, stop=stop, step=step, args=args)
@@ -79,9 +79,12 @@ if __name__ == '__main__':
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
+	parser.add_argument('--fuse', action='store_true',
+			help='disable use of unionfs-fuse to clean temporary files')
 	args = parser.parse_args()
 
-	sim = simulation.Simulator(args.file);
+	sim = simulation.Simulator(args.file,fusemount=args.fuse);
+	fuse_dirs = sim.get_fuse_dirs()
 
 	mcargs = []
 	#if len(args.mcargs) == 1:
@@ -131,7 +134,7 @@ if __name__ == '__main__':
 	if not args.nosim:
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
-				args.stop, args.step, sargs, par_n, resultclass)
+				args.stop, args.step, sargs, par_n, resultclass, reuse)
 		pool = Pool(processes=args.nth)
 		# using apply instead of map because have more than 1 arg to pass
 		for i, val in enumerate(var_vals):
