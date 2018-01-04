@@ -7,7 +7,7 @@ class TestCatromOE(unittest.TestCase):
 	def setUp(self):
 		print "RUNNING SETUP"
 		fn = 'TestCatromOE.mo'
-		sim = simulation.Simulator(fn,tempdir=None)
+		sim = simulation.Simulator(fn)
 		print "COMPILING MODEL"
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
