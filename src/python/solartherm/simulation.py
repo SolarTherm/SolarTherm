@@ -96,6 +96,9 @@ def parse_var_val(vstr, unit):
 	except KeyError:
 		raise ValueError('Can\'t convert from unit ' + unit_old + ' to ' + unit)
 
+UNIONFS = "/usr/bin/unionfs-fuse"
+FUSERMOUNT = "/bin/fusermount"
+
 class Simulator(object):
 	"""Compilation and simulation of a modelica model."""
 	def __init__(self, fn, model=None, suffix=None, fusemount=True, reuse=False):
@@ -125,8 +128,8 @@ class Simulator(object):
 			raise RuntimeError("Model file '%s' does not exist"%fn)
 
 		if fusemount and not reuse:
-			if not os.access("/usr/bin/unionfs-fuse",os.X_OK) or not os.access("/bin/fusermount",os.X_OK):
-				warnings.warn("UNIONFS-FUSE is not installed/accessible (try st_simulate --nofuse)")
+			if not os.access(UNIONFS,os.X_OK) or not os.access(FUSERMOUNT,os.X_OK):
+				warnings.warn("'%s' or '%s are not executable (try st_simulate --nofuse, or sudo apt install unionfs-fuse)"%(UNIONFS,FUSERMOUNT))
 				fusemount = 0
 
 		if model is None:
@@ -174,7 +177,7 @@ class Simulator(object):
 			print "Mount directory '%s'" % self.mountdir
 			self.makefile_fn = os.path.join(self.mountdir,self.makefile_fn)
 			self.init_in_fn = os.path.join(self.mountdir,self.init_in_fn)
-			sp.check_call(['/usr/bin/unionfs','-o','cow','%s=RW:%s=RO'%(sh_quote(self.tempdir),sh_quote(self.init_cwd)), self.mountdir])
+			sp.check_call([UNIONFS,'-o','cow','%s=RW:%s=RO'%(sh_quote(self.tempdir),sh_quote(self.init_cwd)), self.mountdir])
 			os.chdir(self.mountdir)
 			self.entered_fuse = True
 			self.reuse = False
@@ -186,7 +189,7 @@ class Simulator(object):
 				assert getattr(self,'entered_fuse')
 				#print "REMOVING FUSE MOUNTPOINT"
 				try:
-					sp.check_call(['/bin/fusermount','-uz',self.mountdir])
+					sp.check_call([FUSERMOUNT,'-uz',self.mountdir])
 				except sp.CalledProcessError,e:
 					print "UNABLE TO UNMOUNT: %s", str(e)
 					print "cwd = ",os.getcwd()
