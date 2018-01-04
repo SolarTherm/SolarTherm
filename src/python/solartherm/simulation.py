@@ -287,6 +287,5 @@ class Simulator(object):
 			]
 		sp.check_call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
-		res = os.path.join(self.init_cwd,self.res_fn)
-		assert os.access(res,os.R_OK)
+		assert os.access(self.res_fn,os.R_OK)
 
