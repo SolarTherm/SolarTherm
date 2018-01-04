@@ -101,7 +101,7 @@ FUSERMOUNT = "/bin/fusermount"
 
 class Simulator(object):
 	"""Compilation and simulation of a modelica model."""
-	def __init__(self, fn, model=None, suffix=None, fusemount=True, reuse=False):
+	def __init__(self, fn, model=None, suffix=None, fusemount=False, reuse=False):
 		"""Constructor. `fn` is a .mo filename, `suffix` is a init file suffix,
 		`tempdir` is FIXME the location where temporary files should be stored,
 		`True` if a machine-generated temporary location should be generated and
