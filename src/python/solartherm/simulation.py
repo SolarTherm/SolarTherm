@@ -125,7 +125,7 @@ class Simulator(object):
 			raise RuntimeError("Model file '%s' does not exist"%fn)
 
 		if fusemount and not reuse:
-			if not os.access("/usr/bin/unionfs",os.X_OK) or not os.access("/bin/fusermount",os.X_OK):
+			if not os.access("/usr/bin/unionfs-fuse",os.X_OK) or not os.access("/bin/fusermount",os.X_OK):
 				warnings.warn("UNIONFS-FUSE is not installed/accessible (try st_simulate --nofuse)")
 				fusemount = 0
 
