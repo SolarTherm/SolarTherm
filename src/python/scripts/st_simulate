@@ -134,7 +134,7 @@ if __name__ == '__main__':
 	if not args.nosim:
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
-				args.stop, args.step, sargs, par_n, resultclass, reuse)
+				args.stop, args.step, sargs, par_n, resultclass, fuse_dirs)
 		pool = Pool(processes=args.nth)
 		# using apply instead of map because have more than 1 arg to pass
 		for i, val in enumerate(var_vals):
