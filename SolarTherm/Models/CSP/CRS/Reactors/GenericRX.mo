@@ -26,8 +26,11 @@ model GenericRX
 	parameter Real cn_H2_RX[:] "Molar flow rate coefficients for H2 produced in the reactor";
 	parameter Real cn_CH4[:] "Molar flow rate coefficients for CH4 produced in the reactor";
 	parameter Real cn_CO[:] "Molar flow rate coefficients for CO produced in the reactor";
+	parameter Real cn_CO2[:] "Molar flow rate coefficients for CO2 produced in the reactor";
 
 	parameter Real cwp_Rx[:] "Pump power coefficients in the reactor";
+
+	parameter Boolean pv = false "true if extra H2 is added from PV panels";
 
 	//Variables:
 	//****************
@@ -67,14 +70,17 @@ protected
 	constant SI.MolarMass MM_H2 = 0.0020 "Molar mass of H2";
 	constant SI.MolarMass MM_CH4 = 0.0160 "Molar mass of CH4";
 	constant SI.MolarMass MM_CO = 0.0280 "Molar mass of CO";
+	constant SI.MolarMass MM_CO2 = 0.0440 "Molar mass of CO2";
 
 	constant SI.SpecificEnthalpy LHV_H2 = 120.21e6 "Lower heating value of H2";
-	constant SI.SpecificEnthalpy LHV_CH4 = 50e6 "Lower heating value of H2";
-	constant SI.SpecificEnthalpy LHV_CO = 10.11e6 "Lower heating value of H2";
+	constant SI.SpecificEnthalpy LHV_CH4 = 50e6 "Lower heating value of CH4";
+	constant SI.SpecificEnthalpy LHV_CO = 10.11e6 "Lower heating value of CO";
+	constant SI.SpecificEnthalpy LHV_CO2 = 0.0 "Lower heating value of CO2";
 	
 	constant SI.MolarEnthalpy mLHV_H2 = MM_H2 * LHV_H2 "Molar lower heating value of H2";
 	constant SI.MolarEnthalpy mLHV_CH4 = MM_CH4 * LHV_CH4 "Molar lower heating value of CH4";
 	constant SI.MolarEnthalpy mLHV_CO = MM_CO * LHV_CO "Molar lower heating value of CO";
+	constant SI.MolarEnthalpy mLHV_CO2 = MM_CO2 * LHV_CO2 "Molar lower heating value of CO";
 
 	parameter Real R_mean = 37.5 "Mean value of R used in the polynomials centre and scale method";
 	parameter Real R_std = 15.14 "Standard deviation of R used in the polynomials centre and scale method";
@@ -85,6 +91,7 @@ protected
 	SI.MolarFlowRate n_flow_H2_RX "Molar flow rate of H2 produced in the reactor";
 	SI.MolarFlowRate n_flow_CH4 "Molar flow rate of CH4 produced in the reactor";
 	SI.MolarFlowRate n_flow_CO "Molar flow rate of CO produced in the reactor";
+	SI.MolarFlowRate n_flow_CO2 "Molar flow rate of CO2 produced in the reactor";
 	SI.MolarFlowRate n_flow_H2_PV "Molar flow rate of H2 required from PV";
 	SI.MolarFlowRate n_flow_H2 "Total molar flow rate of H2";
 	SI.MolarFlowRate n_flow_sg "Molar flow rate of syngas";
@@ -92,6 +99,7 @@ protected
 	MoleFraction y_H2 "Molar fraction of H2 in syngas flow";
 	MoleFraction y_CH4 "Molar fraction of CH4 in syngas flow";
 	MoleFraction y_CO "Molar fraction of CO in syngas flow";
+	MoleFraction y_CO2 "Molar fraction of CO2 in syngas flow";
 
 	SI.MolarMass MM_sg "Molar mass of syngas";
 
@@ -108,6 +116,7 @@ protected
 	SolarTherm.Utilities.Polynomial.Poly FR_H2_RX(c=cn_H2_RX);
 	SolarTherm.Utilities.Polynomial.Poly FR_CH4(c=cn_CH4);
 	SolarTherm.Utilities.Polynomial.Poly FR_CO(c=cn_CO);
+	SolarTherm.Utilities.Polynomial.Poly FR_CO2(c=cn_CO2);
 
 	SolarTherm.Utilities.Polynomial.Poly p_p(c=cwp_Rx);
 
@@ -175,6 +184,9 @@ equation
 		FR_CO.x = 0;
 		n_flow_CO = 0;
 
+		FR_CO2.x = 0;
+		n_flow_CO2 = 0;
+
 		n_flow_H2_PV = 0;
 		n_flow_H2 = 0;
 
@@ -183,13 +195,15 @@ equation
 		y_H2 = 0;
 		y_CH4 = 0;
 		y_CO = 0;
+		y_CO2 = 0;
 
-		MM_sg = 0.010398330288554;
+		MM_sg = 0.010513556314215649;
+
 		m_flow_sg = 0;
 		m_flow_H2_PV = n_flow_H2_PV * MM_H2;
 
-		mLHV_sg = 2.552736772865006e05;
-		LHV_sg = 24.549487292924592e06;
+		mLHV_sg = 2.543623066014556e05;
+		LHV_sg = 24.193742112158109e06;
 		E_flow = 0;
 
 		p_p.x = if RX_state == 2 then (sum(R)/1e6 - R_mean) / R_std else 0;
@@ -224,21 +238,29 @@ equation
 		FR_CO.x = sum(R)/1e6;
 		n_flow_CO = FR_CO.y * 1000;
 
-		n_flow_H2_PV = molarRatio_H2_CO * n_flow_CO - n_flow_H2_RX;
+		FR_CO2.x = sum(R)/1e6;
+		n_flow_CO2 = FR_CO2.y * 1000;
+
+		if pv then
+			n_flow_H2_PV = molarRatio_H2_CO * n_flow_CO - n_flow_H2_RX;
+		else
+			n_flow_H2_PV = 0;
+		end if;
 		n_flow_H2 = n_flow_H2_RX + n_flow_H2_PV;
 
-		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO;
+		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO+n_flow_CO2;
 
 		y_H2 = n_flow_H2 / n_flow_sg;
 		y_CH4 = n_flow_CH4 / n_flow_sg;
 		y_CO = n_flow_CO / n_flow_sg;
+		y_CO2 = n_flow_CO2 / n_flow_sg;
 
-		MM_sg = y_H2 * MM_H2 + y_CH4 * MM_CH4 + y_CO * MM_CO;
+		MM_sg = y_H2 * MM_H2 + y_CH4 * MM_CH4 + y_CO * MM_CO + y_CO2 * MM_CO2;
 
 		m_flow_sg = n_flow_sg * MM_sg;
 		m_flow_H2_PV = n_flow_H2_PV * MM_H2;
 
-		mLHV_sg = y_H2 * mLHV_H2 + y_CH4 * mLHV_CH4 + y_CO * mLHV_CO;
+		mLHV_sg = y_H2 * mLHV_H2 + y_CH4 * mLHV_CH4 + y_CO * mLHV_CO + y_CO2 * mLHV_CO2;
 		LHV_sg = mLHV_sg / MM_sg;
 
 		E_flow = n_flow_sg * mLHV_sg;
