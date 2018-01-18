@@ -65,7 +65,7 @@ model GenericRX
 
 protected
 	constant Real molarRatio_H2_CO = 2.1 "Molar ratio of H2 to CO at the outlet of SMR";
-	constant Real massRatio_w_a = 3 "Mass ratio of water to algae";
+	constant Real massRatio_w_a = 3.0 "Mass ratio of water to algae";
 
 	constant SI.MolarMass MM_H2 = 0.0020 "Molar mass of H2";
 	constant SI.MolarMass MM_CH4 = 0.0160 "Molar mass of CH4";
@@ -202,8 +202,8 @@ equation
 		m_flow_sg = 0;
 		m_flow_H2_PV = n_flow_H2_PV * MM_H2;
 
-		mLHV_sg = 2.543623066014556e05;
-		LHV_sg = 24.193742112158109e06;
+		mLHV_sg = 2.543623134148470e05;
+		LHV_sg = 24.193742112158110e06;
 		E_flow = 0;
 
 		p_p.x = if RX_state == 2 then (sum(R)/1e6 - R_mean) / R_std else 0;
