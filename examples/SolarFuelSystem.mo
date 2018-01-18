@@ -27,12 +27,13 @@ model SolarFuelSystem
 	parameter Real cwp_Rx[:] = {3.214349160704963e02, 1.536790426747151e02, -1.135605222930574, 2.315935000530164, 3.333549397871687, -2.140229080818388, -3.339222243439558, 0.618459057856818, 0.848233555263823} "Pump power coefficients in reactor";
 	parameter Real cr_sg[:] = {7.022488706961313, 0.529534167296794, 0.002088897277410, -2.423308450667479e-05, 1.040004504170970e-07} "Radiation power coefficients";
 	// Polynomilas coeffs for FT
-	parameter Real cvf_petrol[:] = {2.724389753505295e-09, 3.323247258906536e-04} "Volumetric flow rate coefficients for petrol production in FT";
-	parameter Real cvf_diesel[:] = {2.246473281811684e-09, 2.771858334313171e-04} "Volumetric flow rate coefficients for diesel production in FT";
-	parameter Real cwc_FT[:] = {-4.087962786696209e-06, 1.792714502156496} "Compressor power coefficients in FT";
-	parameter Real cwp_FT[:] = {-3.704936323643472e-05, 4.649987268933631} "Pumps power coefficients in FT";
-	parameter Real cwt_FT[:] = {-2.900917794033634e-06, 1.214067925425614} "Turbine power coefficients in FT";
-	parameter Real cq_FT[:] = {4.594760856107130e-05, 5.604462712309293} "Heat flow coefficients in FT";
+	parameter Real cvf_petrol[:] = {-2.357698951348051e-09, 3.274254974192566e-04} "Volumetric flow rate coefficients for petrol production in FT";
+	parameter Real cvf_diesel[:] = {-1.991676070439976e-09, 2.730994248604119e-04} "Volumetric flow rate coefficients for diesel production in FT";
+	parameter Real cwc_FT[:] = {-2.885816443529007e-05, 1.164058460840140} "Compressor power coefficients in FT";
+	parameter Real cwp_FT[:] = {-1.247610161757073e-05, 3.517701836361515} "Pumps power coefficients in FT";
+	parameter Real cwt_FT[:] = {-3.634880001952640e-06, 0.781188945215679} "Turbine power coefficients in FT";
+	parameter Real cq_FT[:] = {-4.244948478003601e-05, 5.528142103774671} "Heat flow coefficients in FT";
+
 
 	// Info for sizing the solar field
 	parameter SI.Efficiency eff_opt = 0.578161677
@@ -40,14 +41,14 @@ model SolarFuelSystem
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
 	parameter SI.Area A_rec = 50 "Reactor area";
-	parameter Real SM = 3.3 "Solar multiple"; //Potential design variable
+	parameter Real SM = 4.0 "Solar multiple"; //Potential design variable
 	parameter Real land_mult = 1 "Land area multiplier";
-	parameter SI.MassFlowRate m_flow_rx_des = 3.63 "Mass flow rate from RX at design point"; // i.e. the size of RX
+	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX
 
 	parameter Real fr_min_ft = 0.2 "Minium fraction of the nominal mass flow to start the FT";
 	parameter SI.Time t_trans = 60*60 "Ramp-up/down time in FT";
 
-	constant SI.SpecificEnthalpy LHV_sg = 24.549487292924592e06 "Lower heating value of syngas";
+	constant SI.SpecificEnthalpy LHV_sg = 24.193742112158110e06 "Lower heating value of syngas";
 	constant SI.Density rho_sg = 0.420504 "Syngas density at 25C & 1bar";
 
 	parameter Real t_storage(unit="h") = 8 "Hours of storage"; //Potential design variable
@@ -57,7 +58,7 @@ model SolarFuelSystem
 
 	parameter Boolean storage = true "Storage component present";
 
-	parameter Real ft_disp = 0.18 "Min fraction of energy flow to FT";// i.e. 0.19 kg/s of syngas, the minimum flow rate to start the FT
+	parameter Real ft_disp = 0.2 "Min fraction of energy flow to FT";// i.e. 0.19 kg/s of syngas, the minimum flow rate to start the FT
 	parameter Boolean const_dispatch = false "Constant dispatch of energy"; // if true, FT operates either at 0 or full load
 	parameter Boolean forecast_scheduler = true "Forecasted dispatch of energy during the night"; // if true, the energy dispatch is determined based on energy forecast from next day
 
