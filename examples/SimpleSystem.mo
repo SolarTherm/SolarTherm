@@ -144,7 +144,7 @@ equation
 
 	Q_flow_rec = if con_state <= 2 then 0 else C*wea.wbus.dni*A_rec;
 
-	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
+	Q_flow_dis = if (blk_state >= 2 and E >= E_low_l) then Q_flow_sched else 0;
 
 	P_elec = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
 
