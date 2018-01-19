@@ -109,12 +109,14 @@ algorithm
 		con_state := 3; // on sun
 	end when;
 
-	when blk_state >= 2 and (Q_flow_sched <= 0 or E <= E_low_l) then
-		blk_state := 1; // off
+	when (blk_state == 2 or blk_state == 3) and Q_flow_sched <= 0 then
+		blk_state := 1; // turn off (or stop ramping) due to no demand
+	elsewhen (blk_state == 2 or blk_state == 3) and E <= E_low_l then
+		blk_state := 1; // turn off (or stop ramping) due to empty tank
 	elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  then
-		blk_state := 2; // starting
+		blk_state := 2; // ramp up, demand and tank has capacity
 	elsewhen blk_state == 2 and time >= t_blk_next then
-		blk_state := 3; // on
+		blk_state := 3; // operational, ramp completed
 	end when;
 
 	when time >= t_sch_next then
@@ -142,8 +144,7 @@ equation
 
 	Q_flow_rec = if con_state <= 2 then 0 else C*wea.wbus.dni*A_rec;
 
-	//Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
-	Q_flow_dis = if (blk_state >= 2 and E >= E_low_l) then Q_flow_sched else 0;
+	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
 
 	P_elec = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
 
