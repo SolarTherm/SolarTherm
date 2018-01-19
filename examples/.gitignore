@@ -14,6 +14,10 @@ Reference_1
 Reference_1*.[ch]
 TroughWagner
 TroughWagner*.[ch]
+SolarGasifier
+SolarGasifier*.[ch]
+SolarFuelSystem
+SolarFuelSystem*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
