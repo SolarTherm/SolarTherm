@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int vector_init(Vector *vec)
-{
+int vector_init(Vector *vec){
 	vec->len = 0;
 	vec->cap = VECTOR_INIT_CAP;
 	vec->v = malloc(VECTOR_INIT_CAP*sizeof(double));
@@ -12,13 +11,11 @@ int vector_init(Vector *vec)
 	return 0;
 }
 
-void vector_free(Vector *vec)
-{
+void vector_free(Vector *vec){
 	free(vec->v);
 }
 
-int vector_add(Vector *vec, double val)
-{
+int vector_add(Vector *vec, double val){
 	if (vec->len == vec->cap) {
 		double *newv = realloc(vec->v, 2*vec->cap*sizeof(double));
 		if (!newv)
@@ -31,18 +28,15 @@ int vector_add(Vector *vec, double val)
 	return 0;
 }
 
-void vector_set(Vector *vec, size_t i, double val)
-{
+void vector_set(Vector *vec, size_t i, double val){
 	vec->v[i] = val;
 }
 
-double vector_get(const Vector *vec, size_t i)
-{
+double vector_get(const Vector *vec, size_t i){
 	return vec->v[i];
 }
 
-int vectorv_init(VectorV *vec)
-{
+int vectorv_init(VectorV *vec){
 	vec->len = 0;
 	vec->cap = VECTOR_INIT_CAP;
 	vec->v = malloc(VECTOR_INIT_CAP*sizeof(Vector));
@@ -51,16 +45,14 @@ int vectorv_init(VectorV *vec)
 	return 0;
 }
 
-void vectorv_free(VectorV *vec)
-{
+void vectorv_free(VectorV *vec){
 	size_t i;
 	for (i=0; i<vec->len; i++)
 		vector_free(&(vec->v[i]));
 	free(vec->v);
 }
 
-int vectorv_add(VectorV *vec, Vector *val)
-{
+int vectorv_add(VectorV *vec, Vector *val){
 	if (vec->len == vec->cap) {
 		Vector *newv = realloc(vec->v, 2*vec->cap*sizeof(Vector));
 		if (!newv)
@@ -73,23 +65,20 @@ int vectorv_add(VectorV *vec, Vector *val)
 	return 0;
 }
 
-void vectorv_set(VectorV *vec, size_t i, Vector *val)
-{
+void vectorv_set(VectorV *vec, size_t i, Vector *val){
 	vec->v[i] = *val;
 }
 
-Vector *vectorv_get(const VectorV *vec, size_t i)
-{
+Vector *vectorv_get(const VectorV *vec, size_t i){
 	return &(vec->v[i]);
 }
 
-int table_init(Table *table, size_t nr, size_t nc)
-{
+int table_init(Table *table, size_t nr, size_t nc){
 	size_t i;
 	table->nr = nr;
 	table->nc = nc;
 
-	table->v = malloc(nr*sizeof(double *));
+	table->v = calloc(nr,sizeof(double *));
 	if (!table->v)
 		return -1;
 
@@ -106,8 +95,7 @@ int table_init(Table *table, size_t nr, size_t nc)
  * Any line that starts with a # or is blank is ignored.
  * Only loads table if it is rectangular (all elements present).
  */
-int table_init_csv(Table *table, const char *fn, const char *delim)
-{
+int table_init_csv(Table *table, const char *fn, const char *delim){
 	const size_t BUFFLEN = 2048;
 	char line[BUFFLEN];
 	size_t i;
@@ -156,7 +144,7 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 	if (rect) {
 		table->nr = nr;
 		table->nc = nc;
-		table->v = malloc(nr*sizeof(double *));
+		table->v = calloc(nr,sizeof(double *));
 		if (!table->v)
 			return -1;
 		for (i=0; i<nr; i++) {
@@ -176,8 +164,7 @@ int table_init_csv(Table *table, const char *fn, const char *delim)
 	return 0;
 }
 
-void table_print(const Table *table)
-{
+void table_print(const Table *table){
 	size_t i;
 	size_t j;
 	for (i=0; i<table->nr; i++) {
@@ -190,13 +177,13 @@ void table_print(const Table *table)
 	}
 }
 
-void table_free(Table *table)
-{
+void table_free(Table *table){
 	size_t i;
-	if (!table)
+	/* if we are freeing a failed table_init, then there may be NULLs */
+	if(!table || !table->v)
 		return;
 	for (i=0; i<table->nr; i++)
-		free(table->v[i]);
+		if(NULL!=table->v[i])free(table->v[i]);
 	free(table->v);
 }
 
