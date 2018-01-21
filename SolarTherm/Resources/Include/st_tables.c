@@ -30,34 +30,45 @@ void *st_table_init(size_t nr, size_t nc)
 	if (!table)
 		ModelicaError("Table allocation\n");
 
-	if (table_init(table, nr, nc))
-		ModelicaError("Table allocation\n");
-
+	if (table_init(table, nr, nc)){
+		table_free(table);
+		free(table);
+		ModelicaError("Table initialisation\n");
+	}
 	return table;
 }
 
 void *st_table_init_csv(const char *fn, const char *delim)
 {
-	Table *table = malloc(sizeof(Table));
-	if (!table)
-		ModelicaError("Table allocation\n");
+	Table *table = malloc(sizeof(Table)); // FIXME merge malloc into table_init.
+	if(!table)
+		ModelicaError("Table allocation\n"); // no return
 
-	if (table_init_csv(table, fn, delim)) {
+	if(table_init_csv(table, fn, delim)) {
 		switch (errno) {
 		case ENOENT:
-			ModelicaError("Table file not found\n");
+			table_free(table);
+			free(table);
+			ModelicaError("Table file not found\n"); // no return
 			break;
 		case ENOMEM:
-			ModelicaError("Table allocation\n");
+			table_free(table);
+			free(table);
+			ModelicaError("Table allocation\n"); // no return
 			break;
 		default:
-			ModelicaError("Table initialisation\n");
+			table_free(table);
+			free(table);
+			ModelicaError("Table initialisation\n"); // no return
 			break;
 		}
 	}
 
-	if (table->nr == 0 || table->nc == 0)
-		ModelicaError("Table contains no data\n");
+	if(table->nr == 0 || table->nc == 0){
+		table_free(table);
+		free(table);
+		ModelicaError("Table contains no data\n"); // no return
+	}
 
 	return table;
 }

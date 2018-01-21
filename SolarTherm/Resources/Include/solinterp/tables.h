@@ -36,8 +36,19 @@ void vectorv_set(VectorV *vec, size_t i, Vector *val);
 Vector *vectorv_get(const VectorV *vec, size_t i);
 
 int table_init(Table *table, size_t nr, size_t nc);
+/**< Initialise `table` with space for `nr` rows and `nc` columns.
+	Note that `table` must already be allocated and passed in.
+	Return 0 on success, or -1 if memory allocation fails.
+	Note that memory is not cleared during allocation.
+*/
+
 int table_init_csv(Table *table, const char *fn, const char *delim);
 void table_print(const Table *table);
+
 void table_free(Table *table);
+/**< Deallocate memory contained within `table`. Note (unintuitive!) that 
+	`table` itself is not deallocated -- only the data pointed to from inside
+	table is cleared. FIXME?
+*/
 
 #endif
