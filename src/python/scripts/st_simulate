@@ -2,19 +2,21 @@
 import argparse
 import os
 import itertools
-from multiprocessing import Pool
+import multiprocessing as mp
 from functools import partial
 from solartherm import postproc
 from solartherm import simulation
+from time import time
 
 # TODO: Pass on any command line arguments to simulation executable
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, args, par_n, resultclass, reuse, suff, val):
-	sim = simulation.Simulator(fn, suffix=suff, reuse=reuse);
+def simulation_worker(fn, start, stop, step, args, par_n, resultclass, reuse, i, par_v):
+	"""This small function is called from the mp.Pool for parallel simulations"""
+	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
 	sim.load_init()
-	sim.update_pars(par_n, val)
+	sim.update_pars(par_n, par_v)
 	sim.simulate(start=start, stop=stop, step=step, args=args)
 	res = resultclass(sim.res_fn)
 	perf = res.calc_perf()
@@ -71,8 +73,8 @@ if __name__ == '__main__':
 	#		help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
-	parser.add_argument('--nth', type=int, default=None,
-			help='number of threads')
+	parser.add_argument('--np', type=int, default=mp.cpu_count(),
+			help='number of processes (set to 0 for serial mode)')
 	#parser.add_argument('--nthsim', type=int, default=None,
 	#		help='number of threads per simulation')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
@@ -132,21 +134,26 @@ if __name__ == '__main__':
 	logger = LoggerPerf(resultclass)
 	perfs = [None]*len(var_vals)
 	if not args.nosim:
+		t = time()
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
 				args.stop, args.step, sargs, par_n, resultclass, fuse_dirs)
-		pool = Pool(processes=args.nth)
-		# using apply instead of map because have more than 1 arg to pass
-		for i, val in enumerate(var_vals):
-			pool.apply_async(worker_enc, args=(str(i), val),
-					callback=partial(simulation_callback, perfs, i, logger))
-		pool.close()
-		pool.join()
-		#for i, val in enumerate(var_vals):
-		#	perf = worker_enc(str(i), sval)
-		#	print(','.join([str(i)]+list(str(perf[j])
-		#		for j, n in enumerate(perf_names))))
-		#	perfs.append(perf)
+		if args.np:
+			pool = mp.Pool(processes=args.np)
+			# use apply_async in loop (not map_async) so callback runs 1x per sim.
+			for i, val in enumerate(var_vals):
+				pool.apply_async(worker_enc, args=(i, val)
+					,callback=partial(simulation_callback, perfs, i, logger)
+				)
+			pool.close()
+			pool.join()
+		else:
+		# serial version...
+			for i, val in enumerate(var_vals):
+				perf = worker_enc(i, val)
+				simulation_callback(perfs,i,logger,perf)
+
+		print "Simulation time: %fs"%(time()-t)
 
 	if args.plot is not None:
 		from solartherm import plotting
