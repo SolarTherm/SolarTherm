@@ -12,12 +12,12 @@ from time import time
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, args, par_n, resultclass, reuse, i, par_v):
+def simulation_worker(fn, start, stop, step, solver, args, par_n, resultclass, reuse, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""
 	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
 	sim.load_init()
 	sim.update_pars(par_n, par_v)
-	sim.simulate(start=start, stop=stop, step=step, args=args)
+	sim.simulate(start=start, stop=stop, step=step, solver=solver, args=args)
 	res = resultclass(sim.res_fn)
 	perf = res.calc_perf()
 	return perf
@@ -75,6 +75,8 @@ if __name__ == '__main__':
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
 			help='number of processes (set to 0 for serial mode)')
+	parser.add_argument('--solver', type=str, default='rungekutta',
+			help='solver choice for OpenModelica')
 	#parser.add_argument('--nthsim', type=int, default=None,
 	#		help='number of threads per simulation')
 	parser.add_argument('par', metavar='P', type=str, nargs='*',
@@ -137,7 +139,7 @@ if __name__ == '__main__':
 		t = time()
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
-				args.stop, args.step, sargs, par_n, resultclass, fuse_dirs)
+				args.stop, args.step, args.solver, sargs, par_n, resultclass, fuse_dirs)
 		if args.np:
 			pool = mp.Pool(processes=args.np)
 			# use apply_async in loop (not map_async) so callback runs 1x per sim.
