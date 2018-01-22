@@ -15,6 +15,7 @@ model SolarFuelSystem
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
 	// Polynomilas coeffs for SCWG+SMR
+	parameter Boolean dump = true "CO2 is dumped from reactor and FT or not";
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
 	parameter Real cf_SMR[:] = {0.768282037316067, 0.093488773366821, -0.037724819862177, 0.015670722458670, -0.006367262777059, 0.001640716559506, -6.287807751796056e-04, 9.317070447512179e-04, -3.842549181678559e-04} "SMR efficiency coefficients";
 	parameter Real cf_RX[:] = { 0.640798255557369, 0.022098834006959, -0.010723851298492, 0.006750338487959, -3.460944058165703e-04, -0.001495651820584, -0.002071994901842, 0.001274509536169, 1.214843066972747e-04} "Reactor efficiency coefficients";
@@ -26,6 +27,7 @@ model SolarFuelSystem
 	parameter Real cn_CO2[:] = {-2.292482118122781e-04, 3.440136345573267e-05, -2.318344313332857e-07, 3.769732738572897e-09, -2.272446118760488e-11} "Molar flow rate coefficients for CO2";
 	parameter Real cwp_Rx[:] = {3.214349160704963e02, 1.536790426747151e02, -1.135605222930574, 2.315935000530164, 3.333549397871687, -2.140229080818388, -3.339222243439558, 0.618459057856818, 0.848233555263823} "Pump power coefficients in reactor";
 	parameter Real cr_sg[:] = {7.022488706961313, 0.529534167296794, 0.002088897277410, -2.423308450667479e-05, 1.040004504170970e-07} "Radiation power coefficients";
+	parameter Real cm_CO2_dump[:] = if dump then {-0.138561262069788, 0.022687988241418} else {0} "Mass flow rate coefficients for CO2 dumped from the reactor";
 	// Polynomilas coeffs for FT
 	parameter Real cvf_petrol[:] = {-2.357698951348051e-09, 3.274254974192566e-04} "Volumetric flow rate coefficients for petrol production in FT";
 	parameter Real cvf_diesel[:] = {-1.991676070439976e-09, 2.730994248604119e-04} "Volumetric flow rate coefficients for diesel production in FT";
@@ -49,7 +51,7 @@ model SolarFuelSystem
 	parameter SI.Time t_trans = 60*60 "Ramp-up/down time in FT";
 
 	constant SI.SpecificEnthalpy LHV_sg = 24.193742112158110e06 "Lower heating value of syngas";
-	constant SI.Density rho_sg = 0.420504 "Syngas density at 25C & 1bar";
+	constant SI.Density rho_sg = 1.08974 "Syngas density at 25C & 1bar";
 
 	parameter Real t_storage(unit="h") = 8 "Hours of storage"; //Potential design variable
 	parameter Real ini_frac(min=0, max=1) = 0.1 "Initial fraction charged";
@@ -166,7 +168,9 @@ model SolarFuelSystem
 			cn_CO=cn_CO,
 			cn_CO2=cn_CO2,
 			cwp_Rx=cwp_Rx,
-			pv=false);
+			cm_CO2_dump=cm_CO2_dump,
+			pv=false,
+			dump=dump);
 
 	SolarTherm.Models.Storage.Tank.SimpleST ST(
 			E_max=E_max,

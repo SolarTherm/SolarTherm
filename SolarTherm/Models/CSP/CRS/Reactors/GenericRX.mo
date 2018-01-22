@@ -30,7 +30,10 @@ model GenericRX
 
 	parameter Real cwp_Rx[:] "Pump power coefficients in the reactor";
 
+	parameter Real cm_CO2_dump[:] "Mass flow rate coefficients for CO2 dumped from the reactor";
+
 	parameter Boolean pv = false "true if extra H2 is added from PV panels";
+	parameter Boolean dump = true "true if CO2 is dumped from the reactor";
 
 	//Variables:
 	//****************
@@ -50,6 +53,7 @@ model GenericRX
 	SI.MassFlowRate m_flow_water "Mass flow rate of water";
 	SI.MassFlowRate m_flow_sg "Mass flow rate of syngas";
 	SI.MassFlowRate m_flow_H2_PV "Mass flow rate of H2 required from PV";
+	SI.MassFlowRate m_flow_CO2_dump "Mass flow rate of CO2 dumped from the reactor";
 
 	SI.Power P_pump "Pump power consumption";
 
@@ -119,6 +123,9 @@ protected
 	SolarTherm.Utilities.Polynomial.Poly FR_CO2(c=cn_CO2);
 
 	SolarTherm.Utilities.Polynomial.Poly p_p(c=cwp_Rx);
+
+	SolarTherm.Utilities.Polynomial.Poly FR_CO2_dump(c=cm_CO2_dump);
+
 
 initial equation
 	pre(tot) = 0;
@@ -190,6 +197,9 @@ equation
 		n_flow_H2_PV = 0;
 		n_flow_H2 = 0;
 
+		FR_CO2_dump.x = 0;
+		m_flow_CO2_dump = 0;
+
 		n_flow_sg = 0;
 		
 		y_H2 = 0;
@@ -247,6 +257,9 @@ equation
 			n_flow_H2_PV = 0;
 		end if;
 		n_flow_H2 = n_flow_H2_RX + n_flow_H2_PV;
+
+		FR_CO2_dump.x = sum(R)/1e6;
+		m_flow_CO2_dump = FR_CO2_dump.y;
 
 		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO+n_flow_CO2;
 
