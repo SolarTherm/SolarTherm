@@ -280,7 +280,7 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', solver='rungekutta', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', solver='rungekutta', nls='newton', args=[]):
 		"""Run simulation.
 		
 		If running an optimisation then 'optimization' needs to be used as
@@ -293,6 +293,7 @@ class Simulator(object):
 			'-override',
 			'startTime='+start+',stopTime='+stop+',stepSize='+step,
 			'-s', solver,
+			'-nls', nls, #Nonlinear solver
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
 			]
