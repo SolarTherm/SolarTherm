@@ -13,27 +13,26 @@ model GenericRX
 
 	parameter SI.RadiantPower R_min = 0.3 * 1000 * 50 * 1000 "Minimum sun heat duty to start the reactor"; // 0.3 * I_des * A * CR
 
-	parameter SI.Time t_RX_on_delay = 20*60 "Delay until reactor starts";
-	parameter SI.Time t_RX_off_delay = 30*60 "Delay until reactor shuts off";
+	parameter SI.Time t_rx_on_delay = 20*60 "Delay until reactor starts";
+	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
 	parameter Real cf_SCWG[:] "SCWG heat loss efficiency coefficients";
 	parameter Real cf_SMR[:] "SMR heat loss efficiency coefficients";
-	parameter Real cf_RX[:] "Reactor energy efficiency coefficients";
-	parameter Real cfII_RX[:] "Reactor exergy efficiency coefficients";
+	parameter Real cf_rx[:] "Reactor energy efficiency coefficients";
+	parameter Real cfII_rx[:] "Reactor exergy efficiency coefficients";
 
 	parameter Real cm_algae[:] "Algae mass flow rate coefficients";
 
-	parameter Real cn_H2_RX[:] "Molar flow rate coefficients for H2 produced in the reactor";
+	parameter Real cn_H2_rx[:] "Molar flow rate coefficients for H2 produced in the reactor";
 	parameter Real cn_CH4[:] "Molar flow rate coefficients for CH4 produced in the reactor";
 	parameter Real cn_CO[:] "Molar flow rate coefficients for CO produced in the reactor";
 	parameter Real cn_CO2[:] "Molar flow rate coefficients for CO2 produced in the reactor";
 
-	parameter Real cwp_Rx[:] "Pump power coefficients in the reactor";
+	parameter Real cwp_rx[:] "Pump power coefficients in the reactor";
 
-	parameter Real cm_CO2_dump[:] "Mass flow rate coefficients for CO2 dumped from the reactor";
+	parameter Real cm_CO2_rx[:] "Mass flow rate coefficients for CO2 dumped/released from the reactor";
 
 	parameter Boolean pv = false "true if extra H2 is added from PV panels";
-	parameter Boolean dump = true "true if CO2 is dumped from the reactor";
 
 	//Variables:
 	//****************
@@ -46,20 +45,20 @@ model GenericRX
 
 	SI.Efficiency eff_I_SCWG "Reactor energy efficiency";
 	SI.Efficiency eff_I_SMR "SMR energy loss efficiency";
-	SI.Efficiency eff_I_RX "Reactor energy efficiency";
-	SI.Efficiency eff_II_RX "Reactor exergy efficiency";
+	SI.Efficiency eff_I_rx "Reactor energy efficiency";
+	SI.Efficiency eff_II_rx "Reactor exergy efficiency";
 
 	SI.MassFlowRate m_flow_algae "Mass flow rate of algea";
 	SI.MassFlowRate m_flow_water "Mass flow rate of water";
 	SI.MassFlowRate m_flow_sg "Mass flow rate of syngas";
-	SI.MassFlowRate m_flow_H2_PV "Mass flow rate of H2 required from PV";
-	SI.MassFlowRate m_flow_CO2_dump "Mass flow rate of CO2 dumped from the reactor";
+	SI.MassFlowRate m_flow_H2_pv "Mass flow rate of H2 required from PV";
+	SI.MassFlowRate m_flow_CO2 "Mass flow rate of CO2 dumped/released from the reactor";
 
 	SI.Power P_pump "Pump power consumption";
 
-	Integer RX_state(min=1, max=4) "Reactor state";
-	SI.Time t_RX_w_next "Time of next reactor event to warm up";
-	SI.Time t_RX_c_next "Time of next reactor event to cool down";
+	Integer rx_state(min=1, max=4) "Reactor state";
+	SI.Time t_rx_w_next "Time of next reactor event to warm up";
+	SI.Time t_rx_c_next "Time of next reactor event to cool down";
 
 	Modelica.Blocks.Logical.Timer timer "Timer measuring the times that the reactor is on";
 	discrete SI.Time time_on(start=0, fixed=true) "Time marking when the reactor starts running";
@@ -92,11 +91,11 @@ protected
 	SI.HeatFlowRate Q_flow_SCWG "Inlet heat flow to SCWG";
 	SI.HeatFlowRate Q_flow_SMR "Inlet heat flow to SMR";
 
-	SI.MolarFlowRate n_flow_H2_RX "Molar flow rate of H2 produced in the reactor";
+	SI.MolarFlowRate n_flow_H2_rx "Molar flow rate of H2 produced in the reactor";
 	SI.MolarFlowRate n_flow_CH4 "Molar flow rate of CH4 produced in the reactor";
 	SI.MolarFlowRate n_flow_CO "Molar flow rate of CO produced in the reactor";
 	SI.MolarFlowRate n_flow_CO2 "Molar flow rate of CO2 produced in the reactor";
-	SI.MolarFlowRate n_flow_H2_PV "Molar flow rate of H2 required from PV";
+	SI.MolarFlowRate n_flow_H2_pv "Molar flow rate of H2 required from PV";
 	SI.MolarFlowRate n_flow_H2 "Total molar flow rate of H2";
 	SI.MolarFlowRate n_flow_sg "Molar flow rate of syngas";
 
@@ -112,56 +111,56 @@ protected
 
 	SolarTherm.Utilities.Polynomial.Poly eff_SCWG(c=cf_SCWG);
 	SolarTherm.Utilities.Polynomial.Poly eff_SMR(c=cf_SMR);
-	SolarTherm.Utilities.Polynomial.Poly eff_RX(c=cf_RX);
-	SolarTherm.Utilities.Polynomial.Poly exff_RX(c=cfII_RX);
+	SolarTherm.Utilities.Polynomial.Poly eff_rx(c=cf_rx);
+	SolarTherm.Utilities.Polynomial.Poly exff_rx(c=cfII_rx);
 
 	SolarTherm.Utilities.Polynomial.Poly FR_algae(c=cm_algae);
 
-	SolarTherm.Utilities.Polynomial.Poly FR_H2_RX(c=cn_H2_RX);
+	SolarTherm.Utilities.Polynomial.Poly FR_H2_rx(c=cn_H2_rx);
 	SolarTherm.Utilities.Polynomial.Poly FR_CH4(c=cn_CH4);
 	SolarTherm.Utilities.Polynomial.Poly FR_CO(c=cn_CO);
 	SolarTherm.Utilities.Polynomial.Poly FR_CO2(c=cn_CO2);
 
-	SolarTherm.Utilities.Polynomial.Poly p_p(c=cwp_Rx);
+	SolarTherm.Utilities.Polynomial.Poly p_p(c=cwp_rx);
 
-	SolarTherm.Utilities.Polynomial.Poly FR_CO2_dump(c=cm_CO2_dump);
+	SolarTherm.Utilities.Polynomial.Poly FR_CO2_dump(c=cm_CO2_rx);
 
 
 initial equation
 	pre(tot) = 0;
-	RX_state = 1;
-	t_RX_w_next = 0;
-	t_RX_c_next = 0;
+	rx_state = 1;
+	t_rx_w_next = 0;
+	t_rx_c_next = 0;
 
 algorithm
-	when RX_state == 1 and sum(R) >= R_min and rx_on then
-		RX_state := 2; // Reactor warming up
-	elsewhen RX_state == 2 and time >= t_RX_w_next then
-		RX_state := 3; // Reactor working
-	elsewhen RX_state == 4 and time >= t_RX_c_next then
-		RX_state := 1; // Reactor cooling down
-	elsewhen RX_state == 2 and (sum(R) < R_min or not rx_on) then
-		RX_state := 1; // Reactor off
-	elsewhen RX_state == 3 and (sum(R) < R_min or not rx_on) then
-		RX_state := 4; // Reactor off
+	when rx_state == 1 and sum(R) >= R_min and rx_on then
+		rx_state := 2; // Reactor warming up
+	elsewhen rx_state == 2 and time >= t_rx_w_next then
+		rx_state := 3; // Reactor working
+	elsewhen rx_state == 4 and time >= t_rx_c_next then
+		rx_state := 1; // Reactor cooling down
+	elsewhen rx_state == 2 and (sum(R) < R_min or not rx_on) then
+		rx_state := 1; // Reactor off
+	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) then
+		rx_state := 4; // Reactor off
 	end when;
 
-	when RX_state == 2 then
-		t_RX_w_next := time + t_RX_on_delay;
+	when rx_state == 2 then
+		t_rx_w_next := time + t_rx_on_delay;
 	end when;
 
-	when RX_state == 4 then
-		t_RX_c_next := time + t_RX_off_delay;
+	when rx_state == 4 then
+		t_rx_c_next := time + t_rx_off_delay;
 	end when;
 
-	on := if RX_state == 3 then true else false;
+	on := if rx_state == 3 then true else false;
 
 	when on then
 		time_on := time;
 	end when;
 
 equation
-	if RX_state <= 2 or RX_state > 3 then
+	if rx_state <= 2 or rx_state > 3 then
 		Q_flow_loss_SCWG = 0;
 		eff_I_SCWG = 0;
 		Q_flow_SCWG = 0;
@@ -172,18 +171,18 @@ equation
 		Q_flow_SMR = 0;
 		eff_SMR.x = 0;
 
-		eff_RX.x = 0;
-		eff_I_RX = 0;
+		eff_rx.x = 0;
+		eff_I_rx = 0;
 
-		exff_RX.x = 0;
-		eff_II_RX = 0;
+		exff_rx.x = 0;
+		eff_II_rx = 0;
 
-		FR_algae.x = if RX_state == 2 then sum(R)/1e6 else 0;
-		m_flow_algae = if RX_state == 2 then FR_algae.y else 0;
+		FR_algae.x = if rx_state == 2 then sum(R)/1e6 else 0;
+		m_flow_algae = if rx_state == 2 then FR_algae.y else 0;
 		m_flow_water = m_flow_algae * massRatio_w_a;
 
-		FR_H2_RX.x = 0;
-		n_flow_H2_RX = 0;
+		FR_H2_rx.x = 0;
+		n_flow_H2_rx = 0;
 
 		FR_CH4.x = 0;
 		n_flow_CH4 = 0;
@@ -194,11 +193,11 @@ equation
 		FR_CO2.x = 0;
 		n_flow_CO2 = 0;
 
-		n_flow_H2_PV = 0;
+		n_flow_H2_pv = 0;
 		n_flow_H2 = 0;
 
 		FR_CO2_dump.x = 0;
-		m_flow_CO2_dump = 0;
+		m_flow_CO2 = 0;
 
 		n_flow_sg = 0;
 		
@@ -210,14 +209,14 @@ equation
 		MM_sg = 0.010513556314215649;
 
 		m_flow_sg = 0;
-		m_flow_H2_PV = n_flow_H2_PV * MM_H2;
+		m_flow_H2_pv = n_flow_H2_pv * MM_H2;
 
 		mLHV_sg = 2.543623134148470e05;
 		LHV_sg = 24.193742112158110e06;
 		E_flow = 0;
 
-		p_p.x = if RX_state == 2 then (sum(R)/1e6 - R_mean) / R_std else 0;
-		P_pump = if RX_state == 2 then p_p.y * 1e3 else 0;
+		p_p.x = if rx_state == 2 then (sum(R)/1e6 - R_mean) / R_std else 0;
+		P_pump = if rx_state == 2 then p_p.y * 1e3 else 0;
 	else
 		eff_SCWG.x = (sum(R)/1e6 - R_mean) / R_std;
 		eff_I_SCWG = max(eff_SCWG.y,0);
@@ -229,18 +228,18 @@ equation
 		Q_flow_loss_SMR = (1 - eff_I_SMR) * Q_flow_SMR;
 		Q_flow_SMR = (1 - fr_Heat_SCWG) * sum(R);
 
-		eff_RX.x = (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_RX = max(eff_RX.y,0);
+		eff_rx.x = (sum(R)/1e6 - R_mean) / R_std;
+		eff_I_rx = max(eff_rx.y,0);
 
-		exff_RX.x = (sum(R)/1e6 - R_mean) / R_std;
-		eff_II_RX = max(exff_RX.y,0);
+		exff_rx.x = (sum(R)/1e6 - R_mean) / R_std;
+		eff_II_rx = max(exff_rx.y,0);
 
 		FR_algae.x = sum(R)/1e6;
 		m_flow_algae = max(FR_algae.y,0);
 		m_flow_water = m_flow_algae * massRatio_w_a;
 
-		FR_H2_RX.x = sum(R)/1e6;
-		n_flow_H2_RX = FR_H2_RX.y * 1000;
+		FR_H2_rx.x = sum(R)/1e6;
+		n_flow_H2_rx = FR_H2_rx.y * 1000;
 
 		FR_CH4.x = sum(R)/1e6;
 		n_flow_CH4 = FR_CH4.y * 1000;
@@ -252,14 +251,14 @@ equation
 		n_flow_CO2 = FR_CO2.y * 1000;
 
 		if pv then
-			n_flow_H2_PV = molarRatio_H2_CO * n_flow_CO - n_flow_H2_RX;
+			n_flow_H2_pv = molarRatio_H2_CO * n_flow_CO - n_flow_H2_rx;
 		else
-			n_flow_H2_PV = 0;
+			n_flow_H2_pv = 0;
 		end if;
-		n_flow_H2 = n_flow_H2_RX + n_flow_H2_PV;
+		n_flow_H2 = n_flow_H2_rx + n_flow_H2_pv;
 
 		FR_CO2_dump.x = sum(R)/1e6;
-		m_flow_CO2_dump = FR_CO2_dump.y;
+		m_flow_CO2 = FR_CO2_dump.y;
 
 		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO+n_flow_CO2;
 
@@ -271,7 +270,7 @@ equation
 		MM_sg = y_H2 * MM_H2 + y_CH4 * MM_CH4 + y_CO * MM_CO + y_CO2 * MM_CO2;
 
 		m_flow_sg = n_flow_sg * MM_sg;
-		m_flow_H2_PV = n_flow_H2_PV * MM_H2;
+		m_flow_H2_pv = n_flow_H2_pv * MM_H2;
 
 		mLHV_sg = y_H2 * mLHV_H2 + y_CH4 * mLHV_CH4 + y_CO * mLHV_CO + y_CO2 * mLHV_CO2;
 		LHV_sg = mLHV_sg / MM_sg;

@@ -15,27 +15,29 @@ model SolarFuelSystem
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
 	// Polynomilas coeffs for SCWG+SMR
-	parameter Boolean dump = true "CO2 is dumped from reactor and FT or not";
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
 	parameter Real cf_SMR[:] = {0.768282037316067, 0.093488773366821, -0.037724819862177, 0.015670722458670, -0.006367262777059, 0.001640716559506, -6.287807751796056e-04, 9.317070447512179e-04, -3.842549181678559e-04} "SMR efficiency coefficients";
-	parameter Real cf_RX[:] = { 0.640798255557369, 0.022098834006959, -0.010723851298492, 0.006750338487959, -3.460944058165703e-04, -0.001495651820584, -0.002071994901842, 0.001274509536169, 1.214843066972747e-04} "Reactor efficiency coefficients";
-	parameter Real cfII_RX[:] = {0.239720740558951, 0.017717089768015, -0.007908665634978, 0.004564414831539, 3.723312779643871e-04, -9.934891086378645e-04, -0.001873185660747, 6.710472890737369e-04, 3.101812502901246e-04} "Reactor exergy efficiency coefficients";
+	parameter Real cf_rx[:] = { 0.640798255557369, 0.022098834006959, -0.010723851298492, 0.006750338487959, -3.460944058165703e-04, -0.001495651820584, -0.002071994901842, 0.001274509536169, 1.214843066972747e-04} "Reactor efficiency coefficients";
+	parameter Real cfII_rx[:] = {0.239720740558951, 0.017717089768015, -0.007908665634978, 0.004564414831539, 3.723312779643871e-04, -9.934891086378645e-04, -0.001873185660747, 6.710472890737369e-04, 3.101812502901246e-04} "Reactor exergy efficiency coefficients";
 	parameter Real cm_algae[:] = {-0.468224708356939, 0.070274163287345, -3.351528856151204e-04, 4.659387778067976e-06, -2.367028491892777e-08} "Algae mass flow rate coefficients";
-	parameter Real cn_H2_RX[:] = {-0.035482292615410, 0.005324488630281, -3.586830751137109e-05, 5.831648981921393e-07, -3.515255572433898e-09} "Molar flow rate coefficients for H2";
+	parameter Real cn_H2_rx[:] = {-0.035482292615410, 0.005324488630281, -3.586830751137109e-05, 5.831648981921393e-07, -3.515255572433898e-09} "Molar flow rate coefficients for H2";
 	parameter Real cn_CH4[:] = {-1.295422230583035e-04, 1.943905192544214e-05, -1.308888391605432e-07, 2.127775120403135e-09, -1.282545613797826e-11} "Molar flow rate coefficients for CH4";
 	parameter Real cn_CO[:] = {-0.016795474223253, 0.002520339127028, -1.697830945844060e-05, 2.760430906749691e-07, -1.663966476344280e-09} "Molar flow rate coefficients for CO";
 	parameter Real cn_CO2[:] = {-2.292482118122781e-04, 3.440136345573267e-05, -2.318344313332857e-07, 3.769732738572897e-09, -2.272446118760488e-11} "Molar flow rate coefficients for CO2";
-	parameter Real cwp_Rx[:] = {3.214349160704963e02, 1.536790426747151e02, -1.135605222930574, 2.315935000530164, 3.333549397871687, -2.140229080818388, -3.339222243439558, 0.618459057856818, 0.848233555263823} "Pump power coefficients in reactor";
+	parameter Real cwp_rx[:] = {3.214349160704963e02, 1.536790426747151e02, -1.135605222930574, 2.315935000530164, 3.333549397871687, -2.140229080818388, -3.339222243439558, 0.618459057856818, 0.848233555263823} "Pump power coefficients in reactor";
 	parameter Real cr_sg[:] = {7.022488706961313, 0.529534167296794, 0.002088897277410, -2.423308450667479e-05, 1.040004504170970e-07} "Radiation power coefficients";
-	parameter Real cm_CO2_dump[:] = if dump then {-0.138561262069788, 0.022687988241418} else {0} "Mass flow rate coefficients for CO2 dumped from the reactor";
+	parameter Real cm_CO2_rx[:] = {-0.138561262069788, 0.022687988241418} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
 	// Polynomilas coeffs for FT
 	parameter Real cvf_petrol[:] = {-2.357698951348051e-09, 3.274254974192566e-04} "Volumetric flow rate coefficients for petrol production in FT";
 	parameter Real cvf_diesel[:] = {-1.991676070439976e-09, 2.730994248604119e-04} "Volumetric flow rate coefficients for diesel production in FT";
-	parameter Real cwc_FT[:] = {-2.885816443529007e-05, 1.164058460840140} "Compressor power coefficients in FT";
-	parameter Real cwp_FT[:] = {-1.247610161757073e-05, 3.517701836361515} "Pumps power coefficients in FT";
-	parameter Real cwt_FT[:] = {-3.634880001952640e-06, 0.781188945215679} "Turbine power coefficients in FT";
-	parameter Real cq_FT[:] = {-4.244948478003601e-05, 5.528142103774671} "Heat flow coefficients in FT";
-
+	parameter Real cwc_ft[:] = {-2.885816443529007e-05, 1.164058460840140} "Compressor power coefficients in FT";
+	parameter Real cwp_ft[:] = {-1.247610161757073e-05, 3.517701836361515} "Pumps power coefficients in FT";
+	parameter Real cwt_ft[:] = {-3.634880001952640e-06, 0.781188945215679} "Turbine power coefficients in FT";
+	parameter Real cq_ft[:] = {-4.244948478003601e-05, 5.528142103774671} "Heat flow coefficients in FT";
+	parameter Real cm_H2_pv[:] = {-2.242211530720511e-06, 0.018744457967858} "Mass flow rate coefficients for H2 required from PV in FT";
+	parameter Real cm_O2[:] = {-1.765190276268872e-05, 0.105121757554788} "Mass flow rate coefficients for O2 produced in FT";
+	parameter Real cm_water[:] = {-5.455413565288881e-06, 1.742082041909433} "Mass flow rate coefficients for water required in FT";
+	parameter Real cm_CO2_ft[:] = {1.632433704780866e-08, 0.036679737128161} "Mass flow rate coefficients for CO2 dumped/released from FT";
 
 	// Info for sizing the solar field
 	parameter SI.Efficiency eff_opt = 0.578161677
@@ -160,17 +162,16 @@ model SolarFuelSystem
 	SolarTherm.Models.CSP.CRS.Reactors.GenericRX RX(
 			cf_SCWG=cf_SCWG,
 			cf_SMR=cf_SMR,
-			cf_RX=cf_RX,
-			cfII_RX=cfII_RX,
+			cf_rx=cf_rx,
+			cfII_rx=cfII_rx,
 			cm_algae=cm_algae,
-			cn_H2_RX=cn_H2_RX,
+			cn_H2_rx=cn_H2_rx,
 			cn_CH4=cn_CH4,
 			cn_CO=cn_CO,
 			cn_CO2=cn_CO2,
-			cwp_Rx=cwp_Rx,
-			cm_CO2_dump=cm_CO2_dump,
-			pv=false,
-			dump=dump);
+			cwp_rx=cwp_rx,
+			cm_CO2_rx=cm_CO2_rx,
+			pv=false);
 
 	SolarTherm.Models.Storage.Tank.SimpleST ST(
 			E_max=E_max,
@@ -182,10 +183,14 @@ model SolarFuelSystem
 			fuel_conv_ratio = fuel_conv_ratio,
 			cvf_petrol=cvf_petrol,
 			cvf_diesel=cvf_diesel,
-			cwc_FT=cwc_FT,
-			cwp_FT=cwp_FT,
-			cwt_FT=cwt_FT,
-			cq_FT=cq_FT,
+			cwc_ft=cwc_ft,
+			cwp_ft=cwp_ft,
+			cwt_ft=cwt_ft,
+			cq_ft=cq_ft,
+			cm_H2_pv=cm_H2_pv,
+			cm_O2=cm_O2,
+			cm_water=cm_water,
+			cm_CO2_ft=cm_CO2_ft,
 			t_trans=t_trans);
 
 	SolarTherm.Models.Control.SyngasTankDispatch dis(
@@ -280,7 +285,7 @@ equation
 
 	m_w_req.u = RX.m_flow_water;
 	m_alg_req.u = RX.m_flow_algae;
-	m_H2_req.u = RX.m_flow_H2_PV;
+	m_H2_req.u = RX.m_flow_H2_pv;
 	m_sg_prod.u = RX.m_flow_sg;
 	E_rx_prod.u = RX.E_flow;
 	v_petr_prod.u = FT.v_flow_petrol;
