@@ -38,6 +38,9 @@ model SolarFuelSystem
 	parameter Real cm_O2[:] = {-1.765190276268872e-05, 0.105121757554788} "Mass flow rate coefficients for O2 produced in FT";
 	parameter Real cm_water[:] = {-5.455413565288881e-06, 1.742082041909433} "Mass flow rate coefficients for water required in FT";
 	parameter Real cm_CO2_ft[:] = {1.632433704780866e-08, 0.036679737128161} "Mass flow rate coefficients for CO2 dumped/released from FT";
+	parameter Real cm_nickel_ft[:] = {-0.036432683842489, 1.004096443438880e03, -0.328625657660620, 0.163834353981065, -0.024312165460329} "Mass coefficients for Nickel/Aluminum Oxide catalyst required in FT at design for a three-year of operation";
+	parameter Real cm_cobalt_ft[:] = {12.340067812222916, 6.814171157369776e02, 20.874688281356008, -11.294971280220974, 1.752095084592045} "Mass coefficients for Cobalt catalyst required in FT at design for a three-year of operation";
+	parameter Real cm_platinum_ft[:] = {-0.065114037948762, 7.425703372352051e02, -0.331153000124054, 0.147611987351198, -0.020598556194049} "Mass coefficients for Platinum catalyst required in FT at design for a three-year of operation";
 
 	// Info for sizing the solar field
 	parameter SI.Efficiency eff_opt = 0.578161677
@@ -191,6 +194,9 @@ model SolarFuelSystem
 			cm_O2=cm_O2,
 			cm_water=cm_water,
 			cm_CO2_ft=cm_CO2_ft,
+			cm_nickel_ft=cm_nickel_ft,
+			cm_cobalt_ft=cm_cobalt_ft,
+			cm_platinum_ft=cm_platinum_ft,
 			t_trans=t_trans);
 
 	SolarTherm.Models.Control.SyngasTankDispatch dis(
