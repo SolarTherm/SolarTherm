@@ -26,6 +26,10 @@ model GenericFT
 	parameter Real cm_water[:] "Mass flow rate coefficients for water required in FT";
 	parameter Real cm_CO2_ft[:] "Mass flow rate coefficients for CO2 dumped/released from FT";
 
+	parameter Real cm_nickel_ft[:] "Mass coefficients for Nickel/Aluminum Oxide catalyst required in FT at design for a three-year of operation";
+	parameter Real cm_cobalt_ft[:] "Mass coefficients for Cobalt catalyst required in FT at design for a three-year of operation";
+	parameter Real cm_platinum_ft[:] "Mass coefficients for Platinum catalyst required in FT at design for a three-year of operation";
+
 	parameter SI.Time t_trans = 1*60 "Transition time (= 0.0 gives a Step)";
 
 	//Variables:
@@ -38,6 +42,10 @@ model GenericFT
 	SI.VolumeFlowRate v_flow_petrol_des "Volumetric flow rate of petrol produced in FT at design";
 	SI.VolumeFlowRate v_flow_diesel_des "Volumetric flow rate of diesel produced in FT at design";
 	SI.VolumeFlowRate v_flow_fuel_des "Volumetric flow rate of fuel produced in FT at design";
+
+	SI.Mass m_nickel_ft "Mass of Nickel/Aluminum Oxide catalyst required in FT at design for a three-year of operation";
+	SI.Mass m_cobalt_ft "Mass of Cobalt catalyst required in FT at design for a three-year of operation";
+	SI.Mass m_platinum_ft "Mass of Platinum catalyst required in FT at design for a three-year of operation";
 
 	SI.Power P_C "Compressor power consumption";
 	SI.Power P_T "Turbine power production";
@@ -98,6 +106,10 @@ protected
 	SolarTherm.Utilities.Polynomial.Poly FR_water(c=cm_water);
 	SolarTherm.Utilities.Polynomial.Poly FR_CO2_dump(c=cm_CO2_ft);
 
+	SolarTherm.Utilities.Polynomial.Poly m_nickel(c=cm_nickel_ft);
+	SolarTherm.Utilities.Polynomial.Poly m_cobalt(c=cm_cobalt_ft);
+	SolarTherm.Utilities.Polynomial.Poly m_platinum(c=cm_platinum_ft);
+
 initial equation
 	pre(tot) = 0;
 	ft_state = 1;
@@ -138,7 +150,16 @@ equation
 	v_flow_diesel_des = vf_diesel_des.y;
 	vf_diesel_des.x = m_flow_sg_des;
 
-v_flow_fuel_des = v_flow_petrol_des + (fuel_conv_ratio * v_flow_diesel_des);
+	v_flow_fuel_des = v_flow_petrol_des + (fuel_conv_ratio * v_flow_diesel_des);
+
+	m_nickel_ft = m_nickel.y;
+	m_nickel.x = m_flow_sg_des;
+
+	m_cobalt_ft = m_cobalt.y;
+	m_cobalt.x = m_flow_sg_des;
+
+	m_platinum_ft = m_platinum.y;
+	m_platinum.x = m_flow_sg_des;
 
 	if ft_state <= 2 or ft_state > 3 then
 		cd.u = E_sg / LHV_sg;
