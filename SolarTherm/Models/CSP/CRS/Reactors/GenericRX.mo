@@ -32,6 +32,8 @@ model GenericRX
 
 	parameter Real cm_CO2_rx[:] "Mass flow rate coefficients for CO2 dumped/released from the reactor";
 
+	parameter SI.Mass m_nickel_rx = 7546.89 "Mass of Nickel/Aluminum Oxide catalyst required in reactor at design for a three-year of operation";
+
 	parameter Boolean pv = false "true if extra H2 is added from PV panels";
 
 	//Variables:

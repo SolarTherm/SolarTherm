@@ -76,10 +76,6 @@ model SolarFuelSystem
 	parameter Real tnk_full_lb(min=0, max=1) = 0.98;
 	parameter Real tnk_full_ub(min=0, max=1) = 0.99;
 
-	parameter SI.Mass m_catalyst_rx = 4752/3 "Mass of catalyst used in reactor annually";
-	parameter SI.Mass m_catalyst_ft = 742.5/3 "Mass of catalyst used in fischer tropsch reactor annually";
-	parameter SI.Mass m_catalyst_hc = 562/3 "Mass of catalyst used for hydrocracking annually";
-
 	// Calculated Parameters
 	parameter SI.HeatFlowRate Q_flow_des = A_rec * dni_des * C "Heat to the reactor at design point";
 	parameter SI.RadiantPower R_des = Q_flow_des "Input power for reactor at design point";
@@ -106,9 +102,10 @@ model SolarFuelSystem
 	parameter Real f_bm_st = 1.83 "Bare module factor for the syngas storage tank";
 	parameter Real f_ins = 0.02 "Insurance and local taxes factor";
 
-	parameter FI.MassPrice pri_catalyst_rx = 15 "Cost of catalyst per kilogram in reactor";
-	parameter FI.MassPrice pri_catalyst_ft = 26.4 "Cost of catalyst per kilogram in fischer tropsch reactor";
-	parameter FI.MassPrice pri_catalyst_hc = 29.7 "Cost of catalyst per kilogram for hydrocracking";
+	parameter FI.MassPrice pri_nickel = 45.0 "Cost of Nickel catalyst per kilogram";
+	parameter FI.MassPrice pri_cobalt = 45.0 "Cost of Cobalt catalyst per kilogram";
+	parameter FI.MassPrice pri_platinum = 72.28 "Cost of Platinum catalyst per kilogram";
+
 
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram";
 	parameter FI.MassPrice pri_algae = 1.2 "Cost of algae per kilogram";
@@ -145,8 +142,6 @@ model SolarFuelSystem
 	parameter FI.MoneyPerYear pri_labor = 138600 "Cost of labor per person per year";
 	parameter Integer n_labor = 28 "Number of labor working at the plant";
 	parameter FI.MoneyPerYear C_labor = n_labor * pri_labor "Labor cost";
-
-	parameter FI.Money C_catalyst = (m_catalyst_rx * pri_catalyst_rx) + (m_catalyst_ft * pri_catalyst_ft) + (m_catalyst_hc * pri_catalyst_hc) "Catalysts cost";
 
 	parameter FI.MoneyPerYear C_om = (10 * A_field) // field cleaning/maintenance
 				+ (fi_rx * (C_rx + C_st))
@@ -250,6 +245,7 @@ model SolarFuelSystem
 	FI.Money C_op(start=0) "Operating costs";
 	FI.Money R_spot(start=0) "Spot market revenue";
 
+	FI.Money C_catalyst "Catalysts cost";
 	// Equations
 	// *********************
 equation
@@ -286,6 +282,12 @@ equation
 		CL.defocus = false;
 		CL.R_dfc = 0;
 	end if;
+
+
+	// Cost of catalysts:
+
+	C_catalyst = (pri_nickel * RX.m_nickel_rx/3.0) + (pri_nickel * FT.m_nickel_ft/3.0) + (pri_cobalt * FT.m_cobalt_ft/3.0) + (pri_platinum * FT.m_platinum_ft/3.0);
+
 
 	// Cumulative performance-related results:
 
