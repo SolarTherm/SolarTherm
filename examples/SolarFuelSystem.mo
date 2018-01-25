@@ -106,10 +106,11 @@ model SolarFuelSystem
 	parameter FI.MassPrice pri_cobalt = 45.0 "Cost of Cobalt catalyst per kilogram";
 	parameter FI.MassPrice pri_platinum = 72.28 "Cost of Platinum catalyst per kilogram";
 
-
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram";
 	parameter FI.MassPrice pri_algae = 1.2 "Cost of algae per kilogram";
 	parameter FI.MassPrice pri_H2 = 18 "Cost of hydrogen per kilogram";
+	parameter FI.MassPrice pri_CO2 = 25.4*(1e-3) "Penalty cost for CO2 emissions per kilogram";
+	parameter FI.MassPrice pri_O2 = 115.57*(1e-3) "Cost of Oxygen to sell per kilogram";
 	parameter FI.EnergyPrice_kWh pri_elec = 0.25 "Cost of grid electricity per kWh";
 
 	parameter Real fuel_conv_ratio = 0.9 "Conversion ratio of diesel to petrol for price calculation";
@@ -223,14 +224,17 @@ model SolarFuelSystem
 			mmap={1,1,1,1,1,1,1,1,1,1,1,1}
 			) if storage and not const_dispatch and not forecast_scheduler;
 
-	Modelica.Blocks.Continuous.Integrator m_w_req(y_start=0) "Mass of water required by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_alg_req(y_start=0) "Mass of algae required by the reactor"; // [kg]
-	Modelica.Blocks.Continuous.Integrator m_H2_req(y_start=0) "Mass of H2 required from PV"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [J]
 	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor";
 	Modelica.Blocks.Continuous.Integrator v_petr_prod(y_start=0) "Volume of petrol produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator v_dies_prod(y_start=0) "Volume of diesel produced in FT";  // [m3]
+	Modelica.Blocks.Continuous.Integrator m_O2_prod(y_start=0) "Mass of Oxygen produced in FT"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_w_req(y_start=0) "Mass of water required"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_req(y_start=0) "Mass of H2 required from PV"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_CO2_emiss(y_start=0) "Mass of CO2 released/dumped to environment"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_elec_cons(y_start=0) "Plant electricity consumption"; // [J]
+
 
 	// Variables
 	// *********************
@@ -241,10 +245,11 @@ model SolarFuelSystem
 	FI.Money C_water(start=0) "Cost of water";
 	FI.Money C_algae(start=0) "Cost of algae";
 	FI.Money C_H2(start=0) "Cost of hydrogen";
+	FI.Money C_CO2(start=0) "Cost of CO2 emissions";
+	FI.Money C_O2(start=0) "Cost of Oxygen to sell";
 	FI.Money C_elec(start=0) "Cost of electricity consumption";
 	FI.Money C_op(start=0) "Operating costs";
 	FI.Money R_spot(start=0) "Spot market revenue";
-
 	FI.Money C_catalyst "Catalysts cost";
 	// Equations
 	// *********************
@@ -288,24 +293,27 @@ equation
 
 	C_catalyst = (pri_nickel * RX.m_nickel_rx/3.0) + (pri_nickel * FT.m_nickel_ft/3.0) + (pri_cobalt * FT.m_cobalt_ft/3.0) + (pri_platinum * FT.m_platinum_ft/3.0);
 
-
 	// Cumulative performance-related results:
 
-	m_w_req.u = RX.m_flow_water;
 	m_alg_req.u = RX.m_flow_algae;
-	m_H2_req.u = RX.m_flow_H2_pv;
 	m_sg_prod.u = RX.m_flow_sg;
 	E_rx_prod.u = RX.E_flow;
 	v_petr_prod.u = FT.v_flow_petrol;
 	v_dies_prod.u = FT.v_flow_diesel;
 	V_fuel = v_petr_prod.y + (fuel_conv_ratio * v_dies_prod.y);
+	m_O2_prod.u = FT.m_flow_O2;
+	m_w_req.u = RX.m_flow_water + FT.m_flow_water;
+	m_H2_req.u = RX.m_flow_H2_pv + FT.m_flow_H2_pv;
+	m_CO2_emiss.u = RX.m_flow_CO2 + FT.m_flow_CO2;
 	E_elec_cons.u = FT.P_C - FT.P_T + RX.P_pump + FT.P_pumps;
 
 	C_water = m_w_req.y * pri_water;
 	C_algae = m_alg_req.y * pri_algae;
 	C_H2 = m_H2_req.y * pri_H2;
+	C_CO2 = m_CO2_emiss.y * pri_CO2;
+	C_O2 = m_O2_prod.y * pri_O2;
 	C_elec = ((E_elec_cons.y)/(3.6e6)) * pri_elec;
-	C_op = C_water + C_algae + C_H2 + C_elec;
+	C_op = C_water + C_algae + C_H2 + C_CO2 - C_O2 + C_elec;
 
 	R_spot = V_fuel * pri_spot;
 
