@@ -220,6 +220,8 @@ class SimResultFuel(SimResult):
 		C_water_v = self.mat.data('C_water') # Cost of water [$/year]
 		C_algae_v = self.mat.data('C_algae') # Cost of algae [$/year]
 		C_H2_v = self.mat.data('C_H2')  # Cost of hydrogen [$/year]
+		C_CO2_v = self.mat.data('C_CO2')  # Cost of CO2 emissions [$/year]
+		C_O2_v = self.mat.data('C_O2')  # Cost of Oxygen to sell [$/year]
 		C_elec_v = self.mat.data('C_elec') # Cost of electricity consumption [$/year]
 		disc_v = self.mat.data('r_disc') # Discount rate [-]
 		infl_v = self.mat.data('r_i') # Inflation rate [-]
@@ -228,8 +230,8 @@ class SimResultFuel(SimResult):
 		name_v = self.mat.data('FT.v_flow_fuel_des') # Nominal fuel volumetric flow rate [m3/s]
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
-		C_op_v = C_water_v + C_algae_v + C_H2_v + C_elec_v # Operating costs [$/year]
-		C_year = C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
+		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
+		C_year = C_labor_v[0] + C_catalyst_v[-1] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
 
 		dur = V_fuel_t[-1] - V_fuel_t[0] # Time duration [s]
 		years = dur/31536000 # number of years of simulation [year]
