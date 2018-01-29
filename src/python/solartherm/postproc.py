@@ -231,7 +231,7 @@ class SimResultFuel(SimResult):
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
 		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
-		C_year = C_labor_v[0] + C_catalyst_v[-1] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
+		C_year = C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
 
 		dur = V_fuel_t[-1] - V_fuel_t[0] # Time duration [s]
 		years = dur/31536000 # number of years of simulation [year]
