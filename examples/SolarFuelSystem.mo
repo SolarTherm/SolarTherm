@@ -94,13 +94,20 @@ model SolarFuelSystem
 	parameter Real r_i = 0.03 "Inflation rate";
 	parameter Integer t_life(unit="year") = 30 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 2 "Years of construction";
-	parameter Real fi_rx = 0.02 "Maintenance factor of the reactor";
-	parameter Real fi_ft = 0.02 "Maintenance factor of the fischer tropsch reactor";
-	parameter Real f_instl = 1.255 "Installation, integration, piping, service and contractor fees factor of the plant";
+
+	parameter Real f_site_prep = 0.15 "Site preparation factor";
+	parameter Real f_serv_fac = 0.20 "Service facilities factor";
+	parameter Real f_cont = 0.18 "Contingencies and contractor fee factor";
+	parameter Real f_land = 0.02 "Land cost factor";
+	parameter Real f_startup = 0.1 "Startup cost factor";
+	parameter Real f_wc = 0.15 "Working capital factor";
+	parameter Real f_insur = 0.02 "Insurance and local taxes factor";
+	parameter Real f_om = 0.02 "Operational and maintenance cost factor";
+
 	parameter Real f_Subs = 0.0 "Subsidies on initial investment costs";
+
 	parameter Real f_bm_sf = 1.25 "Bare module factor for the solar field";
 	parameter Real f_bm_st = 1.83 "Bare module factor for the syngas storage tank";
-	parameter Real f_ins = 0.02 "Insurance and local taxes factor";
 
 	parameter FI.MassPrice pri_nickel = 45.0 "Cost of Nickel catalyst per kilogram";
 	parameter FI.MassPrice pri_cobalt = 45.0 "Cost of Cobalt catalyst per kilogram";
@@ -119,35 +126,43 @@ model SolarFuelSystem
 	//parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
 	//parameter FI.Money C_land = pri_land * A_land "Land cost";
 
-	parameter FI.AreaPrice pri_field = 120+15 "Field cost per design aperture area";
-	parameter FI.Money C_field = f_bm_sf * (pri_field * A_field) "Field cost";
+	parameter FI.AreaPrice pri_field = 240+15 "Field cost per design aperture area";
+	parameter FI.Money C_field = f_bm_sf * (pri_field * A_field) "Solar field capital cost";
 
-	parameter FI.PowerPrice pri_tower = 0.050 "Tower cost per design power";
-	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower cost";
+	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
+	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower capital cost";
 
-	parameter FI.PowerPrice pri_rx = 0.4233 "Receiver cost per design power";
-	parameter FI.Money C_rx = pri_rx * R_des "Receiver cost";
+	parameter FI.PowerPrice pri_rx = 0.39417294 "Receiver cost per design power";
+	parameter FI.Money C_rx = pri_rx * R_des "Receiver capital cost";
 
-	//parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
-	//parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
-	//parameter FI.Money C_st = integer(V_max/V_ub) * FI.gasTankCost_V(V_ub) + FI.gasTankCost_V(V_max - integer(V_max/V_ub) * V_ub) "Storage tanks cost";
-	parameter FI.EnergyPrice pri_st = 19589/1e9 "Syngas storage cost per unit of energy";
-	parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks cost";
+	parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
+	parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
+	parameter FI.Money C_st = f_bm_st * (integer(V_max/V_ub) * FI.gasTankCost_V(V_ub) + FI.gasTankCost_V(V_max - integer(V_max/V_ub) * V_ub)) "Storage tanks capital cost";
+	//parameter FI.EnergyPrice pri_st = 9475/1e9 "Syngas storage cost per unit of energy";
+	//parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks cost";
 
 	parameter FI.Money C_ft = FI.fischerTropschCost_m_sg(m_flow_ft_des) "fischer tropsch reactor cost";
 
-	parameter FI.Money C_pur = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ft) "Purchased equipment cost";
-	parameter FI.Money C_instl = f_instl * C_pur "Total engineering, installation, integration, and piping costs of the plant";
-	parameter FI.Money C_cap = C_pur + C_instl "Total capital cost of the plant";
+	parameter FI.Money C_tbm = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ft) "Total bare module investment cost";
+	parameter FI.Money C_site = f_site_prep * C_tbm "Site preparation cost";
+	parameter FI.Money C_serv = f_serv_fac * C_tbm "Service facilities cost";
+	parameter FI.Money C_dpi = C_tbm + C_site + C_serv "Direct permanent investment cost";
+	parameter FI.Money C_cont = f_cont * C_dpi "Contingencies and contractor fee";
+	parameter FI.Money C_tdc = C_dpi + C_cont "Total depreciable capital cost";
+	parameter FI.Money C_land = f_land * C_tdc "Cost of land";
+	parameter FI.Money C_startup = f_startup * C_tdc "Cost of startup";
+	parameter FI.Money C_tpi = C_tdc + C_land + C_startup "Total permanent investment cost";
+	parameter FI.Money C_wc = f_wc * C_tpi "Working capital cost";
+	parameter FI.Money C_tci = C_tpi + C_wc "Total capital investment cost";
 
-	parameter FI.MoneyPerYear pri_labor = 138600 "Cost of labor per person per year";
+	parameter FI.Money C_cap = C_tci "Total capital cost of the plant";
+
+	parameter FI.MoneyPerYear pri_labor = 139000 "Cost of labour per person per year";
 	parameter Integer n_labor = 28 "Number of labor working at the plant";
 	parameter FI.MoneyPerYear C_labor = n_labor * pri_labor "Labor cost";
 
-	parameter FI.MoneyPerYear C_om = (10 * A_field) // field cleaning/maintenance
-				+ (fi_rx * (C_rx + C_st))
-				+ (fi_ft * C_ft)
-				+ (f_ins * C_pur) "Maintenance costs for each year";
+	parameter FI.MoneyPerYear C_insur = f_insur * C_tci "Insurance and local taxes cost for each year";
+	parameter FI.MoneyPerYear C_om = C_insur + (f_om * C_tci) "Operational and maintenance cost for each year";
 
 	// System components
 	// *********************
