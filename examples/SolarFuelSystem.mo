@@ -152,16 +152,16 @@ model SolarFuelSystem
 	parameter FI.Money C_wc = f_wc * C_tpi "Working capital cost";
 	parameter FI.Money C_tci = C_tpi + C_wc "Total capital investment cost";
 
-	parameter FI.Money C_cap = C_tci "Total capital cost of the plant";
+	parameter FI.Money C_cap = C_tci "Total capital cost of the plant in AUD";
 
 	parameter FI.MoneyPerYear pri_labor = 139000 "Cost of labour per person per year";
 	parameter Integer n_labor = FI.nLabour_m_sg(m_flow_ft_des) "Number of labor working at the plant";
-	parameter FI.MoneyPerYear C_labor = pri_labor * n_labor "Labor annual cost";
+	parameter FI.MoneyPerYear C_labor = pri_labor * n_labor "Labor annual cost in AUD";
 
-	parameter FI.Money C_catalyst = (pri_nickel * RX.m_nickel_rx/3.0) + (pri_nickel * FT.m_nickel_ft/3.0) + (pri_cobalt * FT.m_cobalt_ft/3.0) + (pri_platinum * FT.m_platinum_ft/3.0) "Catalysts cost for each year of operation";
+	parameter FI.Money C_catalyst = (pri_nickel * RX.m_nickel_rx/3.0) + (pri_nickel * FT.m_nickel_ft/3.0) + (pri_cobalt * FT.m_cobalt_ft/3.0) + (pri_platinum * FT.m_platinum_ft/3.0) "Catalysts cost for each year of operation in AUD";
 
-	parameter FI.MoneyPerYear C_insur = f_insur * C_tci "Insurance and local taxes cost for each year";
-	parameter FI.MoneyPerYear C_om = C_insur + (f_om * C_tci) "Operational and maintenance cost for each year";
+	parameter FI.MoneyPerYear C_insur = f_insur * C_tci "Insurance and local taxes cost for each year in AUD";
+	parameter FI.MoneyPerYear C_om = C_insur + (f_om * C_tci) "Operational and maintenance cost for each year in AUD";
 
 	// System components
 	// *********************
