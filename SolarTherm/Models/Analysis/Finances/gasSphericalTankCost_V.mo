@@ -1,5 +1,5 @@
 within SolarTherm.Models.Analysis.Finances;
-function gasSphericalTankCost "Capital cost of a spherical gas tank as a function of volume"
+function gasSphericalTankCost_V "Capital cost of a spherical gas tank as a function of volume"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Volume V "Tank volume";
 	output SolarTherm.Models.Analysis.Finances.Money C_cap "Capital cost in AUD";
@@ -12,4 +12,4 @@ algorithm
 	//Ref. Table 22.32 page 595 in  W.D. Seider et al., Product and Process Design Principles: Synthesis, Analysis and Design, 3rd Edition 2008
 	// Low pressure spherical vessel: valid for V = 4000 to 400,000 ft3 and pressure up to 1.2 bar
 	C_cap := 3170 * ((V * 35.3147)^0.43) * uf / r_cur;
-end gasSphericalTankCost;
+end gasSphericalTankCost_V;
