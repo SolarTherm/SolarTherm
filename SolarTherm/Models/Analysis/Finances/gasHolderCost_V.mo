@@ -1,5 +1,5 @@
 within SolarTherm.Models.Analysis.Finances;
-function gasSphericalTankCost_V "Capital cost of a spherical gas tank as a function of volume"
+function gasHolderCost_V "Capital cost of a gas holder as a function of volume"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Volume V "Tank volume";
 	output SolarTherm.Models.Analysis.Finances.Money C_cap "Capital cost in AUD";
@@ -10,6 +10,6 @@ protected
 	parameter Real r_cur = 0.7617 "The currency rate from AUD to USD"; //Valid for June 2016: 1 USD = 0.7617 AUD
 algorithm
 	//Ref. Table 22.32 page 595 in  W.D. Seider et al., Product and Process Design Principles: Synthesis, Analysis and Design, 3rd Edition 2008
-	// Low pressure spherical vessel: valid for V = 4000 to 400,000 ft3 and pressure up to 1.2 bar
+	// Low pressure gas holder: valid for V = 4000 to 400,000 ft3 and pressure up to 3 psig
 	C_cap := 3170 * ((V * 35.3147)^0.43) * uf / r_cur;
-end gasSphericalTankCost_V;
+end gasHolderCost_V;

@@ -134,7 +134,7 @@ model SolarFuelSystem
 
 	parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
 	parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
-	parameter FI.Money C_st = f_bm_st * (integer(V_max/V_ub) * FI.gasSphericalTankCost_V(V_ub) + FI.gasSphericalTankCost_V(V_max - integer(V_max/V_ub) * V_ub)) "Storage tanks capital cost";
+	parameter FI.Money C_st = f_bm_st * (integer(V_max/V_ub) * FI.gasHolderCost_V(V_ub) + FI.gasHolderCost_V(V_max - integer(V_max/V_ub) * V_ub)) "Storage tanks capital cost";
 	//parameter FI.EnergyPrice pri_st = 9475/1e9 "Syngas storage cost per unit of energy";
 	//parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks cost";
 
