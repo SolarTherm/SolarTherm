@@ -9,6 +9,7 @@ VolumePrice
 MassPrice
 SpotPriceTable
 gasHolderCost_V
+pressureVesselCost_V
 fischerTropschCost_m_sg
 massNickel_ft_m_sg
 massCobalt_ft_m_sg

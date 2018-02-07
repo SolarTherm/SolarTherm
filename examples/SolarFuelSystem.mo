@@ -53,7 +53,7 @@ model SolarFuelSystem
 	parameter SI.Time t_trans = 60*60 "Ramp-up/down time in FT";
 
 	constant SI.SpecificEnthalpy LHV_sg = 24.193742112158110e06 "Lower heating value of syngas";
-	constant SI.Density rho_sg = 1.08974 "Syngas density at 25C & 3bar";
+	constant SI.Density rho_sg = 1.08974 "Syngas density at 25C & 3bar"; // at 1bar: 0.420504, at 20bar: 8.467232
 
 	parameter Real t_storage(unit="h") = 8 "Hours of storage"; //Potential design variable
 	parameter Real ini_frac(min=0, max=1) = 0.1 "Initial fraction charged";
@@ -132,11 +132,25 @@ model SolarFuelSystem
 	parameter FI.PowerPrice pri_rx = 0.39417294 "Receiver cost per design power";
 	parameter FI.Money C_rx = pri_rx * R_des "Receiver capital cost";
 
-	parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
-	parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
-	parameter FI.Money C_st = f_bm_st * (integer(V_max/V_ub) * FI.gasHolderCost_V(V_ub) + FI.gasHolderCost_V(V_max - integer(V_max/V_ub) * V_ub)) "Storage tanks capital cost";
+	//If gasometer(gas holder) is used, then uncomment the follwing to estimate the cost of storage:
+	//parameter SI.Volume V_lb = 4000 * 0.0283168 "Lower bound of tank volume in cost function";
+	//parameter SI.Volume V_ub = 400000 * 0.0283168 "Upper bound of tank volume in cost function";
+	//parameter Integer n_st = integer(ceil(V_max/V_ub)) "Number of storage tanks";
+	//if V_max < V_lb then
+		//V_unit := V_lb;
+	//else
+		//V_unit := V_max / n_st;
+	//end if;
+	//parameter FI.Money C_st = f_bm_st * (n_st * FI.gasHolderCost_V(V_unit)) "Storage tanks capital cost";
+
+	//If the unit cost from Saw and Jim, then uncomment the following to estimate the cost of storage:
 	//parameter FI.EnergyPrice pri_st = 9475/1e9 "Syngas storage cost per unit of energy";
-	//parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks cost";
+	//parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks capital cost";
+
+	// If a horizontal cylindrical pressure vessel is used, then use the following to estimate the cost of storage:
+	parameter Real par_st_v[2] = FI.pressureVesselCost_V(V_max) "Key cost outputs of the storage at design: n_st and C_cap";
+	parameter Integer n_st = integer(par_st_v[1]) "Number of storage tanks";
+	parameter FI.Money C_st = f_bm_st * par_st_v[2] "Storage tanks capital cost";
 
 	parameter FI.Money C_ft = FI.fischerTropschCost_m_sg(m_flow_ft_des) "fischer tropsch reactor cost";
 
@@ -326,5 +340,4 @@ equation
 	when terminal() then
 		dni_mean = dni_int / CL.tot;
 	end when;
-
 end SolarFuelSystem;
