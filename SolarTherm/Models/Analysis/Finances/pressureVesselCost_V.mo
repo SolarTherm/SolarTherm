@@ -14,7 +14,9 @@ function pressureVesselCost_V "Capital cost of a horizontal cylindrical pressure
 	extends Modelica.Icons.Function;
 
 	input Modelica.SIunits.Volume V "Tank volume";
-	output Real outputs[2] "The outputs vector consisitng n_st and C_cap"; 
+	input Real f_bm "Bare module factor for the syngas storage tank";
+	output Integer n_st "Number of tanks required";
+	output FI.Money C_cap "Capital cost in AUD";
 
 	function volume_d "Tank volume as a function of internal diameter"
 		extends Modelica.Icons.Function;
@@ -159,8 +161,6 @@ protected
 	parameter Real w_ub_check = weight(d_ub, t_d_ub, l_ub, rho) "Weight of the shell and the two heads for the largest tank allowed";
 
 	//Variables:
-	Integer n_st "Number of tanks required";
-	FI.Money C_cap "Capital cost in AUD";
 	Modelica.SIunits.Volume V_unit "Volume of each tank"; 
 	Length_in d_unit "Internal diameter of each tank";
 	Length_in l_unit "Length of each tank";
@@ -197,9 +197,9 @@ algorithm
 		C_pl_unit := CostAdd_st(d_unit, uf, r_cur);
 		C_p_unit := Cost_st(fm, C_v_unit, C_pl_unit);
 
-		C_cap := n_st * C_p_unit;
-		outputs := {n_st, C_cap};
+		C_cap := f_bm * n_st * C_p_unit;
 	else
-		outputs := {0, 0.0};
+		n_st := 0;
+		C_cap := 0.0;
 	end if;
 end pressureVesselCost_V;

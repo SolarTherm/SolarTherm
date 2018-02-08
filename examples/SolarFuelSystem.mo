@@ -148,9 +148,8 @@ model SolarFuelSystem
 	//parameter FI.Money C_st = f_bm_st * (pri_st * E_max) "Storage tanks capital cost";
 
 	// If a horizontal cylindrical pressure vessel is used, then use the following to estimate the cost of storage:
-	parameter Real par_st_v[2] = FI.pressureVesselCost_V(V_max) "Key cost outputs of the storage at design: n_st and C_cap";
-	parameter Integer n_st = integer(par_st_v[1]) "Number of storage tanks";
-	parameter FI.Money C_st = f_bm_st * par_st_v[2] "Storage tanks capital cost";
+	parameter Integer n_st(fixed = false) "Number of storage tanks";
+	parameter FI.Money C_st(fixed = false) "Storage tanks capital cost";
 
 	parameter FI.Money C_ft = FI.fischerTropschCost_m_sg(m_flow_ft_des) "fischer tropsch reactor cost";
 
@@ -277,6 +276,9 @@ model SolarFuelSystem
 	FI.Money R_spot(start=0) "Spot market revenue";
 	// Equations
 	// *********************
+initial equation
+	(n_st, C_st) = FI.pressureVesselCost_V(V_max, f_bm_st);
+
 equation
 	connect(wea.wbus, CL.wbus);
 	connect(wea.wbus, RX.wbus);
