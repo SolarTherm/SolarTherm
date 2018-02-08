@@ -76,6 +76,9 @@ model SimpleSystem
 	SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
 	SI.Power P_elec "Output power of power block";
 
+	Real fr_dfc "Target energy fraction at the defocused state";
+	Boolean full "True if the storage tank is full";
+
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
 	SI.HeatFlowRate Q_flow_sched "Discharge schedule";
@@ -100,10 +103,19 @@ initial equation
 	t_con_next = 0;
 	t_blk_next = 0;
 	t_sch_next = t_sch_next_start;
+
+	if E > E_up_u then
+		full = true;
+	elseif E < E_up_l then
+		full = false;
+	else
+		full = true;
+	end if;
+
 algorithm
-	// Discrete equation system not yet supported (even though correct)
-	// Putting in algorithm section instead
-	when con_state >= 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
+	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
+		con_state := 1; // off sun
+	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) then
 		con_state := 1; // off sun
 	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l then
 		con_state := 2; // start onsteering
@@ -139,12 +151,35 @@ algorithm
 			t_sch_next := time + t_delta[i];
 		end when;
 	end for;
+
+	when E > E_up_u then
+		full := true;
+	elsewhen E < E_up_l then
+		full := false;
+	end when;
+
 equation
 	Q_flow_chg = eff_rec*Q_flow_rec;
 
 	der(E) = Q_flow_chg - Q_flow_dis;
 
-	Q_flow_rec = if con_state <= 2 then 0 else C*wea.wbus.dni*A_rec;
+	if con_state <= 2 then
+		Q_flow_rec = 0;
+		fr_dfc =0;
+	else
+		if full then
+			if eff_rec*(C*wea.wbus.dni*A_rec) > Q_flow_dis then
+				Q_flow_rec = min(Q_flow_dis/eff_rec, max(C*wea.wbus.dni*A_rec, 0));
+				fr_dfc = Q_flow_dis / (max(C*wea.wbus.dni*A_rec, 0) + 1e-6);
+			else
+				Q_flow_rec = C*wea.wbus.dni*A_rec;
+				fr_dfc = 1;
+			end if;
+		else
+			Q_flow_rec = C*wea.wbus.dni*A_rec;
+			fr_dfc = 1;
+		end if;
+	end if;
 
 	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
 
