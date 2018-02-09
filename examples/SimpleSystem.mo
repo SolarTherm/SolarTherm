@@ -78,14 +78,14 @@ model SimpleSystem
 	SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
 	SI.Power P_elec "Output power of power block";
 
-	Real fr_dfc "Target energy fraction of the heliostat field at the defocused state";
+	Real fr_dfc(min=0, max=1) "Target energy fraction of the heliostat field at the defocused state";
 	Boolean full "True if the storage tank is full";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
 	SI.HeatFlowRate Q_flow_sched "Discharge schedule";
 
-	Integer con_state(min=1, max=4) "Concentrator state";
+	Integer con_state(min=1, max=5) "Concentrator state";
 	Integer blk_state(min=1, max=4) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
@@ -119,17 +119,23 @@ initial equation
 	end if;
 
 algorithm
-	// Discrete equation system not yet supported (even though correct)	+	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
+	// Discrete equation system not yet supported (even though correct)
 	// Putting in algorithm section instead
 	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
 		con_state := 1; // off sun
 	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) then
-		con_state := 4; // ramp down
+		con_state := 5; // ramp down
+	elsewhen con_state == 3 and full then
+		con_state := 4; // on sun at part load
+	elsewhen con_state == 4 and not full then
+		con_state := 3; // on sun at full load
+	elsewhen con_state == 4 and (wea.wbus.dni <= dni_stop) then
+		con_state := 5; // ramp down
 	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l then
 		con_state := 2; // start onsteering (i.e. ramp up)
 	elsewhen con_state == 2 and time >= t_con_w_next then
-		con_state := 3; // on sun
-	elsewhen con_state == 4 and time >= t_con_c_next then
+		con_state := 3; // on sun at full load
+	elsewhen con_state == 5 and time >= t_con_c_next then
 		con_state := 1; // Off sun
 	end when;
 
@@ -157,7 +163,7 @@ algorithm
 		t_con_w_next := time + t_con_on_delay;
 	end when;
 
-	when con_state == 4 then
+	when con_state == 5 then
 		t_con_c_next := time + t_con_off_delay;
 	end when;
 
@@ -187,20 +193,20 @@ equation
 
 	der(E) = Q_flow_chg - Q_flow_dis;
 
-	if (con_state <= 2 or con_state > 3) then
+	if (con_state <= 2 or con_state > 4) then
 		Q_flow_rec = 0;
-		fr_dfc =0;
+		fr_dfc = 0;
 	else
 		if full then
 			if eff_rec*(C*wea.wbus.dni*A_rec) > Q_flow_dis then
 				Q_flow_rec = min(Q_flow_dis/eff_rec, max(C*wea.wbus.dni*A_rec, 0));
 				fr_dfc = Q_flow_dis / (max(C*wea.wbus.dni*A_rec, 0) + 1e-6);
 			else
-				Q_flow_rec = C*wea.wbus.dni*A_rec;
+				Q_flow_rec = max(C*wea.wbus.dni*A_rec, 0);
 				fr_dfc = 1;
 			end if;
 		else
-			Q_flow_rec = C*wea.wbus.dni*A_rec;
+			Q_flow_rec = max(C*wea.wbus.dni*A_rec, 0);
 			fr_dfc = 1;
 		end if;
 	end if;
