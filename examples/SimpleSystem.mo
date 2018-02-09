@@ -28,7 +28,9 @@ model SimpleSystem
 	parameter SI.Irradiance dni_start = 200 "DNI at which concentrator starts";
 
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
+	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
 	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
+	parameter SI.Time t_blk_off_delay = 10*60 "Delay until power block shuts off";
 
 	parameter Integer n_sched_states = 1 "Number of schedule states";
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
@@ -76,19 +78,21 @@ model SimpleSystem
 	SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
 	SI.Power P_elec "Output power of power block";
 
-	Real fr_dfc "Target energy fraction at the defocused state";
+	Real fr_dfc "Target energy fraction of the heliostat field at the defocused state";
 	Boolean full "True if the storage tank is full";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
 	SI.HeatFlowRate Q_flow_sched "Discharge schedule";
 
-	Integer con_state(min=1, max=3) "Concentrator state";
-	Integer blk_state(min=1, max=3) "Power block state";
+	Integer con_state(min=1, max=4) "Concentrator state";
+	Integer blk_state(min=1, max=4) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
-	Real t_con_next "Time of next concentrator event";
-	Real t_blk_next "Time of next power block event";
+	Real t_con_w_next "Time of next concentrator warm-up event";
+	Real t_con_c_next "Time of next concentrator cool-down event";
+	Real t_blk_w_next "Time of next power block warm-up event";
+	Real t_blk_c_next "Time of next power block cool-down event";
 	Real t_sch_next "Time of next schedule change";
 
 	FI.Money R_spot(start=0, fixed=true)
@@ -100,8 +104,10 @@ initial equation
 	con_state = 1;
 	blk_state = 1;
 	sch_state = sch_state_start;
-	t_con_next = 0;
-	t_blk_next = 0;
+	t_con_w_next = 0;
+	t_con_c_next = 0;
+	t_blk_w_next = 0;
+	t_blk_c_next = 0;
 	t_sch_next = t_sch_next_start;
 
 	if E > E_up_u then
@@ -113,24 +119,34 @@ initial equation
 	end if;
 
 algorithm
+	// Discrete equation system not yet supported (even though correct)	+	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
+	// Putting in algorithm section instead
 	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
 		con_state := 1; // off sun
 	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) then
-		con_state := 1; // off sun
+		con_state := 4; // ramp down
 	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l then
-		con_state := 2; // start onsteering
-	elsewhen con_state == 2 and time >= t_con_next then
+		con_state := 2; // start onsteering (i.e. ramp up)
+	elsewhen con_state == 2 and time >= t_con_w_next then
 		con_state := 3; // on sun
+	elsewhen con_state == 4 and time >= t_con_c_next then
+		con_state := 1; // Off sun
 	end when;
 
-	when (blk_state == 2 or blk_state == 3) and Q_flow_sched <= 0 then
+	when blk_state == 2 and Q_flow_sched <= 0 then
 		blk_state := 1; // turn off (or stop ramping) due to no demand
-	elsewhen (blk_state == 2 or blk_state == 3) and E <= E_low_l then
+	elsewhen blk_state == 2 and E <= E_low_l then
 		blk_state := 1; // turn off (or stop ramping) due to empty tank
+	elsewhen blk_state == 3 and Q_flow_sched <= 0 then
+		blk_state := 4; // ramp down due to no demand
+	elsewhen blk_state == 3 and E <= E_low_l then
+		blk_state := 4; // ramp down due to empty tank
+	elsewhen blk_state == 2 and time >= t_blk_w_next then
+		blk_state := 3; // operational, ramp-up completed
 	elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  then
 		blk_state := 2; // ramp up, demand and tank has capacity
-	elsewhen blk_state == 2 and time >= t_blk_next then
-		blk_state := 3; // operational, ramp completed
+	elsewhen blk_state == 4 and time >= t_blk_c_next then
+		blk_state := 1; // turn off after the ramp-down is complete
 	end when;
 
 	when time >= t_sch_next then
@@ -138,11 +154,19 @@ algorithm
 	end when;
 
 	when con_state == 2 then
-		t_con_next := time + t_con_on_delay;
+		t_con_w_next := time + t_con_on_delay;
+	end when;
+
+	when con_state == 4 then
+		t_con_c_next := time + t_con_off_delay;
 	end when;
 
 	when blk_state == 2 then
-		t_blk_next := time + t_blk_on_delay;
+		t_blk_w_next := time + t_blk_on_delay;
+	end when;
+
+	when blk_state == 4 then
+		t_blk_c_next := time + t_blk_off_delay;
 	end when;
 
 	for i in 1:n_sched_states loop
@@ -163,7 +187,7 @@ equation
 
 	der(E) = Q_flow_chg - Q_flow_dis;
 
-	if con_state <= 2 then
+	if (con_state <= 2 or con_state > 3) then
 		Q_flow_rec = 0;
 		fr_dfc =0;
 	else
@@ -181,9 +205,9 @@ equation
 		end if;
 	end if;
 
-	Q_flow_dis = if blk_state <= 1 then 0 else Q_flow_sched;
+	Q_flow_dis = if (blk_state <= 1 or blk_state > 3) then 0 else Q_flow_sched;
 
-	P_elec = if blk_state <= 2 then 0 else eff_blk*Q_flow_dis;
+	P_elec = if blk_state == 3 then eff_blk*Q_flow_dis else 0;
 
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
