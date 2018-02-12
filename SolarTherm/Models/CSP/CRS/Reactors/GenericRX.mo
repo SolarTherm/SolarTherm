@@ -140,11 +140,11 @@ algorithm
 	elsewhen rx_state == 2 and time >= t_rx_w_next then
 		rx_state := 3; // Reactor working
 	elsewhen rx_state == 4 and time >= t_rx_c_next then
-		rx_state := 1; // Reactor cooling down
+		rx_state := 1; // Reactor off
 	elsewhen rx_state == 2 and (sum(R) < R_min or not rx_on) then
 		rx_state := 1; // Reactor off
 	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) then
-		rx_state := 4; // Reactor off
+		rx_state := 4; // Reactor cooling down
 	end when;
 
 	when rx_state == 2 then

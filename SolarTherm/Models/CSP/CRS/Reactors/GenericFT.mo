@@ -114,11 +114,11 @@ algorithm
 	elsewhen ft_state == 2 and time >= t_ft_w_next then
 		ft_state := 3; // FT working
 	elsewhen ft_state == 4 and time >= t_ft_c_next then
-		ft_state := 1; // FT cooling down
+		ft_state := 1; // FT off
 	elsewhen ft_state == 2 and E_sg < E_sg_min then
 		ft_state := 1; // FT off
 	elsewhen ft_state == 3 and E_sg < E_sg_min then
-		ft_state := 4; // FT off
+		ft_state := 4; // FT cooling down
 	end when;
 
 	when ft_state == 2 then
