@@ -32,6 +32,8 @@ model SimpleSystem
 	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
 	parameter SI.Time t_blk_off_delay = 10*60 "Delay until power block shuts off";
 
+	parameter Integer ramp_order = 1 "ramping filter order"; // 0: step function, 1: linear, 2: quadrical, etc.
+
 	parameter Integer n_sched_states = 1 "Number of schedule states";
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
 	parameter SI.Time t_sch_next_start = 0 "Time to next schedule change";
@@ -78,8 +80,11 @@ model SimpleSystem
 	SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
 	SI.Power P_elec "Output power of power block";
 
-	Real fr_dfc(min=0, max=1) "Target energy fraction of the heliostat field at the defocused state";
+	Real fr_dfc(min=0, max=1) "Target energy fraction of the heliostat fistateld at the defocused state";
 	Boolean full "True if the storage tank is full";
+
+	Real fr_ramp_con (min=0, max=1) "ramping transition rate for the concentrator";
+	Real fr_ramp_blk (min=0, max=1) "ramping transition rate for the power block";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
@@ -89,9 +94,13 @@ model SimpleSystem
 	Integer blk_state(min=1, max=4) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
+	Real t_con_w_now "Time of current concentrator warm-up event";
 	Real t_con_w_next "Time of next concentrator warm-up event";
+	Real t_con_c_now "Time of current concentrator cool-down event";
 	Real t_con_c_next "Time of next concentrator cool-down event";
+	Real t_blk_w_now "Time of current power block warm-up event";
 	Real t_blk_w_next "Time of next power block warm-up event";
+	Real t_blk_c_now "Time of current power block cool-down event";
 	Real t_blk_c_next "Time of next power block cool-down event";
 	Real t_sch_next "Time of next schedule change";
 
@@ -104,9 +113,13 @@ initial equation
 	con_state = 1;
 	blk_state = 1;
 	sch_state = sch_state_start;
+	t_con_w_now = 0;
 	t_con_w_next = 0;
+	t_con_c_now = 0;
 	t_con_c_next = 0;
+	t_blk_w_now = 0;
 	t_blk_w_next = 0;
+	t_blk_c_now = 0;
 	t_blk_c_next = 0;
 	t_sch_next = t_sch_next_start;
 
@@ -160,18 +173,22 @@ algorithm
 	end when;
 
 	when con_state == 2 then
+		t_con_w_now := time;
 		t_con_w_next := time + t_con_on_delay;
 	end when;
 
 	when con_state == 5 then
+		t_con_c_now := time;
 		t_con_c_next := time + t_con_off_delay;
 	end when;
 
 	when blk_state == 2 then
+		t_blk_w_now := time;
 		t_blk_w_next := time + t_blk_on_delay;
 	end when;
 
 	when blk_state == 4 then
+		t_blk_c_now := time;
 		t_blk_c_next := time + t_blk_off_delay;
 	end when;
 
@@ -188,14 +205,36 @@ algorithm
 		full := false;
 	end when;
 
+	if con_state == 2 then
+		fr_ramp_con := if ramp_order == 0 then 0 else abs(((time - t_con_w_now) / t_con_on_delay)) ^ ramp_order;
+	elseif con_state == 5 then
+		fr_ramp_con := if ramp_order == 0 then 0 else abs((1 - ((time - t_con_c_now) / t_con_off_delay))) ^ ramp_order;
+	else
+		fr_ramp_con := 0;
+	end if;
+
+	if blk_state == 2 then
+		fr_ramp_blk := if ramp_order == 0 then 0 else abs(((time - t_blk_w_now) / t_blk_on_delay)) ^ ramp_order;
+	elseif blk_state == 4 then
+		fr_ramp_blk := if ramp_order == 0 then 0 else abs((1 - ((time - t_blk_c_now) / t_blk_off_delay))) ^ ramp_order;
+	else
+	 fr_ramp_blk := 0;
+	end if;
+
 equation
 	Q_flow_chg = eff_rec*Q_flow_rec;
 
 	der(E) = Q_flow_chg - Q_flow_dis;
 
-	if (con_state <= 2 or con_state > 4) then
+	if con_state <= 1 then
 		Q_flow_rec = 0;
 		fr_dfc = 0;
+	elseif con_state == 2 then
+		Q_flow_rec = fr_ramp_con * max(C*wea.wbus.dni*A_rec, 0);
+		fr_dfc = if ramp_order == 0 then 0 else 1;
+	elseif con_state == 5 then
+		Q_flow_rec = fr_ramp_con * max(C*wea.wbus.dni*A_rec, 0);
+		fr_dfc = if ramp_order == 0 then 0 else 1;
 	else
 		if full then
 			if eff_rec*(C*wea.wbus.dni*A_rec) > Q_flow_dis then
@@ -211,9 +250,19 @@ equation
 		end if;
 	end if;
 
-	Q_flow_dis = if (blk_state <= 1 or blk_state > 3) then 0 else Q_flow_sched;
-
-	P_elec = if blk_state == 3 then eff_blk*Q_flow_dis else 0;
+	if blk_state <=1 then
+		Q_flow_dis = 0;
+		P_elec = 0;
+	elseif blk_state == 2 then
+		Q_flow_dis = if ramp_order == 0 then Q_flow_sched else fr_ramp_blk * Q_flow_sched;
+		P_elec = eff_blk*Q_flow_dis;
+	elseif blk_state == 4 then
+		Q_flow_dis = fr_ramp_blk * Q_flow_sched;
+		P_elec = eff_blk*Q_flow_dis;
+	else
+		Q_flow_dis = Q_flow_sched;
+		P_elec = eff_blk*Q_flow_dis;
+	end if;
 
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
