@@ -32,7 +32,7 @@ model SimpleSystem
 	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
 	parameter SI.Time t_blk_off_delay = 10*60 "Delay until power block shuts off";
 
-	parameter Integer ramp_order = 1 "ramping filter order"; // 0: step function, 1: linear, 2: quadrical, etc.
+	parameter Integer ramp_order = 1 "ramping filter order";
 
 	parameter Integer n_sched_states = 1 "Number of schedule states";
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 1 "Starting schedule state";
@@ -83,8 +83,12 @@ model SimpleSystem
 	Real fr_dfc(min=0, max=1) "Target energy fraction of the heliostat fistateld at the defocused state";
 	Boolean full "True if the storage tank is full";
 
-	Real fr_ramp_con (min=0, max=1) "ramping transition rate for the concentrator";
-	Real fr_ramp_blk (min=0, max=1) "ramping transition rate for the power block";
+	SolarTherm.Utilities.Transition.Ramp ramp_up_con(ramp_order=ramp_order, t_dur= t_con_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_con(ramp_order=ramp_order, t_dur= t_con_off_delay, up=false);
+	Real fr_ramp_con (min=0.0, max=1.0) "ramping transition rate for the concentrator";
+	SolarTherm.Utilities.Transition.Ramp ramp_up_blk(ramp_order=ramp_order, t_dur= t_blk_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_blk(ramp_order=ramp_order, t_dur= t_blk_off_delay, up=false);
+	Real fr_ramp_blk (min=0.0, max=1.0) "ramping transition rate for the power block";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
 
@@ -94,15 +98,15 @@ model SimpleSystem
 	Integer blk_state(min=1, max=4) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
-	Real t_con_w_now "Time of current concentrator warm-up event";
-	Real t_con_w_next "Time of next concentrator warm-up event";
-	Real t_con_c_now "Time of current concentrator cool-down event";
-	Real t_con_c_next "Time of next concentrator cool-down event";
-	Real t_blk_w_now "Time of current power block warm-up event";
-	Real t_blk_w_next "Time of next power block warm-up event";
-	Real t_blk_c_now "Time of current power block cool-down event";
-	Real t_blk_c_next "Time of next power block cool-down event";
-	Real t_sch_next "Time of next schedule change";
+	SI.Time  t_con_w_now "Time of current concentrator warm-up event";
+	SI.Time  t_con_w_next "Time of next concentrator warm-up event";
+	SI.Time  t_con_c_now "Time of current concentrator cool-down event";
+	SI.Time  t_con_c_next "Time of next concentrator cool-down event";
+	SI.Time  t_blk_w_now "Time of current power block warm-up event";
+	SI.Time  t_blk_w_next "Time of next power block warm-up event";
+	SI.Time  t_blk_c_now "Time of current power block cool-down event";
+	SI.Time  t_blk_c_next "Time of next power block cool-down event";
+	SI.Time  t_sch_next "Time of next schedule change";
 
 	FI.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
@@ -205,23 +209,32 @@ algorithm
 		full := false;
 	end when;
 
+
+
 	if con_state == 2 then
-		fr_ramp_con := if ramp_order == 0 then 0 else abs(((time - t_con_w_now) / t_con_on_delay)) ^ ramp_order;
+		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_up_con.y);
 	elseif con_state == 5 then
-		fr_ramp_con := if ramp_order == 0 then 0 else abs((1 - ((time - t_con_c_now) / t_con_off_delay))) ^ ramp_order;
+		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_down_con.y);
 	else
 		fr_ramp_con := 0;
 	end if;
 
+
 	if blk_state == 2 then
-		fr_ramp_blk := if ramp_order == 0 then 0 else abs(((time - t_blk_w_now) / t_blk_on_delay)) ^ ramp_order;
+		fr_ramp_blk := if ramp_order == 0 then 0.0 else abs(ramp_up_blk.y);
 	elseif blk_state == 4 then
-		fr_ramp_blk := if ramp_order == 0 then 0 else abs((1 - ((time - t_blk_c_now) / t_blk_off_delay))) ^ ramp_order;
+		fr_ramp_blk := if ramp_order == 0 then 0.0 else abs(ramp_down_blk.y);
 	else
 	 fr_ramp_blk := 0;
 	end if;
 
 equation
+	ramp_up_con.x = t_con_w_now;
+	ramp_down_con.x = t_con_c_now;
+
+	ramp_up_blk.x = t_blk_w_now;
+	ramp_down_blk.x = t_blk_c_now;
+
 	Q_flow_chg = eff_rec*Q_flow_rec;
 
 	der(E) = Q_flow_chg - Q_flow_dis;
