@@ -6,6 +6,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 	parameter SI.Irradiance dni_stop = 200 "DNI at which concentrator stops";
 	parameter SI.Irradiance dni_start = 300 "DNI at which concentrator starts";
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
+	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
 
 	replaceable model OptEff =
 		SolarTherm.Models.CSP.CRS.HeliostatsField.OptEff;	// should replace
@@ -14,9 +15,12 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 	Modelica.Blocks.Interfaces.BooleanInput defocus(start=false) "true if the defocusing state is on";
 	input SI.RadiantPower R_dfc "The targer radiation power at the defocused state";
 
-	Integer con_state(min=1, max=3) "Concentrator state";
-	Real t_con_next "Time of next concentrator event";
-	Real fr_dfc[nelem] "Target energy fraction at the defocused state";
+	Integer con_state(min=1, max=5) "Concentrator state";
+	//Real t_con_w_now "Time of current concentrator warm-up event";
+	Real t_con_w_next "Time of next concentrator warm-up event";
+	//Real t_con_c_now "Time of current concentrator cool-down event";
+	Real t_con_c_next "Time of next concentrator cool-down event";
+	Real fr_dfc[nelem](each min=0, each max=1) "Target energy fraction at the defocused state";
 
 	OptEff oeff(nelem=nelem);
 
@@ -29,22 +33,40 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 initial equation
 	pre(tot) = 0;
 	con_state = 1;
-	t_con_next = 0;
+	t_con_w_next = 0;
+	t_con_c_next = 0;
 
 algorithm
-	when con_state >= 2 and (wbus.dni < dni_stop or not track) then
+
+	when con_state == 2 and (wbus.dni <= dni_stop or defocus or not track) then
 		con_state := 1; // off sun
-	elsewhen con_state == 1 and wbus.dni >= dni_start and track then
-		con_state := 2; // start onsteering
-	elsewhen con_state == 2 and time >= t_con_next then
-		con_state := 3; // on sun
+	elsewhen con_state == 3 and (wbus.dni <= dni_stop) then
+		con_state := 5; // ramp down
+	elsewhen con_state == 3 and defocus then
+		con_state := 4; // on sun at part load
+	elsewhen con_state == 4 and not defocus then
+		con_state := 3; // on sun at full load
+	elsewhen con_state == 4 and (wbus.dni <= dni_stop) then
+		con_state := 5; // ramp down
+	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track then
+		con_state := 2; // start onsteering (i.e. ramp up)
+	elsewhen con_state == 2 and time >= t_con_w_next then
+		con_state := 3; // on sun at full load
+	elsewhen con_state == 5 and time >= t_con_c_next then
+		con_state := 1; // Off sun
 	end when;
 
 	when con_state == 2 then
-		t_con_next := time + t_con_on_delay;
+		//t_con_w_now := time;
+		t_con_w_next := time + t_con_on_delay;
 	end when;
 
-	on := if con_state == 3 then true else false;
+	when con_state == 5 then
+		//t_con_c_now := time;
+		t_con_c_next := time + t_con_off_delay;
+	end when;
+
+	on := if (con_state == 3 or con_state == 4) then true else false;
 
 	when on then
 		time_on := time;
@@ -54,12 +76,22 @@ equation
 	connect(wbus, oeff.wbus);
 
 	for i in 1:nelem loop
-		if defocus then
-			R_foc[i] = if con_state <= 2 then 0 else min(R_dfc,max(oeff.eff[i]*wbus.dni*A, 0));
-			fr_dfc[i] = if con_state <= 2 then 0 else R_foc[i] / (max(oeff.eff[i]*wbus.dni*A, 0) + 1e6);
+		if (con_state <= 2 or con_state > 4) then
+			R_foc[i] = 0;
+			fr_dfc[i] = 0;
 		else
-			fr_dfc[i] = if con_state <= 2 then 0 else 1;
-			R_foc[i] = if con_state <= 2 then 0 else max(oeff.eff[i]*wbus.dni*A, 0);
+			if defocus then
+				if (oeff.eff[i]*wbus.dni*A) > R_dfc then
+					R_foc[i] = min(R_dfc,max(oeff.eff[i]*wbus.dni*A, 0));
+					fr_dfc[i] = R_foc[i] / (max(oeff.eff[i]*wbus.dni*A, 0) + 1e-6);
+				else
+					R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
+					fr_dfc[i] = 1;
+				end if;
+			else
+				R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
+				fr_dfc[i] = 1;
+			end if;
 		end if;
 	end for;
 
