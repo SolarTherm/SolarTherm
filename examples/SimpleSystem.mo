@@ -98,14 +98,14 @@ model SimpleSystem
 	Integer blk_state(min=1, max=4) "Power block state";
 	Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
-	SI.Time  t_con_w_now "Time of current concentrator warm-up event";
-	SI.Time  t_con_w_next "Time of next concentrator warm-up event";
-	SI.Time  t_con_c_now "Time of current concentrator cool-down event";
-	SI.Time  t_con_c_next "Time of next concentrator cool-down event";
-	SI.Time  t_blk_w_now "Time of current power block warm-up event";
-	SI.Time  t_blk_w_next "Time of next power block warm-up event";
-	SI.Time  t_blk_c_now "Time of current power block cool-down event";
-	SI.Time  t_blk_c_next "Time of next power block cool-down event";
+	SI.Time  t_con_w_now "Time of concentrator current warm-up event";
+	SI.Time  t_con_w_next "Time of concentrator next warm-up event";
+	SI.Time  t_con_c_now "Time of concentrator current cool-down event";
+	SI.Time  t_con_c_next "Time of concentrator next cool-down event";
+	SI.Time  t_blk_w_now "Time of power block current warm-up event";
+	SI.Time  t_blk_w_next "Time of power block next warm-up event";
+	SI.Time  t_blk_c_now "Time of power block current cool-down event";
+	SI.Time  t_blk_c_next "Time of power block next cool-down event";
 	SI.Time  t_sch_next "Time of next schedule change";
 
 	FI.Money R_spot(start=0, fixed=true)
@@ -208,8 +208,6 @@ algorithm
 	elsewhen E < E_up_l then
 		full := false;
 	end when;
-
-
 
 	if con_state == 2 then
 		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_up_con.y);
