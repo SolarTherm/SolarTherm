@@ -14,6 +14,8 @@ model SolarFuelSystem
 	parameter String sch_fcst_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Forecasts/forecast_data.motab") if storage and not const_dispatch;
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
+	parameter Integer ramp_order = 1 "ramping filter order";
+
 	// Polynomilas coeffs for SCWG+SMR
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
 	parameter Real cf_SMR[:] = {0.768282037316067, 0.093488773366821, -0.037724819862177, 0.015670722458670, -0.006367262777059, 0.001640716559506, -6.287807751796056e-04, 9.317070447512179e-04, -3.842549181678559e-04} "SMR efficiency coefficients";
@@ -40,8 +42,8 @@ model SolarFuelSystem
 	parameter Real cm_CO2_ft[:] = {1.632433704780866e-08, 0.036679737128161} "Mass flow rate coefficients for CO2 dumped/released from FT";
 
 	// Info for sizing the solar field
-	parameter SI.Efficiency eff_opt = 0.578161677
-	"Efficiency of optics at design point (max in opt_file)";
+	parameter SI.Efficiency eff_opt = 1
+	"Efficiency of optics at design point (max in opt_file)"; // Needs to change after the lookup table is made. 0.578161677 ----> Ref: SAM obtained by Alireza
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
 	parameter SI.Area A_rec = 50 "Reactor area";
@@ -182,7 +184,8 @@ model SolarFuelSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL_2 CL(
 		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
-		A=A_field
+		A=A_field,
+		ramp_order=ramp_order
 		);
 
 	SolarTherm.Models.CSP.CRS.Reactors.GenericRX RX(
@@ -197,7 +200,8 @@ model SolarFuelSystem
 			cn_CO2=cn_CO2,
 			cwp_rx=cwp_rx,
 			cm_CO2_rx=cm_CO2_rx,
-			pv=false);
+			pv=false,
+			ramp_order=ramp_order);
 
 	SolarTherm.Models.Storage.Tank.SimpleST ST(
 			E_max=E_max,
@@ -217,7 +221,8 @@ model SolarFuelSystem
 			cm_O2=cm_O2,
 			cm_water=cm_water,
 			cm_CO2_ft=cm_CO2_ft,
-			t_trans=t_trans);
+			t_trans=t_trans,
+			ramp_order=ramp_order);
 
 	SolarTherm.Models.Control.SyngasTankDispatch dis(
 		full_lb=tnk_full_lb*E_max,
@@ -305,7 +310,7 @@ equation
 		connect(ST.E_flow_in, dis.flow_in);
 		connect(ST.E, dis.level);
 		dis.flow_tar = sched*E_flow_ft_des;
-		connect(dis.flow_dis, ST.E_flow_set);
+		ST.E_flow_set = abs(dis.flow_dis);
 		connect(dis.full,CL.defocus);
 		connect(dis.R_tar, CL.R_dfc);
 	else

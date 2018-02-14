@@ -8,6 +8,8 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
 	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
 
+	parameter Integer ramp_order "ramping filter order";
+
 	replaceable model OptEff =
 		SolarTherm.Models.CSP.CRS.HeliostatsField.OptEff;	// should replace
 
@@ -16,13 +18,17 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 	input SI.RadiantPower R_dfc "The targer radiation power at the defocused state";
 
 	Integer con_state(min=1, max=5) "Concentrator state";
-	//Real t_con_w_now "Time of current concentrator warm-up event";
-	Real t_con_w_next "Time of next concentrator warm-up event";
-	//Real t_con_c_now "Time of current concentrator cool-down event";
-	Real t_con_c_next "Time of next concentrator cool-down event";
+	SI.Time t_con_w_now "Time of concentrator current warm-up event";
+	SI.Time t_con_w_next "Time of concentrator next warm-up event";
+	SI.Time t_con_c_now "Time of concentrator current cool-down event";
+	SI.Time t_con_c_next "Time of concentrator next cool-down event";
 	Real fr_dfc[nelem](each min=0, each max=1) "Target energy fraction at the defocused state";
 
 	OptEff oeff(nelem=nelem);
+
+	SolarTherm.Utilities.Transition.Ramp ramp_up_con(ramp_order=ramp_order, t_dur= t_con_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_con(ramp_order=ramp_order, t_dur= t_con_off_delay, up=false);
+	Real fr_ramp_con (min=0, max=1) "ramping transition rate for the concentrator";
 
 	Modelica.Blocks.Logical.Timer timer "Timer measuring the times that the solar field is on";
 	discrete SI.Time time_on(start=0, fixed=true) "Time marking when the solar field starts running";
@@ -33,7 +39,9 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 initial equation
 	pre(tot) = 0;
 	con_state = 1;
+	t_con_w_now = 0;
 	t_con_w_next = 0;
+	t_con_c_now = 0;
 	t_con_c_next = 0;
 
 algorithm
@@ -57,14 +65,22 @@ algorithm
 	end when;
 
 	when con_state == 2 then
-		//t_con_w_now := time;
+		t_con_w_now := time;
 		t_con_w_next := time + t_con_on_delay;
 	end when;
 
 	when con_state == 5 then
-		//t_con_c_now := time;
+		t_con_c_now := time;
 		t_con_c_next := time + t_con_off_delay;
 	end when;
+
+	if con_state == 2 then
+		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_up_con.y);
+	elseif con_state == 5 then
+		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_down_con.y);
+	else
+		fr_ramp_con := 0;
+	end if;
 
 	on := if (con_state == 3 or con_state == 4) then true else false;
 
@@ -75,22 +91,31 @@ algorithm
 equation
 	connect(wbus, oeff.wbus);
 
+	ramp_up_con.x = t_con_w_now;
+	ramp_down_con.x = t_con_c_now;
+
 	for i in 1:nelem loop
-		if (con_state <= 2 or con_state > 4) then
-			R_foc[i] = 0;
+		if con_state <= 1 then
 			fr_dfc[i] = 0;
+			R_foc[i] = 0;
+		elseif con_state == 2 then
+			fr_dfc[i] = if ramp_order == 0 then 0 else 1;
+			R_foc[i] = fr_ramp_con * max(oeff.eff[i]*wbus.dni*A, 0);
+		elseif con_state == 5 then
+			fr_dfc[i] = if ramp_order == 0 then 0 else 1;
+			R_foc[i] = fr_ramp_con * max(oeff.eff[i]*wbus.dni*A, 0);
 		else
 			if defocus then
 				if (oeff.eff[i]*wbus.dni*A) > R_dfc then
+					fr_dfc[i] = R_foc[i] / (max(oeff.eff[i]*wbus.dni*A, 0) + 1e-10);
 					R_foc[i] = min(R_dfc,max(oeff.eff[i]*wbus.dni*A, 0));
-					fr_dfc[i] = R_foc[i] / (max(oeff.eff[i]*wbus.dni*A, 0) + 1e-6);
 				else
-					R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
 					fr_dfc[i] = 1;
+					R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
 				end if;
 			else
-				R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
 				fr_dfc[i] = 1;
+				R_foc[i] = max(oeff.eff[i]*wbus.dni*A, 0);
 			end if;
 		end if;
 	end for;
