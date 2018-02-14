@@ -250,7 +250,7 @@ equation
 		if full then
 			if eff_rec*(C*wea.wbus.dni*A_rec) > Q_flow_dis then
 				Q_flow_rec = min(Q_flow_dis/eff_rec, max(C*wea.wbus.dni*A_rec, 0));
-				fr_dfc = Q_flow_dis / (max(C*wea.wbus.dni*A_rec, 0) + 1e-6);
+				fr_dfc = Q_flow_dis / (max(C*wea.wbus.dni*A_rec, 0) + 1e-10);
 			else
 				Q_flow_rec = max(C*wea.wbus.dni*A_rec, 0);
 				fr_dfc = 1;
