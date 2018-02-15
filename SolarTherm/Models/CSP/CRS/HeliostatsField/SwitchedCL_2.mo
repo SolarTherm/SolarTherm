@@ -80,9 +80,9 @@ algorithm
 	end when;
 
 	if con_state == 2 then
-		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_up_con.y);
+		fr_ramp_con := if ramp_order == 0 then 0 else abs(ramp_up_con.y);
 	elseif con_state == 5 then
-		fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_down_con.y);
+		fr_ramp_con := if ramp_order == 0 then 0 else abs(ramp_down_con.y);
 	else
 		fr_ramp_con := 0;
 	end if;
