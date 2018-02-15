@@ -9,14 +9,18 @@ model GenericRX
 
 	//Parameters:
 	//****************
-	parameter Real fr_Heat_SCWG = 0.637 "Fraction of inlet heat flow to SCWG";
+	parameter Real fr_heat_SCWG = 0.637 "Fraction of inlet heat flow to SCWG";
 
 	parameter SI.RadiantPower R_min = 0.3 * 1000 * 50 * 1000 "Minimum sun heat duty to start the reactor"; // 0.3 * I_des * A * CR
 
 	parameter SI.Time t_rx_on_delay = 20*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
-	parameter Integer ramp_order(min=0, max=2) "ramping filter order";
+	parameter Integer ramp_order_heat(min=0, max=2) "ramping filter order for heat supply to the reactor";
+	parameter Integer ramp_order_algae(min=0, max=2) "ramping filter order for algae supply to the reactor";
+	parameter Integer ramp_order_CO2(min=0, max=2) "ramping filter order for CO2 dump/release from the reactor";
+	parameter Integer ramp_order_elec(min=0, max=2) "ramping filter order for electricity supply to the reactor";
+	parameter Integer ramp_order_sg(min=0, max=2) "ramping filter order for syngas production from the reactor";
 
 	parameter Real cf_SCWG[:] "SCWG heat loss efficiency coefficients";
 	parameter Real cf_SMR[:] "SMR heat loss efficiency coefficients";
@@ -66,9 +70,25 @@ model GenericRX
 	SI.Time t_rx_c_now "Time of reactor current cool-down event";
 	SI.Time t_rx_c_next "Time of reactor next cool-down event";
 
-	SolarTherm.Utilities.Transition.Ramp ramp_up_rx(ramp_order=ramp_order, t_dur= t_rx_on_delay, up=true);
-	SolarTherm.Utilities.Transition.Ramp ramp_down_rx(ramp_order=ramp_order, t_dur= t_rx_off_delay, up=false);
-	Real fr_ramp_rx (min=0, max=1) "Ramping transition rate for the reactor";
+	SolarTherm.Utilities.Transition.Ramp ramp_up_heat(ramp_order=ramp_order_heat, t_dur= t_rx_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_heat(ramp_order=ramp_order_heat, t_dur= t_rx_off_delay, up=false);
+	Real fr_ramp_heat(min=0, max=1) "Ramping transition rate for heat supply to the reactor";
+
+	SolarTherm.Utilities.Transition.Ramp ramp_up_algae(ramp_order=ramp_order_algae, t_dur= t_rx_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_algae(ramp_order=ramp_order_algae, t_dur= t_rx_off_delay, up=false);
+	Real fr_ramp_algae(min=0, max=1) "Ramping transition rate for algae supply to the reactor";
+
+	SolarTherm.Utilities.Transition.Ramp ramp_up_CO2(ramp_order=ramp_order_CO2, t_dur= t_rx_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_CO2(ramp_order=ramp_order_CO2, t_dur= t_rx_off_delay, up=false);
+	Real fr_ramp_CO2(min=0, max=1) "Ramping transition rate for CO2 dump/release from the reactor";
+
+	SolarTherm.Utilities.Transition.Ramp ramp_up_elec(ramp_order=ramp_order_elec, t_dur= t_rx_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_elec(ramp_order=ramp_order_elec, t_dur= t_rx_off_delay, up=false);
+	Real fr_ramp_elec(min=0, max=1) "Ramping transition rate for electricity supply to the reactor";
+
+	SolarTherm.Utilities.Transition.Ramp ramp_up_sg(ramp_order=ramp_order_sg, t_dur= t_rx_on_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp ramp_down_sg(ramp_order=ramp_order_sg, t_dur= t_rx_off_delay, up=false);
+	Real fr_ramp_sg(min=0, max=1) "Ramping transition rate for syngas production from the reactor";
 
 	Modelica.Blocks.Logical.Timer timer "Timer measuring the times that the reactor is on";
 	discrete SI.Time time_on(start=0, fixed=true) "Time marking when the reactor starts running";
@@ -172,11 +192,23 @@ algorithm
 	end when;
 
 	if rx_state == 2 then
-		fr_ramp_rx := if ramp_order == 0 then 0.0 else abs(ramp_up_rx.y);
+		fr_ramp_heat := if ramp_order_heat == 0 then 1 else abs(ramp_up_heat.y);
+		fr_ramp_algae := if ramp_order_algae == 0 then 1 else abs(ramp_up_algae.y);
+		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 1 else abs(ramp_up_CO2.y);
+		fr_ramp_elec := if ramp_order_elec == 0 then 1 else abs(ramp_up_elec.y);
+		fr_ramp_sg := if ramp_order_sg == 0 then 0 else abs(ramp_up_sg.y);
 	elseif rx_state == 4 then
-		fr_ramp_rx := if ramp_order == 0 then 0.0 else abs(ramp_down_rx.y);
+		fr_ramp_heat := if ramp_order_heat == 0 then 0 else abs(ramp_down_heat.y);
+		fr_ramp_algae := if ramp_order_algae == 0 then 0 else abs(ramp_down_algae.y);
+		fr_ramp_CO2:= if ramp_order_CO2 == 0 then 0 else abs(ramp_down_CO2.y);
+		fr_ramp_elec:= if ramp_order_elec == 0 then 0 else abs(ramp_down_elec.y);
+		fr_ramp_sg:= if ramp_order_sg == 0 then 0 else abs(ramp_down_sg.y);
 	else
-		fr_ramp_rx := 0;
+		fr_ramp_heat := 0;
+		fr_ramp_algae := 0;
+		fr_ramp_CO2 := 0;
+		fr_ramp_elec := 0;
+		fr_ramp_sg := 0;
 	end if;
 
 	on := if rx_state == 3 then true else false;
@@ -186,8 +218,20 @@ algorithm
 	end when;
 
 equation
-	ramp_up_rx.x = t_rx_w_now;
-	ramp_down_rx.x = t_rx_c_now;
+	ramp_up_heat.x = t_rx_w_now;
+	ramp_down_heat.x = t_rx_c_now;
+
+	ramp_up_algae.x = t_rx_w_now;
+	ramp_down_algae.x = t_rx_c_now;
+
+	ramp_up_CO2.x = t_rx_w_now;
+	ramp_down_CO2.x = t_rx_c_now;
+
+	ramp_up_elec.x = t_rx_w_now;
+	ramp_down_elec.x = t_rx_c_now;
+
+	ramp_up_sg.x = t_rx_w_now;
+	ramp_down_sg.x = t_rx_c_now;
 
 	if rx_state <= 1 then
 		Q_flow_loss_SCWG = 0;
@@ -246,41 +290,41 @@ equation
 
 		p_p.x = 0;
 		P_pump = 0;
-	elseif rx_state == 2 then
-		eff_SCWG.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_SCWG = if ramp_order == 0 then 0 else max(eff_SCWG.y,0);
+	elseif rx_state == 2 or rx_state == 4 then
+		eff_SCWG.x = if ramp_order_heat == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
+		eff_I_SCWG = if ramp_order_heat == 0 then 0 else max(eff_SCWG.y,0);
 
-		Q_flow_SCWG = fr_ramp_rx * fr_Heat_SCWG * sum(R);
+		Q_flow_SCWG = fr_ramp_heat * fr_heat_SCWG * sum(R);
 		Q_flow_loss_SCWG = (1 - eff_I_SCWG) * Q_flow_SCWG;
 
-		eff_SMR.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_SMR = if ramp_order == 0 then 0 else max(eff_SMR.y,0);
+		eff_SMR.x = if ramp_order_heat == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
+		eff_I_SMR = if ramp_order_heat == 0 then 0 else max(eff_SMR.y,0);
 
-		Q_flow_SMR = fr_ramp_rx * (1 - fr_Heat_SCWG) * sum(R);
+		Q_flow_SMR = fr_ramp_heat * (1 - fr_heat_SCWG) * sum(R);
 		Q_flow_loss_SMR = (1 - eff_I_SMR) * Q_flow_SMR;
 
-		eff_rx.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_rx = if ramp_order == 0 then 0 else max(eff_rx.y,0);
+		eff_rx.x = if ramp_order_heat == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
+		eff_I_rx = if ramp_order_heat == 0 then 0 else max(eff_rx.y,0);
 
-		exff_rx.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_II_rx = if ramp_order == 0 then 0 else max(exff_rx.y,0);
+		exff_rx.x = if ramp_order_heat == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
+		eff_II_rx = if ramp_order_heat == 0 then 0 else max(exff_rx.y,0);
 
 		FR_algae.x = sum(R)/1e6;
-		m_flow_algae = if ramp_order == 0 then max(FR_algae.y,0) else fr_ramp_rx * max(FR_algae.y,0);
+		m_flow_algae = fr_ramp_algae * max(FR_algae.y,0);
 
 		m_flow_water = m_flow_algae * massRatio_w_a;
 
-		FR_H2_rx.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_H2_rx = fr_ramp_rx * max(FR_H2_rx.y,0) * 1000;
+		FR_H2_rx.x = if ramp_order_sg == 0 then 0 else sum(R)/1e6;
+		n_flow_H2_rx = fr_ramp_sg * max(FR_H2_rx.y,0) * 1000;
 
-		FR_CH4.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CH4 = fr_ramp_rx * max(FR_CH4.y, 0) * 1000;
+		FR_CH4.x = if ramp_order_sg == 0 then 0 else sum(R)/1e6;
+		n_flow_CH4 = fr_ramp_sg * max(FR_CH4.y,0) * 1000;
 
-		FR_CO.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CO = fr_ramp_rx * max(FR_CO.y, 0) * 1000;
+		FR_CO.x = if ramp_order_sg == 0 then 0 else sum(R)/1e6;
+		n_flow_CO = fr_ramp_sg * max(FR_CO.y,0) * 1000;
 
-		FR_CO2.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CO2 = fr_ramp_rx * max(FR_CO2.y,0) * 1000;
+		FR_CO2.x = if ramp_order_sg == 0 then 0 else sum(R)/1e6;
+		n_flow_CO2 = fr_ramp_sg * max(FR_CO2.y,0) * 1000;
 
 		if pv then
 			n_flow_H2_pv = molarRatio_H2_CO * n_flow_CO - n_flow_H2_rx;
@@ -290,7 +334,7 @@ equation
 		n_flow_H2 = n_flow_H2_rx + n_flow_H2_pv;
 
 		FR_CO2_dump.x = sum(R)/1e6;
-		m_flow_CO2 = if ramp_order == 0 then max(FR_CO2_dump.y,0) else fr_ramp_rx * max(FR_CO2_dump.y,0);
+		m_flow_CO2 = fr_ramp_CO2 * max(FR_CO2_dump.y,0);
 
 		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO+n_flow_CO2;
 
@@ -310,83 +354,17 @@ equation
 		E_flow = n_flow_sg * mLHV_sg;
 
 		p_p.x = (sum(R)/1e6 - R_mean) / R_std;
-		P_pump = if ramp_order == 0 then max(p_p.y*1e3,0) else fr_ramp_rx * max(p_p.y*1e3,0);
-
-	elseif rx_state == 4 then
-		eff_SCWG.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_SCWG = if ramp_order == 0 then 0 else max(eff_SCWG.y,0);
-
-		Q_flow_SCWG = fr_ramp_rx * fr_Heat_SCWG * sum(R);
-		Q_flow_loss_SCWG = (1 - eff_I_SCWG) * Q_flow_SCWG;
-
-		eff_SMR.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_SMR = if ramp_order == 0 then 0 else max(eff_SMR.y,0);
-
-		Q_flow_SMR = fr_ramp_rx * (1 - fr_Heat_SCWG) * sum(R);
-		Q_flow_loss_SMR = (1 - eff_I_SMR) * Q_flow_SMR;
-
-		eff_rx.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_I_rx = if ramp_order == 0 then 0 else max(eff_rx.y,0);
-
-		exff_rx.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		eff_II_rx = if ramp_order == 0 then 0 else max(exff_rx.y,0);
-
-		FR_algae.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		m_flow_algae = fr_ramp_rx * max(FR_algae.y,0);
-
-		m_flow_water = m_flow_algae * massRatio_w_a;
-
-		FR_H2_rx.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_H2_rx = fr_ramp_rx * max(FR_H2_rx.y,0) * 1000;
-
-		FR_CH4.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CH4 = fr_ramp_rx * max(FR_CH4.y,0) * 1000;
-
-		FR_CO.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CO = fr_ramp_rx * max(FR_CO.y,0) * 1000;
-
-		FR_CO2.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		n_flow_CO2 = fr_ramp_rx * max(FR_CO2.y,0) * 1000;
-
-		if pv then
-			n_flow_H2_pv = molarRatio_H2_CO * n_flow_CO - n_flow_H2_rx;
-		else
-			n_flow_H2_pv = 0;
-		end if;
-		n_flow_H2 = n_flow_H2_rx + n_flow_H2_pv;
-
-		FR_CO2_dump.x = if ramp_order == 0 then 0 else sum(R)/1e6;
-		m_flow_CO2 = fr_ramp_rx * max(FR_CO2_dump.y,0);
-
-		n_flow_sg = n_flow_H2 + n_flow_CH4 + n_flow_CO+n_flow_CO2;
-
-		y_H2 = 0.674099570184096;
-		y_CH4 = 0.002461218329356;
-		y_CO = 0.319084098180880;
-		y_CO2 = 0.004355113305667;
-
-		MM_sg = 0.010513556314215649;
-
-		m_flow_sg = n_flow_sg * MM_sg;
-		m_flow_H2_pv = n_flow_H2_pv * MM_H2;
-
-		mLHV_sg = 2.543623134148470e05;
-		LHV_sg = 24.193742112158110e06;
-
-		E_flow = n_flow_sg * mLHV_sg;
-
-		p_p.x = if ramp_order == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
-		P_pump = fr_ramp_rx * max(p_p.y*1e3,0);
+		P_pump = fr_ramp_elec * max(p_p.y*1e3,0);
 	else
 		eff_SCWG.x = (sum(R)/1e6 - R_mean) / R_std;
 		eff_I_SCWG = max(eff_SCWG.y,0);
 		Q_flow_loss_SCWG = (1 - eff_I_SCWG) * Q_flow_SCWG;
-		Q_flow_SCWG = fr_Heat_SCWG * sum(R);
+		Q_flow_SCWG = fr_heat_SCWG * sum(R);
 
 		eff_SMR.x = (sum(R)/1e6 - R_mean) / R_std;
 		eff_I_SMR = max(eff_SMR.y,0);
 		Q_flow_loss_SMR = (1 - eff_I_SMR) * Q_flow_SMR;
-		Q_flow_SMR = (1 - fr_Heat_SCWG) * sum(R);
+		Q_flow_SMR = (1 - fr_heat_SCWG) * sum(R);
 
 		eff_rx.x = (sum(R)/1e6 - R_mean) / R_std;
 		eff_I_rx = max(eff_rx.y,0);
