@@ -8,7 +8,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay feat
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
 	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
 
-	parameter Integer ramp_order "ramping filter order";
+	parameter Integer ramp_order(min=0, max=2) "ramping filter order";
 
 	replaceable model OptEff =
 		SolarTherm.Models.CSP.CRS.HeliostatsField.OptEff;	// should replace

@@ -16,7 +16,7 @@ model GenericRX
 	parameter SI.Time t_rx_on_delay = 20*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
-	parameter Integer ramp_order "ramping filter order";
+	parameter Integer ramp_order(min=0, max=2) "ramping filter order";
 
 	parameter Real cf_SCWG[:] "SCWG heat loss efficiency coefficients";
 	parameter Real cf_SMR[:] "SMR heat loss efficiency coefficients";

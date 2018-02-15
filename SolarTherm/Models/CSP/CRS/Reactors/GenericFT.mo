@@ -15,7 +15,7 @@ model GenericFT
 	parameter SI.Time t_ft_on_delay = 60*60 "Delay until FT starts";
 	parameter SI.Time t_ft_off_delay = 90*60 "Delay until FT shuts off";
 
-	parameter Integer ramp_order "ramping filter order";
+	parameter Integer ramp_order(min=0, max=2) "ramping filter order";
 
 	parameter Real cvf_petrol[:] "Volumetric flow rate coefficients for petrol production in FT";
 	parameter Real cvf_diesel[:] "Volumetric flow rate coefficients for diesel production in FT";
