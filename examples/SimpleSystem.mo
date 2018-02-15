@@ -28,7 +28,7 @@ model SimpleSystem
 	parameter SI.Irradiance dni_start = 200 "DNI at which concentrator starts";
 
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
-	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
+	parameter SI.Time t_con_off_delay = 20*60 "Delay until concentrator shuts off";
 	parameter SI.Time t_blk_on_delay = 15*60 "Delay until power block starts";
 	parameter SI.Time t_blk_off_delay = 10*60 "Delay until power block shuts off";
 
@@ -140,34 +140,46 @@ algorithm
 	// Putting in algorithm section instead
 	when con_state == 2 and (wea.wbus.dni <= dni_stop or E >= E_up_u) then
 		con_state := 1; // off sun
-	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) then
+	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) and t_con_off_delay > 0 then
 		con_state := 5; // ramp down
+	elsewhen con_state == 3 and (wea.wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		con_state := 1; // off sun(no ramp-down)
 	elsewhen con_state == 3 and full then
 		con_state := 4; // on sun at part load
 	elsewhen con_state == 4 and not full then
 		con_state := 3; // on sun at full load
-	elsewhen con_state == 4 and (wea.wbus.dni <= dni_stop) then
+	elsewhen con_state == 4 and (wea.wbus.dni <= dni_stop) and t_con_off_delay > 0 then
 		con_state := 5; // ramp down
-	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l then
+	elsewhen con_state == 4 and (wea.wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		con_state := 1; // off sun (no ramp-down)
+	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l and t_con_on_delay > 0 then
 		con_state := 2; // start onsteering (i.e. ramp up)
+	elsewhen con_state == 1 and wea.wbus.dni >= dni_start and E <= E_up_l and t_con_on_delay <= 0 then
+		con_state := 3; // on sun at full (no ramp-up)
 	elsewhen con_state == 2 and time >= t_con_w_next then
 		con_state := 3; // on sun at full load
 	elsewhen con_state == 5 and time >= t_con_c_next then
-		con_state := 1; // Off sun
+		con_state := 1; // off sun
 	end when;
 
 	when blk_state == 2 and Q_flow_sched <= 0 then
 		blk_state := 1; // turn off (or stop ramping) due to no demand
 	elsewhen blk_state == 2 and E <= E_low_l then
 		blk_state := 1; // turn off (or stop ramping) due to empty tank
-	elsewhen blk_state == 3 and Q_flow_sched <= 0 then
+	elsewhen blk_state == 3 and Q_flow_sched <= 0 and t_blk_off_delay > 0 then
 		blk_state := 4; // ramp down due to no demand
-	elsewhen blk_state == 3 and E <= E_low_l then
+	elsewhen blk_state == 3 and Q_flow_sched <= 0 and t_blk_off_delay <= 0 then
+		blk_state := 1; // turn off (no ramp-down) due to no demand
+	elsewhen blk_state == 3 and E <= E_low_l and t_blk_off_delay > 0 then
 		blk_state := 4; // ramp down due to empty tank
+	elsewhen blk_state == 3 and E <= E_low_l and t_blk_off_delay <= 0 then
+		blk_state := 1; // turn off (no ramp down) due to empty tank
 	elsewhen blk_state == 2 and time >= t_blk_w_next then
 		blk_state := 3; // operational, ramp-up completed
-	elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  then
+	elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  and t_blk_on_delay > 0 then
 		blk_state := 2; // ramp up, demand and tank has capacity
+	elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  and t_blk_on_delay <= 0 then
+		blk_state := 3; // operational (no ramp-up)
 	elsewhen blk_state == 4 and time >= t_blk_c_next then
 		blk_state := 1; // turn off after the ramp-down is complete
 	end when;
