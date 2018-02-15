@@ -119,16 +119,20 @@ initial equation
 	t_ft_c_next = 0;
 
 algorithm
-	when ft_state == 1 and E_sg >= E_sg_min then
+	when ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay > 0 then
 		ft_state := 2; // FT warming up
+	elsewhen ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay <= 0 then
+		ft_state := 3; // FT on (no warm-up)
 	elsewhen ft_state == 2 and time >= t_ft_w_next then
 		ft_state := 3; // FT on
 	elsewhen ft_state == 4 and time >= t_ft_c_next then
 		ft_state := 1; // FT off
 	elsewhen ft_state == 2 and E_sg < E_sg_min then
 		ft_state := 1; // FT off
-	elsewhen ft_state == 3 and E_sg < E_sg_min then
+	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay > 0 then
 		ft_state := 4; // FT cooling down
+	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
+		ft_state := 1; // FT cooling down
 	end when;
 
 	when ft_state == 2 then

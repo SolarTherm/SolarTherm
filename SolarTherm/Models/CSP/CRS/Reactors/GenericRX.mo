@@ -145,16 +145,20 @@ initial equation
 	t_rx_c_next = 0;
 
 algorithm
-	when rx_state == 1 and sum(R) >= R_min and rx_on then
+	when rx_state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay > 0 then
 		rx_state := 2; // Reactor warming up
+	elsewhen rx_state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay <= 0 then
+		rx_state := 3; // Reactor working (no warm-up)
 	elsewhen rx_state == 2 and time >= t_rx_w_next then
 		rx_state := 3; // Reactor working
 	elsewhen rx_state == 4 and time >= t_rx_c_next then
 		rx_state := 1; // Reactor off
 	elsewhen rx_state == 2 and (sum(R) < R_min or not rx_on) then
 		rx_state := 1; // Reactor off
-	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) then
+	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay > 0 then
 		rx_state := 4; // Reactor cooling down
+	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay <= 0 then
+		rx_state := 1; // Reactor off (no cooling down)
 	end when;
 
 	when rx_state == 2 then

@@ -45,19 +45,24 @@ initial equation
 	t_con_c_next = 0;
 
 algorithm
-
 	when con_state == 2 and (wbus.dni <= dni_stop or defocus or not track) then
 		con_state := 1; // off sun
-	elsewhen con_state == 3 and (wbus.dni <= dni_stop) then
+	elsewhen con_state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
 		con_state := 5; // ramp down
+	elsewhen con_state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		con_state := 1; // off sun(no ramp-down)
 	elsewhen con_state == 3 and defocus then
 		con_state := 4; // on sun at part load
 	elsewhen con_state == 4 and not defocus then
 		con_state := 3; // on sun at full load
-	elsewhen con_state == 4 and (wbus.dni <= dni_stop) then
+	elsewhen con_state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
 		con_state := 5; // ramp down
-	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track then
+	elsewhen con_state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		con_state := 1; // off sun (no ramp-down)
+	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay > 0 then
 		con_state := 2; // start onsteering (i.e. ramp up)
+	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay <= 0 then
+		con_state := 3; // on sun at full load (no ramp-up)
 	elsewhen con_state == 2 and time >= t_con_w_next then
 		con_state := 3; // on sun at full load
 	elsewhen con_state == 5 and time >= t_con_c_next then
