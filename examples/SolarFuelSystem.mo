@@ -29,6 +29,13 @@ model SolarFuelSystem
 	parameter Integer ramp_order_ft_CO2(min=0, max=2) = 1 "ramping filter order for CO2 dump/release from FT";
 	parameter Integer ramp_order_ft_prod(min=0, max=2) = 1 "ramping filter order for products production from FT";
 
+	parameter Integer trans_order_ft_sg(min=0, max=2) = 1 "Transitioning filter order for syngas supply to FT while FT is on";
+	parameter Integer trans_order_ft_elec(min=0, max=2) = 1 "Transitioning filter order for electricity supply to FT while FT is on";
+	parameter Integer trans_order_ft_H2_pv(min=0, max=2) = 1 "Transitioning filter order for PV H2 supply to FT while FT is on";
+	parameter Integer trans_order_ft_water(min=0, max=2) = 1 "Transitioning filter order for water supply to FT while FT is on";
+	parameter Integer trans_order_ft_CO2(min=0, max=2) = 1 "Transitioning filter order for CO2 dump/release from FT while FT is on";
+	parameter Integer trans_order_ft_prod(min=0, max=2) = 1 "Transitioning filter order for products production from FT while FT is on";
+
 	// Polynomilas coeffs for SCWG+SMR
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
 	parameter Real cf_SMR[:] = {0.768282037316067, 0.093488773366821, -0.037724819862177, 0.015670722458670, -0.006367262777059, 0.001640716559506, -6.287807751796056e-04, 9.317070447512179e-04, -3.842549181678559e-04} "SMR efficiency coefficients";
@@ -65,7 +72,6 @@ model SolarFuelSystem
 	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX
 
 	parameter Real fr_min_ft = 0.2 "Minium fraction of the nominal mass flow to start the FT";
-	parameter SI.Time t_trans = 60*60 "Ramp-up/down time in FT";
 
 	constant SI.SpecificEnthalpy LHV_sg = 24.193742112158110e06 "Lower heating value of syngas";
 	constant SI.Density rho_sg = 1.08974 "Syngas density at 75C & 3bar"; // at 1bar and 75C: 0.363548, at 20bar and 75C: 7.21335
@@ -238,13 +244,18 @@ model SolarFuelSystem
 			cm_O2=cm_O2,
 			cm_water=cm_water,
 			cm_CO2_ft=cm_CO2_ft,
-			t_trans=t_trans,
 			ramp_order_sg=ramp_order_ft_sg,
 			ramp_order_elec=ramp_order_ft_elec,
 			ramp_order_H2_pv=ramp_order_ft_H2_pv,
 			ramp_order_water=ramp_order_ft_water,
 			ramp_order_CO2=ramp_order_ft_CO2,
-			ramp_order_prod=ramp_order_ft_prod);
+			ramp_order_prod=ramp_order_ft_prod,
+			trans_order_sg=trans_order_ft_sg,
+			trans_order_elec=trans_order_ft_elec,
+			trans_order_H2_pv=trans_order_ft_H2_pv,
+			trans_order_water=trans_order_ft_water,
+			trans_order_CO2=trans_order_ft_CO2,
+			trans_order_prod=trans_order_ft_prod);
 
 	SolarTherm.Models.Control.SyngasTankDispatch dis(
 		full_lb=tnk_full_lb*E_max,

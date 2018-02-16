@@ -14,13 +14,21 @@ model GenericFT
 
 	parameter SI.Time t_ft_on_delay = 60*60 "Delay until FT starts";
 	parameter SI.Time t_ft_off_delay = 90*60 "Delay until FT shuts off";
+	parameter SI.Time t_ft_trans_delay = 60*60 "Transition time when the syngas supply flow changes";
 
-	parameter Integer ramp_order_sg(min=0, max=2) "ramping filter order for syngas supply to FT";
-	parameter Integer ramp_order_elec(min=0, max=2) "ramping filter order for electricity supply to FT";
-	parameter Integer ramp_order_H2_pv(min=0, max=2) "ramping filter order for PV H2 supply to FT";
-	parameter Integer ramp_order_water(min=0, max=2) "ramping filter order for water supply to FT";
-	parameter Integer ramp_order_CO2(min=0, max=2) "ramping filter order for CO2 dump/release from FT";
-	parameter Integer ramp_order_prod(min=0, max=2) "ramping filter order for products production from FT";
+	parameter Integer ramp_order_sg(min=0, max=2) "Ramping filter order for syngas supply to FT";
+	parameter Integer ramp_order_elec(min=0, max=2) "Ramping filter order for electricity supply to FT";
+	parameter Integer ramp_order_H2_pv(min=0, max=2) "Ramping filter order for PV H2 supply to FT";
+	parameter Integer ramp_order_water(min=0, max=2) "Ramping filter order for water supply to FT";
+	parameter Integer ramp_order_CO2(min=0, max=2) "Ramping filter order for CO2 dump/release from FT";
+	parameter Integer ramp_order_prod(min=0, max=2) "Ramping filter order for products production from FT";
+
+	parameter Integer trans_order_sg(min=0, max=2) "Transitioning filter order for syngas supply to FT while FT is on";
+	parameter Integer trans_order_elec(min=0, max=2) "Transitioning filter order for electricity supply to FT while FT is on";
+	parameter Integer trans_order_H2_pv(min=0, max=2) "Transitioning filter order for PV H2 supply to FT while FT is on";
+	parameter Integer trans_order_water(min=0, max=2) "Transitioning filter order for water supply to FT while FT is on";
+	parameter Integer trans_order_CO2(min=0, max=2) "Transitioning filter order for CO2 dump/release from FT while FT is on";
+	parameter Integer trans_order_prod(min=0, max=2) "Transitioning filter order for products production from FT while FT is on";
 
 	parameter Real cvf_petrol[:] "Volumetric flow rate coefficients for petrol production in FT";
 	parameter Real cvf_diesel[:] "Volumetric flow rate coefficients for diesel production in FT";
@@ -37,8 +45,6 @@ model GenericFT
 	parameter SI.Mass m_nickel_ft = FI.massNickel_ft_m_sg(m_flow_sg_des) "Mass of Nickel/Aluminum Oxide catalyst required in FT at design for a three-year of operation";
 	parameter SI.Mass m_cobalt_ft = FI.massCobalt_ft_m_sg(m_flow_sg_des) "Mass of Cobalt catalyst required in FT at design for a three-year of operation";
 	parameter SI.Mass m_platinum_ft = FI.massPlatinum_ft_m_sg(m_flow_sg_des) "Mass of Platinum catalyst required in FT at design for a three-year of operation";
-
-	parameter SI.Time t_trans = 1*60 "Transition time (= 0.0 gives a Step)";
 
 	//Variables:
 	//****************
@@ -59,8 +65,16 @@ model GenericFT
 	SI.MassFlowRate m_flow_water(min=0) "Mass flow rate of water required in FT";
 	SI.MassFlowRate m_flow_CO2(min=0) "Mass flow rate of CO2 dumped/released from FT";
 
+	SI.EnergyFlowRate E_sg_in(min=0) "Syngas energy flow rate at FT";
 	SI.MassFlowRate m_flow_sg(min=0) "Mass flow rate of syngas to FT";
-	Modelica.Blocks.Continuous.CriticalDamping cd(n=1, f=1/t_trans, normalized = true, initType=Modelica.Blocks.Types.Init.SteadyState) "defines a transfer function between the input and the output as an n-th order filter with critical damping characteristics and cut-off frequency f";
+	//Modelica.Blocks.Continuous.CriticalDamping cd(n=1, f=1/t_ft_trans_delay, normalized = true, initType=Modelica.Blocks.Types.Init.SteadyState) "Delays transition for the time given with and n-th order behaviour";
+	SI.EnergyFlowRate E_sg_trans_pre(min=0) "Syngas energy flow rate at the FT right before transition event";
+	SI.EnergyFlowRate E_sg_trans_after(min=0) "Syngas energy flow rate at the FT right after transition event";
+	SI.MassFlowRate m_flow_sg_trans_pre(min=0) "Syngas mass flow rate at the FT right before transition event";
+	SI.MassFlowRate m_flow_sg_trans_after(min=0) "Syngas mass flow rate at the FT right after transition event";
+
+	Boolean trans "true if the syngas supply flow changes";
+	Boolean trend "ture if the change is incremental and false if the change is decremental";
 
 	SI.HeatFlowRate Q_flow_ft "Heat flow produced in FT";
 
@@ -70,12 +84,15 @@ model GenericFT
 	SI.EnergyFlowRate E_flow_petrol(min=0) "Energy flow rate of petrol leaving FT";
 	SI.EnergyFlowRate E_flow_diesel(min=0) "Energy flow rate of diesel leaving FT";
 
-	Integer ft_state(min=1, max=4) "FT state";
+	Integer ft_state(min=1, max=5) "FT state";
 	SI.Time t_ft_w_now "Time of FT current warm-up event";
 	SI.Time t_ft_w_next "Time of FT next warm-up event";
 	SI.Time t_ft_c_now "Time of FT current cool-down event";
 	SI.Time t_ft_c_next "Time of FT next cool-down event";
+	SI.Time t_ft_trans_now "Time of FT current transition event";
+	SI.Time t_ft_trans_next "Time of FT next transition event";
 
+	// Ramping-related variables: 
 	SolarTherm.Utilities.Transition.Ramp ramp_up_sg(ramp_order=ramp_order_sg, t_dur= t_ft_on_delay, up=true);
 	SolarTherm.Utilities.Transition.Ramp ramp_down_sg(ramp_order=ramp_order_sg, t_dur= t_ft_off_delay, up=false);
 	Real fr_ramp_sg(min=0, max=1) "Ramping transition rate for syngas supply to FT";
@@ -98,8 +115,34 @@ model GenericFT
 
 	SolarTherm.Utilities.Transition.Ramp ramp_up_prod(ramp_order=ramp_order_prod, t_dur= t_ft_on_delay, up=true);
 	SolarTherm.Utilities.Transition.Ramp ramp_down_prod(ramp_order=ramp_order_prod, t_dur= t_ft_off_delay, up=false);
-	Real fr_ramp_prod(min=0, max=1) "Ramping transition rate for for products production from FT";
+	Real fr_ramp_prod(min=0, max=1) "Ramping transition rate for products production from FT";
 
+	// Transitioning-related variables: 
+	SolarTherm.Utilities.Transition.Ramp trans_up_sg(ramp_order=trans_order_sg, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_sg(ramp_order=trans_order_sg, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_sg(min=0, max=1) "Transitioning rate for syngas supply to FT while FT is on";
+
+	SolarTherm.Utilities.Transition.Ramp trans_up_elec(ramp_order=trans_order_elec, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_elec(ramp_order=trans_order_elec, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_elec(min=0, max=1) "Transitioning rate for electricity supply to FT while FT is on";
+
+	SolarTherm.Utilities.Transition.Ramp trans_up_H2_pv(ramp_order=trans_order_H2_pv, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_H2_pv(ramp_order=trans_order_H2_pv, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_H2_pv(min=0, max=1) "Transitioning rate for PV H2 supply to FT while FT is on";
+
+	SolarTherm.Utilities.Transition.Ramp trans_up_water(ramp_order=trans_order_water, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_water(ramp_order=trans_order_water, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_water(min=0, max=1) "Transition rate for water supply to FT while FT is on";
+
+	SolarTherm.Utilities.Transition.Ramp trans_up_CO2(ramp_order=trans_order_CO2, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_CO2(ramp_order=trans_order_CO2, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_CO2(min=0, max=1) "Transitioning rate for CO2 dump/release from FT while FT is on";
+
+	SolarTherm.Utilities.Transition.Ramp trans_up_prod(ramp_order=trans_order_prod, t_dur= t_ft_trans_delay, up=true);
+	SolarTherm.Utilities.Transition.Ramp trans_down_prod(ramp_order=trans_order_prod, t_dur= t_ft_trans_delay, up=false);
+	Real fr_trans_prod(min=0, max=1) "Transition rate for products production from FT while FT is on";
+
+	// Timer variables:
 	Modelica.Blocks.Logical.Timer timer "Timer measuring the times that the FT is on";
 	discrete SI.Time time_on(start=0, fixed=true) "Time marking when the FT starts running";
 	discrete SI.Time dt_on(start=0, fixed=true) "Time duration of everytime the FT is on";
@@ -115,8 +158,8 @@ protected
 	constant SI.SpecificEnthalpy h_petrol = 2.165930736319661e6 "Specific enthalpy of petrol at 35C & 3bar";
 	constant SI.SpecificEnthalpy h_diesel = 1.974827449313822e6 "Specific enthalpy of diesel at 35C & 3bar";
 
-	parameter SI.MassFlowRate m_flow_sg_des = E_sg_des / LHV_sg;
-	parameter SI.MassFlowRate m_flow_sg_min = E_sg_min / LHV_sg;
+	parameter SI.MassFlowRate m_flow_sg_des(min=0) = E_sg_des / LHV_sg;
+	parameter SI.MassFlowRate m_flow_sg_min(min=0) = E_sg_min / LHV_sg;
 
 	SolarTherm.Utilities.Polynomial.Poly vf_petrol(c=cvf_petrol);
 	SolarTherm.Utilities.Polynomial.Poly vf_diesel(c=cvf_diesel);
@@ -142,22 +185,36 @@ initial equation
 	t_ft_w_next = 0;
 	t_ft_c_now = 0;
 	t_ft_c_next = 0;
+	t_ft_trans_now = 0;
+	t_ft_trans_next = 0;
+	E_sg_trans_pre = E_sg;
+	E_sg_trans_after = E_sg;
+	m_flow_sg_trans_pre = E_sg / LHV_sg;
+	m_flow_sg_trans_after = E_sg / LHV_sg;
 
 algorithm
 	when ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay > 0 then
 		ft_state := 2; // FT warming up
 	elsewhen ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay <= 0 then
-		ft_state := 3; // FT on (no warm-up)
+		ft_state := 3; // FT operating (no warm-up)
 	elsewhen ft_state == 2 and time >= t_ft_w_next then
-		ft_state := 3; // FT on
-	elsewhen ft_state == 4 and time >= t_ft_c_next then
+		ft_state := 3; // FT operating
+	elsewhen ft_state == 3 and trans and t_ft_trans_delay > 0 then
+		ft_state := 4; // FT in transition
+	elsewhen ft_state == 4 and time >= t_ft_trans_next then
+		ft_state := 3; // FT operating
+	elsewhen ft_state == 4 and E_sg < E_sg_min and t_ft_off_delay > 0 then
+		ft_state := 5; // FT cooling down
+	elsewhen ft_state == 4 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
+		ft_state := 1; // FT off(no cool-down)
+	elsewhen ft_state == 5 and time >= t_ft_c_next then
 		ft_state := 1; // FT off
 	elsewhen ft_state == 2 and E_sg < E_sg_min then
 		ft_state := 1; // FT off
 	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay > 0 then
-		ft_state := 4; // FT cooling down
+		ft_state := 5; // FT cooling down
 	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
-		ft_state := 1; // FT cooling down
+		ft_state := 1; // FT off(no cool-down)
 	end when;
 
 	when ft_state == 2 then
@@ -166,6 +223,15 @@ algorithm
 	end when;
 
 	when ft_state == 4 then
+		t_ft_trans_now := time;
+		t_ft_trans_next := time + t_ft_trans_delay;
+		E_sg_trans_pre := pre(E_sg);
+		E_sg_trans_after := E_sg;
+		m_flow_sg_trans_pre := pre(E_sg) / LHV_sg;
+		m_flow_sg_trans_after := E_sg / LHV_sg;
+	end when;
+
+	when ft_state == 5 then
 		t_ft_c_now := time;
 		t_ft_c_next := time + t_ft_off_delay;
 	end when;
@@ -177,13 +243,29 @@ algorithm
 		fr_ramp_water := if ramp_order_water == 0 then 1 else abs(ramp_up_water.y);
 		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 1 else abs(ramp_up_CO2.y);
 		fr_ramp_prod := if ramp_order_prod == 0 then 0 else abs(ramp_up_prod.y);
-	elseif ft_state == 4 then
+	elseif ft_state == 5 then
 		fr_ramp_sg := if ramp_order_sg == 0 then 0 else abs(ramp_down_sg.y);
 		fr_ramp_elec := if ramp_order_elec == 0 then 0 else abs(ramp_down_elec.y);
 		fr_ramp_H2_pv := if ramp_order_H2_pv == 0 then 0 else abs(ramp_down_H2_pv.y);
 		fr_ramp_water := if ramp_order_water == 0 then 0 else abs(ramp_down_water.y);
 		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 0 else abs(ramp_down_CO2.y);
 		fr_ramp_prod := if ramp_order_prod == 0 then 0 else abs(ramp_down_prod.y);
+	elseif ft_state == 4 then
+		if trend then
+			fr_trans_sg := if trans_order_sg == 0 then 1 else abs(trans_up_sg.y);
+			fr_trans_elec := if trans_order_elec == 0 then 1 else abs(trans_up_elec.y);
+			fr_trans_H2_pv := if trans_order_H2_pv == 0 then 1 else abs(trans_up_H2_pv.y);
+			fr_trans_water := if trans_order_water == 0 then 1 else abs(trans_up_water.y);
+			fr_trans_CO2 := if trans_order_CO2 == 0 then 1 else abs(trans_up_CO2.y);
+			fr_trans_prod := if trans_order_prod == 0 then 0 else abs(trans_up_prod.y);
+		else
+			fr_trans_sg := if trans_order_sg == 0 then 1 else abs(trans_down_sg.y);
+			fr_trans_elec := if trans_order_elec == 0 then 1 else abs(trans_down_elec.y);
+			fr_trans_H2_pv := if trans_order_H2_pv == 0 then 1 else abs(trans_down_H2_pv.y);
+			fr_trans_water := if trans_order_water == 0 then 1 else abs(trans_down_water.y);
+			fr_trans_CO2 := if trans_order_CO2 == 0 then 1 else abs(trans_down_CO2.y);
+			fr_trans_prod := if trans_order_prod == 0 then 0 else abs(trans_down_prod.y);
+		end if;
 	else
 		fr_ramp_sg := 0;
 		fr_ramp_elec := 0;
@@ -191,15 +273,24 @@ algorithm
 		fr_ramp_water := 0;
 		fr_ramp_CO2 := 0;
 		fr_ramp_prod := 0;
+
+		fr_trans_sg := 0;
+		fr_trans_elec := 0;
+		fr_trans_H2_pv := 0;
+		fr_trans_water := 0;
+		fr_trans_CO2 := 0;
+		fr_trans_prod := 0;
 	end if;
 
-	on := if ft_state == 3 then true else false;
+	on := if ft_state == 3 or ft_state == 4 then true else false;
 
 	when on then
 		time_on := time;
 	end when;
 
 equation
+	(trans, trend) = SolarTherm.Utilities.ToleranceTest.compareReal(pre(E_sg), E_sg);
+
 	ramp_up_sg.x = t_ft_w_now;
 	ramp_down_sg.x = t_ft_c_now;
 
@@ -218,6 +309,24 @@ equation
 	ramp_up_prod.x = t_ft_w_now;
 	ramp_down_prod.x = t_ft_c_now;
 
+	trans_up_sg.x = t_ft_trans_now;
+	trans_down_sg.x = t_ft_trans_now;
+
+	trans_up_elec.x = t_ft_trans_now;
+	trans_down_elec.x = t_ft_trans_now;
+
+	trans_up_H2_pv.x = t_ft_trans_now;
+	trans_down_H2_pv.x = t_ft_trans_now;
+
+	trans_up_water.x = t_ft_trans_now;
+	trans_down_water.x = t_ft_trans_now;
+
+	trans_up_CO2.x = t_ft_trans_now;
+	trans_down_CO2.x = t_ft_trans_now;
+
+	trans_up_prod.x = t_ft_trans_now;
+	trans_down_prod.x = t_ft_trans_now;
+
 	v_flow_petrol_des = vf_petrol_des.y;
 	vf_petrol_des.x = m_flow_sg_des;
 
@@ -227,7 +336,8 @@ equation
 	v_flow_fuel_des = v_flow_petrol_des + (fuel_conv_ratio * v_flow_diesel_des);
 
 	if ft_state <= 1 then
-		cd.u = 0;
+		//cd.u = 0;
+		E_sg_in = 0;
 		m_flow_sg = 0;
 
 		vf_petrol.x = 0;
@@ -265,9 +375,11 @@ equation
 
 		E_flow_petrol = m_flow_petrol * h_petrol;
 		E_flow_diesel = m_flow_diesel * h_diesel;
-	elseif ft_state == 2 or ft_state == 4 then
-		cd.u = E_sg / LHV_sg;
-		m_flow_sg = fr_ramp_sg * max(cd.y,0);
+	elseif ft_state == 2 or ft_state == 5 then
+		//cd.u = E_sg / LHV_sg;
+		//m_flow_sg = fr_ramp_sg * max(cd.y,0);
+		E_sg_in = fr_ramp_sg * E_sg;
+		m_flow_sg = E_sg_in / LHV_sg;
 
 		vf_petrol.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
 		v_flow_petrol = fr_ramp_prod * max(vf_petrol.y,0);
@@ -304,9 +416,91 @@ equation
 
 		E_flow_petrol = m_flow_petrol * h_petrol;
 		E_flow_diesel = m_flow_diesel * h_diesel;
+	elseif ft_state == 4 then
+		if trend then
+			E_sg_in = E_sg_trans_pre + fr_trans_sg * (E_sg_trans_after - E_sg_trans_pre);
+			m_flow_sg = E_sg_in / LHV_sg;
+
+			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			v_flow_petrol = if trans_order_prod == 0 then 0 else max(vf_petrol.y,0);
+
+			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			v_flow_diesel = if trans_order_prod == 0 then 0 else max(vf_diesel.y,0);
+
+			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			P_C = max(p_c.y*1e6,0);
+
+			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			P_pumps = max(p_p.y*1e3,0);
+
+			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			P_T = if trans_order_prod == 0 then 0 else max(p_t.y*1e6,0);
+
+			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			Q_flow_ft = if trans_order_prod == 0 then 0 else max(q_ft.y*1e6,0);
+
+			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_H2_pv = max(FR_H2_pv.y,0);
+
+			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			m_flow_O2 = if trans_order_prod == 0 then 0 else max(FR_O2.y,0);
+
+			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_water = max(FR_water.y,0);
+
+			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_CO2 = max(FR_CO2_dump.y,0);
+
+			m_flow_petrol = rho_petrol * v_flow_petrol;
+			m_flow_diesel = rho_diesel * v_flow_diesel;
+
+			E_flow_petrol = m_flow_petrol * h_petrol;
+			E_flow_diesel = m_flow_diesel * h_diesel;
+		else
+			E_sg_in = if trans_order_sg == 0 then E_sg_trans_after else E_sg_trans_pre - (1 - fr_trans_sg) * (E_sg_trans_pre - E_sg_trans_after);
+			m_flow_sg = E_sg_in / LHV_sg;
+
+			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			v_flow_petrol = if trans_order_prod == 0 then 0 else max(vf_petrol.y,0);
+
+			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			v_flow_diesel = if trans_order_prod == 0 then 0 else max(vf_diesel.y,0);
+
+			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			P_C = max(p_c.y*1e6,0);
+
+			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			P_pumps = max(p_p.y*1e3,0);
+
+			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			P_T = if trans_order_prod == 0 then 0 else max(p_t.y*1e6,0);
+
+			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			Q_flow_ft = if trans_order_prod == 0 then 0 else max(q_ft.y*1e6,0);
+
+			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_H2_pv = max(FR_H2_pv.y,0);
+
+			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			m_flow_O2 = if trans_order_prod == 0 then 0 else max(FR_O2.y,0);
+
+			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_water = max(FR_water.y,0);
+
+			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg;
+			m_flow_CO2 = max(FR_CO2_dump.y,0);
+
+			m_flow_petrol = rho_petrol * v_flow_petrol;
+			m_flow_diesel = rho_diesel * v_flow_diesel;
+
+			E_flow_petrol = m_flow_petrol * h_petrol;
+			E_flow_diesel = m_flow_diesel * h_diesel;
+		end if;
 	else
-		cd.u = E_sg / LHV_sg;
-		m_flow_sg = max(cd.y,0);
+		//cd.u = E_sg / LHV_sg;
+		//m_flow_sg = max(cd.y,0);
+		E_sg_in = E_sg;
+		m_flow_sg = E_sg_in / LHV_sg;
 
 		vf_petrol.x = m_flow_sg;
 		v_flow_petrol = max(vf_petrol.y,0);
