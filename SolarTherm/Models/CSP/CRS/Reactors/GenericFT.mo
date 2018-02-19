@@ -66,8 +66,10 @@ model GenericFT
 	SI.MassFlowRate m_flow_CO2(min=0) "Mass flow rate of CO2 dumped/released from FT";
 
 	SI.EnergyFlowRate E_sg_in(min=0) "Syngas energy flow rate at FT";
-	SI.MassFlowRate m_flow_sg(min=0) "Mass flow rate of syngas to FT";
+	SI.MassFlowRate m_flow_sg_in(min=0) "Mass flow rate of syngas at FT";
+
 	//Modelica.Blocks.Continuous.CriticalDamping cd(n=1, f=1/t_ft_trans_delay, normalized = true, initType=Modelica.Blocks.Types.Init.SteadyState) "Delays transition for the time given with and n-th order behaviour";
+
 	SI.EnergyFlowRate E_sg_trans_pre(min=0) "Syngas energy flow rate at the FT right before transition event";
 	SI.EnergyFlowRate E_sg_trans_after(min=0) "Syngas energy flow rate at the FT right after transition event";
 	SI.MassFlowRate m_flow_sg_trans_pre(min=0) "Syngas mass flow rate at the FT right before transition event";
@@ -75,11 +77,12 @@ model GenericFT
 
 	Boolean trans "true if the syngas supply flow changes";
 	Boolean trend "ture if the change is incremental and false if the change is decremental";
+	Boolean useful_prod(start=false) "true if energy/mass supply is converted to useful product";
 
 	SI.HeatFlowRate Q_flow_ft "Heat flow produced in FT";
 
 	SI.MassFlowRate m_flow_petrol(min=0) "Mass flow rate of petrol";
-	SI.MassFlowRate m_flow_diesel(min=0) "Mass flow reate of diesel";
+	SI.MassFlowRate m_flow_diesel(min=0) "Mass flow rate of diesel";
 
 	SI.EnergyFlowRate E_flow_petrol(min=0) "Energy flow rate of petrol leaving FT";
 	SI.EnergyFlowRate E_flow_diesel(min=0) "Energy flow rate of diesel leaving FT";
@@ -91,6 +94,15 @@ model GenericFT
 	SI.Time t_ft_c_next "Time of FT next cool-down event";
 	SI.Time t_ft_trans_now "Time of FT current transition event";
 	SI.Time t_ft_trans_next "Time of FT next transition event";
+
+	SI.EnergyFlowRate E_sg_in_waste(min=0) "Syngas energy flow rate wasted at FT";
+	SI.MassFlowRate m_flow_sg_in_waste(min=0) "Mass flow rate of syngas supply wasted at FT";
+	SI.Power P_C_waste(min=0) "Compressor power consumption wasted";
+	SI.Power P_pumps_waste(min=0) "Pumps power consumption wasted";
+	SI.MassFlowRate m_flow_H2_pv_waste(min=0) "Mass flow rate of H2 supply wasted";
+
+	SI.MassFlowRate m_flow_water_waste(min=0) "Mass flow rate of water supply wasted at FT";
+	SI.MassFlowRate m_flow_CO2_waste(min=0) "Mass flow rate of CO2 dumped/released from FT when the products are rubbish";
 
 	// Ramping-related variables: 
 	SolarTherm.Utilities.Transition.Ramp ramp_up_sg(ramp_order=ramp_order_sg, t_dur= t_ft_on_delay, up=true);
@@ -282,6 +294,18 @@ algorithm
 		fr_trans_prod := 0;
 	end if;
 
+	if ft_state == 1 then
+		useful_prod := false;
+	elseif ft_state == 2 then
+		useful_prod := if ramp_order_prod == 0 then false else true;
+	elseif ft_state == 5 then
+		useful_prod := if ramp_order_prod == 0 then false else true;
+	elseif ft_state == 4 then
+		useful_prod := if trans_order_prod == 0 then false else true;
+	else
+		useful_prod := true;
+	end if;
+
 	on := if ft_state == 3 or ft_state == 4 then true else false;
 
 	when on then
@@ -338,7 +362,7 @@ equation
 	if ft_state <= 1 then
 		//cd.u = 0;
 		E_sg_in = 0;
-		m_flow_sg = 0;
+		m_flow_sg_in = 0;
 
 		vf_petrol.x = 0;
 		v_flow_petrol = 0;
@@ -377,38 +401,38 @@ equation
 		E_flow_diesel = m_flow_diesel * h_diesel;
 	elseif ft_state == 2 or ft_state == 5 then
 		//cd.u = E_sg / LHV_sg;
-		//m_flow_sg = fr_ramp_sg * max(cd.y,0);
+		//m_flow_sg_in = fr_ramp_sg * max(cd.y,0);
 		E_sg_in = fr_ramp_sg * E_sg;
-		m_flow_sg = E_sg_in / LHV_sg;
+		m_flow_sg_in = E_sg_in / LHV_sg;
 
-		vf_petrol.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
+		vf_petrol.x = if ramp_order_prod == 0 then 0 else m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		v_flow_petrol = fr_ramp_prod * max(vf_petrol.y,0);
 
-		vf_diesel.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
+		vf_diesel.x = if ramp_order_prod == 0 then 0 else m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		v_flow_diesel = fr_ramp_prod * max(vf_diesel.y,0);
 
-		p_c.x = m_flow_sg/(fr_ramp_sg + 1e-10);
+		p_c.x = m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		P_C = fr_ramp_elec * max(p_c.y*1e6,0);
 
-		p_p.x = m_flow_sg/(fr_ramp_sg + 1e-10);
+		p_p.x = m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		P_pumps = fr_ramp_elec * max(p_p.y*1e3,0);
 
-		p_t.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
+		p_t.x = if ramp_order_prod == 0 then 0 else m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		P_T = fr_ramp_prod * max(p_t.y*1e6,0);
 
-		q_ft.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
+		q_ft.x = if ramp_order_prod == 0 then 0 else m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		Q_flow_ft = fr_ramp_prod * max(q_ft.y*1e6,0);
 
-		FR_H2_pv.x = m_flow_sg/(fr_ramp_sg + 1e-10);
+		FR_H2_pv.x = m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		m_flow_H2_pv = fr_ramp_H2_pv * max(FR_H2_pv.y,0);
 
-		FR_O2.x = if ramp_order_prod == 0 then 0 else m_flow_sg/(fr_ramp_sg + 1e-10);
+		FR_O2.x = if ramp_order_prod == 0 then 0 else m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		m_flow_O2 = fr_ramp_prod * max(FR_O2.y,0);
 
-		FR_water.x = m_flow_sg/(fr_ramp_sg + 1e-10);
+		FR_water.x = m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		m_flow_water = fr_ramp_water * max(FR_water.y,0);
 
-		FR_CO2_dump.x = m_flow_sg/(fr_ramp_sg + 1e-10);
+		FR_CO2_dump.x = m_flow_sg_in/(fr_ramp_sg + 1e-10);
 		m_flow_CO2 = fr_ramp_CO2 * max(FR_CO2_dump.y,0);
 
 		m_flow_petrol = rho_petrol * v_flow_petrol;
@@ -419,36 +443,36 @@ equation
 	elseif ft_state == 4 then
 		if trend then
 			E_sg_in = E_sg_trans_pre + fr_trans_sg * (E_sg_trans_after - E_sg_trans_pre);
-			m_flow_sg = E_sg_in / LHV_sg;
+			m_flow_sg_in = E_sg_in / LHV_sg;
 
-			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			v_flow_petrol = if trans_order_prod == 0 then 0 else max(vf_petrol.y,0);
 
-			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			v_flow_diesel = if trans_order_prod == 0 then 0 else max(vf_diesel.y,0);
 
-			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			P_C = max(p_c.y*1e6,0);
 
-			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			P_pumps = max(p_p.y*1e3,0);
 
-			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			P_T = if trans_order_prod == 0 then 0 else max(p_t.y*1e6,0);
 
-			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			Q_flow_ft = if trans_order_prod == 0 then 0 else max(q_ft.y*1e6,0);
 
-			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_H2_pv = max(FR_H2_pv.y,0);
 
-			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			m_flow_O2 = if trans_order_prod == 0 then 0 else max(FR_O2.y,0);
 
-			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_water = max(FR_water.y,0);
 
-			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_CO2 = max(FR_CO2_dump.y,0);
 
 			m_flow_petrol = rho_petrol * v_flow_petrol;
@@ -458,36 +482,36 @@ equation
 			E_flow_diesel = m_flow_diesel * h_diesel;
 		else
 			E_sg_in = if trans_order_sg == 0 then E_sg_trans_after else E_sg_trans_pre - (1 - fr_trans_sg) * (E_sg_trans_pre - E_sg_trans_after);
-			m_flow_sg = E_sg_in / LHV_sg;
+			m_flow_sg_in = E_sg_in / LHV_sg;
 
-			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			vf_petrol.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			v_flow_petrol = if trans_order_prod == 0 then 0 else max(vf_petrol.y,0);
 
-			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			vf_diesel.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			v_flow_diesel = if trans_order_prod == 0 then 0 else max(vf_diesel.y,0);
 
-			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			p_c.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			P_C = max(p_c.y*1e6,0);
 
-			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg;
+			p_p.x = if trans_order_elec == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			P_pumps = max(p_p.y*1e3,0);
 
-			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			p_t.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			P_T = if trans_order_prod == 0 then 0 else max(p_t.y*1e6,0);
 
-			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			q_ft.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			Q_flow_ft = if trans_order_prod == 0 then 0 else max(q_ft.y*1e6,0);
 
-			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_H2_pv.x = if trans_order_H2_pv == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_H2_pv = max(FR_H2_pv.y,0);
 
-			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg;
+			FR_O2.x = if trans_order_prod == 0 then 0 else m_flow_sg_in;
 			m_flow_O2 = if trans_order_prod == 0 then 0 else max(FR_O2.y,0);
 
-			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_water.x = if trans_order_water == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_water = max(FR_water.y,0);
 
-			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg;
+			FR_CO2_dump.x = if trans_order_CO2 == 0 then m_flow_sg_trans_after else m_flow_sg_in;
 			m_flow_CO2 = max(FR_CO2_dump.y,0);
 
 			m_flow_petrol = rho_petrol * v_flow_petrol;
@@ -498,38 +522,38 @@ equation
 		end if;
 	else
 		//cd.u = E_sg / LHV_sg;
-		//m_flow_sg = max(cd.y,0);
+		//m_flow_sg_in = max(cd.y,0);
 		E_sg_in = E_sg;
-		m_flow_sg = E_sg_in / LHV_sg;
+		m_flow_sg_in = E_sg_in / LHV_sg;
 
-		vf_petrol.x = m_flow_sg;
+		vf_petrol.x = m_flow_sg_in;
 		v_flow_petrol = max(vf_petrol.y,0);
 
-		vf_diesel.x = m_flow_sg;
+		vf_diesel.x = m_flow_sg_in;
 		v_flow_diesel = max(vf_diesel.y,0);
 
-		p_c.x = m_flow_sg;
+		p_c.x = m_flow_sg_in;
 		P_C = max(p_c.y*1e6,0);
 
-		p_p.x = m_flow_sg;
+		p_p.x = m_flow_sg_in;
 		P_pumps = max(p_p.y*1e3,0);
 
-		p_t.x = m_flow_sg;
+		p_t.x = m_flow_sg_in;
 		P_T = max(p_t.y*1e6,0);
 
-		q_ft.x = m_flow_sg;
+		q_ft.x = m_flow_sg_in;
 		Q_flow_ft = max(q_ft.y*1e6,0);
 
-		FR_H2_pv.x = m_flow_sg;
+		FR_H2_pv.x = m_flow_sg_in;
 		m_flow_H2_pv = max(FR_H2_pv.y,0);
 
-		FR_O2.x = m_flow_sg;
+		FR_O2.x = m_flow_sg_in;
 		m_flow_O2 = max(FR_O2.y,0);
 
-		FR_water.x = m_flow_sg;
+		FR_water.x = m_flow_sg_in;
 		m_flow_water = max(FR_water.y,0);
 
-		FR_CO2_dump.x = m_flow_sg;
+		FR_CO2_dump.x = m_flow_sg_in;
 		m_flow_CO2 = max(FR_CO2_dump.y,0);
 
 		m_flow_petrol = rho_petrol * v_flow_petrol;
@@ -537,6 +561,24 @@ equation
 
 		E_flow_petrol = m_flow_petrol * h_petrol;
 		E_flow_diesel = m_flow_diesel * h_diesel;
+	end if;
+
+	if useful_prod then
+		E_sg_in_waste = 0;
+		m_flow_sg_in_waste = 0;
+		P_C_waste = 0;
+		P_pumps_waste = 0;
+		m_flow_H2_pv_waste = 0;
+		m_flow_water_waste = 0;
+		m_flow_CO2_waste = 0;
+	else
+		E_sg_in_waste = E_sg_in;
+		m_flow_sg_in_waste = m_flow_sg_in;
+		P_C_waste = P_C;
+		P_pumps_waste = P_pumps;
+		m_flow_H2_pv_waste = m_flow_H2_pv;
+		m_flow_water_waste = m_flow_water;
+		m_flow_CO2_waste = m_flow_CO2;
 	end if;
 
 	timer.u = on;
