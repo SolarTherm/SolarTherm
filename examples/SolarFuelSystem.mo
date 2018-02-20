@@ -16,25 +16,25 @@ model SolarFuelSystem
 
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
-	parameter Integer ramp_order_rx_heat(min=0, max=2) = 0 "ramping filter order for heat supply to the reactor";
-	parameter Integer ramp_order_rx_algae(min=0, max=2) = 0 "ramping filter order for algae supply to the reactor";
-	parameter Integer ramp_order_rx_CO2(min=0, max=2) = 0 "ramping filter order for CO2 dump/release from the reactor";
-	parameter Integer ramp_order_rx_elec(min=0, max=2) = 0 "ramping filter order for electricity supply to the reactor";
-	parameter Integer ramp_order_rx_sg(min=0, max=2) = 0 "ramping filter order for syngas production from the reactor";
+	parameter Integer ramp_order_rx_heat(min=0, max=2) = 1 "ramping filter order for heat supply to the reactor";
+	parameter Integer ramp_order_rx_algae(min=0, max=2) = 1 "ramping filter order for algae supply to the reactor";
+	parameter Integer ramp_order_rx_CO2(min=0, max=2) = 1 "ramping filter order for CO2 dump/release from the reactor";
+	parameter Integer ramp_order_rx_elec(min=0, max=2) = 1 "ramping filter order for electricity supply to the reactor";
+	parameter Integer ramp_order_rx_sg(min=0, max=2) = 1 "ramping filter order for syngas production from the reactor";
 
-	parameter Integer ramp_order_ft_sg(min=0, max=2) = 0 "ramping filter order for syngas supply to FT";
-	parameter Integer ramp_order_ft_elec(min=0, max=2) = 0 "ramping filter order for electricity supply to FT";
-	parameter Integer ramp_order_ft_H2_pv(min=0, max=2) = 0 "ramping filter order for PV H2 supply to FT";
-	parameter Integer ramp_order_ft_water(min=0, max=2) = 0 "ramping filter order for water supply to FT";
-	parameter Integer ramp_order_ft_CO2(min=0, max=2) = 0 "ramping filter order for CO2 dump/release from FT";
-	parameter Integer ramp_order_ft_prod(min=0, max=2) = 0 "ramping filter order for products production from FT";
+	parameter Integer ramp_order_ft_sg(min=0, max=2) = 1 "ramping filter order for syngas supply to FT";
+	parameter Integer ramp_order_ft_elec(min=0, max=2) = 1 "ramping filter order for electricity supply to FT";
+	parameter Integer ramp_order_ft_H2_pv(min=0, max=2) = 1 "ramping filter order for PV H2 supply to FT";
+	parameter Integer ramp_order_ft_water(min=0, max=2) = 1 "ramping filter order for water supply to FT";
+	parameter Integer ramp_order_ft_CO2(min=0, max=2) = 1 "ramping filter order for CO2 dump/release from FT";
+	parameter Integer ramp_order_ft_prod(min=0, max=2) = 1 "ramping filter order for products production from FT";
 
-	parameter Integer trans_order_ft_sg(min=0, max=2) = 0 "Transitioning filter order for syngas supply to FT while FT is on";
-	parameter Integer trans_order_ft_elec(min=0, max=2) = 0 "Transitioning filter order for electricity supply to FT while FT is on";
-	parameter Integer trans_order_ft_H2_pv(min=0, max=2) = 0 "Transitioning filter order for PV H2 supply to FT while FT is on";
-	parameter Integer trans_order_ft_water(min=0, max=2) = 0 "Transitioning filter order for water supply to FT while FT is on";
-	parameter Integer trans_order_ft_CO2(min=0, max=2) = 0 "Transitioning filter order for CO2 dump/release from FT while FT is on";
-	parameter Integer trans_order_ft_prod(min=0, max=2) = 0 "Transitioning filter order for products production from FT while FT is on";
+	parameter Integer trans_order_ft_sg(min=0, max=2) = 1 "Transitioning filter order for syngas supply to FT while FT is on";
+	parameter Integer trans_order_ft_elec(min=0, max=2) = 1 "Transitioning filter order for electricity supply to FT while FT is on";
+	parameter Integer trans_order_ft_H2_pv(min=0, max=2) = 1 "Transitioning filter order for PV H2 supply to FT while FT is on";
+	parameter Integer trans_order_ft_water(min=0, max=2) = 1 "Transitioning filter order for water supply to FT while FT is on";
+	parameter Integer trans_order_ft_CO2(min=0, max=2) = 1 "Transitioning filter order for CO2 dump/release from FT while FT is on";
+	parameter Integer trans_order_ft_prod(min=0, max=2) = 1 "Transitioning filter order for products production from FT while FT is on";
 
 	// Polynomilas coeffs for SCWG+SMR
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
