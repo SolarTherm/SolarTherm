@@ -96,6 +96,14 @@ model GenericRX
 	discrete SI.Time tot "Total operating time of the reactor";
 	Boolean on(start=false, fixed=true) "the reactor on/off signal";
 
+	Boolean useful_prod(start=false) "true if energy/mass supply is converted to useful product i.e. syngas";
+
+	SI.MassFlowRate m_flow_algae_waste(min=0) "Mass flow rate of algea supply wasted";
+	SI.MassFlowRate m_flow_water_waste(min=0) "Mass flow rate of water supply wasted";
+	SI.MassFlowRate m_flow_H2_pv_waste(min=0) "Mass flow rate of H2 supply wasted";
+	SI.MassFlowRate m_flow_CO2_waste(min=0) "Mass flow rate of CO2 dumped/released from the reactor when the products are rubbish";
+	SI.Power P_pump_waste(min=0) "Pump power consumption waste";
+
 protected
 	constant Real molarRatio_H2_CO = 2.1 "Molar ratio of H2 to CO at the outlet of SMR";
 	constant Real massRatio_w_a = 3.0 "Mass ratio of water to algae";
@@ -209,6 +217,14 @@ algorithm
 		fr_ramp_CO2 := 0;
 		fr_ramp_elec := 0;
 		fr_ramp_sg := 0;
+	end if;
+
+	if rx_state == 1 then
+		useful_prod := false;
+	elseif rx_state == 2 or rx_state == 4 then
+		useful_prod := if ramp_order_sg == 0 then false else true;
+	else
+		useful_prod := true;
 	end if;
 
 	on := if rx_state == 3 then true else false;
@@ -417,6 +433,20 @@ equation
 
 		p_p.x = (sum(R)/1e6 - R_mean) / R_std;
 		P_pump = max(p_p.y*1e3,0);
+	end if;
+
+	if useful_prod then
+		m_flow_algae_waste = 0;
+		m_flow_water_waste = 0;
+		m_flow_H2_pv_waste = 0;
+		m_flow_CO2_waste = 0;
+		P_pump_waste = 0;
+	else
+		m_flow_algae_waste = m_flow_algae;
+		m_flow_water_waste = m_flow_water;
+		m_flow_H2_pv_waste = m_flow_H2_pv;
+		m_flow_CO2_waste = m_flow_CO2;
+		P_pump_waste = P_pump;
 	end if;
 
 	timer.u = on;

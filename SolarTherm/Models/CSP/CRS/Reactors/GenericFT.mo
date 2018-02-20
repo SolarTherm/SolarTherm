@@ -77,7 +77,7 @@ model GenericFT
 
 	Boolean trans "true if the syngas supply flow changes";
 	Boolean trend "ture if the change is incremental and false if the change is decremental";
-	Boolean useful_prod(start=false) "true if energy/mass supply is converted to useful product";
+	Boolean useful_prod(start=false) "true if energy/mass supply is converted to useful product i.e. fuel";
 
 	SI.HeatFlowRate Q_flow_ft "Heat flow produced in FT";
 
