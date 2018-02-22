@@ -1,11 +1,73 @@
 model Reference_1
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;
+	import SI = Modelica.SIunits;
+	import nSI = Modelica.SIunits.Conversions.NonSIunits;
+	import CN = Modelica.Constants;
+	import CV = Modelica.SIunits.Conversions;
+	import FI = SolarTherm.Models.Analysis.Finances;
 
 	extends Modelica.Icons.Example;
+
+	// Input Parameters
+	// *********************
 	parameter String file_weather = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
 	parameter String file_optics =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
 
+	parameter SI.Area A_heliostat = 144.375 "Heliostat reflective area";
+	parameter Integer n_heliostat = 6377 "Heliostats number";
+	parameter SI.Length H_tower = 183.33 "Tower height";
+	parameter SI.Length H_receiver = 18.67 "Receiver height";
+	parameter SI.Diameter D_receiver = 15 "Receiver diameter";
+	parameter Real t_storage(unit="h") = 4 "Hours of storage";
+	parameter SI.Power P_name = 100e6 "Nameplate rating of power block";
+	parameter SI.Power P_gross = 111e6 "Power block gross rating at design point";
+	parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
+	parameter SI.Area A_land = 5876036 "Land area";
+
+	parameter SI.Area A_field = n_heliostat * A_heliostat "Solar field reflective area";
+	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver area";
+	parameter SI.HeatFlowRate Q_flow_des = P_gross/eff_blk "Heat to power block at design point";
+	parameter SI.Energy E_max = t_storage*3600*Q_flow_des "Maximum tank stored energy";
+
+	// Cost data
+	parameter Real r_disc = 0.07 "Discount rate";
+	parameter Real r_i = 0.03 "Inflation rate";
+	parameter Integer t_life(unit="year") = 27 "Lifetime of plant";
+	parameter Integer t_cons(unit="year") = 3 "Years of construction";
+
+	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
+
+	parameter FI.AreaPrice pri_field = 180 "Field cost per design aperture area";
+	parameter FI.AreaPrice pri_site = 20 "Site improvements cost per area";
+	parameter FI.EnergyPrice pri_storage = 37/(1e3*3600) "Storage cost per energy capacity";
+	parameter FI.PowerPrice pri_block = 1000/1e3 "Power block cost per gross rated power";
+	parameter FI.PowerPrice pri_bop = 350/1e3 "Balance of plant cost per gross rated power";
+	parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
+
+	parameter Real pri_om_name(unit="$/W/year") = 58/1e3 "Fixed O&M cost per nameplate per year";
+	parameter Real pri_om_prod(unit="$/J/year") = 5.96565/(1e6*3600) "Variable O&M cost per production per year";
+
+	parameter FI.Money C_field = pri_field * A_field "Field cost";
+	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
+	parameter FI.Money C_tower = 3117043.67*exp(0.0113*H_tower) "Tower cost";
+	parameter FI.Money C_receiver = 71708855*((A_receiver/879.8)^0.7) "Receiver cost";
+	parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
+	parameter FI.Money C_block = pri_block * P_gross "Power block cost";
+	parameter FI.Money C_bop = pri_bop * P_gross "Balance of plant cost";
+
+	parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money C_contingency = 0.07 * C_cap_dir_sub "Contingency costs";
+	parameter FI.Money C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
+	parameter FI.Money C_EPC = 0.11 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
+	parameter FI.Money C_land = pri_land * A_land "Land cost";
+	parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
+
+	parameter FI.MoneyPerYear C_year = pri_om_name * P_name "Fixed O&M cost per year";
+	parameter Real C_prod(unit="$/J/year") = pri_om_prod "Variable O&M cost per production per year";
+
+	// System components
+	// *********************
 	Models.Sources.SolarModel.Sun			sun(
 		lon=data.lon,
 		lat=data.lat,
@@ -17,7 +79,7 @@ model Reference_1
 			{-62,80}})));
 
 	Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
-		n_h=6377,
+		n_h=n_heliostat,
 		lon=data.lon,
 		lat=data.lat,
 		ele_min(displayUnit="deg") = 0.13962634015955,
@@ -26,7 +88,7 @@ model Reference_1
 		he_av=0.99,
 		use_on=true,
 		use_defocus=true,
-		A_h=144.375,
+		A_h=A_heliostat,
 		nu_defocus=1,
 		nu_min=0.3,
 		Q_design=330000000,
@@ -38,8 +100,8 @@ model Reference_1
 	Models.CSP.CRS.Receivers.ReceiverSimple receiver(
 		em=0.88,
 		redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
-		H_rcv=18.67,
-		D_rcv=15,
+		H_rcv=H_receiver,
+		D_rcv=D_receiver,
 		N_pa=20,
 		t_tb=1.25e-3,
 		D_tb=40e-3,
@@ -109,6 +171,7 @@ model Reference_1
 
 	Models.PowerBlocks.PowerBlockModel
 									powerBlock(
+		W_des=P_gross,
 		enable_losses=true,
 		redeclare model Cycle = Models.PowerBlocks.Correlation.Rankine,
 		nu_min=0.5,
@@ -134,6 +197,11 @@ model Reference_1
 
 	Modelica.Blocks.Logical.Or or1
 		annotation (Placement(transformation(extent={{-102,4},{-94,12}})));
+
+	// Variables:
+	SI.Power P_elec "Output power of power block";
+	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
+	FI.Money R_spot(start=0, fixed=true) "Spot market revenue";
 
 equation
 	connect(sun.solar, heliostatsField.solar) annotation(Line(points={{-72,60},{
@@ -223,6 +291,11 @@ equation
       pattern=LinePattern.Dot));
 	connect(powerBlock.W_net, market.W_net) annotation (Line(points={{115.18,
           22.05},{119.59,22.05},{119.59,21.8},{126,21.8}}, color={0,0,127}));
+
+	P_elec = powerBlock.W_net;
+	E_elec = powerBlock.E_net;
+	R_spot = market.profit;
+
 	annotation(Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}),
         graphics={
         Text(

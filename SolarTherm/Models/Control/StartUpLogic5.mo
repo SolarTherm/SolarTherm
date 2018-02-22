@@ -14,7 +14,7 @@ model StartUpLogic5
   parameter Real level_on=20;
   parameter Real level_off=5;
   Boolean standby;
-  Boolean startup;
+  Boolean startup(start=false, fixed=true);
   Boolean on_charge;
   Boolean on_discharge;
 

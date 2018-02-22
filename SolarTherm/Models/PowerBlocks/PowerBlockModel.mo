@@ -41,8 +41,8 @@ model PowerBlockModel
   SI.HeatFlowRate W_gross "Parasitic losses power";
   SI.HeatFlowRate W_loss "Parasitic losses power";
   //SI.HeatFlowRate W_net "Estimated net output at design";
-  SI.Energy E_gross(final start=0,displayUnit="MWh");
-  SI.Energy E_net(final start=0,displayUnit="MWh");
+  SI.Energy E_gross(final start=0, fixed=true, displayUnit="MWh");
+  SI.Energy E_net(final start=0, fixed=true, displayUnit="MWh");
 
   Boolean logic;
 

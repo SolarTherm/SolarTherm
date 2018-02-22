@@ -66,7 +66,7 @@ model SimpleSystem
 	parameter FI.MoneyPerYear C_year =
 			10*A_col // field cleaning/maintenance
 			"Cost per year";
-	parameter Real C_prod(unit="$/W/year") = 0 "Cost per production per year";
+	parameter Real C_prod(unit="$/J/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";

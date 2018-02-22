@@ -63,7 +63,7 @@ protected
   SI.Power W_loss2;
   //SI.Time t_start=30*60;
   parameter SI.Time t_start=3600 "Start-up traking delay";
-  discrete Modelica.SIunits.Time t_on "Sunrise time instant";
+  discrete Modelica.SIunits.Time t_on(start=0, fixed=true) "Sunrise time instant";
   Modelica.Blocks.Interfaces.BooleanInput on_internal
     "Needed to connect to conditional connector";
   Modelica.Blocks.Interfaces.BooleanInput defocus_internal
