@@ -107,7 +107,7 @@ model GenericSystem
 	parameter FI.Money C_cap = A_field*pri_field + A_land*pri_land
 		+ R_des*pri_receiver + E_max*pri_storage + P_gro*pri_block "Capital cost";
 	parameter FI.MoneyPerYear C_year = P_name*pri_om_name "Cost per year";
-	parameter Real C_prod(unit="$/W/year") = pri_om_prod
+	parameter Real C_prod(unit="$/J/year") = pri_om_prod
 	"Cost per production per year";
 
 	// System components

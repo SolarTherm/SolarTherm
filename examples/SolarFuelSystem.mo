@@ -9,7 +9,6 @@ model SolarFuelSystem
 
 	// Input Parameters
 	// *********************
-
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
 	parameter String sch_fcst_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Forecasts/forecast_data.motab") if storage and not const_dispatch;
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
@@ -107,7 +106,7 @@ model SolarFuelSystem
 	parameter SI.Energy E_max = t_storage * 3600 * E_flow_ft_des "Maximum tank stored energy";
 	parameter SI.Volume V_max = E_max / (LHV_sg * rho_sg) "Tank volume";
 
-	// Cost information
+	// Cost data
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 	parameter Integer t_life(unit="year") = 30 "Lifetime of plant";
