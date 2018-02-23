@@ -3,7 +3,7 @@ model ReceiverFluid
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
   SI.SpecificEnthalpy h_in;
-  SI.SpecificEnthalpy h_out(start=h_0);
+  SI.SpecificEnthalpy h_out(start=h_0, fixed=true);
   //SI.MassFlowRate m_flow;
   parameter SI.Length H_tower=10 "Tower height"
                                                annotation(Dialog(group="Technical data"));
