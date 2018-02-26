@@ -14,15 +14,18 @@ class TestScheduler(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='5m',solver='dassl')
+		sim.simulate(start=0, stop='1y', step='5m')
 		self.res = postproc.SimResultFuel(sim.res_fn)
-
-		# TODO need to restore calc_perf functionality
-		#self.perf = self.res.calc_perf()
+		self.perf = self.res.calc_perf()
 
 	def test_sched(self):
-		# TODO need to add specific tests here
-		pass
+		# Note these are set to the values for what is thought to be a working
+		# version.  They are not validated against anything or independently
+		# calculated.
+		self.assertAlmostEqual(self.perf[0], 6518014.61, 2) # fpy
+		self.assertAlmostEqual(self.perf[1], 6.03, 2) # LCOF
+		self.assertAlmostEqual(self.perf[2], 48.08, 2) # Capacity factor
+		print(self.perf);
 
 if __name__ == '__main__':
 	unittest.main()
