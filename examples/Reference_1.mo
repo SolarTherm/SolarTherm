@@ -45,8 +45,8 @@ model Reference_1
 	parameter FI.PowerPrice pri_bop = 350/1e3 "Balance of plant cost per gross rated power";
 	parameter FI.AreaPrice pri_land = 10000/4046.86 "Land cost per area";
 
-	parameter Real pri_om_name(unit="$/W/year") = 58/1e3 "Fixed O&M cost per nameplate per year";
-	parameter Real pri_om_prod(unit="$/J/year") = 5.96565/(1e6*3600) "Variable O&M cost per production per year";
+	parameter Real pri_om_name(unit="$/W/year") = 56.715/1e3 "Fixed O&M cost per nameplate per year"; // It is 58 $/kW/year in Mehdi's report, but Andrew suggsted a more recent number
+	parameter Real pri_om_prod(unit="$/J/year") = 5.7320752/(1e6*3600) "Variable O&M cost per production per year"; // It was 5.9656 $/MWh/year in Mehdi's report, but Andrew suggsted a more recent number
 
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
