@@ -9,7 +9,8 @@ model SolarFuelSystem
 
 	// Input Parameters
 	// *********************
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Geraldton_Airport_944030_RMY.motab");
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/troughwagner_opt_eff.motab") "Optical efficiency file";
 	parameter String sch_fcst_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Forecasts/forecast_data.motab") if storage and not const_dispatch;
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
@@ -61,7 +62,7 @@ model SolarFuelSystem
 	parameter Real cm_CO2_ft[:] = {1.632433704780866e-08, 0.036679737128161} "Mass flow rate coefficients for CO2 dumped/released from FT";
 
 	// Info for sizing the solar field
-	parameter SI.Efficiency eff_opt = 1
+	parameter SI.Efficiency eff_opt = 0.7449
 	"Efficiency of optics at design point (max in opt_file)"; // Needs to change after the lookup table is made. 0.578161677 ----> Ref: SAM obtained by Alireza
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
@@ -201,7 +202,8 @@ model SolarFuelSystem
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL_2 CL(
-		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
+		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE(
+		file=opt_file, orient_north=if wea.lat < 0 then true else false),
 		A=A_field,
 		ramp_order=ramp_order_con
 		);
