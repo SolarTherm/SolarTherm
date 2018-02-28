@@ -1,5 +1,5 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
-block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up delay features"
+block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-down delay features"
 	extends SolarTherm.Models.CSP.CRS.HeliostatsField.Collector;
 	import SI = Modelica.SIunits;
 

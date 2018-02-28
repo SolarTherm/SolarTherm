@@ -8,7 +8,8 @@ model SolarGasifier
 	// Input Parameters
 	// *********************
 
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Geraldton_Airport_944030_RMY.motab");
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/troughwagner_opt_eff.motab") "Optical efficiency file";
 
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
@@ -33,7 +34,7 @@ model SolarGasifier
 	parameter Real cm_CO2_rx[:] = {-0.138561262069788, 0.022687988241418} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
 
 	// Info for sizing the solar field
-	parameter SI.Efficiency eff_opt = 1
+	parameter SI.Efficiency eff_opt = 0.7449
 	"Efficiency of optics at design point (max in opt_file)";
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
@@ -50,7 +51,8 @@ model SolarGasifier
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL_2 CL(
-		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
+		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE(
+		file=opt_file, orient_north=if wea.lat < 0 then true else false),
 		A=A_field,
 		ramp_order=ramp_order_con
 		);
