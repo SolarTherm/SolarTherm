@@ -22,7 +22,7 @@ class TestReference1Fluid(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 429982.95, 2) # epy
+		self.assertAlmostEqual(self.perf[0], 429982.84, 2) # epy
 		self.assertAlmostEqual(self.perf[1], 147.39, 2) # LCOE
 		self.assertAlmostEqual(self.perf[2], 49.08, 2) # Capacity factor
 		print(self.perf);

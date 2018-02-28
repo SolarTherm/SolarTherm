@@ -22,9 +22,9 @@ class TestSimpleSystem(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 356.95, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 95.30, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 40.75, 2) # Capacity factor
+		self.assertAlmostEqual(self.perf[0], 352.61, 2) # epy
+		self.assertAlmostEqual(self.perf[1], 96.48, 2) # LCOE
+		self.assertAlmostEqual(self.perf[2], 40.25, 2) # Capacity factor
 		print(self.perf);
 
 if __name__ == '__main__':
