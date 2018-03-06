@@ -9,4 +9,5 @@ equation
 	solp_can.t = time;
 	solp_den.t = time;
 	solp_dag.t = time;
+	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=170, Tolerance=1e-06));
 end TestSolarPosition;

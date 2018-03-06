@@ -216,6 +216,6 @@ equation
         <p> Developed by <b>Ali Shirazi</b> on May 15, 2017</p>
         <p> College of Engineering & Computer Science (CECS)
         <p>The Australian National University(ANU)</p>
-   	</html>"));
+   	</html>"), experiment(StartTime=0.0, StopTime=2.0, Interval=0.1, Tolerance=1e-06));
 
 end TestSodiumMedium;
