@@ -13,10 +13,10 @@ protected
  constant nSI.Angle_deg axial_tilt = 23.4354 "Axial tilt (ecliptic obliquity)";
  SI.Angle B "Approximate angle of earth in its orbit";
  nSI.Time_hour E "Equation of time";
- SI.Angle dec "Solar declination (+ve North of equator)";
+ SI.Angle dec_r "Solar declination (+ve North of equator)";
  nSI.Time_hour t_solar "Local solar time (solar noon at 12hrs)";
  Real hra_s "Hour angle sign";
- SI.Angle zen "Zenith angle";
+ SI.Angle zen_r "Zenith angle";
 equation
  // The approximate oribital angle is calculated taking noon UTC as zero
  B = 2*pi*(to_hour(t) - tzone - 12)/(24*365);
@@ -25,10 +25,11 @@ equation
   + 0.001868*cos(B) - 0.032077*sin(B)
   - 0.014615*cos(2*B) - 0.04089*sin(2*B));
  // Calculating th declination from approximate orbital angle
- dec = 0.006918
+ dec_r = 0.006918
   - 0.399912*cos(B) + 0.070257*sin(B)
   - 0.006758*cos(2*B) + 0.000907*sin(2*B)
   - 0.002697*cos(3*B) + 0.00148*sin(3*B);
+ dec = to_deg(dec_r);
  // The local solar time is calculated by applying the equation of time
  // correction and correcting for the difference between the location and
  // the time zone meridian
@@ -45,19 +46,20 @@ equation
 
  // min and max applied to acos arguments because have had numerical
  // problems where the interval [-1, 1] is slightly overshot.
- zen = acos(min(max(sin(dec)*sin(from_deg(lat))
-  + cos(dec)*cos(from_deg(lat))*cos(from_deg(hra)),-1),1));
- azi = to_deg(pi + hra_s*acos(min(max((cos(zen)*sin(from_deg(lat))
-  - sin(dec))/(sin(zen)*cos(from_deg(lat))),-1),1)));
- // The azimuth becomes very sensitive as zen approaches zero
- alt = to_deg(pi/2 - zen);
- // To fully calculate the ecliptic longitude from dec, also need right
+ zen_r = acos(min(max(sin(dec_r)*sin(from_deg(lat))
+  + cos(dec_r)*cos(from_deg(lat))*cos(from_deg(hra)),-1),1));
+ zen = to_deg(zen_r);
+ azi = to_deg(pi + hra_s*acos(min(max((cos(zen_r)*sin(from_deg(lat))
+  - sin(dec_r))/(sin(zen_r)*cos(from_deg(lat))),-1),1)));
+ // The azimuth becomes very sensitive as zen_r approaches zero
+ alt = to_deg(pi/2 - zen_r);
+ // To fully calculate the ecliptic longitude from dec_r, also need right
  // ascension (which we can calc from solar time) and then to apply an atan2:
  //ra = ???
  //elo = to_deg(atan2(sin(ra)*cos(from_deg(axial_tilt))
- //			 + tan(dec)*sin(from_deg(axial_tilt)), cos(ra)));
+ //			 + tan(dec_r)*sin(from_deg(axial_tilt)), cos(ra)));
  // Using the fact that the ecliptic latitude is zero, we can calculate it
  // for just the range -90 to 90.  This is all that matters anyway for solar
  // efficiency calcs as it should be symmetric in the other quadrants.
- elo = to_deg(asin(min(max(sin(dec)/sin(from_deg(axial_tilt)),-1),1)));
+ elo = to_deg(asin(min(max(sin(dec_r)/sin(from_deg(axial_tilt)),-1),1)));
 end SolarPositionDB;
