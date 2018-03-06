@@ -4,6 +4,7 @@ model SolarFuelSystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
+	import SolarTherm.Types.Solar_angles;
 
 	extends Modelica.Icons.Example;
 
@@ -203,7 +204,7 @@ model SolarFuelSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL_2 CL(
 		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE(
-		file=opt_file, orient_north=if wea.lat < 0 then true else false),
+		angles=Solar_angles.ele_azi, file=opt_file, orient_north=if wea.lat < 0 then true else false),
 		A=A_field,
 		ramp_order=ramp_order_con
 		);

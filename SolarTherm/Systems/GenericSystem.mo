@@ -5,12 +5,14 @@ model GenericSystem
 	import CN = Modelica.Constants;
 	import CV = Modelica.SIunits.Conversions;
 	import FI = SolarTherm.Models.Analysis.Finances;
+	import SolarTherm.Types.Solar_angles;
 
 	// Input Parameters
 	// *********************
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter String wea_file "Weather file";
 	parameter String opt_file "Optical efficiency file";
+	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
 	parameter String pri_file = "" "Electricity price file";
 
 	parameter Real wdelay[8] = {0,0,0,0,0,0,0,0} "Weather file delays";
@@ -117,7 +119,7 @@ model GenericSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL CL(
 		redeclare model OptEff = SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE (
-			file=opt_file, orient_north=if wea.lat < 0 then true else false),
+			angles=angles, file=opt_file, orient_north=if wea.lat < 0 then true else false),
 		A=if match_sam then 1.0273*A_field else A_field,
 		steer_rate=0.002,
 		target_error=0.0001,

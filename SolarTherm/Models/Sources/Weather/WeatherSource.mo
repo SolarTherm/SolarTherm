@@ -41,6 +41,8 @@ equation
  connect(spos.azi, wbus.azi);
  connect(spos.elo, wbus.elo);
  connect(spos.hra, wbus.hra);
+ connect(spos.dec, wbus.dec);
+ connect(spos.zen, wbus.zen);
  //connect(wbus.ghi, wtab.y[1]);
  //ghi_l = noEvent(if wtab.y[1] > 0 then wtab.y[1] else 0);
  //ghi_l = if noEvent(wtab.y[1] > 0) then wtab.y[1] else 0;

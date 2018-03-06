@@ -6,4 +6,6 @@ partial block SolarPosition "Sun position"
  output nSI.Angle_deg azi "Azimuth (Clockwise from North=0)";
  output nSI.Angle_deg elo "Ecliptic longitude (reduced to range [-90, 90])";
  output nSI.Angle_deg hra "Solar hour angle (solar noon at 0)";
+ output nSI.Angle_deg dec "Solar declination (+ve North of equator)";
+ output nSI.Angle_deg zen "Zenith angle";
 end SolarPosition;

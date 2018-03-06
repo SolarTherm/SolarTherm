@@ -6,6 +6,8 @@ expandable connector WeatherBus "Bus for weather data"
  nSI.Angle_deg azi "Sun azimuth (Clockwise from North=0)";
  nSI.Angle_deg elo "Ecliptic longitude (reduced to range [-90, 90])";
  nSI.Angle_deg hra "Solar hour angle (solar noon at 0)";
+ nSI.Angle_deg dec "Solar declination (+ve North of equator)";
+ nSI.Angle_deg zen "Zenith angle";
  SI.Irradiance ghi(min=0) "Global horizontal irradiance";
  SI.Irradiance dni(min=0) "Direct normal irradiance";
  SI.Temperature Tdry "Dry-bulb temperature";

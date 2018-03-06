@@ -7,6 +7,7 @@ model TroughWagner
 		match_sam=false,
 		wea_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab"),
 		wdelay={1800,1800,0,0,0,0,0,0},
+		angles=SolarTherm.Types.Solar_angles.ele_azi,
 		opt_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/troughwagner_opt_eff.motab"),
 		eff_opt=0.7449,
 		SM=1.9343,
