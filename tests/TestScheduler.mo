@@ -24,4 +24,5 @@ equation
 	connect(date.moy, wbus.moy);
 	connect(wbus, sch1.wbus);
 	connect(wbus, sch2.wbus);
+	annotation(experiment(StartTime=0.0, StopTime=5356800.0, Interval=300, Tolerance=1e-06));
 end TestScheduler;

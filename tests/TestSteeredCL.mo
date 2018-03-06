@@ -22,4 +22,5 @@ equation
 	elsewhen time >= 100 then
 		conc.target = 0.2;
 	end when;
+	annotation(experiment(StartTime=0.0, StopTime=200.0, Interval=0.1, Tolerance=1e-06));
 end TestSteeredCL;

@@ -106,5 +106,5 @@ equation
 		E_rx_prod_smpl = E_rx_prod.y;
 		E_rx_prod_dly = E_rx_prod_smpl - pre(E_rx_prod_smpl);
 	end when;
-
+	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=60, Tolerance=1e-06));
 end SolarGasifier;

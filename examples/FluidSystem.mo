@@ -163,5 +163,6 @@ equation
 	P_elec = PB.P;
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
+	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=60, Tolerance=1e-06));
 end FluidSystem;
 
