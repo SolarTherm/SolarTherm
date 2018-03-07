@@ -204,7 +204,8 @@ model SolarFuelSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL_2 CL(
 		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE(
-		angles=Solar_angles.ele_azi, file=opt_file, orient_north=if wea.lat < 0 then true else false),
+		angles=Solar_angles.ele_azi, file=opt_file),
+		orient_north=wea.orient_north,
 		A=A_field,
 		ramp_order=ramp_order_con
 		);
