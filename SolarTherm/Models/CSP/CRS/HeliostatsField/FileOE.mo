@@ -9,7 +9,6 @@ block FileOE "Read in optical efficiency from file"
 	import SolarTherm.Types.Solar_angles;
 
 	parameter String file "Optical efficiency table (relative to aperture area)";
-	parameter Boolean orient_north = true "Orient system toward north else south";
 	parameter Solar_angles angles=Solar_angles.ele_azi "Angles used in the lookup table file";
 
 	parameter String tableNames[nelem] = {"eff" + String(i) for i in 1:nelem};

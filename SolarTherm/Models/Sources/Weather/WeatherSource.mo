@@ -3,16 +3,17 @@ block WeatherSource
   "Weather source including tabular data and other calculators"
  import SolarTherm.Models.Sources.Solar.SolarPositionDB;
  parameter String file "File containing TMY data";
- parameter nSI.Angle_deg lat = meta.lat "Latitude";
- parameter nSI.Angle_deg lon = meta.lon "Longitude";
+ parameter nSI.Angle_deg lat(fixed=false) "Latitude";
+ parameter nSI.Angle_deg lon(fixed=false) "Longitude";
+ parameter Boolean orient_north(fixed=false);
  // Delay could be added to metadata.
  // By default we assume no delay as it appears to depend on the weather file
  // whether or not it lines up better.
  parameter SI.Time delay[8] = {0,0,0,0,0,0,0,0} "Time delay of table columns";
   output SolarTherm.Interfaces.Connectors.WeatherBus wbus;
 protected
- parameter String file_act = weatherFileChecker(file);
- parameter Metadata meta = getMetadata(file_act);
+ parameter String file_act(fixed=false);
+ parameter Metadata meta(name(fixed=false), lat(fixed=false), lon(fixed=false), elev(fixed=false), tzone(fixed=false), tstart(fixed=false));
  WeatherTable wtab(
   each tableOnFile=true,
   each fileName=file_act,
@@ -27,6 +28,14 @@ protected
  SI.Velocity wspd_l;
  SI.Temperature Tdry_K;
  SI.Temperature Tdew_K;
+
+initial equation
+ file_act = weatherFileChecker(file);
+ meta = getMetadata(file_act);
+ lat = meta.lat;
+ lon = meta.lon;
+ orient_north = if lat < 0 then true else false;
+
 equation
  connect(date.t, spos.t);
 

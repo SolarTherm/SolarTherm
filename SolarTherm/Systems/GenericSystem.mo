@@ -119,7 +119,8 @@ model GenericSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL CL(
 		redeclare model OptEff = SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE (
-			angles=angles, file=opt_file, orient_north=if wea.lat < 0 then true else false),
+			angles=angles, file=opt_file),
+		orient_north=wea.orient_north,
 		A=if match_sam then 1.0273*A_field else A_field,
 		steer_rate=0.002,
 		target_error=0.0001,
