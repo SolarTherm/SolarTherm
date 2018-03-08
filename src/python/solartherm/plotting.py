@@ -14,7 +14,7 @@ import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], out=None, share=True, bw=False):
+def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -33,11 +33,14 @@ def plot_res(res, fmt, xlim=[], out=None, share=True, bw=False):
 	An optional pair that represents bounds on the domain can be provided as
 	xlim.
 
+	An optional unit for the x axis can be provided as
+	xunit like: 's', 'm', 'd', or 'y', representing seconds, minutes, days, or years respectively.
+
 	If a filename is provided to out, then the plot will be saved to that file,
 	otherwise the plot will be output to a new window.
 	"""
 
-	xlim = [simulation.parse_var_val(x, 's') for x in xlim]
+	xlim = [simulation.parse_var_val(x, xunit) for x in xlim]
 
 	fig = plt.figure()
 
@@ -93,7 +96,9 @@ def plot_res(res, fmt, xlim=[], out=None, share=True, bw=False):
 				label = v + ' (' + unit + ')'
 				if len(res) > 1:
 					label = str(ri+1) + ': ' + label
-				ax[i_ax].plot(res[ri].get_time(v), res[ri].get_values(v),
+				time_old = res[ri].get_time(v) # original time values in seconds
+				time_new = simulation.convert_val(time_old, 's', xunit) # new time values in terms fo xunit
+				ax[i_ax].plot(time_new, res[ri].get_values(v),
 						label=label, color=co[v_id%len(co)],
 						linestyle=ls[v_id%len(ls)],
 						#linewidth=2

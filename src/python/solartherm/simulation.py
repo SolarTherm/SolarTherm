@@ -15,6 +15,9 @@ import tempfile
 var_re = re.compile('([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(\S+)')
 # Assuming all linear relations between units (factor, offset)
 unit_conv = {
+		's': {
+				's': (1,0),
+			},
 		'm': {
 				's': (60,0),
 			},
