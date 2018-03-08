@@ -22,7 +22,7 @@ if __name__ == '__main__':
 			help='save figure to outfile instead of displaying')
 	parser.add_argument('--xlim', nargs=2, type=str, default=[],
 			help='domain of x axis, e.g., 0 86400 or 5d 6d or 0 1y')
-	parser.add_argument('--xunit', type=str, default='s',
+	parser.add_argument('--xunit', type=str, default='d',
 			help='unit of x axis, e.g., s, m, d, or y')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
