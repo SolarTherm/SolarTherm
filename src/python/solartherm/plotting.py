@@ -10,11 +10,12 @@ import matplotlib
 #matplotlib.use('QT5Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
 import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'Times New Roman'
 import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False):
+def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False, dpi=600):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -103,13 +104,21 @@ def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False):
 						linestyle=ls[v_id%len(ls)],
 						#linewidth=2
 						)
+				ylabel = v + ' (' + unit + ')'
+				ax[i_ax].set_ylabel(ylabel)
+				v_v_max = max(res[ri].get_values(v))
+				ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
+			#sp.set_xlim(left=xlim[0], right=xlim[1])
+			xlabels = {'s': 'seconds', 'd': 'minutes', 'h': 'hours', 'd': 'days', 'y': 'years'}
+			xlabel ="time" + " (" + xlabels[xunit] + ")" 
+			sp.set_xlabel(xlabel)
 	plt.tight_layout()
 	if out is not None:
-		fig.savefig(out)
+		fig.savefig(out,dpi=dpi)
 	else:
 		plt.show()
 
