@@ -113,8 +113,9 @@ def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False, dpi=6
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 			#sp.set_xlim(left=xlim[0], right=xlim[1])
+			#sp.margins(y=0.05)
 			xlabels = {'s': 'seconds', 'd': 'minutes', 'h': 'hours', 'd': 'days', 'y': 'years'}
-			xlabel ="time" + " (" + xlabels[xunit] + ")" 
+			xlabel ="Time" + " (" + xlabels[xunit] + ")" 
 			sp.set_xlabel(xlabel)
 	plt.tight_layout()
 	if out is not None:
