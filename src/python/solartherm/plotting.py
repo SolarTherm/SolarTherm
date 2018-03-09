@@ -12,8 +12,8 @@ import matplotlib
 
 #matplotlib.rcParams['text.usetex'] = True
 #matplotlib.rcParams['text.latex.unicode'] = False
-#matplotlib.rcParams['font.family'] = 'serif'
-#matplotlib.rcParams['font.serif'] = 'Times New Roman'
+matplotlib.rcParams['font.family'] = 'serif'
+matplotlib.rcParams['font.serif'] = 'Times New Roman'
 #matplotlib.rcParams['font.serif'] = 'cmr10'
 
 import matplotlib.pyplot as plt
