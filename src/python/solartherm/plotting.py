@@ -16,7 +16,7 @@ import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='d', eunit='kWh', out=None, share=True, bw=False, dpi=600):
+def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False, dpi=600):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -95,6 +95,8 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='kWh', out=None, share=True, bw
 					unit = res[ri].get_unit(v)
 					if unit == 'J':
 						unit= eunit # changing unit from unit to eunit (e.g. from 'J' to 'kWh')
+					if unit == 'W':
+						unit = punit  # changing unit from unit to punit (e.g. from 'W' to 'kW')
 				except:
 					pass
 				label = v + ' (' + unit + ')'
@@ -105,6 +107,8 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='kWh', out=None, share=True, bw
 				v_v = res[ri].get_values(v)
 				if unit==eunit:
 					v_v = simulation.convert_val(v_v, 'J', unit)
+				if unit==punit:
+					v_v = simulation.convert_val(v_v, 'W', unit)
 				ax[i_ax].plot(time_new, v_v,
 						label=label, color=co[v_id%len(co)],
 						linestyle=ls[v_id%len(ls)],
