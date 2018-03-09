@@ -24,6 +24,8 @@ if __name__ == '__main__':
 			help='domain of x axis, e.g., 0 86400 or 5d 6d or 0 1y')
 	parser.add_argument('--xunit', type=str, default='d',
 			help='unit of x axis, e.g., s, m, d, or y')
+	parser.add_argument('--eunit', type=str, default='kWh',
+			help='unit of energy, e.g., J, kWh, MWh, or GWh')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
 	args = parser.parse_args()
@@ -45,7 +47,7 @@ if __name__ == '__main__':
 			print(sorted(str(n) for n in r.get_names()))
 	else:
 		if len(args.var) > 0:
-			plotting.plot_res(res, args.var, xlim=args.xlim, xunit= args.xunit, out=args.outfile,
+			plotting.plot_res(res, args.var, xlim=args.xlim, xunit= args.xunit, eunit=args.eunit, out=args.outfile,
 					share=args.noshare, bw=args.bw)
 		else:
 			print('No variables provided, nothing to plot')

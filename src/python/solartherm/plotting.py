@@ -10,12 +10,13 @@ import matplotlib
 #matplotlib.use('QT5Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
 import matplotlib.pyplot as plt
-plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['font.family'] = 'cmr10'
+#plt.rcParams['font.family'] = 'Times New Roman'
 import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False, dpi=600):
+def plot_res(res, fmt, xlim=[], xunit='d', eunit='kWh', out=None, share=True, bw=False, dpi=600):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -92,6 +93,8 @@ def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False, dpi=6
 				unit = ''
 				try:
 					unit = res[ri].get_unit(v)
+					if unit == 'J':
+						unit= eunit # changing unit from unit to eunit (e.g. from 'J' to 'kWh')
 				except:
 					pass
 				label = v + ' (' + unit + ')'
@@ -99,14 +102,17 @@ def plot_res(res, fmt, xlim=[], xunit='s', out=None, share=True, bw=False, dpi=6
 					label = str(ri+1) + ': ' + label
 				time_old = res[ri].get_time(v) # original time values in seconds
 				time_new = simulation.convert_val(time_old, 's', xunit) # new time values in terms fo xunit
-				ax[i_ax].plot(time_new, res[ri].get_values(v),
+				v_v = res[ri].get_values(v)
+				if unit==eunit:
+					v_v = simulation.convert_val(v_v, 'J', unit)
+				ax[i_ax].plot(time_new, v_v,
 						label=label, color=co[v_id%len(co)],
 						linestyle=ls[v_id%len(ls)],
 						#linewidth=2
 						)
 				ylabel = v + ' (' + unit + ')'
 				ax[i_ax].set_ylabel(ylabel)
-				v_v_max = max(res[ri].get_values(v))
+				v_v_max = max(v_v)
 				ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
 				v_id += 1
 			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
