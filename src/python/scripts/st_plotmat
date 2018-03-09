@@ -26,7 +26,7 @@ if __name__ == '__main__':
 			help='unit of x axis, e.g., s, m, d, or y')
 	parser.add_argument('--eunit', type=str, default='MWh',
 			help='unit of energy, e.g., J, kWh, MWh, or GWh')
-	parser.add_argument('--punit', type=str, default='kW',
+	parser.add_argument('--punit', type=str, default='MW',
 			help='unit of power(i.e. energy rate), e.g., W, kW, MW, or GW')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
