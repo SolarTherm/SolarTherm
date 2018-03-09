@@ -16,7 +16,7 @@ import re
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False, dpi=600):
+def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, share=True, bw=False, dpi=600):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
