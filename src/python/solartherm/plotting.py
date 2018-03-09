@@ -9,9 +9,14 @@ import matplotlib
 #matplotlib.use('TkAgg')
 #matplotlib.use('QT5Agg')
 #matplotlib.use('GTKCairo') # fails to draw long paths
+
+#matplotlib.rcParams['text.usetex'] = True
+#matplotlib.rcParams['text.latex.unicode'] = False
+#matplotlib.rcParams['font.family'] = 'serif'
+#matplotlib.rcParams['font.serif'] = 'Times New Roman'
+#matplotlib.rcParams['font.serif'] = 'cmr10'
+
 import matplotlib.pyplot as plt
-plt.rcParams['font.family'] = 'cmr10'
-#plt.rcParams['font.family'] = 'Times New Roman'
 import re
 
 from solartherm import simulation
@@ -116,14 +121,18 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 						)
 				ylabel = v + ' (' + unit + ')'
 				ax[i_ax].set_ylabel(ylabel)
-				v_v_max = max(v_v)
-				ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
+				#v_v_max = max(v_v)
+				#ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
 				v_id += 1
-			ax[i_ax].legend(loc=pos[i_ax], frameon=False)
+			if i_ax==0:
+				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left')
+			else:
+				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right')
+			#ax[i_ax].legend(loc=pos[i_ax], frameon=False)
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 			#sp.set_xlim(left=xlim[0], right=xlim[1])
-			#sp.margins(y=0.05)
+			sp.margins(y=0.05)
 			xlabels = {'s': 'seconds', 'd': 'minutes', 'h': 'hours', 'd': 'days', 'y': 'years'}
 			xlabel ="Time" + " (" + xlabels[xunit] + ")" 
 			sp.set_xlabel(xlabel)
