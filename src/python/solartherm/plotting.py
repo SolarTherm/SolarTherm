@@ -12,8 +12,8 @@ import matplotlib
 
 #matplotlib.rcParams['text.usetex'] = True
 #matplotlib.rcParams['text.latex.unicode'] = False
-matplotlib.rcParams['font.family'] = 'serif'
-matplotlib.rcParams['font.serif'] = 'Times New Roman'
+#matplotlib.rcParams['font.family'] = 'serif'
+#matplotlib.rcParams['font.serif'] = 'Times New Roman'
 #matplotlib.rcParams['font.serif'] = 'cmr10'
 
 import matplotlib.pyplot as plt
@@ -73,6 +73,7 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 		if sharex is None and share:
 			sharex = sp
 		v_ys = v_sp.split(':')
+		ncol = len(v_ys[0].split(','))
 		assert len(v_ys) < 3, 'Can only utilise at most 2 y-axes per subplot'
 		ax = [sp]
 		for i in range(1,len(v_ys)):
@@ -125,7 +126,7 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 				#ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
 				v_id += 1
 			if i_ax==0:
-				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left')
+				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left', ncol=ncol)
 			else:
 				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right')
 			#ax[i_ax].legend(loc=pos[i_ax], frameon=False)
