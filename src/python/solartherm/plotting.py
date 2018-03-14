@@ -22,7 +22,7 @@ import math
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, share=True, bw=False, dpi=600):
+def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -44,9 +44,22 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 	An optional unit for the x axis can be provided as
 	xunit like: 's', 'm', 'd', or 'y', representing seconds, minutes, days, or years respectively.
 
+	An optional unit for energy and energy rate can be provided as
+	eunit and punit like: 'J', 'kJ', 'MJ', or 'GJ' and 'W', 'kW', 'MW', or 'GW' respectively.
+
 	If a filename is provided to out, then the plot will be saved to that file,
 	otherwise the plot will be output to a new window.
+
+	An optional setting for matplotlib.rcParams can be provided as
+	font, usetetx, and ucode, repsesenting font family, font style, use text rendering With LaTeX and use usetex with unicode.
 	"""
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	xlim = [simulation.parse_var_val(x, xunit) for x in xlim]
 
@@ -74,7 +87,16 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 		if sharex is None and share:
 			sharex = sp
 		v_ys = v_sp.split(':')
-		n_v_ys = len(v_ys[0].split(',')) # Number of variables in left y axis
+		v_yss = [] # name of variables on left and potential right axes saved in a 2d list i.e. v_yss
+		for n_ys in v_ys:
+			v_yss.append(n_ys.split(','))
+		n_yx = len(v_yss) # number of y axis
+		if n_yx < 2:
+			n_v_ys_l = len(v_yss[0]) # number of variables on the left y axis
+			n_v_ys_r = 0 # number of variables on the right y axis
+		else:
+			n_v_ys_l = len(v_yss[0])
+			n_v_ys_r = len(v_yss[1])
 		assert len(v_ys) < 3, 'Can only utilise at most 2 y-axes per subplot'
 		ax = [sp]
 		for i in range(1,len(v_ys)):
@@ -83,7 +105,9 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 		pos[0] = 2
 		pos[1] = 1
 		v_id = 0
-		for i_ax, v_y in enumerate(v_ys):
+		for i_ax, v_y in enumerate(v_ys): # i_ax is the y axis index and v_y contains the name of variables on each y axis
+			v_v_max = [] # a list of maximum value of all variables on each y axis
+			ylabel = []
 			for var in v_y.split(','):
 				vre_res = vre.match(var)
 				if vre_res is None:
@@ -106,7 +130,21 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 						unit = punit  # changing unit from unit to punit (e.g. from 'W' to 'kW')
 				except:
 					pass
-				label = v + ' (' + unit + ')'
+
+				if '.' in v:
+					i_d = v.rfind('.') # index of last dot in v
+					v_main = v[i_d+1:].title()
+					v_sub = v[:i_d].replace('.', ', ')
+				elif '_' in v:
+					i_ul = v.find('_') # index of last undeline in v
+					v_main = v[:i_ul].title()
+					v_sub = v[i_ul+1:].replace('_', ', ')
+				else:
+					v_main = v.title()
+					v_sub = ''
+
+				label = v_main + '$_\mathrm{' + v_sub + '}$' + ' (' + unit + ')'
+				ylabel.append(label)
 				if len(res) > 1:
 					label = str(ri+1) + ': ' + label
 				time_old = res[ri].get_time(v) # original time values in seconds
@@ -116,29 +154,32 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="kW", out=None, sh
 					v_v = simulation.convert_val(v_v, 'J', unit)
 				if unit==punit:
 					v_v = simulation.convert_val(v_v, 'W', unit)
+				v_v_max.append(max(v_v))
 				ax[i_ax].plot(time_new, v_v,
 						label=label, color=co[v_id%len(co)],
 						linestyle=ls[v_id%len(ls)],
 						#linewidth=2
 						)
-				ylabel = v + ' (' + unit + ')'
-				ax[i_ax].set_ylabel(ylabel)
-				#v_v_max = max(v_v)
-				#ax[i_ax].set_ylim(top=v_v_max+0.1*v_v_max)
 				v_id += 1
+			ylabel = ', '.join(ylabel)
+			ax[i_ax].set_ylim(top=max(v_v_max)+0.1*max(v_v_max))
+			#ax[i_ax].set_ylim(auto=True)
+			ax[i_ax].set_ylabel(ylabel=ylabel)
 			if i_ax==0:
-				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left', ncol=int(math.ceil(n_v_ys/2.0)))
+				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left', ncol=int(math.ceil(n_v_ys_l/2.0))) #frame flag: frameon=False
 			else:
-				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right', ncol=int(math.ceil(n_v_ys/2.0)))
-			#ax[i_ax].legend(loc=pos[i_ax], frameon=False)
+				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right', ncol=int(math.ceil(n_v_ys_r/2.0)))
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 			#sp.set_xlim(left=xlim[0], right=xlim[1])
-			sp.margins(y=0.05)
-			xlabels = {'s': 'seconds', 'd': 'minutes', 'h': 'hours', 'd': 'days', 'y': 'years'}
-			xlabel ="Time" + " (" + xlabels[xunit] + ")" 
-			sp.set_xlabel(xlabel)
-	plt.tight_layout()
+			#sp.margins(y=0.05)
+
+	xlabeldic = {'s': 'seconds', 'd': 'minutes', 'h': 'hours', 'd': 'days', 'y': 'years'}
+	xlabel ="Time" + " (" + xlabeldic[xunit] + ")"
+	sp.set_xlabel(xlabel)
+
+	fig.subplots_adjust(top=0.9,hspace=0.8)
+	#plt.tight_layout()
 	if out is not None:
 		fig.savefig(out,dpi=dpi)
 	else:
