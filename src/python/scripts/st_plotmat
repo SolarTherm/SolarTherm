@@ -28,6 +28,14 @@ if __name__ == '__main__':
 			help='unit of energy, e.g., J, kWh, MWh, or GWh')
 	parser.add_argument('--punit', type=str, default='MW',
 			help='unit of power(i.e. energy rate), e.g., W, kW, MW, or GW')
+	parser.add_argument('--dpi', type=int, default=600,
+			help='dpi if saving figure')
+	parser.add_argument('--font', nargs=2, type=str, default=['serif', 'Times New Roman'],
+			help='font family and style, family can only be one of serif, sans-serif, cursive, fantasy, monospace')
+	parser.add_argument('--usetex', action='store_true',
+			help='use text rendering With LaTeX')
+	parser.add_argument('--unicode', action='store_true',
+			help='use usetex with unicode')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
 	args = parser.parse_args()
@@ -50,7 +58,7 @@ if __name__ == '__main__':
 	else:
 		if len(args.var) > 0:
 			plotting.plot_res(res, args.var, xlim=args.xlim, xunit= args.xunit, eunit=args.eunit, punit=args.punit, out=args.outfile,
-					share=args.noshare, bw=args.bw)
+					share=args.noshare, bw=args.bw, dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode) 
 		else:
 			print('No variables provided, nothing to plot')
 

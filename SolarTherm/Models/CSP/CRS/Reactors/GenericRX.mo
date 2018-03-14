@@ -9,7 +9,7 @@ model GenericRX
 
 	//Parameters:
 	//****************
-	parameter Real fr_heat_SCWG = 0.637 "Fraction of inlet heat flow to SCWG";
+	parameter Real fr_heat_SCWG = 0.6488 "Fraction of inlet heat flow to SCWG";
 
 	parameter SI.RadiantPower R_min = 0.3 * 1000 * 50 * 1000 "Minimum sun heat duty to start the reactor"; // 0.3 * I_des * A * CR
 
