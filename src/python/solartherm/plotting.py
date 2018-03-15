@@ -242,8 +242,17 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None):
 	else:
 		plt.show()
 
-def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None):
+def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+
 	from mpl_toolkits.mplot3d import Axes3D
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
 	fig = plt.figure()
 
 	ax = fig.gca(projection='3d')
@@ -256,6 +265,6 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None):
 	ax.set_zlabel(zlabel)
 
 	if out is not None:
-		fig.savefig(out)
+		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
