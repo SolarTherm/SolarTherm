@@ -178,14 +178,25 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 	xlabel ="Time" + " (" + xlabeldic[xunit] + ")"
 	sp.set_xlabel(xlabel)
 
-	fig.subplots_adjust(top=0.9,hspace=0.8)
+	fig.subplots_adjust(top=0.9,hspace=0.5)
 	#plt.tight_layout()
 	if out is not None:
 		fig.savefig(out,dpi=dpi)
 	else:
 		plt.show()
 
-def plot_par1(x1, ys, xlabel='', ylabels=[], out=None):
+def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+	"""Plot a list of variables nested in ys list as a function of x1
+	e.g.
+	#plot_par1(x1=[1, 2, 3], ys=[[10, 100, 1000], [10, 100, 1000]], xlabel='X', ylabels=['Y1', 'Y2'], out=None)
+	"""
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
 	fig = plt.figure()
 
 	# Colours for our lines
@@ -193,14 +204,16 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None):
 
 	for j in range(len(ys)):
 		sp = fig.add_subplot(len(ys), 1, j+1)
-		sp.plot(x1, ys[j], color=co[0%len(co)])
-		sp.set_xlabel(xlabel)
+		sp.plot(x1, ys[j], label=ylabels[j], color=co[0%len(co)])
 		if ylabels != []:
 			sp.set_ylabel(ylabels[j])
+		sp.legend(bbox_to_anchor=(0.,1.02),loc='lower left')
+	sp.set_xlabel(xlabel)
 
-	plt.tight_layout()
+	fig.subplots_adjust(top=0.9,hspace=0.5)
+	#plt.tight_layout()
 	if out is not None:
-		fig.savefig(out)
+		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
 
@@ -243,6 +256,10 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None):
 		plt.show()
 
 def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+	"""Plot a 3d graph based on variables x, y and z
+	e.g.
+	plot_3d(x=[1,2,3], y=[1,2,3] , z=[10, 100, 1000], xlabel='X', ylabel='Y', zlabel='Z')
+	"""
 
 	from mpl_toolkits.mplot3d import Axes3D
 
