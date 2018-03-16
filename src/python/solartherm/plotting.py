@@ -188,7 +188,7 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
 	"""Plot a list of variables nested in ys list as a function of x1
 	e.g.
-	#plot_par1(x1=[1, 2, 3], ys=[[10, 100, 1000], [10, 100, 1000]], xlabel='X', ylabels=['Y1', 'Y2'], out=None)
+	#plot_par1(x1=[1, 2, 3], ys=[[10, 100, 1000], [10, 100, 1000]], xlabel='X', ylabels=['Y1', 'Y2'])
 	"""
 	font_family= font[0]
 	font_style = font[1]
@@ -217,7 +217,18 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', '
 	else:
 		plt.show()
 
-def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None):
+def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+	"""Plot ys as a function of x2 for various x1 values in one graph.
+	e.g. plotting lcoe as a function t_storage for various P_names
+	like: st_simulate --stop 1y --step 5m --plot lcoe FluidSystem.mo P_name=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12
+	"""
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
 	x1g = []
 	ysg = [[] for i in range(len(ys))]
 	x1v = []
@@ -251,7 +262,7 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None):
 
 	plt.tight_layout()
 	if out is not None:
-		fig.savefig(out)
+		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
 
@@ -285,3 +296,60 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['
 		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
+
+def pie_chart1(vals, ex, lbs, co=None, sv='pct', pctdistance=0.6, shadow=False,
+		labeldistance=1.1, startangle=90, radius=1, frame=False, out=None,
+		dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+	"""Plot a single pie chart, where the slices will be ordered and plotted counter-clockwise.
+	vals: sizes in pie()
+	ex: explode in pie()
+	lbs: labels in pie()
+	co: colors in pie()
+	sv: the value shown on each slice i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
+	"""
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	def pct_v(pct, nd=2):
+		"Returns percentage values rounded to nd decimal places"
+		return '{p:.{nd}f}%'.format(p=pct, nd=nd)
+
+	def abs_v(pct, nd=2):
+		"Returns absolute values rounded to nd decimal places"
+		av = vals[abs(vals - pct/100. * sum(vals)).argmin()]
+		return '{v:.{nd}f}'.format(v=av, nd=nd)
+
+	def pct_abs_v(pct, nd=2):
+		"Returns percentage and absolute values rounded to nd decimal places"
+		av = vals[abs(vals - pct/100. * sum(vals)).argmin()]
+		return '{p:.{nd}f}%  ({v:.{nd}f})'.format(p=pct, nd=nd, v=av)
+
+	if sv == 'pct':
+		autopct = pct_v
+	elif sv == 'abs':
+		autopct = abs_v
+	else:
+		autopct = pct_abs_v
+
+	fig, ax = plt.subplots()
+
+	ax.pie(vals, explode=ex, colors=co, autopct=autopct,
+		pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
+		startangle=startangle, radius=radius, frame=frame)
+	ax.axis('equal')
+
+	plt.legend(labels=lbs, bbox_to_anchor=(-0.1,0.8),loc='lower left')
+	#plt.tight_layout()
+
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
+
+def pie_chart2():
+	# plot multiple pi charts
+	pass
