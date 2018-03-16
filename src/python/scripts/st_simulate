@@ -69,6 +69,16 @@ if __name__ == '__main__':
 			help='plot given quantity (at most 2 parameter dimensions)')
 	parser.add_argument('--plot3d', action='store_true',
 			help='plot in 3d')
+	parser.add_argument('-o', '--outfile',  type=str, default=None,
+			help='save figure to outfile instead of displaying')
+	parser.add_argument('--dpi', type=int, default=600,
+			help='dpi if saving figure')
+	parser.add_argument('--font', nargs=2, type=str, default=['serif', 'Times New Roman'],
+			help='font family and style, family can only be one of serif, sans-serif, cursive, fantasy, monospace')
+	parser.add_argument('--usetex', action='store_true',
+			help='use text rendering With LaTeX')
+	parser.add_argument('--unicode', action='store_true',
+			help='use usetex with unicode')
 	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
 	#		help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
@@ -174,21 +184,24 @@ if __name__ == '__main__':
 		if len(dims) == 1:
 			x1 = [v[dims[0]] for v in var_vals]
 			xlabel = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
-			plotting.plot_par1(x1, ys, xlabel=xlabel, ylabels=ylabels)
+			plotting.plot_par1(x1, ys, xlabel=xlabel, ylabels=ylabels, out=args.outfile,
+				dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
 		elif len(dims) == 2 and not args.plot3d:
 			x1 = [v[dims[0]] for v in var_vals]
 			x2 = [v[dims[1]] for v in var_vals]
 			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
 			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
 			plotting.plot_par2(x1, x2, ys, x1label=x1label, x2label=x2label,
-					ylabels=ylabels)
+					ylabels=ylabels, out=args.outfile, dpi=args.dpi,
+					font=args.font, usetex=args.usetex, ucode=args.unicode)
 		elif len(dims) == 2 and args.plot3d:
 			x1 = [float(v[dims[0]]) for v in var_vals]
 			x2 = [float(v[dims[1]]) for v in var_vals]
 			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
 			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
 			plotting.plot_3d(x1, x2, ys[0], xlabel=x1label, ylabel=x2label,
-					zlabel=ylabels[0])
+					zlabel=ylabels[0], out=args.outfile, dpi=args.dpi, font=args.font,
+					usetex=args.usetex, ucode=args.unicode)
 		else:
 			print('Cannot plot problem with ' + str(len(dims)) + ' dimensions')
 
