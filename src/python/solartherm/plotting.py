@@ -22,7 +22,8 @@ import math
 
 from solartherm import simulation
 
-def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False,
+	dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -185,7 +186,8 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 	else:
 		plt.show()
 
-def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'],
+	usetex=False, ucode=False, fontsize=12):
 	"""Plot a list of variables nested in ys list as a function of x1
 	e.g.
 	#plot_par1(x1=[1, 2, 3], ys=[[10, 100, 1000], [10, 100, 1000]], xlabel='X', ylabels=['Y1', 'Y2'])
@@ -217,7 +219,8 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', '
 	else:
 		plt.show()
 
-def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'],
+	usetex=False, ucode=False, fontsize=12):
 	"""Plot ys as a function of x2 for various x1 values in one graph.
 	e.g. plotting lcoe as a function t_storage for various P_names
 	like: st_simulate --stop 1y --step 5m --plot lcoe FluidSystem.mo P_name=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12
@@ -266,7 +269,8 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600,
 	else:
 		plt.show()
 
-def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['serif', 'Times New Roman'],
+	usetex=False, ucode=False, fontsize=12):
 	"""Plot a 3d graph based on variables x, y and z
 	e.g.
 	plot_3d(x=[1,2,3], y=[1,2,3] , z=[10, 100, 1000], xlabel='X', ylabel='Y', zlabel='Z')
@@ -297,15 +301,19 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['
 	else:
 		plt.show()
 
-def pie_chart1(vals, ex, lbs, co=None, sv='pct', pctdistance=0.6, shadow=False,
+def pie_chart1(vals, ex, lbs, co=None, nd=2, sv='pct', lwv=False, pctdistance=0.6, shadow=False,
 		labeldistance=1.1, startangle=90, radius=1, frame=False, out=None,
-		dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False):
+		dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""Plot a single pie chart, where the slices will be ordered and plotted counter-clockwise.
 	vals: sizes in pie()
 	ex: explode in pie()
 	lbs: labels in pie()
 	co: colors in pie()
-	sv: the value shown on each slice i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
+	nd: number of decimal places
+	sv: the value shown on each slice (or legend) i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
+	lwv: true if vales(whether they are absolute, percentage or both) are to be shown in legend (i.e. no values will be shown on the slices)
+	e.g.
+	pie_chart1(vals=[215.134, 130.445, 245.823, 210.376], ex=(0.05, 0, 0, 0), lbs=['C1', 'C2', 'C3', 'C4'], co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
 	"""
 	font_family= font[0]
 	font_style = font[1]
@@ -314,26 +322,37 @@ def pie_chart1(vals, ex, lbs, co=None, sv='pct', pctdistance=0.6, shadow=False,
 	matplotlib.rcParams['text.usetex'] = usetex
 	matplotlib.rcParams['text.latex.unicode'] = ucode
 
-	def pct_v(pct, nd=2):
+	def pct_v(pct, nd=nd):
 		"Returns percentage values rounded to nd decimal places"
 		return '{p:.{nd}f}%'.format(p=pct, nd=nd)
 
-	def abs_v(pct, nd=2):
+	def abs_v(pct, nd=nd):
 		"Returns absolute values rounded to nd decimal places"
 		av = vals[abs(vals - pct/100. * sum(vals)).argmin()]
 		return '{v:.{nd}f}'.format(v=av, nd=nd)
 
-	def pct_abs_v(pct, nd=2):
+	def pct_abs_v(pct, nd=nd):
 		"Returns percentage and absolute values rounded to nd decimal places"
 		av = vals[abs(vals - pct/100. * sum(vals)).argmin()]
-		return '{p:.{nd}f}%  ({v:.{nd}f})'.format(p=pct, nd=nd, v=av)
+		return '{p:.{nd}f}% ({v:.{nd}f})'.format(p=pct, nd=nd, v=av)
+
+	percent = [100. * v / sum(vals) for v in vals] # values in percentage
 
 	if sv == 'pct':
 		autopct = pct_v
+		labels = ['{l:s} - {p:.{nd}f}%'.format(l=i, nd=nd, p=j) for i,j in zip(lbs, percent)]
 	elif sv == 'abs':
 		autopct = abs_v
-	else:
+		labels = ['{l:s} - {v:.{nd}f}'.format(l=i, nd=nd, v=j) for i,j in zip(lbs, vals)]
+	else: # i.e. 'both'
 		autopct = pct_abs_v
+		labels = ['{l:s} - {p:.{nd}f}% ({v:.{nd}f})'.format(l=i, nd=nd, p=j, v=k) for i,j, k in zip(lbs, percent, vals)]
+
+	if lwv:
+		autopct = None
+		labels = labels
+	else:
+		labels = lbs
 
 	fig, ax = plt.subplots()
 
@@ -342,7 +361,7 @@ def pie_chart1(vals, ex, lbs, co=None, sv='pct', pctdistance=0.6, shadow=False,
 		startangle=startangle, radius=radius, frame=frame)
 	ax.axis('equal')
 
-	plt.legend(labels=lbs, bbox_to_anchor=(-0.1,0.8),loc='lower left')
+	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.8),loc='lower left')
 	#plt.tight_layout()
 
 	if out is not None:
@@ -350,6 +369,107 @@ def pie_chart1(vals, ex, lbs, co=None, sv='pct', pctdistance=0.6, shadow=False,
 	else:
 		plt.show()
 
-def pie_chart2():
-	# plot multiple pi charts
-	pass
+
+def pie_chart2(vals, ex, lbs, co=None, nd=2, sv='pct', pctdistance=0.6, shadow=False, labeldistance=1.1,
+		startangle=90, radius=1, frame=False, out=None, dpi=600, font=['serif', 'Times New Roman'],
+		usetex=False, ucode=False, fontsize=12):
+	"""Plot a single or multiple pie charts, where the slices will be ordered and plotted counter-clockwise.
+	vals: a 2d lsit of sizes
+	ex: a 2d lsit o explode
+	lbs: labels in pie()
+	co: colors in pie()
+	nd: number of decimal places
+	sv: the value shown on each slice i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
+	e.g.
+	pie_chart2(vals=[[215.134, 130.445, 245.823, 210.376], [215.134, 130.445, 245.823, 210.376]], ex=[(0.05, 0, 0, 0), (0.05, 0, 0, 0)], lbs=['C1', 'C2', 'C3', 'C4'], co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
+	"""
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	def pct_v(pct, nd=nd):
+		"Returns percentage values rounded to nd decimal places"
+		return '{p:.{nd}f}%'.format(p=pct, nd=nd)
+
+	def abs_v(pct, nd=nd):
+		"Returns absolute values rounded to nd decimal places"
+		for vv in vals:
+			av = vv[abs(vv - pct/100. * sum(vv)).argmin()]
+		return '{v:.{nd}f}'.format(v=av, nd=nd)
+
+	def pct_abs_v(pct, nd=nd):
+		"Returns percentage and absolute values rounded to nd decimal places"
+		for vv in vals:
+			av = vv[abs(vv - pct/100. * sum(vv)).argmin()]
+		return '{p:.{nd}f}% ({v:.{nd}f})'.format(p=pct, nd=nd, v=av)
+
+	if sv == 'pct':
+		autopct = pct_v
+	elif sv == 'abs':
+		autopct = abs_v
+	else:
+		autopct = pct_abs_v
+
+	ng = len(vals) # number of pie graphs
+	even = True if ng % 2. == 0 else False # true if ng is even
+	if even:
+		nc = math.ceil(math.sqrt(ng)) # number of columns of subplots array
+		nr = math.ceil(ng/nc) # number of rows of subplots array
+	else:
+		nc = ng
+		nr = math.ceil(ng/nc)
+
+	if ng != 1: # i.e. more than 1 pie chart
+		fig, axes = plt.subplots(nrows=int(nr), ncols=int(nc))
+		#fig, axes = plt.subplots(nrows=int(nr), ncols=int(nc), figsize=(12, 8))
+		if nr != 1: # i.e. more than 1 row
+			ii = 0 # vals index
+			for r in range(axes.shape[0]):
+				for c in range(axes.shape[1]):
+					if ii >= ng:
+						break
+					patches, texts, autotexts = axes[r,c].pie(vals[ii], explode=ex[ii], colors=co, autopct=autopct,
+						pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
+						startangle=startangle, radius=radius, frame=frame)
+					#for t in texts:
+						#t.set_size('smaller')
+						#t.set_fontsize(12)
+					#for t in autotexts:
+						#t.set_size('x-small')
+						#t.set_fontsize(12)
+						#t.set_color('black')
+					axes[r,c].axis('equal')
+					ii= ii+1 # i.e. go the next element of vals
+					#autotexts[0].set_color('y')
+			axes[0,0].legend(labels=lbs, bbox_to_anchor=(-0.32,0.52), loc='lower left')
+		else: # i.e. only 1 row
+			assert nr==1, "The number rows cannot be zero!"
+			ii = 0
+			for c in range(axes.shape[0]):
+				if ii >= ng:
+					break
+				patches, texts, autotexts = axes[c].pie(vals[ii], explode=ex[ii], colors=co, autopct=autopct,
+					pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
+					startangle=startangle, radius=radius, frame=frame)
+				axes[c].axis('equal')
+				ii= ii+1
+			axes[0].legend(labels=lbs,loc='best')
+			#axes[0].legend(labels=lbs, bbox_to_anchor=(-0.5,-0.35),loc='lower left')
+	else: # i.e. only 1 pie chart
+		assert ng==1, "The lenght of vals cannot be zero!"
+		fig, ax = plt.subplots()
+		ax.pie(vals[0], explode=ex[0], colors=co, autopct=autopct,
+			pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
+			startangle=startangle, radius=radius, frame=frame)
+		ax.axis('equal')
+		plt.legend(labels=lbs,loc='best')
+
+	#plt.tight_layout()
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
+
