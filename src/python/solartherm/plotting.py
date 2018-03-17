@@ -473,3 +473,98 @@ def pie_chart2(vals, ex, lbs, co=None, nd=2, sv='pct', pctdistance=0.6, shadow=F
 	else:
 		plt.show()
 
+def bar_chart1(N, y, xlabel, ylabel, tlabels, yerr=None, ecolor=None,
+width=0.5, align='center', co='y', edgecolor='None', out=None, dpi=600,
+font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	"""
+	Plot a simple bar chart with a single bar for each tick on the x axis.
+	N: Number of variables on x axis
+	y: a list of y values
+	tlabels: tick labels
+	yerr: y axis error bars
+	e.g.
+	bar_chart1(N=4, y=[0.15, 2.5, 5.5, 20], xlabel = 'Component', ylabel = 'Cost (M$)', tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'))
+	"""
+	import numpy as np
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	x = np.arange(N)  # the x locations for the groups
+
+	fig, ax = plt.subplots()
+
+	plt.bar(x, y, width=width, align=align, color=co, edgecolor=edgecolor, yerr=yerr, ecolor=ecolor)
+
+	plt.xticks(x, tlabels)
+
+	#ax.set_title(title, fontweight="bold", fontsize=16)
+	ax.tick_params(axis='x', which='major', pad=10)
+	#ax.tick_params(axis='both', which='major', pad=10)
+	ax.set_xlabel(xlabel=xlabel, fontweight="bold")
+	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
+	ax.set_ylim(top=max(y)+0.1*max(y))
+
+	#plt.tight_layout()
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
+
+def bar_chart2(N, y, xlabel, ylabel, tlabels, labels, co, yerr=None, ecolor=None,
+width=0.5, align='center', edgecolor='None', out=None, dpi=600,
+font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	"""
+	Plot a bar chart with a single or multiple bars for each tick on the x axis.
+	N: Number of variables on x axis
+	y: a list of y values
+	tlabels: tick labels
+	labels: legend labels
+	yerr: y axis error bars
+	e.g.
+	bar_chart2(N=4, y=[[0.15, 2.5, 5.5, 20], [1.5, 5.5, 1.5, 55]], xlabel = 'Component', ylabel = 'Cost (M$)', tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'), labels=['Config1', 'Config2'], co=['gold','yellowgreen'], width = 0.3)
+	"""
+	import numpy as np
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	x = np.arange(N)  # the x locations for the groups
+
+	fig, ax = plt.subplots()
+	w = 0
+	for i in range(len(y)):
+		if labels == None:
+			plt.bar(x+w, y[i], width=width, align=align, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor, label=None)
+		else:
+			plt.bar(x+w, y[i], width=width, align=align, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor, label=labels[i])
+		w = w + width
+
+	v_max = []
+	for v in y:
+		v_max.append(max(v))
+	y_max = max(v_max)
+
+	plt.xticks(x, tlabels)
+	ax.set_xticks(x + width / 2)
+	#ax.set_title(title, fontweight="bold", fontsize=16)
+	ax.tick_params(axis='x', which='major', pad=10)
+	#ax.tick_params(axis='both', which='major', pad=10)
+	ax.set_xlabel(xlabel=xlabel, fontweight="bold")
+	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
+	ax.set_ylim(top=y_max+0.1*y_max)
+	ax.legend(loc=2)
+
+	#plt.tight_layout()
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
