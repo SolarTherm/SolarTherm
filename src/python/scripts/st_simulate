@@ -69,6 +69,10 @@ if __name__ == '__main__':
 			help='plot given quantity (at most 2 parameter dimensions)')
 	parser.add_argument('--plot3d', action='store_true',
 			help='plot in 3d')
+	parser.add_argument('--eunit', type=str, default='MWh',
+			help='unit of energy, e.g., J, kWh, MWh, or GWh')
+	parser.add_argument('--punit', type=str, default='MW',
+			help='unit of power(i.e. energy rate), e.g., W, kW, MW, or GW')
 	parser.add_argument('-o', '--outfile',  type=str, default=None,
 			help='save figure to outfile instead of displaying')
 	parser.add_argument('--dpi', type=int, default=600,
@@ -171,6 +175,7 @@ if __name__ == '__main__':
 
 	if args.plot is not None:
 		from solartherm import plotting
+		import numpy as np
 		ys = []
 		ylabels = []
 		for name in args.plot.split(','):
@@ -180,25 +185,63 @@ if __name__ == '__main__':
 				raise ValueError('Value to plot should be one of '
 						+ str(resultclass.perf_n))
 			ys.append([p[pei] for p in perfs])
-			ylabels.append(name + ' (' + resultclass.perf_u[pei] + ')')
+			ylabels.append(name.upper() + ' (' + resultclass.perf_u[pei] + ')')
 		if len(dims) == 1:
 			x1 = [v[dims[0]] for v in var_vals]
-			xlabel = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
+			x1_unit = sim.get_unit(par_n[dims[0]])
+			if x1_unit == 'J':
+				x1_unit = args.eunit
+				x1 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x1]), 'J', x1_unit)]
+			if x1_unit == 'W':
+				x1_unit = args.punit 
+				x1 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x1]), 'W', x1_unit)]
+			xlabel = par_n[dims[0]] + ' (' + x1_unit + ')'
+
 			plotting.plot_par1(x1, ys, xlabel=xlabel, ylabels=ylabels, out=args.outfile,
 				dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
 		elif len(dims) == 2 and not args.plot3d:
 			x1 = [v[dims[0]] for v in var_vals]
+			x1_unit = sim.get_unit(par_n[dims[0]])
+			if x1_unit == 'J':
+				x1_unit = args.eunit
+				x1 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x1]), 'J', x1_unit)]
+			if x1_unit == 'W':
+				x1_unit = args.punit 
+				x1 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x1]), 'W', x1_unit)]
+			x1label = par_n[dims[0]] + ' (' + x1_unit + ')'
+
 			x2 = [v[dims[1]] for v in var_vals]
-			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
-			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
+			x2_unit = sim.get_unit(par_n[dims[1]])
+			if x2_unit == 'J':
+				x2_unit = args.eunit
+				x2 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x2]), 'J', x2_unit)]
+			if x2_unit == 'W':
+				x2_unit = args.punit 
+				x2 = [str(j) for j in simulation.convert_val(np.array([float(i) for i in x2]), 'W', x2_unit)]
+			x2label = par_n[dims[1]] + ' (' + x2_unit + ')'
 			plotting.plot_par2(x1, x2, ys, x1label=x1label, x2label=x2label,
 					ylabels=ylabels, out=args.outfile, dpi=args.dpi,
 					font=args.font, usetex=args.usetex, ucode=args.unicode)
 		elif len(dims) == 2 and args.plot3d:
 			x1 = [float(v[dims[0]]) for v in var_vals]
+			x1_unit = sim.get_unit(par_n[dims[0]])
+			if x1_unit == 'J':
+				x1_unit = args.eunit
+				x1 = [float(j) for j in simulation.convert_val(np.array(x1), 'J', x1_unit)]
+			if x1_unit == 'W':
+				x1_unit = args.punit 
+				x1 = [float(j) for j in simulation.convert_val(np.array(x1), 'W', x1_unit)]
+			x1label = par_n[dims[0]] + ' (' + x1_unit + ')'
+
 			x2 = [float(v[dims[1]]) for v in var_vals]
-			x1label = par_n[dims[0]] + ' (' + sim.get_unit(par_n[dims[0]]) + ')'
-			x2label = par_n[dims[1]] + ' (' + sim.get_unit(par_n[dims[1]]) + ')'
+			x2_unit = sim.get_unit(par_n[dims[1]])
+			if x2_unit == 'J':
+				x2_unit = args.eunit
+				x2 = [float(j) for j in simulation.convert_val(np.array(x2), 'J', x2_unit)]
+			if x2_unit == 'W':
+				x2_unit = args.punit 
+				x2 = [float(j) for j in simulation.convert_val(np.array(x2), 'W', x2_unit)]
+			x2label = par_n[dims[1]] + ' (' + x2_unit + ')'
 			plotting.plot_3d(x1, x2, ys[0], xlabel=x1label, ylabel=x2label,
 					zlabel=ylabels[0], out=args.outfile, dpi=args.dpi, font=args.font,
 					usetex=args.usetex, ucode=args.unicode)
