@@ -301,7 +301,7 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['
 	else:
 		plt.show()
 
-def pie_chart1(vals, ex, lbs, co=None, nd=2, sv='pct', lwv=False, pctdistance=0.6, shadow=False,
+def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctdistance=0.6, shadow=False,
 		labeldistance=1.1, startangle=90, radius=1, frame=False, out=None,
 		dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""Plot a single pie chart, where the slices will be ordered and plotted counter-clockwise.
@@ -313,7 +313,8 @@ def pie_chart1(vals, ex, lbs, co=None, nd=2, sv='pct', lwv=False, pctdistance=0.
 	sv: the value shown on each slice (or legend) i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
 	lwv: true if vales(whether they are absolute, percentage or both) are to be shown in legend (i.e. no values will be shown on the slices)
 	e.g.
-	pie_chart1(vals=[215.134, 130.445, 245.823, 210.376], ex=(0.05, 0, 0, 0), lbs=['C1', 'C2', 'C3', 'C4'], co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
+	pie_chart1(vals=[215.134, 130.445, 245.823, 210.376], ex=(0.05, 0, 0, 0), lbs=['C1', 'C2', 'C3', 'C4'],
+		co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
 	"""
 	font_family= font[0]
 	font_style = font[1]
@@ -364,13 +365,16 @@ def pie_chart1(vals, ex, lbs, co=None, nd=2, sv='pct', lwv=False, pctdistance=0.
 	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.8),loc='lower left')
 	#plt.tight_layout()
 
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16)
+
 	if out is not None:
 		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
 
 
-def pie_chart2(vals, ex, lbs, co=None, nd=2, sv='pct', pctdistance=0.6, shadow=False, labeldistance=1.1,
+def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6, shadow=False, labeldistance=1.1,
 		startangle=90, radius=1, frame=False, out=None, dpi=600, font=['serif', 'Times New Roman'],
 		usetex=False, ucode=False, fontsize=12):
 	"""Plot a single or multiple pie charts, where the slices will be ordered and plotted counter-clockwise.
@@ -381,7 +385,9 @@ def pie_chart2(vals, ex, lbs, co=None, nd=2, sv='pct', pctdistance=0.6, shadow=F
 	nd: number of decimal places
 	sv: the value shown on each slice i.e. pct, abs, or both, representing percentage value, absolute values, or both respectively.
 	e.g.
-	pie_chart2(vals=[[215.134, 130.445, 245.823, 210.376], [215.134, 130.445, 245.823, 210.376]], ex=[(0.05, 0, 0, 0), (0.05, 0, 0, 0)], lbs=['C1', 'C2', 'C3', 'C4'], co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
+	pie_chart2(vals=[[215.134, 130.445, 245.823, 210.376], [215.134, 130.445, 245.823, 210.376]],
+		ex=[(0.05, 0, 0, 0), (0.05, 0, 0, 0)], lbs=['C1', 'C2', 'C3', 'C4'],
+		co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
 	"""
 	font_family= font[0]
 	font_style = font[1]
@@ -467,23 +473,26 @@ def pie_chart2(vals, ex, lbs, co=None, nd=2, sv='pct', pctdistance=0.6, shadow=F
 		ax.axis('equal')
 		plt.legend(labels=lbs,loc='best')
 
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16)
+
 	#plt.tight_layout()
 	if out is not None:
 		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
 
-def bar_chart1(N, y, xlabel, ylabel, tlabels, yerr=None, ecolor=None,
+def bar_chart1(y, xlabel, ylabel, tlabels, title='', yerr=None, ecolor=None,
 width=0.5, align='center', co='y', edgecolor='None', out=None, dpi=600,
 font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""
 	Plot a simple bar chart with a single bar for each tick on the x axis.
-	N: Number of variables on x axis
 	y: a list of y values
-	tlabels: tick labels
+	tlabels: tick labels on x axis
 	yerr: y axis error bars
 	e.g.
-	bar_chart1(N=4, y=[0.15, 2.5, 5.5, 20], xlabel = 'Component', ylabel = 'Cost (M$)', tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'))
+	bar_chart1(y=[0.15, 2.5, 5.5, 20], xlabel = 'Component', ylabel = 'Cost (M$)',
+		tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'), title='Cost breakdown')
 	"""
 	import numpy as np
 
@@ -494,7 +503,8 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	matplotlib.rcParams['text.usetex'] = usetex
 	matplotlib.rcParams['text.latex.unicode'] = ucode
 
-	x = np.arange(N)  # the x locations for the groups
+	N = len(tlabels)
+	x = np.arange(N) # the x locations for the groups
 
 	fig, ax = plt.subplots()
 
@@ -502,7 +512,9 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 
 	plt.xticks(x, tlabels)
 
-	#ax.set_title(title, fontweight="bold", fontsize=16)
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16)
+
 	ax.tick_params(axis='x', which='major', pad=10)
 	#ax.tick_params(axis='both', which='major', pad=10)
 	ax.set_xlabel(xlabel=xlabel, fontweight="bold")
@@ -515,18 +527,19 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	else:
 		plt.show()
 
-def bar_chart2(N, y, xlabel, ylabel, tlabels, labels, co, yerr=None, ecolor=None,
+def bar_chart2(y, xlabel, ylabel, tlabels, labels, co, title='', yerr=None, ecolor=None,
 width=0.5, align='center', edgecolor='None', out=None, dpi=600,
 font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""
 	Plot a bar chart with a single or multiple bars for each tick on the x axis.
-	N: Number of variables on x axis
 	y: a list of y values
-	tlabels: tick labels
+	tlabels: tick labels on x axis
 	labels: legend labels
 	yerr: y axis error bars
 	e.g.
-	bar_chart2(N=4, y=[[0.15, 2.5, 5.5, 20], [1.5, 5.5, 1.5, 55]], xlabel = 'Component', ylabel = 'Cost (M$)', tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'), labels=['Config1', 'Config2'], co=['gold','yellowgreen'], width = 0.3)
+	bar_chart2(y=[[0.15, 2.5, 5.5, 20], [1.5, 5.5, 1.5, 55]], xlabel = 'Component', ylabel = 'Cost (M$)',
+		tlabels = ('Water', 'Electrolyzer', 'Elec', 'Algae'), labels=['Config1', 'Config2'],
+		co=['gold','yellowgreen'], title='Cost breakdown', width = 0.3)
 	"""
 	import numpy as np
 
@@ -537,15 +550,13 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	matplotlib.rcParams['text.usetex'] = usetex
 	matplotlib.rcParams['text.latex.unicode'] = ucode
 
-	x = np.arange(N)  # the x locations for the groups
+	N = len(tlabels)
+	x = np.arange(N) # the x locations for the groups
 
 	fig, ax = plt.subplots()
 	w = 0
 	for i in range(len(y)):
-		if labels == None:
-			plt.bar(x+w, y[i], width=width, align=align, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor, label=None)
-		else:
-			plt.bar(x+w, y[i], width=width, align=align, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor, label=labels[i])
+		plt.bar(x+w, y[i], width=width, align=align, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor)
 		w = w + width
 
 	v_max = []
@@ -554,14 +565,102 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	y_max = max(v_max)
 
 	plt.xticks(x, tlabels)
+
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16)
+
+
 	ax.set_xticks(x + width / 2)
-	#ax.set_title(title, fontweight="bold", fontsize=16)
 	ax.tick_params(axis='x', which='major', pad=10)
 	#ax.tick_params(axis='both', which='major', pad=10)
 	ax.set_xlabel(xlabel=xlabel, fontweight="bold")
 	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
 	ax.set_ylim(top=y_max+0.1*y_max)
-	ax.legend(loc=2)
+	if labels != None:
+		plt.legend(labels, loc=2)
+
+	#plt.tight_layout()
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
+
+def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, title='', table=False, yerr=None, ecolor=None,
+	width=0.5, align='center', edgecolor='None', out=None, dpi=600,
+	font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	"""
+	Plot a stacked bar chart with a single bar for each tick on the x axis.
+	y: a list of y values
+	tlabels: tick labels on x axis
+	labels: legend labels
+	table: true if a table is to be added at the bottom of the x axis
+	yerr: y axis error bars
+	e.g.
+	stacked_bar_chart(y=[[20, 35, 30, 35, 27], [25, 32, 34, 20, 25], [25, 32, 34, 20, 25]],
+		xlabel='t_storage', ylabel='Cost (M$)', tlabels=('Sim1', 'Sim2', 'Sim3', 'Sim4', 'Sim5'),
+		labels=('Algae', 'Elec', 'Cap'), table=False)
+	"""
+	import numpy as np
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	co = plt.cm.Pastel1(np.linspace(0, 0.5, len(labels))) # Get some pastel shades for the colors
+
+	n_s = len(y) # number of stacks
+
+	N = len(tlabels) # number of x axis tick labels
+	x = np.arange(N) # the x locations for the groups
+	#x = np.arange(N) + 0.3 # to align the tick labels in the table with the bars
+
+	fig, ax = plt.subplots()
+
+	y_offset = np.array([0.0] * N) # initialize the vertical offset for the stacked bar chart.
+
+	# Plot bars and create text labels for the table
+	cell_text = []
+	for i in range(n_s):
+		plt.bar(x, y[i], width=width, align=align, bottom=y_offset, color=co[i], edgecolor=edgecolor, yerr=yerr, ecolor=ecolor)
+		y_offset = y_offset + y[i]
+		cell_text.append(['%1.1f' % j for j in y_offset])
+	# Reverse colors and text labels to display the last value at the top.
+	co = co[::-1]
+	cell_text.reverse()
+
+	v_sum = []
+	for i in range(len(y[0])):
+		v_sum.append(sum(s[i] for s in y))
+	y_max = max(v_sum)
+
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16)
+
+	if table:
+		the_table = plt.table(cellText=cell_text,
+			cellLoc='center',
+			rowLabels=labels,
+			rowColours=co,
+			colLabels=tlabels,
+			loc='bottom')
+
+		the_table.scale(1, 1.5)
+
+		plt.xticks([])
+		ax.set_xlabel(xlabel=xlabel, fontweight="bold", labelpad=10*(n_s+4))
+
+		plt.subplots_adjust(left=0.3, bottom=0.3) # adjust layout to make room for the table
+	else:
+		plt.xticks(x, tlabels)
+		ax.set_xlabel(xlabel=xlabel, fontweight="bold")
+		ax.tick_params(axis='x', which='major', pad=10)
+		plt.legend(labels, loc=2)
+
+	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
+	ax.set_ylim(top=y_max+0.2*y_max)
 
 	#plt.tight_layout()
 	if out is not None:
