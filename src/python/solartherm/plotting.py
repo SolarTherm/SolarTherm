@@ -667,3 +667,83 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, title='', table=False,
 		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
+
+def tornado(v_low, v_high, v_base, weights, v_names, xlabel, ylabel, title='', co=['gold', 'lightskyblue'],
+	out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	"""
+	Plot a tornado graph to show the sensitivity of a variable (objective) to a set of parameters deacreasing and increasing.
+	v_low: values of objective (e.g. LCOF) when a set of parameters are reduced by x% (e.g. -60%).
+	v_high: values of objective (e.g. LCOF) when a set of parameters are increased by x% (e.g. +60%).
+	v_base: base value of the objective.
+	weights: weight of distribution of parameters between the low and high parts of the graph (default is 2.).
+	v_names: name of parameters whose change are investigated.
+	e.g.
+	tornado(v_low=[4.58, 4.94, 5.27, 5.34, 5.38, 5.38], v_high=[6.78, 6.54, 6.09, 6.02, 5.99, 5.98],
+		v_base=5.68, weights=[2., 2., 2., 2., 2., 2., 2., 2.],
+		v_names=['Algae cost', 'Discount rate', 'Hydroc', 'H2 from PV', 'Syngas ST', 'Solar field'],
+		xlabel='LCOF($/L)', ylabel='Parameter', title="Sensitivity analysis (-60% to +60%)", co=['gold', 'lightskyblue'])
+	"""
+	import numpy as np
+
+	font_family= font[0]
+	font_style = font[1]
+	matplotlib.rcParams['font.family'] = font_family
+	matplotlib.rcParams['font.'+font_family] = font_style
+	matplotlib.rcParams['text.usetex'] = usetex
+	matplotlib.rcParams['text.latex.unicode'] = ucode
+
+	values = np.array(v_high) - np.array(v_low) # difference in high and low values
+	lows = np.array([v_base-v/w for v, w in zip(values,weights)]) # i.e. bas-values/weights for each parameter
+
+	ys = range(len(values))[::-1]  # the y position for each variable top to bottom
+
+	fig, ax = plt.subplots()
+
+	for y, low, value in zip(ys, lows, values): # plot the bars, one by one
+		low_width = v_base - low # the width of the 'low' pieces
+		high_width = low + value - v_base # the width of the 'high' pieces 
+
+		ax.broken_barh(
+			[(low, low_width), (v_base, high_width)],
+			(y - 0.4, 0.8),
+			facecolors=[co[0], co[1]],
+			edgecolors=['black', 'black'],
+			linewidth=1) # each bar is a "broken" horizontal bar chart
+
+		# Display the value as text. It should be positioned in the center of
+		# the 'high' bar, except if there isn't any room there, then it should be
+		# next to bar instead.
+		x = v_base + high_width / 2
+		if x <= v_base + 50:
+			x = v_base + high_width + 50
+
+		ax.text(x, y, str(value), va='center', ha='center')
+
+	ax.axvline(v_base, color='black') # draw a vertical line down the middle
+
+	if title != '':
+		plt.title(title, fontweight="bold", fontsize=16, y=1.02)
+
+	ax.set_xlabel(xlabel, fontweight="bold", labelpad=10)
+	ax.tick_params(axis='x', which='major', pad=5)
+	ax.set_ylabel(ylabel, fontweight="bold")
+
+	plt.yticks(ys, v_names) # make the y-axis display the variables names
+
+	axes = plt.gca()  # gca means get current axes
+	axes.spines['top'].set_visible(False) # hide all the top spine
+	axes.spines['left'].set_visible(False) # hide all the left spine
+	axes.spines['right'].set_visible(False) # hide all the right spine
+
+	axes.xaxis.set_ticks_position('bottom') # position the x axis ticks on the bottom
+	axes.xaxis.set_label_position('bottom') # position the x axis label on the bottom
+
+	#plt.xlim(v_base - 1000, v_base + 1000) # set x axis limits
+	#plt.ylim(-1, len(v_names)) # set y axis limits
+
+	plt.subplots_adjust(left=0.2, bottom=0.1) # adjust layout to make room for the variables names
+	#plt.tight_layout()
+	if out is not None:
+		fig.savefig(out, dpi=dpi)
+	else:
+		plt.show()
