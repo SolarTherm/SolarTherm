@@ -5,17 +5,19 @@ language: python
 python:
   - "2.7"
 sudo: required
-dist: precise
-#dist: trusty
+dist: trusty
+#dist: precise
+#dist: xenial
 virtualenv:
   system_site_packages: true
 before_install:
-  - for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` stable"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+  - ping -c 5 8.8.8.8
+  - for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` nightly"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
   - wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y openmodelica
+  - sudo apt-get install -qq -y openmodelica unionfs-fuse
   - sudo apt-get install -qq -y python-scipy python-matplotlib
-  - pip2 install dymat pyswarm cma
+  - pip2 install dymat pyswarm cma pyevolve deap scoop
 install:
   - mkdir build
   - cd build

@@ -1,21 +1,30 @@
 model EnergySystem
-	import Modelica.Constants.pi;
-	parameter String wea_file = "resources/weather/Mildura_Real2010_Created20130430.motab";
-	parameter Real A_col = 1;
-	parameter Real E_max = 1*3600*1000;
-	SolarTherm.Sources.Weather.WeatherSource wea(file=wea_file);
-	SolarTherm.Collectors.SwitchedCL CL(
-		redeclare model OptEff=SolarTherm.Collectors.IdealIncOE(alt_fixed=45),
+	import SI = Modelica.SIunits;
+	import CN = Modelica.Constants;
+	import CV = Modelica.SIunits.Conversions;
+	import FI = SolarTherm.Models.Analysis.Finances;
+
+	extends Modelica.Icons.Example;
+
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");
+
+	parameter SI.Area A_col = 1 "Collector area";
+	parameter SI.Energy E_max = 1*3600*1000 "Max stored energy";
+
+	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
+
+	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL CL(
+		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
 		A=A_col
 		);
-	SolarTherm.Receivers.FixedEffRC RC(eff=0.8);
-	SolarTherm.Fluid.Valves.EnergySplitter spl;
-	SolarTherm.Fluid.Sources.EnergySourceSink ess;
-	SolarTherm.Storage.EnergyST ST(E_max=E_max, E_0=0.1*E_max);
-	SolarTherm.PowerBlocks.EnergyPB PB(eff=0.9, P_max=500);
-	SolarTherm.Fluid.Pumps.EnergyPump pmp(P_max=0.7*PB.P_max);
-	SolarTherm.Control.Trigger ltrig(low=0.1*ST.E_max, up=0.2*ST.E_max);
-	SolarTherm.Control.Trigger utrig(low=0.8*ST.E_max, up=0.9*ST.E_max);
+	SolarTherm.Models.CSP.CRS.Receivers.FixedEffRC RC(eff=0.8);
+	SolarTherm.Models.Fluid.Valves.EnergySplitter spl;
+	SolarTherm.Models.Fluid.Sources.EnergySourceSink ess;
+	SolarTherm.Models.Storage.Tank.EnergyST ST(E_max=E_max, E_0=0.1*E_max);
+	SolarTherm.Models.PowerBlocks.EnergyPB PB(eff=0.9, P_max=500);
+	SolarTherm.Models.Fluid.Pumps.EnergyPump pmp(P_max=0.7*PB.P_max);
+	SolarTherm.Models.Control.Trigger ltrig(low=0.1*ST.E_max, up=0.2*ST.E_max);
+	SolarTherm.Models.Control.Trigger utrig(low=0.8*ST.E_max, up=0.9*ST.E_max);
 equation
 	connect(wea.wbus, CL.wbus);
 	connect(wea.wbus, RC.wbus);

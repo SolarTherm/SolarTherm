@@ -1,8 +1,8 @@
 block TestSteeredCL
 	import CN = Modelica.Constants;
-	import SolarTherm.Collectors.SteeredCL;
-	import SolarTherm.Collectors.IdealIncOE;
-	import SolarTherm.Sources.Weather.WeatherSource;
+	import SolarTherm.Models.CSP.CRS.HeliostatsField.SteeredCL;
+	import SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE;
+	import SolarTherm.Models.Sources.Weather.WeatherSource;
 
 	parameter String file = "resources/tests/weatherfile1.motab";
 	WeatherSource wea(file=file);
@@ -22,4 +22,5 @@ equation
 	elsewhen time >= 100 then
 		conc.target = 0.2;
 	end when;
+	annotation(experiment(StartTime=0.0, StopTime=200.0, Interval=0.1, Tolerance=1e-06));
 end TestSteeredCL;

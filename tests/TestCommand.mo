@@ -11,4 +11,5 @@ block TestCommand
 	parameter Integer result(fixed=false);
 initial algorithm
 	result := touch("TestCommandTouched");
+	annotation(experiment(StartTime=0.0, StopTime=1.0, Interval=0.1, Tolerance=1e-06));
 end TestCommand;
