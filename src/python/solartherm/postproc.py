@@ -4,9 +4,14 @@ import solartherm.finances as fin
 import DyMat
 import xml.etree.ElementTree as ET
 import re
+import numpy as np
 
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
+		"""
+		fn: results file (*_res*.mat)
+		init_fn: input paramet file (*_init*.xml)
+		"""
 		self.fn = fn
 		self.init_fn = init_fn
 		self.mat = None
@@ -22,7 +27,7 @@ class SimResult(object):
 		init_fn = self.init_fn
 
 		if init_fn is None:
-			# Try version based off result file
+			# Find the .xml file with the name matching the .mat file.
 			res_re = re.compile('(\S+)_res_?(\S+)?\.mat')
 			ps = res_re.match(self.fn)
 			if ps is not None:
@@ -69,6 +74,7 @@ class SimResult(object):
 		il = int(len(ab)*t/(ab[-1] - ab[0]))
 		il = min(len(ab)-2, max(0, il))
 
+		# FIXME make use of 'import bisect' here to increase speed
 		while t < ab[il]:
 			il -= 1
 		while t > ab[il+1]:
@@ -76,48 +82,60 @@ class SimResult(object):
 
 		return il
 	
-	def closest(self, name, t):
-		"""Closest point in interval.
+	def closest(self, names, t):
+		"""Closest point in interval for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 
 		il = self.lower_ind(ab, t)
 		iu = il + 1
 
 		if t <= ((ab[iu] + ab[il])/2):
-			return self.mat.data(name)[il]
+			return np.array([self.mat.data(name)[il] for name in names])
 		else:
-			return self.mat.data(name)[iu]
+			return np.array([self.mat.data(name)[iu] for name in names])
 
-	def interpolate(self, name, t):
-		"""Linear interpolation of point.
+	def interpolate(self, names, t):
+		"""Linear interpolation of point for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 
 		il = self.lower_ind(ab, t)
-		iu = il + 1
+		iu = il + 1	
 
-		vl = self.mat.data(name)[il]
-		vu = self.mat.data(name)[iu]
+		vl = np.array([self.mat.data(name)[il] for name in names])
+		vu = np.array([self.mat.data(name)[iu] for name in names])
 
 		if ab[il] == ab[iu]:
 			return vl
 		else:
 			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
-	
-	def integrate(self, name, t0, t1):
-		"""Integration of linear interpolation over interval
+
+	def integrate(self, names, t0, t1):
+		"""Integration of linear interpolation (trapezoidal rule) over interval for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
-		val = self.mat.data(name)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
+
+		val = np.empty((ab.shape[0],len(names)))
+		for i,name in enumerate(names):
+			val[:,i] = self.mat.data(name)
 
 		il = self.lower_ind(ab, t0)
 		iu = self.lower_ind(ab, t1) + 1
 
-		vsum = 0.
+		vsum = np.zeros(len(names))
 		for i in range(il, iu):
-			vl = val[i]
-			vu = val[i+1]
+			vl = val[i,:]
+			vu = val[i+1,:]
 
 			tl = ab[i]
 			tu = ab[i+1]
@@ -136,62 +154,196 @@ class SimResult(object):
 
 		return vsum
 
-	def sample(self, name, step):
-		ab = self.mat.abscissa(name, valuesOnly=True)
+	def sample(self, names, step):
+		"""Sampling of a list of variables placed in 'names' list as strings,
+		with 'step' timestep instead of the timestep in the original _res.mat file.
+		"""
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 		n = int((ab[-1] - ab[0])/step)
 
-		t = []
-		v = []
+		t = np.empty(n)
+		v = np.empty((n,len(names)))
 		for i in range(n):
 			t0 = step*i + ab[0]
 			t1 = step*(i + 1) + ab[0]
-			t.append((t0 + t1)/2)
-			v.append(self.integrate(name, t0, t1)/step)
+			t[i] = (t0 + t1)/2
+			v[i,:] = self.integrate(names, t0, t1)/step
 
 		return t, v
-	
-	def calc_perf(self):
-		"""Calculate plant performance.
 
+class SimResultElec(SimResult):
+	def calc_perf(self):
+		"""Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
 		"""
-		eng_t = self.mat.abscissa('E_elec', valuesOnly=True)
-		eng_v = self.mat.data('E_elec') # cumulative electricity generated
-		cap_v = self.mat.data('C_cap') # capital costs
-		om_y_v = self.mat.data('C_year') # O&M costs per year
-		om_p_v = self.mat.data('C_prod') # O&M costs per production per year
-		disc_v = self.mat.data('r_disc') # discount factor
-		life_v = self.mat.data('t_life') # plant lifetime
-		cons_v = self.mat.data('t_cons') # construction time
-		name_v = self.mat.data('P_name') # generator nameplate
-		rev_v = self.mat.data('R_spot') # cumulative revenue
+		var_names = self.get_names()
+		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
 
-		dur = eng_t[-1] - eng_t[0]
-		years = dur/31536000
+		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
+		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
+		cap_v = self.mat.data('C_cap') # Capital costs [$]
+		om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
+		om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = self.mat.data('t_cons') # Construction time [year]
+		name_v = self.mat.data('P_name') # Generator nameplate [W]
+		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
 
-		epy = fin.energy_per_year(dur, eng_v[-1]) # energy expected in a year
-		srev = rev_v[-1] # spot market revenue
-		lcoe = None # levelised cost of electricity
-		capf = None # capacity factor
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+		srev = rev_v[-1] # spot market revenue [$]
+		lcoe = None # Levelised cost of electricity
+		capf = None # Capacity factor
 		if close_to_year: 
-			lcoe = fin.lcoe(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
-		epy = epy/(1e6*3600) # convert from J/year to MWh/year
+		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year: 
-			lcoe = lcoe*1e6*3600 # convert from $/J to $/MWh
+			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 
 		return [epy, lcoe, capf, srev,]
 
-	# Static class variables
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
+
+
+class SimResultFuel(SimResult):
+	def calc_perf(self):
+		"""Calculate solar fuels plant performance.
+		Some of the metrics will be returned as none if simulation runtime is
+		not a multiple of a year.
+		"""
+		var_names = self.get_names()
+
+		assert('V_fuel' in var_names), "For a fuel_calc calculation, it is expected to see V_fuel variable in the results file!"
+
+		V_fuel_t = self.mat.abscissa('V_fuel', valuesOnly=True) # Time [s]
+		V_fuel_v = self.mat.data('V_fuel') # Cumulative produced fuel [m3]
+		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
+		C_labor_v = self.mat.data('C_labor') # Labor cost [$/year]
+		C_catalyst_v = self.mat.data('C_catalyst') # Catalysts cost [$/year]
+		C_om_v = self.mat.data('C_om') # Maintenance cost [$/year]
+		C_water_v = self.mat.data('C_water') # Cost of water [$/year]
+		C_algae_v = self.mat.data('C_algae') # Cost of algae [$/year]
+		C_H2_v = self.mat.data('C_H2')  # Cost of hydrogen [$/year]
+		C_CO2_v = self.mat.data('C_CO2')  # Cost of CO2 emissions [$/year]
+		C_O2_v = self.mat.data('C_O2')  # Cost of Oxygen to sell [$/year]
+		C_elec_v = self.mat.data('C_elec') # Cost of electricity consumption [$/year]
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		infl_v = self.mat.data('r_i') # Inflation rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = self.mat.data('t_cons') # Construction time [year]
+		name_v = self.mat.data('FT.v_flow_fuel_des') # Nominal fuel volumetric flow rate [m3/s]
+		rev_v = self.mat.data('R_spot') # cumulative revenue
+
+		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
+		C_year = C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1] # Total operational costs [$/year]
+
+		dur = V_fuel_t[-1] - V_fuel_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
+		# Only provide certain metrics if runtime is a multiple of a year
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+		fpy = fin.fuel_per_year(dur, V_fuel_v[-1]) # Fuel produced in a year [m3/year]
+		srev = rev_v[-1] # Spot market revenue [$/year]
+		lcof = None # Levelised cost of fuel
+		capf = None # Capacity factor
+		if close_to_year: 
+			lcof = fin.lcof_r(C_cap_v[0], C_year, disc_v[0], int(life_v[0]), int(cons_v[0]), fpy)
+			capf = fin.capacity_factor_f(name_v[0], fpy)
+
+		# Convert to useful units
+		fpy = fpy*1e3 # convert from m3/year to L/year
+		if close_to_year: 
+			lcof = lcof/1e3 # convert from $/m3 to $/L
+			capf = 100*capf
+
+		return [fpy, lcof, capf, srev,]
+
+	perf_n = ['fpy', 'lcof', 'capf', 'srev']
+	perf_u = ['L/year', '$/L', '%', '$']
+
+class DecisionMaker(object):
+	"""
+	This class is used to select the final optimum point amongs a list of optimal solutions in a multi-objective optimisation problem.
+	"""
+	def __init__(self, cand, fitness):
+		self.cand = cand
+		self.fitness = fitness
+
+	def linmap(self):
+		""" LINMAP decision-making method for multi-objective optimisation. This method is used to select a final optimal point amongs a list of optimal solutions.
+		It is assumed that obj1(e.g. lcoe) was minimised and obj2(e.g. epy) was maximised.
+		cand is the list of optimal individuals (design variables) and fitness is the list of optimal fitness (objective functions), where each objective set (i.e. obj1 and obj2) are nested in the list as a tuple
+		"""
+		obj1 = np.array([vv[0] for vv in self.fitness]) # Objective 1 that has been minimised
+		obj2 = np.array([vv[1] for vv in self.fitness]) # Objective 2 that has been maximised
+
+		obj1_n = obj1 / np.sqrt(np.sum(obj1**2)) # Normalised version of objective 1
+		obj2_n = obj2 / np.sqrt(np.sum(obj2**2)) # Normalised version of objective 2
+
+		obj1_n_min = obj1_n.min() # The minimum value of normalised objective 1 (i.e the x coordinate for the ideal point)
+		i1, = np.where(obj1_n==obj1_n_min) # x coordinate index of the ideal point
+
+		obj2_n_max = obj2_n.max() # The maximum value of normalised objective 2 (i.e the y coordinate for the ideal point)
+		i2, = np.where(obj2_n==obj2_n_max) # y coordinate index of the ideal point
+
+		d_plus = np.sqrt((obj1_n - obj1_n[i1[0]])**2 + (obj2_n - obj2_n[i2[0]])**2) # Distance of each optimal solution from the ideal point
+		d_plus_min = d_plus.min() # Minimum distance form the ideal point
+		ind_opt, = np.where(d_plus==d_plus_min) # Index of the point that has the minimum distance from the ideal point
+
+		best_ind = self.cand[ind_opt[0]] # Final optimal solution
+		best_fitness = list(self.fitness[ind_opt[0]]) # Final optimal objective
+
+		return best_ind, best_fitness
+
+	def topsis(self):
+		""" TOPSIS decision-making method for multi-objective optimisation. This method is used to select a final optimal point amongs a list of optimal solutions.
+		It is assumed that obj1(e.g. lcoe) was minimised and obj2(e.g. epy) was maximised.
+		cand is the list of optimal individuals (design variables) and fitness is the list of optimal fitness (objective functions), where each objective set (i.e. obj1 and obj2) are nested in the list as a tuple
+		"""
+		obj1 = np.array([vv[0] for vv in self.fitness]) # Objective 1 that has been minimised
+		obj2 = np.array([vv[1] for vv in self.fitness])  # Objective 2 that has been maximised
+
+		obj1_n = obj1 / np.sqrt(np.sum(obj1**2))  # Normalised version of objective 1
+		obj2_n = obj2 / np.sqrt(np.sum(obj2**2))  # Normalised version of objective 12 
+
+		obj1_n_min = obj1_n.min() # The minimum value of normalised objective 1 (i.e the x coordinate for the ideal point)
+		i1, = np.where(obj1_n==obj1_n_min) # x coordinate index of the ideal point
+
+		obj2_n_max = obj2_n.max() # The maximum value of normalised objective 2 (i.e the y coordinate for the ideal point)
+		i2, = np.where(obj2_n==obj2_n_max) # y coordinate index of the ideal point
+
+		obj1_n_max = obj1_n.max() # The maximum value of normalised objective 1 (i.e the x coordinate for the mon-ideal point)
+		ni1, = np.where(obj1_n==obj1_n_max) # x coordinate index of the non-ideal point
+
+		obj2_n_min = obj2_n.min() # The minimum value of normalised objective 2 (i.e the y coordinate for the non-ideal point)
+		ni2, = np.where(obj2_n==obj2_n_min) # y coordinate index of the non-ideal point
+
+		d_plus = np.sqrt((obj1_n - obj1_n[i1[0]])**2 + (obj2_n - obj2_n[i2[0]])**2) # Distance of each optimal solution from the ideal point
+		d_minus = np.sqrt((obj1_n - obj1_n[ni1[0]])**2 + (obj2_n - obj2_n[ni2[0]])**2) # Distance of each optimal solution from the non-ideal point
+
+		cl = d_minus/(d_plus+d_minus)
+		cl_max = cl.max()
+
+		ind_opt, = np.where(cl==cl_max) # Index of the point that has the minimum distance from the ideal point and maximum distance from the non-ideal point
+		best_ind = self.cand[ind_opt[0]] # Final optimal solution
+		best_fitness = list(self.fitness[ind_opt[0]]) # Final optimal objective
+
+		return best_ind, best_fitness
 
 class CSVResult(object):
 	"""Results from a CSV file.

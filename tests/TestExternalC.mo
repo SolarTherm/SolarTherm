@@ -12,4 +12,5 @@ block TestExternalC
 	end square;
 equation
 	y = square(time);
+	annotation(experiment(StartTime=0.0, StopTime=4.0, Interval=0.01, Tolerance=1e-06));
 end TestExternalC;

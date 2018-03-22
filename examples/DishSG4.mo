@@ -1,8 +1,10 @@
 model DishSG4
+	extends Modelica.Icons.Example;
+
 	extends SolarTherm.Systems.GenericSystem(
-		wea_file="resources/weather/AUS_NT.Alice.Springs.Airport.943260_RMY.motab",
-		opt_file="resources/optics/sg4_opt_eff.motab",
-		pri_file="resources/prices/aemo_vic_2014.motab",
+		wea_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_NT.Alice.Springs.Airport.943260_RMY.motab"),
+		opt_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sg4_opt_eff.motab"),
+		pri_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab"),
 		SM=1.2,
 		P_gro=133.89e3,
 		eff_cyc=0.37,

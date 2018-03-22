@@ -32,3 +32,33 @@ st_wea_to_mo
 
 st_get_aemo_prices
     A python script that downloads spot market prices from `AEMO <http://aemo.com.au/>`_ for a particular year and region, and then converts them into a simulation-table-ready format.
+
+The optimisation tool
+----------
+Our optimisation tool (i.e. the ``st_optimise`` script) is capable of handling a wide range of optimisation problems in concentrating solar thermal applications. In particular, there are three frameworks implemented for this purpose, namely a single-objective optimisation to either minimise or maximise an objective function and a multi-objective optimisation platform that can handle two or more objectives (the latter can be done with a little bit of tweaking in the codes). For each optimisation framework, our optimisation tool offers several optimisation methods such as Particle Swarm Optimization (PSO), Covariance Matrix Adaptation (CMA), Genetic Algorithm (GA) and one of the SciPy optimisation methods (e.g.  Nelder-Mead, L-BFGS-B, TNC, SLSQP, etc.). It should be noted that the Non-Dominated Sorting Genetic Algorithm II (NSGAII) method is the only optimisation method implemented at the moment for the multi-objective optimisation platform.
+In order to utilise our optimisation tool, one should be familiar with a number of key flags defined in the st_optimise command. These flags are:
+
+- The ``--framework`` flag: this flag simply defines which optimisation framework is going to be used, which can be one of single-objective minimisation (``soo_min``), single-objective maximisation (``soo_max``) or multi-objective optimisation (``moo``). One can follow the following format to use this flag after the ``st_optimise`` command::
+
+    --framework=soo_min
+
+- The ``--objective`` flag: this flag is used to select the objective function(s) that are going to be optimised. At the moment, these objectives can be the levelised cost of electricity/fuel (i.e. ``lcoe`` or ``lcof``),  the capacity factor(i.e. ``capf``), the annual electricity/fuel produced per year (``epy`` or ``fpy``) and/or the market spot revenue (``srev``). It is evident that the nature of some of these functions is for minimisation, while the others must be maximised in order to make logical sense. The following example shows how this flag can be used after the ``st_optimise`` command::
+
+    --objective=lcoe,epy
+
+- The ``--method`` flag: this flag specifies which optimisation method is going to be used to conduct the optimisation process. The options can be one of ``pso``, ``cma``, GA from PyEvolve or DEAP packages (i.e. ``ga1`` or ``ga2`` respectively), ``nsga2`` or one of the SciPy optimisation methods. Note that nsga2 is only for multi-objective optimisation problems.  It is noteworthy that ``ga1``, ``ga2``, and ``nsga2`` methods are equipped with parallel processing. The following example shows how this flag can be used after the ``st_optimise`` command::
+
+    --method=pso
+
+- The ``--fuel`` flag: for those systems producing fuel rather than electricity the ``-- fuel`` flag must be mentioned after the ``st_optimise`` command.
+
+- The ``--par`` flag: this flag takes the parameters with bounds and optional starting value in form of PNAME=LOW, HIGH [, START]
+- The ``--maxiter`` flag: this flag defines the maximum number of iterations (not necessarily number of simulations).  It should be noted that this flag is only for ``pso``, ``cma`` and SciPye optimisation methods.
+
+- The ``--dm`` flag: this flag is used to specify the decision-making methods for the multi-objective optimisation framework. The options are ``linmap`` or ``topsis``. In LINMAP method, a solution on the Pareto front curve with the minimum spacial distance from an ideal point (the point at which each single objective has its optimum value regardless of satisfaction of other objectives) is selected as the best optimum design point. In TOPSIS method, in addition to the ideal point, a non-ideal point (the point at which each objective has its worst value) is defined. In fact, the basic principle of this method is that the selected final optimal point must have the shortest distance from the ideal point and the farthest distance from the non-ideal point. Below shows the format this flag is used::
+
+    --dm=linmap
+
+- The ``--outtxt`` and ``-- outfig`` flags: these flags are used to save the optimal solutions and Pareto front graph in a multi-objective optimisation into files. The arguments given to these flags are the paths at which these files are going to be saved. For instance::
+
+    --outtxt=../examples/result.txt
