@@ -1,6 +1,7 @@
 #! /bin/env python
 
-import argparse
+import argparse, sys
+import numpy as np
 
 from solartherm import postproc
 from solartherm import simulation
@@ -10,41 +11,163 @@ if __name__ == '__main__':
 	parser.add_argument('file',
 			help='result mat-file to read')
 	parser.add_argument('var', type=str,
-			help='variable to inspect')
-	parser.add_argument('time', type=str,
-			help='time in simulation, or time step for sampling')
+			help='variable(s) to inspect, e.g. v1,v2,v3')
+	parser.add_argument('--time', type=str, default='',
+			help='time in simulation, or time step for sampling. Note it is not used for slicing')
 	parser.add_argument('--type', type=str, default='linear',
-			help='type of interpolation: linear, closest, sample')
+			help='type of interpolation: linear, closest, sample, or slice')
+	parser.add_argument('--tlim', nargs=2, type=str, default=[],
+			help='time range (start and end) only for slicing variable(s), e.g., 0 86400 or 5d 6d or 0 1y')
+	parser.add_argument('--tunit', type=str, default='h',
+			help='unit of time to be used in output, e.g., s, m, d, or y')
+	parser.add_argument('--eunit', type=str, default='MWh',
+			help='unit of energy, e.g., J, kWh, MWh, or GWh')
+	parser.add_argument('--punit', type=str, default='MW',
+			help='unit of power(i.e. energy rate), e.g., W, kW, MW, or GW')
+	parser.add_argument('--outfile',  type=str, default=None,
+			help='save results to outfile instead of showing them on screen')
+	parser.add_argument('--fuel', action='store_true',
+			help='run post-processing calculations for levelised cost of fuel')
 	args = parser.parse_args()
 
 	fn = args.file
-	res = postproc.SimResult(fn)
 
-	unit = ''
+	if args.fuel:
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
+
+	res = resultclass(fn)
+
+	if args.type != 'slice':
+		time = simulation.parse_var_val(args.time, 's')
+
+	tlim = [simulation.parse_var_val(i, args.tunit) for i in args.tlim]
+
+	var_n = args.var.split(',')
+
+	units = [''] * len(var_n)
 	try:
-		unit = res.units[args.var]
+		units = [res.units[vn] for vn in var_n]
 	except:
 		pass
 
-	time = simulation.parse_var_val(args.time, 's')
+	for i in range(len(units)):
+		if units[i] == 'J':
+			units[i] = args.eunit
+		elif units[i] == 'W':
+			units[i] = args.punit
+		else:
+			pass
 
 	val = None
 	if args.type == 'linear':
-		val = res.closest(args.var, time)
+		val = res.closest(var_n, time) # returns a 1D array of size len(var_n)
+		for i in range(len(var_n)):
+			if units[i] == args.eunit:
+				val[i] = simulation.convert_val(val[i], 'J', units[i])
+			elif units[i] == args.punit:
+				val[i] = simulation.convert_val(val[i], 'W', units[i])
+			else:
+				pass
+		time = simulation.convert_val(time, 's', args.tunit) # time in seconds converted to tunit
 	elif args.type == 'closest':
-		val = res.interpolate(args.var, time)
+		val = res.interpolate(var_n, time) # returns a 1D array of size len(var_n)
+		for i in range(len(var_n)):
+			if units[i] == args.eunit:
+				val[i] = simulation.convert_val(val[i], 'J', units[i])
+			elif units[i] == args.punit:
+				val[i] = simulation.convert_val(val[i], 'W', units[i])
+			else:
+				pass
+		time = simulation.convert_val(time, 's', args.tunit) # time in seconds converted to tunit
 	elif args.type == 'sample':
-		val = res.sample(args.var, time)
+		val = res.sample(var_n, time) # retutns a 1D array with ab.shape[0] rows for time and
+		# a 2D array with ab.shape[0] rows and len(var_n) columns for the values of all variables in var_n
+	elif args.type == 'slice':
+		t = res.get_time(var_n[0]) # original time array in seconds
+		t = simulation.convert_val(t, 's', args.tunit) # time array converted to tunit
+		val = np.empty((t.shape[0], len(var_n)))
+		for i, vn in enumerate(var_n):
+			val[:,i] = res.get_values(vn)
+			if units[i] == args.eunit:
+				val[:,i] = simulation.convert_val(val[:,i], 'J', units[i])
+			elif units[i] == args.punit:
+				val[:,i] = simulation.convert_val(val[:,i], 'W', units[i])
+			else:
+				pass
+		if len(tlim) == 2:
+			i1 = np.where(t==tlim[0])
+			i2 = np.where(t==tlim[1])
+			t = t[i1[0][0]:i2[0][0] + 1] # sliced time array in tunit
+			val = val[i1[0][0]:i2[0][0] + 1,:] # sliced variables array
 	else:
 		print('Interpolation type not recognised')
 
 	if args.type == 'sample':
 		t, v = val
-		print('Time (sec), ' + args.var + ' (' + unit + ')')
-		for i in range(len(t)): 
-			print(str(t[i]) + ', ' + str(v[i]))
+		t = simulation.convert_val(t, 's', args.tunit) # time array converted to tunit
+		for i in range(len(var_n)):
+			if units[i] == args.eunit:
+				v[:,i] = simulation.convert_val(v[:,i], 'J', units[i])
+			elif units[i] == args.punit:
+				v[:,i] = simulation.convert_val(v[:,i], 'W', units[i])
+			else:
+				pass
+		header = 'Time (' + args.tunit + '), ' + ", ".join([vn + ' (' + u + ')' for vn, u in zip(var_n, units)])
+		if args.outfile is None:
+			print(header)
+		else:
+			f = open(args.outfile, 'w')
+			f.write(header + '\n')
+		for i in range(t.shape[0]):
+			if args.outfile is None:
+				print(str(t[i]) + ', ' + ", ".join([str(v[i,j]) for j in range(v.shape[1])]))
+			else:
+				f.write(str(t[i]) + ', ' + ", ".join([str(v[i,j]) for j in range(v.shape[1])]) + "\n")
+		if args.outfile is not None:
+			f.close()
+	elif args.type == 'slice':
+		header = 'Time (' + args.tunit + '), ' + ", ".join([vn + ' (' + u + ')' for vn, u in zip(var_n, units)])
+		if args.outfile is None:
+			print(header)
+		else:
+			f = open(args.outfile, 'w')
+			f.write(header + '\n')
+		for i in range(t.shape[0]):
+			if args.outfile is None:
+				print(str(t[i]) + ', ' + ", ".join([str(val[i,j]) for j in range(val.shape[1])]))
+			else:
+				f.write(str(t[i]) + ', ' + ", ".join([str(val[i,j]) for j in range(val.shape[1])]) + '\n')
+		if args.outfile is not None:
+			f.close()
 	else:
-		print(str(val) + ' ' + unit)
+		header = 'Time (' + args.tunit + '), ' + ", ".join([vn + ' (' + u + ')' for vn, u in zip(var_n, units)])
+		if args.outfile is None:
+			print(header)
+			print(str(time) + ", " + ", ".join([str(v) for v in val]))
+		else:
+			f = open(args.outfile, 'w')
+			f.write(header + '\n')
+			f.write(str(time) + ", " + ", ".join([str(v) for v in val]))
+			f.close()
+
+
+
+
+
+
 
 # example call:
 # st_inspect EnergySystem_res.mat 'tnk.E' 7d
+# st_inspect --type=slice --tlim 10d 11d --tunit=h SimpleSystem_res_0.mat wea.wbus.dni 5m
+# st_inspect --type=sample SimpleSystem_res_0.mat wea.wbus.dni 5m
+# st_inspect SimpleSystem_res_0.mat wea.wbus.dni 5m
+# st_inspect --type=closest SimpleSystem_res_0.mat wea.wbus.dni 5m
+#sys.stderr.write("var_n = %s\n" % (var_n,))
+# for v_n in var_n:
+# I reckon the followings should go inside the loop and args.var should be replaced with v_n
+#sys.stderr.write("Shape:"+str(t.shape[0])+"\n")
+#print('\"Time (sec)\", \"' + args.var + ' (' + unit + ')\"')
+#print(str(t[i]) + ', ' + ",".join([str(v) for v in val[i]))
+#f.write(str(t[i]) + '\n')

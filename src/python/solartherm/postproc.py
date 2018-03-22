@@ -74,6 +74,7 @@ class SimResult(object):
 		il = int(len(ab)*t/(ab[-1] - ab[0]))
 		il = min(len(ab)-2, max(0, il))
 
+		# FIXME make use of 'import bisect' here to increase speed
 		while t < ab[il]:
 			il -= 1
 		while t > ab[il+1]:
@@ -81,48 +82,60 @@ class SimResult(object):
 
 		return il
 	
-	def closest(self, name, t):
-		"""Closest point in interval.
+	def closest(self, names, t):
+		"""Closest point in interval for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 
 		il = self.lower_ind(ab, t)
 		iu = il + 1
 
 		if t <= ((ab[iu] + ab[il])/2):
-			return self.mat.data(name)[il]
+			return np.array([self.mat.data(name)[il] for name in names])
 		else:
-			return self.mat.data(name)[iu]
+			return np.array([self.mat.data(name)[iu] for name in names])
 
-	def interpolate(self, name, t):
-		"""Linear interpolation of point.
+	def interpolate(self, names, t):
+		"""Linear interpolation of point for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 
 		il = self.lower_ind(ab, t)
-		iu = il + 1
+		iu = il + 1	
 
-		vl = self.mat.data(name)[il]
-		vu = self.mat.data(name)[iu]
+		vl = np.array([self.mat.data(name)[il] for name in names])
+		vu = np.array([self.mat.data(name)[iu] for name in names])
 
 		if ab[il] == ab[iu]:
 			return vl
 		else:
 			return (vu - vl)*(t - ab[il])/(ab[iu] - ab[il]) + vl
-	
-	def integrate(self, name, t0, t1):
-		"""Integration of linear interpolation over interval
+
+	def integrate(self, names, t0, t1):
+		"""Integration of linear interpolation (trapezoidal rule) over interval for a list of variables placed in 'names' list as strings.
 		"""
-		ab = self.mat.abscissa(name, valuesOnly=True)
-		val = self.mat.data(name)
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
+
+		val = np.empty((ab.shape[0],len(names)))
+		for i,name in enumerate(names):
+			val[:,i] = self.mat.data(name)
 
 		il = self.lower_ind(ab, t0)
 		iu = self.lower_ind(ab, t1) + 1
 
-		vsum = 0.
+		vsum = np.zeros(len(names))
 		for i in range(il, iu):
-			vl = val[i]
-			vu = val[i+1]
+			vl = val[i,:]
+			vu = val[i+1,:]
 
 			tl = ab[i]
 			tu = ab[i+1]
@@ -141,17 +154,23 @@ class SimResult(object):
 
 		return vsum
 
-	def sample(self, name, step):
-		ab = self.mat.abscissa(name, valuesOnly=True)
+	def sample(self, names, step):
+		"""Sampling of a list of variables placed in 'names' list as strings,
+		with 'step' timestep instead of the timestep in the original _res.mat file.
+		"""
+		if isinstance(names,str):
+			names = [names]
+
+		ab = self.mat.abscissa(names[0], valuesOnly=True)
 		n = int((ab[-1] - ab[0])/step)
 
-		t = []
-		v = []
+		t = np.empty(n)
+		v = np.empty((n,len(names)))
 		for i in range(n):
 			t0 = step*i + ab[0]
 			t1 = step*(i + 1) + ab[0]
-			t.append((t0 + t1)/2)
-			v.append(self.integrate(name, t0, t1)/step)
+			t[i] = (t0 + t1)/2
+			v[i,:] = self.integrate(names, t0, t1)/step
 
 		return t, v
 

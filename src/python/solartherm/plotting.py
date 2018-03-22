@@ -125,11 +125,14 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 				unit = ''
 				try:
 					unit = res[ri].get_unit(v)
-					if unit == 'J':
-						unit= eunit # changing unit from unit to eunit (e.g. from 'J' to 'kWh')
-					if unit == 'W':
-						unit = punit  # changing unit from unit to punit (e.g. from 'W' to 'kW')
 				except:
+					pass
+
+				if unit == 'J':
+					unit = eunit # changing unit from unit to eunit (e.g. from 'J' to 'kWh')
+				elif unit == 'W':
+					unit = punit  # changing unit from unit to punit (e.g. from 'W' to 'kW')
+				else:
 					pass
 
 				if '.' in v:
@@ -153,8 +156,10 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 				v_v = res[ri].get_values(v)
 				if unit==eunit:
 					v_v = simulation.convert_val(v_v, 'J', unit)
-				if unit==punit:
+				elif unit==punit:
 					v_v = simulation.convert_val(v_v, 'W', unit)
+				else:
+					pass
 				v_v_max.append(max(v_v))
 				ax[i_ax].plot(time_new, v_v,
 						label=label, color=co[v_id%len(co)],
