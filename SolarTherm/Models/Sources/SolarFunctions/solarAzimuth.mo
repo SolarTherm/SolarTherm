@@ -9,8 +9,11 @@ protected
   SI.Angle zen;
 algorithm
   zen:=solarZenith(dec,hra,lat=lat);
-  azi:=sign(hra)*abs(acos((cos(zen)*sin(from_deg(lat))-sin(dec))/(sin(zen)*cos(from_deg(lat))))-pi);
-  //  azi:=sign(hra)*abs(acos((cos(zen)*sin(from_deg(lat))-sin(dec))/(sin(zen)*cos(from_deg(lat)))));
+  if lat>0 then
+    azi:=sign(hra)*abs(acos((cos(zen)*sin(from_deg(lat))-sin(dec))/(sin(zen)*cos(from_deg(lat)))));
+  else
+    azi:=sign(hra)*abs(acos((cos(zen)*sin(from_deg(lat))-sin(dec))/(sin(zen)*cos(from_deg(lat))))-pi);
+  end if;
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
         coordinateSystem(preserveAspectRatio=false)));
 end solarAzimuth;
