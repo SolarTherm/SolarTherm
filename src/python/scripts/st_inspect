@@ -152,22 +152,19 @@ if __name__ == '__main__':
 			f.write(str(time) + ", " + ", ".join([str(v) for v in val]))
 			f.close()
 
-
-
-
-
-
-
 # example call:
-# st_inspect EnergySystem_res.mat 'tnk.E' 7d
-# st_inspect --type=slice --tlim 10d 11d --tunit=h SimpleSystem_res_0.mat wea.wbus.dni 5m
-# st_inspect --type=sample SimpleSystem_res_0.mat wea.wbus.dni 5m
-# st_inspect SimpleSystem_res_0.mat wea.wbus.dni 5m
-# st_inspect --type=closest SimpleSystem_res_0.mat wea.wbus.dni 5m
-#sys.stderr.write("var_n = %s\n" % (var_n,))
-# for v_n in var_n:
-# I reckon the followings should go inside the loop and args.var should be replaced with v_n
-#sys.stderr.write("Shape:"+str(t.shape[0])+"\n")
-#print('\"Time (sec)\", \"' + args.var + ' (' + unit + ')\"')
-#print(str(t[i]) + ', ' + ",".join([str(v) for v in val[i]))
-#f.write(str(t[i]) + '\n')
+#linear:
+#st_inspect --time=720m --tunit=h SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#st_inspect --time=720m --tunit=h --outfile=../examples/results.txt SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#closest:
+#st_inspect --type=closest --time=720m --tunit=h SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#st_inspect --type=closest --time=720m --tunit=h --outfile=../examples/results.txt SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#sample:
+#st_inspect --type=sample --time=60m --tunit=h SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#st_inspect --type=sample --time=60m --tunit=h --outfile=../examples/results.txt SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#slice:
+#st_inspect --type=slice --tlim 10d 11d --tunit=s SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+#st_inspect --type=slice --tlim 10d 11d --tunit=h --outfile=../examples/results.txt SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec
+
+# to save directly to a csv file:
+#st_inspect --time=720m --tunit=h SimpleSystem_res_0.mat wea.wbus.dni,E,P_elec > FILENAME.csv
