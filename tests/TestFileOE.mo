@@ -31,5 +31,5 @@ equation
 		oeff.wbus.alt = 33.75;
 		oeff.wbus.azi = -22.5;
 	end when;
-	annotation(experiment(StartTime=0.0, StopTime=10.0, Interval=0.1, Tolerance=1e-06));
+	//annotation(experiment(StartTime=0.0, StopTime=10.0, Interval=0.1, Tolerance=1e-06));
 end TestFileOE;

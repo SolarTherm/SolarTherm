@@ -1,3 +1,4 @@
+within examples;
 model Reference_1
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;

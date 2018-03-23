@@ -1,3 +1,4 @@
+within examples;
 model SolarFuelSystem
 	import SI = Modelica.SIunits;
 	import nSI = Modelica.SIunits.Conversions.NonSIunits;
