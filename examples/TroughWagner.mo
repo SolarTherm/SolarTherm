@@ -136,7 +136,7 @@ initial equation
 	dni_annual = 0;
 equation
 	der(dni_annual) = wea.wbus.dni/(1000*3600);
-	annotation (uses(Modelica(version="3.2.1")));
+	annotation (uses(Modelica(version="3.2.2")));
 	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=60, Tolerance=1e-06));
 end TroughWagner;
 
