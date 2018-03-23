@@ -24,7 +24,7 @@ end A;
 
 optimization AO(objective=-x2)
 	extends A;
-	annotation(experiment(StartTime=0.0, StopTime=1.0, Interval=0.02, Tolerance=1e-06));
+	//annotation(experiment(StartTime=0.0, StopTime=1.0, Interval=0.02, Tolerance=1e-06));
 end AO;
 //model B
 //	Real x1(start=1, fixed=true, min=0, max=1);

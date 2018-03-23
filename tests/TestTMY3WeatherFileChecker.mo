@@ -38,5 +38,5 @@ algorithm
 	l2 :=l_real[2,:];
 	l3 :=l_real[3,:];
 	l4 :=l_real[4,:];
-	annotation(experiment(StartTime=0.0, StopTime=1.0, Interval=5.0, Tolerance=1e-06));
+	annotation(experiment(StartTime=0.0, StopTime=1.0, Interval=0.1, Tolerance=1e-06));
 end TestTMY3WeatherFileChecker;

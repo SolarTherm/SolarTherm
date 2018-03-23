@@ -13,5 +13,5 @@ block TestCatromOE
 		);
 equation
 	connect(wea.wbus, oeff.wbus);
-	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=300, Tolerance=1e-06));
+	//annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=300, Tolerance=1e-06));
 end TestCatromOE;

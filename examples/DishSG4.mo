@@ -1,3 +1,4 @@
+within examples;
 model DishSG4
 	extends Modelica.Icons.Example;
 
