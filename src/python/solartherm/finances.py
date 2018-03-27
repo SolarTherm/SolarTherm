@@ -188,14 +188,7 @@ def capacity_factor_f(v_rate, fpy):
 	"""Capacity factor for a solar fuel system"""
 	return fpy/(v_rate*365*24*3600)
 
-
-
-
-
-
-
-
-
-
-
-
+def annualised_capital_cost(c_cap, r, t_life):
+	"""Annualised capital cost in $/year"""
+	crf = (r*((1 + r)**t_life)) / ((1 + r)**t_life - 1) # capital recovery factor
+	return c_cap * crf
