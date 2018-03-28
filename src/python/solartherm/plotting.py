@@ -321,6 +321,8 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 	pie_chart1(vals=[215.134, 130.445, 245.823, 210.376], ex=(0.05, 0, 0, 0), lbs=['C1', 'C2', 'C3', 'C4'],
 		co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
 	"""
+	import numpy as np
+
 	font_family= font[0]
 	font_style = font[1]
 	matplotlib.rcParams['font.family'] = font_family
@@ -362,6 +364,9 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 
 	fig, ax = plt.subplots()
 
+	if co==None:
+		co = plt.cm.GnBu(np.linspace(0.4, 0.9, len(vals))) # Get some shades for the colors
+
 	ax.pie(vals, explode=ex, colors=co, autopct=autopct,
 		pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
 		startangle=startangle, radius=radius, frame=frame)
@@ -394,6 +399,8 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 		ex=[(0.05, 0, 0, 0), (0.05, 0, 0, 0)], lbs=['C1', 'C2', 'C3', 'C4'],
 		co=['gold', 'yellowgreen', 'lightcoral', 'lightskyblue'], sv='pct')
 	"""
+	import numpy as np
+
 	font_family= font[0]
 	font_style = font[1]
 	matplotlib.rcParams['font.family'] = font_family
@@ -432,6 +439,9 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 	else:
 		nc = ng
 		nr = math.ceil(ng/nc)
+
+	if co==None:
+		co = plt.cm.GnBu(np.linspace(0.4, 0.9, len(lbs))) # Get some shades for the colors
 
 	if ng != 1: # i.e. more than 1 pie chart
 		fig, axes = plt.subplots(nrows=int(nr), ncols=int(nc))
@@ -532,7 +542,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	else:
 		plt.show()
 
-def bar_chart2(y, xlabel, ylabel, tlabels, labels, co, title='', yerr=None, ecolor=None,
+def bar_chart2(y, xlabel, ylabel, tlabels, labels, co=None, title='', yerr=None, ecolor=None,
 width=0.5, align='center', edgecolor='None', out=None, dpi=600,
 font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""
@@ -557,6 +567,9 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 
 	N = len(tlabels)
 	x = np.arange(N) # the x locations for the groups
+
+	if co == None:
+		co = plt.cm.GnBu(np.linspace(0.5, 1, len(y))) # Get some shades for the colors
 
 	fig, ax = plt.subplots()
 	w = 0
@@ -590,7 +603,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	else:
 		plt.show()
 
-def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, title='', table=False, yerr=None, ecolor=None,
+def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', table=False, yerr=None, ecolor=None,
 	width=0.5, align='center', edgecolor='None', out=None, dpi=600,
 	font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	"""
@@ -614,7 +627,8 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, title='', table=False,
 	matplotlib.rcParams['text.usetex'] = usetex
 	matplotlib.rcParams['text.latex.unicode'] = ucode
 
-	co = plt.cm.Pastel1(np.linspace(0, 0.5, len(labels))) # Get some pastel shades for the colors
+	if co == None:
+		co = plt.cm.GnBu(np.linspace(0.5, 1, len(labels))) # Get some shades for the colors
 
 	n_s = len(y) # number of stacks
 
