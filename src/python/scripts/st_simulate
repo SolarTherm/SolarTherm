@@ -89,9 +89,9 @@ if __name__ == '__main__':
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
 			help='number of processes (set to 0 for serial mode)')
-	parser.add_argument('--solver', type=str, default='rungekutta',
+	parser.add_argument('--solver', type=str, default='dassl',
 			help='solver choice for OpenModelica')
-	parser.add_argument('--nls', type=str, default='newton',
+	parser.add_argument('--nls', type=str, default='homotopy',
 			help='non-linear solver choice for OpenModelica e.g. newton, hybrid, kinsol, mixed, and homotopy')
 	#parser.add_argument('--nthsim', type=int, default=None,
 	#		help='number of threads per simulation')
