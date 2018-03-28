@@ -365,7 +365,7 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 	fig, ax = plt.subplots()
 
 	if co==None:
-		co = plt.cm.GnBu(np.linspace(0.4, 0.9, len(vals))) # Get some shades for the colors
+		co = plt.cm.Pastel1(np.linspace(0, 0.5, len(vals))) # Get some shades for the colors
 
 	ax.pie(vals, explode=ex, colors=co, autopct=autopct,
 		pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
@@ -441,7 +441,7 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 		nr = math.ceil(ng/nc)
 
 	if co==None:
-		co = plt.cm.GnBu(np.linspace(0.4, 0.9, len(lbs))) # Get some shades for the colors
+		co = plt.cm.Pastel1(np.linspace(0, 0.5, len(lbs))) # Get some shades for the colors
 
 	if ng != 1: # i.e. more than 1 pie chart
 		fig, axes = plt.subplots(nrows=int(nr), ncols=int(nc))
@@ -569,7 +569,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	x = np.arange(N) # the x locations for the groups
 
 	if co == None:
-		co = plt.cm.GnBu(np.linspace(0.5, 1, len(y))) # Get some shades for the colors
+		co = plt.cm.Pastel1(np.linspace(0, 0.5, len(y))) # Get some shades for the colors
 
 	fig, ax = plt.subplots()
 	w = 0
@@ -628,7 +628,7 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', tab
 	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	if co == None:
-		co = plt.cm.GnBu(np.linspace(0.5, 1, len(labels))) # Get some shades for the colors
+		co = plt.cm.Pastel1(np.linspace(0, 0.5, len(labels))) # Get some shades for the colors
 
 	n_s = len(y) # number of stacks
 
