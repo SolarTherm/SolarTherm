@@ -58,12 +58,16 @@ model SimpleSystem
 	//		12*3600
 	//		};
 
-	parameter FI.Money C_cap =
-			120*A_col // field cost
-			+ 135*C*A_rec // receiver cost
-			+ (30/(1e3*3600))*E_max // storage cost
-			+ (1440/1e3)*P_name // power block cost
-			"Capital cost";
+	parameter FI.Money C_field = 120*A_col "Field cost";
+	parameter FI.Money C_site = 0 "Site improvements cost";
+	parameter FI.Money C_tower = 0 "Tower cost";
+	parameter FI.Money C_receiver = 135*C*A_rec "Receiver cost";
+	parameter FI.Money C_storage = (30/(1e3*3600))*E_max "Storage cost";
+	parameter FI.Money C_block = (1440/1e3)*P_name "Power block cost";
+	parameter FI.Money C_bop = 0 "Balance of plant cost";
+	parameter FI.Money C_land = 0 "Land cost";
+	parameter FI.Money C_cap = C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_land "Capital costs";
+
 	parameter FI.MoneyPerYear C_year =
 			10*A_col // field cleaning/maintenance
 			"Cost per year";
