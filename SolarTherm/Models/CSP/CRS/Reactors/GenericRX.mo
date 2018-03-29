@@ -64,7 +64,7 @@ model GenericRX
 
 	SI.Power P_pump(min=0) "Pump power consumption";
 
-	Integer rx_state(min=1, max=4) "Reactor state";
+	Integer state(min=1, max=4) "Reactor state";
 	SI.Time t_rx_w_now "Time of reactor current warm-up event";
 	SI.Time t_rx_w_next "Time of reactor next warm-up event";
 	SI.Time t_rx_c_now "Time of reactor current cool-down event";
@@ -166,46 +166,46 @@ protected
 
 initial equation
 	pre(tot) = 0;
-	rx_state = 1;
+	state = 1;
 	t_rx_w_now = 0;
 	t_rx_w_next = 0;
 	t_rx_c_now = 0;
 	t_rx_c_next = 0;
 
 algorithm
-	when rx_state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay > 0 then
-		rx_state := 2; // Reactor warming up
-	elsewhen rx_state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay <= 0 then
-		rx_state := 3; // Reactor working (no warm-up)
-	elsewhen rx_state == 2 and time >= t_rx_w_next then
-		rx_state := 3; // Reactor working
-	elsewhen rx_state == 4 and time >= t_rx_c_next then
-		rx_state := 1; // Reactor off
-	elsewhen rx_state == 2 and (sum(R) < R_min or not rx_on) then
-		rx_state := 1; // Reactor off
-	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay > 0 then
-		rx_state := 4; // Reactor cooling down
-	elsewhen rx_state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay <= 0 then
-		rx_state := 1; // Reactor off (no cooling down)
+	when state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay > 0 then
+		state := 2; // Reactor warming up
+	elsewhen state == 1 and sum(R) >= R_min and rx_on and t_rx_on_delay <= 0 then
+		state := 3; // Reactor working (no warm-up)
+	elsewhen state == 2 and time >= t_rx_w_next then
+		state := 3; // Reactor working
+	elsewhen state == 4 and time >= t_rx_c_next then
+		state := 1; // Reactor off
+	elsewhen state == 2 and (sum(R) < R_min or not rx_on) then
+		state := 1; // Reactor off
+	elsewhen state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay > 0 then
+		state := 4; // Reactor cooling down
+	elsewhen state == 3 and (sum(R) < R_min or not rx_on) and t_rx_off_delay <= 0 then
+		state := 1; // Reactor off (no cooling down)
 	end when;
 
-	when rx_state == 2 then
+	when state == 2 then
 		t_rx_w_now := time;
 		t_rx_w_next := time + t_rx_on_delay;
 	end when;
 
-	when rx_state == 4 then
+	when state == 4 then
 		t_rx_c_now := time;
 		t_rx_c_next := time + t_rx_off_delay;
 	end when;
 
-	if rx_state == 2 then
+	if state == 2 then
 		fr_ramp_heat := if ramp_order_heat == 0 then 1 else abs(ramp_up_heat.y);
 		fr_ramp_algae := if ramp_order_algae == 0 then 1 else abs(ramp_up_algae.y);
 		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 1 else abs(ramp_up_CO2.y);
 		fr_ramp_elec := if ramp_order_elec == 0 then 1 else abs(ramp_up_elec.y);
 		fr_ramp_sg := if ramp_order_sg == 0 then 0 else abs(ramp_up_sg.y);
-	elseif rx_state == 4 then
+	elseif state == 4 then
 		fr_ramp_heat := if ramp_order_heat == 0 then 0 else abs(ramp_down_heat.y);
 		fr_ramp_algae := if ramp_order_algae == 0 then 0 else abs(ramp_down_algae.y);
 		fr_ramp_CO2:= if ramp_order_CO2 == 0 then 0 else abs(ramp_down_CO2.y);
@@ -219,15 +219,15 @@ algorithm
 		fr_ramp_sg := 0;
 	end if;
 
-	if rx_state == 1 then
+	if state == 1 then
 		useful_prod := false;
-	elseif rx_state == 2 or rx_state == 4 then
+	elseif state == 2 or state == 4 then
 		useful_prod := if ramp_order_sg == 0 then false else true;
 	else
 		useful_prod := true;
 	end if;
 
-	on := if rx_state == 3 then true else false;
+	on := if state == 3 then true else false;
 
 	when on then
 		time_on := time;
@@ -249,7 +249,7 @@ equation
 	ramp_up_sg.x = t_rx_w_now;
 	ramp_down_sg.x = t_rx_c_now;
 
-	if rx_state <= 1 then
+	if state <= 1 then
 		Q_flow_loss_SCWG = 0;
 		eff_I_SCWG = 0;
 		Q_flow_SCWG = 0;
@@ -306,7 +306,7 @@ equation
 
 		p_p.x = 0;
 		P_pump = 0;
-	elseif rx_state == 2 or rx_state == 4 then
+	elseif state == 2 or state == 4 then
 		eff_SCWG.x = if ramp_order_heat == 0 then 0 else (sum(R)/1e6 - R_mean) / R_std;
 		eff_I_SCWG = if ramp_order_heat == 0 then 0 else max(eff_SCWG.y,0);
 

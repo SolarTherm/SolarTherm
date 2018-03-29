@@ -170,11 +170,11 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 			ylabel = ', '.join(ylabel)
 			ax[i_ax].set_ylim(top=max(v_v_max)+0.1*max(v_v_max))
 			#ax[i_ax].set_ylim(auto=True)
-			ax[i_ax].set_ylabel(ylabel=ylabel)
+			#ax[i_ax].set_ylabel(ylabel=ylabel, fontsize=10)
 			if i_ax==0:
-				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left', ncol=int(math.ceil(n_v_ys_l/2.0))) #frame flag: frameon=False
+				ax[i_ax].legend(bbox_to_anchor=(0.,1.02),loc='lower left', ncol=int(math.ceil(n_v_ys_l/2.0)), fontsize=10) #frame flag: frameon=False
 			else:
-				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right', ncol=int(math.ceil(n_v_ys_r/2.0)))
+				ax[i_ax].legend(bbox_to_anchor=(1,1.02),loc='lower right', ncol=int(math.ceil(n_v_ys_r/2.0)), fontsize=10)
 		if len(xlim) == 2:
 			sp.set_xlim(xlim)
 			#sp.set_xlim(left=xlim[0], right=xlim[1])
