@@ -372,7 +372,7 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 		startangle=startangle, radius=radius, frame=frame)
 	ax.axis('equal')
 
-	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.8),loc='lower left')
+	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.0),loc='lower left')
 	#plt.tight_layout()
 
 	if title != '':
