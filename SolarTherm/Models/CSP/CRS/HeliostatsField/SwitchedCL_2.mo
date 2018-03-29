@@ -17,7 +17,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-d
 	Modelica.Blocks.Interfaces.BooleanInput defocus(start=false) "true if the defocusing state is on";
 	input SI.RadiantPower R_dfc "The targer radiation power at the defocused state";
 
-	Integer con_state(min=1, max=5) "Concentrator state";
+	Integer state(min=1, max=5) "Concentrator state";
 	SI.Time t_con_w_now "Time of concentrator current warm-up event";
 	SI.Time t_con_w_next "Time of concentrator next warm-up event";
 	SI.Time t_con_c_now "Time of concentrator current cool-down event";
@@ -38,56 +38,56 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-d
 
 initial equation
 	pre(tot) = 0;
-	con_state = 1;
+	state = 1;
 	t_con_w_now = 0;
 	t_con_w_next = 0;
 	t_con_c_now = 0;
 	t_con_c_next = 0;
 
 algorithm
-	when con_state == 2 and (wbus.dni <= dni_stop or defocus or not track) then
-		con_state := 1; // off sun
-	elsewhen con_state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
-		con_state := 5; // ramp down
-	elsewhen con_state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
-		con_state := 1; // off sun(no ramp-down)
-	elsewhen con_state == 3 and defocus then
-		con_state := 4; // on sun at part load
-	elsewhen con_state == 4 and not defocus then
-		con_state := 3; // on sun at full load
-	elsewhen con_state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
-		con_state := 5; // ramp down
-	elsewhen con_state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
-		con_state := 1; // off sun (no ramp-down)
-	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay > 0 then
-		con_state := 2; // start onsteering (i.e. ramp up)
-	elsewhen con_state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay <= 0 then
-		con_state := 3; // on sun at full load (no ramp-up)
-	elsewhen con_state == 2 and time >= t_con_w_next then
-		con_state := 3; // on sun at full load
-	elsewhen con_state == 5 and time >= t_con_c_next then
-		con_state := 1; // Off sun
+	when state == 2 and (wbus.dni <= dni_stop or defocus or not track) then
+		state := 1; // off sun
+	elsewhen state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
+		state := 5; // ramp down
+	elsewhen state == 3 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		state := 1; // off sun(no ramp-down)
+	elsewhen state == 3 and defocus then
+		state := 4; // on sun at part load
+	elsewhen state == 4 and not defocus then
+		state := 3; // on sun at full load
+	elsewhen state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay > 0 then
+		state := 5; // ramp down
+	elsewhen state == 4 and (wbus.dni <= dni_stop) and t_con_off_delay <= 0 then
+		state := 1; // off sun (no ramp-down)
+	elsewhen state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay > 0 then
+		state := 2; // start onsteering (i.e. ramp up)
+	elsewhen state == 1 and wbus.dni >= dni_start and not defocus and track and t_con_on_delay <= 0 then
+		state := 3; // on sun at full load (no ramp-up)
+	elsewhen state == 2 and time >= t_con_w_next then
+		state := 3; // on sun at full load
+	elsewhen state == 5 and time >= t_con_c_next then
+		state := 1; // Off sun
 	end when;
 
-	when con_state == 2 then
+	when state == 2 then
 		t_con_w_now := time;
 		t_con_w_next := time + t_con_on_delay;
 	end when;
 
-	when con_state == 5 then
+	when state == 5 then
 		t_con_c_now := time;
 		t_con_c_next := time + t_con_off_delay;
 	end when;
 
-	if con_state == 2 then
+	if state == 2 then
 		fr_ramp_con := if ramp_order == 0 then 0 else abs(ramp_up_con.y);
-	elseif con_state == 5 then
+	elseif state == 5 then
 		fr_ramp_con := if ramp_order == 0 then 0 else abs(ramp_down_con.y);
 	else
 		fr_ramp_con := 0;
 	end if;
 
-	on := if (con_state == 3 or con_state == 4) then true else false;
+	on := if (state == 3 or state == 4) then true else false;
 
 	when on then
 		time_on := time;
@@ -100,13 +100,13 @@ equation
 	ramp_down_con.x = t_con_c_now;
 
 	for i in 1:nelem loop
-		if con_state <= 1 then
+		if state <= 1 then
 			fr_dfc[i] = 0;
 			R_foc[i] = 0;
-		elseif con_state == 2 then
+		elseif state == 2 then
 			fr_dfc[i] = if ramp_order == 0 then 0 else 1;
 			R_foc[i] = fr_ramp_con * max(oeff.eff[i]*wbus.dni*A, 0);
-		elseif con_state == 5 then
+		elseif state == 5 then
 			fr_dfc[i] = if ramp_order == 0 then 0 else 1;
 			R_foc[i] = fr_ramp_con * max(oeff.eff[i]*wbus.dni*A, 0);
 		else

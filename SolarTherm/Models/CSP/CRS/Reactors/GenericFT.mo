@@ -87,7 +87,7 @@ model GenericFT
 	SI.EnergyFlowRate E_flow_petrol(min=0) "Energy flow rate of petrol leaving FT";
 	SI.EnergyFlowRate E_flow_diesel(min=0) "Energy flow rate of diesel leaving FT";
 
-	Integer ft_state(min=1, max=5) "FT state";
+	Integer state(min=1, max=5) "FT state";
 	SI.Time t_ft_w_now "Time of FT current warm-up event";
 	SI.Time t_ft_w_next "Time of FT next warm-up event";
 	SI.Time t_ft_c_now "Time of FT current cool-down event";
@@ -192,7 +192,7 @@ protected
 
 initial equation
 	pre(tot) = 0;
-	ft_state = 1;
+	state = 1;
 	t_ft_w_now = 0;
 	t_ft_w_next = 0;
 	t_ft_c_now = 0;
@@ -205,36 +205,36 @@ initial equation
 	m_flow_sg_trans_after = E_sg / LHV_sg;
 
 algorithm
-	when ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay > 0 then
-		ft_state := 2; // FT warming up
-	elsewhen ft_state == 1 and E_sg >= E_sg_min and t_ft_on_delay <= 0 then
-		ft_state := 3; // FT operating (no warm-up)
-	elsewhen ft_state == 2 and time >= t_ft_w_next then
-		ft_state := 3; // FT operating
-	elsewhen ft_state == 3 and trans and t_ft_trans_delay > 0 then
-		ft_state := 4; // FT in transition
-	elsewhen ft_state == 4 and time >= t_ft_trans_next then
-		ft_state := 3; // FT operating
-	elsewhen ft_state == 4 and E_sg < E_sg_min and t_ft_off_delay > 0 then
-		ft_state := 5; // FT cooling down
-	elsewhen ft_state == 4 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
-		ft_state := 1; // FT off(no cool-down)
-	elsewhen ft_state == 5 and time >= t_ft_c_next then
-		ft_state := 1; // FT off
-	elsewhen ft_state == 2 and E_sg < E_sg_min then
-		ft_state := 1; // FT off
-	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay > 0 then
-		ft_state := 5; // FT cooling down
-	elsewhen ft_state == 3 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
-		ft_state := 1; // FT off(no cool-down)
+	when state == 1 and E_sg >= E_sg_min and t_ft_on_delay > 0 then
+		state := 2; // FT warming up
+	elsewhen state == 1 and E_sg >= E_sg_min and t_ft_on_delay <= 0 then
+		state := 3; // FT operating (no warm-up)
+	elsewhen state == 2 and time >= t_ft_w_next then
+		state := 3; // FT operating
+	elsewhen state == 3 and trans and t_ft_trans_delay > 0 then
+		state := 4; // FT in transition
+	elsewhen state == 4 and time >= t_ft_trans_next then
+		state := 3; // FT operating
+	elsewhen state == 4 and E_sg < E_sg_min and t_ft_off_delay > 0 then
+		state := 5; // FT cooling down
+	elsewhen state == 4 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
+		state := 1; // FT off(no cool-down)
+	elsewhen state == 5 and time >= t_ft_c_next then
+		state := 1; // FT off
+	elsewhen state == 2 and E_sg < E_sg_min then
+		state := 1; // FT off
+	elsewhen state == 3 and E_sg < E_sg_min and t_ft_off_delay > 0 then
+		state := 5; // FT cooling down
+	elsewhen state == 3 and E_sg < E_sg_min and t_ft_off_delay <= 0 then
+		state := 1; // FT off(no cool-down)
 	end when;
 
-	when ft_state == 2 then
+	when state == 2 then
 		t_ft_w_now := time;
 		t_ft_w_next := time + t_ft_on_delay;
 	end when;
 
-	when ft_state == 4 then
+	when state == 4 then
 		t_ft_trans_now := time;
 		t_ft_trans_next := time + t_ft_trans_delay;
 		E_sg_trans_pre := pre(E_sg);
@@ -243,26 +243,26 @@ algorithm
 		m_flow_sg_trans_after := E_sg / LHV_sg;
 	end when;
 
-	when ft_state == 5 then
+	when state == 5 then
 		t_ft_c_now := time;
 		t_ft_c_next := time + t_ft_off_delay;
 	end when;
 
-	if ft_state == 2 then
+	if state == 2 then
 		fr_ramp_sg := if ramp_order_sg == 0 then 1 else abs(ramp_up_sg.y);
 		fr_ramp_elec := if ramp_order_elec == 0 then 1 else abs(ramp_up_elec.y);
 		fr_ramp_H2_pv := if ramp_order_H2_pv == 0 then 1 else abs(ramp_up_H2_pv.y);
 		fr_ramp_water := if ramp_order_water == 0 then 1 else abs(ramp_up_water.y);
 		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 1 else abs(ramp_up_CO2.y);
 		fr_ramp_prod := if ramp_order_prod == 0 then 0 else abs(ramp_up_prod.y);
-	elseif ft_state == 5 then
+	elseif state == 5 then
 		fr_ramp_sg := if ramp_order_sg == 0 then 0 else abs(ramp_down_sg.y);
 		fr_ramp_elec := if ramp_order_elec == 0 then 0 else abs(ramp_down_elec.y);
 		fr_ramp_H2_pv := if ramp_order_H2_pv == 0 then 0 else abs(ramp_down_H2_pv.y);
 		fr_ramp_water := if ramp_order_water == 0 then 0 else abs(ramp_down_water.y);
 		fr_ramp_CO2 := if ramp_order_CO2 == 0 then 0 else abs(ramp_down_CO2.y);
 		fr_ramp_prod := if ramp_order_prod == 0 then 0 else abs(ramp_down_prod.y);
-	elseif ft_state == 4 then
+	elseif state == 4 then
 		if trend then
 			fr_trans_sg := if trans_order_sg == 0 then 1 else abs(trans_up_sg.y);
 			fr_trans_elec := if trans_order_elec == 0 then 1 else abs(trans_up_elec.y);
@@ -294,19 +294,19 @@ algorithm
 		fr_trans_prod := 0;
 	end if;
 
-	if ft_state == 1 then
+	if state == 1 then
 		useful_prod := false;
-	elseif ft_state == 2 then
+	elseif state == 2 then
 		useful_prod := if ramp_order_prod == 0 then false else true;
-	elseif ft_state == 5 then
+	elseif state == 5 then
 		useful_prod := if ramp_order_prod == 0 then false else true;
-	elseif ft_state == 4 then
+	elseif state == 4 then
 		useful_prod := if trans_order_prod == 0 then false else true;
 	else
 		useful_prod := true;
 	end if;
 
-	on := if ft_state == 3 or ft_state == 4 then true else false;
+	on := if state == 3 or state == 4 then true else false;
 
 	when on then
 		time_on := time;
@@ -359,7 +359,7 @@ equation
 
 	v_flow_fuel_des = v_flow_petrol_des + (fuel_conv_ratio * v_flow_diesel_des);
 
-	if ft_state <= 1 then
+	if state <= 1 then
 		//cd.u = 0;
 		E_sg_in = 0;
 		m_flow_sg_in = 0;
@@ -399,7 +399,7 @@ equation
 
 		E_flow_petrol = m_flow_petrol * h_petrol;
 		E_flow_diesel = m_flow_diesel * h_diesel;
-	elseif ft_state == 2 or ft_state == 5 then
+	elseif state == 2 or state == 5 then
 		//cd.u = E_sg / LHV_sg;
 		//m_flow_sg_in = fr_ramp_sg * max(cd.y,0);
 		E_sg_in = fr_ramp_sg * E_sg;
@@ -440,7 +440,7 @@ equation
 
 		E_flow_petrol = m_flow_petrol * h_petrol;
 		E_flow_diesel = m_flow_diesel * h_diesel;
-	elseif ft_state == 4 then
+	elseif state == 4 then
 		if trend then
 			E_sg_in = E_sg_trans_pre + fr_trans_sg * (E_sg_trans_after - E_sg_trans_pre);
 			m_flow_sg_in = E_sg_in / LHV_sg;
