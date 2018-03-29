@@ -106,11 +106,19 @@ model GenericSystem
 	parameter SI.Power P_net = (1 - par_fr)*P_gro
 	"Power block net rating at design";
 	parameter SI.Power P_name = P_net "Nameplate power";
-	parameter FI.Money C_cap = A_field*pri_field + A_land*pri_land
-		+ R_des*pri_receiver + E_max*pri_storage + P_gro*pri_block "Capital cost";
+
+	parameter FI.Money C_field = A_field*pri_field "Field cost";
+	parameter FI.Money C_site = 0 "Site improvements cost";
+	parameter FI.Money C_tower = 0 "Tower cost";
+	parameter FI.Money C_receiver = R_des*pri_receiver "Receiver cost";
+	parameter FI.Money C_storage = E_max*pri_storage "Storage cost";
+	parameter FI.Money C_block = P_gro*pri_block "Power block cost";
+	parameter FI.Money C_bop = 0 "Balance of plant cost";
+	parameter FI.Money C_land = A_land*pri_land "Land cost";
+	parameter FI.Money C_cap = C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_land "Capital costs";
+
 	parameter FI.MoneyPerYear C_year = P_name*pri_om_name "Cost per year";
-	parameter Real C_prod(unit="$/J/year") = pri_om_prod
-	"Cost per production per year";
+	parameter Real C_prod(unit="$/J/year") = pri_om_prod "Cost per production per year";
 
 	// System components
 	// *********************

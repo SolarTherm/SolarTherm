@@ -132,14 +132,17 @@ model ASTRI100
 	parameter SI.Mass m_up_stop = 0.95*m_max;
 	parameter Real split_cold = 0.95 "Starting fluid fraction in cold tank";
 
-	parameter FI.Money C_cap =
-			120*A_col // field cost
-			+ 135*A_col // receiver cost
-			//+ (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) // storage cost
-			// only works with PartialSimpleMedium
-			+ (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) // storage cost
-			+ (1440/1e3)*P_name // power block cost
-			"Capital costs";
+	parameter FI.Money C_field = 120*A_col "Field cost";
+	parameter FI.Money C_site = 0 "Site improvements cost";
+	parameter FI.Money C_tower = 0 "Tower cost";
+	parameter FI.Money C_receiver = 135*A_col "Receiver cost";
+	parameter FI.Money C_storage = (30/(1e3*3600))*m_max*1277*(T_hot_set - T_cold_set) "Storage cost";
+	//parameter FI.Money C_storage = (30/(1e3*3600))*m_max*MedRec.cp_const*(T_hot_set - T_cold_set) "Storage cost"; // only works with PartialSimpleMedium
+	parameter FI.Money C_block = (1440/1e3)*P_name "Power block cost";
+	parameter FI.Money C_bop = 0 "Balance of plant cost";
+	parameter FI.Money C_land = 0 "Land cost";
+	parameter FI.Money C_cap = C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_land "Capital costs";
+
 	parameter FI.MoneyPerYear C_year =
 			10*A_col // field cleaning/maintenance
 			"Maintenance costs for each year";
