@@ -78,7 +78,7 @@ model SolarFuelSystem
 	constant SI.SpecificEnthalpy LHV_sg = 24.193742112158110e06 "Lower heating value of syngas";
 	constant SI.Density rho_sg = 1.08974 "Syngas density at 75C & 3bar"; // at 1bar and 75C: 0.363548, at 20bar and 75C: 7.21335
 
-	parameter Real t_storage(unit="h") = 8 "Hours of storage"; //Potential design variable
+	parameter Real t_storage(unit="h") = 15 "Hours of storage"; //Potential design variable
 	parameter Real ini_frac(min=0, max=1) = 0.1 "Initial fraction charged";
 
 	parameter Real tnk_min_start = 0.1 "Minimum fraction of tank to start dispatch";
