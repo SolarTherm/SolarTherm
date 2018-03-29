@@ -216,6 +216,47 @@ class SimResultElec(SimResult):
 
 		return [epy, lcoe, capf, srev,]
 
+	def cost_breakdown(self):
+		"""Calculate costs breakdown for the solar power plant"""
+		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
+		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+
+		C_field_v = self.mat.data('C_field') # Solar field capital cost [$]
+		C_tower_v = self.mat.data('C_tower') # Tower capital cost [$]
+		C_receiver_v = self.mat.data('C_receiver') # Receiver capital cost [$]
+		C_storage_v = self.mat.data('C_storage') # Storage tanks capital cost [$]
+		C_block_v = self.mat.data('C_block') # Power block capital cost [$]
+		C_bop_v = self.mat.data('C_bop') # Balance of plant cost [$]
+		C_land_v = self.mat.data('C_land') # Land cos [$]
+
+		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
+
+		om_y_v = self.mat.data('C_year') # Fixed O&M costs per year [$/year]
+		om_p_v = self.mat.data('C_prod') # Variable O&M costs per production per year [$/J/year]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+
+		C_cap = C_cap_v[0] * 1e-3 # Total capital investment (TCI) [k$]
+		C_cap_annul = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
+		C_year = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total operational costs [k$/year]
+
+		C_cap_bd_n = ['Solar field', 'Tower', 'Receiver', 'Storage', 'PB', 'BOP', 'Land'] # Capital cost components name
+		C_cap_bd_u = 'k$' # Capital cost components unit
+		C_cap_bd_v = [C_field_v[0]*1e-3, C_tower_v[0]*1e-3, C_receiver_v[0]*1e-3, C_storage_v[0]*1e-3, C_block_v[0]*1e-3, C_bop_v[0]*1e-3, C_land_v[0]*1e-3] # Capital cost breakdown [k$]
+
+		C_op_bd_n = ['Fixed O&M', 'variable O&M'] # Operational cost components name
+		C_op_bd_u = 'k$/year' # Operational cost components unit
+		C_op_bd_v = [om_y_v[0]*1e-3, om_p_v[0]*epy*1e-3] # Operational cost breakdown [k$/year]
+
+		C_annul_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_annul_bd_u = 'k$/year' # Annualised cost breakdown unit
+		C_annul_bd_v = [C_cap_annul, C_year] # Annualised cost breakdown [k$/year]
+
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_annul_bd_n, C_annul_bd_u, C_annul_bd_v
+
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
 
@@ -272,6 +313,52 @@ class SimResultFuel(SimResult):
 			capf = 100*capf
 
 		return [fpy, lcof, capf, srev,]
+
+	def cost_breakdown(self):
+		"""Calculate costs breakdown for the solar fuels plant"""
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+
+		C_field_v = self.mat.data('C_field') # Solar field capital cost [$]
+		C_tower_v = self.mat.data('C_tower') # Tower capital cost [$]
+		C_rx_v = self.mat.data('C_rx') # Receiver capital cost [$]
+		C_st_v = self.mat.data('C_st') # Storage tanks capital cost [$]
+		C_ft_v = self.mat.data('C_ft') # Fischer tropsch reactor cost [$]
+		C_land_v = self.mat.data('C_land') # Land cos [$]
+
+		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
+
+		C_labor_v = self.mat.data('C_labor') # Labor cost [$/year]
+		C_catalyst_v = self.mat.data('C_catalyst') # Catalysts cost [$/year]
+		C_om_v = self.mat.data('C_om') # Maintenance cost [$/year]
+
+		C_water_v = self.mat.data('C_water') # Cost of water [$/year]
+		C_algae_v = self.mat.data('C_algae') # Cost of algae [$/year]
+		C_H2_v = self.mat.data('C_H2')  # Cost of hydrogen [$/year]
+		C_CO2_v = self.mat.data('C_CO2')  # Cost of CO2 emissions [$/year]
+		C_O2_v = self.mat.data('C_O2')  # Cost of Oxygen to sell [$/year]
+		C_elec_v = self.mat.data('C_elec') # Cost of electricity consumption [$/year]
+
+		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
+
+		C_cap = C_cap_v[0] * 1e-6 # Total capital investment (TCI) [M$]
+		C_cap_annul = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [M$/year]
+		C_year = (C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1]) * 1e-6 # Total operational costs [M$/year]
+
+		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land'] # Capital cost components name
+		C_cap_bd_u = 'M$' # Capital cost components unit
+		C_cap_bd_v = [C_field_v[0]*1e-6, C_tower_v[0]*1e-6, C_rx_v[0]*1e-6, C_st_v[0]*1e-6, C_ft_v[0]*1e-6, C_land_v[0]*1e-6] # Capital cost breakdown [M$]
+
+		C_op_bd_n = ['Labor', 'Catalysts', 'O&M', 'Water', 'Algae', 'H2', 'CO2', 'Electricity'] # Operational cost components name
+		C_op_bd_u = 'M$/year' # Operational cost components unit
+		C_op_bd_v = [C_labor_v[0]*1e-6, C_catalyst_v[0]*1e-6, C_om_v[0]*1e-6, C_water_v[-1]*1e-6,
+			C_algae_v[-1]*1e-6, C_H2_v[-1]*1e-6, C_CO2_v[-1]*1e-6, C_elec_v[-1]*1e-6] # Operational cost breakdown [M$/year]
+
+		C_annul_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_annul_bd_u = 'M$/year' # Annualised cost breakdown unit
+		C_annul_bd_v = [C_cap_annul, C_year] # Annualised cost breakdown [M$/year]
+
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_annul_bd_n, C_annul_bd_u, C_annul_bd_v
 
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']

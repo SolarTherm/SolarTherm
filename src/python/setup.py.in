@@ -12,5 +12,6 @@ setup(name='solartherm',
 			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_get_aemo_prices',
 			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_inspect',
 			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_conv_sam_hourly',
+			'${CMAKE_CURRENT_SOURCE_DIR}/scripts/st_cost',
 			]
 		)
