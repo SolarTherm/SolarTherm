@@ -214,7 +214,7 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', '
 		sp.plot(x1, ys[j], label=ylabels[j], color=co[0%len(co)])
 		if ylabels != []:
 			sp.set_ylabel(ylabels[j])
-		sp.legend(bbox_to_anchor=(0.,1.02),loc='lower left')
+		sp.legend(bbox_to_anchor=(0.,1.02),loc='lower left', fontsize=10)
 	sp.set_xlabel(xlabel)
 
 	fig.subplots_adjust(top=0.9,hspace=0.5)
@@ -266,7 +266,7 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600,
 		sp.set_xlabel(x2label)
 		if ylabels != []:
 			sp.set_ylabel(ylabels[j])
-		sp.legend(loc=1, frameon=False)
+		sp.legend(loc=1, frameon=False, fontsize=10)
 
 	plt.tight_layout()
 	if out is not None:
@@ -372,7 +372,7 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 		startangle=startangle, radius=radius, frame=frame)
 	ax.axis('equal')
 
-	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.0),loc='lower left')
+	plt.legend(labels=labels, bbox_to_anchor=(-0.1,0.0),loc='lower left', fontsize=10)
 	#plt.tight_layout()
 
 	if title != '':
@@ -465,7 +465,7 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 					axes[r,c].axis('equal')
 					ii= ii+1 # i.e. go the next element of vals
 					#autotexts[0].set_color('y')
-			axes[0,0].legend(labels=lbs, bbox_to_anchor=(-0.32,0.52), loc='lower left')
+			axes[0,0].legend(labels=lbs, bbox_to_anchor=(-0.32,0.52), loc='lower left', fontsize=10)
 		else: # i.e. only 1 row
 			assert nr==1, "The number rows cannot be zero!"
 			ii = 0
@@ -477,7 +477,7 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 					startangle=startangle, radius=radius, frame=frame)
 				axes[c].axis('equal')
 				ii= ii+1
-			axes[0].legend(labels=lbs,loc='best')
+			axes[0].legend(labels=lbs,loc='best', fontsize=10)
 			#axes[0].legend(labels=lbs, bbox_to_anchor=(-0.5,-0.35),loc='lower left')
 	else: # i.e. only 1 pie chart
 		assert ng==1, "The lenght of vals cannot be zero!"
@@ -486,7 +486,7 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 			pctdistance=pctdistance, shadow=shadow, labeldistance=labeldistance,
 			startangle=startangle, radius=radius, frame=frame)
 		ax.axis('equal')
-		plt.legend(labels=lbs,loc='best')
+		plt.legend(labels=lbs,loc='best', fontsize=10)
 
 	if title != '':
 		plt.title(title, fontweight="bold", fontsize=16)
@@ -595,7 +595,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
 	ax.set_ylim(top=y_max+0.1*y_max)
 	if labels != None:
-		plt.legend(labels, loc=2)
+		plt.legend(labels, loc=2, fontsize=10)
 
 	#plt.tight_layout()
 	if out is not None:
@@ -676,7 +676,7 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', tab
 		plt.xticks(x, tlabels)
 		ax.set_xlabel(xlabel=xlabel, fontweight="bold")
 		ax.tick_params(axis='x', which='major', pad=10)
-		plt.legend(labels, loc=2)
+		plt.legend(labels, loc=2, fontsize=10)
 
 	ax.set_ylabel(ylabel=ylabel, fontweight="bold")
 	ax.set_ylim(top=y_max+0.2*y_max)
