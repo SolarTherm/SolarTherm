@@ -12,9 +12,9 @@ model GenericFT
 	parameter SI.EnergyFlowRate E_sg_min "Minimum syngas energy flow rate to start FT"; // the lower band used in regression to get the polynomial equation
 	parameter Real fuel_conv_ratio "Conversion ratio of diesel to petrol";
 
-	parameter SI.Time t_ft_on_delay = 60*60 "Delay until FT starts";
+	parameter SI.Time t_ft_on_delay = 90*60 "Delay until FT starts";
 	parameter SI.Time t_ft_off_delay = 90*60 "Delay until FT shuts off";
-	parameter SI.Time t_ft_trans_delay = 60*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_ft_trans_delay = 90*60 "Transition time when the syngas supply flow changes";
 
 	parameter Integer ramp_order_sg(min=0, max=2) "Ramping filter order for syngas supply to FT";
 	parameter Integer ramp_order_elec(min=0, max=2) "Ramping filter order for electricity supply to FT";

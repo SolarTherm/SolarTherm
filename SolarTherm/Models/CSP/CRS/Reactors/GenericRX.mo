@@ -13,7 +13,7 @@ model GenericRX
 
 	parameter SI.RadiantPower R_min = 0.3 * 1000 * 50 * 1000 "Minimum sun heat duty to start the reactor"; // 0.3 * I_des * A * CR
 
-	parameter SI.Time t_rx_on_delay = 20*60 "Delay until reactor starts";
+	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
 	parameter Integer ramp_order_heat(min=0, max=2) "ramping filter order for heat supply to the reactor";

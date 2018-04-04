@@ -6,7 +6,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-d
 	parameter SI.Irradiance dni_stop = 200 "DNI at which concentrator stops";
 	parameter SI.Irradiance dni_start = 300 "DNI at which concentrator starts";
 	parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
-	parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
+	parameter SI.Time t_con_off_delay = 20*60 "Delay until concentrator shuts off";
 
 	parameter Integer ramp_order(min=0, max=2) "ramping filter order";
 
