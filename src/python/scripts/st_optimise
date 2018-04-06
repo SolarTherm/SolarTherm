@@ -47,10 +47,10 @@ except ImportError:
 #			(args.start, args.stop, args.step),
 #			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
-def objective_function(sim, mat_fn, stime, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
+def objective_function(sim, mat_fn, stime, solver, nls, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
-	sim.simulate(start=stime[0], stop=stime[1], step=stime[2])
+	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], solver=solver, nls=nls)
 
 	res = resultclass(mat_fn)
 
@@ -115,6 +115,10 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
+	parser.add_argument('--solver', type=str, default='dassl',
+			help='solver choice for OpenModelica')
+	parser.add_argument('--nls', type=str, default='homotopy',
+			help='non-linear solver choice for OpenModelica e.g. newton, hybrid, kinsol, mixed, and homotopy')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
 			help='pso,  cma, ga1, ga2, nsga2 or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', type=int, default=20,
@@ -203,7 +207,7 @@ if __name__ == '__main__':
 				+ str(resultclass.perf_n))
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
-			(args.start, args.stop, args.step),
+			(args.start, args.stop, args.step), args.solver, args.nls,
 			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
 	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
