@@ -41,7 +41,7 @@ try:
 except ImportError:
 	deap = None
 
-# TODO: add decision making methods for multi-objective optimisation
+# TODO: add contraint handling feature (should work in deap)
 
 #	objfunc = functools.partial(objective_function, sim, mat_fn,
 #			(args.start, args.stop, args.step),
