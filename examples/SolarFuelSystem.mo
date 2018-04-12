@@ -291,8 +291,8 @@ model SolarFuelSystem
 			) if storage and not const_dispatch and not forecast_scheduler;
 
 	Modelica.Blocks.Continuous.Integrator m_alg_req(y_start=0) "Mass of algae required by the reactor"; // [kg]
-	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [J]
-	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor";
+	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [kg]
+	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor"; // [J]
 	Modelica.Blocks.Continuous.Integrator v_petr_prod(y_start=0) "Volume of petrol produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator v_dies_prod(y_start=0) "Volume of diesel produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator m_O2_prod(y_start=0) "Mass of Oxygen produced in FT"; // [kg]
