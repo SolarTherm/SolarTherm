@@ -20,6 +20,10 @@ SolarGasifier
 SolarGasifier*.[ch]
 SolarFuelSystem
 SolarFuelSystem*.[ch]
+PS10_Flat
+PS10_Flat*.[ch]
+PS10_Bladed
+PS10_Bladed*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
