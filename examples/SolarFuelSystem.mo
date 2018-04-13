@@ -293,6 +293,8 @@ model SolarFuelSystem
 	Modelica.Blocks.Continuous.Integrator m_alg_req(y_start=0) "Mass of algae required by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor"; // [J]
+	Modelica.Blocks.Continuous.Integrator m_sg_req(y_start=0) "Mass of syngas required by the FT"; // [kg]
+	Modelica.Blocks.Continuous.Integrator E_rx_req(y_start=0) "Energy of syngas required by the FT"; // [J]
 	Modelica.Blocks.Continuous.Integrator v_petr_prod(y_start=0) "Volume of petrol produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator v_dies_prod(y_start=0) "Volume of diesel produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator m_O2_prod(y_start=0) "Mass of Oxygen produced in FT"; // [kg]
@@ -306,7 +308,7 @@ model SolarFuelSystem
 	Modelica.Blocks.Continuous.Integrator E_sg_waste(y_start=0) "Syngas energy wasted at FT"; // [J]
 	Modelica.Blocks.Continuous.Integrator m_water_waste(y_start=0) "Mass of water supply wasted at the reactor and FT"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_H2_pv_waste(y_start=0) "Mass of H2 supply wasted at the reactor and FT"; // [kg]
-	Modelica.Blocks.Continuous.Integrator m_CO2_waste(y_start=0) "Mass of CO2 supply dumped/released from the reactor and FT when the products are rubbish"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_CO2_waste(y_start=0) "Mass of CO2 dumped/released from the reactor and FT when the products are rubbish"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_elec_waste(y_start=0) "Plant electricity consumption wasted at the reactor and FT"; // [J]
 
 	// Variables
@@ -367,6 +369,8 @@ equation
 	m_alg_req.u = RX.m_flow_algae;
 	m_sg_prod.u = RX.m_flow_sg;
 	E_rx_prod.u = RX.E_flow;
+	m_sg_req.u = FT.m_flow_sg_in;
+	E_rx_req.u = FT.E_sg_in;
 	v_petr_prod.u = FT.v_flow_petrol;
 	v_dies_prod.u = FT.v_flow_diesel;
 	V_fuel = v_petr_prod.y + (fuel_conv_ratio * v_dies_prod.y);
