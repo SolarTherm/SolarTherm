@@ -27,6 +27,8 @@ model GenericSystem
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter nSI.Angle_deg deploy_angle = 0 "Altitude angle to start tracking";
 	parameter nSI.Angle_deg stow_angle = 0 "Altitude angle to stop tracking";
+	parameter SI.Irradiance dni_start = 0.001 "DNI at which solar field is switched on";
+	parameter SI.Irradiance dni_stop = 0 "DNI at which solar field is switched off";
 	parameter Real t_blk_heat(unit="h") = 0
 	"Hours to heat up power block at blk_heat";
 	parameter Real t_blk_cool(unit="h") = 1 "Hours to cool power block";
@@ -132,7 +134,9 @@ model GenericSystem
 		A=if match_sam then 1.0273*A_field else A_field,
 		steer_rate=0.002,
 		target_error=0.0001,
-		actual_0=0.0);  // ~8 minutes till fully on sun
+		actual_0=0.0,
+		dni_start=dni_start,
+		dni_stop=dni_stop);  // ~8 minutes till fully on sun
 						// if large can be large source of missing energy
 
 	Models.CSP.CRS.Receivers.GenericRC RC(

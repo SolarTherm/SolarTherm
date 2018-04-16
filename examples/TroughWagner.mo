@@ -17,6 +17,8 @@ model TroughWagner
 		ini_frac=0.1,
 		deploy_angle=10,
 		stow_angle=10,
+		dni_start=0.001,
+		dni_stop=0,
 		t_blk_heat=0.5,
 		t_blk_cool=1.,
 		blk_disp=0.25,
