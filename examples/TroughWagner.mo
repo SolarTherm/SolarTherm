@@ -6,14 +6,15 @@ model TroughWagner
 	extends SolarTherm.Systems.GenericSystem(
 		match_sam=false,
 		fac_fra_wrt_dni=false,
-		fixed_field=false,
+		fixed_field=true, // if true, R_des must be given as input, otherwise P_gro must be given as input
 		wea_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/USA_CA_Daggett.Barstow-Daggett.AP.723815_TMY3.motab"),
 		wdelay={1800,1800,0,0,0,0,0,0},
 		angles=SolarTherm.Types.Solar_angles.ele_azi,
 		opt_file=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/troughwagner_opt_eff.motab"),
 		eff_opt=0.7449,
 		SM=1.9343,
-		P_gro=111e6,
+		//P_gro=111e6,
+		R_des=612391565.884, // Corresponding to P_gro=111e6
 		H_tower=0,
 		A_receiver=0,
 		A0_receiver=1571,
