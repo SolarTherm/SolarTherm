@@ -5,7 +5,8 @@ model GenericRC "Polynomial factors around design point"
 	import CN = Modelica.Constants;
 
 	parameter Boolean match_sam = false "Configure to match SAM output";
-
+	parameter Boolean fac_fra_wrt_dni = false "true if DNI fraction is to be used to calculate fac_fra.x
+		and false if inlet thermal power fraction is to be used to calculate fac_fra.x";
 	parameter SI.HeatFlowRate Q_flow_loss_des "Design heat loss";
 	parameter SI.RadiantPower R_des "Design radiant power";
 	parameter SI.Irradiance I_des = 1000 "Design irradiance";
@@ -24,7 +25,7 @@ protected
 equation
 	Q_flow = max(sum(R) - Q_flow_loss, 0);
 	Q_flow_loss = Q_flow_loss_des*fac_fra.y*fac_amb.y*fac_wnd.y;
-	fac_fra.x = if match_sam then wbus.dni/I_des else sum(R)/R_des;
+	fac_fra.x = if (match_sam or fac_fra_wrt_dni) then wbus.dni/I_des else sum(R)/R_des;
 	fac_amb.x = wbus.Tdry - T_amb_des;
 	fac_wnd.x = wbus.wspd;
 end GenericRC;
