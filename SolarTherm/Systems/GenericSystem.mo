@@ -13,7 +13,8 @@ model GenericSystem
 	parameter Boolean fac_fra_wrt_dni = false
 		"true if DNI fraction is to be used to calculate heat losses in receiver
 		and false if inlet thermal power fraction is to be used to calculate heat losses in receiver";
-	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
+	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
+		// if fixed_field=false, P_gro will be fixed and given as input, otherwise, R_des will be fixed and given as input
 	parameter String wea_file "Weather file";
 	parameter String opt_file "Optical efficiency file";
 	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
