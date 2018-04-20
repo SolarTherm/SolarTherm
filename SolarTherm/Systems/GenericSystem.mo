@@ -10,6 +10,10 @@ model GenericSystem
 	// Input Parameters
 	// *********************
 	parameter Boolean match_sam = false "Configure to match SAM output";
+	parameter Boolean fac_fra_wrt_dni = false
+		"true if DNI fraction is to be used to calculate heat losses in receiver
+		and false if inlet thermal power fraction is to be used to calculate heat losses in receiver";
+	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 	parameter String wea_file "Weather file";
 	parameter String opt_file "Optical efficiency file";
 	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
@@ -17,7 +21,11 @@ model GenericSystem
 
 	parameter Real wdelay[8] = {0,0,0,0,0,0,0,0} "Weather file delays";
 	parameter Real SM "Solar multiple";
-	parameter SI.Power P_gro "Power block gross rating at design";
+	parameter SI.Power P_gro(fixed= if fixed_field then false else true) "Power block gross rating at design";
+	parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power for receiver at design";
+	parameter SI.Length H_tower = 0 "Tower height";
+	parameter SI.Area A_receiver "Receiver area";
+	parameter SI.Area A0_receiver "Receiver reference area";
 	parameter SI.Efficiency eff_cyc = 0.37
 	"Efficiency of power cycle at design point";
 	parameter SI.Efficiency eff_opt = 1
@@ -77,10 +85,15 @@ model GenericSystem
 	// Contingencies should be included
 	parameter Real land_mult = 1 "Land area multiplier";
 	parameter FI.AreaPrice pri_field = 0 "Field cost per design aperture area";
+	parameter FI.AreaPrice pri_site = 0 "Site improvements cost per area";
 	parameter FI.AreaPrice pri_land = 0 "Land cost per area";
-	parameter FI.PowerPrice pri_receiver = 0 "Receiver cost per design power";
+	parameter FI.Money pri_tower = 0 "Fixed tower cost";
+	parameter Real idx_pri_tower = 0 "Tower cost scaling exponent";
+	parameter FI.Money pri_receiver = 0 "Receiver reference cost";
+	parameter Real idx_pri_receiver = 0 "Receiver cost scaling exponent";
 	parameter FI.EnergyPrice pri_storage = 0 "Storage cost per energy capacity";
 	parameter FI.PowerPrice pri_block = 0 "Power block cost per gross rated power";
+	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";
 
 	parameter Real pri_om_name(unit="$/W/year") = 0
 	"O&M cost per nameplate per year";
@@ -93,14 +106,10 @@ model GenericSystem
 
 	// Calculated Parameters
 	// *********************
-	parameter SI.HeatFlowRate Q_flow_des = P_gro/eff_cyc
-	"Heat to power block at design";
-	parameter SI.RadiantPower R_des = if match_sam then
-		SM*Q_flow_des*(1 + rec_fr)
-	else SM*Q_flow_des/(1 - rec_fr) "Input power for receiver at design";
+	parameter SI.HeatFlowRate Q_flow_des = if fixed_field then (if match_sam then R_des/((1 + rec_fr)*SM) else R_des*(1 - rec_fr) / SM) else P_gro/eff_cyc "Heat to power block at design";
 	parameter SI.Energy E_max = t_storage*3600*Q_flow_des
 	"Maximum tank stored energy";
-	parameter Boolean storage = (t_storage > 0) "Storage component present";
+	parameter Boolean storage = true "Storage component present";
 
 	parameter SI.Area A_field = (R_des/eff_opt)/dni_des "Field area";
 	parameter SI.Area A_land = land_mult*A_field "Land area";
@@ -110,12 +119,12 @@ model GenericSystem
 	parameter SI.Power P_name = P_net "Nameplate power";
 
 	parameter FI.Money C_field = A_field*pri_field "Field cost";
-	parameter FI.Money C_site = 0 "Site improvements cost";
-	parameter FI.Money C_tower = 0 "Tower cost";
-	parameter FI.Money C_receiver = R_des*pri_receiver "Receiver cost";
+	parameter FI.Money C_site = A_field*pri_site "Site improvements cost";
+	parameter FI.Money C_tower = pri_tower*exp(idx_pri_tower*H_tower) "Tower cost";
+	parameter FI.Money C_receiver = pri_receiver*((A_receiver/A0_receiver)^idx_pri_receiver) "Receiver cost";
 	parameter FI.Money C_storage = E_max*pri_storage "Storage cost";
 	parameter FI.Money C_block = P_gro*pri_block "Power block cost";
-	parameter FI.Money C_bop = 0 "Balance of plant cost";
+	parameter FI.Money C_bop = P_gro*pri_bop "Balance of plant cost";
 	parameter FI.Money C_land = A_land*pri_land "Land cost";
 	parameter FI.Money C_cap = C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_land "Capital costs";
 
@@ -141,6 +150,7 @@ model GenericSystem
 
 	Models.CSP.CRS.Receivers.GenericRC RC(
 		match_sam=match_sam,
+		fac_fra_wrt_dni=fac_fra_wrt_dni,
 		Q_flow_loss_des=if match_sam then rec_fr*SM*Q_flow_des else rec_fr*R_des,
 		R_des=R_des,
 		I_des=dni_des,
@@ -197,6 +207,14 @@ model GenericSystem
 	SI.Energy E_elec "Generated electricity";
 	FI.Money R_spot "Spot market revenue";
 	// Equations
+
+initial equation
+	if fixed_field then
+		P_gro = Q_flow_des * eff_cyc;
+	else
+		R_des = if match_sam then SM*Q_flow_des*(1 + rec_fr) else SM*Q_flow_des/(1 - rec_fr);
+	end if;
+
 equation
 	connect(wea.wbus, CL.wbus);
 	connect(wea.wbus, RC.wbus);
