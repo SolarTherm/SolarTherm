@@ -14,7 +14,7 @@ model PS10_Flat
 		SM=4.81,
 		R_des=62752300,
 		H_tower=115,
-		A_receiver=0, //////////////////////////////////////////// from Joe
+		A_receiver=100,
 		A0_receiver=1571,
 		eff_cyc=0.3774,
 		t_storage=14.34,
@@ -53,7 +53,7 @@ model PS10_Flat
 		pri_land=10000/4046.86, //note currency is in USD
 		pri_tower = 3e6*1.07, //note currency is in USD
 		idx_pri_tower = 0.0113,
-		pri_receiver=103e6*1.07, //note currency is in USD //////////////////////////////////////////// from Joe
+		pri_receiver=103181917*1.07, //note currency is in USD
 		idx_pri_receiver=0.7,
 		pri_storage=(24/(1e3*3600))*1.07, //note currency is in USD
 		pri_block=(1100/1e3)*1.07, //note currency is in USD
