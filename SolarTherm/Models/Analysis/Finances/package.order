@@ -11,7 +11,9 @@ SpotPriceTable
 gasHolderCost_V
 pressureVesselCost_V
 fischerTropschCost_m_sg
+methanolReactorCost_m_sg
 massNickel_ft_m_sg
 massCobalt_ft_m_sg
 massPlatinum_ft_m_sg
-nLabour_m_sg
+nLabour_m_sg_ft
+nLabour_m_sg_msr

@@ -14,6 +14,8 @@ block ForecastScheduler "Forecast Scheduler"
 
 	// Calculated parameters
 	parameter SI.Energy E_used_dly = t_delta[1] * E_flow_des "Energy used during the daily schedule";
+	parameter SI.Energy E_min_ngtly = fr_min * E_flow_des * t_delta[2] "Minimum energy to keep the downstream reactor on overnight";
+	parameter Integer n_night = 1 "Number of nights that the storage should have enough energy for";
 
 	// Variables
 	input Real level(min=0) "Level of tank";
@@ -38,15 +40,15 @@ algorithm
 	end when;
 
 	when sch_state == 1 then
-		E_stored_fcst := 0;
+		E_stored_fcst := if forecast_prod > E_used_dly then (forecast_prod - E_used_dly) else 0;
 		E_remain := 0;
-		v := 1;
+		v := if (level + E_stored_fcst ) > (n_night * E_min_ngtly) then 1.0 else min(1.0, max(fr_min, (1.0 - ((n_night * E_min_ngtly - (level + E_stored_fcst)) / t_delta[1]) / E_flow_des)));
 		t_sch_next := time + t_delta[1];
 	end when;
 
 	when sch_state == 2 then
 		E_stored_fcst := if forecast_prod > E_used_dly then (forecast_prod - E_used_dly) else 0;
-		E_remain := if E_stored_fcst < E_max then (E_max - E_stored_fcst) else 0;
+		E_remain := if E_stored_fcst < (n_night * E_min_ngtly) then (n_night * E_min_ngtly - E_stored_fcst) else 0;
 		v := if level > E_remain then min(max(((level - E_remain) / t_delta[2]) / E_flow_des,fr_min),1.0) else fr_min;
 		t_sch_next := time + t_delta[2];
 	end when;
