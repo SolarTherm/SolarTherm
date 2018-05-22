@@ -20,6 +20,8 @@ SolarGasifier
 SolarGasifier*.[ch]
 SolarFuelSystem
 SolarFuelSystem*.[ch]
+SolarMethanolSystem
+SolarMethanolSystem*.[ch]
 PS10_Flat
 PS10_Flat*.[ch]
 PS10_Bladed

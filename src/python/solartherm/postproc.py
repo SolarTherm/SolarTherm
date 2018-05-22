@@ -287,7 +287,7 @@ class SimResultFuel(SimResult):
 		infl_v = self.mat.data('r_i') # Inflation rate [-]
 		life_v = self.mat.data('t_life') # Plant lifetime [year]
 		cons_v = self.mat.data('t_cons') # Construction time [year]
-		name_v = self.mat.data('FT.v_flow_fuel_des') # Nominal fuel volumetric flow rate [m3/s]
+		name_v = self.mat.data('v_flow_fuel_des') # Nominal fuel volumetric flow rate [m3/s]
 		rev_v = self.mat.data('R_spot') # cumulative revenue
 
 		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
@@ -323,7 +323,7 @@ class SimResultFuel(SimResult):
 		C_tower_v = self.mat.data('C_tower') # Tower capital cost [$]
 		C_rx_v = self.mat.data('C_rx') # Receiver capital cost [$]
 		C_st_v = self.mat.data('C_st') # Storage tanks capital cost [$]
-		C_ft_v = self.mat.data('C_ft') # Fischer tropsch reactor cost [$]
+		C_ft_v = self.mat.data('C_ds_rx') # Downstream (e.g. Fischer tropsch or methanol synthesis) reactor cost [$]
 		C_land_v = self.mat.data('C_land') # Land cos [$]
 
 		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
