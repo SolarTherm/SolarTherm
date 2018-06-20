@@ -317,23 +317,40 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', solver='rungekutta', nls='newton', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', args=[]):
 		"""Run simulation.
-		
+
 		If running an optimisation then 'optimization' needs to be used as
 		solver type.
 		"""
 		start = str(parse_var_val(start, 's'))
 		stop = str(parse_var_val(stop, 's'))
 		step = str(parse_var_val(step, 's'))
+
+		if initStep!=None:
+			initStep = str(parse_var_val(initStep, 's'))
+		if maxStep!=None:
+			maxStep = str(parse_var_val(maxStep, 's'))
+
 		sim_args = [
 			'-override',
 			'startTime='+start+',stopTime='+stop+',stepSize='+step,
 			'-s', solver,
 			'-nls', nls, #Nonlinear solver
+			'-initialStepSize', initStep,
+			'-maxStepSize', maxStep,
+			'-maxIntegrationOrder', integOrder,
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
 			]
+
+		if initStep==None:
+			sim_args = [e for e in sim_args if e not in ('-initialStepSize', initStep)]
+		if maxStep==None:
+			sim_args = [e for e in sim_args if e not in ('-maxStepSize', maxStep)]
+		if integOrder==None:
+			sim_args = [e for e in sim_args if e not in ('-maxIntegrationOrder', integOrder)]
+
 		sp.check_call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
