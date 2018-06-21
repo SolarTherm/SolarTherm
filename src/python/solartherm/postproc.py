@@ -174,6 +174,22 @@ class SimResult(object):
 
 		return t, v
 
+	def constrained_optimisation(self):
+		"""
+		Showing if the optimisation process is constrained or not.
+		"""
+		try:
+			constrained = self.mat.data('constrained') # trigger for constrained optimisation.
+				# Note that 'constrained' must be defined in the Modelica model if there is a constraint, e.g. if T>T_0 then constrained=true; false otherwise.
+			if constrained[-1] == 1.0:
+				constr = True # i.e. the optimisation is constrained.
+			else:
+				constr = False # i.e. the optimisation is NOT constrained.
+		except KeyError:
+			constr = False
+
+		return constr
+
 class SimResultElec(SimResult):
 	def calc_perf(self):
 		"""Calculate the solar power plant performance.
