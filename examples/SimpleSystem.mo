@@ -76,6 +76,11 @@ model SimpleSystem
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
 
+	parameter Boolean constrained = false "Constraint is present in optimisation if true";
+		// If there is a constraint, then "constrained" must be a 'variable' Boolean
+		// whose value is determined through an if statement with a constraint being the condition.
+		// Note in this case the if block must be moved to the equation section.
+
 	// Variables/Models
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
 	FI.SpotPriceTable pri(file=pri_file);
