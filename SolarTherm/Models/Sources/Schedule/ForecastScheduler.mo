@@ -5,8 +5,8 @@ block ForecastScheduler "Forecast Scheduler"
 	parameter Integer sch_state_start(min=1, max=n_sched_states) = 2 "Starting schedule state";
 	parameter SI.Time t_sch_next_start = 8*3600 "Time to next schedule change"; // That is, schedule 1 won't start until 8 am given that sch_state_start=2
 	parameter SI.Time t_delta[n_sched_states] = {
-			10*3600, // 8am to 6pm
-			14*3600 // outside 8am-6pm
+			12*3600, // 8am to 6pm
+			12*3600 // outside 8am-6pm
 			} "Time differences between schedule states";
 	parameter SI.EnergyFlowRate E_flow_des "Dispatched energy flow at design point";
 	parameter Real fr_min = 0.2 "Minium dispatched energy fraction";
