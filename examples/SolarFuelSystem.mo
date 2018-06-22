@@ -135,7 +135,7 @@ model SolarFuelSystem
 	parameter FI.MassPrice pri_platinum = 72.28 "Cost of Platinum catalyst per kilogram";
 
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram"; // Ref: http://www.teampoly.com.au/knowledge-base/water-prices-in-australia/index.html
-	parameter FI.MassPrice pri_algae = 1.2 "Cost of algae per kilogram";
+	parameter FI.MassPrice pri_algae = 0.61025 "Cost of algae per kilogram";
 	parameter FI.MassPrice pri_H2 = 18 "Cost of hydrogen per kilogram";
 	parameter FI.MassPrice pri_CO2 = 25.4*(1e-3) "Penalty cost for CO2 emissions per kilogram";
 	parameter FI.MassPrice pri_O2 = 115.57*(1e-3) "Cost of Oxygen to sell per kilogram";
