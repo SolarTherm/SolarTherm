@@ -124,7 +124,7 @@ model SolarMethanolSystem
 	parameter FI.VolumePrice pri_catalyst = 76.5776467725205 "Cost of Cu/ZnO/Al2O3 catalyst per m3";
 
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram"; // Ref: http://www.teampoly.com.au/knowledge-base/water-prices-in-australia/index.html
-	parameter FI.MassPrice pri_algae = 1.2 "Cost of algae per kilogram";
+	parameter FI.MassPrice pri_algae = 0.61025 "Cost of algae per kilogram";
 	parameter FI.MassPrice pri_H2 = 18 "Cost of hydrogen per kilogram";
 	parameter FI.MassPrice pri_CO2 = 25.4*(1e-3) "Penalty cost for CO2 emissions per kilogram";
 	parameter FI.EnergyPrice_kWh pri_elec = 0.25 "Cost of grid electricity per kWh";
@@ -140,7 +140,7 @@ model SolarMethanolSystem
 	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
 	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower capital cost";
 
-	parameter FI.PowerPrice pri_rx = 0.39417294 "Receiver cost per design power";
+	parameter FI.PowerPrice pri_rx = 0.354024491010332 "Receiver cost per design power";
 	parameter FI.Money C_rx = pri_rx * R_des "Receiver capital cost";
 
 	//If gasometer(gas holder) is used, then uncomment the follwing to estimate the cost of storage:
