@@ -153,7 +153,7 @@ model SolarFuelSystem
 	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
 	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower capital cost";
 
-	parameter FI.PowerPrice pri_rx = 0.39417294 "Receiver cost per design power";
+	parameter FI.PowerPrice pri_rx = 0.354024491010332 "Receiver cost per design power";
 	parameter FI.Money C_rx = pri_rx * R_des "Receiver capital cost";
 
 	//If gasometer(gas holder) is used, then uncomment the follwing to estimate the cost of storage:
