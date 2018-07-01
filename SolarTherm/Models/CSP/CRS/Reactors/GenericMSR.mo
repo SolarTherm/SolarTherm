@@ -10,9 +10,9 @@ model GenericMSR
 	parameter SI.EnergyFlowRate E_sg_des "Energy flow to methanol reactor at design";
 	parameter SI.EnergyFlowRate E_sg_min "Minimum syngas energy flow rate to start MSR"; // the lower band used in regression to get the polynomial equation
 
-	parameter SI.Time t_msr_on_delay = 30*60 "Delay until MSR starts";
-	parameter SI.Time t_msr_off_delay = 30*60 "Delay until MSR shuts off";
-	parameter SI.Time t_msr_trans_delay = 15*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_msr_on_delay = 90*60 "Delay until MSR starts";
+	parameter SI.Time t_msr_off_delay = 90*60 "Delay until MSR shuts off";
+	parameter SI.Time t_msr_trans_delay = 90*60 "Transition time when the syngas supply flow changes";
 
 	parameter Integer ramp_order_sg(min=0, max=2) "Ramping filter order for syngas supply to MSR";
 	parameter Integer ramp_order_elec(min=0, max=2) "Ramping filter order for electricity supply to MSR";

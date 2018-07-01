@@ -14,7 +14,7 @@ class TestSimpleSystem(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='5m')
+		sim.simulate(start=0, stop='1y', step='5m', solver='dassl', nls='homotopy')
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
 
@@ -22,9 +22,9 @@ class TestSimpleSystem(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 352.61, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 96.48, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 40.25, 2) # Capacity factor
+		self.assertAlmostEqual(self.perf[0], 349.78, 2) # epy
+		self.assertAlmostEqual(self.perf[1], 97.26, 2) # LCOE
+		self.assertAlmostEqual(self.perf[2], 39.93, 2) # Capacity factor
 		print(self.perf);
 
 if __name__ == '__main__':

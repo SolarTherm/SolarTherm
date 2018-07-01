@@ -56,7 +56,7 @@ model GenericRX
 	SI.Efficiency eff_I_rx(min=0, max=1) "Reactor energy efficiency";
 	SI.Efficiency eff_II_rx(min=0, max=1) "Reactor exergy efficiency";
 
-	SI.MassFlowRate m_flow_algae(min=0) "Mass flow rate of algea";
+	SI.MassFlowRate m_flow_algae(min=0) "Mass flow rate of algae";
 	SI.MassFlowRate m_flow_water(min=0) "Mass flow rate of water";
 	SI.MassFlowRate m_flow_sg(min=0) "Mass flow rate of syngas";
 	SI.MassFlowRate m_flow_H2_pv(min=0) "Mass flow rate of H2 required from PV";
@@ -98,6 +98,7 @@ model GenericRX
 
 	Boolean useful_prod(start=false) "true if energy/mass supply is converted to useful product i.e. syngas";
 
+	SI.RadiantPower R_waste(min=0) "Sun heat duty wasted";
 	SI.MassFlowRate m_flow_algae_waste(min=0) "Mass flow rate of algea supply wasted";
 	SI.MassFlowRate m_flow_water_waste(min=0) "Mass flow rate of water supply wasted";
 	SI.MassFlowRate m_flow_H2_pv_waste(min=0) "Mass flow rate of H2 supply wasted";
@@ -436,12 +437,14 @@ equation
 	end if;
 
 	if useful_prod then
+		R_waste = 0;
 		m_flow_algae_waste = 0;
 		m_flow_water_waste = 0;
 		m_flow_H2_pv_waste = 0;
 		m_flow_CO2_waste = 0;
 		P_pump_waste = 0;
 	else
+		R_waste = sum(R);
 		m_flow_algae_waste = m_flow_algae;
 		m_flow_water_waste = m_flow_water;
 		m_flow_H2_pv_waste = m_flow_H2_pv;
