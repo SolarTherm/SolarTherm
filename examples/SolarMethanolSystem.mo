@@ -125,7 +125,7 @@ model SolarMethanolSystem
 
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram"; // Ref: http://www.teampoly.com.au/knowledge-base/water-prices-in-australia/index.html
 	parameter FI.MassPrice pri_algae = 0.61025 "Cost of algae per kilogram";
-	parameter FI.MassPrice pri_H2 = 18 "Cost of hydrogen per kilogram";
+	parameter FI.MassPrice pri_H2 = 9.721883 "Cost of hydrogen per kilogram";  // Ref: TEA of a PV-based hydrogen electrolyser plant by Mahesh Venkataraman
 	parameter FI.MassPrice pri_CO2 = 25.4*(1e-3) "Penalty cost for CO2 emissions per kilogram";
 	parameter FI.EnergyPrice_kWh pri_elec = 0.25 "Cost of grid electricity per kWh";
 
@@ -162,7 +162,8 @@ model SolarMethanolSystem
 	parameter Integer n_st(fixed = false) "Number of storage tanks";
 	parameter FI.Money C_st(fixed = false) "Storage tanks capital cost";
 
-	parameter FI.Money C_ds_rx = FI.methanolReactorCost_m_sg(m_flow_msr_des) "methaol synthesis (downstream) reactor cost";
+	parameter FI.Money C_ds_rx(fixed=false) "Methaol synthesis (downstream) reactor cost";
+	parameter Real fr_c_ds_rx[6](fixed=false) "MSR components cost fraction";
 
 	parameter FI.Money C_tbm = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ds_rx) "Total bare module investment cost";
 	parameter FI.Money C_site = f_site_prep * C_tbm "Site preparation cost";
@@ -276,6 +277,7 @@ model SolarMethanolSystem
 	Modelica.Blocks.Continuous.Integrator m_CO2_emiss(y_start=0) "Mass of CO2 released/dumped to environment"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_elec_cons(y_start=0) "Plant electricity consumption"; // [J]
 
+	Modelica.Blocks.Continuous.Integrator R_waste(y_start=0) "Sun heat duty wasted at the reactor"; // [J]
 	Modelica.Blocks.Continuous.Integrator m_alg_waste(y_start=0) "Mass of algae supply wasted at the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_sg_waste(y_start=0) "Mass of Syngas supply wasted at MSR"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_sg_waste(y_start=0) "Syngas energy wasted at MSR"; // [J]
@@ -305,6 +307,7 @@ model SolarMethanolSystem
 	// *********************
 initial equation
 	(n_st, C_st) = FI.pressureVesselCost_V(V_max, f_bm_st);
+	(C_ds_rx, fr_c_ds_rx) = FI.methanolReactorCost_m_sg(m_flow_msr_des);
 
 equation
 	connect(wea.wbus, CL.wbus);
@@ -354,6 +357,7 @@ equation
 	m_CO2_emiss.u = RX.m_flow_CO2 + MSR.m_flow_CO2;
 	E_elec_cons.u = MSR.P_C + RX.P_pump;
 
+	R_waste.u = RX.R_waste;
 	m_alg_waste.u = RX.m_flow_algae_waste;
 	m_sg_waste.u = MSR.m_flow_sg_in_waste;
 	E_sg_waste.u = MSR.E_sg_in_waste;

@@ -14,7 +14,7 @@ class TestScheduler(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='5m')
+		sim.simulate(start=0, stop='1y', step='5m', solver='dassl', nls='homotopy')
 		self.res = postproc.SimResultFuel(sim.res_fn)
 		self.perf = self.res.calc_perf()
 
@@ -22,9 +22,9 @@ class TestScheduler(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 21383017.68, 2) # fpy
-		self.assertAlmostEqual(self.perf[1], 1.50, 2) # LCOF
-		self.assertAlmostEqual(self.perf[2], 73.51, 2) # Capacity factor
+		self.assertAlmostEqual(self.perf[0], 21042764.27, 2) # fpy
+		self.assertAlmostEqual(self.perf[1], 1.52, 2) # LCOF
+		self.assertAlmostEqual(self.perf[2], 72.34, 2) # Capacity factor
 		print(self.perf);
 
 if __name__ == '__main__':
