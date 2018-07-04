@@ -17,6 +17,16 @@ model SolarFuelSystem
 	parameter Integer n_night = 1 "Number of nights that the storage should have enough energy for as part of forecasting";
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
+	parameter SI.Time t_con_on_delay = 4*60 "Delay until heliostat field starts";
+	parameter SI.Time t_con_off_delay = 2*60 "Delay until heliostat field shuts off";
+
+	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
+	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
+
+	parameter SI.Time t_ft_on_delay = 120*60 "Delay until FT starts";
+	parameter SI.Time t_ft_off_delay = 120*60 "Delay until FT shuts off";
+	parameter SI.Time t_ft_trans_delay = 120*60 "Transition time when the syngas supply flow changes";
+
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
 	parameter Integer ramp_order_rx_heat(min=0, max=2) = 1 "ramping filter order for heat supply to the reactor";
@@ -210,6 +220,8 @@ model SolarFuelSystem
 		angles=Solar_angles.ele_azi, file=opt_file),
 		orient_north=wea.orient_north,
 		A=A_field,
+		t_con_on_delay=t_con_on_delay,
+		t_con_off_delay=t_con_off_delay,
 		ramp_order=ramp_order_con
 		);
 
@@ -226,6 +238,8 @@ model SolarFuelSystem
 			cwp_rx=cwp_rx,
 			cm_CO2_rx=cm_CO2_rx,
 			pv=false,
+			t_rx_on_delay=t_rx_on_delay,
+			t_rx_off_delay=t_rx_off_delay,
 			ramp_order_heat=ramp_order_rx_heat,
 			ramp_order_algae=ramp_order_rx_algae,
 			ramp_order_CO2=ramp_order_rx_CO2,
@@ -250,6 +264,9 @@ model SolarFuelSystem
 			cm_O2=cm_O2,
 			cm_water=cm_water,
 			cm_CO2_ft=cm_CO2_ft,
+			t_ft_on_delay=t_ft_on_delay,
+			t_ft_off_delay=t_ft_off_delay,
+			t_ft_trans_delay=t_ft_trans_delay,
 			ramp_order_sg=ramp_order_ft_sg,
 			ramp_order_elec=ramp_order_ft_elec,
 			ramp_order_H2_pv=ramp_order_ft_H2_pv,
@@ -293,6 +310,7 @@ model SolarFuelSystem
 			mmap={1,1,1,1,1,1,1,1,1,1,1,1}
 			) if storage and not const_dispatch and not forecast_scheduler;
 
+	Modelica.Blocks.Continuous.Integrator R_req(y_start=0) "Sun heat duty to the reactor"; // [J]
 	Modelica.Blocks.Continuous.Integrator m_alg_req(y_start=0) "Mass of algae required by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor"; // [J]
@@ -373,6 +391,7 @@ equation
 	end if;
 
 	// Cumulative performance-related results:
+	R_req.u = sum(RX.R);
 	m_alg_req.u = RX.m_flow_algae;
 	m_sg_prod.u = RX.m_flow_sg;
 	E_rx_prod.u = RX.E_flow;
