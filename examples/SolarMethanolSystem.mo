@@ -16,6 +16,16 @@ model SolarMethanolSystem
 	parameter String sch_fcst_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Forecasts/forecast_data.motab") if storage and not const_dispatch;
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
+	parameter SI.Time t_con_on_delay = 4*60 "Delay until heliostat field starts";
+	parameter SI.Time t_con_off_delay = 2*60 "Delay until heliostat field shuts off";
+
+	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
+	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
+
+	parameter SI.Time t_msr_on_delay = 90*60 "Delay until MSR starts";
+	parameter SI.Time t_msr_off_delay = 90*60 "Delay until MSR shuts off";
+	parameter SI.Time t_msr_trans_delay = 90*60 "Transition time when the syngas supply flow changes";
+
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
 	parameter Integer ramp_order_rx_heat(min=0, max=2) = 1 "ramping filter order for heat supply to the reactor";
@@ -195,6 +205,8 @@ model SolarMethanolSystem
 		angles=Solar_angles.ele_azi, file=opt_file),
 		orient_north=wea.orient_north,
 		A=A_field,
+		t_con_on_delay=t_con_on_delay,
+		t_con_off_delay=t_con_off_delay,
 		ramp_order=ramp_order_con
 		);
 
@@ -211,6 +223,8 @@ model SolarMethanolSystem
 			cwp_rx=cwp_rx,
 			cm_CO2_rx=cm_CO2_rx,
 			pv=false,
+			t_rx_on_delay=t_rx_on_delay,
+			t_rx_off_delay=t_rx_off_delay,
 			ramp_order_heat=ramp_order_rx_heat,
 			ramp_order_algae=ramp_order_rx_algae,
 			ramp_order_CO2=ramp_order_rx_CO2,
@@ -228,6 +242,9 @@ model SolarMethanolSystem
 			cwc_msr=cwc_msr,
 			cq_msr=cq_msr,
 			cm_CO2_msr=cm_CO2_msr,
+			t_msr_on_delay=t_msr_on_delay,
+			t_msr_off_delay=t_msr_off_delay,
+			t_msr_trans_delay=t_msr_trans_delay,
 			ramp_order_sg=ramp_order_msr_sg,
 			ramp_order_elec=ramp_order_msr_elec,
 			ramp_order_CO2=ramp_order_msr_CO2,
