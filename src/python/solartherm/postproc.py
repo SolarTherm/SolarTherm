@@ -180,6 +180,9 @@ class SimResult(object):
 		"""
 		try:
 			constrained = self.mat.data('constrained') # trigger for constrained optimisation.
+			distance_v = self.mat.data('distance') # distance added to a constant offset as penalty when a constraint is not respected.
+			distance = distance_v[-1]
+
 				# Note that 'constrained' must be defined in the Modelica model if there is a constraint, e.g. if T>T_0 then constrained=true; false otherwise.
 			if constrained[-1] == 1.0:
 				constr = True # i.e. the optimisation is constrained.
@@ -187,8 +190,9 @@ class SimResult(object):
 				constr = False # i.e. the optimisation is NOT constrained.
 		except KeyError:
 			constr = False
+			distance = 0.
 
-		return constr
+		return constr, distance
 
 class SimResultElec(SimResult):
 	def calc_perf(self):

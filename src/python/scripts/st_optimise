@@ -51,13 +51,13 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls)
 
 	res = resultclass(mat_fn)
-	constr = res.constrained_optimisation() # true if optimisattion is constrained.
+	constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset
 
 	if frwk == "soo_min": # Single-objective optimisation to minimise an objective
 		obj_min = res.calc_perf()[perf_i[0]] # The objective to be minimised (i.e. lcoe or lcof)
 
 		if constr:
-			obj_min = 9.999e+99
+			obj_min = 9.999e+99 + distance
 			print "A constraint is violated at this design point!"
 
 		if verb:
@@ -72,7 +72,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 		obj_max = res.calc_perf()[perf_i[0]] # The objective to be maximised (i.e. epy, capf or srev)
 
 		if constr:
-			obj_max = -9.999e+99
+			obj_max = -9.999e+99 - distance
 			print "A constraint is violated at this design point!"
 
 		if verb:
@@ -93,8 +93,8 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 			obj_max = res.calc_perf()[perf_i[0]]
 
 		if constr:
-			obj_min = 9.999e+99
-			obj_max = -9.999e+99
+			obj_min = 9.999e+99 + distance
+			obj_max = -9.999e+99 - distance
 			print "A constraint is violated at this design point!"
 
 		if verb:

@@ -80,6 +80,10 @@ model SimpleSystem
 		// If there is a constraint, then "constrained" must be a 'variable' Boolean
 		// whose value is determined through an if statement with a constraint being the condition.
 		// Note in this case the if block must be moved to the equation section.
+	parameter Real distance = 0 "Distance to be added to a constant offset as added penalty when a constraint is not respected";
+		// e.g. for euclidean distance: if T > T0 then constrained=true & distance=sqrt((T-T0)^2)
+		// e.g. for quadratic distance: if T > T0 then constrained=true & distance=(T-T0)^2
+		// e.g. for a constraint like T1 < T < T2, then T0 = (T1 + T2)/2
 
 	// Variables/Models
 	SolarTherm.Models.Sources.Weather.WeatherSource wea(file=wea_file);
