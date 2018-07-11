@@ -351,6 +351,8 @@ class Simulator(object):
 			sim_args = [e for e in sim_args if e not in ('-maxStepSize', maxStep)]
 		if integOrder==None:
 			sim_args = [e for e in sim_args if e not in ('-maxIntegrationOrder', integOrder)]
+		if lv==None:
+			sim_args = [e for e in sim_args if e not in ('-lv', lv)]
 
 		sp.check_call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file

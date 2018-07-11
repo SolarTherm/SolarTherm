@@ -45,10 +45,10 @@ except ImportError:
 #			(args.start, args.stop, args.step),
 #			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
-	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls)
+	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
 	res = resultclass(mat_fn)
 	constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset
@@ -137,6 +137,8 @@ if __name__ == '__main__':
 			help='solver choice for OpenModelica')
 	parser.add_argument('--nls', type=str, default='homotopy',
 			help='non-linear solver choice for OpenModelica e.g. newton, hybrid, kinsol, mixed, and homotopy')
+	parser.add_argument('--lv', type=str, default='-LOG_SUCCESS,-stdout',
+			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
 			help='pso,  cma, ga1, ga2, nsga2 or one of the scipy optimisation methods')
 	parser.add_argument('--maxiter', type=int, default=20,
@@ -226,7 +228,7 @@ if __name__ == '__main__':
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
-			args.maxStep, args.integOrder, args.solver, args.nls,
+			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
 	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
