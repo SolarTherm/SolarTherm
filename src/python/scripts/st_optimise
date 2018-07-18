@@ -151,10 +151,12 @@ if __name__ == '__main__':
 			help='run post-processing calculations for levelised cost of fuel')
 	parser.add_argument('--framework', type=str, default='soo_min',
 			help='soo_min, soo_max or moo, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
+	parser.add_argument('--outfile_f',  type=str, default=None,
+			help='save final optimal solution and objective(s) to outfile_f')
 	parser.add_argument('--outfig',  type=str, default=None,
 			help='save figure to outfig instead of displaying')
-	parser.add_argument('--outfile',  type=str, default=None,
-			help='save optimal solutions to outfile')
+	parser.add_argument('--outfile_p',  type=str, default=None,
+			help='save pareto optimal solutions of multi-objective optimisation to outfile_p')
 	parser.add_argument('--dm',  type=str, default='linmap',
 			help='Decision-making methods for the multi-objective optimisation framework: linmap, topsis')
 	args = parser.parse_args()
@@ -246,12 +248,21 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			if args.framework == 'soo_min':
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (res[1])
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				if args.framework == 'soo_min':
+					f.write("Optimal objective function: " + str(res[1]))
+				else:
+					f.write("Optimal objective function: " + str(sign * res[1]))
+				f.close()
 			else:
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (sign * res[1])
+				if args.framework == 'soo_min':
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (res[1])
+				else:
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (sign * res[1])
 		elif args.method == 'cma':
 			assert cma is not None, 'Library for cma is not installed'
 			sigma0 = 0.2 # "step size", should be around 1/4 of search domain
@@ -272,12 +283,21 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\n\Total time elapsed: ", t_dur, "seconds."
-			if args.framework == 'soo_min':
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (res[1])
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				if args.framework == 'soo_min':
+					f.write("Optimal objective function: " + str(res[1]))
+				else:
+					f.write("Optimal objective function: " + str(sign * res[1]))
+				f.close()
 			else:
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (sign * res[1])
+				if args.framework == 'soo_min':
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (res[1])
+				else:
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (sign * res[1])
 		elif args.method == 'ga1':
 			assert pe is not None, 'Library for pyevolve is not installed'
 
@@ -319,8 +339,14 @@ if __name__ == '__main__':
 
 			res = ga.bestIndividual() # Best individual in normalised form
 			cand = [scale[i]*v + offset[i] for i, v in enumerate(res.genomeList)] # Denormalised best individual
-			print "Optimal design parameters: ", (cand)
-			print "Optimal objective function: ", (res.score)
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				f.write("Optimal objective function: " + str(res.score))
+				f.close()
+			else:
+				print "Optimal design parameters: ", (cand)
+				print "Optimal objective function: ", (res.score)
 		elif args.method == 'ga2':
 			assert deap is not None, 'Library for deap is not installed'
 
@@ -439,8 +465,14 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			print "Optimal design parameters: ", (cand)
-			print "Optimal objective function: ", (res.fitness.values[0])
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				f.write("Optimal objective function: " + str(res.fitness.values[0]))
+				f.close()
+			else:
+				print "Optimal design parameters: ", (cand)
+				print "Optimal objective function: ", (res.fitness.values[0])
 		else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
 			if args.framework == 'soo_max':
 				assert sciopt is not None, 'Library for scipy is not installed'
@@ -458,12 +490,21 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			if args.framework == 'soo_min':
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (res.fun)
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				if args.framework == 'soo_min':
+					f.write("Optimal objective function: " + str(res.fun))
+				else:
+					f.write("Optimal objective function: " + str(sign * res.fun))
+				f.close()
 			else:
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (sign * res.fun)
+				if args.framework == 'soo_min':
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (res.fun)
+				else:
+					print "Optimal design parameters: ", (cand)
+					print "Optimal objective function: ", (sign * res.fun)
 	else:
 		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
 		if args.method == 'nsga2':
@@ -599,8 +640,8 @@ if __name__ == '__main__':
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
 			# Save the optimal solutions to a text file
-			if args.outfile is not None:
-				f = open(args.outfile, 'w') # Example: outfile = ../examples/result.txt
+			if args.outfile_p is not None:
+				f = open(args.outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
 				for nn in par_n:
 					f.write("%s " % nn)
 				for ii in obj_n:
@@ -617,8 +658,14 @@ if __name__ == '__main__':
 				best_ind, best_fitness = dm.topsis()
 
 			print "\n\nTotal time elapsed: ", t_dur, "seconds."
-			print "Final optimal design parameters: ", (best_ind)
-			print "Final optimal objective functions: ", (best_fitness)
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Final optimal design parameters: " + str(best_ind) + '\n')
+				f.write("Final optimal objective functions: " + str(best_fitness))
+				f.close()
+			else:
+				print "Final optimal design parameters: ", (best_ind)
+				print "Final optimal objective functions: ", (best_fitness)
 
 			# Plot the Pareto Front
 			fig = plt.figure()
