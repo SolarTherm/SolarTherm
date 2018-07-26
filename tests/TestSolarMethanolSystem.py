@@ -22,7 +22,7 @@ class TestScheduler(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 21042764.27, 2) # fpy
+		self.assertAlmostEqual(self.perf[0], 21042840.51, 2) # fpy
 		self.assertAlmostEqual(self.perf[1], 1.52, 2) # LCOF
 		self.assertAlmostEqual(self.perf[2], 72.34, 2) # Capacity factor
 		print(self.perf);

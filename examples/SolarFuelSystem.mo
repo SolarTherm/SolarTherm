@@ -23,9 +23,9 @@ model SolarFuelSystem
 	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
-	parameter SI.Time t_ft_on_delay = 120*60 "Delay until FT starts";
-	parameter SI.Time t_ft_off_delay = 120*60 "Delay until FT shuts off";
-	parameter SI.Time t_ft_trans_delay = 120*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_ft_on_delay = 2*60*60 "Delay until FT starts";
+	parameter SI.Time t_ft_trans_delay = 2*60*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_ft_off_delay = 2*60*60 "Delay until FT shuts off";
 
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
@@ -186,7 +186,7 @@ model SolarFuelSystem
 	parameter FI.Money C_st(fixed = false) "Storage tanks capital cost";
 
 	parameter FI.Money C_ds_rx(fixed=false) "Fischer-Tropsch (downstream) reactor cost";
-	parameter Real fr_c_ds_rx[8](fixed=false) "Fischer-Tropsch components cost fraction";
+	parameter Real fr_c_ds_rx[8](each fixed=false) "Fischer-Tropsch components cost fraction";
 
 	parameter FI.Money C_tbm = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ds_rx) "Total bare module investment cost";
 	parameter FI.Money C_site = f_site_prep * C_tbm "Site preparation cost";
@@ -300,7 +300,8 @@ model SolarFuelSystem
 			E_flow_des=E_flow_ft_des,
 			fr_min=fr_min_ft,
 			E_max=E_max,
-			n_night=n_night
+			n_night=n_night,
+			dt_ramp=t_ft_on_delay
 			) if storage and not const_dispatch and forecast_scheduler;
 
 	SolarTherm.Models.Sources.Schedule.Scheduler sch_fixed(
