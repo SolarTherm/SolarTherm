@@ -14,6 +14,7 @@ model SolarMethanolSystem
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Geraldton_Airport_944030_RMY.motab");
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/solar_fuel_opt_eff.motab") "Optical efficiency file";
 	parameter String sch_fcst_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Forecasts/forecast_data.motab") if storage and not const_dispatch;
+	parameter Integer n_night = 1 "Number of nights that the storage should have enough energy for as part of forecasting";
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
 	parameter SI.Time t_con_on_delay = 4*60 "Delay until heliostat field starts";
@@ -22,9 +23,9 @@ model SolarMethanolSystem
 	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
 
-	parameter SI.Time t_msr_on_delay = 90*60 "Delay until MSR starts";
-	parameter SI.Time t_msr_off_delay = 90*60 "Delay until MSR shuts off";
-	parameter SI.Time t_msr_trans_delay = 90*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_msr_on_delay = 1.5*60*60 "Delay until MSR starts";
+	parameter SI.Time t_msr_trans_delay = 1.5*60*60 "Transition time when the syngas supply flow changes";
+	parameter SI.Time t_msr_off_delay = 1.5*60*60 "Delay until MSR shuts off";
 
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
@@ -173,7 +174,7 @@ model SolarMethanolSystem
 	parameter FI.Money C_st(fixed = false) "Storage tanks capital cost";
 
 	parameter FI.Money C_ds_rx(fixed=false) "Methaol synthesis (downstream) reactor cost";
-	parameter Real fr_c_ds_rx[6](fixed=false) "MSR components cost fraction";
+	parameter Real fr_c_ds_rx[6](each fixed=false) "MSR components cost fraction";
 
 	parameter FI.Money C_tbm = (1 - f_Subs) * (C_field + C_tower + C_rx + C_st + C_ds_rx) "Total bare module investment cost";
 	parameter FI.Money C_site = f_site_prep * C_tbm "Site preparation cost";
@@ -273,7 +274,9 @@ model SolarMethanolSystem
 			final n_sched_states=2,
 			E_flow_des=E_flow_msr_des,
 			fr_min=fr_min_msr,
-			E_max=E_max
+			E_max=E_max,
+			n_night=n_night,
+			dt_ramp=t_msr_on_delay
 			) if storage and not const_dispatch and forecast_scheduler;
 
 	SolarTherm.Models.Sources.Schedule.Scheduler sch_fixed(
