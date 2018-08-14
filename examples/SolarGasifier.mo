@@ -13,6 +13,12 @@ model SolarGasifier
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Geraldton_Airport_944030_RMY.motab");
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/solar_fuel_opt_eff.motab") "Optical efficiency file";
 
+	parameter SI.Time t_con_on_delay = 30 "Delay until heliostat field starts";
+	parameter SI.Time t_con_off_delay = 30 "Delay until heliostat field shuts off";
+
+	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
+	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
+
 	parameter Integer ramp_order_con(min=0, max=2) = 1 "ramping filter order for the concentrator";
 
 	parameter Integer ramp_order_rx_heat(min=0, max=2) = 1 "ramping filter order for heat supply to the reactor";
@@ -57,6 +63,8 @@ model SolarGasifier
 		angles=Solar_angles.ele_azi, file=opt_file),
 		orient_north=wea.orient_north,
 		A=A_field,
+		t_con_on_delay=t_con_on_delay,
+		t_con_off_delay=t_con_off_delay,
 		ramp_order=ramp_order_con
 		);
 
@@ -73,6 +81,8 @@ model SolarGasifier
 			cwp_rx=cwp_rx,
 			cm_CO2_rx=cm_CO2_rx,
 			pv=false,
+			t_rx_on_delay=t_rx_on_delay,
+			t_rx_off_delay=t_rx_off_delay,
 			ramp_order_heat=ramp_order_rx_heat,
 			ramp_order_algae=ramp_order_rx_algae,
 			ramp_order_CO2=ramp_order_rx_CO2,
