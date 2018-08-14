@@ -17,8 +17,8 @@ model SolarFuelSystem
 	parameter Integer n_night = 1 "Number of nights that the storage should have enough energy for as part of forecasting";
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
-	parameter SI.Time t_con_on_delay = 4*60 "Delay until heliostat field starts";
-	parameter SI.Time t_con_off_delay = 2*60 "Delay until heliostat field shuts off";
+	parameter SI.Time t_con_on_delay = 30 "Delay until heliostat field starts";
+	parameter SI.Time t_con_off_delay = 30 "Delay until heliostat field shuts off";
 
 	parameter SI.Time t_rx_on_delay = 30*60 "Delay until reactor starts";
 	parameter SI.Time t_rx_off_delay = 30*60 "Delay until reactor shuts off";
