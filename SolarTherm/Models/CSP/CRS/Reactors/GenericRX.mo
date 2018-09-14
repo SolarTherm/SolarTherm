@@ -106,7 +106,7 @@ model GenericRX
 	SI.Power P_pump_waste(min=0) "Pump power consumption waste";
 
 protected
-	constant Real molarRatio_H2_CO = 2.1 "Molar ratio of H2 to CO at the outlet of SMR";
+	constant Real molarRatio_H2_CO = 2.1126 "Molar ratio of H2 to CO at the outlet of SMR";
 	constant Real massRatio_w_a = 3.0 "Mass ratio of water to algae";
 
 	constant SI.MolarMass MM_H2 = 0.0020 "Molar mass of H2";
