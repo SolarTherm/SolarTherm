@@ -129,7 +129,7 @@ model SolarFuelSystem
 	parameter SI.Area A_rec = 50 "Reactor area";
 	parameter Real SM = 4.0 "Solar multiple"; //Potential design variable
 	parameter Real land_mult = 1 "Land area multiplier";
-	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX
+	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX. SMR with CO2 dumping: 3.0, SMR with H2 makeup: 3.65, ATR: 4.11, PODR: 5.93
 
 	parameter Real fr_min_ft = 0.2 "Minium fraction of the nominal mass flow to start the FT";
 
@@ -368,6 +368,8 @@ model SolarFuelSystem
 	Modelica.Blocks.Continuous.Integrator v_dies_prod(y_start=0) "Volume of diesel produced in FT";  // [m3]
 	Modelica.Blocks.Continuous.Integrator m_O2_prod(y_start=0) "Mass of Oxygen produced in FT"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_w_req(y_start=0) "Mass of water required"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_req_rx(y_start=0) "Mass of H2 required from PV at RC"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_req_ft(y_start=0) "Mass of H2 required from PV at FT"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_H2_req(y_start=0) "Mass of H2 required from PV"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_CO2_emiss(y_start=0) "Mass of CO2 released/dumped to environment"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_elec_cons(y_start=0) "Plant electricity consumption"; // [J]
@@ -377,7 +379,9 @@ model SolarFuelSystem
 	Modelica.Blocks.Continuous.Integrator m_sg_waste(y_start=0) "Mass of Syngas supply wasted at FT"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_sg_waste(y_start=0) "Syngas energy wasted at FT"; // [J]
 	Modelica.Blocks.Continuous.Integrator m_water_waste(y_start=0) "Mass of water supply wasted at the reactor and FT"; // [kg]
-	Modelica.Blocks.Continuous.Integrator m_H2_pv_waste(y_start=0) "Mass of H2 supply wasted at the reactor and FT"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_pv_waste_rx(y_start=0) "Mass of H2 supply wasted at the reactor"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_pv_waste_ft(y_start=0) "Mass of H2 supply wasted at the FT"; // [kg]
+	Modelica.Blocks.Continuous.Integrator m_H2_pv_waste(y_start=0) "Mass of H2 supply wasted at the plant"; // [kg
 	Modelica.Blocks.Continuous.Integrator m_CO2_waste(y_start=0) "Mass of CO2 dumped/released from the reactor and FT when the products are rubbish"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_elec_waste(y_start=0) "Plant electricity consumption wasted at the reactor and FT"; // [J]
 
@@ -450,6 +454,8 @@ equation
 	V_fuel = v_petr_prod.y + (fuel_conv_ratio * v_dies_prod.y);
 	m_O2_prod.u = FT.m_flow_O2;
 	m_w_req.u = RX.m_flow_water + FT.m_flow_water;
+	m_H2_req_rx.u = RX.m_flow_H2_pv;
+	m_H2_req_ft.u = FT.m_flow_H2_pv;
 	m_H2_req.u = RX.m_flow_H2_pv + FT.m_flow_H2_pv;
 	m_CO2_emiss.u = RX.m_flow_CO2 + FT.m_flow_CO2;
 	E_elec_cons.u = FT.P_C - FT.P_T + RX.P_pump + FT.P_pumps;
@@ -459,6 +465,8 @@ equation
 	m_sg_waste.u = FT.m_flow_sg_in_waste;
 	E_sg_waste.u = FT.E_sg_in_waste;
 	m_water_waste.u = RX.m_flow_water_waste + FT.m_flow_water_waste;
+	m_H2_pv_waste_rx.u = RX.m_flow_H2_pv_waste;
+	m_H2_pv_waste_ft.u = FT.m_flow_H2_pv_waste;
 	m_H2_pv_waste.u = RX.m_flow_H2_pv_waste + FT.m_flow_H2_pv_waste;
 	m_CO2_waste.u = RX.m_flow_CO2_waste + FT.m_flow_CO2_waste;
 	E_elec_waste.u = RX.P_pump_waste + FT.P_C_waste + FT.P_pumps_waste;
