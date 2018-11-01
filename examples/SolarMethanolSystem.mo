@@ -17,6 +17,8 @@ model SolarMethanolSystem
 	parameter Integer n_night = 1 "Number of nights that the storage should have enough energy for as part of forecasting";
 	parameter String sch_fixed_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_solar_fuel.motab") if storage and not const_dispatch and not forecast_scheduler;
 
+	parameter Boolean H2_makeup = false "true if there is H2 makeup";
+
 	parameter SI.Time t_con_on_delay = 30 "Delay until heliostat field starts";
 	parameter SI.Time t_con_off_delay = 30 "Delay until heliostat field shuts off";
 
@@ -45,7 +47,9 @@ model SolarMethanolSystem
 	parameter Integer trans_order_msr_CO2(min=0, max=2) = 1 "Transitioning filter order for CO2 dump/release from MSR while MSR is on";
 	parameter Integer trans_order_msr_prod(min=0, max=2) = 1 "Transitioning filter order for products production from MSR while MSR is on";
 
-	// Polynomilas coeffs for SCWG+SMR
+	// Polynomilas coeffs for SCWG+methane reforming reactor
+
+	// Coefficients for SMR with CO2 dumped:
 	parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
 	parameter Real cf_SMR[:] = {0.768282037316067, 0.093488773366821, -0.037724819862177, 0.015670722458670, -0.006367262777059, 0.001640716559506, -6.287807751796056e-04, 9.317070447512179e-04, -3.842549181678559e-04} "SMR efficiency coefficients";
 	parameter Real cf_rx[:] = { 0.640798255557369, 0.022098834006959, -0.010723851298492, 0.006750338487959, -3.460944058165703e-04, -0.001495651820584, -0.002071994901842, 0.001274509536169, 1.214843066972747e-04} "Reactor efficiency coefficients";
@@ -59,6 +63,48 @@ model SolarMethanolSystem
 	parameter Real cr_sg[:] = {7.022488706961313, 0.529534167296794, 0.002088897277410, -2.423308450667479e-05, 1.040004504170970e-07} "Radiation power coefficients";
 	parameter Real cm_CO2_rx[:] = {-0.138561262069788, 0.022687988241418} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
 
+	// Coefficients for SMR with H2 make-up:
+	//parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
+	//parameter Real cf_SMR[:] = {0.768282037326182, 0.093488773418409, -0.037724820032708, 0.015670722323667, -0.006367262395985, 0.001640716680835, -6.287810457842271e-04, 9.317070127963413e-04, -3.842548570574841e-04} "SMR efficiency coefficients";
+	//parameter Real cf_rx[:] = {0.687025594611737, 0.021431016489290, -0.009918028145347, 0.005228896505506, -0.002648352476403, -6.868599112458954e-05, 2.112000484161840e-04, 9.100872044658880e-04, -4.887469300572853e-04} "Reactor efficiency coefficients";
+	//parameter Real cfII_rx[:] = {0.431119708281740, 0.024676534855107, -0.010792719118631, 0.005124108830129, -0.002420528092795, 2.622140185849018e-04, 1.883967269845761e-05, 6.434684732893853e-04, -3.363129426621995e-04} "Reactor exergy efficiency coefficients";
+	//parameter Real cm_algae[:] = {-0.473161279150002, 0.070525907955420, -4.097745858339394e-04, 6.284176107925915e-06, -3.577159037296405e-08} "Algae mass flow rate coefficients";
+	//parameter Real cn_H2_rx[:] = {-0.030582575757576, 0.004558319752007, -2.651910256410351e-05, 4.067736337736557e-07, -2.315643615643777e-09} "Molar flow rate coefficients for H2";
+	//parameter Real cn_CH4[:] = {-9.733721548821562e-05, 1.450788340240011e-05, -8.458620014245290e-08, 1.298337952171353e-09, -7.395221445221981e-12} "Molar flow rate coefficients for CH4";
+	//parameter Real cn_CO[:] = {-0.020143153198653, 0.003002342636838, -1.746453671328680e-05, 2.678840110506809e-07, -1.524980574980601e-09} "Molar flow rate coefficients for CO";
+	//parameter Real cn_CO2[:] = {-3.437720244107729e-04, 5.124008856729678e-05, -2.973984799922276e-07, 4.558611542778197e-09, -2.593609168609168e-11} "Molar flow rate coefficients for CO2";
+	//parameter Real cwp_rx[:] = {3.148488841047790e02, 1.511300409667773e02, -0.389043498507857, 0.105363118972932, -0.196827420513049, 0.121325803744551, 0.098676758960660, 0.013863241278019, -0.051864629997255} "Pump power coefficients in reactor";
+	//parameter Real cr_sg[:] = {7.015720194048859, 0.443071425171402, 0.001213367730478, -1.080548794540187e-05, 3.566904682826104e-08} "Radiation power coefficients";
+	//parameter Real cm_CO2_rx[:] = {0, 0} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
+
+	// Coefficients for ATR with H2 make-up:
+	//parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
+	//parameter Real cf_SMR[:] = {0.768282037326182, 0.093488773418409, -0.037724820032708, 0.015670722323667, -0.006367262395985, 0.001640716680835, -6.287810457842271e-04, 9.317070127963413e-04, -3.842548570574841e-04} "SMR efficiency coefficients";
+	//parameter Real cf_rx[:] = {0.696396908610051, 0.017928635336211, -0.008266951169057, 0.004344008304303, -0.002185717683978, -7.229528836104134e-05, 1.482704123290864e-04, 7.695327419764168e-04, -4.026339214968672e-04} "Reactor efficiency coefficients";
+	//parameter Real cfII_rx[:] = {0.441893492653477, 0.020912246703955, -0.009177594003639, 0.004322582090546, -0.002191423185768, 2.789495746872515e-04, 9.512319056539256e-05, 5.740079719418247e-04, -3.264943946335905e-04} "Reactor exergy efficiency coefficients";
+	//parameter Real cm_algae[:] = {-0.498174365095458, 0.078411623398637, -4.497368722756696e-04, 6.976050480420177e-06, -4.015493354312776e-08} "Algae mass flow rate coefficients";
+	//parameter Real cn_H2_rx[:] = {-0.028652543350168, 0.004509642643313, -2.592167233229654e-05, 4.023241172407741e-07, -2.317191142191098e-09} "Molar flow rate coefficients for H2";
+	//parameter Real cn_CH4[:] = {-1.027260774410767e-05, 1.616568248726575e-06, -9.370312095311857e-09, 1.458338945005574e-10, -8.423724423724177e-13} "Molar flow rate coefficients for CH4";
+	//parameter Real cn_CO[:] = {-0.021407725168350, 0.003369491880558, -1.933052800440401e-05, 2.998427134594017e-07, -1.725901320901470e-09} "Molar flow rate coefficients for CO";
+	//parameter Real cn_CO2[:] = {-2.534988425925936e-04, 3.990510193818547e-05, -2.270436399249016e-07, 3.511795950962867e-09, -2.015300440300616e-11} "Molar flow rate coefficients for CO2";
+	//parameter Real cwp_rx[:] = {3.559542361264907e02, 1.688099984254838e02, -0.378275748099016, 0.168682417113760, -0.170622147652501, 0.045153222426341, 0.045123060727875, 0.039283686884855, -0.038839038209280} "Pump power coefficients in reactor";
+	//parameter Real cr_sg[:] = {6.633771582967861, 0.394544619753353, 9.666766326999010e-04, -7.698436512304350e-06, 2.272377287564413e-08} "Radiation power coefficients";
+	//parameter Real cm_CO2_rx[:] = {0,0} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
+
+	// Coefficients for PODR with H2 make-up:
+	//parameter Real cf_SCWG[:] = {0.861548846435547, 0.040890337613260, -0.016377240668398, 0.006300210850991, -0.002949360411857, 0.001198974859965, -2.674495240684157e-05, 2.803482204959359e-04, -2.451620638315131e-04} "SCWG efficiency coefficients";
+	//parameter Real cf_SMR[:] = {0.768282037326182, 0.093488773418409, -0.037724820032708, 0.015670722323667, -0.006367262395985, 0.001640716680835, -6.287810457842271e-04, 9.317070127963413e-04, -3.842548570574841e-04} "SMR efficiency coefficients";
+	//parameter Real cf_rx[:] = {0.712878880020749, 0.008907306041831, -0.003785699730558, 0.001637658430799, -0.001002577977438, 2.896157934164272e-04, 9.450292831824031e-05, 1.376579114797136e-04, -1.126873242030549e-04} "Reactor efficiency coefficients";
+	//parameter Real cfII_rx[:] = {0.445830125285907, 0.010474867200685, -0.004496668769385, 0.001811636973897, -7.526741304551024e-04, 3.426839004968730e-04, -1.276409540301475e-04, 1.251077532207179e-04, -6.398810419356095e-05} "Reactor exergy efficiency coefficients";
+	//parameter Real cm_algae[:] = {-0.356535600819693, 0.090707540844623, -2.951466684081717e-07, 1.311386705516475e-08, -8.184184149238017e-11} "Algae mass flow rate coefficients";
+	//parameter Real cn_H2_rx[:] = {-0.014665128787879, 0.003731068657731, -1.975621600827403e-08, 6.965811966252525e-10, -4.726754727078410e-12} "Molar flow rate coefficients for H2";
+	//parameter Real cn_CH4[:] = {-1.375550925925921e-06, 3.500406004489336e-07, -4.203088578096711e-12, 1.186005352675481e-13, -9.388759388789998e-16} "Molar flow rate coefficients for CH4";
+	//parameter Real cn_CO[:] = {-0.015041125420875, 0.003826492526763, -1.709077958819327e-08, 6.070102736323043e-10, -3.574203573924458e-12} "Molar flow rate coefficients for CO";
+	//parameter Real cn_CO2[:] = {-4.653257323232308e-04, 1.183582922170423e-04, -2.888662263745366e-10, 1.207588707612732e-11, -3.328153328344878e-14} "Molar flow rate coefficients for CO2";
+	//parameter Real cwp_rx[:] = {5.165097377065779e02, 2.330790820527035e02, 0.342703194387771, -0.416510724656649, -0.810581334750472, 0.375187277505359, 0.632826393692572, -0.095015293632266, -0.149658157438693} "Pump power coefficients in reactor";
+	//parameter Real cr_sg[:] = {3.930169506060433, 0.330404401596025, -3.452392727089805e-07, -6.638790936857809e-10} "Radiation power coefficients";
+	//parameter Real cm_CO2_rx[:] = {0,0} "Mass flow rate coefficients for CO2 dumped/released from the reactor";
+
 	// Polynomilas coeffs for MSR
 	parameter Real cvf_methanol[:] = {-4.295280186314835e-09, 0.001229898347413} "Volumetric flow rate coefficients for methanol production in MSR";
 	parameter Real cwc_msr[:] = {-6.495030514919800e-06, 1.847556974672308} "Compressor power coefficients in MSR";
@@ -71,9 +117,9 @@ model SolarMethanolSystem
 	parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 	parameter Real C = 1000 "Concentration ratio";
 	parameter SI.Area A_rec = 50 "Reactor area";
-	parameter Real SM = 4 "Solar multiple"; //Potential design variable
+	parameter Real SM = 4.0 "Solar multiple"; //Potential design variable
 	parameter Real land_mult = 1 "Land area multiplier";
-	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX
+	parameter SI.MassFlowRate m_flow_rx_des = 3.0 "Mass flow rate from RX at design point"; // i.e. the size of RX. SMR with CO2 dumping: 3.0, SMR with H2 makeup: 3.65, ATR: 4.11, PODR: 5.93
 
 	parameter Real fr_min_msr = 0.2 "Minium fraction of the nominal mass flow to start the MSR";
 
@@ -136,7 +182,7 @@ model SolarMethanolSystem
 
 	parameter FI.MassPrice pri_water = 2.6*(1e-3) "Cost of water per kilogram"; // Ref: http://www.teampoly.com.au/knowledge-base/water-prices-in-australia/index.html
 	parameter FI.MassPrice pri_algae = 0.61025 "Cost of algae per kilogram";
-	parameter FI.MassPrice pri_H2 = 9.721883 "Cost of hydrogen per kilogram";  // Ref: TEA of a PV-based hydrogen electrolyser plant by Mahesh Venkataraman
+	parameter FI.MassPrice pri_H2 = 9.721883 "Cost of hydrogen per kilogram"; // Ref: TEA of a PV-based hydrogen electrolyser plant by Mahesh Venkataraman
 	parameter FI.MassPrice pri_CO2 = 25.4*(1e-3) "Penalty cost for CO2 emissions per kilogram";
 	parameter FI.EnergyPrice_kWh pri_elec = 0.25 "Cost of grid electricity per kWh";
 
@@ -151,7 +197,7 @@ model SolarMethanolSystem
 	parameter FI.PowerPrice pri_tower = 0.051 "Tower cost per design power";
 	parameter FI.Money C_tower = f_bm_sf * (pri_tower * R_des) "Tower capital cost";
 
-	parameter FI.PowerPrice pri_rx = 0.354024491010332 "Receiver cost per design power";
+	parameter FI.PowerPrice pri_rx = 0.354024491010332 "Receiver cost per design power"; // SMR with dumping : 0.354024491010332, SMR with H2 makeup: 0.347677539618532, ATR with H2 makeup: 0.467861912430237, PODR with H2 makeup: 0.546079626560444
 	parameter FI.Money C_rx = pri_rx * R_des "Receiver capital cost";
 
 	//If gasometer(gas holder) is used, then uncomment the follwing to estimate the cost of storage:
@@ -223,7 +269,7 @@ model SolarMethanolSystem
 			cn_CO2=cn_CO2,
 			cwp_rx=cwp_rx,
 			cm_CO2_rx=cm_CO2_rx,
-			pv=false,
+			pv=H2_makeup,
 			t_rx_on_delay=t_rx_on_delay,
 			t_rx_off_delay=t_rx_off_delay,
 			ramp_order_heat=ramp_order_rx_heat,
@@ -286,6 +332,7 @@ model SolarMethanolSystem
 			mmap={1,1,1,1,1,1,1,1,1,1,1,1}
 			) if storage and not const_dispatch and not forecast_scheduler;
 
+	Modelica.Blocks.Continuous.Integrator R_req(y_start=0) "Sun heat duty to the reactor"; // [J]
 	Modelica.Blocks.Continuous.Integrator m_alg_req(y_start=0) "Mass of algae required by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator m_sg_prod(y_start=0) "Mass of syngas produced by the reactor"; // [kg]
 	Modelica.Blocks.Continuous.Integrator E_rx_prod(y_start=0) "Energy of syngas produced by the reactor"; // [J]
@@ -365,6 +412,7 @@ equation
 	end if;
 
 	// Cumulative performance-related results:
+	R_req.u = sum(RX.R);
 	m_alg_req.u = RX.m_flow_algae;
 	m_sg_prod.u = RX.m_flow_sg;
 	E_rx_prod.u = RX.E_flow;
