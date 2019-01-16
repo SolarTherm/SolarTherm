@@ -15,5 +15,7 @@ Reference_1_fluid
 TestTMY3WeatherFileChecker
 SolarFuelSystem
 SolarMethanolSystem
+TestExternalC
+TestExternalPyStr
 optimizeInput.csv
 *.libs
