@@ -4,9 +4,9 @@
 #include <python2.7/Python.h>
 #include <stdio.h>
 
-double TestExternalPy_func(int argc, char *argv[]);
+double TestExternalPy_func(int argc, const char *argv[]);
 
-double TestExternalPy_func(int argc, char *argv[])
+double TestExternalPy_func(int argc, const char *argv[])
 {
     double output;
     PyObject *pName, *pModule, *pFunc;
@@ -20,7 +20,7 @@ double TestExternalPy_func(int argc, char *argv[])
 
     Py_Initialize(); /*  Initialize Interpreter  */
 
-    PySys_SetPath(argv[0]);  // path to the module (function file) to import
+    PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import
 
     pName = PyString_FromString(argv[1]);
     /* Error checking of pName left out */
