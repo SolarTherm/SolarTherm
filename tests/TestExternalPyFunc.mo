@@ -2,7 +2,7 @@ block TestExternalPyFunc
 	output Real y;
 	parameter String ppath = "./" "Path to the Python script";
 	//parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Path to the Python script";
-	parameter String pname = "st_test_ext" "Python script name";
+	parameter String pname = "st_test_ext_py" "Python script name";
 	parameter String pfunc = "testExternalPy_multiply" "Python functiuon name"; // i.e. c = a* b
 	parameter Integer argc = 5 "Number of arguments to be passed to the C function";
 
