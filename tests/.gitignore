@@ -17,5 +17,6 @@ SolarFuelSystem
 SolarMethanolSystem
 TestExternalC
 TestExternalPyStr
+TestExternalPyFunc
 optimizeInput.csv
 *.libs
