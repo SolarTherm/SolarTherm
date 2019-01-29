@@ -26,6 +26,8 @@ PS10_Flat
 PS10_Flat*.[ch]
 PS10_Bladed
 PS10_Bladed*.[ch]
+SimpleResistiveStorage
+SimpleResistiveStorage*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml
