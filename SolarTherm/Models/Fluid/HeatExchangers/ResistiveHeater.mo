@@ -24,20 +24,20 @@ block ResistiveHeater "Resistive heater with ramp features"
 	//Variables:
 	//****************
 	input SI.Power P(min=0, displayUnit="MW") "Electrical power to heater";
-	input SI.HeatFlowRate Q_flow_dfc(min=0, displayUnit="MW") "The target heat flow at the defocused state";
+	input SI.HeatFlowRate Q_flow_dr(min=0, displayUnit="MW") "The target heat flow at the derated state";
 	output SI.HeatFlowRate Q_flow(min=0, displayUnit="MW") "Heat flow output from heater";
 
 	SI.Power P_in(min=0, displayUnit="MW") "Power consumption rate at heater";
 
 	Modelica.Blocks.Interfaces.BooleanInput grid "Set to true to start connecting to the grid";
-	Modelica.Blocks.Interfaces.BooleanInput defocus(start=false) "true if the defocusing state is on";
+	Modelica.Blocks.Interfaces.BooleanInput derate(start=false) "true if the derated state is on";
 
 	Integer state(min=1, max=5) "Heater state";
 	SI.Time t_htr_w_now "Time of heater current warm-up event";
 	SI.Time t_htr_w_next "Time of heater next warm-up event";
 	SI.Time t_htr_c_now "Time of heater current cool-down event";
 	SI.Time t_htr_c_next "Time of heater next cool-down event";
-	Real fr_dfc(min=0, max=1, start=1) "Target power fraction at the defocused state";
+	Real fr_dfc(min=0, max=1, start=1) "Target power fraction at the derateed state";
 
 	Boolean useful_prod(start=false) "true if power supply is converted to useful heat";
 
@@ -70,29 +70,29 @@ initial equation
 	t_htr_c_next = 0;
 
 algorithm
-	when state == 2 and (P <= P_min or P >= P_max or defocus or not grid) then
+	when state == 2 and (P <= P_min or P >= P_max or derate or not grid) then
 		state := 1; // off
 	elsewhen state == 3 and (P <= P_min or P >= P_max) and t_htr_off_delay > 0 then
 		state := 5; // ramp down
 	elsewhen state == 3 and (P <= P_min or P >= P_max) and t_htr_off_delay <= 0 then
 		state := 1; // off (no ramp-down)
-	elsewhen state == 3 and defocus then
-		if Q_flow_dfc > 0 then
+	elsewhen state == 3 and derate then
+		if Q_flow_dr > 0 then
 			state := 4; //on at part load
-		elseif Q_flow_dfc <= 0 and t_htr_off_delay > 0 then
+		elseif Q_flow_dr <= 0 and t_htr_off_delay > 0 then
 			state := 5; // ramp down
 		else
 			state := 1; // off (no ramp-down)
 		end if;
-	elsewhen state == 4 and not defocus then
+	elsewhen state == 4 and not derate then
 		state := 3; // on at full load
 	elsewhen state == 4 and (P <= P_min or P >= P_max) and t_htr_off_delay > 0 then
 		state := 5; // ramp down
 	elsewhen state == 4 and (P <= P_min or P >= P_max) and t_htr_off_delay <= 0 then
 		state := 1; // off (no ramp-down)
-	elsewhen state == 1 and P >= P_min and P <= P_max and not defocus and grid and t_htr_on_delay > 0 then
+	elsewhen state == 1 and P >= P_min and P <= P_max and not derate and grid and t_htr_on_delay > 0 then
 		state := 2; // start (i.e. ramp up)
-	elsewhen state == 1 and P >= P_min and P <= P_max and not defocus and grid and t_htr_on_delay <= 0 then
+	elsewhen state == 1 and P >= P_min and P <= P_max and not derate and grid and t_htr_on_delay <= 0 then
 		state := 3; // on at full load (no ramp-up)
 	elsewhen state == 2 and time >= t_htr_w_next then
 		state := 3; // on at full load
@@ -156,16 +156,16 @@ equation
 		P_in = fr_ramp_cons * P;
 	else
 		q_htr.x = (P/P_des);
-		if defocus then
-			if (eff_htr * Q_flow_des * max(q_htr.y,0)) > Q_flow_dfc then
-				p_htr_dfc.x = (Q_flow_dfc/Q_flow_des);
+		if derate then
+			if (eff_htr * Q_flow_des * max(q_htr.y,0)) > Q_flow_dr then
+				p_htr_dfc.x = (Q_flow_dr/Q_flow_des);
 				P_in = P_des*max(p_htr_dfc.y,0)/eff_htr;
-				Q_flow = min(Q_flow_dfc, (eff_htr* Q_flow_des*max(q_htr.y,0)));
+				Q_flow = min(Q_flow_dr, (eff_htr* Q_flow_des*max(q_htr.y,0)));
 				fr_dfc = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
 				//fr_dfc = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
-				//Q_flow = min(Q_flow_dfc, (eff_htr* Q_flow_des*max(q_htr.y,0)));
+				//Q_flow = min(Q_flow_dr, (eff_htr* Q_flow_des*max(q_htr.y,0)));
 				//q_htr_dfc.x = (P_in/P_des);
-				//Q_flow_dfc = eff_htr * Q_flow_des*max(q_htr_dfc.y,0);
+				//Q_flow_dr = eff_htr * Q_flow_des*max(q_htr_dfc.y,0);
 			else
 				fr_dfc = 1;
 				Q_flow = eff_htr * Q_flow_des * max(q_htr.y,0);
