@@ -37,7 +37,7 @@ block ResistiveHeater "Resistive heater with ramp features"
 	SI.Time t_htr_w_next "Time of heater next warm-up event";
 	SI.Time t_htr_c_now "Time of heater current cool-down event";
 	SI.Time t_htr_c_next "Time of heater next cool-down event";
-	Real fr_dfc(min=0, max=1, start=1) "Target power fraction at the derateed state";
+	Real fr_dr(min=0, max=1, start=1) "Target power fraction at the derateed state";
 
 	Boolean useful_prod(start=false) "true if power supply is converted to useful heat";
 
@@ -57,9 +57,9 @@ block ResistiveHeater "Resistive heater with ramp features"
 	discrete SI.Time tot "Total operating time of the heater";
 	Boolean on(start=false, fixed=true) "the heater on/off signal";
 
-//protected
+protected
 	SolarTherm.Utilities.Polynomial.Poly q_htr(c=cq_htr);
-	SolarTherm.Utilities.Polynomial.Poly p_htr_dfc(c=cp_htr);
+	SolarTherm.Utilities.Polynomial.Poly p_htr_dr(c=cp_htr);
 
 initial equation
 	pre(tot) = 0;
@@ -143,39 +143,39 @@ equation
 	ramp_down_prod.x = t_htr_c_now;
 
 	if state <= 1 then
-		fr_dfc = 1;
+		fr_dr = 1;
 		Q_flow = 0;
 		q_htr.x = 0;
-		p_htr_dfc.x = 0;
+		p_htr_dr.x = 0;
 		P_in = 0;
 	elseif state == 2 or state == 5 then
-		fr_dfc = 1;
+		fr_dr = 1;
 		q_htr.x = if ramp_order_prod == 0 then 0 else (P/P_des);
 		Q_flow = eff_htr * Q_flow_des * fr_ramp_prod * max(q_htr.y,0);
-		p_htr_dfc.x = 0;
+		p_htr_dr.x = 0;
 		P_in = fr_ramp_cons * P;
 	else
 		q_htr.x = (P/P_des);
 		if derate then
 			if (eff_htr * Q_flow_des * max(q_htr.y,0)) > Q_flow_dr then
-				p_htr_dfc.x = (Q_flow_dr/Q_flow_des);
-				P_in = P_des*max(p_htr_dfc.y,0)/eff_htr;
+				p_htr_dr.x = (Q_flow_dr/Q_flow_des);
+				P_in = P_des*max(p_htr_dr.y,0)/eff_htr;
 				Q_flow = min(Q_flow_dr, (eff_htr* Q_flow_des*max(q_htr.y,0)));
-				fr_dfc = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
-				//fr_dfc = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
+				fr_dr = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
+				//fr_dr = Q_flow / ((eff_htr * Q_flow_des*max(q_htr.y,0)) + 1e-10);
 				//Q_flow = min(Q_flow_dr, (eff_htr* Q_flow_des*max(q_htr.y,0)));
-				//q_htr_dfc.x = (P_in/P_des);
-				//Q_flow_dr = eff_htr * Q_flow_des*max(q_htr_dfc.y,0);
+				//q_htr_dr.x = (P_in/P_des);
+				//Q_flow_dr = eff_htr * Q_flow_des*max(q_htr_dr.y,0);
 			else
-				fr_dfc = 1;
+				fr_dr = 1;
 				Q_flow = eff_htr * Q_flow_des * max(q_htr.y,0);
-				p_htr_dfc.x = 0;
+				p_htr_dr.x = 0;
 				P_in = P;
 			end if;
 		else
-			fr_dfc = 1;
+			fr_dr = 1;
 			Q_flow = eff_htr * Q_flow_des * max(q_htr.y,0);
-			p_htr_dfc.x = 0;
+			p_htr_dr.x = 0;
 			P_in = P;
 		end if;
 	end if;
