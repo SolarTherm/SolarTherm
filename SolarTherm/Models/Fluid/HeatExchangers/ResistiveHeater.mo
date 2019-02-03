@@ -123,7 +123,7 @@ algorithm
 
 	if state == 1 then
 		useful_prod := false;
-	elseif state == 2 or state == 4 then
+	elseif state == 2 or state == 5 then
 		useful_prod := if ramp_order_cons == 0 then false else true;
 	else
 		useful_prod := true;
