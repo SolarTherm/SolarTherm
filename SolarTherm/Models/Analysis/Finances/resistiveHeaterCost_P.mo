@@ -4,8 +4,8 @@ function resistiveHeaterCost_P "Bare module cost of a resistive hater"
 	input Modelica.SIunits.Power P "Power to heater at design";
 	output SolarTherm.Models.Analysis.Finances.Money C_cap "Capital cost";
 protected
-	constant Real p1 = 0.001679697256268;
-	constant Real p2 = 0.105788746454194;
+	constant Real p1 = 0.004112986371710;
+	constant Real p2 = 0.092159354785374;
 
 algorithm
 	//Ref. Polynomials from M.V. Python model
