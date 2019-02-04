@@ -1,5 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-block ResistiveHeater "Resistive heater with ramp features"
+model ResistiveHeater "Resistive heater with ramp features"
 
 	import SI = Modelica.SIunits;
 
@@ -196,4 +196,8 @@ equation
 	when terminal() then
 		reinit(tot, pre(tot) + dt_on);
 	end when;
+
+	annotation (Documentation(revisions="<html>
+		<p>by <b>Ali Shirazi</b></p>
+		</html>"));
 end ResistiveHeater;
