@@ -20,7 +20,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 			max=1373.15,
 			start=900));
 
-	import SolarTherm.Media.Sodium.MoltenSalt_utilities.*;
+	import SolarTherm.Media.SolidParticles.CarboHSP_utilities.*;
 
 	// Provide medium constants here
 	//constant SpecificHeatCapacity cp_const=123456
