@@ -7,10 +7,9 @@ protected
 	constant Real p1 = -1.12e-3;
 	constant Real p2 = 2.07;
 	constant Real p3 = 264.;
-	constant Real p4 = -901.183217765;
+	constant Real p4 = -2071.55571631;
 
-	Modelica.SIunits.Temp_C T_C = Modelica.SIunits.Conversions.to_degC(T) "Temperature in degree Celsius";
 algorithm
 	// s is obtained by integrating (cp/T dT). The integration constant was added such that the s value at T = 298.15 K (i.e. 25 degC) becomes zero.
-	s := (p1/2)*(T_C ^ 2) + p2*T_C + p3*log(T_C) + p4;
+	s := (p1/2)*(T ^ 2) + p2*T + p3*log(T) + p4;
 end s_T;
