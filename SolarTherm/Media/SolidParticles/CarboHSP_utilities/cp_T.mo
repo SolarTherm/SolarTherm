@@ -8,7 +8,6 @@ protected
 	constant Real p2 = 2.07;
 	constant Real p3 = 264.;
 
-	Modelica.SIunits.Temp_C T_C = Modelica.SIunits.Conversions.to_degC(T) "Temperature in degree Celsius";
 algorithm
-	cp := p1 * (T_C ^ 2) + p2 * T_C + p3;
+	cp := p1 * (T ^ 2) + p2 * T + p3;
 end cp_T;

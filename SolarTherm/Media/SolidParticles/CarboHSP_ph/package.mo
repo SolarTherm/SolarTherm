@@ -1,5 +1,5 @@
 within SolarTherm.Media.SolidParticles;
-package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
+package CarboHSP_ph "Solid CarboHSP particle model, explicit in p and h"
 
 	/* The statement below extends from PartialMedium and sets some
 		package constants. Provide values for these constants
@@ -9,7 +9,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 	*/
 
 	extends Modelica.Media.Interfaces.PartialMedium(
-		ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.pT,
+		ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
 		final mediumName="CARBO HSP 20/40",
 		final substanceNames={"Al2O3", "SiO2", "Fe2O3", "TiO2", "other"}, // Molar fractions: 83%, 5%, 7%, 3.5% and 1.5%
 		final singleState=false,
@@ -17,7 +17,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 		final fixedX=true,
 		Temperature(
 			min=300,
-			max=1373.15,
+			max=1370,
 			start=900));
 
 	import SolarTherm.Media.SolidParticles.CarboHSP_utilities.*;
@@ -63,15 +63,15 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 		the base class Interfaces.PartialMedium.BaseProperties, so it should not
 		be repeated here.
 		The code fragment below is for a single-substance medium with
-		p and T as independent variables.
+		p and h as independent variables.
 	*/
 
 	redeclare record extends ThermodynamicState
 		"A selection of variables that uniquely defines the thermodynamic state"
 		AbsolutePressure p "Absolute pressure of medium";
-		Temperature T "Temperature of medium";
-		annotation (Documentation(info="<html>
-			
+		SpecificEnthalpy h "Specific enthalpy";
+		 annotation (Documentation(info="<html>
+
 			</html>"));
 	end ThermodynamicState;
 
@@ -79,10 +79,10 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 		"Base properties of medium"
 
 	equation
-	T = state.T;
+	T = T_h(h);
 	p = state.p;
 	d = rho_T(T);
-	h = h_T(T);
+	h = state.h;
 	u = h - p / d;
 	MM = 0.10313381;
 	R = 8.3144 / MM;
@@ -98,48 +98,47 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 	*/
 
 	redeclare function setState_pTX
-		"Return thermodynamic state as function of p, T and composition X or Xi"
+		"Return thermodynamic state from p, T, and X or Xi"
 		extends Modelica.Icons.Function;
 		input AbsolutePressure p "Pressure";
 		input Temperature T "Temperature";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p, T=T);
+		state := ThermodynamicState(p=p, h=h_T(T));
 	end setState_pTX;
 
 	redeclare function setState_phX
-		"Return thermodynamic state as function of p, h and composition X or Xi"
+		"Return thermodynamic state from p, h, and X or Xi"
 		extends Modelica.Icons.Function;
 		input AbsolutePressure p "Pressure";
 		input SpecificEnthalpy h "Specific enthalpy";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p, T=T_h(h));
+		state := ThermodynamicState(p=p, h=h);
 	end setState_phX;
 
 	redeclare function setState_psX
-		"Return thermodynamic state as function of p, s and composition X or Xi"
+		"Return thermodynamic state from p, s, and X or Xi"
 		extends Modelica.Icons.Function;
 		input AbsolutePressure p "Pressure";
 		input SpecificEntropy s "Specific entropy";
 		input MassFraction X[:]=reference_X "Mass fractions";
-		output ThermodynamicState state "Thermodynamic state record";
+	output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p, T=T_s(s));
+		state := ThermodynamicState(p=p, h=h_s(s));
 	end setState_psX;
 
 	redeclare function setState_dTX
-		"Return thermodynamic state as function of d, T and composition X or Xi"
+		"Return thermodynamic state from d, T, and X or Xi"
 		extends Modelica.Icons.Function;
-		input Density d "Density";
-		input Temperature T "Temperature";
+		input Density d "Pressure";
+		input Temperature T "Specific entropy";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p_rho(d), T=T);
-		assert(false,"no inverse functions");
+		state := ThermodynamicState(p=p_rho(d), h=h_T(T));
 	end setState_dTX;
 
 	redeclare function extends pressure "Return pressure"
@@ -150,31 +149,31 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 
 	redeclare function extends temperature "Return temperature"
 	algorithm
-		T := state.T;
+		T := T_h(state.h);
 		annotation (Inline=true);
 	end temperature;
 
 	redeclare function extends specificEnthalpy "Return specific enthalpy"
 	algorithm
-		h := h_T(state.T);
+		h := state.h;
 		annotation (Inline=true);
 	end specificEnthalpy;
 
 	redeclare function extends density "Return density"
 	algorithm
-		d := rho_T(state.T);
+		d := rho_T(T_h(state.h));
 		annotation (Inline=true);
 	end density;
 
 	redeclare function extends specificInternalEnergy "Return specific internal energy"
 	algorithm
-		u := h_T(state.T) - state.p / rho_T(state.T);
+		u := state.h - state.p / rho_T(T_h(state.h));
 		annotation (Inline=true);
 	end specificInternalEnergy;
 
 	redeclare function extends thermalConductivity "Return thermal conductivity"
 	algorithm
-		lambda := lamda_T(state.T);
+		lambda := lamda_T(T_h(state.h));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -182,7 +181,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 
 	redeclare function extends specificEntropy "Return specific entropy"
 	algorithm
-		s := s_T(state.T);
+		s := s_T(T_h(state.h));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -207,7 +206,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 	redeclare function extends specificHeatCapacityCp
 		"Return specific heat capacity at constant pressure"
 	algorithm
-		cp := cp_T(state.T);
+		cp := cp_T(T_h(state.h));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -216,7 +215,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 	redeclare function extends specificHeatCapacityCv
 		"Return specific heat capacity at constant volume"
 	algorithm
-		cv := cp_T(state.T); // for a solid substance: cp is almost equal to cv
+		cv := cp_T(T_h(state.h)); // for a solid substance: cp is almost equal to cv
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -234,7 +233,7 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 	redeclare function extends density_derT_p
 		"Return density derivative w.r.t. temperature at constant pressure"
 	algorithm
-		ddTp := drho_dT_T(state.T);
+		ddTp := drho_dT_T(T_h(state.h));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -255,4 +254,4 @@ package CarboHSP_pT "Solid CarboHSP particle model, explicit in p and T"
 		<p style=\"margin-left: 30px;\">Siegel, N.P. et al., 'The Development of Direct Absorption and Storage Media for Falling Particle Solar Central Receivers', <i>Journal of Solar Energy Engineering </i> 137 (2015) 041003. Retrieved from https://bit.ly/2UMc3lx</p>
 		<p style=\"margin-left: 30px;\">CARBO Company's website. Retreived from https://bit.ly/2GbWHTM</p>
 		</html>"));
-end CarboHSP_pT;
+end CarboHSP_ph;
