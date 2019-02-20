@@ -6,6 +6,6 @@ function rho_T "Density of solid CarboHSP particle as a function of temperature"
 protected
 	Modelica.SIunits.Temp_C T_C = Modelica.SIunits.Conversions.to_degC(T) "Temperature in degree Celsius";
 algorithm
-	rho := 2e3; // Constant density
+	rho := 2e3; // Constant bulk density
 	annotation(derivative=rho_T_der);
 end rho_T;

@@ -1,5 +1,5 @@
 within SolarTherm.Media.SolidParticles;
-package CarboHSP_ph "Solid CarboHSP particle model, explicit in p and h"
+package CarboHSP_ph "Solid CarboHSP 40/70 particle model, explicit in p and h"
 
 	/* The statement below extends from PartialMedium and sets some
 		package constants. Provide values for these constants
@@ -10,7 +10,7 @@ package CarboHSP_ph "Solid CarboHSP particle model, explicit in p and h"
 
 	extends Modelica.Media.Interfaces.PartialMedium(
 		ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
-		final mediumName="CARBO HSP 20/40",
+		final mediumName="CARBO HSP 40/70",
 		final substanceNames={"Al2O3", "SiO2", "Fe2O3", "TiO2", "other"}, // Molar fractions: 83%, 5%, 7%, 3.5% and 1.5%
 		final singleState=false,
 		final reducedX=true,
@@ -250,6 +250,7 @@ package CarboHSP_ph "Solid CarboHSP particle model, explicit in p and h"
 		<li><b><span style=\"font-family: Arial,sans-serif;\">Explicit for pressure and temperature. </span></b></li>
 </ul>
 		<p><b><span style=\"font-family: Arial,sans-serif;\">References</span></b> </p>
+		<p style=\"margin-left: 30px;\">Albrecht, K.J. and Ho, C.K, 'Design and operating considerations for a shell-and-plate, moving packed-bed, particle-to-sCO2 heat exchanger', <i>Solar Energy </i> 178 (2019) 331-340. Retrieved from https://bit.ly/2GbWHTM</p>
 		<p style=\"margin-left: 30px;\">Siegel, N.P. et al., 'Development and Evaluation of a Prototype Solid Particle Receiver: On-Sun Testing and Model Validation', <i>Journal of Solar Energy Engineering </i> 132 (2010) 021008. Retrieved from https://bit.ly/2RFgEUz</p>
 		<p style=\"margin-left: 30px;\">Siegel, N.P. et al., 'The Development of Direct Absorption and Storage Media for Falling Particle Solar Central Receivers', <i>Journal of Solar Energy Engineering </i> 137 (2015) 041003. Retrieved from https://bit.ly/2UMc3lx</p>
 		<p style=\"margin-left: 30px;\">CARBO Company's website. Retreived from https://bit.ly/2GbWHTM</p>
