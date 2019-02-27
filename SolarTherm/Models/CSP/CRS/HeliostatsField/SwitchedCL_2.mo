@@ -24,7 +24,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-d
 	SI.Time t_con_c_next "Time of concentrator next cool-down event";
 	Real fr_dfc[nelem](each min=0, each max=1) "Target energy fraction at the defocused state";
 
-	OptEff oeff(nelem=nelem);
+	OptEff oeff(nelem=nelem, orient_north=orient_north);
 
 	SolarTherm.Utilities.Transition.Ramp ramp_up_con(ramp_order=ramp_order, t_dur= t_con_on_delay, up=true);
 	SolarTherm.Utilities.Transition.Ramp ramp_down_con(ramp_order=ramp_order, t_dur= t_con_off_delay, up=false);

@@ -78,12 +78,13 @@ model FluidSystem
 
 	SolarTherm.Models.CSP.CRS.HeliostatsField.SwitchedCL CL(
 		redeclare model OptEff=SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE(alt_fixed=45),
+		orient_north=wea.orient_north,
 		A=A_col
 		);
 
 	SolarTherm.Models.CSP.CRS.Receivers.PlateRC RC(
 		redeclare package Medium=MedRec,
-		A=A_rec, em=em_steel, h_th=h_th_rec);
+		A=A_rec, em=em_steel, ab=em_steel, h_th=h_th_rec); // (em used for absorptivity)
 
 	SolarTherm.Models.Fluid.Pumps.IdealPump pmp_rec(
 		redeclare package Medium=MedRec,

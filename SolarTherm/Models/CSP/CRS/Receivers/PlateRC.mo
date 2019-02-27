@@ -8,6 +8,7 @@ model PlateRC "Single element plate receiver with fluid interface"
 
 	parameter SI.Area A "Area of aperture";
 	parameter Real em "Emissivity";
+	parameter Real ab "Absorptivity";
 	parameter SI.CoefficientOfHeatTransfer h_th "Heat transfer coeff with env";
 
 	replaceable model FlowModel =
@@ -53,7 +54,7 @@ equation
 	R_loss = em*CN.sigma*A*(T_avg^4 - wbus.Tdry^4);
 
 	if door_open then
-		Q_flow + Q_flow_loss + R_loss = em*R[1]; // (em used for absorptivity)
+		Q_flow + Q_flow_loss + R_loss = ab*R[1];
 	else
 		//Q_flow = 0;
 		port_b.h_outflow = inStream(port_a.h_outflow);
