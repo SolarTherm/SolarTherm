@@ -28,6 +28,8 @@ PS10_Bladed
 PS10_Bladed*.[ch]
 SimpleResistiveStorage
 SimpleResistiveStorage*.[ch]
+SimpleParticleSystem
+SimpleParticleSystem*.[ch]
 SolarTherm_*.[ch]
 SolarTherm_*.libs
 *.xml

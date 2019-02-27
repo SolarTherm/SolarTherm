@@ -8,7 +8,7 @@ block SwitchedCL "Collector that can be switched on/off sun"
 
 	input Boolean track "Set to true to start tracking";
 
-	OptEff oeff(nelem=nelem);
+	OptEff oeff(nelem=nelem, orient_north=orient_north);
 equation
 	connect(wbus, oeff.wbus);
 	for i in 1:nelem loop
