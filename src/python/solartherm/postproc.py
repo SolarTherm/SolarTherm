@@ -260,7 +260,7 @@ class SimResultElec(SimResult):
 		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 
 		C_cap = C_cap_v[0] * 1e-3 # Total capital investment (TCI) [k$]
-		C_cap_annul = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
+		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
 		C_year = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total operational costs [k$/year]
 
 		C_cap_bd_n = ['Solar field', 'Tower', 'Receiver', 'Storage', 'PB', 'BOP', 'Land'] # Capital cost components name
@@ -271,11 +271,11 @@ class SimResultElec(SimResult):
 		C_op_bd_u = 'k$/year' # Operational cost components unit
 		C_op_bd_v = [om_y_v[0]*1e-3, om_p_v[0]*epy*1e-3] # Operational cost breakdown [k$/year]
 
-		C_annul_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
-		C_annul_bd_u = 'k$/year' # Annualised cost breakdown unit
-		C_annul_bd_v = [C_cap_annul, C_year] # Annualised cost breakdown [k$/year]
+		C_ann_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
+		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [k$/year]
 
-		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_annul_bd_n, C_annul_bd_u, C_annul_bd_v
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
 
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
@@ -362,7 +362,7 @@ class SimResultFuel(SimResult):
 		C_op_v = C_water_v + C_algae_v + C_H2_v + C_CO2_v - C_O2_v + C_elec_v # Operating costs [$/year]
 
 		C_cap = C_cap_v[0] * 1e-6 # Total capital investment (TCI) [M$]
-		C_cap_annul = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [M$/year]
+		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [M$/year]
 		C_year = (C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1]) * 1e-6 # Total operational costs [M$/year]
 
 		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land'] # Capital cost components name
@@ -374,11 +374,11 @@ class SimResultFuel(SimResult):
 		C_op_bd_v = [C_labor_v[0]*1e-6, C_catalyst_v[0]*1e-6, C_om_v[0]*1e-6, C_water_v[-1]*1e-6,
 			C_algae_v[-1]*1e-6, C_H2_v[-1]*1e-6, C_CO2_v[-1]*1e-6, C_elec_v[-1]*1e-6] # Operational cost breakdown [M$/year]
 
-		C_annul_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
-		C_annul_bd_u = 'M$/year' # Annualised cost breakdown unit
-		C_annul_bd_v = [C_cap_annul, C_year] # Annualised cost breakdown [M$/year]
+		C_ann_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_ann_bd_u = 'M$/year' # Annualised cost breakdown unit
+		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [M$/year]
 
-		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_annul_bd_n, C_annul_bd_u, C_annul_bd_v
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
 
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']
