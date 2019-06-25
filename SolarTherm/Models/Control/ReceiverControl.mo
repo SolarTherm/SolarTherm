@@ -4,6 +4,7 @@ model ReceiverControl
   parameter SI.Temperature T_ref=from_degC(570) "Setpoint of temperature";
   parameter SI.MassFlowRate m_flow_max=1400 "Maximum mass flow rate";
   parameter SI.MassFlowRate m_flow_min=0 "Mass flow rate when control off";
+  parameter Real L_on = 30 "Level of start discharge";
   parameter Real L_off=10 "Level of stop discharge";
   parameter Real L_df_on=99 "Level of start defocus";
   parameter Real L_df_off=96 "Level of stop defocus";
