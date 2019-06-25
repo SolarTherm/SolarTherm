@@ -1,5 +1,5 @@
 within examples;
-model Reference_1_Scalable
+model Reference_2
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;
 	import SI = Modelica.SIunits;
@@ -58,7 +58,7 @@ model Reference_1_Scalable
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 
-	parameter Real ar_rec = 18.67/15 "Height to diameter aspect ratio of cavity receiver aperture";
+	parameter Real ar_rec = 18.67/15 "Height to diameter aspect ratio of receiver aperture";
 
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
@@ -187,7 +187,7 @@ model Reference_1_Scalable
 	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
-	parameter SI.Diameter D_tower = 20 "Tower diameter"; //TODO This is just a place holder. Tower height-to-diameter correlation to be added in future.
+	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.07 "Real discount rate";
@@ -531,4 +531,4 @@ initial equation
 	</ul>
 
 	</html>"));
-end Reference_1_Scalable;
+end Reference_2;
