@@ -153,7 +153,7 @@ model Reference_2
 	// Calculated Parameters
 	parameter SI.HeatFlowRate Q_flow_des =
 		if fixed_field then (if match_sam then R_des/((1 + rec_fr)*SM)
-			else R_des*(1 - rec_fr) / SM) else P_gross/eff_blk "Receiver Thermal power output at design";
+			else R_des*(1 - rec_fr) / SM) else P_gross/eff_blk "Heat to power block at design";
 
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
@@ -400,8 +400,9 @@ model Reference_2
 		nu_net = nu_net_blk,
 		T_in_ref = T_in_ref_blk,
 		T_out_ref = T_out_ref_blk,
-		Q_flow_ref = Q_flow_des) annotation(
-										Placement(transformation(extent = {{88, 4}, {124, 42}})));
+		Q_flow_ref = Q_flow_des,
+		redeclare model Cooling = Models.PowerBlocks.Cooling.SAM) annotation(
+										Placement(transformation(extent = {{88, 4}, {124, 42}}))); // TODO define "Models.PowerBlocks.Cooling.SAM2" at the beginning of the script.
 
 	// Price
 	SolarTherm.Models.Analysis.Market market(
