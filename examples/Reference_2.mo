@@ -102,6 +102,9 @@ model Reference_2
 	parameter Real tank_ar = 20/18.667 "storage aspect ratio";
 
 	// Power block
+	replaceable model Cycle = Models.PowerBlocks.Correlation.Rankine "Rankine cycle regression model";
+	replaceable model Cooling = Models.PowerBlocks.Cooling.SAM "PB cooling model";
+
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
 
 	parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
@@ -391,7 +394,7 @@ model Reference_2
 	Models.PowerBlocks.PowerBlockModel powerBlock(
 		W_des = P_gross,
 		enable_losses = blk_enable_losses,
-		redeclare model Cycle = Models.PowerBlocks.Correlation.Rankine,
+		redeclare model Cycle = Cycle,
 		nu_min = nu_min_blk,
 		external_parasities = external_parasities,
 		W_base = W_base_blk,
@@ -401,7 +404,7 @@ model Reference_2
 		T_in_ref = T_in_ref_blk,
 		T_out_ref = T_out_ref_blk,
 		Q_flow_ref = Q_flow_des,
-		redeclare model Cooling = Models.PowerBlocks.Cooling.SAM) annotation(
+		redeclare model Cooling = Cooling) annotation(
 										Placement(transformation(extent = {{88, 4}, {124, 42}}))); // TODO define "Models.PowerBlocks.Cooling.SAM2" at the beginning of the script.
 
 	// Price
@@ -409,7 +412,7 @@ model Reference_2
 		redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
 																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
-	// TODO Needs to be configured in instantiation if not const_dispatch
+	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
 	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	// Variables:
