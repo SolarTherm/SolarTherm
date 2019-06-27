@@ -3,8 +3,9 @@ DishSG4
 EnergySystem
 FluidSystem
 Reference_1
-Reference_2
 Reference_1_fluid
+Reference_2
+HighTemperatureSaltSystem
 SimpleSystem
 SolarFuelSystem
 SolarMethanolSystem
