@@ -36,13 +36,12 @@ model PowerBlockModel
      SolarTherm.Models.PowerBlocks.Correlation.Rankine constrainedby
     SolarTherm.Models.PowerBlocks.Correlation.Cycle
     annotation (Dialog(group="Regresion"),choicesAllMatching=true);
-  Cycle cycle(T_ND=T_ND, load=load);
-
+  Cycle cycle(T_in=T_in,load=load,final T_in_ref=T_in_ref);
   replaceable model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling constrainedby
     SolarTherm.Models.PowerBlocks.Cooling.Cooling
     annotation (Dialog(group="Cooling losses",enable = enable_losses),
       choicesAllMatching=true);
-  Cooling cool(T_amb=T_amb_internal, T_des=T_des);
+  Cooling cool(T_amb=T_amb_internal);
   Real load;
   SI.HeatFlowRate W_gross "Parasitic losses power";
   SI.HeatFlowRate W_loss "Parasitic losses power";
@@ -68,9 +67,6 @@ protected
   SI.SpecificEnthalpy h_out;
   parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
 
-  parameter SI.Temperature Tsat_ref=Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_bo);
-
-  Real T_ND;
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
   parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);
@@ -96,10 +92,7 @@ equation
     parasities_internal=0;
   end if;
 
-  //cycle.T_ND=T_ND;
-
   logic=load>nu_min;
-  T_ND=(T_in-Tsat_ref)/(T_in_ref-Tsat_ref);
   h_in=inStream(fluid_a.h_outflow);
   h_out=fluid_b.h_outflow;
   h_out=fluid_a.h_outflow;
