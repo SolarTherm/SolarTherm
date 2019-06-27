@@ -179,7 +179,8 @@ model Reference_1
 		external_parasities=true,
 		W_base=0.0055*111e6,
 		p_bo=10000000,
-		T_des=316.15)
+		T_des=316.15,
+		redeclare model Cooling = Models.PowerBlocks.Cooling.SAM(T_des=316.15))
 		annotation (Placement(transformation(extent={{88,4},{124,42}})));
 
 	Modelica.Blocks.Sources.RealExpression Wspd_input(y=data.Wspd) annotation(Placement(transformation(extent={{-140,20},

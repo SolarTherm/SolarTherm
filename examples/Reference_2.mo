@@ -394,7 +394,7 @@ model Reference_2
 	Models.PowerBlocks.PowerBlockModel powerBlock(
 		W_des = P_gross,
 		enable_losses = blk_enable_losses,
-		redeclare model Cycle = Cycle,
+		redeclare model Cycle = Cycle(p_bo=p_blk),
 		nu_min = nu_min_blk,
 		external_parasities = external_parasities,
 		W_base = W_base_blk,
@@ -404,7 +404,7 @@ model Reference_2
 		T_in_ref = T_in_ref_blk,
 		T_out_ref = T_out_ref_blk,
 		Q_flow_ref = Q_flow_des,
-		redeclare model Cooling = Cooling) annotation(
+		redeclare model Cooling = Cooling(T_des=blk_T_amb_des)) annotation(
 										Placement(transformation(extent = {{88, 4}, {124, 42}}))); // TODO define "Models.PowerBlocks.Cooling.SAM2" at the beginning of the script.
 
 	// Price
