@@ -12,8 +12,8 @@ Reference_1_fluid
 Reference_1_fluid*.[ch]
 Reference_2
 Reference_2*.[ch]
-HighTemperatureSaltSystem
-HighTemperatureSaltSystem*.[ch]
+SaltSCO2System
+SaltSCO2System*.[ch]
 ASTRI100
 ASTRI100*.[ch]
 EnergySystem

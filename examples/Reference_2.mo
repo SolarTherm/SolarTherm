@@ -405,7 +405,7 @@ model Reference_2
 		T_out_ref = T_out_ref_blk,
 		Q_flow_ref = Q_flow_des,
 		redeclare model Cooling = Cooling(T_des=blk_T_amb_des)) annotation(
-										Placement(transformation(extent = {{88, 4}, {124, 42}}))); // TODO define "Models.PowerBlocks.Cooling.SAM2" at the beginning of the script.
+										Placement(transformation(extent = {{88, 4}, {124, 42}})));
 
 	// Price
 	SolarTherm.Models.Analysis.Market market(

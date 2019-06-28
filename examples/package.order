@@ -5,7 +5,7 @@ FluidSystem
 Reference_1
 Reference_1_fluid
 Reference_2
-HighTemperatureSaltSystem
+SaltSCO2System
 SimpleSystem
 SolarFuelSystem
 SolarMethanolSystem
