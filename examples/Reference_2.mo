@@ -93,8 +93,8 @@ model Reference_2
 
 	parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
 
-	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
-	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
 
 	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
