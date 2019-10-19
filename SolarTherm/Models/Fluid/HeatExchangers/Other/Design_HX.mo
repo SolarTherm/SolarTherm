@@ -2,31 +2,35 @@ within SolarTherm.Models.Fluid.HeatExchangers;
 function Design_HX
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
-  import MA = Modelica.Math;
-  import SolarTherm.{Models,Media};
-  import Modelica.Math.Vectors;
+  import Modelica.Math;
   
-  input SI.HeatFlowRate Q_d "Design Heat Flow Rate";
-  input SI.Temperature T_Na1 "Desing Sodium Hot Fluid Temperature";
-  input SI.Temperature T_MS1 "Desing Molten Salt Cold Fluid Temperature";
-  input SI.Temperature T_MS2 "Desing Molten Salt Hot Fluid Temperature";
   input SI.Length d_o "Outer Tube diameter";
   input SI.Length L "Tube length";
   input Integer N_p "Number of passes";
   input Integer layout "Tube layout";
   // if layout=1(one) is square, while if layout=2(two) it is triangular //
-  input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
-  input SI.Pressure p_Na1 "Sodium Inlet Pressure";
-  input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
+  input SI.Pressure P_shell "Shell-side pressure";
+  input SI.Pressure P_tubes "Tube-side pressure";
+  input Real UA(unit= "W/K") "UA";
+  input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
+  input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
   input Real c_e(unit = "€/year") "Power cost";
   input Real r "Real interest rate";
+  input Real CEPCI_18 "CEPCI 2018";
   input Real H_y(unit= "h") "Operating hours";
+  input Real M_conv(unit= "€/USD") "Conversion factor";
+  input SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
+  input SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
+  input SI.Density rho_Na "Sodium density @mean temperature";
+  input SI.Density rho_MS "Molten Salts density @mean temperature";
+  input SI.DynamicViscosity mu_Na "Sodium dynamic viscosity @mean temperature";
+  input SI.DynamicViscosity mu_MS "Molten Salts  dynamic viscosity @mean temperature";
+  input SI.DynamicViscosity mu_Na_wall "Sodium dynamic viscosity @wall temperature";
+  input SI.DynamicViscosity mu_MS_wall "Molten salts dynamic viscosity @wall temperature";
+  input SI.SpecificHeatCapacity cp_Na "Sodium specific heat capacity @mean temperature";
+  input SI.SpecificHeatCapacity cp_MS "Molten Salts specific heat capacity @mean temperature";
 
-  output SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
-  output SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
-  output Real F(unit = "") "Temperature correction factor";
-  output SI.ThermalConductance UA "UA";
-  output Integer N_t "Number of tubes";
+  output Real N_t "Number of tubes";
   output SI.CoefficientOfHeatTransfer U_calc "Heat tranfer coefficient";
   output SI.Area A_tot "Exchange Area";
   output SI.Pressure Dp_tube "Tube-side pressure drop";
@@ -39,8 +43,7 @@ function Design_HX
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
   output Real C_BEC(unit= "€")  "Bare cost @2018";
   output Real C_pump(unit= "€")  "Annual pumping cost";
-  output Real ex_eff(unit="") "HX Exergetic Efficiency";
-  output Real en_eff(unit="") "HX Energetic Efficiency";
+
   
   protected
   parameter SI.Length t_tube=2.54e-3 "Tube thickness";
@@ -53,15 +56,13 @@ function Design_HX
   parameter SI.Length t_b=t_tube "Baffle thickness";
   parameter SI.Length P_t=1.25*d_o "Tube pitch";
   parameter Real CEPCI_01=397 "CEPCI 2001";
-  parameter Real CEPCI_18=603.1 "CEPCI 2018";
-  parameter Real M_conv(unit="€/USD")=0.9175 "Conversion factor";
   parameter Real eta_pump=0.75 "Pump efficiency";
   parameter SI.ThermalInsulance R_ss=8.808e-5 "Fouling resistance";
   parameter Integer n=20 "Operating years";
   parameter SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity";
-     
+  
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
-  Integer Tep(start=7962) "Tubes for each pass";
+  Real Tep(start=7962) "Tubes for each pass";
   SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
   SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
   Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
@@ -128,96 +129,14 @@ function Design_HX
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
   
-  //Fluid properties
-  SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
-  SI.Temperature Tm_MS "Mean Molten Salts Fluid Temperature";
-  SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
-  SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
-  SI.Density rho_Na "Sodium density @mean temperature";
-  SI.Density rho_MS "Molten Salts density @mean temperature";
-  SI.DynamicViscosity mu_Na "Sodium dynamic viscosity @mean temperature";
-  SI.DynamicViscosity mu_MS "Molten Salts  dynamic viscosity @mean temperature";
-  SI.DynamicViscosity mu_Na_wall "Sodium dynamic viscosity @wall temperature";
-  SI.DynamicViscosity mu_MS_wall "Molten salts dynamic viscosity @wall temperature";
-  SI.SpecificHeatCapacity cp_Na "Sodium specific heat capacity @mean temperature";
-  SI.SpecificHeatCapacity cp_MS "Molten Salts specific heat capacity @mean temperature";
-  SI.SpecificEnthalpy h_Na1 "Sodium specific enthalpy @inlet temperature";
-  SI.SpecificEnthalpy h_Na2 "Sodium specific enthalpy @outlet temperature";
-  SI.SpecificEntropy s_Na1 "Sodium specific entropy @inlet temperature";
-  SI.SpecificEntropy s_Na2 "Sodium specific entropy @outlet temperature";
-  SI.SpecificEnthalpy h_MS1 "Molten Salt specific enthalpy @inlet temperature";
-  SI.SpecificEnthalpy h_MS2 "Molten Salt specific enthalpy @outlet temperature";
-  SI.SpecificEntropy s_MS1 "Molten Salt specific entropy @inlet temperature";
-  SI.SpecificEntropy s_MS2 "Molten Salt specific entropy @outlet temperature";
-  replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
-  Medium1.ThermodynamicState state_mean_Na;
-  Medium1.ThermodynamicState state_input_Na;
-  Medium1.ThermodynamicState state_output_Na;
-  Medium2.ThermodynamicState state_mean_MS;
-  Medium2.ThermodynamicState state_wall_MS;
-  Medium2.ThermodynamicState state_input_MS;
-  Medium2.ThermodynamicState state_output_MS;
-  //Temperature differences
-  SI.TemperatureDifference DT1 "Sodium-Molten Salt temperature difference 1";
-  SI.TemperatureDifference DT2 "Sodium-Molten Salt temperature difference 2";
-  SI.TemperatureDifference LMTD "Logarithmic mean temperature difference";
-  //Shell and tube pressures
-  SI.Pressure P_shell "Shell-side pressure";
-  SI.Pressure P_tubes "Tube-side pressure";
-  
 algorithm
-  P_shell:=p_MS1;
-  P_tubes:=p_Na1;
-  Tm_Na:=(T_Na1+T_Na2)/2;
-  Tm_MS:=(T_MS1+T_MS2)/2;
-  //Sodium properties
-  state_mean_Na:=Medium1.setState_pTX(p_Na1, Tm_Na);
-  state_input_Na:=Medium1.setState_pTX(p_Na1, T_Na1);
-  state_output_Na:=Medium1.setState_pTX(p_Na1, T_Na2);
-  rho_Na:=Medium1.density(state_mean_Na);
-  cp_Na:=Medium1.specificHeatCapacityCp(state_mean_Na);
-  mu_Na:=Medium1.dynamicViscosity(state_mean_Na);
-  mu_Na_wall:=mu_Na;
-  k_Na:=Medium1.thermalConductivity(state_mean_Na);
-  h_Na1:=Medium1.specificEnthalpy(state_input_Na);
-  h_Na2:=Medium1.specificEnthalpy(state_output_Na);
-  s_Na1:=Medium1.specificEntropy(state_input_Na);
-  s_Na2:=Medium1.specificEntropy(state_output_Na);
-  //Chloride Salt properties
-  state_mean_MS:=Medium2.setState_pTX(Medium2.p_default, Tm_MS);
-  state_wall_MS:=Medium2.setState_pTX(Medium2.p_default, Tm_Na);
-  state_input_MS:=Medium2.setState_pTX(p_Na1, T_MS1);
-  state_output_MS:=Medium2.setState_pTX(p_Na1, T_MS2);
-  rho_MS:=Medium2.density(state_mean_MS);
-  cp_MS:=Medium2.specificHeatCapacityCp(state_mean_MS);
-  mu_MS:=Medium2.dynamicViscosity(state_mean_MS);
-  mu_MS_wall:=Medium2.dynamicViscosity(state_wall_MS);
-  k_MS:=Medium2.thermalConductivity(state_mean_MS);
-  h_MS1:=Medium2.specificEnthalpy(state_input_MS);
-  h_MS2:=Medium2.specificEnthalpy(state_output_MS);
-  s_MS1:=Medium2.specificEntropy(state_input_MS);
-  s_MS2:=Medium2.specificEntropy(state_output_MS); 
-  DT1:=T_Na1-T_MS2;
-  DT2:=T_Na2-T_MS1;
-  LMTD:=(DT1-DT2)/MA.log(DT1 / DT2);
-  m_flow_Na:=Q_d/(cp_Na*(T_Na1-T_Na2));
-  m_flow_MS:=Q_d/(cp_MS*(T_MS2 - T_MS1));
-  F:=TempCorrFactor(T_Na1=T_Na1, T_Na2=T_Na2, T_MS1=T_MS1, T_MS2=T_MS2);
-  UA:=Q_d/(F*LMTD);
-  ex_eff:=(m_flow_MS*((h_MS2-h_MS1)-(25+273.15)*cp_MS*(MA.log(T_MS2/T_MS1))))/(m_flow_Na*((h_Na1-h_Na2)-(25+273.15)*cp_Na*(MA.log(T_Na1/T_Na2))));
-  if (cp_Na*m_flow_Na)>(cp_MS*m_flow_MS) then
-    en_eff:=(T_MS2-T_MS1)./(T_Na1-T_MS1);
-    else
-    en_eff:=(T_Na1-T_Na2)./(T_Na1-T_MS1);
-  end if;
   U_calc_prev:=U_guess;
   condition:=10;
   
   while noEvent(condition>tol) loop
   A_tot:=UA/U_calc_prev;
-  N_t:=integer(ceil(A_tot/A_st));
-  Tep:=integer(ceil(N_t/N_p));
+  N_t:=ceil(A_tot/A_st);
+  Tep:=ceil(N_t/N_p);
   N_t:=Tep*N_p;
   A_cs:=CN.pi/4*d_i^2;
   A_cs_tot:=Tep*A_cs;

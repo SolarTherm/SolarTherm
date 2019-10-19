@@ -1,5 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-function Design_HX
+function Design_HX_2
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import MA = Modelica.Math;
@@ -26,7 +26,7 @@ function Design_HX
   output SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
   output Real F(unit = "") "Temperature correction factor";
   output SI.ThermalConductance UA "UA";
-  output Integer N_t "Number of tubes";
+  output Real N_t "Number of tubes";
   output SI.CoefficientOfHeatTransfer U_calc "Heat tranfer coefficient";
   output SI.Area A_tot "Exchange Area";
   output SI.Pressure Dp_tube "Tube-side pressure drop";
@@ -61,7 +61,7 @@ function Design_HX
   parameter SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity";
      
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
-  Integer Tep(start=7962) "Tubes for each pass";
+  Real Tep(start=7962) "Tubes for each pass";
   SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
   SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
   Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
@@ -216,8 +216,8 @@ algorithm
   
   while noEvent(condition>tol) loop
   A_tot:=UA/U_calc_prev;
-  N_t:=integer(ceil(A_tot/A_st));
-  Tep:=integer(ceil(N_t/N_p));
+  N_t:=ceil(A_tot/A_st);
+  Tep:=ceil(N_t/N_p);
   N_t:=Tep*N_p;
   A_cs:=CN.pi/4*d_i^2;
   A_cs_tot:=Tep*A_cs;
@@ -407,4 +407,4 @@ end while;
   f:=(r*(1+r)^n)/((1+r)^n-1);
   TAC:=f*C_BEC+C_pump; 
    
-end Design_HX;
+end Design_HX_2;

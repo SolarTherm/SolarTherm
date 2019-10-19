@@ -1,5 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-model HE_2
+model HE
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import MA = Modelica.Math;
@@ -21,25 +21,39 @@ model HE_2
   parameter SI.Temperature Tm_MS = (T_MS1 + T_MS2) / 2 "Mean Molten Salts Fluid Temperature";
   
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  parameter Medium1.ThermodynamicState state_mean_Na = Medium1.setState_pTX(Medium1.p_default, Tm_Na);
+  parameter Medium1.ThermodynamicState state_mean_Na = Medium1.setState_pTX(p_Na1, Tm_Na);
+  parameter Medium1.ThermodynamicState state_input_Na = Medium1.setState_pTX(p_Na1, T_Na1);
+  parameter Medium1.ThermodynamicState state_output_Na = Medium1.setState_pTX(p_Na1, T_Na2);
   parameter SI.Density rho_Na = Medium1.density(state_mean_Na) "Sodium density @mean temperature";
-  parameter SI.SpecificHeatCapacity cp_Na = Medium1.specificHeatCapacityCp(state_mean_Na) "Sodium specific     heat capacity @mean temperature";
+  parameter SI.SpecificHeatCapacity cp_Na = Medium1.specificHeatCapacityCp(state_mean_Na) "Sodium specific heat capacity @mean temperature";
   parameter SI.DynamicViscosity mu_Na = Medium1.dynamicViscosity(state_mean_Na) "Sodium dynamic viscosity @mean temperature";
   parameter SI.DynamicViscosity mu_Na_wall = mu_Na "Sodium dynamic viscosity @wall temperature";
   parameter SI.ThermalConductivity k_Na = Medium1.thermalConductivity(state_mean_Na) "Sodium Conductivity @mean temperature";
+  parameter SI.SpecificEnthalpy h_Na1 = Medium1.specificEnthalpy(state_input_Na) "Sodium specific enthalpy @inlet temperature";
+  parameter SI.SpecificEnthalpy h_Na2 = Medium1.specificEnthalpy(state_output_Na) "Sodium specific enthalpy @outlet temperature";
+  parameter SI.SpecificEntropy s_Na1 = Medium1.specificEntropy(state_input_Na) "Sodium specific entropy @inlet temperature";
+  parameter SI.SpecificEntropy s_Na2 = Medium1.specificEntropy(state_output_Na) "Sodium specific entropy @outlet temperature";
   
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   parameter Medium2.ThermodynamicState state_mean_MS = Medium2.setState_pTX(Medium2.p_default, Tm_MS);
   parameter Medium2.ThermodynamicState state_wall_MS = Medium2.setState_pTX(Medium2.p_default, Tm_Na);
+  parameter Medium2.ThermodynamicState state_input_MS = Medium2.setState_pTX(p_Na1, T_MS1);
+  parameter Medium2.ThermodynamicState state_output_MS = Medium2.setState_pTX(p_Na1, T_MS2);
   parameter SI.Density rho_MS = Medium2.density(state_mean_MS) "Molten Salt density @mean temperature";
   parameter SI.SpecificHeatCapacity cp_MS = Medium2.specificHeatCapacityCp(state_mean_MS) "Molten Salt specific heat capacity @mean temperature";
   parameter SI.DynamicViscosity mu_MS = Medium2.dynamicViscosity(state_mean_MS) "Molten Salt dynamic viscosity @mean temperature";
   parameter SI.DynamicViscosity mu_MS_wall = Medium2.dynamicViscosity(state_wall_MS) "Molten Salt dynamic viscosity @wall temperature";
   parameter SI.ThermalConductivity k_MS = Medium2.thermalConductivity(state_mean_MS) "Molten Salt Conductivity @mean temperature";
+  parameter SI.SpecificEnthalpy h_MS1 = Medium2.specificEnthalpy(state_input_MS) "Molten Salt specific enthalpy @inlet temperature";
+  parameter SI.SpecificEnthalpy h_MS2 = Medium2.specificEnthalpy(state_output_MS) "Molten Salt specific enthalpy @outlet temperature";
+  parameter SI.SpecificEntropy s_MS1 = Medium2.specificEntropy(state_input_MS) "Molten Salt specific entropy @inlet temperature";
+  parameter SI.SpecificEntropy s_MS2 = Medium2.specificEntropy(state_output_MS) "Molten Salt specific entropy @outlet temperature";
   
   //Sweep Parameters
   parameter SI.Length d_o[10]={6.35e-3,9.53e-3,12.7e-3,15.88e-3,19.05e-3,22.23e-3,25.4e-3,31.75e-3,38.10e-3,50.8e-3}"Outer Tube Diameter";
+  //parameter SI.Length d_o[1]={50.8e-3}"Outer Tube Diameter";
   parameter SI.Length L[10]={2,4,6,8,10,12,14,16,18,20} "Tube Length";
+  //parameter SI.Length L[1]={8} "Tube Length";
   parameter Integer N_p[1]={4} "Tube passes number";
   parameter Integer layout[2]={1,2} "Tube layout";
   parameter Integer num_dim=4;
@@ -72,6 +86,8 @@ model HE_2
   Real C_BEC[dim_tot](unit = fill("€",dim_tot)) "Bare cost @2018";
   Real C_pump[dim_tot](unit = fill("€/year",dim_tot)) "Annual pumping cost";
   Real TAC[dim_tot](unit = fill("€/year",dim_tot)) "Total Annualized Cost";
+  Real ex_eff(unit="") "HX Exergetic Efficiency";
+  Real en_eff(unit="") "HX Energetic Efficiency";
   Integer result;
   
   //Optimal Values
@@ -101,6 +117,12 @@ equation
   DT2 = T_Na2 - T_MS1;
   LMTD = (DT1 - DT2) / MA.log(DT1 / DT2);
   F=TempCorrFactor(T_Na1=T_Na1, T_Na2=T_Na2, T_MS1=T_MS1, T_MS2=T_MS2);
+  ex_eff=(m_flow_MS*((h_MS2-h_MS1)-(25+273.15)*cp_MS*(MA.log(T_MS2/T_MS1))))/(m_flow_Na*((h_Na1-h_Na2)-(25+273.15)*cp_Na*(MA.log(T_Na1/T_Na2))));
+  if (cp_Na*m_flow_Na)>(cp_MS*m_flow_MS) then
+    en_eff=(T_MS2-T_MS1)./(T_Na1-T_MS1);
+    else
+    en_eff=(T_Na1-T_Na2)./(T_Na1-T_MS1);
+  end if;
   
 algorithm
   iter:=1;
@@ -137,4 +159,4 @@ algorithm
   N_p_opt:=integer(vec[result,3]);
   layout_opt:=integer(vec[result,4]);
   
-end HE_2;
+end HE;
