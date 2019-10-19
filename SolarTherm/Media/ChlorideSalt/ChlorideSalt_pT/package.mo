@@ -143,7 +143,7 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 
 	redeclare function extends specificEnthalpy "Return specific enthalpy"
 	algorithm
-		h := h_T(state.T);
+		h := h_T(state.T,state.p);
 		annotation (Inline=true);
 	end specificEnthalpy;
 

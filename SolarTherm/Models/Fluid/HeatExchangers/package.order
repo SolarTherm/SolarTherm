@@ -4,6 +4,9 @@ HeatExchanger
 ResistiveHeater
 SimpleHeatExchanger
 Design_HX
+Design_HX_wf
 HE
-HE_2
+Transient_HX
 TempCorrFactor
+HTCs
+Dp_losses
