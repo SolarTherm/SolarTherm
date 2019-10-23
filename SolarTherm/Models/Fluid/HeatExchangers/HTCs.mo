@@ -36,12 +36,12 @@ function HTCs
   Integer Tep(start=7962) "Tubes for each pass";
   SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
   SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
-  Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
-  Real Re_Na(start=23551.4178716723) "Na Reynolds Number";
-  Real Pr_Na(unit= "") "Na Prandtl Number";
-  Real Pe_Na(unit= "") "Na Peclet Number";
+  Real M_Na(unit= "kg/m2/s",start=287.349397220073,min=0) "Mass velocity of Na (tube-side)";
+  Real Re_Na(start=23551.4178716723,min=0) "Na Reynolds Number";
+  Real Pr_Na(unit= "",min=0) "Na Prandtl Number";
+  Real Pe_Na(unit= "",min=0) "Na Peclet Number";
   Real A(unit= "") "Correlation coefficient";
-  Real Nu_Na(unit= "") "Na Nusselt number";
+  Real Nu_Na(unit= "",min=0) "Na Nusselt number";
   
   //Shell-side heat transfer coefficient:
   SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
@@ -50,7 +50,7 @@ function HTCs
   SI.DynamicViscosity mu_MS_wall "Molten salts dynamic viscosity @wall temperature";
   SI.SpecificHeatCapacity cp_MS "Molten Salts specific heat capacity @mean temperature";
   SI.Length D_s "Shell Diameter";
-  SI.Velocity v_max_MS "Molten Salt velocity in shell";
+  SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
   parameter SI.Length P_t=1.25*d_o "Tube pitch";
   parameter Real B=0.25 "Baffle cut";
   SI.Length D_b(start=4.42) "Bundle diameter";
@@ -59,9 +59,9 @@ function HTCs
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
   SI.Length l_b "Baffle spacing";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
-  Real Re_MS(start=100) "MS Reynolds Number";
-  Real Pr_MS(unit= "") "MS Prandtl Number";
-  Real Nu_MS(unit= "") "MS Nusselt Number";
+  Real Re_MS(start=100,min=0) "MS Reynolds Number";
+  Real Pr_MS(unit= "",min=0) "MS Prandtl Number";
+  Real Nu_MS(unit= "",min=0) "MS Nusselt Number";
   Real aa(unit= "") "Correlation coefficient";
   Real mm(unit= "") "Correlation coefficient";
   SI.CoefficientOfHeatTransfer h_s_id "Ideal shell-side Heat tranfer coefficient";
@@ -97,6 +97,7 @@ algorithm
   Re_Na:=M_Na*d_i/mu_Na;
   Pr_Na:=mu_Na*cp_Na/k_Na;
   Pe_Na:=Re_Na*Pr_Na;
+  if Re_Na>0 then
     if Pe_Na<=1000 then
       A:=4.5;
     elseif Pe_Na>=2000 then
@@ -104,8 +105,11 @@ algorithm
     else
       A:=5.4-9e-4*Pe_Na;
     end if;
-  Nu_Na:=A+0.018*Pe_Na;
-  h_t:=Nu_Na*k_Na/d_i;
+    Nu_Na:=A+0.018*Pe_Na;
+    h_t:=Nu_Na*k_Na/d_i;
+  else
+    h_t:=0;
+  end if;
   
   //Shell-side heat transfer coefficient:
   rho_MS:=Medium2.density(state_mean_MS);
@@ -144,6 +148,7 @@ algorithm
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
   Pr_MS:=mu_MS*cp_MS/k_MS;
+  if Re_MS>0 then
     if layout==1 then
       if Re_MS<=300 then
          aa:=0.742;
@@ -188,9 +193,16 @@ algorithm
     end if;
   N_ss:=ceil(SS*N_c);
   J_B:=Modelica.Math.exp(-1.35*F_bp*(1-2*r_s)^(1/3));
-  h_s:=h_s_id*J_C*J_L*J_B;
+  h_s:=h_s_id*J_C*J_L*J_B;  
+  else
+    h_s:=0;
+  end if;
   
   //Global heat transfer coefficient:
+  if Re_Na==0 and Re_MS==0 then
+  U:=0;
+  else
   U:=(1/h_s+R_ss+1/h_t*d_o/d_i+d_o*0.5/k_wall*log(d_o/d_i))^(-1);
+  end if;
 
 end HTCs;

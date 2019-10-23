@@ -18,6 +18,9 @@ function Design_HX_wf
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
+  input SI.Length t_tube "Tube thickness";
+  input SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
+  input SI.Density rho_wall "HX material density";
   input Real c_e(unit = "€/year") "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
@@ -37,15 +40,14 @@ function Design_HX_wf
   output SI.Length D_s "Shell Diameter";
   output SI.Velocity v_Na "Sodium velocity in tubes";
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
+  output SI.Volume V_HX "Heat-Exchanger Total Volume";
+  output SI.Mass m_HX "Heat-Exchanger Total Mass";
   output Real C_BEC(unit= "€")  "Bare cost @2018";
   output Real C_pump(unit= "€")  "Annual pumping cost";
   output Real ex_eff(unit="") "HX Exergetic Efficiency";
   output Real en_eff(unit="") "HX Energetic Efficiency";
   
   protected
-  parameter SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity"; //Need to be updated with function
-  parameter SI.Length t_tube=2.54e-3 "Tube thickness"; //Need to be included as varibale in order to change and change it everywhere DP and HTCs
-  
   parameter SI.CoefficientOfHeatTransfer U_guess=1000 "Heat tranfer coefficient guess";
   parameter Real tol=0.01 "Heat transfer coefficient tollerance";
   Real condition "When condition";
@@ -67,6 +69,17 @@ function Design_HX_wf
   Real nn1(unit= "",start=2.263) "Correlation coefficient";
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
   SI.Length D_b(start=4.42) "Bundle diameter";
+  SI.Length D_s_out "Shell Outer Diameter";
+  
+  //Volume_and_Weight
+  SI.Mass m_Na "Mass of Sodium";
+  SI.Mass m_MS "Mass of Molten Salts";
+  SI.Mass m_material "Mass of HX material";
+  SI.Volume V_Na "Volume of Sodium";
+  SI.Volume V_MS "Volume of Molten Salt";
+  SI.Volume V_material "Volume of HX material";
+  SI.Volume V_min "Minimum HX Volume";
+  SI.Volume DV "Volume difference";
   
   //Cost Functions
   parameter Real CEPCI_01=397 "CEPCI 2001";
@@ -132,7 +145,6 @@ function Design_HX_wf
 
   
 algorithm
-
   Tm_Na:=(T_Na1+T_Na2)/2;
   Tm_MS:=(T_MS1+T_MS2)/2;
   
@@ -221,6 +233,19 @@ end while;
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*D_b)/995;
   D_s:=L_bb+D_b;
+  D_s_out:=D_s+0.01; //1cm external thickness
+  
+  V_min:=CN.pi/4*(D_s^2)*L;
+  V_Na:=CN.pi/4*(d_i^2)*L*N_t;
+  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L;
+  DV:=V_min-V_Na-V_MS;
+  V_material:=DV+(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_HX:=V_material+V_MS+V_Na;
+  
+  m_Na:=V_Na*rho_Na;
+  m_MS:=V_MS*rho_MS;
+  m_material:=V_material*rho_wall;
+  m_HX:=m_material+m_MS+m_Na;
   
   //Cost function
   P_shell:=p_MS1;
@@ -258,7 +283,7 @@ end while;
   B2:=1.66;
   if noEvent(A_tot>1000) then
     A_cost:=1000;    
-    elseif noEvent(A_tot>1000) then
+    elseif noEvent(A_tot<10) then
     A_cost:=10;    
     else
     A_cost:=A_tot;    

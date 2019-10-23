@@ -19,10 +19,10 @@ function Dp_losses
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
 
-  output SI.Pressure Dp_tube "Tube-side pressure drop";
-  output SI.Pressure Dp_shell "Shell-side pressure drop";
-  output SI.Velocity v_Na "Sodium velocity in tubes";
-  output SI.Velocity v_max_MS "Molten Salt velocity in shell";
+  output SI.Pressure Dp_tube(min=0) "Tube-side pressure drop";
+  output SI.Pressure Dp_shell(min=0) "Shell-side pressure drop";
+  output SI.Velocity v_Na(min=0) "Sodium velocity in tubes";
+  output SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
   
   protected
   //Tube Side  
@@ -32,8 +32,8 @@ function Dp_losses
   SI.DynamicViscosity mu_Na_wall "Sodium dynamic viscosity @wall temperature";
   SI.SpecificHeatCapacity cp_Na "Sodium specific heat capacity @mean temperature";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
-  Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
-  Real Re_Na(start=23551.4178716723) "Na Reynolds Number";
+  Real M_Na(unit= "kg/m2/s",start=287.349397220073,min=0) "Mass velocity of Na (tube-side)";
+  Real Re_Na(start=23551.4178716723,min=0) "Na Reynolds Number";
   Real j_f(unit= "") "Friction factor";
   Real m(unit= "") "Correlation coefficient";
   Integer Tep(start=7962) "Tubes for each pass";
@@ -57,7 +57,7 @@ function Dp_losses
   SI.Length D_s "Shell Diameter";
   SI.Length l_b "Baffle spacing";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
-  Real Re_MS(start=100) "MS Reynolds Number";
+  Real Re_MS(start=100,min=0) "MS Reynolds Number";
   SI.Length L_c(start=1.11251222030861) "Baffle length";
   Real F_c(unit= "") "Fraction of tubes in crossflow";
   Real N_c(start=90) "Number of crossflow rows";  
@@ -101,7 +101,11 @@ algorithm
     else
       m:=0.14;
     end if;
+  if Re_Na==0 then
+  Dp_tube:=0;
+  else
   Dp_tube:=N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m))*0.5*rho_Na*v_Na^2;
+  end if;
   
   //Shell-side heat transfer coefficient:
   rho_MS:=Medium2.density(state_mean_MS);
@@ -154,7 +158,7 @@ algorithm
            K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
       end if;
       else
-        if noEvent(Re_MS<=2300) then
+        if noEvent(Re_MS<2300) then
              K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
           //elseif Re_MS>2300 and Re_MS<2*10^6  then
           else
@@ -176,7 +180,11 @@ algorithm
   r_lm:=(S_sb+S_tb)/S_m;
   xx:=-0.15*(1+r_s)+0.8;
   R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
-  Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
   
+  if Re_MS==0 then
+  Dp_shell:=0;
+  else
+  Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
+  end if;
   
 end Dp_losses;
