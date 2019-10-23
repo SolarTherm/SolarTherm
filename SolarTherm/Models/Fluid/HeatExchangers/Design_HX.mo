@@ -18,6 +18,8 @@ function Design_HX
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
+  input SI.Length t_tube=2.54e-3 "Tube thickness";
+  input SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity";
   input Real c_e(unit = "€/year") "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
@@ -43,7 +45,6 @@ function Design_HX
   output Real en_eff(unit="") "HX Energetic Efficiency";
   
   protected
-  parameter SI.Length t_tube=2.54e-3 "Tube thickness";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
   parameter SI.CoefficientOfHeatTransfer U_guess=1000 "Heat tranfer coefficient guess";
   parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
@@ -58,7 +59,6 @@ function Design_HX
   parameter Real eta_pump=0.75 "Pump efficiency";
   parameter SI.ThermalInsulance R_ss=8.808e-5 "Fouling resistance";
   parameter Integer n=20 "Operating years";
-  parameter SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity";
      
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
   Integer Tep(start=7962) "Tubes for each pass";
