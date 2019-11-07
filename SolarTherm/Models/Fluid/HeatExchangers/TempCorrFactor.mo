@@ -17,7 +17,7 @@ protected
   Real R(unit = "") "Non-dimensional factor for F calculation";
   Real AA(unit = "") "Non-dimensional factor for F calculation";
   Real BB(unit = "") "Non-dimensional factor for F calculation";
-  parameter Real tol=1e-5;
+  parameter Real tol=1e-6;
   
 algorithm
   S := (T_Na2 - T_Na1) / (T_MS1 - T_Na1);

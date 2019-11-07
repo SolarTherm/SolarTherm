@@ -143,7 +143,7 @@ algorithm
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*D_b)/995;
   D_s:=L_bb+D_b;
-  l_b:=0.4*D_s;
+  l_b:=0.3*D_s;
   S_m:=l_b*(D_s-D_b+(D_b-d_o)*(P_t-d_o)/P_t);
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;

@@ -293,6 +293,9 @@ end while;
   C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
+  if (v_max_MS<0.5 or v_max_MS>1.5) or (v_Na<1 or v_Na>3) then
+  TAC:=10e10;
+  else
   TAC:=f*C_BEC+C_pump; 
-   
+  end if;
 end Design_HX_wf;

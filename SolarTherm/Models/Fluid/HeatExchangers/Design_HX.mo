@@ -355,7 +355,7 @@ end while;
   Dp_c:=N_c*K_f*0.5*rho_MS*v_max_MS^2;
   N:=ceil(L/(l_b+t_b)-1);
   S_w:=D_s^2/4*(acos(1-(2*L_c/D_s))-(1-(2*L_c/D_s))*(1-(1-(2*L_c/D_s))^2)^0.5)-N_t/8*(1-F_c)*CN.pi*d_o^2;
-  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS;
+  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS^2;
   S_b:=L_bb*l_b;
   R_B:=Modelica.Math.exp(-3.7*S_b/S_m*(1-r_s^(1/3)));
   R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
