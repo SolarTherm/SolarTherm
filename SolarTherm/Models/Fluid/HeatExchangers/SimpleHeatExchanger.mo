@@ -1,6 +1,8 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
 model SimpleHeatExchanger "A simple counterflow heat exchanger model based on LMTD method"
 	extends SolarTherm.Interfaces.Models.HeatExchangerFluid;
+	replaceable package Medium_A = Media.Sodium.Sodium_pT "Medium props for Sodium";
+    replaceable package Medium_B = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
 
 	import CN = Modelica.Constants;
 	import SI = Modelica.SIunits;

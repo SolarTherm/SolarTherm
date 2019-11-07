@@ -63,7 +63,7 @@ function Dp_losses
   Real N_c(start=90) "Number of crossflow rows";  
   Real N_cw "Number of effective crossflow rows in the window zone";
   Real N "Number of baffles";
-  Real K_f(unit= "") "Non dimensional factor";
+  Real K_f "Non dimensional factor";
   SI.Area S_w(start=3.04066566915712) "Window flow area";
   SI.Area S_b "Bypass flow area";
   SI.Pressure Dp_c "Ideal crossflow pressure drop";  
@@ -104,7 +104,7 @@ algorithm
   if Re_Na==0 then
   Dp_tube:=0;
   else
-  Dp_tube:=N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m))*0.5*rho_Na*v_Na^2;
+  Dp_tube:=(N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m)))*0.5*rho_Na*v_Na^2;
   end if;
   
   //Shell-side heat transfer coefficient:
@@ -140,7 +140,7 @@ algorithm
   L_bb:=(12+5*D_b)/995;
   D_s:=L_bb+D_b;
   L_c:=B*D_s;
-  l_b:=0.4*D_s;
+  l_b:=0.3*D_s;
   S_m:=l_b*(D_s-D_b+(D_b-d_o)*(P_t-d_o)/P_t);
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
@@ -151,16 +151,14 @@ algorithm
       N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t/0.866);
     end if;
     if layout==1 then
-      if noEvent(Re_MS<=2300) then
+      if Re_MS<=2300 then
            K_f:=0.272+(0.207e3/Re_MS)+(0.102e3/Re_MS^2)-(0.286e3/Re_MS^3);
-        //elseif Re_MS>2300 and Re_MS<2*10^6  then
         else
            K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
       end if;
       else
-        if noEvent(Re_MS<2300) then
+        if Re_MS<=2300 then
              K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
-          //elseif Re_MS>2300 and Re_MS<2*10^6  then
           else
              K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
         end if;
@@ -170,7 +168,7 @@ algorithm
   N:=ceil(L/(l_b+t_b)-1);
   F_c:=1/CN.pi*(CN.pi+2*((D_s-2*L_c)/D_b)*sin(acos((D_s-2*L_c)/D_b))-2*acos((D_s-2*L_c)/D_b));
   S_w:=D_s^2/4*(acos(1-(2*L_c/D_s))-(1-(2*L_c/D_s))*(1-(1-(2*L_c/D_s))^2)^0.5)-N_t/8*(1-F_c)*CN.pi*d_o^2;
-  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS;
+  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS^2;
   S_b:=L_bb*l_b; 
   L_sb:=(3.1+0.004*D_s)/1000;
   S_sb:=D_s*L_sb*0.5*(CN.pi-acos(1-2*L_c/D_s));
