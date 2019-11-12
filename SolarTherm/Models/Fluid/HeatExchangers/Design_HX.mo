@@ -18,8 +18,9 @@ function Design_HX
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
-  input SI.Length t_tube=2.54e-3 "Tube thickness";
-  input SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity";
+  input SI.Length t_tube "Tube thickness";
+  input SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
+  input SI.Density rho_wall "HX material density";
   input Real c_e(unit = "€/year") "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
@@ -39,76 +40,53 @@ function Design_HX
   output SI.Length D_s "Shell Diameter";
   output SI.Velocity v_Na "Sodium velocity in tubes";
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
+  output SI.Volume V_HX "Heat-Exchanger Total Volume";
+  output SI.Mass m_HX "Heat-Exchanger Total Mass";
   output Real C_BEC(unit= "€")  "Bare cost @2018";
   output Real C_pump(unit= "€")  "Annual pumping cost";
   output Real ex_eff(unit="") "HX Exergetic Efficiency";
   output Real en_eff(unit="") "HX Energetic Efficiency";
   
   protected
-  parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
   parameter SI.CoefficientOfHeatTransfer U_guess=1000 "Heat tranfer coefficient guess";
-  parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
-  parameter Real B=0.25 "Baffle cut";
   parameter Real tol=0.01 "Heat transfer coefficient tollerance";
-  parameter Real SS=0.2 "Sealing strips per crossflow row";
-  parameter SI.Length t_b=t_tube "Baffle thickness";
-  parameter SI.Length P_t=1.25*d_o "Tube pitch";
+  Real condition "When condition";
+  SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
+  
+  //Tube Side  
+  parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
+  parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
+  Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
+  Real Re_Na(start=23551.4178716723) "Na Reynolds Number";
+  Real j_f(unit= "") "Friction factor";
+  Real m(unit= "") "Correlation coefficient";
+  Integer Tep(start=7962) "Tubes for each pass";
+  SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
+  SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
+  
+  //Shell Side
+  Real KK1(unit= "",start=0.158) "Correlation coefficient";
+  Real nn1(unit= "",start=2.263) "Correlation coefficient";
+  SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
+  SI.Length D_b(start=4.42) "Bundle diameter";
+  SI.Length D_s_out "Shell Outer Diameter";
+  
+  //Volume_and_Weight
+  SI.Mass m_Na "Mass of Sodium";
+  SI.Mass m_MS "Mass of Molten Salts";
+  SI.Mass m_material "Mass of HX material";
+  SI.Volume V_Na "Volume of Sodium";
+  SI.Volume V_MS "Volume of Molten Salt";
+  SI.Volume V_material "Volume of HX material";
+  SI.Volume V_min "Minimum HX Volume";
+  SI.Volume DV "Volume difference";
+  
+  //Cost Functions
   parameter Real CEPCI_01=397 "CEPCI 2001";
   parameter Real CEPCI_18=603.1 "CEPCI 2018";
   parameter Real M_conv(unit="€/USD")=0.9175 "Conversion factor";
   parameter Real eta_pump=0.75 "Pump efficiency";
-  parameter SI.ThermalInsulance R_ss=8.808e-5 "Fouling resistance";
   parameter Integer n=20 "Operating years";
-     
-  SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
-  Integer Tep(start=7962) "Tubes for each pass";
-  SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
-  SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
-  Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
-  Real Re_Na(start=23551.4178716723) "Na Reynolds Number";
-  Real Pr_Na(unit= "") "Na Prandtl Number";
-  Real Pe_Na(unit= "") "Na Peclet Number";
-  Real A(unit= "") "Correlation coefficient";
-  Real Nu_Na(unit= "") "Na Nusselt number";
-  Real j_f(unit= "") "Friction factor";
-  Real m(unit= "") "Correlation coefficient";
-  SI.Length D_b(start=4.42) "Bundle diameter";
-  Real KK1(unit= "",start=0.158) "Correlation coefficient";
-  Real nn1(unit= "",start=2.263) "Correlation coefficient";
-  SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
-  SI.Length l_b "Baffle spacing";
-  SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
-  Real Re_MS(start=100) "MS Reynolds Number";
-  Real Pr_MS(unit= "") "MS Prandtl Number";
-  Real Nu_MS(unit= "") "MS Nusselt Number";
-  Real aa(unit= "") "Correlation coefficient";
-  Real mm(unit= "") "Correlation coefficient";
-  SI.CoefficientOfHeatTransfer h_s_id "Ideal shell-side Heat tranfer coefficient";
-  SI.Length L_c(start=1.11251222030861) "Baffle length";
-  Real F_c(unit= "") "Fraction of tubes in crossflow";
-  Real J_C(unit= "") "Configuration correction factor";
-  SI.Length L_sb "Shell-to-baffle diametral clearance";
-  SI.Area S_sb "Shell-to-baffle leakage area";
-  SI.Area S_tb "Tube-to-baffle leakage area";
-  SI.Length L_tb "Tube-to-baffle diametral clearance";
-  Real r_lm(unit= "") "Non dimensional factor";
-  Real r_s(unit= "") "Non dimensional factor";
-  Real xx(unit= "") "Non dimensional factor";
-  Real J_L(unit= "") "Leakage correction factor";
-  Real F_bp(unit= "") "Bypass correction factor";
-  Real N_c(start=90) "Number of crossflow rows";
-  Real N_ss "Number of sealing strips";
-  Real J_B(unit= "") "Bypass correction factor";
-  Real condition "When condition";
-  Real N_cw "Number of effective crossflow rows in the window zone";
-  Real N "Number of baffles";
-  Real K_f(unit= "") "Non dimensional factor";
-  SI.Area S_w(start=3.04066566915712) "Window flow area";
-  SI.Area S_b "Bypass flow area";
-  SI.Pressure Dp_c "Ideal crossflow pressure drop";  
-  SI.Pressure Dp_w "Pressure drop for the window zone";  
-  Real R_B(unit= "") "Non dimensional factor";
-  Real R_L(unit= "") "Non dimensional factor";
   Real k1(unit= "") "Non dimensional factor";
   Real k2(unit= "") "Non dimensional factor";
   Real k3(unit= "") "Non dimensional factor";
@@ -124,6 +102,8 @@ function Design_HX
   Real Fp(unit= "") "Cost pressure factor";
   Real Fm(unit= "") "Cost material factor";
   Boolean both "Condition for pressure factor correlation";
+  SI.Pressure P_shell "Shell-side pressure";
+  SI.Pressure P_tubes "Tube-side pressure";
   Real P_tube_cost(unit= "barg") "Tube pressure in barg";
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
@@ -162,15 +142,12 @@ function Design_HX
   SI.TemperatureDifference DT1 "Sodium-Molten Salt temperature difference 1";
   SI.TemperatureDifference DT2 "Sodium-Molten Salt temperature difference 2";
   SI.TemperatureDifference LMTD "Logarithmic mean temperature difference";
-  //Shell and tube pressures
-  SI.Pressure P_shell "Shell-side pressure";
-  SI.Pressure P_tubes "Tube-side pressure";
+
   
 algorithm
-  P_shell:=p_MS1;
-  P_tubes:=p_Na1;
   Tm_Na:=(T_Na1+T_Na2)/2;
   Tm_MS:=(T_MS1+T_MS2)/2;
+  
   //Sodium properties
   state_mean_Na:=Medium1.setState_pTX(p_Na1, Tm_Na);
   state_input_Na:=Medium1.setState_pTX(p_Na1, T_Na1);
@@ -184,6 +161,7 @@ algorithm
   h_Na2:=Medium1.specificEnthalpy(state_output_Na);
   s_Na1:=Medium1.specificEntropy(state_input_Na);
   s_Na2:=Medium1.specificEntropy(state_output_Na);
+  
   //Chloride Salt properties
   state_mean_MS:=Medium2.setState_pTX(Medium2.p_default, Tm_MS);
   state_wall_MS:=Medium2.setState_pTX(Medium2.p_default, Tm_Na);
@@ -198,6 +176,7 @@ algorithm
   h_MS2:=Medium2.specificEnthalpy(state_output_MS);
   s_MS1:=Medium2.specificEntropy(state_input_MS);
   s_MS2:=Medium2.specificEntropy(state_output_MS); 
+  
   DT1:=T_Na1-T_MS2;
   DT2:=T_Na2-T_MS1;
   LMTD:=(DT1-DT2)/MA.log(DT1 / DT2);
@@ -211,35 +190,24 @@ algorithm
     else
     en_eff:=(T_Na1-T_Na2)./(T_Na1-T_MS1);
   end if;
+  
   U_calc_prev:=U_guess;
   condition:=10;
   
-  while noEvent(condition>tol) loop
+while noEvent(condition>tol) loop
   A_tot:=UA/U_calc_prev;
   N_t:=integer(ceil(A_tot/A_st));
   Tep:=integer(ceil(N_t/N_p));
   N_t:=Tep*N_p;
-  A_cs:=CN.pi/4*d_i^2;
-  A_cs_tot:=Tep*A_cs;
-  M_Na:=m_flow_Na/A_cs_tot;
-  v_Na:=M_Na/rho_Na;
+  (U_calc, h_s, h_t):=HTCs(d_o=d_o, t_tube=t_tube, k_wall=k_wall, N_p=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  condition:=abs(U_calc-U_calc_prev)/U_calc_prev;
+  U_calc_prev:=U_calc;
+end while;
+
+  (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, t_tube=t_tube, N_p=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   
-  //Tube-side heat transfer coefficient:
-  Re_Na:=M_Na*d_i/mu_Na;
-  Pr_Na:=mu_Na*cp_Na/k_Na;
-  Pe_Na:=Re_Na*Pr_Na;
-    if Pe_Na<=1000 then
-      A:=4.5;
-    elseif Pe_Na>=2000 then
-      A:=3.6;
-    else
-      A:=5.4-9e-4*Pe_Na;
-    end if;
-  Nu_Na:=A+0.018*Pe_Na;
-  h_t:=Nu_Na*k_Na/d_i;
-  
-  //Shell-side heat transfer coefficient:
-    if layout==1 then
+  //Shell Diameter
+  if layout==1 then
       if N_p==4 then
          KK1:=0.158;
          nn1:=2.263;
@@ -265,103 +233,23 @@ algorithm
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*D_b)/995;
   D_s:=L_bb+D_b;
-  l_b:=0.4*D_s;
-  S_m:=l_b*(D_s-D_b+(D_b-d_o)*(P_t-d_o)/P_t);
-  v_max_MS:=m_flow_MS/rho_MS/S_m;
-  Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
-  Pr_MS:=mu_MS*cp_MS/k_MS;
-    if layout==1 then
-      if Re_MS<=300 then
-         aa:=0.742;
-         mm:=0.431;
-      elseif Re_MS>300 and Re_MS<2e5  then
-         aa:=0.211;
-         mm:=0.651;
-      elseif Re_MS>2e5 and Re_MS<2e6 then
-         aa:=0.116;
-         mm:=0.7;
-      end if;
-    else
-      if Re_MS<=300 then
-         aa:=1.309;
-         mm:=0.36;
-      elseif Re_MS>300 and Re_MS<2e5  then
-         aa:=0.273;
-         mm:=0.635;
-      elseif Re_MS>2e5 and Re_MS<2e6 then
-         aa:=0.124;
-         mm:=0.7;
-      end if;
-    end if;
-  Nu_MS:=aa*(Re_MS^mm)*(Pr_MS^0.34)*((mu_MS/mu_MS_wall)^0.26);
-  h_s_id:=Nu_MS*k_MS/d_o;
-  L_c:=B*D_s;
-  F_c:=1/CN.pi*(CN.pi+2*((D_s-2*L_c)/D_b)*sin(acos((D_s-2*L_c)/D_b))-2*acos((D_s-2*L_c)/D_b));
-  J_C:=0.55+0.72*F_c;
-  L_sb:=(3.1+0.004*D_s)/1000;
-  S_sb:=D_s*L_sb*0.5*(CN.pi-acos(1-2*L_c/D_s));
-  L_tb:=0.0008;
-  S_tb:=CN.pi*d_o*L_tb*0.5*N_t*0.5*(1+F_c);
-  r_lm:=(S_sb+S_tb)/S_m;
-  r_s:=S_sb/(S_sb+S_tb);
-  xx:=-0.15*(1+r_s)+0.8;
-  J_L:=0.44/(1-r_s)+(1-0.44*(1-r_s))*Modelica.Math.exp(-2.2*r_lm);
-  F_bp:=(D_s-D_b)*l_b/S_m;
-    if layout==1 then
-      N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t);
-      else
-      N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t/0.866);
-    end if;
-  N_ss:=ceil(0.2*N_c);
-  J_B:=Modelica.Math.exp(-1.35*F_bp*(1-2*r_s)^(1/3));
-  h_s:=h_s_id*J_C*J_L*J_B;
+  D_s_out:=D_s+0.01; //1cm external thickness
   
-  //Global heat transfer coefficient:
-  U_calc:=(1/h_s+R_ss+1/h_t*d_o/d_i+d_o*0.5/k_wall*log(d_o/d_i))^(-1);
-  condition:=abs(U_calc-U_calc_prev)/U_calc_prev;
-  U_calc_prev:=U_calc;
-end while;
-
-  //Tube-side pressure drop:
-    if Re_Na<=855 then
-      j_f:=8.1274*Re_Na^(-1.011);
-    else
-      j_f:=0.046*Re_Na^(-0.244);
-    end if;
-    if Re_Na<=2100 then
-      m:=0.25;
-    else
-      m:=0.14;
-    end if;
-  Dp_tube:=N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m))*0.5*rho_Na*v_Na^2;
+  V_min:=CN.pi/4*(D_s^2)*L;
+  V_Na:=CN.pi/4*(d_i^2)*L*N_t;
+  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L;
+  DV:=V_min-V_Na-V_MS;
+  V_material:=DV+(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_HX:=V_material+V_MS+V_Na;
   
-  //Shell-side pressure drop:
-  N_cw:=ceil(0.8*L_c/P_t);
-    if layout==1 then
-      if noEvent(Re_MS<=2300) then
-           K_f:=0.272+(0.207e3/Re_MS)+(0.102e3/Re_MS^2)-(0.286e3/Re_MS^3);
-        //elseif Re_MS>2300 and Re_MS<2*10^6  then
-        else
-           K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
-      end if;
-      else
-        if noEvent(Re_MS<=2300) then
-             K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
-          //elseif Re_MS>2300 and Re_MS<2*10^6  then
-          else
-             K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
-        end if;
-    end if;
-  Dp_c:=N_c*K_f*0.5*rho_MS*v_max_MS^2;
-  N:=ceil(L/(l_b+t_b)-1);
-  S_w:=D_s^2/4*(acos(1-(2*L_c/D_s))-(1-(2*L_c/D_s))*(1-(1-(2*L_c/D_s))^2)^0.5)-N_t/8*(1-F_c)*CN.pi*d_o^2;
-  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS^2;
-  S_b:=L_bb*l_b;
-  R_B:=Modelica.Math.exp(-3.7*S_b/S_m*(1-r_s^(1/3)));
-  R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
-  Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
+  m_Na:=V_Na*rho_Na;
+  m_MS:=V_MS*rho_MS;
+  m_material:=V_material*rho_wall;
+  m_HX:=m_material+m_MS+m_Na;
   
   //Cost function
+  P_shell:=p_MS1;
+  P_tubes:=p_Na1;
   P_tube_cost:=(P_tubes/10^5)-1;
   P_shell_cost:=(P_shell/10^5)-1;
   if ((P_tube_cost>5 and P_shell_cost>5)or(P_tube_cost<5 and P_shell_cost>5)) then
@@ -395,7 +283,7 @@ end while;
   B2:=1.66;
   if noEvent(A_tot>1000) then
     A_cost:=1000;    
-    elseif noEvent(A_tot>1000) then
+    elseif noEvent(A_tot<10) then
     A_cost:=10;    
     else
     A_cost:=A_tot;    
@@ -405,6 +293,9 @@ end while;
   C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  TAC:=f*C_BEC+C_pump; 
-   
+  if (v_max_MS<0.5 or v_max_MS>1.5 or v_Na<1 or v_Na>4) then
+    TAC:=10e10;
+  else
+    TAC:=f*C_BEC+C_pump; 
+  end if;
 end Design_HX;

@@ -1,15 +1,11 @@
 BasicHE
 Design_HX
-Design_HX_wf
 Dp_losses
 Extractor
 HeatExchanger
-HE_wports
 HTCs
 HX
-HX_wports
-modello
 ResistiveHeater
 SimpleHeatExchanger
 TempCorrFactor
-Transient_HX
+test_HX

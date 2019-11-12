@@ -12,11 +12,11 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 		//final substanceNames={"Na"},
 		final singleState=false,
 		final reducedX=true,
-		final fixedX=true);
-		//Temperature(
-		//	min=370.9,
-		//	max=1154.7,
-		//	start=700));
+		final fixedX=true,
+		Temperature(
+			min=370.9,
+			max=1154.7,
+			start=700));
 	import SolarTherm.Media.ChlorideSalt.ChlorideSalt_utilities.*;
 	// Provide medium constants here
 
@@ -78,8 +78,8 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 	d = rho_T(T);
 	h = h_T(T);
 	u = h - p / d;
-	//MM = 0.02298977;
-	//R = 8.3144 / MM;
+	MM = 0.02298977;
+	R = 8.3144 / MM;
 	//T = T_h(h);
 	//h = state.h;
 
@@ -143,7 +143,7 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 
 	redeclare function extends specificEnthalpy "Return specific enthalpy"
 	algorithm
-		h := h_T(state.T,state.p);
+		h := h_T(state.T);
 		annotation (Inline=true);
 	end specificEnthalpy;
 
