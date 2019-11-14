@@ -34,8 +34,8 @@ equation
   m_flow_Na = (m_flow_Na_min - m_flow_Na_max) * time + m_flow_Na_max;
   Na_inlet.m_flow_in = m_flow_Na;
 //Sodium Inlet Temperature
-  //T_Na1 = T_Na1_des;
-  T_Na1=T_Na1_des+5*sin(time*2*CN.pi);
+//T_Na1 = T_Na1_des;
+  T_Na1 = T_Na1_des + 5 * sin(time * 2 * CN.pi);
   Na_inlet.T_in = T_Na1;
 //Molten Salt Inlet Temperature
   T_MS1 = T_MS1_des;
