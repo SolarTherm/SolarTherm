@@ -5,7 +5,10 @@ Extractor
 HeatExchanger
 HTCs
 HX
+HX_2
+Inconel800H_BaseProperties
 ResistiveHeater
 SimpleHeatExchanger
 TempCorrFactor
 test_HX
+test_HX_2

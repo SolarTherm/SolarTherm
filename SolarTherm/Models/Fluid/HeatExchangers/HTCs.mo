@@ -9,7 +9,6 @@ function HTCs
 
   input SI.Length d_o "Outer Tube diameter";
   input SI.Length t_tube "Tube thickness";
-  input SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
   input Integer N_p "Number of passes";
   input Integer layout "Tube layout";
   input Integer N_t "Number of tubes";
@@ -26,8 +25,12 @@ function HTCs
   protected
   parameter SI.ThermalInsulance R_ss=8.808e-5 "Fouling resistance";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
+  SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
+  SI.Density rho_wall "HX material density";
+  SI.Temperature Tm_wall "Mean Wall Temperature";
   
   //Tube-side heat transfer coefficient:
+  SI.Temperature Tm_Na "Na Mean Temperature";
   SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
   SI.Density rho_Na "Sodium density @mean temperature";
   SI.DynamicViscosity mu_Na "Sodium dynamic viscosity @mean temperature";
@@ -44,6 +47,7 @@ function HTCs
   Real Nu_Na(unit= "",min=0) "Na Nusselt number";
   
   //Shell-side heat transfer coefficient:
+  SI.Temperature Tm_MS "MS Mean Temperature";
   SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
   SI.Density rho_MS "Molten Salts density @mean temperature";
   SI.DynamicViscosity mu_MS "Molten Salts  dynamic viscosity @mean temperature";
@@ -85,6 +89,7 @@ function HTCs
 algorithm
   
   //Tube-side heat transfer coefficient:
+  Tm_Na:=Medium1.temperature(state_mean_Na);
   rho_Na:=Medium1.density(state_mean_Na);
   cp_Na:=Medium1.specificHeatCapacityCp(state_mean_Na);
   mu_Na:=Medium1.dynamicViscosity(state_mean_Na);
@@ -112,6 +117,7 @@ algorithm
   end if;
   
   //Shell-side heat transfer coefficient:
+  Tm_MS:=Medium2.temperature(state_mean_MS);
   rho_MS:=Medium2.density(state_mean_MS);
   cp_MS:=Medium2.specificHeatCapacityCp(state_mean_MS);
   mu_MS:=Medium2.dynamicViscosity(state_mean_MS);
@@ -199,6 +205,8 @@ algorithm
   end if;
   
   //Global heat transfer coefficient:
+  Tm_wall:=(Tm_MS+Tm_Na)/2;
+  (k_wall, rho_wall):=Inconel800H_BaseProperties(Tm_wall);
   if Re_Na==0 and Re_MS==0 then
   U:=0;
   else
