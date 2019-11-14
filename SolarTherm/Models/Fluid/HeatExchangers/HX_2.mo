@@ -1,5 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-model HX
+model HX_2
   extends SolarTherm.Interfaces.Models.HeatExchangerFluid;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -299,4 +299,4 @@ equation
   Q = U * A_tot_opt * F * LMTD;
   (Dp_tube, Dp_shell, v_Na, v_max_MS) = Dp_losses(d_o = d_o_opt, t_tube = t_tube, N_p = N_p_opt, layout = layout_opt, N_t = N_t_opt, L = L_opt, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
   
-end HX;
+end HX_2;

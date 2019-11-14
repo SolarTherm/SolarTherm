@@ -9,14 +9,14 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 	extends Modelica.Media.Interfaces.PartialMedium(
 		ThermoStates=Modelica.Media.Interfaces.Choices.IndependentVariables.pT,
 		final mediumName="Chloride Salt",
-		//final substanceNames={"Na"},
+		final substanceNames={"CS"},
 		final singleState=false,
 		final reducedX=true,
 		final fixedX=true,
 		Temperature(
-			min=370.9,
-			max=1154.7,
-			start=700));
+			min=400+273.15,
+			max=780+273.15,
+			start=800));
 	import SolarTherm.Media.ChlorideSalt.ChlorideSalt_utilities.*;
 	// Provide medium constants here
 
@@ -78,8 +78,8 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 	d = rho_T(T);
 	h = h_T(T);
 	u = h - p / d;
-	MM = 0.02298977;
-	R = 8.3144 / MM;
+	MM = 0.02298977; //Update it, more info needed
+	R = 8.3144 / MM; //Update it, more info needed
 	//T = T_h(h);
 	//h = state.h;
 
