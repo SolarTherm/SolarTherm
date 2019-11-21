@@ -17,7 +17,6 @@ function Design_HX
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
-  input SI.Length t_tube "Tube thickness";
   input Real c_e(unit = "€/year") "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
@@ -52,6 +51,7 @@ function Design_HX
   SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
   SI.Density rho_wall "HX material density";
   SI.Temperature Tm_wall "Mean Wall Temperature";
+  parameter SI.Length t_tube=TubeThickness(d_o) "Tube thickness";
   
   //Tube Side  
   parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
@@ -200,12 +200,12 @@ while noEvent(condition>tol) loop
   N_t:=integer(ceil(A_tot/A_st));
   Tep:=integer(ceil(N_t/N_p));
   N_t:=Tep*N_p;
-  (U_calc, h_s, h_t):=HTCs(d_o=d_o, t_tube=t_tube, N_p=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (U_calc, h_s, h_t):=HTCs(d_o=d_o, N_p=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   condition:=abs(U_calc-U_calc_prev)/U_calc_prev;
   U_calc_prev:=U_calc;
 end while;
 
-  (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, t_tube=t_tube, N_p=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, N_p=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   
   //Shell Diameter
   if layout==1 then
