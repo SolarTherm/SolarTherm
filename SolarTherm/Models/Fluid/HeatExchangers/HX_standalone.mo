@@ -15,18 +15,15 @@ model HX_standalone
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
   parameter SI.Pressure p_Na1_des = 101325 "Design Sodium Inlet Pressure";
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
-  parameter SI.Length t_tube=2.54e-3 "Tube thickness"; //Need to be included as varibale in order to change and change it everywhere DP and HTCs
-  parameter SI.ThermalConductivity k_wall = 24 "Tube Thermal Conductivity"; //Need to be updated with function
-  parameter SI.Density rho_wall=8020 "HX material density";
   
   //Sweep Parameters
-  //parameter SI.Length d_o[10]={6.35e-3,9.53e-3,12.7e-3,15.88e-3,19.05e-3,22.23e-3,25.4e-3,31.75e-3,38.10e-3,50.8e-3} "Outer Tube Diameter";
+  //parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
   //parameter SI.Length L[10]={2,4,6,8,10,12,14,16,18,20} "Tube Length";
   //parameter Integer N_p[2]={4,8} "Tube passes number";
   //parameter Integer layout[2]={1,2} "Tube layout";
   //parameter SI.Temperature T_Na2[11] = {630+273.15,640+273.15,650+273.15,660+273.15,670+273.15,680+273.15,690+273.15,700+273.15,710+273.15,720+273.15,730+273.15} "Sodium Cold Fluid Temperature";
-  parameter SI.Length d_o[6]={19.05e-3,22.23e-3,25.4e-3,31.75e-3,38.10e-3,50.8e-3} "Outer Tube Diameter";
-  parameter SI.Length L[7]={2,4,6,8,10,12,14} "Tube Length";
+  parameter SI.Length d_o[7]={28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,50.80e-3} "Outer Tube Diameter";
+  parameter SI.Length L[6]={4,6,8,10,12,14} "Tube Length";
   parameter Integer N_p[1]={4} "Tube passes number";
   parameter Integer layout[1]={2} "Tube layout";
   parameter SI.Temperature T_Na2_des[6] = {650+273.15,670+273.15,680+273.15,690+273.15,700+273.15,710+273.15} "Sodium Cold Fluid Temperature";
@@ -156,7 +153,7 @@ if optimize_and_run==true then
           vec[iter,3]:=N_p[ii];
           vec[iter,4]:=layout[ww];
           vec[iter,5]:=T_Na2_des[ll];
-          (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]):= Design_HX(Q_d=Q_d_des, T_Na1=T_Na1_des, T_MS1=T_MS1_des, T_MS2=T_MS2_des, d_o=d_o[kk], L=L[jj], N_p=N_p[ii], layout=layout[ww], T_Na2=T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, t_tube=t_tube, k_wall=k_wall, rho_wall=rho_wall, c_e = 0.13, r = 0.05, H_y = 4500);
+          (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]):= Design_HX(Q_d=Q_d_des, T_Na1=T_Na1_des, T_MS1=T_MS1_des, T_MS2=T_MS2_des, d_o=d_o[kk], L=L[jj], N_p=N_p[ii], layout=layout[ww], T_Na2=T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
           iter:=iter+1;
           end for;
         end for;
@@ -228,9 +225,10 @@ equation
   p_Na1=101325; //Substitute with inlet pressure
   T_Na1=740+273.15; //Substitute with inlet temperature
   T_MS1=500+273.15; //Substitute with inlet temperature
-  m_flow_Na=((m_flow_min_Na-m_flow_max_Na)*time/10)+m_flow_max_Na; //Substitute with inlet flow rate
+  m_flow_Na=((m_flow_max_Na-m_flow_min_Na)*time/10)+m_flow_max_Na; //Substitute with inlet flow rate
   
   T_MS2=720+273.15; //Impose value
+  
   //Molten Salt properties
   Tm_MS=(T_MS1+T_MS2)/2;
   state_mean_MS=Medium2.setState_pTX(p_MS1, Tm_MS);
@@ -257,10 +255,10 @@ equation
   DT2=T_Na2-T_MS1;
   LMTD=(DT1-DT2)/MA.log(DT1 / DT2);
   F=TempCorrFactor(T_Na1=T_Na1, T_Na2=T_Na2, T_MS1=T_MS1, T_MS2=T_MS2);
-  (U, h_s, h_t)=HTCs(d_o=d_o_opt, t_tube=t_tube, k_wall=k_wall, N_p=N_p_opt, layout=layout_opt, N_t=N_t_opt, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (U, h_s, h_t)=HTCs(d_o=d_o_opt, N_p=N_p_opt, layout=layout_opt, N_t=N_t_opt, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   Q=m_flow_Na*cp_Na*(T_Na1-T_Na2);
   Q=m_flow_MS*cp_MS*(T_MS2-T_MS1);
   Q=U*A_tot_opt*F*LMTD;
-  (Dp_tube, Dp_shell, v_Na, v_max_MS)=Dp_losses(d_o=d_o_opt, t_tube=t_tube, N_p=N_p_opt, layout=layout_opt, N_t=N_t_opt, L=L_opt, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (Dp_tube, Dp_shell, v_Na, v_max_MS)=Dp_losses(d_o=d_o_opt, N_p=N_p_opt, layout=layout_opt, N_t=N_t_opt, L=L_opt, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
     
 end HX_standalone;

@@ -17,18 +17,12 @@ protected
   Real R(unit = "") "Non-dimensional factor for F calculation";
   Real AA(unit = "") "Non-dimensional factor for F calculation";
   Real BB(unit = "") "Non-dimensional factor for F calculation";
-  parameter Real tol=1e-6;
   
 algorithm
   S := (T_Na2 - T_Na1) / (T_MS1 - T_Na1);
   R := (T_MS1 - T_MS2) / (T_Na2 - T_Na1);
   AA := 2 / S - R - 1;
-  BB := 2 / S * ((1 - S) * (1 - S * R)) ^ 0.5;
-  if (AA + BB - (R ^ 2 + 1) ^ 0.5)<tol then
-    F:=0;
-  else  
+  BB := 2 / S * ((1 - S) * (1 - S * R)) ^ 0.5; 
   F := (R ^ 2 + 1) ^ 0.5 / (2 * (R + 1)) * log((1 - S) / (1 - S * R)) / log((AA + BB + (R ^ 2 + 1) ^ 0.5) / (AA + BB - (R ^ 2 + 1) ^ 0.5));
-  end if;
-    
 
 end TempCorrFactor;

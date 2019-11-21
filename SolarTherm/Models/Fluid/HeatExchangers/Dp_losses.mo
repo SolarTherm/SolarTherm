@@ -8,7 +8,6 @@ function Dp_losses
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   input SI.Length d_o "Outer Tube diameter";
-  input SI.Length t_tube "Tube thickness";
   input Integer N_p "Number of passes";
   input Integer layout "Tube layout";
   input Integer N_t "Number of tubes";
@@ -18,6 +17,7 @@ function Dp_losses
   input Medium2.ThermodynamicState state_wall_MS;
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
+  input Boolean low_flow=false;
 
   output SI.Pressure Dp_tube(min=0) "Tube-side pressure drop";
   output SI.Pressure Dp_shell(min=0) "Shell-side pressure drop";
@@ -25,6 +25,7 @@ function Dp_losses
   output SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
   
   protected
+  parameter SI.Length t_tube=TubeThickness(d_o) "Tube thickness";
   //Tube Side  
   SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
   SI.Density rho_Na "Sodium density @mean temperature";
@@ -91,7 +92,7 @@ algorithm
   M_Na:=m_flow_Na/A_cs_tot;
   v_Na:=M_Na/rho_Na;
   Re_Na:=M_Na*d_i/mu_Na;
-    if Re_Na<=855 then
+    if noEvent(Re_Na<=855) then
       j_f:=8.1274*Re_Na^(-1.011);
     else
       j_f:=0.046*Re_Na^(-0.244);
@@ -101,7 +102,7 @@ algorithm
     else
       m:=0.14;
     end if;
-  if Re_Na==0 then
+  if noEvent(Re_Na==0) then
   Dp_tube:=0;
   else
   Dp_tube:=(N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m)))*0.5*rho_Na*v_Na^2;
@@ -151,13 +152,13 @@ algorithm
       N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t/0.866);
     end if;
     if layout==1 then
-      if Re_MS<=2300 then
+      if noEvent(Re_MS<=2300) then
            K_f:=0.272+(0.207e3/Re_MS)+(0.102e3/Re_MS^2)-(0.286e3/Re_MS^3);
         else
            K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
       end if;
       else
-        if Re_MS<=2300 then
+        if noEvent(Re_MS<=2300) then
              K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
           else
              K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
@@ -179,10 +180,10 @@ algorithm
   xx:=-0.15*(1+r_s)+0.8;
   R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
   
-  if Re_MS==0 then
-  Dp_shell:=0;
+  if noEvent(Re_MS==0) or low_flow then
+    Dp_shell:=0;
   else
-  Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
+    Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
   end if;
   
 end Dp_losses;
