@@ -299,6 +299,10 @@ end while;
   if (v_max_MS<0.5 or v_max_MS>1.5 or v_Na<1 or v_Na>4) then
     TAC:=10e10;
   else
-    TAC:=f*C_BEC+C_pump; 
+    if noEvent(C_BEC>0) and noEvent(C_pump>0) then
+      TAC:=f*C_BEC+C_pump;
+    else
+      TAC:=10e10;
+    end if;
   end if;
 end Design_HX;

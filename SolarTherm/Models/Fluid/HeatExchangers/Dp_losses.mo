@@ -17,7 +17,6 @@ function Dp_losses
   input Medium2.ThermodynamicState state_wall_MS;
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
-  input Boolean low_flow=false;
 
   output SI.Pressure Dp_tube(min=0) "Tube-side pressure drop";
   output SI.Pressure Dp_shell(min=0) "Shell-side pressure drop";
@@ -77,6 +76,7 @@ function Dp_losses
   Real r_s(unit= "") "Non dimensional factor";
   Real r_lm(unit= "") "Non dimensional factor";
   Real xx(unit= "") "Non dimensional factor";
+  //parameter Real tol1=1e-4;
   
 algorithm
 
@@ -92,20 +92,20 @@ algorithm
   M_Na:=m_flow_Na/A_cs_tot;
   v_Na:=M_Na/rho_Na;
   Re_Na:=M_Na*d_i/mu_Na;
+  if noEvent(Re_Na>0) then
     if noEvent(Re_Na<=855) then
       j_f:=8.1274*Re_Na^(-1.011);
     else
       j_f:=0.046*Re_Na^(-0.244);
     end if;
-    if Re_Na<=2100 then
+    if noEvent(Re_Na<=2100) then
       m:=0.25;
     else
       m:=0.14;
     end if;
-  if noEvent(Re_Na==0) then
-  Dp_tube:=0;
+    Dp_tube:=(N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m)))*0.5*rho_Na*v_Na^2;
   else
-  Dp_tube:=(N_p*(2.5+8*j_f*(L/d_i)*(mu_Na/mu_Na_wall)^(-m)))*0.5*rho_Na*v_Na^2;
+    Dp_tube:=0;
   end if;
   
   //Shell-side heat transfer coefficient:
@@ -115,28 +115,28 @@ algorithm
   mu_MS_wall:=Medium2.dynamicViscosity(state_wall_MS);
   k_MS:=Medium2.thermalConductivity(state_mean_MS);
   if layout==1 then
-      if N_p==4 then
-         KK1:=0.158;
-         nn1:=2.263;
-      elseif N_p==6 then
-         KK1:=0.0402;
-         nn1:=2.617;
-      else
-         KK1:=0.0331;
-         nn1:=2.643;
-      end if;
+    if N_p==4 then
+      KK1:=0.158;
+      nn1:=2.263;
+    elseif N_p==6 then
+      KK1:=0.0402;
+      nn1:=2.617;
     else
-      if N_p==4 then
-         KK1:=0.175;
-         nn1:=2.285;
-      elseif N_p==6 then
-         KK1:=0.0743;
-         nn1:=2.499;
-      else
-         KK1:=0.0365;
-         nn1:=2.675;
-      end if;
+      KK1:=0.0331;
+      nn1:=2.643;
     end if;
+  else
+    if N_p==4 then
+      KK1:=0.175;
+      nn1:=2.285;
+    elseif N_p==6 then
+      KK1:=0.0743;
+      nn1:=2.499;
+    else
+      KK1:=0.0365;
+      nn1:=2.675;
+    end if;
+  end if;
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*D_b)/995;
   D_s:=L_bb+D_b;
@@ -146,44 +146,51 @@ algorithm
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
   N_cw:=ceil(0.8*L_c/P_t);
-  if layout==1 then
+  
+  if noEvent(Re_MS>0) then
+    if layout==1 then
       N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t);
-      else
+    else
       N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t/0.866);
     end if;
-    if layout==1 then
-      if noEvent(Re_MS<=2300) then
-           K_f:=0.272+(0.207e3/Re_MS)+(0.102e3/Re_MS^2)-(0.286e3/Re_MS^3);
-        else
-           K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
-      end if;
-      else
-        if noEvent(Re_MS<=2300) then
-             K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
-          else
-             K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
-        end if;
-    end if;
-    
-  Dp_c:=N_c*K_f*0.5*rho_MS*v_max_MS^2;
-  N:=ceil(L/(l_b+t_b)-1);
-  F_c:=1/CN.pi*(CN.pi+2*((D_s-2*L_c)/D_b)*sin(acos((D_s-2*L_c)/D_b))-2*acos((D_s-2*L_c)/D_b));
-  S_w:=D_s^2/4*(acos(1-(2*L_c/D_s))-(1-(2*L_c/D_s))*(1-(1-(2*L_c/D_s))^2)^0.5)-N_t/8*(1-F_c)*CN.pi*d_o^2;
-  Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS^2;
-  S_b:=L_bb*l_b; 
-  L_sb:=(3.1+0.004*D_s)/1000;
-  S_sb:=D_s*L_sb*0.5*(CN.pi-acos(1-2*L_c/D_s));
-  S_tb:=CN.pi*d_o*L_tb*0.5*N_t*0.5*(1+F_c);
-  r_s:=S_sb/(S_sb+S_tb);
-  R_B:=Modelica.Math.exp(-3.7*S_b/S_m*(1-r_s^(1/3)));
-  r_lm:=(S_sb+S_tb)/S_m;
-  xx:=-0.15*(1+r_s)+0.8;
-  R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
   
-  if noEvent(Re_MS==0) or low_flow then
-    Dp_shell:=0;
-  else
+    if layout==1 then
+      if noEvent(Re_MS<2300) then
+        K_f:=0.272+(0.207e3/Re_MS)+(0.102e3/Re_MS^2)-(0.286e3/Re_MS^3);
+      else
+        K_f:=0.267+(0.249e4/Re_MS)-(0.927e7/Re_MS^2)+(10^10/Re_MS^3);
+      end if;
+    else
+      if noEvent(Re_MS>4000) then
+        K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
+      else
+        K_f:=11.474*Re_MS^(-0.34417);
+      end if; 
+    end if;
+                        //    if noEvent(Re_MS<2300) then
+                        //      K_f:=0.795+(0.247e3/Re_MS)+(0.335e4/Re_MS^2)-(0.155e4/Re_MS^3)+(0.241e4/Re_MS^4);
+                        //    else
+                        //      K_f:=0.245+(0.339e4/Re_MS)-(0.984e7/Re_MS^2)+(0.133e11/Re_MS^3)-(0.599e13/Re_MS^4);
+                        //    end if;
+  
+    
+    Dp_c:=N_c*K_f*0.5*rho_MS*v_max_MS^2;
+    N:=ceil(L/(l_b+t_b)-1);
+    F_c:=1/CN.pi*(CN.pi+2*((D_s-2*L_c)/D_b)*sin(acos((D_s-2*L_c)/D_b))-2*acos((D_s-2*L_c)/D_b));
+    S_w:=D_s^2/4*(acos(1-(2*L_c/D_s))-(1-(2*L_c/D_s))*(1-(1-(2*L_c/D_s))^2)^0.5)-N_t/8*(1-F_c)*CN.pi*d_o^2;
+    Dp_w:=(0.2+0.6*N_cw)/(2*S_m*S_w*rho_MS)*m_flow_MS^2;
+    S_b:=L_bb*l_b; 
+    L_sb:=(3.1+0.004*D_s)/1000;
+    S_sb:=D_s*L_sb*0.5*(CN.pi-acos(1-2*L_c/D_s));
+    S_tb:=CN.pi*d_o*L_tb*0.5*N_t*0.5*(1+F_c);
+    r_s:=S_sb/(S_sb+S_tb);
+    R_B:=Modelica.Math.exp(-3.7*S_b/S_m*(1-r_s^(1/3)));
+    r_lm:=(S_sb+S_tb)/S_m;
+    xx:=-0.15*(1+r_s)+0.8;
+    R_L:=Modelica.Math.exp(-1.23*(1+r_s))*r_lm^xx;
     Dp_shell:=((N-1)*Dp_c*R_B+N*Dp_w)*R_L+2*Dp_c*R_B*(1+N_cw/N_c);
+  else
+    Dp_shell:=0;
   end if;
   
 end Dp_losses;

@@ -18,9 +18,11 @@ protected
   Real R(unit = "") "Non-dimensional factor for F calculation";
   Real AA(unit = "") "Non-dimensional factor for F calculation";
   Real BB(unit = "") "Non-dimensional factor for F calculation";
+  Real F_calc(unit = "") "Temperature correction factor";
+  
   parameter Real tol1 = 1e-3;
   parameter Real tol2 = 0.12;
-  parameter Real tol3 = 1e-6;
+  parameter Real tol3 = 1e-8;
   
 algorithm
   S := (T_Na2 - T_Na1) / (T_MS1 - T_Na1);
@@ -28,12 +30,18 @@ algorithm
   AA := 2 / S - R - 1;
   BB := 2 / S * ((1 - S) * (1 - S * R)) ^ 0.5;
   if AA + BB - (R ^ 2 + 1) ^ 0.5 < tol1 then
-    F := 0.1; //DON'T PUT EQUAL TO ZERO --> PROBLEM START UP
+    F_calc := 0.1; //DON'T PUT EQUAL TO ZERO --> PROBLEM START UP
   else
-    F := (R ^ 2 + 1) ^ 0.5 / (2 * (R + 1)) * log((1 - S) / (1 - S * R)) / log((AA + BB + (R ^ 2 + 1) ^ 0.5) / (AA + BB - (R ^ 2 + 1) ^ 0.5));
+    F_calc := (R ^ 2 + 1) ^ 0.5 / (2 * (R + 1)) * log((1 - S) / (1 - S * R)) / log((AA + BB + (R ^ 2 + 1) ^ 0.5) / (AA + BB - (R ^ 2 + 1) ^ 0.5));
+  end if;
+  
+  if noEvent(S==0) then
+    F := 0.1;
+  else
+    F := F_calc;
   end if;
 
-  if noEvent(F <= tol2) or noEvent(F >= 1) or noEvent(S==tol3) then
+  if noEvent(F <= tol2) or noEvent(F>0.9) then
     F_problem := true;
     F := 0.1;
   else
