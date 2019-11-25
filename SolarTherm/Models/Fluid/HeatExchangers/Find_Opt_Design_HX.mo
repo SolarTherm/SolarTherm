@@ -43,15 +43,10 @@ function Find_Opt_Design_HX
   protected
   //Sweep Parameters
   parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
-  parameter SI.Length L[10]={2,4,6,8,10,12,14,16,18,20} "Tube Length";
+  parameter SI.Length L[11]={2,4,6,8,10,12,14,16,18,20,22} "Tube Length";
   parameter Integer N_p[2]={4,8} "Tube passes number";
   parameter Integer layout[2]={1,2} "Tube layout";
   parameter SI.Temperature T_Na2_des[11] = {630+273.15,640+273.15,650+273.15,660+273.15,670+273.15,680+273.15,690+273.15,700+273.15,710+273.15,720+273.15,730+273.15} "Sodium Cold Fluid Temperature";
-//  parameter SI.Length d_o[7] = {28.58e-3, 31.75e-3, 34.93e-3, 38.10e-3, 41.28e-3, 44.45e-3, 50.80e-3} "Outer Tube Diameter";
-//  parameter SI.Length L[6] = {4, 6, 8, 10, 12, 14} "Tube Length";
-//  parameter Integer N_p[1] = {4} "Tube passes number";
-//  parameter Integer layout[1] = {2} "Tube layout";
-//  parameter SI.Temperature T_Na2_des[6] = {650 + 273.15, 670 + 273.15, 680 + 273.15, 690 + 273.15, 700 + 273.15, 710 + 273.15} "Sodium Cold Fluid Temperature";
 
   //Auxiliary parameters
   parameter Integer num_dim = 5;
