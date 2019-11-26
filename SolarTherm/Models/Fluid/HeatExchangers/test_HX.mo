@@ -1,5 +1,4 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-
 model test_HX
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -10,7 +9,7 @@ model test_HX
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Parameters
-  parameter SI.MassFlowRate m_flow_Na_des = 570.58;
+  parameter SI.MassFlowRate m_flow_Na_des = HX_shell_tube.m_flow_Na_design;
   parameter SI.MassFlowRate m_flow_Na_min = m_flow_Na_des * 0;
   parameter SI.MassFlowRate m_flow_Na_max = m_flow_Na_des * 1;
   parameter SI.Temperature T_MS1_des = 500 + 273.15;
@@ -28,7 +27,7 @@ model test_HX
   SI.Temperature T_MS1(start = 500 + 273.15, nominal = 500 + 273.15);
   
   //Components
-  SolarTherm.Models.Fluid.HeatExchangers.HX HX_shell_tube annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.HX HX_shell_tube(Q_d_des = 50e6) annotation(
     Placement(visible = true, transformation(origin = {4, -4}, extent = {{-40, -40}, {40, 40}}, rotation = 0)));
   Modelica.Fluid.Sources.MassFlowSource_T Na_inlet(replaceable package Medium = Medium1, T(start = 900, nominal = 900), nPorts = 1, use_T_in = true, use_m_flow_in = true) annotation(
     Placement(visible = true, transformation(origin = {-66, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -58,17 +57,14 @@ algorithm
   end if;
 
 equation
-////Sweep Parameter
-//  //m_flow_Na = -(m_flow_Na_max - m_flow_Na_min) * time + m_flow_Na_max;
-//  m_flow_Na =  m_flow_Na_min + (m_flow_Na_max - m_flow_Na_min) * time;
-  
+//Sodium Mass FLow Rate
   Na_inlet.m_flow_in = m_flow_Na;
-  
+
 //Sodium Inlet Temperature
-  //T_Na1 = T_Na1_des;
-  T_Na1=T_Na1_des+5*sin(time*2*CN.pi);
+//T_Na1 = T_Na1_des;
+  T_Na1 = T_Na1_des + 10 * sin(time * 2 * CN.pi);
   Na_inlet.T_in = T_Na1;
-  
+
 //Molten Salt Inlet Temperature
   T_MS1 = T_MS1_des;
   MS_inlet.T_in = T_MS1;
@@ -80,4 +76,6 @@ equation
     Line(points = {{-56, 0}, {-41.5, 0}, {-41.5, 6}, {-21, 6}}, color = {0, 127, 255}));
   connect(HX_shell_tube.port_a_out, Na_Sink.port_a) annotation(
     Line(points = {{29, -6}, {60, -6}, {60, 0}}, color = {0, 127, 255}));
+  annotation(
+    experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-6, Interval = 0.02));
 end test_HX;

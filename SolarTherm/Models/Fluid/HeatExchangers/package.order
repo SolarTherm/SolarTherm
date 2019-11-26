@@ -1,9 +1,9 @@
 BasicHE
 Extractor
 HeatExchanger
-HX
 HX_standalone
 HX_sa_graphs
+HX_sa_graphs_Q
 ResistiveHeater
 SimpleHeatExchanger
 TempCorrFactor
@@ -16,6 +16,4 @@ Dp_losses
 Inconel800H_BaseProperties
 TubeThickness
 Find_Opt_Design_HX
-HX_simple
-test_HX_simple
-HX_sa_graphs_Q
+HX
