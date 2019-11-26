@@ -11,7 +11,6 @@ function TempCorrFactor_operating
   input SI.Temperature T_MS2(start = 720 + 273.15) "Molten Salts Hot Fluid Temperature";
   input Boolean low_flow = false;
   output Real F(unit = "") "Temperature correction factor";
-  output Boolean F_problem;
   
 protected
   Real S(unit = "") "Non-dimensional factor for F calculation";
@@ -42,10 +41,7 @@ algorithm
   end if;
 
   if noEvent(F <= tol2) or noEvent(F>0.9) then
-    F_problem := true;
     F := 0.1;
-  else
-    F_problem := false;
   end if;
 
 end TempCorrFactor_operating;
