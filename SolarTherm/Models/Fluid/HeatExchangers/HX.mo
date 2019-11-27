@@ -56,7 +56,6 @@ model HX
   parameter SI.ThermalConductance UA_design(fixed = false) "Optimal UA";
   parameter Real ex_eff_design(fixed = false) "Optimal HX Exergetic Efficiency";
   parameter Real en_eff_design(fixed = false) "Optimal HX Energetic Efficiency";
-  parameter SI.Temperature T_Na2_min_des(fixed = false) "Optimal outlet sodium temperature";
   
   //Variables
   SI.MassFlowRate m_flow_Na(min = 0, start = 17.1174, nominal = 17.1174) "Sodium mass flow rate";
@@ -81,6 +80,7 @@ model HX
   SI.Pressure Dp_shell "Shell-side pressure drop";
   SI.Velocity v_Na "Sodium velocity in tubes";
   SI.Velocity v_max_MS "Molten Salt velocity in shell";
+  SI.Temperature T_Na2_min "Optimal outlet sodium temperature";
   Boolean low_flow_ON;
   Boolean low_flow;
   Boolean up;
@@ -125,7 +125,7 @@ initial algorithm
   end if;
   m_flow_Na_min_des := 0.0001 * m_flow_Na_design;
   m_flow_MS_min_des := 0.01 * m_flow_MS_design;
-  T_Na2_min_des:=628+273.15;
+//  T_Na2_min:=627.35+273.15;
   
 algorithm
   if m_flow_Na > 0 then
@@ -198,7 +198,7 @@ equation
   state_mean_Na = Medium1.setState_pTX(p_Na1, Tm_Na);
   state_input_Na = Medium1.setState_phX(p_Na1, h_Na_in);
   state_output_Na = Medium1.setState_pTX(p_Na1, T_Na2);
-  state_min_F = Medium1.setState_pTX(p_Na1, T_Na2_min_des);
+  state_min_F = Medium1.setState_pTX(p_Na1, T_Na2_min);
   rho_Na = Medium1.density(state_mean_Na);
   cp_Na = Medium1.specificHeatCapacityCp(state_mean_Na);
   mu_Na = Medium1.dynamicViscosity(state_mean_Na);
@@ -206,9 +206,10 @@ equation
   k_Na = Medium1.thermalConductivity(state_mean_Na);
 
 //Problem
+  T_Na2_min = Find_min_TNa2(T_Na1 = T_Na1, T_MS1 = T_MS1, T_MS2 = T_MS2);
   T_MS2 = if low_flow_ON then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
   port_a_out.h_outflow = if low_flow_ON then h_Na_in else max(Medium1.specificEnthalpy(state_min_F),h_Na_in - Q / m_flow_Na);  
-  m_flow_MS = if low_flow_ON then 0 else if up then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q / (port_b_out.h_outflow - h_MS_in);
+  m_flow_MS = if low_flow_ON then 0 else if low_flow then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q / (port_b_out.h_outflow - h_MS_in);
   DT1 = T_Na1 - T_MS2;
   DT2 = T_Na2 - T_MS1;
   LMTD = if low_flow_ON then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);

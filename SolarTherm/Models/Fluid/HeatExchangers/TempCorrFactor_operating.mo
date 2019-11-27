@@ -12,16 +12,18 @@ function TempCorrFactor_operating
   output Real F(unit = "") "Temperature correction factor";
   
 protected
+  parameter Real tol1 = 1e-3;
+  parameter Real tol2 = 0.12;
+
+  
   Real S(unit = "") "Non-dimensional factor for F calculation";
   Real R(unit = "") "Non-dimensional factor for F calculation";
   Real AA(unit = "") "Non-dimensional factor for F calculation";
   Real BB(unit = "") "Non-dimensional factor for F calculation";
-  Real F_calc(unit = "") "Temperature correction factor";
-  
-  parameter Real tol1 = 1e-3;
-  parameter Real tol2 = 0.12;
+  Real F_calc(unit = "") "Temperature correction factor";  
   
 algorithm
+ 
   S := (T_Na2 - T_Na1) / (T_MS1 - T_Na1);
   R := (T_MS1 - T_MS2) / (T_Na2 - T_Na1);
   AA := 2 / S - R - 1;
