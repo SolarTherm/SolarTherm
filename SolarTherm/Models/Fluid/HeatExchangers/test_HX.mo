@@ -27,7 +27,7 @@ model test_HX
   SI.Temperature T_MS1(start = 500 + 273.15, nominal = 500 + 273.15);
   
   //Components
-  SolarTherm.Models.Fluid.HeatExchangers.HX HX_shell_tube(Q_d_des = 50e6) annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.HX HX_shell_tube(Q_d_des = 150e6) annotation(
     Placement(visible = true, transformation(origin = {4, -4}, extent = {{-40, -40}, {40, 40}}, rotation = 0)));
   Modelica.Fluid.Sources.MassFlowSource_T Na_inlet(replaceable package Medium = Medium1, T(start = 900, nominal = 900), nPorts = 1, use_T_in = true, use_m_flow_in = true) annotation(
     Placement(visible = true, transformation(origin = {-66, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -62,8 +62,8 @@ equation
   Na_inlet.m_flow_in = m_flow_Na;
 
 //Sodium Inlet Temperature
-  T_Na1 = T_Na1_des;
-  //T_Na1 = T_Na1_des + 10 * sin(time * 2 * CN.pi);
+  //T_Na1 = T_Na1_des;
+  T_Na1 = T_Na1_des + 10 * sin(time * 2 * CN.pi);
   Na_inlet.T_in = T_Na1;
 
 //Molten Salt Inlet Temperature
