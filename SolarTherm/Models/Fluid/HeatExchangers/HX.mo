@@ -20,6 +20,7 @@ model HX
   //Auxiliary parameters
   parameter Boolean optimize_and_run = true;
   parameter SI.MassFlowRate m_flow_Na_min_des(fixed = false);
+  parameter SI.MassFlowRate m_flow_MS_min_des(fixed = false);
   
   //Input parameters
   parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter";
@@ -55,6 +56,7 @@ model HX
   parameter SI.ThermalConductance UA_design(fixed = false) "Optimal UA";
   parameter Real ex_eff_design(fixed = false) "Optimal HX Exergetic Efficiency";
   parameter Real en_eff_design(fixed = false) "Optimal HX Energetic Efficiency";
+  parameter SI.Temperature T_Na2_min_des(fixed = false) "Optimal outlet sodium temperature";
   
   //Variables
   SI.MassFlowRate m_flow_Na(min = 0, start = 17.1174, nominal = 17.1174) "Sodium mass flow rate";
@@ -100,6 +102,7 @@ model HX
   Medium1.ThermodynamicState state_mean_Na;
   Medium1.ThermodynamicState state_input_Na;
   Medium1.ThermodynamicState state_output_Na;
+  Medium1.ThermodynamicState state_min_F;
   Medium2.ThermodynamicState state_mean_MS;
   Medium2.ThermodynamicState state_wall_MS;
   Medium2.ThermodynamicState state_input_MS;
@@ -120,7 +123,9 @@ initial algorithm
     T_Na2_design := T_Na2_input;
     (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, N_t, U_design, A_HX, Dp_tube_design, Dp_shell_design, TAC, h_s_design, h_t_design, D_s, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, ex_eff_design, en_eff_design) := Design_HX(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, L = L, N_p = N_p, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
   end if;
-  m_flow_Na_min_des := 0.25 * m_flow_Na_design;
+  m_flow_Na_min_des := 0.0001 * m_flow_Na_design;
+  m_flow_MS_min_des := 0.01 * m_flow_MS_design;
+  T_Na2_min_des:=628+273.15;
   
 algorithm
   if m_flow_Na > 0 then
@@ -137,8 +142,8 @@ algorithm
   end if;
 
 equation
-  up = if noEvent(m_flow_Na > pre(m_flow_Na) and low_flow == true) then true else false;
-  down = if noEvent(m_flow_Na < pre(m_flow_Na) and low_flow == true) then true else false;
+  up = if m_flow_Na > pre(m_flow_Na) and low_flow == true then true else false;
+  down = if m_flow_Na < pre(m_flow_Na) and low_flow == true then true else false;
   
 //Mass conservation equations
   port_a_in.m_flow + port_a_out.m_flow = 0;
@@ -193,6 +198,7 @@ equation
   state_mean_Na = Medium1.setState_pTX(p_Na1, Tm_Na);
   state_input_Na = Medium1.setState_phX(p_Na1, h_Na_in);
   state_output_Na = Medium1.setState_pTX(p_Na1, T_Na2);
+  state_min_F = Medium1.setState_pTX(p_Na1, T_Na2_min_des);
   rho_Na = Medium1.density(state_mean_Na);
   cp_Na = Medium1.specificHeatCapacityCp(state_mean_Na);
   mu_Na = Medium1.dynamicViscosity(state_mean_Na);
@@ -201,8 +207,8 @@ equation
 
 //Problem
   T_MS2 = if low_flow_ON then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
-  port_a_out.h_outflow = if low_flow_ON then h_Na_in else if low_flow then h_Na_in - Q/(m_flow_Na_min_des/2) else h_Na_in - Q / m_flow_Na;
-  m_flow_MS = if low_flow_ON then 0 else if up then max(1, Q / (port_b_out.h_outflow - h_MS_in)) else Q / (port_b_out.h_outflow - h_MS_in);
+  port_a_out.h_outflow = if low_flow_ON then h_Na_in else max(Medium1.specificEnthalpy(state_min_F),h_Na_in - Q / m_flow_Na);  
+  m_flow_MS = if low_flow_ON then 0 else if up then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q / (port_b_out.h_outflow - h_MS_in);
   DT1 = T_Na1 - T_MS2;
   DT2 = T_Na2 - T_MS1;
   LMTD = if low_flow_ON then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);

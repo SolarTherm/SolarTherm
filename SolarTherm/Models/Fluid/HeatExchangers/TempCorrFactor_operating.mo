@@ -1,15 +1,14 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-
 function TempCorrFactor_operating
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import MA = Modelica.Math;
   import SolarTherm.{Models,Media};
+  
   input SI.Temperature T_Na1(start = 740 + 273.15) "Sodium Hot Fluid Temperature";
   input SI.Temperature T_Na2(start = 700 + 273.15) "Sodium Cold Fluid Temperature";
   input SI.Temperature T_MS1(start = 500 + 273.15) "Molten Salts Cold Fluid Temperature";
   input SI.Temperature T_MS2(start = 720 + 273.15) "Molten Salts Hot Fluid Temperature";
-  input Boolean low_flow = false;
   output Real F(unit = "") "Temperature correction factor";
   
 protected
@@ -21,7 +20,6 @@ protected
   
   parameter Real tol1 = 1e-3;
   parameter Real tol2 = 0.12;
-  parameter Real tol3 = 1e-8;
   
 algorithm
   S := (T_Na2 - T_Na1) / (T_MS1 - T_Na1);
@@ -40,7 +38,7 @@ algorithm
     F := F_calc;
   end if;
 
-  if noEvent(F <= tol2) or noEvent(F>0.9) then
+  if noEvent(F <= tol2) or noEvent(F>1) then
     F := 0.1;
   end if;
 
