@@ -37,37 +37,39 @@ model test_HX
     Placement(visible = true, transformation(origin = {70, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink MS_Sink(replaceable package Medium = Medium2) annotation(
     Placement(visible = true, transformation(origin = {30, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-
 algorithm
+
 //Sweep Parameter
   if time <= t1_end then
     m_flow_Na := m_flow_Na_min;
   end if;
-  if time > t1_end and time <= t2_end then
+  if time > t1_end and time < t2_end then
     m_flow_Na := m_flow_Na_max * (time - t1_end) / (t2_end - t1_end);
   end if;
-  if time > t2_end and time <= t3_end then
+  if time >= t2_end and time <= t3_end then
     m_flow_Na := m_flow_Na_max;
   end if;
-  if time > t3_end and time <= t4_end then
+  if time > t3_end and time < t4_end then
     m_flow_Na := m_flow_Na_max * (1 - (time - t3_end) / (t4_end - t3_end));
   end if;
-  if time > t4_end then
+  if time >= t4_end then
     m_flow_Na := m_flow_Na_min;
   end if;
-
+  
 equation
+
 //Sodium Mass FLow Rate
   Na_inlet.m_flow_in = m_flow_Na;
 
 //Sodium Inlet Temperature
-//T_Na1 = T_Na1_des;
-  T_Na1 = T_Na1_des + 10 * sin(time * 2 * CN.pi);
+  T_Na1 = T_Na1_des;
+  //T_Na1 = T_Na1_des + 10 * sin(time * 2 * CN.pi);
   Na_inlet.T_in = T_Na1;
 
 //Molten Salt Inlet Temperature
   T_MS1 = T_MS1_des;
   MS_inlet.T_in = T_MS1;
+  
   connect(MS_inlet.ports[1], HX_shell_tube.port_b_in) annotation(
     Line(points = {{-22, -50}, {15, -50}, {15, -15}}, color = {0, 127, 255}));
   connect(HX_shell_tube.port_b_out, MS_Sink.port_a) annotation(
@@ -76,6 +78,8 @@ equation
     Line(points = {{-56, 0}, {-41.5, 0}, {-41.5, 6}, {-21, 6}}, color = {0, 127, 255}));
   connect(HX_shell_tube.port_a_out, Na_Sink.port_a) annotation(
     Line(points = {{29, -6}, {60, -6}, {60, 0}}, color = {0, 127, 255}));
+  
   annotation(
     experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-6, Interval = 0.02));
+    
 end test_HX;
