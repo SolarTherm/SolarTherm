@@ -13,4 +13,5 @@ Receiver
 ReceiverFluid
 ReceiverSimple
 ReceiverSimple_2
+ReceiverSimpleStress
 HeatTransfer
