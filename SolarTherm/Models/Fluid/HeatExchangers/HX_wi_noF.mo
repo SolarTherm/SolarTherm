@@ -81,7 +81,6 @@ model HX_wi_noF
   SI.Velocity v_Na "Sodium velocity in tubes";
   SI.Velocity v_max_MS "Molten Salt velocity in shell";
   parameter SI.Temperature T_Na2_min=T_MS1_des+1 "Optimal outlet sodium temperature";
-  Boolean low_flow_ON;
   Boolean low_flow;
   
   //Fluid Properties
@@ -133,13 +132,10 @@ algorithm
     if m_flow_Na > 0 then
       if m_flow_Na <= m_flow_Na_min_des then
         low_flow := true;
-        low_flow_ON := false;
       else
         low_flow := false;
-        low_flow_ON := false;
       end if;
     else
-      low_flow_ON := true;
       low_flow := false;
     end if;
   end if;
@@ -210,9 +206,10 @@ equation
   m_flow_MS = if not HF_on then 0 else if low_flow then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q/(port_b_out.h_outflow - h_MS_in);
   DT1 = T_Na1 - T_MS2;
   DT2 = T_Na2 - T_MS1;
-  LMTD = if low_flow_ON then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);
+  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);
   F=1;
   (U, h_s, h_t) = HTCs(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
   Q=U * A_HX * F * LMTD;
   (Dp_tube, Dp_shell, v_Na, v_max_MS) = Dp_losses(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, L = L, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
+  
 end HX_wi_noF;
