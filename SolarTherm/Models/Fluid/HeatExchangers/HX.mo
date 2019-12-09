@@ -60,9 +60,9 @@ model HX
   //Variables
   SI.MassFlowRate m_flow_Na(min = 0, start = 17.1174, nominal = 17.1174) "Sodium mass flow rate";
   SI.MassFlowRate m_flow_MS(min = 0, start = 10.1462, nominal = 10.1462) "Molten Salt mass flow rate";
-  SI.Temperature T_Na1(start = T_Na1_des, nominal = T_Na1_des) "Sodium Hot Fluid Temperature";
-  SI.Temperature T_MS1(start = T_MS1_des, nominal = T_MS1_des) "Molten Salt Cold Fluid Temperature";
-  SI.Temperature T_MS2(start = T_MS2_des, nominal = T_MS2_des) "Molten Salt Hot Fluid Temperature";
+  SI.Temperature T_Na1(start = 1013.15, nominal = 1013.15) "Sodium Hot Fluid Temperature";
+  SI.Temperature T_MS1(start = 773.15, nominal = 773.15) "Molten Salt Cold Fluid Temperature";
+  SI.Temperature T_MS2(start = 993.15, nominal = 993.15) "Molten Salt Hot Fluid Temperature";
   SI.Temperature T_Na2(start = 628.252 + 273.15, nominal = 628.252 + 273.15) "Sodium Cold Fluid Temperature";
   SI.Pressure p_Na1(start = p_Na1_des, nominal = p_Na1_des) "Sodium Inlet Pressure";
   SI.Pressure p_MS1(start = p_MS1_des, nominal = p_MS1_des) "Molten Salt Inlet Pressure";
@@ -87,8 +87,8 @@ model HX
   Boolean down;
   
   //Fluid Properties
-  SI.Temperature Tm_Na(start = (690 + 740) / 2 + 273.15, nominal = (690 + 740) / 2 + 273.15) "Mean Sodium Fluid Temperature";
-  SI.Temperature Tm_MS(start = (500 + 720) / 2 + 273.15, nominal = (500 + 720) / 2 + 273.15) "Mean Molten Salts Fluid Temperature";
+  SI.Temperature Tm_Na(start = 684.126+273.15, nominal = 684.126+273.15) "Mean Sodium Fluid Temperature";
+  SI.Temperature Tm_MS(start = 883.15, nominal = 883.15) "Mean Molten Salts Fluid Temperature";
   SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
   SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
   SI.Density rho_Na "Sodium density @mean temperature";
@@ -206,7 +206,7 @@ equation
   k_Na = Medium1.thermalConductivity(state_mean_Na);
 
 //Problem
-  T_Na2_min = Find_min_TNa2(T_Na1 = T_Na1, T_MS1 = T_MS1, T_MS2 = T_MS2);
+  T_Na2_min = if low_flow_ON then T_Na2 else Find_min_TNa2(T_Na1 = T_Na1, T_MS1 = T_MS1, T_MS2 = T_MS2);
   T_MS2 = if low_flow_ON then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
   port_a_out.h_outflow = if low_flow_ON then h_Na_in else max(Medium1.specificEnthalpy(state_min_F),h_Na_in - Q / m_flow_Na);  
   m_flow_MS = if low_flow_ON then 0 else if low_flow then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q / (port_b_out.h_outflow - h_MS_in);
