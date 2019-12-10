@@ -2,8 +2,8 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model SodiumReceiver "ReceiverSimple with convective losses"
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
-  SI.SpecificEnthalpy h_in(start=h_in_0);
-  SI.SpecificEnthalpy h_out(start=h_in_0, nominal=h_out_0);
+  SI.SpecificEnthalpy h_in(start=h_out_0,nominal=h_in_0);
+  SI.SpecificEnthalpy h_out(start=h_out_0);
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
   //SI.MassFlowRate m_flow;
@@ -25,7 +25,7 @@ model SodiumReceiver "ReceiverSimple with convective losses"
   SI.HeatFlowRate Q_rcv;
   
   Real T_av4( final unit="K4")= ((T_in^4)/5 + ((T_in^3)*(T_out))/5 + ((T_in^2)*(T_out^2))/5 + ((T_in)*(T_out^3))/5 + (T_out^4)/5);
-  SI.Temperature T_av(start=T_out_0/2+T_in_0/2, nominal=1013.15/2+942.939/2)=T_in/2+T_out/2;
+  SI.Temperature T_av=T_in/2+T_out/2;
   SI.Temperature Tw_in=T_in+DT;
   SI.Temperature Tw_out=T_out+DT;
   Real Tw_av4( final unit="K4")=((Tw_in^4)/5 + ((Tw_in^3)*(Tw_out))/5 + ((Tw_in^2)*(Tw_out^2))/5 + ((Tw_in)*(Tw_out^3))/5 + (Tw_out^4)/5);
@@ -41,8 +41,8 @@ model SodiumReceiver "ReceiverSimple with convective losses"
         extent={{-6,-6},{6,6}},
         rotation=-90,
         origin={0,78})));
-  parameter SI.Temperature T_out_0=from_degC(740) "Start value of outlet temperature";
-  parameter SI.Temperature T_in_0=from_degC(501) "Start value of inlet temperature";
+  parameter SI.Temperature T_in_0=from_degC(540) "Start value of inlet temperature";
+  parameter SI.Temperature T_out_0=from_degC(740) "Start value of inlet temperature";
 
 protected
   parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -51,10 +51,12 @@ protected
   parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
   parameter SI.Area A_out=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
   parameter SI.Area A_in=N_pa*N_tb_pa*H_rcv*pi*(D_tb-2*t_tb)/2 "Area";
-  parameter Medium.ThermodynamicState state_out_0=Medium.setState_pTX(1e5,T_out_0);
-  parameter Medium.ThermodynamicState state_in_0=Medium.setState_pTX(1e5,T_in_0);
-  parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
+  
+  parameter Medium.ThermodynamicState state_in_0=Medium.setState_pTX(Medium.p_default,T_in_0);
+  parameter Medium.ThermodynamicState state_out_0=Medium.setState_pTX(Medium.p_default,T_out_0);
   parameter SI.SpecificEnthalpy h_in_0=Medium.specificEnthalpy(state_in_0);
+  parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
+  
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
   Medium.ThermodynamicState states=Medium.setState_pTX(medium.p,T_av);
@@ -69,7 +71,7 @@ public
 equation
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
-  fluid_b.h_outflow=max(h_in_0,h_out);
+  fluid_b.h_outflow=/*max(h_0,*/h_out;
   fluid_a.h_outflow=0;
 
   heat.T=medium.T;
@@ -91,7 +93,7 @@ equation
    Q_loss=0;
   end if;
   
-  0=ab*heat.Q_flow+Q_loss+max(1e-1,fluid_a.m_flow)*(h_in-h_out);
+  0=ab*heat.Q_flow+Q_loss+max(1e-3,fluid_a.m_flow)*(h_in-h_out);
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
   eff=Q_rcv/max(1,heat.Q_flow);
   
