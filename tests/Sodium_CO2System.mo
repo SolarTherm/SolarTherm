@@ -9,6 +9,7 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   import SolarTherm.Types.Solar_angles;
   import SolarTherm.Types.Currency;
   extends Modelica.Icons.Example;
+  
   //Media
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
@@ -43,6 +44,7 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   parameter Real gnd_cvge = 0.26648 "Ground coverage";
   parameter Real excl_fac = 0.97 "Exclusion factor";
   parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
+  
   // Receiver
   parameter Integer N_pa_rec = 20 "Number of panels in receiver";
   parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
@@ -55,18 +57,19 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
   parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
   parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
-  parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
-  parameter Medium1.ThermodynamicState state_hot_set_Na= Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
+  parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(101325, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
+  parameter Medium1.ThermodynamicState state_hot_set_Na= Medium1.setState_pTX(101325, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
+  
   // Storage
   parameter Real t_storage(unit = "h") = 4 "Hours of storage";
   parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
   parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
   parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
   parameter SI.Temperature T_hot_start_CS = CV.from_degC(720) "Hot tank starting temperature";
-  parameter SI.Temperature T_cold_aux_set = CV.from_degC(500) "Cold tank auxiliary heater set-point temperature";
-  parameter SI.Temperature T_hot_aux_set = CV.from_degC(720) "Hot tank auxiliary heater set-point temperature";
-  parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
-  parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
+  parameter SI.Temperature T_cold_aux_set = CV.from_degC(495) "Cold tank auxiliary heater set-point temperature";
+  parameter SI.Temperature T_hot_aux_set = CV.from_degC(725) "Hot tank auxiliary heater set-point temperature";
+  parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(101325, T_cold_set_CS) "Cold salt thermodynamic state at design";
+  parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(101325, T_hot_set_CS) "Hold salt thermodynamic state at design";
   parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
   parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
   parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
@@ -83,7 +86,7 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
   parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
   replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 1e6 "Power block gross rating at design point";
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
   parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
   parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -122,7 +125,10 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound";
   // Level (above which) to start disptach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+  parameter Real Kp = -1000*0.3 "Gain of proportional component in receiver control";
+  parameter Real Ti_CS = 0.1  "Time constant for integral component of receiver control";
+  parameter Real Kp_CS = -1000*1.105 "Gain of proportional component in receiver control";
+
   //Storage Control and Calculated parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
@@ -133,17 +139,19 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
   parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
-  parameter SI.MassFlowRate m_flow_max_CS = 1.13952693353 * m_flow_fac "Maximum mass flow rate to receiver";
-  parameter SI.MassFlowRate m_flow_start_CS = 0.81394780966 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  parameter SI.MassFlowRate m_flow_max_CS = 1.35 * m_flow_fac "Maximum mass flow rate to receiver";
+  parameter SI.MassFlowRate m_flow_start_CS = 0.231114973262 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
+  
   //Receiver Control and Calculated parameters
   parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
   parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
   parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
-  parameter SI.MassFlowRate m_flow_max_Na = 1.13952693353 * m_flow_rec "Maximum mass flow rate to receiver";
-  parameter SI.MassFlowRate m_flow_start_Na = 0.81394780966 * m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  parameter SI.MassFlowRate m_flow_max_Na = 1.8 * m_flow_rec "Maximum mass flow rate to receiver";
+  parameter SI.MassFlowRate m_flow_start_Na = 0.184104680851*m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  
   // SF Calculated Parameters
   parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
   parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
@@ -268,7 +276,7 @@ model Sodium_CO2System "High temperature Sodium-sCO2 system"
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(visible = true, transformation(extent = {{96, 80}, {108, 66}}, rotation = 0)));
   // Storage Control
-  SolarTherm.Models.Control.ReceiverControl storagecontrolCold(T_ref = T_hot_set_CS, m_flow_max = m_flow_max_CS, y_start = m_flow_fac, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti = Ti, Kp = Kp) annotation(
+  SolarTherm.Models.Control.ReceiverControl storagecontrolCold(T_ref = T_hot_set_CS, m_flow_max = m_flow_max_CS, y_start = m_flow_fac, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti = Ti_CS, Kp = Kp_CS) annotation(
     Placement(visible = true, transformation(extent = {{58, -62}, {44, -48}}, rotation = 0)));
   // Power block
   SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(redeclare package Medium = Medium2, W_des = P_gross, enable_losses = blk_enable_losses, redeclare model Cycle = Cycle, nu_min = nu_min_blk, external_parasities = external_parasities, W_base = W_base_blk, p_bo = p_blk, T_des = blk_T_amb_des, nu_net = nu_net_blk, T_in_ref = T_in_ref_blk, T_out_ref = T_out_ref_blk, Q_flow_ref = Q_flow_des, redeclare model Cooling = Cooling(T_co = T_comp_in)) annotation(
@@ -399,6 +407,10 @@ equation
   P_elec = powerBlock.W_net;
   E_elec = powerBlock.E_net;
   R_spot = market.profit;
+  
+  when not Shell_and_Tube_HX.HF_on then
+     reinit(storagecontrolCold.T_mea, Shell_and_Tube_HX.T_MS2_des);
+  end when;
   
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {0, -38}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {-10, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 3, fontName = "CMU Serif"), Text(origin = {6, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 3, fontName = "CMU Serif"), Text(origin = {-50, 6}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 3, fontName = "CMU Serif"), Text(origin = {34, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 3, fontName = "CMU Serif"), Text(origin = {36, -14}, extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 3, fontName = "CMU Serif"), Text(origin = {16, 2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 3, fontName = "CMU Serif"), Text(origin = {14, 2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 3, fontName = "CMU Serif"), Text(origin = {34, -80}, extent = {{-6, 20}, {42, 0}}, textString = "Storage Control", fontSize = 3, fontName = "CMU Serif"), Text(origin = {44, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 3, fontName = "CMU Serif"), Text(origin = {-38, -22}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 3, fontName = "CMU Serif"), Text(origin = {-16, -80}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 3, fontName = "CMU Serif")}),
