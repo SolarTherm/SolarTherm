@@ -201,7 +201,7 @@ equation
   k_Na = Medium1.thermalConductivity(state_mean_Na);
 
 //Problem
-  T_MS2 = if not HF_on then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
+  //T_MS2 = if not HF_on then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
   port_a_out.h_outflow = if not HF_on then h_Na_in else max(Medium1.specificEnthalpy(state_min_F),h_Na_in - Q / m_flow_Na);  
   m_flow_MS = if not HF_on then 0 else if low_flow then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q/(port_b_out.h_outflow - h_MS_in);
   DT1 = T_Na1 - T_MS2;
