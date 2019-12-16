@@ -1,5 +1,5 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
-model SodiumReceiver "ReceiverSimple with convective losses"
+model SodiumReceiver_v3 "ReceiverSimple with convective losses"
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
   SI.SpecificEnthalpy h_in(start=h_out_0,nominal=h_in_0);
@@ -71,7 +71,7 @@ public
 equation
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
-  fluid_b.h_outflow=/*max(h_in_0,*/ h_out;
+  fluid_b.h_outflow=h_out;
   fluid_a.h_outflow=0;
 
   heat.T=medium.T;
@@ -130,4 +130,4 @@ equation
 <li>fluid_b: This connector provides the outlet mass flow rate and specific enthalpy of the system working fluid, the pressure is not used.</li>
 </ul>
 </html>"));
-end SodiumReceiver;
+end SodiumReceiver_v3;
