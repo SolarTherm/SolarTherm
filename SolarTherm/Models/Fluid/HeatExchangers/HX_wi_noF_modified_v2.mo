@@ -1,6 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-
-model HX_wi_noF_modified
+model HX_wi_noF_modified_v2
   extends SolarTherm.Interfaces.Models.HeatExchangerFluid;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -16,7 +15,6 @@ model HX_wi_noF_modified
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
   parameter SI.Pressure p_Na1_des = 101325 "Design Sodium Inlet Pressure";
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
-  
   //Auxiliary parameters
   parameter Boolean optimize_and_run = true;
   parameter Medium1.ThermodynamicState state_Na_in_0 = Medium1.setState_pTX(p_Na1_des, T_Na1_des);
@@ -91,7 +89,6 @@ model HX_wi_noF_modified
   //SI.HeatFlowRate Q_receiver "Design Heat Flow Rate";
   Boolean problema(start = false);
   Boolean problema2(start = false);
-  
   //Fluid Properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
   SI.Temperature Tm_MS "Mean Molten Salts Fluid Temperature";
@@ -112,6 +109,7 @@ model HX_wi_noF_modified
   Medium2.ThermodynamicState state_wall_MS;
   Medium2.ThermodynamicState state_input_MS;
   Medium2.ThermodynamicState state_output_MS;
+  
   //Ports Variables
   SI.SpecificEnthalpy h_Na_in(start = h_Na_in_0, nominal = h_Na_in_0);
   SI.SpecificEnthalpy h_MS_in(start = h_MS_in_0);
@@ -134,20 +132,24 @@ initial algorithm
   end if;
   m_flow_MS_min_des := 0.23 * m_flow_MS_design;
   m_flow_Na_min_des := 0.15 * m_flow_Na_design;
+
 equation
 //Mass conservation equations
   port_a_in.m_flow + port_a_out.m_flow = 0;
   port_b_in.m_flow + port_b_out.m_flow = 0;
   m_flow_Na = port_a_in.m_flow;
   m_flow_MS = port_b_in.m_flow;
+
 //Fluids Enthalpies
-  port_b_out.h_outflow = if HF_on then max(h_MS_out,h_MS_in_0) else h_MS_in;
-  port_a_out.h_outflow = if HF_on then h_Na_out else h_Na_in;
+  port_b_out.h_outflow = if HF_on then h_MS_out else h_MS_in;
+  port_a_out.h_outflow = if HF_on then h_Na_out else h_Na_out_0;
   h_Na_in = inStream(port_a_in.h_outflow);
   h_MS_in = inStream(port_b_in.h_outflow);
+
 //Shouldn't have reverse flows
   port_a_in.h_outflow = 0.0;
   port_b_in.h_outflow = 0.0;
+
 //Other ports equations
   port_a_out.Xi_outflow = inStream(port_a_in.Xi_outflow);
   port_a_in.Xi_outflow = inStream(port_a_out.Xi_outflow);
@@ -157,6 +159,7 @@ equation
   port_a_in.C_outflow = inStream(port_a_out.C_outflow);
   port_b_out.C_outflow = inStream(port_b_in.C_outflow);
   port_b_in.C_outflow = inStream(port_b_out.C_outflow);
+
 //Fluid temperatures and pressures
   T_Na1 = Medium1.temperature(state_input_Na);
   T_Na2 = Medium1.temperature(state_output_Na);
@@ -191,13 +194,14 @@ equation
   mu_Na = Medium1.dynamicViscosity(state_mean_Na);
   mu_Na_wall = mu_Na;
   k_Na = Medium1.thermalConductivity(state_mean_Na);
-
 //Problem
-  Q = max(1e-3, m_flow_Na) * (h_Na_in - h_Na_out);
+  Q = max(1e-3,m_flow_Na) * (h_Na_in - h_Na_out);
+  Q = max(1e-3,m_flow_MS) * (h_MS_out - h_MS_in);
 //Q=max(1e-3, m_flow_MS)*(h_MS_out-h_MS_in);
 //h_MS_out = max(h_MS_in+(Q/max(1e-3, m_flow_MS)),h_MS_in+Q_small/max(m_flow_MS_min_des, m_flow_MS));
 //Q=if HF_on then max(Q/(h_MS_out-h_MS_in),5) else 0;
-  m_flow_MS = /*if low_flow then onnn*max(m_flow_MS_min_des,Q /(h_MS_out - h_MS_in)) else*/ Q / (h_MS_out - h_MS_in);
+  //m_flow_MS = Q / (h_MS_out - h_MS_in);
+/*if low_flow then onnn*max(m_flow_MS_min_des,Q /(h_MS_out - h_MS_in)) else*/
 /*if HF_on then max(1,Q/(h_MS_out - h_MS_in)) else*/
 //h_MS_out = h_MS_in + Q/m_flow_MS;
   DT1 = T_Na1 - T_MS2;
@@ -214,4 +218,4 @@ equation
 //  when not HF_on then
 //     reinit(T_MS2, T_MS2_des);
 //  end when;
-end HX_wi_noF_modified;
+end HX_wi_noF_modified_v2;

@@ -1,8 +1,9 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
-model SodiumReceiver "ReceiverSimple with convective losses"
+model SodiumReceiver_v2 "ReceiverSimple with convective losses"
   extends Interfaces.Models.ReceiverFluid;
+  import CV = Modelica.SIunits.Conversions;
   Medium.BaseProperties medium;
-  SI.SpecificEnthalpy h_in(start=h_out_0,nominal=h_in_0);
+  SI.SpecificEnthalpy h_in(start=h_in_0,nominal=h_in_0);
   SI.SpecificEnthalpy h_out(start=h_out_0,nominal=h_out_0);
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
@@ -41,8 +42,8 @@ model SodiumReceiver "ReceiverSimple with convective losses"
         extent={{-6,-6},{6,6}},
         rotation=-90,
         origin={0,78})));
-  parameter SI.Temperature T_in_0=from_degC(540) "Start value of inlet temperature";
-  parameter SI.Temperature T_out_0=from_degC(740) "Start value of inlet temperature";
+  parameter SI.Temperature T_in_0=CV.from_degC(560) "Start value of inlet temperature";
+  parameter SI.Temperature T_out_0=CV.from_degC(740) "Start value of inlet temperature";
 
 protected
   parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -52,10 +53,12 @@ protected
   parameter SI.Area A_out=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
   parameter SI.Area A_in=N_pa*N_tb_pa*H_rcv*pi*(D_tb-2*t_tb)/2 "Area";
   
-  parameter Medium.ThermodynamicState state_in_0=Medium.setState_pTX(Medium.p_default,T_in_0);
-  parameter Medium.ThermodynamicState state_out_0=Medium.setState_pTX(Medium.p_default,T_out_0);
+  parameter Medium.ThermodynamicState state_in_0=Medium.setState_pTX(101325,T_in_0);
+  parameter Medium.ThermodynamicState state_out_0=Medium.setState_pTX(101325,T_out_0);
   parameter SI.SpecificEnthalpy h_in_0=Medium.specificEnthalpy(state_in_0);
   parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
+
+  
   
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
@@ -71,7 +74,7 @@ public
 equation
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
-  fluid_b.h_outflow=/*max(h_in_0,*/ h_out;
+  fluid_b.h_outflow=max(h_in_0,h_out);
   fluid_a.h_outflow=0;
 
   heat.T=medium.T;
@@ -130,4 +133,4 @@ equation
 <li>fluid_b: This connector provides the outlet mass flow rate and specific enthalpy of the system working fluid, the pressure is not used.</li>
 </ul>
 </html>"));
-end SodiumReceiver;
+end SodiumReceiver_v2;
