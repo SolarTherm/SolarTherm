@@ -84,7 +84,7 @@ model HX_Control
   
   Modelica.Blocks.Interfaces.BooleanOutput defocus  
    annotation (
-   Placement(visible = true, transformation(origin = {0, -126}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, -126}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+   Placement(visible = true, transformation(origin = {0, -116}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, -116}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   
   Modelica.Blocks.Math.Feedback feedback2 
     annotation(
@@ -114,6 +114,8 @@ model HX_Control
     Placement(visible = true, transformation(origin = {64, 2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 equation
+  connect(not1.y, defocus) annotation(
+    Line(points = {{0, -92.6}, {0, -116}}, color = {255, 0, 255}));
   connect(PID.y, switch.in2) annotation(
     Line(points = {{36, 60}, {44, 60}, {44, 6}, {52, 6}, {52, 9}}, color = {0, 0, 127}));
   connect(PI_rec.y, switch.in1) annotation(
@@ -144,8 +146,6 @@ equation
     Line(points = {{-7, 60}, {11, 60}}, color = {0, 0, 127}));
   connect(L_mea, hotTankLogic.level_ref) annotation(
     Line(points = {{-110, -12}, {-74, -12}}, color = {0, 0, 127}));
-  connect(not1.y, defocus) annotation(
-    Line(points = {{0, -92.6}, {0, -126}}, color = {255, 0, 255}));
   connect(not1.u, defocus_logic.y) annotation(
     Line(points = {{0, -78.8}, {0, -76}, {-1.33227e-15, -76}, {-1.33227e-15, -72.96}}, color = {255, 0, 255}));
   connect(and1.u2, sf_on) annotation(
