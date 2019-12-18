@@ -20,17 +20,25 @@ model loop_breaker_v2
   SI.Temperature T;
   Medium.ThermodynamicState state_i;
   Real L "Level in %";
+  Modelica.Blocks.Interfaces.RealInput p_top annotation (Placement(
+        transformation(
+        extent={{-16,-16},{16,16}},
+        rotation=-90,
+        origin={0,108}), iconTransformation(
+        extent={{-11,-11},{11,11}},
+        rotation=-90,
+        origin={45,97})));
 
-  initial equation
+initial equation
   medium.h=Medium.specificEnthalpy(state_i);
   m=Medium.density(state_i)*V_t*L_start/100;
 
 equation
+  p_top=medium.p;
   fluid_a.h_outflow = medium.h; // shouldn't flow backwards anyway
   fluid_b.h_outflow=medium.h;
   fluid_b.p=medium.p;
   fluid_a.p=medium.p;
-  medium.p=101325;
   state_i=Medium.setState_pTX(medium.p,T_start);
   T=Medium.temperature(medium.state);
   der(m)=fluid_a.m_flow+fluid_b.m_flow;
