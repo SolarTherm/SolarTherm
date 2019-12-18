@@ -13,5 +13,5 @@ function T_h "Temperature of Chloride Salt as a function of specific enthalpy"
 algorithm
 	//From h_T
   //	T:=(-1538.7+(1538.7^2+2*0.528*(-435295.54146-h))^0.5)/(-0.528);
-  T:=(-c2+(c2^2+4*c1*(h+c4))^0.5)/(2*c1);
+    T:=(-c2+(c2^2+4*c1*(h+c4))^0.5)/(2*c1);
 end T_h;

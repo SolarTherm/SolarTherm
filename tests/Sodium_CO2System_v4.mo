@@ -52,7 +52,6 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
   parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
   parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
-  parameter SI.Temperature T_hot_set_Na_2 = CV.from_degC(750) "Hot Receiver target temperature";
   parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(101325, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
   parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(101325, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
   // Storage
@@ -121,9 +120,9 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound";
   // Level (above which) to start disptach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp = -940 "Gain of proportional component in receiver control";
+  parameter Real Kp = -800 "Gain of proportional component in receiver control";
   parameter Real Ti_CS = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp_CS = -935 "Gain of proportional component in receiver control";
+  parameter Real Kp_CS = Kp+6.5 "Gain of proportional component in receiver control";
   //Storage Control and Calculated parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
