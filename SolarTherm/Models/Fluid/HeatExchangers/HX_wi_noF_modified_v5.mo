@@ -88,6 +88,7 @@ model HX_wi_noF_modified_v5
   SI.Velocity v_max_MS "Molten Salt velocity in shell";
   Boolean problema(start = false);
   Boolean problema2(start = false);
+  
   //Fluid Properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
   SI.Temperature Tm_MS "Mean Molten Salts Fluid Temperature";
@@ -112,7 +113,7 @@ model HX_wi_noF_modified_v5
   //Ports Variables
   SI.SpecificEnthalpy h_Na_in;
   SI.SpecificEnthalpy h_MS_in;
-  SI.SpecificEnthalpy h_MS_out(min = h_MS_in_0, start = h_MS_out_0, nominal = h_MS_out_0);
+  SI.SpecificEnthalpy h_MS_out(start = h_MS_out_0, nominal = h_MS_out_0);
   SI.SpecificEnthalpy h_Na_out(start = h_Na_out_0, nominal = h_Na_out_0);
   
   //Real Input
@@ -203,10 +204,12 @@ equation
   (U, h_s, h_t) = HTCs(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
   Q = U * A_HX * F * LMTD;
   (Dp_tube, Dp_shell, v_Na, v_max_MS) = Dp_losses(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, L = L, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
+  
+//Assertions
   problema = if m_flow_MS <= 0 and HF_on then true else false;
   problema2 = if port_b_out.h_outflow <= 0 then true else false;
-
-//  assert(problema == false, "Mass Flow Rate zero", level = AssertionLevel.error);
+  
+  //assert(problema == false, "Mass Flow Rate zero", level = AssertionLevel.error);
   assert(problema2 == false, "Enthalpy_out zero", level = AssertionLevel.error);
 
 end HX_wi_noF_modified_v5;
