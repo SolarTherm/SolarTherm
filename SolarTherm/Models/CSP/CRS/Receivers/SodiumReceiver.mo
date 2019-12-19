@@ -2,11 +2,10 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model SodiumReceiver "ReceiverSimple with convective losses"
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
-  SI.SpecificEnthalpy h_in(start=h_out_0,nominal=h_in_0);
+  SI.SpecificEnthalpy h_in(start=h_in_0,nominal=h_in_0);
   SI.SpecificEnthalpy h_out(start=h_out_0,nominal=h_out_0);
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
-  //SI.MassFlowRate m_flow;
   
   parameter SI.Length H_rcv=1 "Receiver height" annotation(Dialog(group="Technical data"));
   parameter SI.Diameter D_rcv=1 "Receiver diameter" annotation(Dialog(group="Technical data"));
@@ -71,7 +70,7 @@ public
 equation
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
-  fluid_b.h_outflow=/*max(h_in_0,*/ h_out;
+  fluid_b.h_outflow=h_out;
   fluid_a.h_outflow=0;
 
   heat.T=medium.T;

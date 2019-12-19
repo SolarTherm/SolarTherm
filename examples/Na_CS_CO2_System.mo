@@ -1,4 +1,5 @@
-model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
+within examples;
+model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -54,6 +55,7 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
   parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(101325, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
   parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(101325, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
+  
   // Storage
   parameter Real t_storage(unit = "h") = 4 "Hours of storage";
   parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
@@ -120,9 +122,9 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound";
   // Level (above which) to start disptach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp = -800 "Gain of proportional component in receiver control";
+  parameter Real Kp = -710 "Gain of proportional component in receiver control";
   parameter Real Ti_CS = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp_CS = Kp+6.5 "Gain of proportional component in receiver control";
+  parameter Real Kp_CS = Kp+6 "Gain of proportional component in receiver control";
   //Storage Control and Calculated parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
@@ -230,7 +232,7 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
     Placement(visible = true, transformation(extent = {{-98, 2}, {-66, 36}}, rotation = 0)));
   // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_v4 receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na) annotation(
     Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
   // Temperature sensor1
   SolarTherm.Models.Fluid.Sensors.Temperature temperature1(redeclare package Medium = Medium1) annotation(
@@ -242,9 +244,9 @@ model Sodium_CO2System_v4 "High temperature Sodium-sCO2 system"
   SolarTherm.Models.Control.HX_Control hX_Control(T_ref_rec = T_hot_set_Na, m_flow_max_rec = m_flow_max_Na, y_start_rec = m_flow_start_Na, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti_rec = Ti, Kp_rec = Kp, T_ref_HX = T_hot_set_CS, m_flow_max_HX = m_flow_max_CS, y_start_HX = m_flow_start_CS, Ti_HX = Ti_CS, Kp_HX = Kp_CS) annotation(
     Placement(visible = true, transformation(origin = {40, -56}, extent = {{10, -10}, {-10, 10}}, rotation = -90)));
   //HX
-  SolarTherm.Models.Fluid.HeatExchangers.HX_wi_noF_modified_v5 Shell_and_Tube_HX(replaceable package Medium1 = Medium1, replaceable package Medium2 = Medium2, Q_d_des = Q_rec_out) annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.HX_wi_noF Shell_and_Tube_HX(replaceable package Medium1 = Medium1, replaceable package Medium2 = Medium2, Q_d_des = Q_rec_out) annotation(
     Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
-  SolarTherm.Models.Fluid.HeatExchangers.loop_breaker_v2 loop_breaker(replaceable package Medium = Medium1) annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.buffer_tank loop_breaker(replaceable package Medium = Medium1) annotation(
     Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium2, D = D_storage, H = H_storage, T_start = T_hot_start_CS, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set) annotation(
@@ -390,4 +392,4 @@ equation
 
 	</html>"),
     uses(SolarTherm(version = "0.2")));
-end Sodium_CO2System_v4;
+end Na_CS_CO2_System;
