@@ -19,8 +19,16 @@ model HX_wi_noF
   
   //Auxiliary parameters
   parameter Boolean optimize_and_run = true;
-  parameter SI.MassFlowRate m_flow_Na_min_des(fixed = false);
-  parameter SI.MassFlowRate m_flow_MS_min_des(fixed = false);
+  parameter Medium1.ThermodynamicState state_Na_in_0 = Medium1.setState_pTX(p_Na1_des, T_Na1_des);
+  parameter Medium2.ThermodynamicState state_MS_in_0 = Medium2.setState_pTX(p_MS1_des, T_MS1_des);
+  parameter SI.SpecificEnthalpy h_Na_in_0 = Medium1.specificEnthalpy(state_Na_in_0);
+  parameter SI.SpecificEnthalpy h_MS_in_0 = Medium2.specificEnthalpy(state_MS_in_0);
+  parameter Medium1.ThermodynamicState state_Na_out_0 = Medium1.setState_pTX(p_Na1_des, T_Na2_design);
+  parameter Medium2.ThermodynamicState state_MS_out_0 = Medium2.setState_pTX(p_MS1_des, T_MS2_des);
+  parameter SI.SpecificEnthalpy h_Na_out_0 = Medium1.specificEnthalpy(state_Na_out_0);
+  parameter SI.SpecificEnthalpy h_MS_out_0 = Medium2.specificEnthalpy(state_MS_out_0);
+  parameter SI.MassFlowRate m_flow_Na_min_des(fixed = false) "Sodium minimum mass flow rate";
+  parameter SI.MassFlowRate m_flow_MS_min_des(fixed = false) "Molten-Salt minimum mass flow rate";
   
   //Input parameters
   parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter";
@@ -58,34 +66,34 @@ model HX_wi_noF
   parameter Real en_eff_design(fixed = false) "Optimal HX Energetic Efficiency";
   
   //Variables
-  SI.MassFlowRate m_flow_Na(min = 0, start = 17.1174, nominal = 17.1174) "Sodium mass flow rate";
-  SI.MassFlowRate m_flow_MS(min = 0, start = 211.93, nominal = 211.93) "Molten Salt mass flow rate";
-  SI.Temperature T_Na1(start = 1013.15, nominal = 1013.15) "Sodium Hot Fluid Temperature";
-  SI.Temperature T_MS1(start = 773.15, nominal = 773.15) "Molten Salt Cold Fluid Temperature";
-  SI.Temperature T_MS2(start = 993.15, nominal = 993.15) "Molten Salt Hot Fluid Temperature";
-  SI.Temperature T_Na2(start = 628.252 + 273.15, nominal = 628.252 + 273.15) "Sodium Cold Fluid Temperature";
+  SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
+  SI.MassFlowRate m_flow_MS(start=m_flow_MS_design) "Molten Salt mass flow rate";
+  SI.Temperature T_Na1(start=740+273.15, nominal=740+273.15) "Sodium Hot Fluid Temperature";
+  SI.Temperature T_MS1 "Molten Salt Cold Fluid Temperature";
+  SI.Temperature T_MS2(start=720+273.15, nominal= 720+273.15) "Molten Salt Hot Fluid Temperature";
+  SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   SI.Pressure p_Na1(start = p_Na1_des, nominal = p_Na1_des) "Sodium Inlet Pressure";
   SI.Pressure p_MS1(start = p_MS1_des, nominal = p_MS1_des) "Molten Salt Inlet Pressure";
   SI.Pressure p_Na2 "Sodium Outlet Pressure";
   SI.Pressure p_MS2 "Molten Salt Outlet Pressure";
-  SI.CoefficientOfHeatTransfer U(start = 234.407, nominal = 234.407) "Heat tranfer coefficient";
-  SI.CoefficientOfHeatTransfer h_s(start = 235.936, nominal = 235.936) "Shell-side Heat tranfer coefficient";
-  SI.CoefficientOfHeatTransfer h_t(start = 8092.03, nominal = 8092.03) "Tube-side Heat tranfer coefficient";
-  SI.HeatFlowRate Q(start = 2.39E+06, nominal = 2.39E+06) "Design Heat Flow Rate";
-  Real F(start = 0.133385, nominal = 0.133385) "Temperature correction factor";
-  SI.TemperatureDifference DT1(start = 20, nominal = 20) "Sodium-Molten Salt temperature difference 1";
-  SI.TemperatureDifference DT2(start = 128.252, nominal = 128.252) "Sodium-Molten Salt temperature difference 2";
-  SI.TemperatureDifference LMTD(start = 58.2543, nominal = 58.2543) "Logarithmic mean temperature difference";
+  SI.CoefficientOfHeatTransfer U "Heat tranfer coefficient";
+  SI.CoefficientOfHeatTransfer h_s "Shell-side Heat tranfer coefficient";
+  SI.CoefficientOfHeatTransfer h_t "Tube-side Heat tranfer coefficient";
+  SI.HeatFlowRate Q "Design Heat Flow Rate";
+  Real F "Temperature correction factor";
+  SI.TemperatureDifference DT1 "Sodium-Molten Salt temperature difference 1";
+  SI.TemperatureDifference DT2 "Sodium-Molten Salt temperature difference 2";
+  SI.TemperatureDifference LMTD "Logarithmic mean temperature difference";
   SI.Pressure Dp_tube "Tube-side pressure drop";
   SI.Pressure Dp_shell "Shell-side pressure drop";
   SI.Velocity v_Na "Sodium velocity in tubes";
   SI.Velocity v_max_MS "Molten Salt velocity in shell";
-  parameter SI.Temperature T_Na2_min=T_MS1_des+1 "Optimal outlet sodium temperature";
-  Boolean low_flow;
+  Boolean problema(start = false);
+  Boolean problema2(start = false);
   
   //Fluid Properties
-  SI.Temperature Tm_Na(start = 684.126+273.15, nominal = 684.126+273.15) "Mean Sodium Fluid Temperature";
-  SI.Temperature Tm_MS(start = 883.15, nominal = 883.15) "Mean Molten Salts Fluid Temperature";
+  SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
+  SI.Temperature Tm_MS "Mean Molten Salts Fluid Temperature";
   SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
   SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
   SI.Density rho_Na "Sodium density @mean temperature";
@@ -99,7 +107,6 @@ model HX_wi_noF
   Medium1.ThermodynamicState state_mean_Na;
   Medium1.ThermodynamicState state_input_Na;
   Medium1.ThermodynamicState state_output_Na;
-  parameter Medium1.ThermodynamicState state_min_F = Medium1.setState_pTX(p_Na1_des, T_Na2_min);
   Medium2.ThermodynamicState state_mean_MS;
   Medium2.ThermodynamicState state_wall_MS;
   Medium2.ThermodynamicState state_input_MS;
@@ -108,9 +115,11 @@ model HX_wi_noF
   //Ports Variables
   SI.SpecificEnthalpy h_Na_in;
   SI.SpecificEnthalpy h_MS_in;
+  SI.SpecificEnthalpy h_MS_out(start = h_MS_out_0, nominal = h_MS_out_0);
+  SI.SpecificEnthalpy h_Na_out(start = h_Na_out_0, nominal = h_Na_out_0);
   
   //Real Input
-  Modelica.Blocks.Interfaces.BooleanInput HF_on(start=true) annotation(
+  Modelica.Blocks.Interfaces.BooleanInput HF_on(start = true) annotation(
     Placement(visible = true, transformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90), iconTransformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
 
 initial algorithm
@@ -124,21 +133,9 @@ initial algorithm
     T_Na2_design := T_Na2_input;
     (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, N_t, U_design, A_HX, Dp_tube_design, Dp_shell_design, TAC, h_s_design, h_t_design, D_s, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, ex_eff_design, en_eff_design) := Design_HX(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, L = L, N_p = N_p, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
   end if;
-  m_flow_Na_min_des := 0.0001 * m_flow_Na_design;
-  m_flow_MS_min_des := 0.01 * m_flow_MS_design;
-
-algorithm
-  if HF_on then
-    if m_flow_Na > 0 then
-      if m_flow_Na <= m_flow_Na_min_des then
-        low_flow := true;
-      else
-        low_flow := false;
-      end if;
-    else
-      low_flow := false;
-    end if;
-  end if;
+  
+  m_flow_MS_min_des := 1e-3 /*0.202 * m_flow_MS_design*/;
+  m_flow_Na_min_des := 1e-3 /*0.183 * m_flow_Na_design*/;
 
 equation
 //Mass conservation equations
@@ -146,17 +143,17 @@ equation
   port_b_in.m_flow + port_b_out.m_flow = 0;
   m_flow_Na = port_a_in.m_flow;
   m_flow_MS = port_b_in.m_flow;
-  
+
 //Fluids Enthalpies
-  port_b_out.h_outflow = Medium2.specificEnthalpy(state_output_MS);
-  port_a_out.h_outflow = Medium1.specificEnthalpy(state_output_Na);
+  port_b_out.h_outflow = h_MS_out;
+  port_a_out.h_outflow = h_Na_out;
   h_Na_in = inStream(port_a_in.h_outflow);
   h_MS_in = inStream(port_b_in.h_outflow);
-  
+
 //Shouldn't have reverse flows
   port_a_in.h_outflow = 0.0;
   port_b_in.h_outflow = 0.0;
-  
+
 //Other ports equations
   port_a_out.Xi_outflow = inStream(port_a_in.Xi_outflow);
   port_a_in.Xi_outflow = inStream(port_a_out.Xi_outflow);
@@ -166,10 +163,12 @@ equation
   port_a_in.C_outflow = inStream(port_a_out.C_outflow);
   port_b_out.C_outflow = inStream(port_b_in.C_outflow);
   port_b_in.C_outflow = inStream(port_b_out.C_outflow);
-  
+
 //Fluid temperatures and pressures
   T_Na1 = Medium1.temperature(state_input_Na);
+  T_Na2 = Medium1.temperature(state_output_Na);
   T_MS1 = Medium2.temperature(state_input_MS);
+  T_MS2 = Medium2.temperature(state_output_MS);
   p_Na1 = port_a_in.p;
   p_MS1 = port_b_in.p;
   p_Na2 = port_a_out.p;
@@ -181,7 +180,7 @@ equation
   Tm_MS = (T_MS1 + T_MS2) / 2;
   state_mean_MS = Medium2.setState_pTX(p_MS1, Tm_MS);
   state_input_MS = Medium2.setState_phX(p_MS1, h_MS_in);
-  state_output_MS = Medium2.setState_pTX(p_MS1, T_MS2);
+  state_output_MS = Medium2.setState_phX(p_MS1, h_MS_out);
   state_wall_MS = Medium2.setState_pTX(p_MS1, Tm_Na);
   rho_MS = Medium2.density(state_mean_MS);
   cp_MS = Medium2.specificHeatCapacityCp(state_mean_MS);
@@ -193,7 +192,7 @@ equation
   Tm_Na = (T_Na1 + T_Na2) / 2;
   state_mean_Na = Medium1.setState_pTX(p_Na1, Tm_Na);
   state_input_Na = Medium1.setState_phX(p_Na1, h_Na_in);
-  state_output_Na = Medium1.setState_pTX(p_Na1, T_Na2);
+  state_output_Na = Medium1.setState_phX(p_Na1, h_Na_out);
   rho_Na = Medium1.density(state_mean_Na);
   cp_Na = Medium1.specificHeatCapacityCp(state_mean_Na);
   mu_Na = Medium1.dynamicViscosity(state_mean_Na);
@@ -201,15 +200,21 @@ equation
   k_Na = Medium1.thermalConductivity(state_mean_Na);
 
 //Problem
-  //T_MS2 = if not HF_on then T_MS1 else min(T_MS2_des, T_Na1 - 15); //Imposed value with tollerance
-  port_a_out.h_outflow = if not HF_on then h_Na_in else max(Medium1.specificEnthalpy(state_min_F),h_Na_in - Q / m_flow_Na);  
-  m_flow_MS = if not HF_on then 0 else if low_flow then max(m_flow_MS_min_des, Q / (port_b_out.h_outflow - h_MS_in)) else Q/(port_b_out.h_outflow - h_MS_in);
+  Q = max(m_flow_Na_min_des,m_flow_Na) * (h_Na_in - h_Na_out);
+  Q = max(m_flow_MS_min_des, m_flow_MS) * (h_MS_out - h_MS_in);
   DT1 = T_Na1 - T_MS2;
   DT2 = T_Na2 - T_MS1;
-  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);
-  F=1;
+  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0 or abs(DT1 - DT2)<1e-3) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);
+  F = 1;
   (U, h_s, h_t) = HTCs(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
-  Q=U * A_HX * F * LMTD;
+  Q = U * A_HX * F * LMTD;
   (Dp_tube, Dp_shell, v_Na, v_max_MS) = Dp_losses(d_o = d_o, N_p = N_p, layout = layout, N_t = N_t, L = L, state_mean_Na = state_mean_Na, state_mean_MS = state_mean_MS, state_wall_MS = state_wall_MS, m_flow_Na = m_flow_Na, m_flow_MS = m_flow_MS);
   
+//Assertions
+  problema = if m_flow_MS <= 0 and HF_on then true else false;
+  problema2 = if port_b_out.h_outflow <= 0 then true else false;
+  
+  //assert(problema == false, "Mass Flow Rate zero", level = AssertionLevel.error);
+  //assert(problema2 == false, "Enthalpy_out zero", level = AssertionLevel.error);
+
 end HX_wi_noF;

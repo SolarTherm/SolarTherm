@@ -1,5 +1,5 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-model loop_breaker_v2
+model buffer_tank
   extends SolarTherm.Interfaces.Models.StorageFluid;
   //replaceable package Medium = Modelica.Media.Interfaces.PartialMedium;
 //  Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium=Medium, m_flow(min=0)) annotation (
@@ -46,4 +46,4 @@ equation
   V=m/medium.d;
   L=100*V/V_t;
 
-end loop_breaker_v2;
+end buffer_tank;
