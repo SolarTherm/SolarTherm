@@ -22,6 +22,7 @@ function Find_Opt_Design_HX_noF
   output SI.CoefficientOfHeatTransfer h_s_opt_des "Optimal Shell-side Heat tranfer coefficient";
   output SI.CoefficientOfHeatTransfer h_t_opt_des "Optimal Tube-side Heat tranfer coefficient";
   output SI.Length D_s_opt "Optimal Shell Diameter";
+  output Integer N_baffles_opt "Number of Baffles";
   output SI.Velocity v_Na_opt_des "Optimal Sodium velocity in tubes";
   output SI.Velocity v_max_MS_opt_des "Optimal Molten Salt velocity in shell";
   output SI.Volume V_HX_opt_des "Optimal Heat-Exchanger Total Volume";
@@ -41,17 +42,29 @@ function Find_Opt_Design_HX_noF
   output Real en_eff_opt_des "Optimal HX Energetic Efficiency";
 
   protected
+//  //Sweep Parameters
+//  parameter SI.Length d_o[1] = {50.80e-3} "Outer Tube Diameter";
+//  parameter SI.Length L[1]={10} "Tube Length";
+//  parameter Integer N_p[1]={2} "Tube passes number";
+//  parameter Integer layout[1]={2} "Tube layout";
+//  parameter SI.Temperature T_Na2_des[1] = {560+273.15} "Sodium Cold Fluid Temperature";
+
+  
   //Sweep Parameters
-  parameter SI.Length d_o[1] = {41.28e-3} "Outer Tube Diameter";
-  parameter SI.Length L[1]={10} "Tube Length";
-  parameter Integer N_p[1]={4} "Tube passes number";
-  parameter Integer layout[1]={2} "Tube layout";
-  //parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
-  //parameter SI.Length L[11]={2,4,6,8,10,12,14,16,18,20,22} "Tube Length";
-  //parameter Integer N_p[2]={4,8} "Tube passes number";
-  //parameter Integer layout[2]={1,2} "Tube layout";
-  //parameter SI.Temperature T_Na2_des[18] = {510+273.15, 520+273.15, 530+273.15, 540+273.15, 550+273.15, 560+273.15, 570+273.15, 580+273.15, 590+273.15, 600+273.15, 610+273.15, 620+273.15, 630+273.15, 640+273.15, 650+273.15, 660+273.15, 670+273.15, 680+273.15, 690+273.15, 700+273.15} "Sodium Cold Fluid Temperature";
+  parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
+  parameter SI.Length L[12]={2,4,6,8,10,12,14,16,18,20,22,24} "Tube Length";
+  parameter Integer N_p[2]={1,2} "Tube passes number";
+  parameter Integer layout[2]={1,2} "Tube layout";
+  //parameter SI.Temperature T_Na2_des[12] = {510+273.15, 530+273.15, 550+273.15, 570+273.15, 590+273.15, 610+273.15, 630+273.15, 650+273.15, 670+273.15, 690+273.15, 710+273.15, 730+273.15} "Sodium Cold Fluid Temperature";
   parameter SI.Temperature T_Na2_des[1] = {560+273.15} "Sodium Cold Fluid Temperature";
+  
+//  //Sweep Parameters
+//  parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
+//  parameter SI.Length L[11]={2,4,6,8,10,12,14,16,18,20,22} "Tube Length";
+//  parameter Integer N_p[2]={4,8} "Tube passes number";
+//  parameter Integer layout[2]={1,2} "Tube layout";
+//  parameter SI.Temperature T_Na2_des[20] = {510+273.15, 521+273.15, 530+273.15, 540+273.15, 550+273.15, 560+273.15, 570+273.15, 580+273.15, 590+273.15, 600+273.15, 610+273.15, 620+273.15, 630+273.15, 640+273.15, 650+273.15, 660+273.15, 670+273.15, 680+273.15, 690+273.15, 700+273.15} "Sodium Cold Fluid Temperature";
+
 
   //Auxiliary parameters
   parameter Integer num_dim = 5;
@@ -63,7 +76,7 @@ function Find_Opt_Design_HX_noF
   parameter Integer dim_tot = dim1 * dim2 * dim3 * dim4 * dim5;
   Real vec[dim_tot, num_dim];
   Integer iter;
-  Integer result; //Maybe it should be a variable
+  Integer result;
   
   //Design Parameters
   SI.MassFlowRate m_flow_Na_des[dim_tot](each fixed=false) "Sodium mass flow rate";
@@ -78,6 +91,7 @@ function Find_Opt_Design_HX_noF
   SI.CoefficientOfHeatTransfer h_s_des[dim_tot](each fixed=false) "Shell-side Heat tranfer coefficient";
   SI.CoefficientOfHeatTransfer h_t_des[dim_tot](each fixed=false) "Tube-side Heat tranfer coefficient";
   SI.Length D_s[dim_tot](each fixed=false) "Shell Diameter";
+  Integer N_baffles[dim_tot](each fixed=false) "Number of baffles";
   SI.Velocity v_Na_des[dim_tot](each fixed=false) "Sodium velocity in tubes";
   SI.Velocity v_max_MS_des[dim_tot](each fixed=false) "Molten Salt velocity in shell";
   SI.Volume V_HX_des[dim_tot](each fixed=false) "Heat-Exchanger Total Volume";
@@ -103,7 +117,7 @@ algorithm
               vec[iter, 3] := N_p[ii];
               vec[iter, 4] := layout[ww];
               vec[iter, 5] := T_Na2_des[ll];
-              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
+              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], N_baffles[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
               iter := iter + 1;
             end for;
           end for;
@@ -120,6 +134,7 @@ algorithm
     h_s_opt_des := h_s_des[result];
     h_t_opt_des := h_t_des[result];
     D_s_opt := D_s[result];
+    N_baffles_opt:=N_baffles[result];
     v_Na_opt_des := v_Na_des[result];
     v_max_MS_opt_des := v_max_MS_des[result];
     V_HX_opt_des := V_HX_des[result];

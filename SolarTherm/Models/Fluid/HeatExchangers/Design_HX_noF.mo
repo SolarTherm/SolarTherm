@@ -13,6 +13,7 @@ function Design_HX_noF
   input SI.Length d_o "Outer Tube diameter";
   input SI.Length L "Tube length";
   input Integer N_p "Number of passes";
+  input Integer N_sp "Number of passes";
   input Integer layout "Tube layout"; // if layout=1(one) is square, while if layout=2(two) it is triangular //
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
@@ -34,6 +35,7 @@ function Design_HX_noF
   output SI.CoefficientOfHeatTransfer h_s "Shell-side Heat tranfer coefficient";
   output SI.CoefficientOfHeatTransfer h_t "Tube-side Heat tranfer coefficient";
   output SI.Length D_s "Shell Diameter";
+  output Integer N_baffles "Number of baffles";
   output SI.Velocity v_Na "Sodium velocity in tubes";
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
   output SI.Volume V_HX "Heat-Exchanger Total Volume";
@@ -44,7 +46,7 @@ function Design_HX_noF
   output Real en_eff(unit="") "HX Energetic Efficiency";
   
   protected
-  parameter SI.CoefficientOfHeatTransfer U_guess=1000 "Heat tranfer coefficient guess";
+  parameter SI.CoefficientOfHeatTransfer U_guess=1200 "Heat tranfer coefficient guess";
   parameter Real tol=0.01 "Heat transfer coefficient tollerance";
   Real condition "When condition";
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
@@ -188,7 +190,7 @@ algorithm
   ex_eff:=(m_flow_MS*((h_MS2-h_MS1)-(25+273.15)*cp_MS*(MA.log(T_MS2/T_MS1))))/(m_flow_Na*((h_Na1-h_Na2)-(25+273.15)*cp_Na*(MA.log(T_Na1/T_Na2))));
   if (cp_Na*m_flow_Na)>(cp_MS*m_flow_MS) then
     en_eff:=(T_MS2-T_MS1)./(T_Na1-T_MS1);
-    else
+  else
     en_eff:=(T_Na1-T_Na2)./(T_Na1-T_MS1);
   end if;
   
@@ -200,40 +202,52 @@ while noEvent(condition>tol) loop
   N_t:=integer(ceil(A_tot/A_st));
   Tep:=integer(ceil(N_t/N_p));
   N_t:=Tep*N_p;
-  (U_calc, h_s, h_t):=HTCs(d_o=d_o, N_p=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (U_calc, h_s, h_t):=HTCs(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, L=L);
   condition:=abs(U_calc-U_calc_prev)/U_calc_prev;
   U_calc_prev:=U_calc;
 end while;
 
-  (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, N_p=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
+  (Dp_tube, Dp_shell, v_Na, v_max_MS, N_baffles):=Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   
   //Shell Diameter
   if layout==1 then
-      if N_p==4 then
-         KK1:=0.158;
-         nn1:=2.263;
-      elseif N_p==6 then
-         KK1:=0.0402;
-         nn1:=2.617;
-      else
-         KK1:=0.0331;
-         nn1:=2.643;
-      end if;
-    else
-      if N_p==4 then
-         KK1:=0.175;
-         nn1:=2.285;
-      elseif N_p==6 then
-         KK1:=0.0743;
-         nn1:=2.499;
-      else
-         KK1:=0.0365;
-         nn1:=2.675;
-      end if;
+    if N_p==1 then
+      KK1:=0.215;
+      nn1:=2.207;
+    elseif N_p==2 then
+      KK1:=0.156;
+      nn1:=2.291;
+    elseif N_p==4 then
+      KK1:=0.158;
+      nn1:=2.263;
+    elseif N_p==6 then
+      KK1:=0.0402;
+      nn1:=2.617;
+    elseif N_p==8 then
+      KK1:=0.0331;
+      nn1:=2.643;
     end if;
+  else
+    if N_p==1 then
+      KK1:=0.319;
+      nn1:=2.142;
+    elseif N_p==2 then
+      KK1:=0.249;
+      nn1:=2.207;
+    elseif N_p==4 then
+      KK1:=0.175;
+      nn1:=2.285;
+    elseif N_p==6 then
+      KK1:=0.0743;
+      nn1:=2.499;
+    elseif N_p==8 then
+      KK1:=0.0365;
+      nn1:=2.675;
+    end if;
+  end if;
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
-  L_bb:=(12+5*D_b)/995;
-  D_s:=L_bb+D_b;
+  L_bb:=(12+5*(D_b+d_o))/995;
+  D_s:=L_bb+D_b+d_o;
   D_s_out:=D_s+0.01; //1cm external thickness
   
   V_min:=CN.pi/4*(D_s^2)*L;
@@ -243,7 +257,7 @@ end while;
   V_material:=DV+(D_s_out^2-(D_s^2))*CN.pi/4*L;
   V_HX:=V_material+V_MS+V_Na;
   
-  (k_wall, rho_wall):=Inconel800H_BaseProperties(Tm_wall);
+  (k_wall, rho_wall):=Haynes230_BaseProperties(Tm_wall);
   
   m_Na:=V_Na*rho_Na;
   m_MS:=V_MS*rho_MS;
@@ -296,7 +310,7 @@ end while;
   C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS<0.5 or v_max_MS>1.5 or v_Na<1 or v_Na>4) then
+  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>4) then
     TAC:=10e10;
   else
     if noEvent(C_BEC>0) and noEvent(C_pump>0) then
