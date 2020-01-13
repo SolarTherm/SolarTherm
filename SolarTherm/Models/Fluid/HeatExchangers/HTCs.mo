@@ -8,7 +8,8 @@ function HTCs
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
 
   input SI.Length d_o "Outer Tube diameter";
-  input Integer N_p "Number of passes";
+  input Integer N_p "Number of tube-passes";
+  input Integer N_sp "Number of shell-passes";
   input Integer layout "Tube layout";
   input Integer N_t "Number of tubes";
   input Medium1.ThermodynamicState state_mean_Na;
@@ -16,6 +17,7 @@ function HTCs
   input Medium2.ThermodynamicState state_wall_MS;
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
+  input SI.Length L "Tube length";
    
   output SI.CoefficientOfHeatTransfer U "Heat tranfer coefficient";
   output SI.CoefficientOfHeatTransfer h_s "Shell-side Heat tranfer coefficient";
@@ -57,12 +59,14 @@ function HTCs
   SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
   parameter SI.Length P_t=1.25*d_o "Tube pitch";
   parameter Real B=0.25 "Baffle cut";
+  parameter SI.Length t_b=t_tube "Baffle thickness";
   SI.Length D_b(start=4.42) "Bundle diameter";
   Real KK1(unit= "",start=0.158) "Correlation coefficient";
   Real nn1(unit= "",start=2.263) "Correlation coefficient";
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
   SI.Length l_b "Baffle spacing";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
+  SI.Area S_b "Bypass flow area";
   Real Re_MS(start=100,min=0) "MS Reynolds Number";
   Real Pr_MS(unit= "",min=0) "MS Prandtl Number";
   Real Nu_MS(unit= "",min=0) "MS Nusselt Number";
@@ -76,14 +80,19 @@ function HTCs
   SI.Area S_sb "Shell-to-baffle leakage area";
   SI.Area S_tb "Tube-to-baffle leakage area";
   SI.Length L_tb "Tube-to-baffle diametral clearance";
+  SI.Angle theta_ds "Centriangle of baffle cut";
+  SI.Angle theta_ctl "Upper centriangle of baffle cut";
   Real r_lm(unit= "") "Non dimensional factor";
   Real r_s(unit= "") "Non dimensional factor";
   Real xx(unit= "") "Non dimensional factor";
   Real J_L(unit= "") "Leakage correction factor";
   Real F_bp(unit= "") "Bypass correction factor";
+  Real F_w(unit= "") "Fraction of tubes in crossflow";
   Real N_c(start=90) "Number of crossflow rows";
-  Real N_ss "Number of sealing strips";
-  parameter Real SS=0.2 "Sealing strips per crossflow row";
+  Integer N_calc "Number of Baffles calculated";
+  Integer N "Number of baffles";
+  Real r_ss "Fraction";
+  parameter Real N_ss=0.2 "Number of sealing strips per crossflow row";
   Real J_B(unit= "") "Bypass correction factor";
 //  parameter Real tol1=1e-4;
 
@@ -118,49 +127,61 @@ algorithm
     h_t:=0;
   end if;
   
-//  if m_flow_MS<=1e-5 then
-//    Re_MS:=0;
-//    h_t:=0;
-//  else
-    //Shell-side heat transfer coefficient:
-    Tm_MS:=Medium2.temperature(state_mean_MS);
-    rho_MS:=Medium2.density(state_mean_MS);
-    cp_MS:=Medium2.specificHeatCapacityCp(state_mean_MS);
-    mu_MS:=Medium2.dynamicViscosity(state_mean_MS);
-    mu_MS_wall:=Medium2.dynamicViscosity(state_wall_MS);
-    k_MS:=Medium2.thermalConductivity(state_mean_MS);
-      if layout==1 then
-        if N_p==4 then
-           KK1:=0.158;
-           nn1:=2.263;
-        elseif N_p==6 then
-           KK1:=0.0402;
-           nn1:=2.617;
-        else
-           KK1:=0.0331;
-           nn1:=2.643;
-        end if;
-      else
-        if N_p==4 then
-           KK1:=0.175;
-           nn1:=2.285;
-        elseif N_p==6 then
-           KK1:=0.0743;
-           nn1:=2.499;
-        else
-           KK1:=0.0365;
-           nn1:=2.675;
-        end if;
-      end if;
-    D_b:=(N_t/KK1)^(1/nn1)*d_o;
-    L_bb:=(12+5*D_b)/995;
-    D_s:=L_bb+D_b;
-    l_b:=0.3*D_s;
-    S_m:=l_b*(D_s-D_b+(D_b-d_o)*(P_t-d_o)/P_t);
-    v_max_MS:=m_flow_MS/rho_MS/S_m;
-    Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
-    Pr_MS:=mu_MS*cp_MS/k_MS;
-    if noEvent(Re_MS>0) then
+  //Shell-side heat transfer coefficient:
+  Tm_MS:=Medium2.temperature(state_mean_MS);
+  rho_MS:=Medium2.density(state_mean_MS);
+  cp_MS:=Medium2.specificHeatCapacityCp(state_mean_MS);
+  mu_MS:=Medium2.dynamicViscosity(state_mean_MS);
+  mu_MS_wall:=Medium2.dynamicViscosity(state_wall_MS);
+  k_MS:=Medium2.thermalConductivity(state_mean_MS);
+  if layout==1 then
+    if N_p==1 then
+       KK1:=0.215;
+       nn1:=2.207;
+    elseif N_p==2 then
+       KK1:=0.156;
+       nn1:=2.291;
+    elseif N_p==4 then
+       KK1:=0.158;
+       nn1:=2.263;
+    elseif N_p==6 then
+       KK1:=0.0402;
+       nn1:=2.617;
+    elseif N_p==8 then
+       KK1:=0.0331;
+       nn1:=2.643;
+    end if;
+  else
+    if N_p==1 then
+       KK1:=0.319;
+       nn1:=2.142;
+    elseif N_p==2 then
+       KK1:=0.249;
+       nn1:=2.207;
+    elseif N_p==4 then
+       KK1:=0.175;
+       nn1:=2.285;
+    elseif N_p==6 then
+       KK1:=0.0743;
+       nn1:=2.499;
+    else
+       KK1:=0.0365;
+       nn1:=2.675;
+    end if;
+  end if;
+  
+  D_b:=(N_t/KK1)^(1/nn1)*d_o;
+  L_bb:=(12+5*(D_b+d_o))/995;
+  D_s:=L_bb+D_b+d_o;
+  l_b:=D_s;
+  N_calc:=integer(ceil((L/(l_b+t_b)-1)*N_sp));
+  N:= if N_calc<10 then 10 else N_calc;
+  l_b:=L/(N/N_sp+1);
+  S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
+  v_max_MS:=m_flow_MS/rho_MS/S_m;
+  Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
+  Pr_MS:=mu_MS*cp_MS/k_MS;
+  if noEvent(Re_MS>0) then
       if layout==1 then
         if noEvent(Re_MS<=300) then
            aa:=0.742;
@@ -184,35 +205,39 @@ algorithm
            mm:=0.7;
         end if;
       end if;
-    Nu_MS:=aa*(Re_MS^mm)*(Pr_MS^0.34)*((mu_MS/mu_MS_wall)^0.26);
-    h_s_id:=Nu_MS*k_MS/d_o;
-    L_c:=B*D_s;
-    F_c:=1/CN.pi*(CN.pi+2*((D_s-2*L_c)/D_b)*sin(acos((D_s-2*L_c)/D_b))-2*acos((D_s-2*L_c)/D_b));
-    J_C:=0.55+0.72*F_c;
-    L_sb:=(3.1+0.004*D_s)/1000;
-    S_sb:=D_s*L_sb*0.5*(CN.pi-acos(1-2*L_c/D_s));
-    L_tb:=0.0008;
-    S_tb:=CN.pi*d_o*L_tb*0.5*N_t*0.5*(1+F_c);
-    r_lm:=(S_sb+S_tb)/S_m;
-    r_s:=S_sb/(S_sb+S_tb);
-    xx:=-0.15*(1+r_s)+0.8;
-    J_L:=0.44/(1-r_s)+(1-0.44*(1-r_s))*Modelica.Math.exp(-2.2*r_lm);
-    F_bp:=(D_s-D_b)*l_b/S_m;
+      Nu_MS:=aa*(Re_MS^mm)*(Pr_MS^0.34)*((mu_MS/mu_MS_wall)^0.26);
+      h_s_id:=Nu_MS*k_MS/d_o;
+      L_c:=B*D_s;
+      theta_ctl:=2*acos((D_s-2*L_c)/D_b);
+      F_w:=theta_ctl/(2*CN.pi)-sin(theta_ctl)/(2*CN.pi);
+      F_c:=1-2*F_w;
+      J_C:=0.55+0.72*F_c;
+      L_sb:=(3.1+0.004*D_s)/1000;
+      theta_ds:=2*acos(1-2*B);
+      S_sb:=(D_s/N_sp)*(CN.pi/2)*L_sb*((2*CN.pi-theta_ds)/(2*CN.pi));
+      L_tb:=0.0008;
+      S_tb:=(1/N_sp)*(CN.pi/4)*((d_o+L_tb)^2-d_o^2)*N_t*(1-F_w);
+      r_lm:=(S_sb+S_tb)/S_m;
+      r_s:=S_sb/(S_sb+S_tb);
+      xx:=-0.15*(1+r_s)+0.8;
+      J_L:=0.44*(1-r_s)+(1-0.44*(1-r_s))*Modelica.Math.exp(-2.2*r_lm);
+      S_b:=L_bb*l_b;
+      F_bp:=S_b/S_m;
       if layout==1 then
         N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t);
         else
         N_c:=ceil(D_s*(1-2*L_c/D_s)/P_t/0.866);
       end if;
-    N_ss:=ceil(SS*N_c);
-    J_B:=Modelica.Math.exp(-1.35*F_bp*(1-2*r_s)^(1/3));
-    h_s:=h_s_id*J_C*J_L*J_B;  
+      r_ss:=N_ss/N_c;
+      J_B:=Modelica.Math.exp(-1.35*F_bp*(1-(2*r_s)^(1/3)));
+      h_s:=h_s_id*J_C*J_L*J_B;  
     else
       h_s:=0;
     end if;
   
   //Global heat transfer coefficient:
   Tm_wall:=(Tm_MS+Tm_Na)/2;
-  (k_wall, rho_wall):=Inconel800H_BaseProperties(Tm_wall);
+  (k_wall, rho_wall):=Haynes230_BaseProperties(Tm_wall);
   if noEvent(Re_Na==0) or noEvent(Re_MS==0) then
     U:=0;
   else

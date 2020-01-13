@@ -10,7 +10,7 @@ model HX_standalone
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des = 50e6 "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des = 529.412e6 "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
