@@ -80,7 +80,7 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
   parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
   replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 50e6 "Power block gross rating at design point";
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
   parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
   parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -98,7 +98,7 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
   parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
   parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-  parameter SI.HeatFlowRate Q_flow_defocus = 1.35 * Q_flow_des "Solar field thermal power at defocused state";
+  parameter SI.HeatFlowRate Q_flow_defocus = /*m_flow_rec / 2347.87 **/ 1.3 * /*400/294.18*/ Q_flow_des "Solar field thermal power at defocused state";
   // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
   parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
@@ -107,8 +107,8 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   // Level (below which) to stop disptach
   parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound";
   // Level (above which) to start disptach
-  parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
-  parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
+  parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
+  parameter Real hot_tnk_full_ub = 95 "Hot tank full trigger upper bound";
   parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound";
   // Level (below which) to stop disptach
   parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound";
@@ -120,9 +120,14 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   
   //HX_Control
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+  //parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+//  parameter Real Kp = -1000 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
+  parameter Real Kp = -1000 * (m_flow_rec / 2347.87) "Gain of proportional component in receiver control";
+  
   parameter Real Ti_CS = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp_CS = -950 "Gain of proportional component in receiver control";
+  parameter Real Kp_CS = (m_flow_fac/m_flow_rec*1.01) * Kp "Gain of proportional component in receiver control";
+//    parameter Real Kp_CS = -950 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
+  //parameter Real Kp_CS = -950 "Gain of proportional component in receiver control";
   
   //Storage Calculated parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
@@ -135,8 +140,8 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
   
   parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
-  parameter SI.MassFlowRate m_flow_max_CS = 1.135 * m_flow_fac "Maximum mass flow rate to receiver";
-  parameter SI.MassFlowRate m_flow_start_CS = 0.2 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  parameter SI.MassFlowRate m_flow_max_CS = 1.3 * m_flow_fac /*2500 * Q_rec_out / 529.412e6*/ "Maximum mass flow rate to receiver";
+  parameter SI.MassFlowRate m_flow_start_CS = 0.8 * m_flow_fac /*450 * Q_rec_out / 529.412e6 */"Initial or guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   
@@ -145,8 +150,8 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
   parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
-  parameter SI.MassFlowRate m_flow_max_Na = 1.135 * m_flow_rec "Maximum mass flow rate to receiver";
-  parameter SI.MassFlowRate m_flow_start_Na = 0.20 * m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  parameter SI.MassFlowRate m_flow_max_Na = 1.2 * m_flow_rec /*2700 * Q_rec_out / 529.412e6*/ "Maximum mass flow rate to receiver";
+  parameter SI.MassFlowRate m_flow_start_Na = 0.80 * m_flow_rec /*470 * Q_rec_out / 529.412e6*/ "Initial or guess value of mass flow rate to receiver in the feedback controller";
   
   //SF Calculated Parameters
   parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
