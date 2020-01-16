@@ -95,7 +95,7 @@ equation
   logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
   h_out=fluid_b.h_outflow;
-  h_out=fluid_a.h_outflow;
+  fluid_a.h_outflow = 0;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
 

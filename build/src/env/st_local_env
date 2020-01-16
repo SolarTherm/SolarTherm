@@ -1,0 +1,61 @@
+# This file must be used with "source st_local_env"
+
+# Setup environment in shell for local development install
+# Unlike the activate version used with virtualenv, this is not reversible
+
+INSTALL_PREFIX=/home/admin-u5277975/.local
+
+st_deactivate () {
+	export OPENMODELICALIBRARY="$_OPENMODELICALIBRARY"
+	export PATH="$_PATH"
+	export PYTHONPATH="$_PYTHONPATH"
+	export LD_LIBRARY_PATH="$_LD_LIBRARY_PATH"
+	export LIBRARY_PATH="$_LIBRARY_PATH"
+	export PS1="$_PS1"
+	unset _OPENMODELICALIBRARY
+	unset _PATH
+	unset _PYTHONPATH
+	unset _LD_LIBRARY_PATH
+	unset _LIBRARY_PATH
+	unset _PS1
+
+	if [ -z "$OPENMODELICALIBRARY" ] ; then
+		unset OPENMODELICALIBRARY
+	fi
+	if [ -z "$PATH" ] ; then
+		unset PATH
+	fi
+	if [ -z "$PYTHONPATH" ] ; then
+		unset PYTHONPATH
+	fi
+	if [ -z "$LD_LIBRARY_PATH" ] ; then
+		unset LD_LIBRARY_PATH
+	fi
+	if [ -z "$LIBRARY_PATH" ] ; then
+		unset LIBRARY_PATH
+	fi
+
+	if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
+		hash -r 2>/dev/null
+	fi
+}
+
+export _OPENMODELICALIBRARY="$OPENMODELICALIBRARY"
+export OPENMODELICALIBRARY="$HOME/.openmodelica/libraries:$INSTALL_PREFIX/lib/omlibrary:/usr/lib/omlibrary:/usr/local/lib/omlibrary"
+export _PATH="$PATH"
+export PATH="$INSTALL_PREFIX/bin:$PATH"
+export _PYTHONPATH="$PYTHONPATH"
+export PYTHONPATH="$INSTALL_PREFIX/lib/python2.7/site-packages:$PYTHONPATH"
+export _LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH"
+export _LIBRARY_PATH="$LIBRARY_PATH"
+export LIBRARY_PATH="$INSTALL_PREFIX/lib:$LIBRARY_PATH"
+
+_PS1="$PS1"
+export PS1="<env>$PS1"
+
+# Forget past commands otherwise might not find them in correct location after
+# change to $PATH
+if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
+    hash -r 2>/dev/null
+fi
