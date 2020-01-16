@@ -1,3 +1,4 @@
+within examples;
 model Small_SolarSalt "System level model presented in SolarPACES 2019 and APSRC 2019"
 
 	import SolarTherm.{Models,Media};
