@@ -16,3 +16,4 @@ ReceiverSimple_2
 ReceiverSimpleStress
 HeatTransfer
 SB_Receiver
+ParticleReceiver
