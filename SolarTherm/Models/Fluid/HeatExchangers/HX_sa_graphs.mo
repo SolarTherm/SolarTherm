@@ -21,11 +21,11 @@ model HX_sa_graphs
   parameter Boolean optimize_and_run(fixed = false);
   
   //Input parameters
-  parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter";
+  parameter SI.Length d_o_input = 0.01588 "Optimal Outer Tube Diameter";
   parameter SI.Length L_input = 8 "Optimal Tube Length";
-  parameter Integer N_p_input = 4 "Optimal Tube passes number";
+  parameter Integer N_p_input = 1 "Optimal Tube passes number";
   parameter Integer layout_input = 2 "Optimal Tube Layout";
-  parameter SI.Temperature T_Na2_input = 670 + 273.15 "Optimal outlet sodium temperature";
+  parameter SI.Temperature T_Na2_input = 560 + 273.15 "Optimal outlet sodium temperature";
   
   //Optimal Parameter Values
   parameter Real TAC(unit = "€/year", fixed = false) "Minimum Total Annualized Cost";
@@ -57,7 +57,7 @@ model HX_sa_graphs
   parameter Real en_eff_design(fixed = false) "Optimal HX Energetic Efficiency";
 
 initial algorithm
-  optimize_and_run := true;
+  optimize_and_run := false;
   if optimize_and_run == true then
     (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
   else
