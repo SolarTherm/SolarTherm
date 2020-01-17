@@ -1,6 +1,7 @@
-HeatpipePCMFluid
 CV_Location
 CV_Mass
 CV_Thickness
 Q_bot
 Q_top
+SB_PCMStorage
+SB_PCMStorage2

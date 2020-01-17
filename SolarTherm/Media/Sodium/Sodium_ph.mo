@@ -1,5 +1,5 @@
 within SolarTherm.Media.Sodium;
-package Sodium_dTX "liquid sodium model, explicit in p and T"
+package Sodium_ph "liquid sodium model, explicit in p and T"
 	/* The statement below extends from PartialMedium and sets some
 		package constants. Provide values for these constants
 		that are appropriate for your medium model. Note that other
@@ -7,7 +7,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		definitions given in the base class Interfaces.PartialMedium"
 	*/
 	extends Modelica.Media.Interfaces.PartialMedium(
-		ThermoStates=Modelica.Media.Interfaces.Choices.IndependentVariables.dTX,
+		ThermoStates=Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
 		final mediumName="Sodium",
 		final substanceNames={"Na"},
 		final singleState=false,
@@ -16,7 +16,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		Temperature(
 			min=700.0,
 			max=1500.0,
-			start=700));
+			start=1073.0));
 	import SolarTherm.Media.Sodium.Sodium_utilities.*;
 	// Provide medium constants here
 
@@ -61,9 +61,8 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	*/
 	redeclare record extends ThermodynamicState
 		"A selection of variables that uniquely defines the thermodynamic state"
-		Density d "Density of medium mixture";
-		Temperature T "Temperature of medium mixture";
-		
+		AbsolutePressure p "Absolute pressure of medium";
+		SpecificEnthalpy h "SpecificEnthalpy of medium";
 		annotation (Documentation(info="<html>
 			
 			</html>"));
@@ -71,15 +70,16 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare model extends BaseProperties(final standardOrderComponents=true)
 		"Base properties of medium"
- Real x "Vapor quality";
+ protected
+    Real x;
  equation
-	T = state.T;
-	d = state.d;
+	p = state.p;
+	h = state.h;
 	
-	d = (1-x)*rho_T(T) + x*rho_v_T(T);
+	T = T_p(p);
 	h = (1-x)*h_T(T) + x*h_v_T(T);
-	p = p_v(T);
-
+	d = (1-x)*rho_T(T) + x*rho_v_T(T);
+	
 	u = h - p / d;
 	MM = 0.02298977;
 	R = 8.3144 / MM;
@@ -104,12 +104,33 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		input Temperature T "Temperature";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
-	protected
-        Density d "Density";
 	algorithm
-        d := X[1]*rho_T(T)+X[2]*rho_v_T(T);
-		state := ThermodynamicState(d=d, T=T);
+
+		state := ThermodynamicState(p=p, h=h_T(T));
 	end setState_pTX;
+
+	redeclare function setState_phX
+		"Return thermodynamic state as function of p, h and composition X or Xi"
+		extends Modelica.Icons.Function;
+		input AbsolutePressure p "Pressure";
+		input SpecificEnthalpy h "Specific enthalpy";
+		input MassFraction X[:]=reference_X "Mass fractions";
+		output ThermodynamicState state "Thermodynamic state record";
+	algorithm
+		state := ThermodynamicState(p=p, h = h);
+	end setState_phX;
+
+	redeclare function setState_psX
+		"Return thermodynamic state as function of p, s and composition X or Xi"
+		extends Modelica.Icons.Function;
+		input AbsolutePressure p "Pressure";
+		input SpecificEntropy s "Specific entropy";
+		input MassFraction X[:]=reference_X "Mass fractions";
+		output ThermodynamicState state "Thermodynamic state record";
+	algorithm
+		state := ThermodynamicState(p=p, h=h_s(s));
+		assert(false,"no inverse funtions");
+	end setState_psX;
 
 	redeclare function setState_dTX
 		"Return thermodynamic state as function of d, T and composition X or Xi"
@@ -118,54 +139,57 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		input Temperature T "Temperature";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
+	protected
+        Real x;
+        SpecificEnthalpy h;
 	algorithm
-		state := ThermodynamicState(d=d, T=T);
+        x := (d - rho_T(T))/(rho_v_T(T)-rho_T(T));
+        h := (1-x)*h_T(T) + x*h_v_T(T);
+		state := ThermodynamicState(p=p_v(T), h=h);
+		assert(false,"no inverse functions");
 	end setState_dTX;
 
 	redeclare function extends pressure "Return pressure"
 	algorithm
-		p := p_v_T(state.T);
+		p := state.p;
 		annotation (Inline=true);
 	end pressure;
 	
 	redeclare function extends temperature "Return temperature"
 	algorithm
-		T := state.T;
+		T := T_p(state.p);
 		annotation (Inline=true);
 	end temperature;
 
 	redeclare function extends specificEnthalpy "Return specific enthalpy"
-	protected
-        Real x;
 	algorithm
-		x := (state.d - rho_T(state.T))/(rho_v_T(state.T)-rho_T(state.T));
-		h := (1-x)*h_T(state.T)+x*(h_v_T(state.T));
+		h := state.h;
 		annotation (Inline=true);
 	end specificEnthalpy;
 
 	redeclare function extends density "Return density"
+	protected
+        Real x;
 	algorithm
-		d := state.d;
+        x := (state.h - h_T(T))/(h_v_T(T)-h_T(T));
+        d := (1-x)*rho_T(T) + x*rho_v_T(T);
 		annotation (Inline=true);
 	end density;
 
 	redeclare function extends specificInternalEnergy "Return specific internal energy"
 	protected
         Real x;
-        SpecificEnthalpy h;
-        AbsolutePressure p;
+        Density d;
 	algorithm
-		x := (state.d - rho_T(state.T))/(rho_v_T(state.T)-rho_T(state.T));
-		h := (1-x)*h_T(state.T)+x*(h_v_T(state.T));
-		p := p_v_T(state.T);
-		
-		u := h - p / state.d;
+	    x := (state.h - h_T(T))/(h_v_T(T)-h_T(T));
+        d := (1-x)*rho_T(T) + x*rho_v_T(T);
+		u := state.h - state.p / d;
 		annotation (Inline=true);
 	end specificInternalEnergy;
 
 	redeclare function extends dynamicViscosity "Return dynamic viscosity"
 	algorithm
-		eta := eta_T(state.T);
+		eta := eta_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -173,7 +197,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare function extends thermalConductivity "Return thermal conductivity"
 	algorithm
-		lambda := lamda_T(state.T);
+		lambda := lamda_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -181,7 +205,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare function extends specificEntropy "Return specific entropy"
 	algorithm
-		s := s_T(state.T);
+		s := s_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -189,7 +213,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare function extends specificGibbsEnergy "Return specific Gibbs energy"
 	algorithm
-		g := gibbs_T(state.T);
+		g := gibbs_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));	
@@ -197,7 +221,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare function extends specificHelmholtzEnergy "Return specific Helmholtz energy"
 	algorithm
-		f := helmholtz_pT(T = state.T,p = state.p);
+		f := helmholtz_pT(T_p(state.p),p = state.p);
 		annotation (Documentation(info="<html>
 
 			</html>"));	
@@ -206,7 +230,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends specificHeatCapacityCp
 		"Return specific heat capacity at constant pressure"
 	algorithm
-		cp := cp_T(state.T);
+		cp := cp_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -215,7 +239,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends specificHeatCapacityCv
 		"Return specific heat capacity at constant volume"
 	algorithm
-		cv := cv_T(state.T);
+		cv := cv_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -224,7 +248,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends isentropicExponent "Return isentropic exponent"
 		extends Modelica.Icons.Function;
 	algorithm
-		gamma := cp_T(state.T) / cv_T(state.T);
+		gamma := cp_T(T_p(state.p)) / cv_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -242,7 +266,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 
 	redeclare function extends velocityOfSound "Return velocity of sound"
 	algorithm
-		a := vs_T(state.T);
+		a := vs_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -251,7 +275,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends isobaricExpansionCoefficient
 		"Return overall the isobaric expansion coefficient beta"
 	algorithm
-		beta := beta_T(state.T);
+		beta := beta_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -260,7 +284,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends isothermalCompressibility
 		"Return overall the isothermal compressibility factor"
 	algorithm
-		kappa := kappa_T(state.T);
+		kappa := kappa_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -272,7 +296,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		input ThermodynamicState state "Thermodynamic state record";
 		output SpecificEnthalpy r0 "Vaporization enthalpy";
 	algorithm
-		r0 := h_fg_T(state.T);
+		r0 := h_fg_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -281,7 +305,7 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 	redeclare function extends density_derT_p
 		"Return density derivative w.r.t. temperature at constant pressure"
 	algorithm
-		ddTp := drho_dT_T(state.T);
+		ddTp := drho_dT_T(T_p(state.p));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -301,4 +325,4 @@ package Sodium_dTX "liquid sodium model, explicit in p and T"
 		<p style=\"margin-left: 30px;\">Fink, J. & Leibowitz, L. (1995). 'Thermodynamic and transport properties of sodium liquid and vapour', <i>Technical Report ANL/RE-95/2, Reactor Engineering Division, Argonne National Laboratories</i>. Retrieved from http://www.ne.anl.gov/eda/ANL-RE-95-2.pdf</p>
 	<p style=\"margin-left: 30px;\">Pye, J. (2015). 'Model of liquid sodium properties'. Retreived from http://code.ascend4.org/ascend/trunk/models/johnpye/liquidsodium.a4c</p>
 		</html>"));
-end Sodium_dTX;
+end Sodium_ph;
