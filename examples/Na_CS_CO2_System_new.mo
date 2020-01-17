@@ -1,5 +1,6 @@
 within examples;
-model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
+
+model Na_CS_CO2_System_new "High temperature Sodium-sCO2 system"
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -20,7 +21,6 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
-  
   // Weather data
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
   //parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
@@ -29,7 +29,6 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter nSI.Angle_deg lat = 34.85 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 2008 "Meteorological year";
-
   // Field
   parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
   parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file";
@@ -79,12 +78,11 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
   parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
   parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
-  
   // Power block
   replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
   parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
   replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 50e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
   parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
   parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -98,12 +96,12 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
   parameter SI.Temperature T_in_ref_blk = from_degC(720) "HTF inlet temperature to power block at design";
   parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
-  
   // Control
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
   parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
   parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-  parameter SI.HeatFlowRate Q_flow_defocus = /*m_flow_rec / 2347.87 **/ 1.3 * Q_flow_des "Solar field thermal power at defocused state";
+  parameter SI.HeatFlowRate Q_flow_defocus = 1.3 * Q_flow_des "Solar field thermal power at defocused state";
+  /*m_flow_rec / 2347.87 **/
   // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
   parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
@@ -122,18 +120,17 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   // Level (below which) to stop disptach
   parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound";
   // Level (above which) to start disptach
-  
   //HX_Control
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
   //parameter Real Kp = -1000 "Gain of proportional component in receiver control";
-//  parameter Real Kp = -1000 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
-  parameter Real Kp = -1000 /** (m_flow_rec / 2347.87)*/ "Gain of proportional component in receiver control";
-  
+  //  parameter Real Kp = -1000 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
+  parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+  /** (m_flow_rec / 2347.87)*/
   parameter Real Ti_CS = 0.1 "Time constant for integral component of receiver control";
-  parameter Real Kp_CS = /*(m_flow_fac/m_flow_rec)^1.15 * Kp*/ -950 "Gain of proportional component in receiver control";
-//    parameter Real Kp_CS = -950 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
+  parameter Real Kp_CS = -950 "Gain of proportional component in receiver control";
+  /*(m_flow_fac/m_flow_rec)^1.15 * Kp*/
+  //    parameter Real Kp_CS = -950 * Q_rec_out / 529.412e6 "Gain of proportional component in receiver control";
   //parameter Real Kp_CS = -950 "Gain of proportional component in receiver control";
-  
   //Storage Calculated parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
@@ -143,13 +140,11 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
   parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
-  
   parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
   parameter SI.MassFlowRate m_flow_max_CS = 1.2 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_start_CS = 0.8 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
-  
   //Receiver Calculated parameters
   parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
   parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
@@ -157,7 +152,6 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
   parameter SI.MassFlowRate m_flow_max_Na = 1.2 * m_flow_rec "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_start_Na = 0.8 * m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
-  
   //SF Calculated Parameters
   parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
   parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
@@ -219,7 +213,6 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   //Weather data
   SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
     Placement(visible = true, transformation(extent = {{-128, -82}, {-98, -54}}, rotation = 0)));
-  
   //DNI_input
   Modelica.Blocks.Sources.RealExpression DNI_input(y = data.DNI) annotation(
     Placement(visible = true, transformation(extent = {{-136, 58}, {-116, 78}}, rotation = 0)));
@@ -245,21 +238,21 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
     Placement(visible = true, transformation(extent = {{-98, 2}, {-66, 36}}, rotation = 0)));
   // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_new receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na) annotation(
     Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
   // Temperature sensor1
   SolarTherm.Models.Fluid.Sensors.Temperature temperature1(redeclare package Medium = Medium1) annotation(
-    Placement(visible = true, transformation(extent = {{-16, 36}, {-6, 26}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-27, -19}, extent = {{-5, -5}, {5, 5}}, rotation = 90)));
   // Pump cold1
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold1(redeclare package Medium = Medium1, k_loss = k_loss_cold) annotation(
-    Placement(visible = true, transformation(extent = {{-12, -42}, {-24, -30}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
   //HX Control
-  SolarTherm.Models.Control.HX_Control hX_Control(T_ref_rec = T_hot_set_Na, m_flow_max_rec = m_flow_max_Na, y_start_rec = m_flow_start_Na, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti_rec = Ti, Kp_rec = Kp, T_ref_HX = T_hot_set_CS, m_flow_max_HX = m_flow_max_CS, y_start_HX = m_flow_start_CS, Ti_HX = Ti_CS, Kp_HX = Kp_CS) annotation(
+  SolarTherm.Models.Control.HX_Control_new hX_Control(T_ref_rec = T_hot_set_Na, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, T_ref_hs = T_hot_set_CS, Q_rec_out=Q_rec_out, d_o=Shell_and_Tube_HX.d_o, N_p=Shell_and_Tube_HX.N_p, N_sp=Shell_and_Tube_HX.N_p,layout=Shell_and_Tube_HX.layout, N_t=Shell_and_Tube_HX.N_t, L=Shell_and_Tube_HX.L)  annotation(
     Placement(visible = true, transformation(origin = {40, -56}, extent = {{10, -10}, {-10, 10}}, rotation = -90)));
   //HX
   SolarTherm.Models.Fluid.HeatExchangers.HX_wi_noF Shell_and_Tube_HX(replaceable package Medium1 = Medium1, replaceable package Medium2 = Medium2, Q_d_des = Q_rec_out) annotation(
     Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
-  SolarTherm.Models.Fluid.HeatExchangers.buffer_tank SodiumBufferTank(replaceable package Medium = Medium1, T_start=T_cold_set_Na) annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.buffer_tank SodiumBufferTank(replaceable package Medium = Medium1, T_start = T_cold_set_Na) annotation(
     Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium2, D = D_storage, H = H_storage, T_start = T_hot_start_CS, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set) annotation(
@@ -275,7 +268,7 @@ model Na_CS_CO2_System "High temperature Sodium-sCO2 system"
     Placement(visible = true, transformation(extent = {{66, 8}, {54, 20}}, rotation = 0)));
   // Temperature sensor 2
   SolarTherm.Models.Fluid.Sensors.Temperature temperature2(redeclare package Medium = Medium2) annotation(
-    Placement(visible = true, transformation(extent = {{26, 74}, {36, 64}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {73, -1}, extent = {{5, 5}, {-5, -5}}, rotation = -90)));
   // PowerBlockControl
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(visible = true, transformation(extent = {{98, 80}, {110, 66}}, rotation = 0)));
@@ -307,6 +300,38 @@ initial equation
 // SAM 2018 cost data: 1.09025e6 * (603.1/318.4) * exp(0.00879 * H_tower)
   end if;
 equation
+  connect(temperature2.T, hX_Control.T_output_cs) annotation(
+    Line(points = {{68, 0}, {58, 0}, {58, -72}, {44, -72}, {44, -66}, {44, -66}}, color = {0, 0, 127}));
+  connect(temperature2.fluid_a, tankCold.fluid_b) annotation(
+    Line(points = {{74, -6}, {74, -6}, {74, -40}, {78, -40}, {78, -38}}, color = {0, 127, 255}));
+  connect(pumpCold2.fluid_a, temperature2.fluid_b) annotation(
+    Line(points = {{66, 14}, {72, 14}, {72, 4}, {74, 4}}, color = {0, 127, 255}));
+  connect(temperature1.T, hX_Control.T_input_rec) annotation(
+    Line(points = {{-32, -18}, {-34, -18}, {-34, -80}, {50, -80}, {50, -68}, {50, -68}}, color = {0, 0, 127}));
+  connect(receiver.fluid_a, temperature1.fluid_b) annotation(
+    Line(points = {{-32, 6}, {-28, 6}, {-28, -14}, {-27, -14}}, color = {0, 127, 255}));
+  connect(temperature1.fluid_a, pumpCold1.fluid_b) annotation(
+    Line(points = {{-27, -24}, {-27, -36}, {-22, -36}}, color = {0, 127, 255}));
+  connect(Shell_and_Tube_HX.port_b_out, tankHot.fluid_a) annotation(
+    Line(points = {{14, 6}, {6, 6}, {6, 68}, {48, 68}, {48, 70}}, color = {0, 127, 255}));
+  connect(Shell_and_Tube_HX.port_a_in, receiver.fluid_b) annotation(
+    Line(points = {{18, 12}, {18, 12}, {18, 30}, {-30, 30}, {-30, 30}}, color = {0, 127, 255}));
+  connect(receiver.Q_out, hX_Control.Q_out_rec) annotation(
+    Line(points = {{-30, 18}, {-24, 18}, {-24, -72}, {64, -72}, {64, -56}, {52, -56}, {52, -56}}, color = {0, 0, 127}));
+  connect(heliostatsField.on, receiver.on) annotation(
+    Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, 5}, {-39, 5}}, color = {255, 0, 255}));
+  connect(heliostatsField.heat, receiver.heat) annotation(
+    Line(points = {{-66, 27.5}, {-54.82, 27.5}, {-54.82, 27}, {-54, 27}}, color = {191, 0, 0}));
+  connect(receiver.Tamb, tankHot.T_amb) annotation(
+    Line(points = {{-36, 36}, {-36, 80}, {54, 80}, {54, 74}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+  connect(pumpCold1.fluid_a, SodiumBufferTank.fluid_b) annotation(
+    Line(points = {{-10, -36}, {-1, -36}, {-1, -36.5}, {4, -36.5}}, color = {0, 127, 255}));
+  connect(hX_Control.m_flow_rec, pumpCold1.m_flow) annotation(
+    Line(points = {{35, -44}, {34, -44}, {34, -22}, {-16, -22}, {-16, -31}}, color = {0, 0, 127}));
+  connect(hX_Control.m_flow_hs, controlHot.m_flow_in) annotation(
+    Line(points = {{44, -44}, {44, -44}, {44, -16}, {78, -16}, {78, 36}, {94, 36}, {94, 70}, {98, 70}, {98, 70}}, color = {0, 0, 127}));
+  connect(hX_Control.m_flow_hs, pumpCold2.m_flow) annotation(
+    Line(points = {{44, -44}, {44, -44}, {44, -16}, {78, -16}, {78, 26}, {60, 26}, {60, 20}, {60, 20}}, color = {0, 0, 127}));
   connect(Tamb_input.y, tankHot.T_amb) annotation(
     Line(points = {{157, 100}, {54, 100}, {54, 74}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Tamb_input.y, powerBlock.T_amb) annotation(
@@ -327,8 +352,6 @@ equation
   connect(controlHot.m_flow, pumpHot.m_flow) annotation(
     Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
 //Connections from data
-  connect(receiver.Tamb, tankHot.T_amb) annotation(
-    Line(points = {{-36, 36}, {-36, 80}, {54, 80}, {54, 74}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation(
     Line(points = {{-109, 30}, {-98, 30}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(DNI_input.y, sun.dni) annotation(
@@ -336,54 +359,26 @@ equation
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{149, 50}, {149, 40.85}, {124, 40.85}, {124, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 //HX_control connections
-  connect(hX_Control.m_flow_rec, pumpCold1.m_flow) annotation(
-    Line(points = {{35, -44}, {34, -44}, {34, -22}, {-18, -22}, {-18, -31}}, color = {0, 0, 127}));
-  connect(hX_Control.m_flow_HX, controlHot.m_flow_in) annotation(
-    Line(points = {{45, -44}, {45, -22}, {48, -22}, {48, 24}, {94, 24}, {94, 69.5}, {98, 69.5}}, color = {0, 0, 127}));
-  connect(hX_Control.T_out_HX, temperature2.T) annotation(
-    Line(points = {{50, -68}, {50, -88}, {60, -88}, {60, 0}, {31, 0}, {31, 64}}, color = {0, 0, 127}));
-  connect(hX_Control.T_out_rec, temperature1.T) annotation(
-    Line(points = {{44, -66}, {44, -66}, {44, -88}, {-20, -88}, {-20, 20}, {-10, 20}, {-10, 26}, {-10, 26}}, color = {0, 0, 127}));
   connect(hX_Control.L_mea, tankCold.L) annotation(
     Line(points = {{38, -66}, {38, -66}, {38, -74}, {70, -74}, {70, -28}, {78, -28}, {78, -28}}, color = {0, 0, 127}));
   connect(or1.u2, hX_Control.defocus) annotation(
     Line(points = {{-117, 3}, {-126, 3}, {-126, -54}, {27, -54}, {27, -56}}, color = {255, 0, 255}));
   connect(heliostatsField.on, hX_Control.sf_on) annotation(
     Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, -74}, {34, -74}, {34, -67}, {33, -67}}, color = {255, 0, 255}));
-  connect(hX_Control.m_flow_HX, pumpCold2.m_flow) annotation(
-    Line(points = {{45, -44}, {45, -22}, {48, -22}, {48, 24}, {60, 24}, {60, 20}}, color = {0, 0, 127}));
 //Solar field connections i.e. solar.heat port and control
   connect(heliostatsField.on, Shell_and_Tube_HX.HF_on) annotation(
     Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, -6}, {13, -6}}, color = {255, 0, 255}));
-  connect(heliostatsField.heat, receiver.heat) annotation(
-    Line(points = {{-66, 27.5}, {-54.82, 27.5}, {-54.82, 27}, {-54, 27}}, color = {191, 0, 0}));
-  connect(heliostatsField.on, receiver.on) annotation(
-    Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, 5}, {-39, 5}}, color = {255, 0, 255}));
   connect(sun.solar, heliostatsField.solar) annotation(
     Line(points = {{-82, 58}, {-82, 36}}, color = {255, 128, 0}));
   connect(or1.y, heliostatsField.defocus) annotation(
     Line(points = {{-108, 6}, {-98, 6}, {-98, 9}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //Fluid connections
-  connect(tankCold.fluid_b, pumpCold2.fluid_a) annotation(
-    Line(points = {{78, -38}, {72, -38}, {72, 14}, {66, 14}, {66, 14}, {66, 14}}, color = {0, 127, 255}));
   connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{68, 58}, {72, 58}, {72, 48}, {78, 48}, {78, 48}}, color = {0, 127, 255}));
   connect(Shell_and_Tube_HX.port_a_out, SodiumBufferTank.fluid_a) annotation(
     Line(points = {{24, -14}, {24, -30.5}, {14, -30.5}}, color = {0, 127, 255}));
-  connect(pumpCold1.fluid_a, SodiumBufferTank.fluid_b) annotation(
-    Line(points = {{-12, -36}, {-1, -36}, {-1, -36.5}, {4, -36.5}}, color = {0, 127, 255}));
   connect(pumpCold2.fluid_b, Shell_and_Tube_HX.port_b_in) annotation(
     Line(points = {{54, 14}, {34, 14}, {34, -7}, {29, -7}}, color = {0, 127, 255}));
-  connect(temperature1.fluid_b, Shell_and_Tube_HX.port_a_in) annotation(
-    Line(points = {{-6, 32}, {18, 32}, {18, 12}}, color = {0, 127, 255}));
-  connect(Shell_and_Tube_HX.port_b_out, temperature2.fluid_a) annotation(
-    Line(points = {{14, 5}, {14, 69}, {26, 69}}, color = {0, 127, 255}));
-  connect(receiver.fluid_a, pumpCold1.fluid_b) annotation(
-    Line(points = {{-32, 6}, {-26, 6}, {-26, -36}, {-24, -36}}, color = {0, 127, 255}));
-  connect(receiver.fluid_b, temperature1.fluid_a) annotation(
-    Line(points = {{-30, 31}, {-16, 31}}, color = {0, 127, 255}));
-  connect(temperature2.fluid_b, tankHot.fluid_a) annotation(
-    Line(points = {{36, 69}, {44, 69}, {44, 70}, {48, 70}}, color = {0, 127, 255}));
 //PowerBlock connections
   connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
     Line(points = {{90, 48}, {102, 48}, {102, 30}, {112, 30}, {112, 30}, {112, 30}, {112, 30}}, color = {0, 127, 255}));
@@ -406,4 +401,4 @@ equation
 
 	</html>"),
     uses(SolarTherm(version = "0.2")));
-end Na_CS_CO2_System;
+end Na_CS_CO2_System_new;

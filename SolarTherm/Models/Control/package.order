@@ -8,3 +8,8 @@ PowerBlockControl
 StartUpLogic5
 HX_Control
 Switch2
+IdealMassflowBlockCalculation
+FakeControl
+HX_Control_new
+m_flow_calculations
+m_flow_calculations_simple
