@@ -10,7 +10,7 @@ model loop_breaker
 
 equation
   port_a.h_outflow = 0; // shouldn't flow backwards anyway
-  //port_b.p = port_a.p;
+  port_b.p = port_a.p;
   port_b.h_outflow= inStream(port_a.h_outflow);
   port_b.Xi_outflow = inStream(port_a.Xi_outflow);
   port_a.Xi_outflow = inStream(port_b.Xi_outflow);

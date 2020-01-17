@@ -3,7 +3,7 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model SB_Receiver
   import CN = Modelica.Constants;
   extends Interfaces.Models.ReceiverFluid;
-  redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_dTX;
+  redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph;
   parameter String concept = "Cavity" "Type of receiver {Cavity,Billboard,Cylindrical}";
   parameter SI.Length H_tower = 20 "Tower height" annotation(
     Dialog(group = "Technical data"));
@@ -71,15 +71,21 @@ equation
 //HTF_avg.h=(HTF_in.h+HTF_out.h)/2;
 //HTF_avg.T = HTF_in.T;
 //calculate m_flow here
-//fluid_a.m_flow = (ab*heat.Q_flow+Q_loss)/(SolarTherm.Media.Sodium.Sodium_utilities.h_fg_T(HTF_in.T));
+  m_flow_guess = max(0.0,(ab*heat.Q_flow+Q_loss)/(SolarTherm.Media.Sodium.Sodium_utilities.h_fg_T(HTF_in.T)));
+  
   fluid_a.h_outflow = 0;
   heat.T = HTF_in.T;
   fluid_b.m_flow + fluid_a.m_flow = 0;
-  fluid_a.p = fluid_b.p;
+
 //Zebedee
   HTF_in.h = inStream(fluid_a.h_outflow);
+  HTF_in.p = fluid_a.p;
+  
   HTF_out.h = fluid_b.h_outflow;
+  HTF_out.p = fluid_b.p;
+  
   HTF_out.T = HTF_in.T;
+
   h_in = HTF_in.h;
   h_out = HTF_out.h;
   0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);

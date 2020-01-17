@@ -180,9 +180,6 @@ initial equation
 //set all nodes to a constant starting specific enthalpy
   end for;
   T_HTF = T_start;
-algorithm
-  fluid_bp.m_flow := -1.0*fluid_ap.m_flow;
-  fluid_br.m_flow := -1.0*fluid_ar.m_flow;
 equation
   T_storage = T_HTF;
 //HTF Properties
@@ -275,10 +272,7 @@ equation
 //inStream(fluid_ar.h_outflow);//0.0;
   fluid_ap.h_outflow = 0.0;
 //inStream(fluid_ap.h_outflow);//0.0;
-  fluid_bp.p = HTF_State.p;
-  fluid_br.p = HTF_State.p;
-  fluid_ap.p = HTF_State.p;
-  fluid_ar.p = HTF_State.p;
+
 //HTF mass balance
 //der(m_HTF) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
 //der(m_HTF) = 0.0;
@@ -290,16 +284,18 @@ equation
   H_HTF = m_HTF * h_HTF;
   H_tank = m_tank * cp_tank * (T_HTF - 298.15);
   H_tray = m_tray * cp_tray * (T_HTF - 298.15);
-  
-  //H_tank = HCap_tank*(T_HTF-T_start);
-  //H_tray = HCap_tray*(T_HTF-T_start);
+
   H_HTF_tray_tank = H_HTF + H_tank + H_tray;
-  //Q_loss = -1.0*U_loss_tank*A_loss_tank*(T_HTF-T_amb);
+
   der(H_HTF_tray_tank) = Q_flow_chg - Q_flow_dis;
-  //der(E_stored) = Q_flow_chg - Q_flow_dis + Q_loss; //Rate of change of energy in the storage vessel
-  //der(E_HTF_tray_tank) = Q_flow_chg - Q_flow_dis - Q_HTFPCM + Q_loss;
-  //E_HTF = E_HTF_tray_tank - H_tank - H_tray;
-  
+
+
+  fluid_bp.m_flow = -1.0*fluid_ap.m_flow;
+  fluid_br.m_flow = -1.0*fluid_ar.m_flow;
+  fluid_bp.p = HTF_bp.p;
+  fluid_br.p = HTF_br.p;
+  //fluid_ap.p = HTF_State.p;
+  //fluid_ar.p = HTF_State.p;
   
   
 //Define energy tracked

@@ -13,9 +13,14 @@ model SB_Control
   Modelica.Blocks.Interfaces.RealInput T_stor "Temperature of the HTF in storage"
     annotation (Placement(transformation(extent={{-130,40},{-90,80}})));
     Modelica.Blocks.Interfaces.BooleanOutput defocus(start=false) annotation (Placement(visible = true, transformation(origin = {106,0}, extent = {{-12, -10}, {12, 10}}, rotation = 0), iconTransformation(origin = {106,0}, extent = {{-12, -10}, {12, 10}}, rotation = 0)));
-  //parameter SI.Time period = 1.0*3600.0;
+    
+  Modelica.Blocks.Interfaces.RealInput m_flow_rec_guess "Guess flow rate of receiver"
+    annotation (Placement(visible = true, transformation(extent = {{-130, 8}, {-90, 48}}, rotation = 0), iconTransformation(extent = {{-130, 8}, {-90, 48}}, rotation = 0)));
+
 
   Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start=0.0) "Is the power block on?" annotation (Placement(visible = true, transformation(extent = {{92, 20}, {132, 60}}, rotation = 0), iconTransformation(extent = {{92, 20}, {132, 60}}, rotation = 0))) ;
+  
+  Modelica.Blocks.Interfaces.RealOutput m_flow_recv(start=0.0) "Is the power block on?" annotation (Placement(visible = true, transformation(extent = {{90, 58}, {130, 98}}, rotation = 0), iconTransformation(extent = {{90, 58}, {130, 98}}, rotation = 0))) ;
 
 
 algorithm
@@ -34,8 +39,9 @@ algorithm
   when T_stor < T_off then
     PB_load := 0.0;
   end when;
-
+  m_flow_PB := PB_load*m_flow_PB_des;
+  m_flow_recv := m_flow_rec_guess;
 equation
-  m_flow_PB = PB_load*m_flow_PB_des;
+  
 
 end SB_Control;
