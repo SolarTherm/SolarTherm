@@ -37,7 +37,7 @@ model m_flow_calculations_simple
     Placement(visible = true, transformation(extent = {{-140, -40}, {-100, 0}}, rotation = 0), iconTransformation(extent = {{-140, -40}, {-100, 0}}, rotation = 0)));
     
   
-  Modelica.Blocks.Interfaces.RealInput Q_out_rec(start=Q_rec_out)
+  Modelica.Blocks.Interfaces.RealInput Q_out_rec(start=Q_rec_out, nominal=Q_rec_out)
     annotation (
     Placement(visible = true, transformation(origin = {0, 110},extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, 110},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   
@@ -60,25 +60,25 @@ model m_flow_calculations_simple
   SI.MassFlowRate m_flow_rec_internal;
   SI.MassFlowRate m_flow_hs_internal;
 
-algorithm
-  state_Na1:= Medium1.setState_pTX(Medium1.p_default, T_out_rec_ref);
-  state_Na2:= Medium1.setState_pTX(Medium1.p_default, T_input_rec);
-  state_CS1:= Medium2.setState_pTX(Medium2.p_default, T_output_cs);
-  state_CS2:= Medium2.setState_pTX(Medium2.p_default, T_input_hs);
-  h_Na1:= Medium1.specificEnthalpy(state_Na1);
-  h_Na2:= Medium1.specificEnthalpy(state_Na2);
-  h_CS1:= Medium2.specificEnthalpy(state_CS1);
-  h_CS2:= Medium2.specificEnthalpy(state_CS2);
+equation
+  state_Na1= Medium1.setState_pTX(Medium1.p_default, T_out_rec_ref);
+  state_Na2= Medium1.setState_pTX(Medium1.p_default, T_input_rec);
+  state_CS1= Medium2.setState_pTX(Medium2.p_default, T_output_cs);
+  state_CS2= Medium2.setState_pTX(Medium2.p_default, T_input_hs);
+  h_Na1= Medium1.specificEnthalpy(state_Na1);
+  h_Na2= Medium1.specificEnthalpy(state_Na2);
+  h_CS1= Medium2.specificEnthalpy(state_CS1);
+  h_CS2= Medium2.specificEnthalpy(state_CS2);
   
   if sf_on then
-    m_flow_rec_internal:=Q_out_rec/(h_Na1-h_Na2);
-    m_flow_hs_internal:=Q_out_rec/(h_CS2-h_CS1);
+    m_flow_rec_internal=Q_out_rec/(h_Na1-h_Na2);
+    m_flow_hs_internal=Q_out_rec/(h_CS2-h_CS1);
   else
-    m_flow_rec_internal:=0;
-    m_flow_hs_internal:=0;
+    m_flow_rec_internal=0;
+    m_flow_hs_internal=0;
   end if;
   
-  m_flow_rec:=m_flow_rec_internal;
-  m_flow_hs:=m_flow_hs_internal;
+  m_flow_rec=m_flow_rec_internal;
+  m_flow_hs=m_flow_hs_internal;
   
 end m_flow_calculations_simple;
