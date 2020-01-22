@@ -13,6 +13,7 @@ Receiver
 ReceiverFluid
 ReceiverSimple
 ReceiverSimple_2
+ReceiverSimpleStress
 HeatTransfer
 SodiumReceiver
 HTC_receiver
