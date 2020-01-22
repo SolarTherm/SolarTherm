@@ -56,7 +56,7 @@ function Find_Opt_Design_HX_noF
   parameter Integer N_p[2]={1,2} "Tube passes number";
   parameter Integer layout[2]={1,2} "Tube layout";
   //parameter SI.Temperature T_Na2_des[12] = {510+273.15, 530+273.15, 550+273.15, 570+273.15, 590+273.15, 610+273.15, 630+273.15, 650+273.15, 670+273.15, 690+273.15, 710+273.15, 730+273.15} "Sodium Cold Fluid Temperature";
-  parameter SI.Temperature T_Na2_des[1] = {560+273.15} "Sodium Cold Fluid Temperature";
+  parameter SI.Temperature T_Na2_des[1] = {550+273.15} "Sodium Cold Fluid Temperature";
   
 //  //Sweep Parameters
 //  parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";

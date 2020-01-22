@@ -76,7 +76,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
   replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
   parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
   replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 20e6 "Power block gross rating at design point";
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 500e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
   parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
   parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -94,7 +94,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
   parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
   parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-  parameter SI.HeatFlowRate Q_flow_defocus = 330 / 294.18 * Q_flow_des "Solar field thermal power at defocused state";
+  parameter SI.HeatFlowRate Q_flow_defocus = 317 / 294.18 * Q_flow_des "Solar field thermal power at defocused state";
   // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
   parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";

@@ -30,7 +30,7 @@ model SodiumReceiver_new "ReceiverSimple with convective losses"
   Real Tw_av4( final unit="K4")=((Tw_in^4)/5 + ((Tw_in^3)*(Tw_out))/5 + ((Tw_in^2)*(Tw_out^2))/5 + ((Tw_in)*(Tw_out^3))/5 + (Tw_out^4)/5);
   SI.Temperature Tw_av=Tw_in/2+Tw_out/2;
   SI.TemperatureDifference DT(final start=0);
-  Real eff;
+  Real eff(start=0.5);
 
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
         transformation(
@@ -96,7 +96,11 @@ equation
   0=ab*heat.Q_flow+Q_loss+max(1e-3,fluid_a.m_flow)*(h_in-h_out);
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
   eff=Q_rcv/max(1,heat.Q_flow);
-  Q_out=(heat.Q_flow)*max(0.72,eff);
+//  Q_out=heat.Q_flow*ab;
+  //Q_out=heat.Q_flow*eff;  
+//  Q_out=heat.Q_flow*0.8; //540
+Q_out=heat.Q_flow*0.8;
+  //Q_out=(heat.Q_flow)*max(eff,0.73);
   
   annotation (Documentation(info="<html>
 <h4>Brief description:</h4>

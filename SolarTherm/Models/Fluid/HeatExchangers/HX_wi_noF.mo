@@ -29,6 +29,9 @@ model HX_wi_noF
   parameter SI.SpecificEnthalpy h_MS_out_0 = Medium2.specificEnthalpy(state_MS_out_0);
   parameter SI.MassFlowRate m_flow_Na_min_des(fixed = false) "Sodium minimum mass flow rate";
   parameter SI.MassFlowRate m_flow_MS_min_des(fixed = false) "Molten-Salt minimum mass flow rate";
+  parameter SI.Temperature T_Na2_min = 505 + 273.15 "Desing Sodium Hot Fluid Temperature";
+  parameter Medium1.ThermodynamicState state_Na_min = Medium1.setState_pTX(p_Na1_des, T_Na2_min);
+  parameter SI.SpecificEnthalpy h_Na_min = Medium1.specificEnthalpy(state_Na_min);
   
   //Input parameters
   parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter";
@@ -69,12 +72,12 @@ model HX_wi_noF
   //Variables
   SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   SI.MassFlowRate m_flow_MS(start=m_flow_MS_design) "Molten Salt mass flow rate";
-  SI.Temperature T_Na1(start=740+273.15, nominal=740+273.15) "Sodium Hot Fluid Temperature";
+  SI.Temperature T_Na1(start=T_Na1_des) "Sodium Hot Fluid Temperature";
   SI.Temperature T_MS1 "Molten Salt Cold Fluid Temperature";
-  SI.Temperature T_MS2(start=720+273.15, nominal= 720+273.15) "Molten Salt Hot Fluid Temperature";
-  SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
-  SI.Pressure p_Na1(start = p_Na1_des, nominal = p_Na1_des) "Sodium Inlet Pressure";
-  SI.Pressure p_MS1(start = p_MS1_des, nominal = p_MS1_des) "Molten Salt Inlet Pressure";
+  SI.Temperature T_MS2 "Molten Salt Hot Fluid Temperature";
+  SI.Temperature T_Na2(start=T_Na2_design) "Sodium Cold Fluid Temperature";
+  SI.Pressure p_Na1 "Sodium Inlet Pressure";
+  SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
   SI.Pressure p_Na2 "Sodium Outlet Pressure";
   SI.Pressure p_MS2 "Molten Salt Outlet Pressure";
   SI.CoefficientOfHeatTransfer U "Heat tranfer coefficient";
@@ -93,7 +96,7 @@ model HX_wi_noF
   Boolean problema2(start = false);
   
   //Fluid Properties
-  SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
+  SI.Temperature Tm_Na(start=(T_Na1_des+T_Na2_design)/2) "Mean Sodium Fluid Temperature";
   SI.Temperature Tm_MS "Mean Molten Salts Fluid Temperature";
   SI.ThermalConductivity k_Na "Sodium Conductivity @mean temperature";
   SI.ThermalConductivity k_MS "Molten Salts Conductivity @mean temperature";
@@ -114,7 +117,7 @@ model HX_wi_noF
   Medium2.ThermodynamicState state_output_MS;
   
   //Ports Variables
-  SI.SpecificEnthalpy h_Na_in;
+  SI.SpecificEnthalpy h_Na_in(start = h_Na_in_0, nominal = h_Na_in_0);
   SI.SpecificEnthalpy h_MS_in;
   SI.SpecificEnthalpy h_MS_out(start = h_MS_out_0, nominal = h_MS_out_0);
   SI.SpecificEnthalpy h_Na_out(start = h_Na_out_0, nominal = h_Na_out_0);
@@ -122,6 +125,7 @@ model HX_wi_noF
   //Real Input
   Modelica.Blocks.Interfaces.BooleanInput HF_on(start = true) annotation(
     Placement(visible = true, transformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90), iconTransformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+
 
 initial algorithm
 //  optimize_and_run := true;
@@ -149,7 +153,7 @@ equation
 //Fluids Enthalpies
   port_b_out.h_outflow = h_MS_out;
   port_a_out.h_outflow = h_Na_out;
-  h_Na_in = inStream(port_a_in.h_outflow);
+  h_Na_in = if HF_on then inStream(port_a_in.h_outflow) else h_Na_out_0;
   h_MS_in = inStream(port_b_in.h_outflow);
 
 //Shouldn't have reverse flows

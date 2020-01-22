@@ -10,19 +10,19 @@ partial model HeatExchangerFluid
     "Medium in the other side"
       annotation (choicesAllMatching = true,Dialog(group="Working fluid",__Dymola_label="Medium B"));
   Modelica.Fluid.Interfaces.FluidPort_a port_a_in(redeclare package Medium =
-        MA)
+        MA, p.nominal=100000)
     annotation (Placement(transformation(extent={{-96,20},{-76,40}}),
         iconTransformation(extent={{-68,20},{-58,30}})));
   Modelica.Fluid.Interfaces.FluidPort_b port_a_out(redeclare package Medium =
-        MA)
+        MA, p.nominal=100000)
     annotation (Placement(transformation(extent={{72,-22},{92,-2}}),
         iconTransformation(extent={{58,-10},{68,0}})));
   Modelica.Fluid.Interfaces.FluidPort_a port_b_in(redeclare package Medium =
-        MB)
+        MB, p.nominal=100000)
     annotation (Placement(transformation(extent={{22,-36},{42,-16}}),
         iconTransformation(extent={{22,-32},{32,-22}})));
   Modelica.Fluid.Interfaces.FluidPort_b port_b_out(redeclare package Medium =
-        MB)
+        MB, p.nominal=100000)
     annotation (Placement(transformation(extent={{-38,42},{-18,62}}),
         iconTransformation(extent={{-34,40},{-24,50}})));
 
