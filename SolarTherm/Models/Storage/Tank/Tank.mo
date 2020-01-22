@@ -105,7 +105,7 @@ equation
   L_internal=100*V/V_t;
   A=2*pi*(D/2)*H*(L_internal/100);
 
-  if medium.T<T_set then
+  if noEvent(medium.T<T_set) then
     W_net=min(-Q_losses,W_max);
   else
     W_net=0;
