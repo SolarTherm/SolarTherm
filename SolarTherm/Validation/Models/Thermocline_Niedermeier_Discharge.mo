@@ -11,7 +11,7 @@ model Thermocline_Niedermeier_Discharge
   package CaO = SolarTherm.Media.Materials.CaO;
   package Quartzite = SolarTherm.Media.Materials.Quartzite_Sand;
 
-  parameter Integer N_f = 200;
+  parameter Integer N_f = 50;
   parameter Integer N_p = 5;
   parameter SI.Length H_tank = 6.1;
   parameter SI.Diameter D_tank = 3.0;
@@ -43,6 +43,7 @@ model Thermocline_Niedermeier_Discharge
 
   parameter SI.Temperature T_min = CV.from_degC(290.0) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(396.0) "Design hot Temperature of everything in the tank (K)";
+
  
   //Inlet and Outlet
   SI.SpecificEnthalpy h_top "J/kg";
@@ -68,6 +69,9 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
   
+when terminal() then
+  print(String(T_max));
+end when;
 annotation(experiment(StopTime = 9000, StartTime = 0, Tolerance = 1e-6, Interval = 180.0));
 
 end Thermocline_Niedermeier_Discharge;

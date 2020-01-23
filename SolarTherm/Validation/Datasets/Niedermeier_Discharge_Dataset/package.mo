@@ -15,21 +15,7 @@ package Niedermeier_Discharge_Dataset "Provides the initial temerature and entha
     SI.Temperature[42] T_data = {595.7609546651,598.1159424539,600.4713814762,602.5646538181,605.5746070744,607.5371345012,609.9418143824,612.5102920346,616.3066701267,619.3829547119,620.8892474379,623.2455889272,627.7619853208,631.5711182806,635.0266195237,638.4821207668,642.5663256861,645.3353879229,648.3795221191,654.2706014592,656.9214856348,662.123869801,663.9521176501,664.7679854736,665.5165442957,665.7428755134,666.1318388155,666.2240032639,666.483312132,666.6113872487,666.4132957294,667.5182914367,667.7760209875,668.0667281886,668.1634049723,668.4534353232,668.9420084269,668.8410449247,668.9365936245,668.9316300557,668.9289226545,669.0231176537};
   algorithm
     for i in 1:N_f loop
-      j := 0;
-      while j <= 42 loop
-        if z_f[i] < z_data[1] then
-          T_f[i] := T_data[1]+((z_f[i]-z_data[1])/(z_data[2]-z_data[1]))*(T_data[2]-T_data[1]);
-          break;
-        elseif z_f[i] >= z_data[j] and z_f[i] <= z_data[j+1] then
-          T_f[i] := T_data[j] + (T_data[j+1]-T_data[j])*(z_f[i]-z_data[j])/(z_data[j+1]-z_data[j]);
-          break;
-        elseif z_f[i] > z_data[41] then
-          T_f[i] := T_data[41]+((z_f[i]-z_data[41])/(z_data[42]-z_data[41]))*(T_data[42]-T_data[41]);
-          break;
-        else
-          j := j + 1;
-        end if;
-      end while;
+        T_f[i] := SolarTherm.Utilities.Interpolation.Interpolate1D(z_data,T_data,z_f[i]);
     end for;
   end Initial_Temperature_f;
   
@@ -45,24 +31,8 @@ package Niedermeier_Discharge_Dataset "Provides the initial temerature and entha
     SI.Temperature[42] T_data = {595.7609546651,598.1159424539,600.4713814762,602.5646538181,605.5746070744,607.5371345012,609.9418143824,612.5102920346,616.3066701267,619.3829547119,620.8892474379,623.2455889272,627.7619853208,631.5711182806,635.0266195237,638.4821207668,642.5663256861,645.3353879229,648.3795221191,654.2706014592,656.9214856348,662.123869801,663.9521176501,664.7679854736,665.5165442957,665.7428755134,666.1318388155,666.2240032639,666.483312132,666.6113872487,666.4132957294,667.5182914367,667.7760209875,668.0667281886,668.1634049723,668.4534353232,668.9420084269,668.8410449247,668.9365936245,668.9316300557,668.9289226545,669.0231176537};
   algorithm
     for i in 1:N_f loop
-      j := 0;
-      while j <= 42 loop
-        if z_f[i] < z_data[1] then
-          T_f[i] := T_data[1]+((z_f[i]-z_data[1])/(z_data[2]-z_data[1]))*(T_data[2]-T_data[1]);
-          h_f[i] := Fluid.h_Tf(T_f[i]);
-          break;
-        elseif z_f[i] >= z_data[j] and z_f[i] <= z_data[j+1] then
-          T_f[i] := T_data[j] + (T_data[j+1]-T_data[j])*(z_f[i]-z_data[j])/(z_data[j+1]-z_data[j]);
-          h_f[i] := Fluid.h_Tf(T_f[i]);
-          break;
-        elseif z_f[i] > z_data[42] then
-          T_f[i] := T_data[41]+((z_f[i]-z_data[41])/(z_data[42]-z_data[41]))*(T_data[42]-T_data[41]);
-          h_f[i] := Fluid.h_Tf(T_f[i]);
-          break;
-        else
-          j := j + 1;
-        end if;
-      end while;
+       T_f[i] := SolarTherm.Utilities.Interpolation.Interpolate1D(z_data,T_data,z_f[i]);
+       h_f[i] := Fluid.h_Tf(T_f[i]);
     end for;
   end Initial_Enthalpy_f;
   
@@ -78,27 +48,9 @@ package Niedermeier_Discharge_Dataset "Provides the initial temerature and entha
     SI.Temperature[42] T_data = {595.7609546651,598.1159424539,600.4713814762,602.5646538181,605.5746070744,607.5371345012,609.9418143824,612.5102920346,616.3066701267,619.3829547119,620.8892474379,623.2455889272,627.7619853208,631.5711182806,635.0266195237,638.4821207668,642.5663256861,645.3353879229,648.3795221191,654.2706014592,656.9214856348,662.123869801,663.9521176501,664.7679854736,665.5165442957,665.7428755134,666.1318388155,666.2240032639,666.483312132,666.6113872487,666.4132957294,667.5182914367,667.7760209875,668.0667281886,668.1634049723,668.4534353232,668.9420084269,668.8410449247,668.9365936245,668.9316300557,668.9289226545,669.0231176537};
   algorithm
     for i in 1:N_f loop
-      j := 0;
-      while j <= 42 loop
-        if z_f[i] < z_data[1] then
-          for k in 1:N_p loop
-            T_p[i,k] := T_data[1]+((z_f[i]-z_data[1])/(z_data[2]-z_data[1]))*(T_data[2]-T_data[1]);
-          end for;
-          break;
-        elseif z_f[i] >= z_data[j] and z_f[i] <= z_data[j+1] then
-          for k in 1:N_p loop
-            T_p[i,k] := T_data[j] + (T_data[j+1]-T_data[j])*(z_f[i]-z_data[j])/(z_data[j+1]-z_data[j]);
-          end for;
-          break;
-        elseif z_f[i] > z_data[42] then
-          for k in 1:N_p loop
-            T_p[i,k] := T_data[41]+((z_f[i]-z_data[41])/(z_data[42]-z_data[41]))*(T_data[42]-T_data[41]);
-          end for;
-          break;
-        else
-          j := j + 1;
-        end if;
-      end while;
+      for k in 1:N_p loop
+          T_p[i,k] := SolarTherm.Utilities.Interpolation.Interpolate1D(z_data,T_data,z_f[i]);
+      end for;
     end for;
   end Initial_Temperature_p;
   
@@ -115,31 +67,10 @@ package Niedermeier_Discharge_Dataset "Provides the initial temerature and entha
     SI.Temperature[42] T_data = {595.7609546651,598.1159424539,600.4713814762,602.5646538181,605.5746070744,607.5371345012,609.9418143824,612.5102920346,616.3066701267,619.3829547119,620.8892474379,623.2455889272,627.7619853208,631.5711182806,635.0266195237,638.4821207668,642.5663256861,645.3353879229,648.3795221191,654.2706014592,656.9214856348,662.123869801,663.9521176501,664.7679854736,665.5165442957,665.7428755134,666.1318388155,666.2240032639,666.483312132,666.6113872487,666.4132957294,667.5182914367,667.7760209875,668.0667281886,668.1634049723,668.4534353232,668.9420084269,668.8410449247,668.9365936245,668.9316300557,668.9289226545,669.0231176537};
   algorithm
     for i in 1:N_f loop
-      j := 0;
-      while j <= 42 loop
-        if z_f[i] < z_data[1] then
-          for k in 1:N_p loop
-            T := T_data[1]+((z_f[i]-z_data[1])/(z_data[2]-z_data[1]))*(T_data[2]-T_data[1]);
-            h_p[i,k] := Filler.h_Tf(T,0);
-            
-          end for;
-          break;
-        elseif z_f[i] >= z_data[j] and z_f[i] <= z_data[j+1] then
-          for k in 1:N_p loop
-            T := T_data[j] + (T_data[j+1]-T_data[j])*(z_f[i]-z_data[j])/(z_data[j+1]-z_data[j]);
-            h_p[i,k] := Filler.h_Tf(T,0);
-          end for;
-          break;
-        elseif z_f[i] > z_data[42] then
-          for k in 1:N_p loop
-            T := T_data[41]+((z_f[i]-z_data[41])/(z_data[42]-z_data[41]))*(T_data[42]-T_data[41]);
-            h_p[i,k] := Filler.h_Tf(T,0);
-          end for;
-          break;
-        else
-          j := j + 1;
-        end if;
-      end while;
+      for k in 1:N_p loop
+        T := SolarTherm.Utilities.Interpolation.Interpolate1D(z_data,T_data,z_f[i]);
+        h_p[i,k] := Filler.h_Tf(T,0);
+      end for;
     end for;
   end Initial_Enthalpy_p;
 end Niedermeier_Discharge_Dataset;

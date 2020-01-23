@@ -322,6 +322,7 @@ model PhysicalParticleCO2
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
+  
 initial equation
   if fixed_field then
     P_gross = Q_flow_des * eff_cyc;
@@ -333,6 +334,7 @@ initial equation
   C_block=powerBlock.C_PB;
   C_cap  = (C_field + C_site + C_receiver + C_storage + C_hx + C_block + C_bop) * (1 + r_contg) * (1 + r_indirect) * (1 + r_cons) + C_land;
 equation
+
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
