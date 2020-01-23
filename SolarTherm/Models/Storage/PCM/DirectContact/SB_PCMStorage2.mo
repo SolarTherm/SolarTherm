@@ -1,4 +1,4 @@
-within SolarTherm.Models.Storage.PCM;
+within SolarTherm.Models.Storage.PCM.DirectContact;
 
 model SB_PCMStorage2
   extends Interfaces.Models.StorageFluid4P;
@@ -75,7 +75,7 @@ model SB_PCMStorage2
   //-----------------------------------------------------------------------
   //Variables
   //Storage Tank and Overall
-  SI.Energy E_stored "Total energy stored in the system, J";
+  //SI.Energy E_stored "Total energy stored in the system, J";
   SI.HeatFlowRate Q_flow_chg "Heat rate into storage system, J/s";
   SI.HeatFlowRate Q_flow_dis "Heat rate discharged from storage system, J/s";
   SI.HeatFlowRate Q_loss "Heat lost to surroundings, J/s";
@@ -129,12 +129,12 @@ model SB_PCMStorage2
   SI.Length L_total "Total variable length, m";
   SI.Length L_combined "Total length of Sodium layer and salt, m";
   //Efficiency Calculations
-  SI.Heat E_in(start = 0) "Total heat energy entering the System, J";
-  SI.Heat E_out(start = 0) "Total heat energy leaving the System, J";
-  SI.Heat X_in(start = 0) "Total exergy entering the system, J";
-  SI.Heat X_out(start = 0) "Total exergy leaving the system, J";
-  Real energy_efficiency;
-  Real exergy_efficiency;
+  //SI.Heat E_in(start = 0) "Total heat energy entering the System, J";
+  //SI.Heat E_out(start = 0) "Total heat energy leaving the System, J";
+  //SI.Heat X_in(start = 0) "Total exergy entering the system, J";
+  //SI.Heat X_out(start = 0) "Total exergy leaving the system, J";
+  //Real energy_efficiency;
+  //Real exergy_efficiency;
   //material State Models
   PCM_Package.State PCM_State[n];
   Medium.BaseProperties HTF_State;
@@ -240,14 +240,14 @@ equation
   m_avail = m_HTF * (1.0 - x_HTF) - m_trap;
   L_combined = sum(dz) + dz_liq;
 //Analytical variables
-  if time >= 10 * 3600 * 24 then
+  //if time >= 10 * 3600 * 24 then
 //start calculating efficiencies after day 10
-    energy_efficiency = E_out / E_in;
-    exergy_efficiency = X_out / X_in;
-  else
-    energy_efficiency = 0.0;
-    exergy_efficiency = 0.0;
-  end if;
+    //energy_efficiency = E_out / E_in;
+    //exergy_efficiency = X_out / X_in;
+  //else
+    //energy_efficiency = 0.0;
+    //exergy_efficiency = 0.0;
+  //end if;
 //Energy Flow
 //Heat Transfered to the Tank and energy tracking
 //H_tank = HCap_tank*(T_HTF-T_start);
@@ -302,11 +302,11 @@ equation
   der(E_HTF) = der(H_HTF);
   der(E_tank) = der(H_tank);
   der(E_tray) = der(H_tray);
-  der(E_in) = Q_flow_chg;
-  der(E_out) = Q_flow_dis;
-  der(X_in) = Q_flow_chg * (1.0 - 298.15 / T_HTF);
-  der(X_out) = Q_flow_dis * (1.0 - 298.15 / T_HTF);
-  der(E_stored) = Q_loss + fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow - (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
+  //der(E_in) = Q_flow_chg;
+  //der(E_out) = Q_flow_dis;
+ //der(X_in) = Q_flow_chg * (1.0 - 298.15 / T_HTF);
+  //der(X_out) = Q_flow_dis * (1.0 - 298.15 / T_HTF);
+  //der(E_stored) = Q_loss + fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow - (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
   Q_flow_chg = fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow;
   Q_flow_dis = -1.0 * (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
 //fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow = 0.0;

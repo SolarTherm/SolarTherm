@@ -1,4 +1,4 @@
-within SolarTherm.Models.Storage.PCM;
+within SolarTherm.Models.Storage.PCM.DirectContact;
 
 model SB_PCMStorage
   extends Interfaces.Models.StorageFluid4P;

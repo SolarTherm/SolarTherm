@@ -321,7 +321,7 @@ model SodiumBoiler_PCM_sCO2
     Placement(visible = true, transformation(extent = {{110, 90}, {90, 110}}, rotation = 0)));
   //parasitic inputs
   Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss) annotation(
-    Placement(visible = true, transformation(origin = {128, 63}, extent = {{-12, 9}, {12, -9}}, rotation = 180)));
+    Placement(visible = true, transformation(origin = {136, 63}, extent = {{-12, 9}, {12, -9}}, rotation = 180)));
   // Or block for defocusing
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
@@ -368,22 +368,22 @@ model SodiumBoiler_PCM_sCO2
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  SolarTherm.Models.Storage.PCM.SB_PCMStorage2 storage(n=10) annotation(
+  SolarTherm.Models.Storage.PCM.SB_PCMStorage2 storage(n = 10) annotation(
     Placement(visible = true, transformation(origin = {28, 16}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.SB_Receiver receiver(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-30, 22}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-  SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {104, 32}, extent = {{-18, -18}, {18, 18}}, rotation = 90)));
   SolarTherm.Models.Control.SB_Control control annotation(
     Placement(visible = true, transformation(origin = {44, 60}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {76, 6}, extent = {{8, -8}, {-8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-6, 6}, extent = {{8, -8}, {-8, 8}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-6, 30}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.loop_breaker recvLoopBreaker(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-2, 32}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-8, 6}, extent = {{14, -14}, {-14, 14}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.loop_breaker pbLoopBreaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 24}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
+  SolarTherm.Models.PowerBlocks.SB_PowerBlockModel powerBlock annotation(
+    Placement(visible = true, transformation(origin = {108, 18}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -427,40 +427,42 @@ equation
     Line(points = {{-56, 28}, {-50, 28}, {-50, 28}, {-48, 28}}, color = {191, 0, 0}));
   connect(Tamb_input.y, receiver.Tamb) annotation(
     Line(points = {{120, 80}, {-30, 80}, {-30, 36}, {-30, 36}}, color = {0, 0, 127}));
-  connect(parasities_input.y, powerBlock.parasities) annotation(
-    Line(points = {{114, 64}, {86, 64}, {86, 36}, {94, 36}, {94, 36}}, color = {0, 0, 127}));
-  connect(powerBlock.W_net, market.W_net) annotation(
-    Line(points = {{104, 42}, {104, 42}, {104, 48}, {122, 48}, {122, 22}, {128, 22}, {128, 22}}, color = {0, 0, 127}));
   connect(storage.T_storage, control.T_stor) annotation(
     Line(points = {{43, 29}, {44, 29}, {44, 46}, {26, 46}, {26, 66}, {34, 66}}, color = {0, 0, 127}));
   connect(control.defocus, heliostatsField.defocus) annotation(
     Line(points = {{54, 60}, {58, 60}, {58, -6}, {-88, -6}, {-88, 8}, {-88, 8}}, color = {255, 0, 255}));
   connect(Tamb_input.y, storage.T_amb) annotation(
     Line(points = {{120, 80}, {28, 80}, {28, 27}}, color = {0, 0, 127}));
-  connect(powerBlock.fluid_b, pumpHot.fluid_a) annotation(
-    Line(points = {{112, 22}, {112, 22}, {112, 6}, {84, 6}, {84, 6}}, color = {0, 127, 255}));
   connect(pumpHot.fluid_b, storage.fluid_ap) annotation(
-    Line(points = {{68, 6}, {42, 6}, {42, 6}, {42, 6}}, color = {0, 127, 255}));
-  connect(storage.fluid_br, pumpCold.fluid_a) annotation(
-    Line(points = {{14, 6}, {2, 6}, {2, 6}, {2, 6}}, color = {0, 127, 255}));
-  connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
-    Line(points = {{-14, 6}, {-26, 6}, {-26, 6}, {-26, 6}}, color = {0, 127, 255}));
+    Line(points = {{68, 6}, {42, 6}}, color = {0, 127, 255}));
   connect(control.m_flow_PB, pumpHot.m_flow) annotation(
     Line(points = {{56, 64}, {76, 64}, {76, 12}, {76, 12}}, color = {0, 0, 127}));
-  connect(Tamb_input.y, powerBlock.T_amb) annotation(
-    Line(points = {{120, 80}, {82, 80}, {82, 28}, {94, 28}, {94, 28}}, color = {0, 0, 127}));
+  connect(control.m_flow_recv, pumpCold.m_flow) annotation(
+    Line(points = {{56, 68}, {58, 68}, {58, 76}, {-6, 76}, {-6, 37}}, color = {0, 0, 127}));
+  connect(storage.fluid_bp, pbLoopBreaker.port_a) annotation(
+    Line(points = {{42, 23}, {47, 23}, {47, 24}, {52, 24}}, color = {0, 127, 255}));
+  connect(storage.fluid_br, recvLoopBreaker.port_a) annotation(
+    Line(points = {{14, 6}, {6, 6}, {6, 6}, {6, 6}}, color = {0, 127, 255}));
+  connect(recvLoopBreaker.port_b, receiver.fluid_a) annotation(
+    Line(points = {{-22, 6}, {-26, 6}, {-26, 6}, {-26, 6}}, color = {0, 127, 255}));
+  connect(receiver.fluid_b, pumpCold.fluid_a) annotation(
+    Line(points = {{-24, 30}, {-14, 30}, {-14, 30}, {-14, 30}}, color = {0, 127, 255}));
+  connect(pumpCold.fluid_b, storage.fluid_ar) annotation(
+    Line(points = {{2, 30}, {6, 30}, {6, 22}, {14, 22}, {14, 24}}, color = {0, 127, 255}));
+  connect(heliostatsField.on, control.helio_on) annotation(
+    Line(points = {{-72, 2}, {-72, 2}, {-72, -2}, {-44, -2}, {-44, 60}, {34, 60}, {34, 60}}, color = {255, 0, 255}));
   connect(receiver.m_flow_guess, control.m_flow_rec_guess) annotation(
     Line(points = {{-26, 22}, {-16, 22}, {-16, 62}, {34, 62}, {34, 62}}, color = {0, 0, 127}));
-  connect(control.m_flow_recv, pumpCold.m_flow) annotation(
-    Line(points = {{56, 68}, {58, 68}, {58, 76}, {-6, 76}, {-6, 12}, {-6, 12}}, color = {0, 0, 127}));
-  connect(receiver.fluid_b, recvLoopBreaker.port_a) annotation(
-    Line(points = {{-24, 30}, {-20, 30}, {-20, 32}, {-16, 32}}, color = {0, 127, 255}));
-  connect(recvLoopBreaker.port_b, storage.fluid_ar) annotation(
-    Line(points = {{12, 32}, {12, 22}, {14, 22}, {14, 24}}, color = {0, 127, 255}));
-  connect(storage.fluid_bp, pbLoopBreaker.port_a) annotation(
-    Line(points = {{42, 24}, {52, 24}}, color = {0, 127, 255}));
+  connect(powerBlock.W_net, market.W_net) annotation(
+    Line(points = {{118, 18}, {122, 18}, {122, 22}, {128, 22}, {128, 22}}, color = {0, 0, 127}));
   connect(pbLoopBreaker.port_b, powerBlock.fluid_a) annotation(
-    Line(points = {{80, 24}, {98, 24}}, color = {0, 127, 255}));
+    Line(points = {{80, 24}, {100, 24}, {100, 24}, {100, 24}}, color = {0, 127, 255}));
+  connect(powerBlock.fluid_b, pumpHot.fluid_a) annotation(
+    Line(points = {{98, 10}, {92, 10}, {92, 6}, {84, 6}, {84, 6}}, color = {0, 127, 255}));
+  connect(Tamb_input.y, powerBlock.T_amb) annotation(
+    Line(points = {{120, 80}, {104, 80}, {104, 28}, {104, 28}}, color = {0, 0, 127}));
+  connect(parasities_input.y, powerBlock.parasities) annotation(
+    Line(points = {{123, 63}, {112, 63}, {112, 28}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {2, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {26, -78}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),

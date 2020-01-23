@@ -98,15 +98,19 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 
 
 	redeclare function setState_pTX
-		"Return thermodynamic state as function of p, T and composition X or Xi"
+		"Return thermodynamic state as function of T and composition X or Xi"
 		extends Modelica.Icons.Function;
 		input AbsolutePressure p "Pressure";
 		input Temperature T "Temperature";
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
+	protected
+        Real x;
+        SpecificEnthalpy h;
 	algorithm
-
-		state := ThermodynamicState(p=p, h=h_T(T));
+        x := X[2];
+        h := (1-x)*h_T(T) + x*h_v_T(T);
+		state := ThermodynamicState(p=p, h=h);
 	end setState_pTX;
 
 	redeclare function setState_phX

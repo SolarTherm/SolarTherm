@@ -16,8 +16,6 @@ model TestSBP_RecvStorage_PB
     Placement(visible = true, transformation(origin = {-112, -6}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
   Modelica.Thermal.HeatTransfer.Sources.FixedHeatFlow fixedHeatFlow(Q_flow = 50000)  annotation(
     Placement(visible = true, transformation(origin = {-160, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression realExpression(y = 25) annotation(
-    Placement(visible = true, transformation(origin = {-88, 62}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.loop_breaker loop_breaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-76, -24}, extent = {{18, -18}, {-18, 18}}, rotation = 0)));
   SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlockModel(redeclare package Medium = Medium) annotation(
@@ -26,6 +24,8 @@ model TestSBP_RecvStorage_PB
     Placement(visible = true, transformation(origin = {74, 20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression parasit annotation(
     Placement(visible = true, transformation(origin = {142, 58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression realExpression(y = 25) annotation(
+    Placement(visible = true, transformation(origin = {-88, 62}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
   connect(Tamb.y, storage.T_amb) annotation(
     Line(points = {{-34, 72}, {0, 72}, {0, 30}, {-2, 30}}, color = {0, 0, 127}));
@@ -37,8 +37,6 @@ equation
     Line(points = {{-34, 72}, {-30, 72}, {-30, 34}, {-112, 34}, {-112, 10}, {-112, 10}}, color = {0, 0, 127}));
   connect(fixedHeatFlow.port, sB_Receiver.heat) annotation(
     Line(points = {{-150, 0}, {-130, 0}, {-130, 0}, {-132, 0}}, color = {191, 0, 0}));
-  connect(realExpression.y, pumpRecv.m_flow) annotation(
-    Line(points = {{-77, 62}, {-62, 62}, {-62, -12}, {-74, -12}, {-74, 21}}, color = {0, 0, 127}));
   connect(sB_Receiver.fluid_b, pumpRecv.fluid_a) annotation(
     Line(points = {{-106, 4}, {-96, 4}, {-96, 14}, {-82, 14}, {-82, 14}}, color = {0, 127, 255}));
   connect(pumpRecv.fluid_b, storage.fluid_ar) annotation(
@@ -57,4 +55,6 @@ equation
     Line(points = {{-34, 72}, {120, 72}, {120, 30}, {120, 30}}, color = {0, 0, 127}));
   connect(parasit.y, powerBlockModel.parasities) annotation(
     Line(points = {{154, 58}, {158, 58}, {158, 36}, {132, 36}, {132, 30}, {132, 30}}, color = {0, 0, 127}));
+  connect(realExpression.y, pumpRecv.m_flow) annotation(
+    Line(points = {{-77, 62}, {-62, 62}, {-62, -12}, {-74, -12}, {-74, 21}}, color = {0, 0, 127}));
 end TestSBP_RecvStorage_PB;

@@ -88,7 +88,11 @@ equation
 
   h_in = HTF_in.h;
   h_out = HTF_out.h;
-  0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);
+  if fluid_a.m_flow > 1.0e6 then
+    0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);
+  else
+    h_in = h_out;
+  end if;
   Q_rcv = fluid_a.m_flow * (h_out - h_in);
   Q_loss = -A_aperture * CN.sigma * em * (HTF_in.T ^ 4 - Tamb ^ 4);
   der(E_absorbed) = ab * heat.Q_flow;

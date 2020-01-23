@@ -1,4 +1,4 @@
-within SolarTherm.Models.Storage.PCM;
+within SolarTherm.Models.Storage.PCM.DirectContact;
 
 function CV_Thickness
   input Real r;
