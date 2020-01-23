@@ -28,7 +28,7 @@ package Air_Table
   
   redeclare function h_Tf "Specific enthalpy of air vs Temperature"
     input SI.Temperature T "Absolute temperature (K)";
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   protected
     Real T_data[35] = {100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,3000};
@@ -39,7 +39,7 @@ package Air_Table
   
   redeclare function rho_Tf "Density of air vs Temperature"
     input SI.Temperature T;
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy rho;
   protected
     Real T_data[35] = {100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,3000};

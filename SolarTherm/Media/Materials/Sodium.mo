@@ -25,7 +25,7 @@ package Sodium
 
   redeclare function h_Tf
     input SI.Temperature T;
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy h;
   algorithm
     h := SolarTherm.Media.Sodium.Sodium_utilities.h_T(T);
@@ -33,7 +33,7 @@ package Sodium
   
   redeclare function rho_Tf
     input SI.Temperature T;
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy rho;
   algorithm
     rho := SolarTherm.Media.Sodium.Sodium_utilities.rho_T(T);

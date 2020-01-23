@@ -64,7 +64,7 @@ package Sodium2P
   
   function h_Tf "Specific enthalpy of liquid sodium vs Temperature"
     input SI.Temperature T "Absolute temperature (K)";
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
     if T < 2000.0 then
@@ -158,7 +158,7 @@ package Sodium2P
   
   function rho_Tf "Density of liquid sodium"
     input SI.Temperature T "Absolute temperature (K)";
-    input Real f "Liquid mass melt fraction (No effect on result)";
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.Density rho "Density (kg/m3)";
   algorithm
     rho := 219 + 275.32 * (1 - T / 2503.7) + 511.58 * sqrt(1 - T / 2503.7);

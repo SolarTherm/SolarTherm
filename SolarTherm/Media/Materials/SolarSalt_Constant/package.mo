@@ -1,12 +1,9 @@
 within SolarTherm.Media.Materials;
 
-package SolarSalt "60% NaNO3 + 40% KNO3 wt"
+package SolarSalt_Constant
   extends SolarTherm.Media.Materials.PartialMaterial;
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
-  
-  constant SI.MolarMass MM = 93.04895e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 260+273.15 "Melting point (K)";
-  constant Real cost = 0.0 "USD/kg";
+  import SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.*;
   
   redeclare model State "A model which calculates state and properties"
     parameter SI.SpecificEnthalpy h_start;
@@ -17,11 +14,11 @@ package SolarSalt "60% NaNO3 + 40% KNO3 wt"
     SI.SpecificHeatCapacity cp;
     SI.ThermalConductivity k;
   equation
-    k = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.lamda_T(T);
-    cp = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.cp_T(T);
-    mu = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.eta_T(T);
-    rho = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.rho_T(T);
-    h = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.h_T(T);
+    k = 0.57;
+    cp = 1550.0;
+    mu = 0.0021;
+    rho = 1733.0;
+    h = 1550.0*T;
   end State;
   
   redeclare function h_Tf "Specific enthalpy of liquid sodium vs Temperature"
@@ -29,7 +26,7 @@ package SolarSalt "60% NaNO3 + 40% KNO3 wt"
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    h := SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.h_T(T);
+    h := 1550.0*T;
   end h_Tf;
   
   redeclare function rho_Tf "Density of liquid solar salt vs Temperature"
@@ -37,7 +34,6 @@ package SolarSalt "60% NaNO3 + 40% KNO3 wt"
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy rho;
   algorithm
-    rho := SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.rho_T(T);
+    rho := 1733.0;
   end rho_Tf;
-  
-end SolarSalt;
+end SolarSalt_Constant;

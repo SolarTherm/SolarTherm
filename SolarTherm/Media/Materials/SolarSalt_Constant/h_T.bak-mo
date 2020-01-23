@@ -1,0 +1,6 @@
+function h_T "Specific enthalpy of liquid sodium vs Temperature"
+    input SI.Temperature T "Absolute temperature (K)";
+    output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+  algorithm
+    h := 1550.0*T;
+  end h_T;
