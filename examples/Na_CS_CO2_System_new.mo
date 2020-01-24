@@ -105,8 +105,8 @@ model Na_CS_CO2_System_new "High temperature Sodium-sCO2 system"
   parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
   
   //Pgross and defocus
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 200e6 "Power block gross rating at design point";
-  parameter SI.HeatFlowRate Q_flow_defocus = 388/294.118 * Q_flow_des /*35e6*/ "Solar field thermal power at defocused state";
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 50e6 "Power block gross rating at design point";
+  parameter SI.HeatFlowRate Q_flow_defocus = 360/294.118 * Q_flow_des /*35e6*/  "Solar field thermal power at defocused state";
   
   // Control
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
@@ -243,7 +243,7 @@ model Na_CS_CO2_System_new "High temperature Sodium-sCO2 system"
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
     Placement(visible = true, transformation(extent = {{-98, 2}, {-66, 36}}, rotation = 0)));
   // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_new receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_new receiver(em = em_rec, redeclare package Medium = Medium1, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, T_in_0 = T_cold_set_Na, T_out_0 = T_hot_set_Na,DNI_SF=data.DNI) annotation(
     Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
   // Temperature sensor1
   SolarTherm.Models.Fluid.Sensors.Temperature temperature1(redeclare package Medium = Medium1) annotation(

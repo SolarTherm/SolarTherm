@@ -17,6 +17,14 @@ model SodiumReceiver_new "ReceiverSimple with convective losses"
   parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
   parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
   
+  parameter Real a1=-1.24e-12;
+  parameter Real a2=3.79e-09;
+  parameter Real a3=-4.40e-06;
+  parameter Real a4=0.002426622;
+//  parameter Real a5=0.267880817;
+  parameter Real a5=0.26;
+//  parameter Real eff_assumed=0.82;
+  
   SI.CoefficientOfHeatTransfer alphas;
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rad;
@@ -31,6 +39,8 @@ model SodiumReceiver_new "ReceiverSimple with convective losses"
   SI.Temperature Tw_av=Tw_in/2+Tw_out/2;
   SI.TemperatureDifference DT(final start=0);
   Real eff(start=0.5);
+  Real DNI_SF;
+  Real eff_assumed;
 
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
         transformation(
@@ -96,10 +106,11 @@ equation
   0=ab*heat.Q_flow+Q_loss+max(1e-3,fluid_a.m_flow)*(h_in-h_out);
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
   eff=Q_rcv/max(1,heat.Q_flow);
-//  Q_out=heat.Q_flow*ab;
+  eff_assumed=a1*DNI_SF^4+a2*DNI_SF^3+a3*DNI_SF^2+a4*DNI_SF+a5;
+  Q_out=heat.Q_flow*eff_assumed;
+  //Q_out=heat.Q_flow*ab;
   //Q_out=heat.Q_flow*eff;  
-//  Q_out=heat.Q_flow*0.8; //540
-Q_out=heat.Q_flow*0.8;
+  //Q_out=heat.Q_flow*0.82;
   //Q_out=(heat.Q_flow)*max(eff,0.73);
   
   annotation (Documentation(info="<html>

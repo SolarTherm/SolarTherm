@@ -18,7 +18,7 @@ model HX_wi_noF
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
   
   //Auxiliary parameters
-  parameter Boolean optimize_and_run = true;
+  parameter Boolean optimize_and_run = true annotation (Dialog(group="Input Parameters"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter Medium1.ThermodynamicState state_Na_in_0 = Medium1.setState_pTX(p_Na1_des, T_Na1_des);
   parameter Medium2.ThermodynamicState state_MS_in_0 = Medium2.setState_pTX(p_MS1_des, T_MS1_des);
   parameter SI.SpecificEnthalpy h_Na_in_0 = Medium1.specificEnthalpy(state_Na_in_0);
@@ -34,11 +34,11 @@ model HX_wi_noF
   parameter SI.SpecificEnthalpy h_Na_min = Medium1.specificEnthalpy(state_Na_min);
   
   //Input parameters
-  parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter";
-  parameter SI.Length L_input = 8 "Optimal Tube Length";
-  parameter Integer N_p_input = 4 "Optimal Tube passes number";
-  parameter Integer layout_input = 2 "Optimal Tube Layout";
-  parameter SI.Temperature T_Na2_input = 670 + 273.15 "Optimal outlet sodium temperature";
+  parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter" annotation(Dialog(group="Input Parameters"));
+  parameter SI.Length L_input = 8 "Optimal Tube Length" annotation(Dialog(group="Input Parameters"));
+  parameter Integer N_p_input = 4 "Optimal Tube passes number" annotation(Dialog(group="Input Parameters"));
+  parameter Integer layout_input = 2 "Optimal Tube Layout" annotation(Dialog(group="Input Parameters"));
+  parameter SI.Temperature T_Na2_input = 670 + 273.15 "Optimal outlet sodium temperature" annotation(Dialog(group="Input Parameters"));
   
   //Optimal Parameter Values
   parameter Real TAC(unit = "€/year", fixed = false) "Minimum Total Annualized Cost";

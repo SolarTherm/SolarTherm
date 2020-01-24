@@ -12,9 +12,11 @@ model Tank
   parameter Boolean use_p_top = false
     "= true to get p_top from an input connector"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
+      
   parameter SI.AbsolutePressure p_fixed=Medium.p_default
     "Fixed value of pressure" annotation (Evaluate = true,
                 Dialog(group="Assumptions",enable = not use_p_top));
+                
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
