@@ -1,11 +1,12 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
-
 model HX_sa_graphs
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import MA = Modelica.Math;
   import SolarTherm.{Models,Media};
   import Modelica.Math.Vectors;
+  import UF = SolarTherm.Models.Fluid.HeatExchangers.Utilities;
+  import FI = SolarTherm.Models.Analysis.Finances;
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
@@ -28,7 +29,7 @@ model HX_sa_graphs
   parameter SI.Temperature T_Na2_input = 560 + 273.15 "Optimal outlet sodium temperature";
   
   //Optimal Parameter Values
-  parameter Real TAC(unit = "€/year", fixed = false) "Minimum Total Annualized Cost";
+  parameter FI.MoneyPerYear TAC(fixed = false) "Minimum Total Annualized Cost";
   parameter SI.Area A_HX(fixed = false) "Optimal Exchange Area";
   parameter SI.CoefficientOfHeatTransfer U_design(fixed = false) "Optimal Heat tranfer coefficient";
   parameter Integer N_t(fixed = false) "Optimal Number of tubes";
@@ -42,8 +43,8 @@ model HX_sa_graphs
   parameter SI.Velocity v_max_MS_design(fixed = false) "Optimal Molten Salt velocity in shell";
   parameter SI.Volume V_HX(fixed = false) "Optimal Heat-Exchanger Total Volume";
   parameter SI.Mass m_HX(fixed = false) "Optimal Heat-Exchanger Total Mass";
-  parameter Real C_BEC_HX(unit = "€", fixed = false) "Optimal Bare cost @2018";
-  parameter Real C_pump_design(unit = "€/year", fixed = false) "Optimal Annual pumping cost";
+  parameter FI.Money_USD C_BEC_HX(fixed = false) "Optimal Bare cost @2018";
+  parameter FI.MoneyPerYear C_pump_design(fixed = false) "Optimal Annual pumping cost";
   parameter SI.Length d_o(fixed = false) "Optimal Outer Tube Diameter";
   parameter SI.Length L(fixed = false) "Optimal Tube Length";
   parameter Integer N_p(fixed = false) "Optimal Tube passes number";
@@ -59,14 +60,14 @@ model HX_sa_graphs
 initial algorithm
   optimize_and_run := false;
   if optimize_and_run == true then
-    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
+    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
   else
     d_o := d_o_input;
     L := L_input;
     N_p := N_p_input;
     layout := layout_input;
     T_Na2_design := T_Na2_input;
-    (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, N_t, U_design, A_HX, Dp_tube_design, Dp_shell_design, TAC, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, ex_eff_design, en_eff_design) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, L = L, N_p = N_p, N_sp = N_p, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
+    (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, N_t, U_design, A_HX, Dp_tube_design, Dp_shell_design, TAC, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, ex_eff_design, en_eff_design) := UF.Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, L = L, N_p = N_p, N_sp = N_p, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
   end if;
 
 end HX_sa_graphs;

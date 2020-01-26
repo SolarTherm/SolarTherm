@@ -16,5 +16,4 @@ ReceiverSimple_2
 ReceiverSimpleStress
 HeatTransfer
 SodiumReceiver
-HTC_receiver
-SodiumReceiver_new
+SodiumReceiver_withOutput

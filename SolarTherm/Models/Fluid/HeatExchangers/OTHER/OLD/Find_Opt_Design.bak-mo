@@ -1,5 +1,0 @@
-within SolarTherm.Models.Fluid.HeatExchangers;
-model Find_Opt_Design
-equation
-
-end Find_Opt_Design;

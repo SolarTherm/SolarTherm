@@ -1,0 +1,9 @@
+#! /bin/bash
+
+MODULE_NAMES=""
+
+for file in ./*.py; do
+	file=${file##*/}
+	MODULE_NAMES="$MODULE_NAMES ${file%.*}"
+done
+python2 -m unittest $MODULE_NAMES

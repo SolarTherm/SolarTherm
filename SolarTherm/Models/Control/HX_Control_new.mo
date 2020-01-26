@@ -5,11 +5,14 @@ model HX_Control_new
   parameter SI.Temperature T_ref_hs=from_degC(570) "Setpoint of temperature";
   
   parameter SI.MassFlowRate m_flow_max_CS=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_CS=0*m_flow_start_CS "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS=0 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS_safe=0.2*m_flow_start_CS "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_start_CS=0 "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_max_Na=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_Na=0*m_flow_start_Na "Mass flow rate when control off";
-  parameter SI.MassFlowRate m_flow_start_Na=100 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na=0 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na_safe=0.2*m_flow_start_Na "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_start_Na=0 "Mass flow rate when control off";
+  parameter SI.HeatFlowRate Q_flow_rec=0;
   
   parameter Real L_on = 30 "Level of start discharge";
   parameter Real L_off=10 "Level of stop discharge";
@@ -27,7 +30,7 @@ model HX_Control_new
     annotation (
     Placement(visible = true, transformation(extent = {{-130, 18}, {-90, 58}}, rotation = 0), iconTransformation(extent = {{-130, 18}, {-90, 58}}, rotation = 0)));
   
-  Modelica.Blocks.Interfaces.RealInput Q_out_rec
+  Modelica.Blocks.Interfaces.RealInput Q_out_rec(start=Q_flow_rec, nominal=Q_flow_rec)
     annotation (
     Placement(visible = true, transformation(origin = {2, 108},extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {2, 108},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   
@@ -43,11 +46,11 @@ model HX_Control_new
     annotation (
     Placement(visible = true, transformation(extent = {{-130, -32}, {-90, 8}}, rotation = 0), iconTransformation(extent = {{-130, -32}, {-90, 8}}, rotation = 0)));
   
-  Modelica.Blocks.Interfaces.RealOutput m_flow_rec(start=m_flow_start_Na, nominal=m_flow_start_Na)
+  Modelica.Blocks.Interfaces.RealOutput m_flow_rec
     annotation (
     Placement(visible = true, transformation(extent = {{100, -68}, {136, -32}}, rotation = 0), iconTransformation(extent = {{100, -68}, {136, -32}}, rotation = 0)));
     
-    Modelica.Blocks.Interfaces.RealOutput m_flow_hs
+    Modelica.Blocks.Interfaces.RealOutput m_flow_hs(start=m_flow_start_CS, nominal=m_flow_start_CS)
     annotation (Placement(visible = true, transformation(extent = {{100, 30}, {136, 66}}, rotation = 0), iconTransformation(extent = {{100, 30}, {136, 66}}, rotation = 0)));
   
   Modelica.Blocks.Interfaces.BooleanInput sf_on
@@ -80,7 +83,7 @@ model HX_Control_new
   SolarTherm.Models.Control.Switch2 switch 
    annotation(
     Placement(visible = true, transformation(origin = {68, 2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.m_flow_calculations_simple m_flow_calculations1(m_flow_max_Na=m_flow_max_Na, m_flow_max_CS=m_flow_max_CS, m_flow_start_Na=m_flow_start_Na, m_flow_start_CS=m_flow_start_CS, m_flow_min_CS=m_flow_min_CS, m_flow_min_Na=m_flow_min_Na) annotation(
+  SolarTherm.Models.Control.m_flow_calculations_simple m_flow_calculations1(m_flow_max_Na=m_flow_max_Na, m_flow_max_CS=m_flow_max_CS, m_flow_start_Na=m_flow_start_Na, m_flow_start_CS=m_flow_start_CS, m_flow_min_CS=m_flow_min_CS, m_flow_min_Na=m_flow_min_Na,m_flow_min_Na_safe=m_flow_min_Na_safe,m_flow_min_CS_safe=m_flow_min_CS_safe, Q_flow_rec=Q_flow_rec) annotation(
     Placement(visible = true, transformation(origin = {1, 49}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
 // Modelica.Blocks.Nonlinear.Limiter limiter_hs(uMax=m_flow_max_CS, uMin=m_flow_min_CS) annotation(
 //    Placement(visible = true, transformation(origin = {39, 57}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
