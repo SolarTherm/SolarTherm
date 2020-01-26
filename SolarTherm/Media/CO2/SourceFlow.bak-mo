@@ -1,0 +1,19 @@
+within SolarTherm.Media.CO2;
+
+model SourceFlow
+  extends SolarTherm.Media.CO2.PropCO2;
+  replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+  
+  parameter Real h_out=500000;
+  parameter Real p_out = 73*10^5;
+  parameter Real m_flow = 10;
+  parameter Boolean use_m_parameter = true;
+  Modelica.Fluid.Interfaces.FluidPort_b port_b (redeclare package Medium=MedRec) annotation(
+    Placement(visible = true, transformation(origin = {80,0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {80, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+equation
+  port_b.h_outflow=h_out;
+  if use_m_parameter then 
+  port_b.m_flow = -m_flow*(1);
+  end if;
+  port_b.p = p_out;
+end SourceFlow;
