@@ -82,7 +82,7 @@ equation
   Q_con=A_out*alpha*(Tw_av-Tamb);
 
   vs = fluid_a.m_flow/((N_fl*N_tb_pa)*rhos*(pi*(D_tb-2*t_tb)^2)/4);
-  alphas = HTC_receiver(state_mean_Na = states, v_Na=vs, d_i = D_tb-2*t_tb);
+  alphas = HeatTransfer.HTC_receiver(state_mean_Na = states, v_Na=vs, d_i = D_tb-2*t_tb);
 
   DT=max(0,Q_rcv/max(1e-3,A_in*alphas));
 

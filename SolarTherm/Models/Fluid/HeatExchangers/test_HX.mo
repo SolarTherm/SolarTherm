@@ -28,7 +28,7 @@ model test_HX
   SI.Temperature T_MS1(start = 773.15, nominal = 773.15);
   
   //Components
-  SolarTherm.Models.Fluid.HeatExchangers.HX HX_shell_tube(Q_d_des = 50e6) annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.HX_noF HX_shell_tube(Q_d_des = 50e6) annotation(
     Placement(visible = true, transformation(origin = {4, -4}, extent = {{-40, -40}, {40, 40}}, rotation = 0)));
   Modelica.Fluid.Sources.MassFlowSource_T Na_inlet(replaceable package Medium = Medium1, T(nominal = 973.15, start = 973.15), nPorts = 1, use_T_in = true, use_m_flow_in = true) annotation(
     Placement(visible = true, transformation(origin = {-66, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -39,27 +39,27 @@ model test_HX
   SolarTherm.Models.Fluid.Sources.FluidSink MS_Sink(replaceable package Medium = Medium2) annotation(
     Placement(visible = true, transformation(origin = {30, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
-//algorithm
-////Sweep Parameter
-//  if time <= t1_end then
-//    m_flow_Na := m_flow_Na_min;
-//  end if;
-//  if time > t1_end and time < t2_end then
-//    m_flow_Na := m_flow_Na_max * (time - t1_end) / (t2_end - t1_end);
-//  end if;
-//  if time >= t2_end and time <= t3_end then
-//    m_flow_Na := m_flow_Na_max;
-//  end if;
-//  if time > t3_end and time < t4_end then
-//    m_flow_Na := m_flow_Na_max * (1 - (time - t3_end) / (t4_end - t3_end));
-//  end if;
-//  if time >= t4_end then
-//    m_flow_Na := m_flow_Na_min;
-//  end if;
+algorithm
+//Sweep Parameter
+  if time <= t1_end then
+    m_flow_Na := m_flow_Na_min;
+  end if;
+  if time > t1_end and time < t2_end then
+    m_flow_Na := m_flow_Na_max * (time - t1_end) / (t2_end - t1_end);
+  end if;
+  if time >= t2_end and time <= t3_end then
+    m_flow_Na := m_flow_Na_max;
+  end if;
+  if time > t3_end and time < t4_end then
+    m_flow_Na := m_flow_Na_max * (1 - (time - t3_end) / (t4_end - t3_end));
+  end if;
+  if time >= t4_end then
+    m_flow_Na := m_flow_Na_min;
+  end if;
 
 equation
 //Sodium Mass FLow Rate
-  m_flow_Na=m_flow_Na_des;
+  //m_flow_Na=1*m_flow_Na_des;
   Na_inlet.m_flow_in = m_flow_Na;
 
 //Sodium Inlet Temperature
