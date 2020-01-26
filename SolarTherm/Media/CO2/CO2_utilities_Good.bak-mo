@@ -1,0 +1,208 @@
+within SolarTherm.Media.CO2;
+
+package CO2_utilities
+ extends Modelica.Icons.UtilitiesPackage;
+
+  function cp_p_h "Specific heat capacity of CO2 as a function of pressure and enthalpy. Performs interpolation with the tableID declared in the Medium declaration."
+    extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID;
+    output Modelica.SIunits.SpecificHeatCapacity cp "Specific heat capacity";
+    external"C" cp = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p)
+        annotation (Library={"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end cp_p_h;
+
+  function eta_p_h "Dynamic viscosity of molten salt as a function of temperature"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.DynamicViscosity eta "Dynamic viscosity";
+  
+    external "C" eta = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end eta_p_h;
+
+  function helmholtz_p_h "Specific Helmholtz energy of CO2"
+  extends Modelica.Icons.Function;
+  input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.SpecificHelmholtzFreeEnergy helmholtz "Specific Helmholtz energy";
+  
+    external "C" helmholtz = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end helmholtz_p_h;
+
+  function h_fg_p "Specific enthalpy of vaporization of molten salt as a function of pressure"
+    extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    output Modelica.SIunits.SpecificEnthalpy h_fg "Specific enthalpy";
+  algorithm
+// Ref: Ferri, R., Cammi, A., & Mazzei, D. (2008). Molten salt mixture properties in RELAP5 code for thermodynamic solar applications. International Journal of Thermal Sciences, 47(12), 1676–1687, pp. 1679
+    h_fg := 0.0507 * (1e7 - p);
+  end h_fg_p;
+
+  function h_rho "Specific enthalpy of molten salt as a function of density"
+    extends Modelica.Icons.Function;
+    input Modelica.SIunits.Density rho "Density";
+    output Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+  protected
+    constant Real p1 = 39.713718745914576;
+    constant Real p2 = 50.407945969307448;
+    constant Real p3 = -1.228120420950819e02;
+    constant Real p4 = -1.394940386838149e02;
+    constant Real p5 = 1.134882498794937e02;
+    constant Real p6 = 1.049937053496403e02;
+    constant Real p7 = 9.752089378977765e02;
+    constant Real p8 = -1.641079585719889e05;
+    constant Real p9 = 1.019046845737454e06;
+    constant Real rho_mean = 1817;
+    constant Real rho_std = 69.27;
+    Real x;
+  algorithm
+// Valid from 533.15K to 873.15K
+    x := (rho - rho_mean) / rho_std;
+    h := p1 * x ^ 8 + p2 * x ^ 7 + p3 * x ^ 6 + p4 * x ^ 5 + p5 * x ^ 4 + p6 * x ^ 3 + p7 * x ^ 2 + p8 * x + p9;
+  end h_rho;
+
+  function h_p_s "Specific enthalpy of CO2 as a function of Specific entropy and pressure"
+  import SolarTherm.Media.CO2.CO2_utilities.*;
+    extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEntropy s "Specific entropy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+  
+    external "C" h = ModelicaStandardTables_CombiTable2D_getValue(tableID, s, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end h_p_s;
+
+  function h_p_T "Specific enthalpy of molten salt as a function of temperature"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.Temperature T "Temperature";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+  
+    external "C" h = ModelicaStandardTables_CombiTable2D_getValue(tableID, T, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end h_p_T;
+
+  function lambda_p_h "Thermal conductivity of molten salt as a function of temperature"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.ThermalConductivity lambda "Thermal conductivity";
+  
+    external "C" lambda = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end lambda_p_h;
+
+  function p_rho "Saturated vapour pressur of molten salt as a function of density"
+    extends Modelica.Icons.Function;
+    input Modelica.SIunits.Density rho "Density";
+    output Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+  protected
+    constant Real p1 = 0.733446745332821;
+    constant Real p2 = 0.653577028271395;
+    constant Real p3 = -1.254638858135562;
+    constant Real p4 = 23.599040313108496;
+    constant Real p5 = 16.841697526950028;
+    constant Real p6 = -1.832200683871549e03;
+    constant Real p7 = 1.001166286167321e04;
+    constant Real p8 = -2.197288709140443e04;
+    constant Real p9 = 1.800126936525206e04;
+    constant Real rho_mean = 1817;
+    constant Real rho_std = 69.27;
+    Real x;
+  algorithm
+// Valid from 533.15K to 873.15K
+    x := (rho - rho_mean) / rho_std;
+    p := p1 * x ^ 8 + p2 * x ^ 7 + p3 * x ^ 6 + p4 * x ^ 5 + p5 * x ^ 4 + p6 * x ^ 3 + p7 * x ^ 2 + p8 * x + p9;
+  end p_rho;
+
+
+  function rho_p_h "Density of molten salt as a function of temperature"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.Density rho "Density";
+  
+    external "C" rho = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end rho_p_h;
+
+
+  function s_rho "Specific entropy of molten salt as a function of density"
+    extends Modelica.Icons.Function;
+    input Modelica.SIunits.Density rho "Density";
+    output Modelica.SIunits.SpecificEntropy s "Specific entropy";
+  protected
+    constant Real p1 = 0.074442895162941;
+    constant Real p2 = 0.094105565955424;
+    constant Real p3 = -0.233574614812304;
+    constant Real p4 = -0.286315713014475;
+    constant Real p5 = 0.013365595797011;
+    constant Real p6 = -1.523616571400823;
+    constant Real p7 = -16.749820096832305;
+    constant Real p8 = -2.345160845000009e02;
+    constant Real p9 = 9.265390905220705e03;
+    constant Real rho_mean = 1817;
+    constant Real rho_std = 69.27;
+    Real x;
+  algorithm
+// 400K to 2500K liquid on saturation curve:
+    x := (rho - rho_mean) / rho_std;
+//rho_norm
+    s := p1 * x ^ 8 + p2 * x ^ 7 + p3 * x ^ 6 + p4 * x ^ 5 + p5 * x ^ 4 + p6 * x ^ 3 + p7 * x ^ 2 + p8 * x + p9;
+  end s_rho;
+
+  function s_p_h "Specific entropy of molten salt as a function of pressure and enthalpy"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.SpecificEntropy s  "Specific entropy";
+  
+    external "C" s = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end s_p_h;
+
+  function T_p_h "Temperature of molten salt as a function of pressure and specific enthalpy"
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.Temperature T "Temperature";
+  
+    external "C" T = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end T_p_h;
+
+  function u_p_h
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID "Table with the values to interpolate";
+    output Modelica.SIunits.SpecificEnergy u "Specific energy";
+  
+  external "C" u = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p) annotation(
+      Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+  end u_p_h;
+
+  function cv_p_h
+  extends Modelica.Icons.Function;
+    input Modelica.Media.Interfaces.Types.AbsolutePressure p "Pressure";
+    input Modelica.SIunits.SpecificEnthalpy h "Enthalpy";
+    input Modelica.Blocks.Types.ExternalCombiTable2D tableID;
+    output Modelica.SIunits.SpecificHeatCapacity cv "Specific heat capacity";
+    external"C" cv = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p)
+        annotation (Library={"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
+
+  end cv_p_h;
+  annotation();
+end CO2_utilities;

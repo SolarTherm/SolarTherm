@@ -16,4 +16,10 @@ ReceiverSimple_2
 ReceiverSimpleStress
 HeatTransfer
 SodiumReceiver
+<<<<<<< HEAD
 SodiumReceiver_withOutput
+=======
+HTC_receiver
+SodiumReceiver_new
+ParticleReceiver
+>>>>>>> 241ab8dff5aa486e66d94d66bd888e101007071c
