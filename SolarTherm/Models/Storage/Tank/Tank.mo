@@ -12,9 +12,11 @@ model Tank
   parameter Boolean use_p_top = false
     "= true to get p_top from an input connector"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
+      
   parameter SI.AbsolutePressure p_fixed=Medium.p_default
     "Fixed value of pressure" annotation (Evaluate = true,
                 Dialog(group="Assumptions",enable = not use_p_top));
+                
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -105,7 +107,7 @@ equation
   L_internal=100*V/V_t;
   A=2*pi*(D/2)*H*(L_internal/100);
 
-  if medium.T<T_set then
+  if noEvent(medium.T<T_set) then
     W_net=min(-Q_losses,W_max);
   else
     W_net=0;
