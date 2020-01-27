@@ -1,7 +1,7 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 
 model ParticleReceiver
-    extends Interfaces.Models.ReceiverFluid;
+	extends Interfaces.Models.ReceiverFluid;
 
 	parameter SI.Length H_rcv = 2 "Receiver drop height" annotation(Dialog(group="Technical data"));
 	parameter SI.Length W_rcv = 2 "Receiver width" annotation(Dialog(group="Technical data"));
@@ -9,7 +9,7 @@ model ParticleReceiver
 
 	parameter SI.Area A = H_rcv * W_rcv "Receiver aperture area" annotation(Dialog(group="Technical data"));
 
-	parameter SI.Length th_c_in = 1 "Curtain thicknesss at the inlet" annotation(Dialog(group="Technical data"));
+	parameter SI.Length th_c_in = 1 "Curtain thickness at the inlet" annotation(Dialog(group="Technical data"));
 
 	parameter SI.Efficiency em "Emissivity" annotation(Dialog(group="Technical data"));
 	parameter SI.Efficiency ab "Absorptivity" annotation(Dialog(group="Technical data"));
@@ -79,10 +79,35 @@ equation
 
 
 	annotation (Documentation(info="<html>
+	<p>
+	<b>ParticleReceiver</b> models the heat transfer characteristics of an external tubular receiver with a user-defined geometry by employing simple energy and mass balances, an average temperature 	for receiver external surface, and heat transfer correlations. The receiver <b>ParticleReceiver</b> model has the following connectors:
+	</p>
+	<ul>
+	<li> A <b>HeatPort</b> interface. According to the Modelica sign convention, a positive heat flow rate Q_flow (in Watts) is considered to flow into the receiver.</li>
+	<li> A <b>Real_input</b> for the ambient temperature (in K).</li>
+	<li> A <b>BooleanInput </b> for the operation of the field.</li>
+	<li> An inlet <b>FluidPort_a</b> and an outlet <b>FluidPort_b</b>. Each fluid connector has three stream variables (h_outflow, Xi_outflow and C_outflow) associated with the flow variable m_flow. 		These variables represent the specific enthalpy, the mass fractions and the concentrations associated to m_flow <0.</li>
+	</ul>
+	<p>
+	The model requires to define the following parameters:a <b>Medium</b> package from the <b>Media</b> library.
+	</p>
+	<ul>
+	<li> <b>H_rcv</b>: Receiver height, in meters. <b>Default</b>: 1.0 m.</li>
+	<li> <b>W_rcv</b>: Receiver width, in meters. <b>Default</b>: 1.0 m.</li>
+	<li> <b>L_rcv</b>: Receiver length(depth), in meters. <b>Default</b>: 1.0 m.</li>
+	<li> <b>th_c_in</b>: Curtain thickness at the receiver inlet. <b>Default</b>: 1.0 m.</li>
+	<li> <b>ab</b>: Absorptance of the curtain.</li>
+	<li> <b>em</b>: Emmitance of the curtain.</li>
+	<li> <b>const_alpha</b>: Boolean, true if external convective heat transfer. <b>Default</b>: true.</li>
+	<li> <b>alpha</b>: Heat transfer coefficient due to external convection, in W/(m2.K). <b>Default</b>: 1.0 W/(m2.K).</li>
+	</ul>
 </html>", revisions="<html>
-<ul>
-<li>A Shirazi:<br>Released first version. </li>
-</ul>
+		<ul>
+		<li><i>Jun 2019</i> by Ali Shirazi and <a href=\"mailto:armando.fontalvo@anu.edu.au\">Armando Fontalvo</a>:<br>
+		Created.</li>
+		<li><i>Jan 2020</i> by <a href=\"mailto:armando.fontalvo@anu.edu.au\">Armando Fontalvo</a>:<br>
+		Information modified.</li>
+	</ul>
 </html>"));
 
 end ParticleReceiver;
