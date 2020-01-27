@@ -176,12 +176,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
   parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
   parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-  parameter FI.Money_USD C_receiver = if currency == Currency.USD then 71708855 * (A_receiver / 879.8) ^ 0.7 else 71708855 * (A_receiver / 879.8) ^ 0.7 / r_cur "Receiver cost"; // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
+  parameter FI.Money_USD C_receiver = if currency == Currency.USD then 71708855 * (A_receiver / 1571) ^ 0.7 else 71708855 * (A_receiver / 1571) ^ 0.7 / r_cur "Receiver cost"; // Old Function: 71708855 * (A_receiver / 879.8) ^ 0.7, SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
   parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
   parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
   parameter FI.Money_USD C_bop = pri_bop * P_gross "Balance of plant cost";
-  parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_hx + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+  parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver+ C_hx + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
   parameter FI.Money_USD C_contingency = 0.07 * C_cap_dir_sub "Contingency costs";
   parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
   parameter FI.Money_USD C_EPC = 0.11 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; // SAM 2018 cost data: 0.13

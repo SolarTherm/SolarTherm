@@ -14,7 +14,7 @@ ReceiverFluid
 ReceiverSimple
 ReceiverSimple_2
 ReceiverSimpleStress
-HeatTransfer
 SodiumReceiver
 SodiumReceiver_withOutput
 ParticleReceiver
+HeatTransfer
