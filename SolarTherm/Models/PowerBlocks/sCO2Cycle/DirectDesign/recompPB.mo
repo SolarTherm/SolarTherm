@@ -97,7 +97,7 @@ model recompPB
 		Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
 	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(PR = PR, T_amb = T_amb_des, N_shaft = N_shaft, eta_design=eta_turb) annotation(
 		Placement(visible = true, transformation(origin = {74, 0}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph,P_nom_des=P_gro,T_out_CO2_des=T_high,N_exch=N_exch, ratio_m_des=1) annotation(
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = MedRec,P_nom_des=P_gro,T_out_CO2_des=T_high,N_exch=N_exch, ratio_m_des=1) annotation(
 		Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
 	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft,P_nom_des=P_gro,p_high_des=p_high) annotation(
 		Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
