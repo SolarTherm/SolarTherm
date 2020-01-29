@@ -18,5 +18,5 @@ block TestExternalPyFunc
 			);
 	end pyRunFunction;
 equation
-	y = pyRunFunction(argc,{ppath,pname, pfunc, String(time), String(time)});
+	y = pyRunFunction(argc,{ppath,pname, pfunc, String(101325 + time), String(505000 + time)});
 end TestExternalPyFunc;
