@@ -13,6 +13,7 @@ model PowerBlockModel
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
+  Real eff_pb "Power Block Efficiency";
 
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
@@ -113,6 +114,7 @@ equation
 
   Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
   W_gross/(cool.nu_w*W_des*load)=k_w;
+  eff_pb=W_gross/max(1,Q_flow);
 
   der(E_gross)=W_gross;
   der(E_net)=W_net;

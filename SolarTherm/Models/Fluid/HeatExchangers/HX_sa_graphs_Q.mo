@@ -11,7 +11,7 @@ model HX_sa_graphs_Q
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des[25] = {1e6, 2e6, 3e6, 4e6, 5e6, 10e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 100e6, 110e6, 120e6, 130e6, 140e6, 150e6, 160e6, 170e6, 180e6, 190e6, 200e6} "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des[24] = {1e6, 2e6, 3e6, 4e6, 5e6, 10e6, 20e6, 40e6, 60e6, 80e6, 100e6, 120e6, 140e6, 160e6, 180e6, 200e6, 250e6, 300e6, 350e6, 400e6, 450e6, 500e6, 550e6, 600e6} "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
@@ -36,6 +36,7 @@ model HX_sa_graphs_Q
   parameter SI.Velocity v_max_MS_design[dim_tot](each fixed=false) "Molten Salt velocity in shell";
   parameter SI.Volume V_HX[dim_tot](each fixed=false) "Heat-Exchanger Total Volume";
   parameter SI.Mass m_HX[dim_tot](each fixed=false) "Heat-Exchanger Total Mass";
+  parameter SI.Mass m_material_HX[dim_tot](each fixed = false) "Optimal HX Material Mass";
   parameter FI.Money_USD C_BEC_HX[dim_tot](each fixed=false) "Bare cost @2018";
   parameter FI.MoneyPerYear C_pump_design[dim_tot](each fixed=false) "Annual pumping cost";
   parameter SI.Length d_o[dim_tot](each fixed=false) "Optimal Outer Tube Diameter";
@@ -50,11 +51,17 @@ model HX_sa_graphs_Q
   parameter Real ex_eff_design[dim_tot](each fixed=false) "HX Exergetic Efficiency";
   parameter Real en_eff_design[dim_tot](each fixed=false) "HX Energetic Efficiency";
   parameter Integer N_baffles[dim_tot](each fixed=false) "Number of Baffles";
-  parameter Real ratio[dim_tot](each fixed=false) "HX Energetic Efficiency";
+  parameter Real ratio[dim_tot](each fixed=false) "HX L/D Ratio";
+  parameter FI.AreaPrice sc_A[dim_tot](each fixed=false) "HX Specific Cost - Area";
+  parameter FI.MassPrice sc_m[dim_tot](each fixed=false) "HX Specific Cost - Mass";
+  parameter Real sc_cap[dim_tot](each fixed=false) "HX Specific Cost - Capacity";
   
 initial algorithm
   for ii in 1:dimQ loop
-    (TAC[ii], A_HX[ii], U_design[ii], N_t[ii], Dp_tube_design[ii], Dp_shell_design[ii], h_s_design[ii], h_t_design[ii], D_s[ii], N_baffles[ii], v_Na_design[ii], v_max_MS_design[ii], V_HX[ii], m_HX[ii], C_BEC_HX[ii], C_pump_design[ii], d_o[ii], L[ii], N_p[ii], layout[ii], T_Na2_design[ii], m_flow_Na_design[ii], m_flow_MS_design[ii], F_design[ii], UA_design[ii], ex_eff_design[ii], en_eff_design[ii]) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des[ii], T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
+    (TAC[ii], A_HX[ii], U_design[ii], N_t[ii], Dp_tube_design[ii], Dp_shell_design[ii], h_s_design[ii], h_t_design[ii], D_s[ii], N_baffles[ii], v_Na_design[ii], v_max_MS_design[ii], V_HX[ii], m_HX[ii], m_material_HX[ii], C_BEC_HX[ii], C_pump_design[ii], d_o[ii], L[ii], N_p[ii], layout[ii], T_Na2_design[ii], m_flow_Na_design[ii], m_flow_MS_design[ii], F_design[ii], UA_design[ii], ex_eff_design[ii], en_eff_design[ii]) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des[ii], T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
   ratio[ii]:=L[ii]/D_s[ii];
+  sc_A[ii]:=C_BEC_HX[ii]/A_HX[ii];
+  sc_m[ii]:=C_BEC_HX[ii]/m_material_HX[ii];
+  sc_cap[ii]:=C_BEC_HX[ii]/Q_d_des[ii];
   end for;
 end HX_sa_graphs_Q;

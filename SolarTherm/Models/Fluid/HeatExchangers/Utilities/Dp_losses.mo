@@ -63,25 +63,10 @@ function Dp_losses
   Integer N_calc "Number of Baffles calculated";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
   Real Re_MS(start=100,min=0) "MS Reynolds Number";
+  SI.Area S_b "Bypass flow area";
   SI.Length L_c(start=1.11251222030861) "Baffle length";
-  Real F_w(unit= "") "Fraction of tubes in crossflow";
-  Real F_bp(unit= "") "Bypass Factor";
-  Real F_c(unit= "") "Fraction of tubes in crossflow";
-  Real N_c(start=90) "Number of crossflow rows";  
-  Real N_cw "Number of effective crossflow rows in the window zone";
-  Real K_f "Non dimensional factor";
   SI.Angle theta_ds "Centriangle of baffle cut";
   SI.Angle theta_ctl "Upper centriangle of baffle cut";
-  SI.Area S_wg "Window flow area";
-  SI.Area S_wt "Window flow area";
-  SI.Area S_w(start=3.04066566915712) "Window flow area";
-  SI.Area S_b "Bypass flow area";
-  SI.Pressure Dp_c "Ideal crossflow pressure drop";  
-  SI.Pressure Dp_w "Pressure drop for the window zone";
-  SI.Pressure Dp_bi "Pressure drop base";
-  SI.Pressure Dp_e "Pressure drop base";
-  Real R_B(unit= "") "Non dimensional factor";
-  Real R_L(unit= "") "Non dimensional factor";
   SI.Length L_sb "Shell-to-baffle diametral clearance";
   SI.Area S_sb "Shell-to-baffle leakage area";
   SI.Area S_tb "Tube-to-baffle leakage area";
@@ -89,6 +74,24 @@ function Dp_losses
   Real r_ss(unit= "") "Non dimensional factor";
   Real r_lm(unit= "") "Non dimensional factor";
   Real xx(unit= "") "Non dimensional factor";
+  Real N_c(start=90) "Number of crossflow rows";  
+  Real F_w(unit= "") "Fraction of tubes in crossflow";
+  Real F_bp(unit= "") "Bypass Factor";
+  Real F_c(unit= "") "Fraction of tubes in crossflow";
+  
+  Real N_cw "Number of effective crossflow rows in the window zone";
+  Real K_f "Non dimensional factor";
+  SI.Area S_wg "Window flow area";
+  SI.Area S_wt "Window flow area";
+  SI.Area S_w(start=3.04066566915712) "Window flow area";
+  SI.Pressure Dp_c "Ideal crossflow pressure drop";  
+  SI.Pressure Dp_w "Pressure drop for the window zone";
+  SI.Pressure Dp_bi "Pressure drop base";
+  SI.Pressure Dp_e "Pressure drop base";
+  Real R_B(unit= "") "Non dimensional factor";
+  Real R_L(unit= "") "Non dimensional factor";
+
+
 
   
 algorithm
