@@ -20,7 +20,7 @@ function Design_HX_noF
   input SI.Temperature T_Na2 "Sodium Cold Fluid Temperature";
   input SI.Pressure p_Na1 "Sodium Inlet Pressure";
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
-  input Real c_e(unit = "€/year") "Power cost";
+  input FI.EnergyPrice_kWh c_e "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
 
@@ -42,6 +42,7 @@ function Design_HX_noF
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
   output SI.Volume V_HX "Heat-Exchanger Total Volume";
   output SI.Mass m_HX "Heat-Exchanger Total Mass";
+  output SI.Mass m_material "Heat-Exchanger Material Mass";
   output FI.Money_USD C_BEC  "Bare cost @2018";
   output FI.MoneyPerYear C_pump  "Annual pumping cost";
   output Real ex_eff(unit="") "HX Exergetic Efficiency";
@@ -61,13 +62,7 @@ function Design_HX_noF
   //Tube Side  
   parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
-  Real M_Na(unit= "kg/m2/s",start=287.349397220073) "Mass velocity of Na (tube-side)";
-  Real Re_Na(start=23551.4178716723) "Na Reynolds Number";
-  Real j_f(unit= "") "Friction factor";
-  Real m(unit= "") "Correlation coefficient";
   Integer Tep(start=7962) "Tubes for each pass";
-  SI.Area A_cs(start=0.000174834657720518) "Single tube cross section area";
-  SI.Area A_cs_tot(start=1.39203354477076) "Total cross section area";
   
   //Shell Side
   Real KK1(unit= "",start=0.158) "Correlation coefficient";
@@ -79,7 +74,7 @@ function Design_HX_noF
   //Volume_and_Weight
   SI.Mass m_Na "Mass of Sodium";
   SI.Mass m_MS "Mass of Molten Salts";
-  SI.Mass m_material "Mass of HX material";
+//  SI.Mass m_material "Mass of HX material";
   SI.Volume V_Na "Volume of Sodium";
   SI.Volume V_MS "Volume of Molten Salt";
   SI.Volume V_material "Volume of HX material";
@@ -185,7 +180,11 @@ algorithm
   
   DT1:=T_Na1-T_MS2;
   DT2:=T_Na2-T_MS1;
-  LMTD:=(DT1-DT2)/MA.log(DT1 / DT2);
+  if abs(DT1-DT2)<1e-6 then
+    LMTD:=DT1;
+  else
+    LMTD:=(DT1-DT2)/MA.log(DT1 / DT2);
+  end if;
   m_flow_Na:=Q_d/(cp_Na*(T_Na1-T_Na2));
   m_flow_MS:=Q_d/(cp_MS*(T_MS2 - T_MS1));
   F:=1;
@@ -310,10 +309,10 @@ end while;
   end if;
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
+  C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>4) then
+  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>3) then
     TAC:=10e10;
   else
     if noEvent(C_BEC>0) and noEvent(C_pump>0) then
