@@ -8,19 +8,32 @@ double TestExternalPy_func(int argc, const char *argv[]);
 
 double TestExternalPy_func(int argc, const char *argv[])
 {
+    static int isloaded;
     double output;
     PyObject *pName, *pModule, *pFunc;
     PyObject *pArgs, *pValue;
     int i;
+    //char *cons_path;
 
     if (argc < 3) {
         fprintf(stderr,"Usage: call pythonfile funcname [args]\n");
         return 1;
     }
 
-    Py_Initialize(); /*  Initialize Interpreter  */
+    if(!isloaded){
+	Py_Initialize(); /*  Initialize Interpreter  */
+	isloaded = 1;
+    }
 
-    PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import
+    fprintf(stderr,"Initialised python...\n");
+    fprintf(stderr,"Requested path is '%s'\n",(char *)argv[0]);
+/*    PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import*/
+    // add the path of the Python function file to the system path
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Append(sys_path, PyString_FromString((char *)argv[0]));
+
+    //cons_path="/home/arfontalvo/.local/lib/python2.7/site-packages/CoolProp";
+    //PyList_Append(sys_path, PyString_FromString((char *)cons_path));
 
     pName = PyString_FromString(argv[1]);
     /* Error checking of pName left out */
@@ -73,9 +86,11 @@ double TestExternalPy_func(int argc, const char *argv[])
     else {
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", argv[1]);
+	//Py_Finalize();
         return 1;
     }
-    Py_Finalize();
+    fprintf(stderr,"Call succeeded :-)\n");
+    //Py_Finalize();
     return output;
 }
 
