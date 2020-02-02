@@ -37,7 +37,7 @@ model ReceiverControl
     annotation (Placement(transformation(extent={{-130,-80},{-90,-40}})));
   Modelica.Blocks.Interfaces.RealInput T_mea
     annotation (Placement(transformation(extent={{-130,40},{-90,80}})));
-  Level2Logic hotTankLogic(level_max=30, level_min=L_off)
+  Level2Logic hotTankLogic(level_max=L_on, level_min=L_off)
     annotation (Placement(transformation(extent={{-74,-10},{-54,10}})));
   Modelica.Blocks.Logical.And and1
     annotation (Placement(transformation(extent={{-34,-22},{-14,-2}})));
@@ -73,8 +73,6 @@ equation
     annotation (Line(points={{-108,0},{-74,0}},           color={0,0,127}));
   connect(hotTankLogic.y, and1.u1) annotation (Line(points={{-53.2,0},{-44,0},{
           -44,-12},{-36,-12}}, color={255,0,255}));
-  connect(and1.y, switch.u2) annotation (Line(points={{-13,-12},{-6,-12},{-6,0},
-          {52.8,0}}, color={255,0,255}));
   connect(and1.u2, sf_on) annotation (Line(points={{-36,-20},{-64,-20},{-64,-60},
           {-110,-60}}, color={255,0,255}));
   connect(switch.y, m_flow)
@@ -85,6 +83,8 @@ equation
           {1.33227e-015,-64},{0,-64},{0,-60.96}}, color={255,0,255}));
   connect(not1.y, defocus)
     annotation (Line(points={{0,-80.6},{0,-114}}, color={255,0,255}));
+  connect(and1.y, switch.u2) annotation(
+    Line(points = {{-13, -12}, {-6, -12}, {-6, 0}, {52.8, 0}}, color = {255, 0, 255}));
   annotation (Documentation(revisions="<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>

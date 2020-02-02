@@ -13,5 +13,9 @@ Receiver
 ReceiverFluid
 ReceiverSimple
 ReceiverSimple_2
-ReceiverSimpleStress
+ParticleReceiver
 HeatTransfer
+ParticleReceiver1D
+ParticleReceiver1D_v11
+ParticleReceiver1DCalculator
+ParticleReceiver1D_v11_test_purpose

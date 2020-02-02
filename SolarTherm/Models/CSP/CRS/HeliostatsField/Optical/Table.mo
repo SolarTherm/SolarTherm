@@ -13,7 +13,7 @@ model Table "From table"
   SI.Angle angle2;
   Modelica.Blocks.Tables.CombiTable2D nu_table(
     tableOnFile=true,
-    tableName="optics",
+    tableName="optical_efficiency",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file)
     annotation (Placement(transformation(extent={{12,12},{32,32}})));

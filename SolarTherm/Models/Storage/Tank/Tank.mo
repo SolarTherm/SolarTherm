@@ -1,6 +1,7 @@
 within SolarTherm.Models.Storage.Tank;
 model Tank
   extends Interfaces.Models.StorageFluid;
+  redeclare replaceable package Medium = Media.SolidParticles.CarboHSP_ph;
 
 //  SI.AbsolutePressure p "Pressure";
   parameter SI.Diameter D=18.667 "Diameter";
@@ -41,7 +42,7 @@ model Tank
  // SI.Temperature T=Medium.temperature(medium.state);
   SI.Area A;
   SI.HeatFlowRate Q_losses;
-  Medium.ThermodynamicState state_i=Medium.setState_pTX(medium.p,T_start);
+  Medium.ThermodynamicState state_i=Medium.setState_pTX(medium.p,T_start); //initialize initial state
 
   SI.Power W_net;
   SI.Power W_loss;
@@ -66,6 +67,9 @@ model Tank
         extent={{-11,-11},{11,11}},
         rotation=-90,
         origin={-41,97})));
+  
+  Modelica.Blocks.Interfaces.RealOutput T_mea annotation(
+    Placement(transformation(extent = {{94, -18}, {130, 18}})));
 
 protected
   parameter SI.Volume V_t=(H*pi*D^2)/4;
@@ -96,10 +100,11 @@ equation
   p_top_internal=medium.p;
   fluid_a.p=medium.p;
   fluid_b.p=medium.p;
-  fluid_a.h_outflow=medium.h;
+  fluid_a.h_outflow=0;//medium.h;
   fluid_b.h_outflow=medium.h;
   der(m)=fluid_a.m_flow+fluid_b.m_flow;
   m*der(medium.h)+der(m)*medium.h=Q_losses+W_net+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
+  T_mea = medium.T;
 
   V=m/medium.d;
   L_internal=100*V/V_t;

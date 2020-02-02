@@ -1,0 +1,9 @@
+within SolarTherm.Media.CO2;
+
+model SinkFlow
+  extends SolarTherm.Media.CO2.PropCO2;
+  replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+  Modelica.Fluid.Interfaces.FluidPort_a port_a (redeclare package Medium=MedRec) annotation(
+    Placement(visible = true, transformation(origin = {74, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {74, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+equation
+end SinkFlow;

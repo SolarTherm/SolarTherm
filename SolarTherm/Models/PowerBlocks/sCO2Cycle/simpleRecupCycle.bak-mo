@@ -1,0 +1,111 @@
+within SolarTherm.Models.PowerBlocks.sCO2Cycle;
+
+model simpleRecupCycle
+    extends SolarTherm.Media.CO2.PropCO2;
+    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    
+    //Parameters
+    
+    parameter Modelica.SIunits.AbsolutePressure p_high = 200*10^5 "high pressure of the cycle";
+    parameter Modelica.SIunits.ThermodynamicTemperature T_high = 640+273.15"inlet temperature of the turbine";
+    parameter Modelica.SIunits.ThermodynamicTemperature T_amb = 40+273.15 "ambiant temperature";
+    parameter Real PR = 2.313 "Pressure ratio";
+    parameter Modelica.SIunits.Power P_nom = 6*10^4 "Nominal electrical power";
+    parameter Modelica.SIunits.Efficiency eta_comp=0.87 "Isentropic efficiency of the compressors";
+    parameter Modelica.SIunits.Efficiency eta_turb = 0.9 "Isentropic efficiency of the turbine";  
+    parameter Integer N_q = 15 "Number of discretization of the heat recuperators";
+    
+    // Instanciation of the components
+    
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.Heater heater (
+                T_high=T_high,
+                T_amb=T_amb)  
+                annotation(
+      Placement(visible = true, transformation(origin = {32, 28}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.Turbine turbine (
+                PR=PR,
+                eta_turb=eta_turb,
+                T_amb=T_amb) 
+                annotation(
+      Placement(visible = true, transformation(origin = {74, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    
+    Compressor mainCompressor (
+                PR=PR,
+                eta_comp=eta_comp,
+                p_out=p_high,
+                T_amb=T_amb) 
+                annotation(
+      Placement(visible = true, transformation(origin = {-60, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    
+    Cooler cooler (
+                  T_amb=T_amb) 
+                  annotation(
+      Placement(visible = true, transformation(origin = {-66, -14}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.HeatRecuperator HTRecuperator (
+                  N_q=N_q,
+                  flowGuess=P_nom/10^5,
+                  T_amb=T_amb
+                  ) 
+                  annotation(
+      Placement(visible = true, transformation(origin = {-2, -8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    // UA_dis = {154684,68520.8,45514.8,35214.4,29598.4,26182.4,23952.3,22422.5,21332.5,20532.8,19933.2,19473.9,19117.2,18838.1}
+    
+    // Variables to investigate the cycle and its simulation.
+    
+    Modelica.SIunits.Efficiency efficiencyCycle;
+    Real E_bal_check;
+    
+    //Exergy analysis
+    
+//    Real ex_d_percent_Compressor "Compressor exergy destruction";
+//    Real ex_d_percent_HTRecuperator "Recuperator exergy destruction" ;
+//    Real ex_d_percent_heater "heater exergy destruction" ;
+//    Real ex_d_percent_turbine "turbine exergy destruction" ;
+    //    Real ex_d_percent_cooler "cooler exergy destruction" ;
+
+//    SolarTherm.Types.SpecificExergy ex_d_tot "Total exergy destruction";
+//    SolarTherm.Types.SpecificExergy ex_in;
+//    Modelica.SIunits.Efficiency eta_ex "Exergetic efficiency";
+    equation
+    P_nom = (-turbine.W_turb) - mainCompressor.W_comp; //fixes the mass flow
+    efficiencyCycle * heater.Q_heater = P_nom; //Calculates the energetic efficiency of the cycle
+     E_bal_check = turbine.W_turb + mainCompressor.W_comp + heater.Q_heater +cooler.Q_cooler; //check the 1st law of thermodynamics
+    
+    
+    //Connections
+    
+    connect(mainCompressor.port_b, HTRecuperator.from_comp_port_a) annotation(
+      Line(points = {{-56, 10}, {-10, 10}, {-10, -4}}, color = {0, 127, 255}));
+    connect(HTRecuperator.from_turb_port_b, cooler.port_a) annotation(
+      Line(points = {{-9, -14}, {-9, -22}, {-66, -22}}, color = {0, 127, 255}));
+    connect(HTRecuperator.from_turb_port_a, turbine.port_b) annotation(
+      Line(points = {{4, -14}, {80, -14}, {80, 4}}, color = {0, 127, 255}));
+    connect(HTRecuperator.from_comp_port_b, heater.port_a) annotation(
+      Line(points = {{4, -4}, {4, 7}, {32, 7}, {32, 20}}, color = {0, 127, 255}));
+    connect(cooler.port_b, mainCompressor.port_a) annotation(
+      Line(points = {{-66, -6}, {-80, -6}, {-80, 22}, {-68, 22}, {-68, 22}, {-68, 22}}, color = {0, 127, 255}));
+    connect(heater.port_b, turbine.port_a) annotation(
+      Line(points = {{32, 36}, {70, 36}, {70, 14}, {70, 14}}, color = {0, 127, 255}));
+    mainCompressor.port_b.h_outflow = HTRecuperator.from_comp_port_a.h_outflow;
+    HTRecuperator.from_turb_port_b.h_outflow = cooler.port_a.h_outflow;
+    HTRecuperator.from_turb_port_a.h_outflow = turbine.port_b.h_outflow;
+    HTRecuperator.from_comp_port_b.h_outflow = heater.port_a.h_outflow;
+    cooler.port_b.h_outflow = mainCompressor.port_a.h_outflow;
+    heater.port_b.h_outflow = turbine.port_a.h_outflow;
+    
+    // Exergy analysis
+    
+//    ex_d_tot= mainCompressor.ex_d+HTRecuperator.ex_d+heater.ex_d+turbine.ex_d+cooler.ex_d;
+//    mainCompressor.ex_d*100/ex_d_tot= ex_d_percent_Compressor ;
+//    HTRecuperator.ex_d*100/ex_d_tot= ex_d_percent_HTRecuperator ;
+//    heater.ex_d*100/ex_d_tot= ex_d_percent_heater ;
+//    turbine.ex_d*100/ex_d_tot= ex_d_percent_turbine;
+//    cooler.ex_d*100/ex_d_tot= ex_d_percent_cooler;
+//    ex_in=heater.Q_heater*(1-T_amb/T_high);
+//    eta_ex=((-turbine.W_turb) - mainCompressor.W_comp)/ex_in;
+    
+  annotation(
+    __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
+    experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));end simpleRecupCycle;

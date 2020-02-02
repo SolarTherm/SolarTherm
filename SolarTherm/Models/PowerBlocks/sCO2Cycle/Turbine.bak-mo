@@ -1,0 +1,40 @@
+within SolarTherm.Models.PowerBlocks.sCO2Cycle;
+
+model Turbine
+    extends SolarTherm.Media.CO2.PropCO2;
+    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-32, 60}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-38, 66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {60, -42}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {60, -46}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    
+    parameter Real eta_turb = 0.9 "isentropic efficiency of the turbine";
+    parameter Real PR = 2.313 "Pressure ratio";
+    parameter Modelica.SIunits.ThermodynamicTemperature T_amb = 273.15 + 40 "Outlet temperature in Kelvin";
+    parameter Boolean is_second_turbine = false;
+    
+    // This last parameter, when put to true, adds a mass_flow equality equation. Reason is, you need one and only one component in the cycle without mass flow or else you will have too much equation and circular equality issues. therefore, when adding turbines, this equation should be present (or when it's an open-cycle).
+    
+    MedRec.ThermodynamicState state_a "thermodynamic state at the entrance";
+    MedRec.ThermodynamicState state_isen "thermodynamic state at the end of the isentropic decompression";
+    MedRec.ThermodynamicState state_b "thermodynamic state at the end of the real decompresssion";
+    Modelica.SIunits.Power W_turb "Outlet power";
+    SolarTherm.Types.SpecificExergy ex_d "destroyed exergy";
+    Modelica.SIunits.SpecificEntropy s_entrance " entropy at the entrance of the turbine";
+  equation
+    state_a = MedRec.setState_phX(port_a.p, inStream(port_a.h_outflow));
+    s_entrance = MedRec.specificEntropy(state_a);
+    state_isen = MedRec.setState_psX(state_a.p / PR, s_entrance);
+    state_b = MedRec.setState_phX(state_a.p / PR, state_a.h + (state_isen.h - state_a.h) * eta_turb);
+    port_b.p = state_b.p;
+    port_b.h_outflow = state_b.h;
+    W_turb = port_a.m_flow * (state_b.h - state_a.h);
+    if is_second_turbine then 
+    port_a.m_flow + port_b.m_flow = 0;
+    end if;
+    ex_d =W_turb + port_a.m_flow*(state_a.h-T_amb*MedRec.specificEntropy(state_a))+port_b.m_flow*(state_b.h-T_amb*MedRec.specificEntropy(state_b));
+    annotation(
+      Diagram(graphics = {Text(origin = {-36, -28}, extent = {{18, 80}, {78, 16}}, textString = "TURBINE"), Polygon(origin = {15, 20}, points = {{-35, 44}, {-35, -52}, {35, -68}, {35, 68}, {-35, 44}, {35, 68}, {-35, 44}})}, coordinateSystem(initialScale = 0.1)),
+      Icon(graphics = {Text(origin = {-10, 26}, extent = {{-10, 12}, {52, -34}}, textString = "TURBINE"), Ellipse(extent = {{56, 58}, {56, 58}}, endAngle = 360), Polygon(origin = {11, 17}, points = {{-37, 49}, {-37, -51}, {37, -71}, {37, 71}, {-37, 49}})}, coordinateSystem(initialScale = 0.1)));
+  end Turbine;
+

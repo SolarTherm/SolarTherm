@@ -1,0 +1,83 @@
+within SolarTherm.Models.PowerBlocks.sCO2Cycle;
+
+model HeatRecuperatorOffDesignNTU "The heat recuperator is subdivised in N_q segments in order to accurately represent the CO2 properties variation. The system of equation is closed by imposing a pinch of 5°C. "
+    extends SolarTherm.Media.CO2.PropCO2;
+    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package MedEasyCalc = SolarTherm.Media.CO2.CO2_utilities;
+    parameter Integer N_q = 15;
+    parameter Real flowGuess = 100;
+    parameter Real pinchRecuperator = 5;
+    parameter Modelica.SIunits.ThermodynamicTemperature T_amb = 40+273.15;
+    Modelica.Fluid.Interfaces.FluidPort_a from_comp_port_a(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-60, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-78, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Interfaces.FluidPort_a from_turb_port_a(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {60, -50}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {62, -58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Interfaces.FluidPort_b from_comp_port_b(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {60, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {62, 44}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Interfaces.FluidPort_b from_turb_port_b(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-60, -50}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, -58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.SIunits.SpecificEnthalpy[N_q] h_from_turb (start={ 500000 for i in 1:N_q});
+    Modelica.SIunits.ThermodynamicTemperature[N_q] T_from_turb (start={500 for i in 1:N_q});
+    Modelica.SIunits.SpecificEnthalpy[N_q] h_from_comp (start={500000 for i in 1:N_q}) ;
+    Modelica.SIunits.ThermodynamicTemperature[N_q] T_from_comp (start={350 for i in 1:N_q});
+    Real[N_q] deltaT (start={150 for i in 1:N_q});
+    //Real deltaT_lm;
+    parameter SolarTherm.Types.Conductance[N_q-1] UA_dis = {566917,554876,550288,552854,562549,579876,605981,642565,692469,760692,855371,990872,1.19592*10^6,1.53748*10^6};
+    SolarTherm.Types.Conductance UA_bis;
+    //SolarTherm.Types.Conductance UA_HTR;
+    //Modelica.SIunits.HeatFlowRate Q_T_HTR;
+    //Modelica.SIunits.HeatFlowRate Q_HX_HTR_dis;
+    Real m_flowStart (start = flowGuess);
+    // gives a start value to the mass flow, taken as P_nom/10⁵; allows easier convergence
+    //Real ex_d;
+    Real[N_q - 1] C_dot_comp;
+    Real[N_q-1] C_dot_turb;
+    Real[N_q - 1] C_dot_min;
+    Real[N_q-1] C_dot_max;
+    Real[N_q-1] C_R;
+    Real[N_q-1] eps;
+    Real[N_q-1] NTU;
+    
+  equation
+    for i in 1:N_q loop
+      deltaT[i] = T_from_turb[i] - T_from_comp[i];
+      
+      T_from_turb[i] = MedEasyCalc.T_p_h(from_turb_port_a.p,h_from_turb[i],tableIDT_p_h);
+      T_from_comp[i] = MedEasyCalc.T_p_h(from_comp_port_a.p,h_from_comp[i],tableIDT_p_h);
+    end for;
+    
+    
+    h_from_turb[N_q] = from_turb_port_a.h_outflow;
+    h_from_comp[1] = from_comp_port_a.h_outflow;
+    from_turb_port_b.h_outflow = h_from_turb[1];
+    from_comp_port_b.h_outflow = h_from_comp[N_q];
+    
+        
+    //deltaT_lm * Modelica.Math.log((T_from_turb[1] - T_from_comp[1]) / (T_from_turb[N_q] - T_from_comp[N_q])) = (T_from_turb[1] - T_from_comp[1]) - (T_from_turb[N_q] - T_from_comp[N_q]);
+    //UA_HTR * deltaT_lm = Q_T_HTR;
+    //Q_HX_HTR_dis = Q_T_HTR / N_q;
+    
+    for i in 2:N_q loop
+      from_turb_port_a.m_flow * (h_from_turb[i] - h_from_turb[i - 1]) = from_comp_port_a.m_flow * (h_from_comp[i] - h_from_comp[i - 1]);
+      C_dot_comp[i-1]=from_comp_port_a.m_flow *(h_from_comp[i]-h_from_comp[i-1])/(T_from_comp[i]-T_from_comp[i-1]);
+      C_dot_turb[i-1]=from_turb_port_a.m_flow *(h_from_turb[i]-h_from_turb[i-1])/(T_from_turb[i]-T_from_turb[i-1]);
+      C_dot_min[i-1]=C_dot_comp[i-1];
+      C_dot_max[i-1]=C_dot_turb[i-1];
+      C_R[i-1]=C_dot_min[i-1]/C_dot_max[i-1];
+      eps[i-1] = from_comp_port_a.m_flow *(h_from_comp[i]-h_from_comp[i-1])/(C_dot_min[i-1]*(T_from_turb[i]-T_from_comp[i-1]));
+      NTU[i-1]=Modelica.Math.log((1-eps[i-1]*C_R[i-1])/(1-eps[i-1]))/(1-C_R[i-1]);
+      UA_dis[i-1]=NTU[i-1]*C_dot_min[i-1];
+    end for;
+    
+    UA_bis=sum(UA_dis);
+  
+    from_turb_port_b.m_flow + from_turb_port_a.m_flow = 0;
+    from_comp_port_b.m_flow + from_comp_port_a.m_flow = 0;
+    m_flowStart = from_turb_port_a.m_flow ;
+    from_turb_port_b.p = from_turb_port_a.p;
+    from_comp_port_b.p = from_comp_port_a.p;
+      
+    annotation(
+      Diagram(graphics = {Rectangle(origin = {1, 7}, extent = {{-61, 31}, {61, -31}}), Text(origin = {5, 1}, extent = {{-53, -17}, {53, 17}}, textString = "RECUPERATOR")}),
+      Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-65, 33}, {65, -33}}), Text(origin = {-2, -5}, extent = {{-46, -15}, {46, 15}}, textString = "RECUPERATOR")}));
+  end HeatRecuperatorOffDesignNTU;

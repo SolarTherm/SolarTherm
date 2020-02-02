@@ -1,0 +1,106 @@
+/* External objects file */
+#include "PhysicalParticleCO21D_v11_model.h"
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+void PhysicalParticleCO21D_v11_callExternalObjectDestructors(DATA *data, threadData_t *threadData)
+{
+  if(data->simulationInfo->extObjs)
+  {
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[87]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[85]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[84]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[86]);
+    omc_Modelica_Blocks_Types_ExternalCombiTimeTable_destructor(threadData,data->simulationInfo->extObjs[0]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[1]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[79]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[77]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[76]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[78]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[47]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[45]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[44]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[46]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[63]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[61]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[60]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[62]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[55]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[53]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[52]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[54]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[83]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[81]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[80]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[82]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[59]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[57]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[56]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[58]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[71]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[69]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[68]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[70]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[51]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[49]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[48]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[50]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[67]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[65]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[64]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[66]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[75]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[73]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[72]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable2D_destructor(threadData,data->simulationInfo->extObjs[74]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[23]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[24]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[25]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[26]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[27]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[28]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[29]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[30]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[31]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[32]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[33]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[34]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[35]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[36]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[37]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[38]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[39]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[40]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[41]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[42]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[43]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[2]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[3]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[4]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[5]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[6]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[7]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[8]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[9]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[10]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[11]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[12]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[13]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[14]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[15]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[16]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[17]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[18]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[19]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[20]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[21]);
+    omc_Modelica_Blocks_Types_ExternalCombiTable1D_destructor(threadData,data->simulationInfo->extObjs[22]);
+    free(data->simulationInfo->extObjs);
+    data->simulationInfo->extObjs = 0;
+  }
+}
+#if defined(__cplusplus)
+}
+#endif
+
