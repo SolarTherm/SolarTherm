@@ -69,17 +69,17 @@ model Reference_1
 
 	// System components
 	// *********************
-	Models.Sources.SolarModel.Sun			sun(
+	SolarTherm.Models.Sources.SolarModel.Sun			sun(
 		lon=data.lon,
 		lat=data.lat,
 		t_zone=data.t_zone,
 		year=data.year,
 		redeclare function solarPosition =
-			Models.Sources.SolarFunctions.PSA_Algorithm)
+			SolarTherm.Models.Sources.SolarFunctions.PSA_Algorithm)
 										annotation(Placement(transformation(extent={{-82,60},
 			{-62,80}})));
 
-	Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
 		n_h=n_heliostat,
 		lon=data.lon,
 		lat=data.lat,
@@ -94,11 +94,11 @@ model Reference_1
 		nu_min=0.3,
 		Q_design=330000000,
 		nu_start=0.6,
-		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table (
+		redeclare model Optical = SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table (
 			angles=SolarTherm.Types.Solar_angles.elo_hra, file=file_optics))
 			annotation (Placement(transformation(extent={{-88,2},{-56,36}})));
 
-	Models.CSP.CRS.Receivers.ReceiverSimple receiver(
+	SolarTherm.Models.CSP.CRS.Receivers.ReceiverSimple receiver(
 		em=0.88,
 		redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
 		H_rcv=H_receiver,
@@ -113,7 +113,7 @@ model Reference_1
 	Modelica.Blocks.Sources.RealExpression Tamb_input(y=data.Tdry)   annotation(Placement(transformation(extent={{140,70},
 			{120,90}})));
 
-	Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Tank tankHot(
 		redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
 		T_start=from_degC(574),
 		L_start=30,
@@ -123,11 +123,11 @@ model Reference_1
 		use_L=true,
 		T_set=from_degC(500))
 		annotation (Placement(transformation(extent={{16,54},{36,74}})));
-		Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium =
+		SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium =
 		Media.MoltenSalt.MoltenSalt_ph)                                                            annotation(Placement(transformation(extent={{66,38},
 			{78,50}})));
 
-	Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Tank tankCold(
 		redeclare package Medium = Media.MoltenSalt.MoltenSalt_ph,
 		T_start=from_degC(290),
 		L_start=70,
@@ -138,29 +138,29 @@ model Reference_1
 		T_set=from_degC(280))
 		annotation (Placement(transformation(extent={{64,-28},{44,-8}})));
 
-	Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium =
+	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium =
 		Media.MoltenSalt.MoltenSalt_ph, k_loss=0.15e3)                                              annotation(Placement(transformation(extent={{10,-30},
 			{-2,-18}})));
 
-	Models.Sources.DataTable.DataTable data(			t_zone=9.5, file=
+	SolarTherm.Models.Sources.DataTable.DataTable data(			t_zone=9.5, file=
 		file_weather)								annotation(Placement(
 		transformation(extent={{-138,-30},{-108,-2}})));
 
-	Models.Fluid.Sensors.Temperature          temperature(redeclare package
+	SolarTherm.Models.Fluid.Sensors.Temperature          temperature(redeclare package
 	Medium = Media.MoltenSalt.MoltenSalt_ph)                                                                            annotation(Placement(transformation(extent={{-14,74},
 	{-4,64}})));
 
 	Modelica.Blocks.Sources.RealExpression Pres_input(y=data.Pres)
 	annotation (Placement(transformation(extent={{76,18},{56,38}})));
 
-	Models.Control.PowerBlockControl controlHot(
+	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on=682.544,
 		L_off=5,
 		L_df_on=120,
 		L_df_off=123,
 		L_on=10) annotation (Placement(transformation(extent={{48,72},{60,58}})));
 
-	Models.Control.ReceiverControl controlCold(
+	SolarTherm.Models.Control.ReceiverControl controlCold(
 		T_ref=from_degC(574),
 		m_flow_max=1400,
 		y_start=1000,
@@ -170,24 +170,24 @@ model Reference_1
 		Ti=0.1,
 		Kp=-1000) annotation (Placement(transformation(extent={{24,-10},{10,4}})));
 
-	Models.PowerBlocks.PowerBlockModel
+	SolarTherm.Models.PowerBlocks.PowerBlockModel
 									powerBlock(
 		W_des=P_gross,
 		enable_losses=true,
-		redeclare model Cycle = Models.PowerBlocks.Correlation.Rankine,
+		redeclare model Cycle = SolarTherm.Models.PowerBlocks.Correlation.Rankine,
 		nu_min=0.5,
 		external_parasities=true,
 		W_base=0.0055*111e6,
 		p_bo=10000000,
 		T_des=316.15,
-		redeclare model Cooling = Models.PowerBlocks.Cooling.SAM(T_des=316.15))
+		redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.SAM(T_des=316.15))
 		annotation (Placement(transformation(extent={{88,4},{124,42}})));
 
 	Modelica.Blocks.Sources.RealExpression Wspd_input(y=data.Wspd) annotation(Placement(transformation(extent={{-140,20},
 		{-114,40}})));
 
-	Models.Analysis.Market market(redeclare model Price =
-		Models.Analysis.EnergyPrice.Constant)
+	SolarTherm.Models.Analysis.Market market(redeclare model Price =
+		SolarTherm.Models.Analysis.EnergyPrice.Constant)
 		annotation (Placement(transformation(extent={{126,12},{146,32}})));
 
 	Modelica.Blocks.Sources.RealExpression parasities_input(y=heliostatsField.W_loss

@@ -15,7 +15,7 @@ block SwitchedCL_2 "Collector with on/off switch, defocus and warm-up and cool-d
 
 	Modelica.Blocks.Interfaces.BooleanInput track "Set to true to start tracking";
 	Modelica.Blocks.Interfaces.BooleanInput defocus(start=false) "true if the defocusing state is on";
-	input SI.RadiantPower R_dfc "The targer radiation power at the defocused state";
+	input SI.RadiantPower R_dfc "The target radiation power at the defocused state";
 
 	Integer state(min=1, max=5) "Concentrator state";
 	SI.Time t_con_w_now "Time of concentrator current warm-up event";

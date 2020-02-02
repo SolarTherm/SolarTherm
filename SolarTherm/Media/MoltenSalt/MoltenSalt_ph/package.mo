@@ -138,7 +138,7 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 		state := ThermodynamicState(p=p_rho(d), h=h_T(T));
 	end setState_dTX;
 
-	redeclare function extends pressure "Return pressure"
+	redeclare   function extends pressure "Return pressure"
 	algorithm
 		p := state.p;
 		annotation (Inline=true);

@@ -1,0 +1,32 @@
+within SolarTherm.Models.PowerBlocks.sCO2Cycle;
+
+model Cooler
+    extends SolarTherm.Media.CO2.PropCO2;
+    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    parameter Modelica.SIunits.ThermodynamicTemperature T_amb = 313.15 "Outlet temperature in Kelvin";
+    parameter Real deltaT_cooler = 15 "Approach difference of temperature at the outlet";
+    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {0, -78}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {2, -80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-2, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {0, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    SolarTherm.Types.Conductance UA_cooler "Conductance of the cooler";
+    Modelica.SIunits.HeatFlowRate Q_cooler "Heat transfer in the cooler";
+    MedRec.ThermodynamicState state_a "Thermodynamic State at the entrance";
+    MedRec.ThermodynamicState state_b "Thermodynamic State at the outlet";
+    SolarTherm.Types.SpecificExergy ex_d "destroyed exergy";
+    
+    equation
+    
+    state_a = MedRec.setState_phX(port_a.p, port_a.h_outflow);
+    state_b = MedRec.setState_pTX(port_a.p, T_amb + deltaT_cooler);
+    -Q_cooler = UA_cooler*((MedRec.temperature(state_a)-T_amb)-(MedRec.temperature(state_b)-T_amb))/Modelica.Math.log((MedRec.temperature(state_a)-T_amb)/(MedRec.temperature(state_b)-T_amb));
+    Q_cooler = port_a.m_flow * (MedRec.specificEnthalpy(state_b) - MedRec.specificEnthalpy(state_a));
+    port_a.m_flow + port_b.m_flow = 0;
+    port_a.p = port_b.p;
+    port_b.h_outflow = MedRec.specificEnthalpy(state_b);
+    ex_d = port_a.m_flow*(state_a.h-T_amb*MedRec.specificEntropy(state_a))+port_b.m_flow*(state_b.h-T_amb*MedRec.specificEntropy(state_b));
+    annotation(
+      Icon(graphics = {Rectangle(origin = {2, 1}, extent = {{-58, 65}, {58, -65}}), Text(origin = {0, -1}, extent = {{-40, -15}, {40, 15}}, textString = "COOLER")}),
+      Diagram(graphics = {Rectangle(origin = {-4, 7}, extent = {{-64, 67}, {64, -67}}), Text(origin = {5, 14}, extent = {{-41, -12}, {41, 12}}, textString = "COOLER")}));
+  end Cooler;
+

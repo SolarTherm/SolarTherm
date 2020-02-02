@@ -11,6 +11,7 @@ from time import time
 # TODO: Pass on any command line arguments to simulation executable
 # TODO: Save separate results files
 # TODO: Pull together relevant results
+# TODO: Add a flag to save perf metrics into a file
 
 def simulation_worker(fn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""

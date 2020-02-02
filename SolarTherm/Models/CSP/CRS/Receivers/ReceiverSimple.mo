@@ -18,7 +18,7 @@ model ReceiverSimple
                                                    annotation(Dialog(group="Technical data"));
   parameter SI.Efficiency em=1 "Coating Emitance"
                                                  annotation(Dialog(group="Technical data"));
-
+  
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rcv;
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(

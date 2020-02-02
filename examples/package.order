@@ -15,4 +15,9 @@ PS10_Flat
 PS10_Bladed
 SimpleResistiveStorage
 SimpleParticleSystem
-NaSaltSCO2System
+PhysicalParticleSystem1D
+PhysicalParticleSystem0D
+PhysicalParticleCO21D
+PhysicalParticleCO21D_v11
+Combined1
+ParticleReceiver1DCalculator
