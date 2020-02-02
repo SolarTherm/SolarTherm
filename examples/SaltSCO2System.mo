@@ -528,7 +528,7 @@ equation
 			Text(origin = {-18, -22}, extent = {{-10, 8}, {12, 2}}, textString = "PumpCold", fontSize = 10, fontName = "CMU Serif"),
 			Text(origin = {81, 67}, extent = {{1, -5}, {19, -11}}, textString = "PumpHot", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-		experiment(StopTime = 604800, StartTime = 0, Tolerance = 0.0001, Interval = 300),		
+		experiment(StopTime = 2592000, StartTime = 0, Tolerance = 0.0001, Interval = 60),		
 		__Dymola_experimentSetupOutput,
 		Documentation(info = "<html>
 	<p>
