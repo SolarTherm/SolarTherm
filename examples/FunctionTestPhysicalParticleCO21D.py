@@ -27,7 +27,7 @@ VERBOSE=0
 class FunctionTestPhysicalParticleCO21D(unittest.TestCase):
 	def test1(self):
 		global VERBOSE, RUNSIM, PLOTME
-		file_name = 'PhysicalParticleCO21D_v11'
+		file_name = 'PhysicalParticleCO21D'
 		#file_name = 'PhysicalParticleSystem1D'
 		fn = ('%s.mo'%(file_name,))
 		print "Modelica File Name = " + fn
@@ -97,15 +97,15 @@ class FunctionTestPhysicalParticleCO21D(unittest.TestCase):
 
 			print "Receiver's Geometry"
 
-			name_var = 'A_receiver'
+			name_var = 'A_rcv'
 			var = data.data(name_var)
 			print 'Total receiver area (m.sq) = %f'%(var[1])
 
-			name_var = 'H_receiver'
+			name_var = 'H_rcv'
 			var = data.data(name_var)
 			print 'Receiver height (m) = %f'%(var[1])
 
-			name_var = 'A_receiver'
+			name_var = 'A_rcv'
 			var = data.data(name_var)
 			print 'Receiver aperture area (m.sq) = %f'%(var[1])
 			print ""
