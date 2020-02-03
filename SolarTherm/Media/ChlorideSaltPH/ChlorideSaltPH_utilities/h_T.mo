@@ -6,7 +6,7 @@ function h_T "Specific enthalpy of Chloride Salt as a function of temperature"
 protected
 	constant Real a = -0.263995;
 	constant Real b = 1538.8204685;
-	constant Real c = -897243.412985412;
+	constant Real c = 0.001;//-897243.412985412;
 
 algorithm
 	// h is obtained by integrating (cp dT). The integration constant was added such that the h value at T = 298.15K (i.e. 25 degC) becomes zero.
