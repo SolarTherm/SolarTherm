@@ -52,12 +52,12 @@ within SolarTherm.Models.CSP.CRS.Receivers;
   parameter SI.Efficiency eps_s = 0.86 "Particle emissivity Sandia Rev 11";
   parameter SI.Efficiency abs_s = 0.9976785 "Particle absorptivity";
   parameter SI.Efficiency tau_s = 5.75335e-8 "Particle transmitivity";
-  parameter SI.Density rho_s = 3300. "Particle density [kg/m3]";
+  parameter SI.Density rho_s = 3300 * 0.6 "Particle density [kg/m3]";
   parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
   // Environment
   parameter SI.Temperature T_amb = from_degC(25) "Ambient temperature [K]";
   parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
-  parameter SI.Irradiance dni_des = 788.8;
+  parameter SI.Irradiance dni_des = 950;
   parameter SI.Efficiency eta_opt_des = 0.5;
   parameter Real CR = 1200;
   //Wall properties
@@ -123,9 +123,9 @@ within SolarTherm.Models.CSP.CRS.Receivers;
   inner Real eta_rec(min = 0, max = 1) "Receiver efficiency, Make it inner so it can be accessed by every component in the system";
   //Declaring the table TAB for h (output) and T (input), ditching out the h_T enthalpy function
   parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/CarboHSP/CarboHSP_hT.txt");
-  import Tables = Modelica.Blocks.Tables;
+  /*import Tables = Modelica.Blocks.Tables;
   Tables.CombiTable1Ds Tab[N + 1](each tableOnFile = true, each tableName = "CarboHSP_hT", each columns = 2:2, each fileName = table_file);
-  //Boolean problema;
+  //Boolean problema;*/
 protected
   //Thermodynamic Properties in Connectors
   SI.SpecificEnthalpy h_in = inStream(fluid_a.h_outflow);
@@ -170,8 +170,8 @@ algorithm
         B[i] := min((1 - phi_area[i]) ^ 2, 0.99999);
         A2[i] := prob_center * (1 - eps_s) * phi_area[i] + 2 * (prob_side * (1 - eps_s) * phi_area[i]) ^ 2 / phi_area[i] / (1 - (1 - eps_s));
         eps_c[i] := eps_s;
-        abs_c[i] := 1 - A[i] * (1 - B[i] ^ N_layers[i]) / (1 - B[i] - tau_c[i]);
         tau_c[i] := max((1 - phi_area[i]) ^ N_layers[i], 1e-30) "?? Reference";
+        abs_c[i] := 1 - A[i] * (1 - B[i] ^ N_layers[i]) / (1 - B[i]) - tau_c[i];
         reflectivity_c[i] := 1 - abs_c[i] - tau_c[i];
       end if;
     end if;
@@ -205,7 +205,8 @@ equation
   T_s[N + 1] = T_out;
   T_w[1] = T_w[2];
   T_w[N + 2] = T_w[N + 1];
-  Tab[N + 1].y[1] = h_out;
+  h_s[N+1] = h_out;
+  //Tab[N + 1].y[1] = h_out;
 
 // Node locations
   for i in 2:N + 1 loop
@@ -252,28 +253,39 @@ equation
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
-//Assigning values to the TAB lookup table
-  for i in 1:N + 1 loop
-//Temperature (input)
-    Tab[i].u = T_s[i];
-//Enthalpy (output)
-    Tab[i].y[1] = h_s[i];
-  end for;
+
+/*if fixed_cp == false  then
+    //Assigning values to the TAB lookup table
+      for i in 1:N + 1 loop
+    //Temperature (input)
+        Tab[i].u = T_s[i];
+    //Enthalpy (output)
+        Tab[i].y[1] = h_s[i];
+      end for;
+else*/
+for i in 1:N + 1 loop
+      h_s[i] = cp_s * (T_s[i] - 298.15);
+end for;
+//end if;
   
 
 if on then
     for i in 1:N loop
         //Curtain-wall radiation heat fluxes (W/m²)
         gc_f[i] = q_solar;
-        jc_f[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i];
+        jc_f[i] = (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i]) + tau_c[i] * gc_b[i];
         gc_b[i] = j_w[i];
-        jc_b[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i] + tau_c[i] * gc_f[i];
+        jc_b[i] = (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i]) + tau_c[i] * gc_f[i];
         g_w[i] = jc_b[i];
         j_w[i] = eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i];
         // Curtain energy balance
         q_conv_curtain[i] = h_conv * (T_s[i + 1] - Tamb);
         q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv * (T_s[i + 1] - Tamb);
-        q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
+        if fixed_cp then
+            q_net[i] * dx * W_rcv = mdot * (cp_s * (T_s[i + 1] - T_s[i]));
+        else
+            q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
+        end if;
               // Back wall energy balance
               if with_isothermal_backwall then
               // wall is at ambient temperature, absorbed heat lost as convection+radiation

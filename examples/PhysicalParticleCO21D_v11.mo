@@ -35,30 +35,50 @@ model PhysicalParticleCO21D_v11
   parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
-  // Field
+  // Field, heliostat and tower
   parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/g3p3_opt_eff_SolarPILOT_Zeb.motab");
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 0 "Land area multiplier";
-  parameter Boolean polar = true "True for polar field layout, otherwise surrounded";
-  parameter SI.Area A_heliostat = 100 "Heliostat module reflective area";
+  parameter String field_type = "polar" "Other options are : surround";
+  parameter SI.Length W_helio = 10 "width of heliostat in m";
+  parameter SI.Length H_helio = 10 "height of heliostat in m";
+  parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+  parameter SI.Area A_helio = W_helio * H_helio "Heliostat module reflective area";
+  parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter Real he_av_design = 0.99 "Helisotats availability";
   parameter SI.Efficiency eff_opt = 0.5565 "Field optical efficiency at design point";
+  parameter SI.Length H_tower = 200 "Tower height";
+  parameter SI.Length R_tower = W_rcv / 2 "Tower diameter";
+  parameter Boolean single_field = true "True for single field, false for multi tower";
+  parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
   parameter Real gnd_cvge = 0.3126 "Ground coverage";
   parameter Real excl_fac = 0.97 "Exclusion factor";
-  parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
   //Design Condition
-  parameter SI.Area A_receiver(fixed = false) "Receiver aperture area C= 1200 DNI des =788.8";
+  parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
+  parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200";
+  parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
-  parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
+  parameter Real n_helios = metadata_list[1] "Number of heliostats";
   parameter Real SM = 2.5 "Solar multiple";
   parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 100e06 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_in_rec = from_degC(580.3) "Particle inlet temperature to particle receiver at design";
   parameter SI.Irradiance dni_des = 909.06 "DNI at design point Equinox";
+  parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
   parameter SI.Temperature T_amb_des = from_degC(25) "Design point ambient temp";
+  parameter Real alpha_rcv = 1;
+  parameter Integer n_H_rcv = 20 "discretization of the height axis of the receiver";
+  parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
+  parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM;
+  //Optical simulation parameters
+  parameter Integer n_rays = 10000 "number of rays for solstice";
+  parameter Integer n_procs = 1 "number of processors in soltice";
+  //Output of the optical simulation
+  parameter Real n_row_oelt = 50 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 10 "number of columns of the lookup table (simulated hours per day)";
   // Receiver
   parameter Real ar_rec = 1 "Height to diameter aspect ratio of receiver aperture";
   parameter SI.Efficiency em_curtain = 0.86 "Emissivity of curtain";
@@ -162,10 +182,9 @@ model PhysicalParticleCO21D_v11
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  //parameter SI.Area A_receiver = A_field / C "CHANGED PG Receiver aperture area";
-  parameter SI.Length H_receiver = sqrt(A_receiver * ar_rec) "Receiver aperture height";
-  parameter SI.Length W_receiver = A_receiver / H_receiver "Receiver aperture width";
-  parameter SI.Length L_receiver = 1 "Receiver length(depth)";
+  parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
+  parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
+  parameter SI.Length L_rcv = 1 "Receiver length(depth)";
   //parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
   parameter SI.Area A_land = 0 "Land area";
   parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold particles specific enthalpy at design";
@@ -187,10 +206,6 @@ model PhysicalParticleCO21D_v11
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
-  // parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height";
-  parameter SI.Length H_tower = 200 "Tower height CHANGED PG";
-  // A_field/(gnd_cvge*excl_fac) is the field gross area
-  parameter SI.Diameter D_tower = W_receiver "Tower diameter";
   // That's a fair estimate. An accurate H-to-D correlation may be used.
   parameter SI.TemperatureDifference LMTD_des = (T_hot_set - T_out_ref_co2 - (T_cold_set - T_in_ref_co2)) / Math.log((T_hot_set - T_out_ref_co2) / (T_cold_set - T_in_ref_co2)) "Particle heat exchnager LMTD at design";
   parameter SI.Area A_hx = Q_flow_des / (U_hx * LMTD_des) "Heat transfer surface area of the particle heat exchanger";
@@ -226,7 +241,7 @@ model PhysicalParticleCO21D_v11
   parameter FI.Money C_lift_rec = pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
   parameter FI.Money C_lift_hx = pri_lift * dh_liftHX * m_flow_blk "Heat exchanger lift cost";
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
-  parameter FI.Money C_fpr = pri_receiver * A_receiver "Falling particle receiver cost";
+  parameter FI.Money C_fpr = pri_receiver * A_rcv "Falling particle receiver cost";
   parameter FI.Money C_receiver = C_fpr + C_tower + C_lift_rec "Total receiver cost";
   parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
@@ -268,7 +283,7 @@ model PhysicalParticleCO21D_v11
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_helios, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receiver
   // Hot tank
@@ -335,7 +350,7 @@ model PhysicalParticleCO21D_v11
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D_v11(H_drop_design = H_receiver, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D_v11(H_drop_design = H_rcv, N = n_H_rcv, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
     Placement(visible = true, transformation(origin = {-28, 32}, extent = {{-22, -22}, {22, 22}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des) annotation(
     Placement(visible = true, transformation(origin = {148, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -353,7 +368,7 @@ algorithm
     eta_solartoelec := E_pb_net / E_resource;
   end if;
 initial equation
-  A_receiver = particleReceiver1DCalculator.particleReceiver1D_v11.H_drop ^ 2;
+  A_rcv = particleReceiver1DCalculator.particleReceiver1D_v11.H_drop ^ 2;
   rec_fr = 1 - particleReceiver1DCalculator.particleReceiver1D_v11.eta_rec;
   m_flow_fac = particleReceiver1DCalculator.particleReceiver1D_v11.mdot;
   if fixed_field then
@@ -438,7 +453,7 @@ equation
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
   R_spot = market.profit;
-  //connect (particleReceiver1D_v11.eta_rec_receiver, simpleReceiverControl.idealMassflowBlockCalculation.eta_rec);
+//connect (particleReceiver1D_v11.eta_rec_receiver, simpleReceiverControl.idealMassflowBlockCalculation.eta_rec);
   connect(liftRC.m_flow, controlHot.m_flow_in) annotation(
     Line(points = {{2, -14}, {2, -14}, {2, 42}, {46, 42}, {46, 62}, {48, 62}}, color = {0, 0, 127}));
   connect(heliostatsField.Q_incident, simpleReceiverControl.Q_in) annotation(

@@ -89,8 +89,7 @@ else:
 	LCOE_2 = float('%.2f'%(result_2[1]))
 	EPY_2= float('%.2f'%(result_2[0]))
 	CAPF_2 = float('%.2f'%(result_2[2]))
-
-
+exit
 data_value = np.zeros([data_set,num_var])
 shape = np.shape(data_value)
 parameter_value = np.zeros([data_set,num_parameter])
