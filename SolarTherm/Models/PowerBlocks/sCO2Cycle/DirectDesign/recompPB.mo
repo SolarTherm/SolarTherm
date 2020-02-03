@@ -32,7 +32,13 @@ model recompPB
 		rotation=-90,
 		origin={20,60})));
 
-	input SI.ThermodynamicTemperature T_amb;
+	Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
+        transformation(extent={{-12,-48},{12,-24}},
+        rotation=-90,
+        origin={1.77636e-015,80}),                  iconTransformation(
+        extent={{-6,-6},{6,6}},
+        rotation=-90,
+        origin={-20,60})));
 
 	//Cycle parameters
 	parameter SI.AbsolutePressure p_high = 20e6 "high pressure of the cycle";
