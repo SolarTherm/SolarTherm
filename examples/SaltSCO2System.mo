@@ -401,8 +401,9 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		redeclare package MedRec = Medium,
 		P_gro = P_gross,
 		T_HTF_in_des = T_in_ref_blk,
-		T_amb_des=blk_T_amb_des,
+		T_amb_des = blk_T_amb_des,
 		T_low = T_comp_in,
+		m_HTF_des = m_flow_blk,
 		external_parasities = external_parasities,
 		nu_min = nu_min_blk) annotation(
 		Placement(transformation(extent = {{88, 4}, {124, 42}})));
@@ -528,7 +529,7 @@ equation
 			Text(origin = {-18, -22}, extent = {{-10, 8}, {12, 2}}, textString = "PumpCold", fontSize = 10, fontName = "CMU Serif"),
 			Text(origin = {81, 67}, extent = {{1, -5}, {19, -11}}, textString = "PumpHot", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-		experiment(StopTime = 2592000, StartTime = 0, Tolerance = 0.0001, Interval = 60),		
+		experiment(StopTime = 31536000, StartTime = 0, Tolerance = 0.0001, Interval = 1800),		
 		__Dymola_experimentSetupOutput,
 		Documentation(info = "<html>
 	<p>
