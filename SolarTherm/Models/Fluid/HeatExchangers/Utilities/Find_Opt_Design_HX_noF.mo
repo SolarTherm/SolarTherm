@@ -16,6 +16,7 @@ function Find_Opt_Design_HX_noF
   input FI.EnergyPrice_kWh c_e "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
+  input Integer n(unit= "years") "Operating years";
   
   output FI.MoneyPerYear TAC_min "Minimum Total Annualized Cost";
   output SI.Area A_tot_opt "Optimal Exchange Area";
@@ -49,7 +50,7 @@ function Find_Opt_Design_HX_noF
   protected
   //Sweep Parameters
   parameter SI.Length d_o[19] = {6.35e-3,9.53e-3,12.70e-3,15.88e-3,19.05e-3,22.23e-3,25.40e-3,28.58e-3,31.75e-3,34.93e-3,38.10e-3,41.28e-3,44.45e-3,47.63e-3,50.80e-3,53.98e-3,57.15e-3,60.33e-3,63.50e-3} "Outer Tube Diameter";
-  parameter SI.Length L[50]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50} "Tube Length";
+  parameter SI.Length L[70]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70} "Tube Length";
   parameter Integer N_p[2]={1,2} "Tube passes number";
   parameter Integer layout[2]={1,2} "Tube layout";
 //  parameter SI.Temperature T_Na2_des[6] = {510+273.15, 520.1+273.15, 530+273.15, 540+273.15, 550+273.15, 560+273.15} "Sodium Cold Fluid Temperature";
@@ -112,7 +113,7 @@ algorithm
               vec[iter, 3] := N_p[ii];
               vec[iter, 4] := layout[ww];
               vec[iter, 5] := T_Na2_des[ll];
-              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], N_baffles[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], m_material_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y);
+              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], N_baffles[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], m_material_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n=n);
               iter := iter + 1;
             end for;
           end for;

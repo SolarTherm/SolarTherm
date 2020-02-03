@@ -23,6 +23,7 @@ function Design_HX_noF
   input FI.EnergyPrice_kWh c_e "Power cost";
   input Real r "Real interest rate";
   input Real H_y(unit= "h") "Operating hours";
+  input Integer n(unit= "h") "Operating years";
 
   output SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   output SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
@@ -86,7 +87,6 @@ function Design_HX_noF
   parameter Real CEPCI_18=603.1 "CEPCI 2018";
   parameter Real M_conv = if currency == Currency.USD then 1 else 0.9175 "Conversion factor";
   parameter Real eta_pump=0.75 "Pump efficiency";
-  parameter Integer n=20 "Operating years";
   Real k1(unit= "") "Non dimensional factor";
   Real k2(unit= "") "Non dimensional factor";
   Real k3(unit= "") "Non dimensional factor";
@@ -107,6 +107,7 @@ function Design_HX_noF
   Real P_tube_cost(unit= "barg") "Tube pressure in barg";
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
+  FI.MassPrice material_sc "Material HX Specific Cost";
   
   //Fluid properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
@@ -309,7 +310,12 @@ end while;
   end if;
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
+  if noEvent(A_tot>1000) then
+    material_sc:=97.5+110616/(m_material+5273);
+    C_BEC:=m_material*material_sc;
+  else
+    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
+  end if;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
   if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>3) then

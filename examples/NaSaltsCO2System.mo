@@ -1,5 +1,4 @@
 within examples;
-
 model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
@@ -11,6 +10,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   import SolarTherm.Types.Solar_angles;
   import SolarTherm.Types.Currency;
   extends Modelica.Icons.Example;
+  
   //Media
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
@@ -386,15 +386,35 @@ equation
   E_elec = powerBlock.E_net;
   R_spot = market.profit;
   annotation(
-    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {-6, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-26, 6}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {36, 0}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {36, -14}, extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {16, 2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {18, 2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {24, -90}, extent = {{-6, 20}, {42, 0}}, textString = "HX Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 6, fontName = "CMU Serif"), Text(origin = {52, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-124, -50}, extent = {{112, 16}, {160, -4}}, textString = "Buffer Tank", fontSize = 6, fontName = "CMU Serif")}),
+    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {
+      Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), 
+      Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), 
+      Text(origin = {-6, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {6, 0}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {-26, 6}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {36, 0}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {36, -14}, extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {16, 2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {18, 2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {24, -90}, extent = {{-6, 20}, {42, 0}}, textString = "HX Control", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {14, -52}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {52, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 6, fontName = "CMU Serif"), 
+      Text(origin = {-124, -50}, extent = {{112, 16}, {160, -4}}, textString = "Buffer Tank", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
     experiment(StopTime = 3.1536e+7, StartTime = 0, Tolerance = 0.0001, Interval = 60),
     __Dymola_experimentSetupOutput,
-    Documentation(revisions = "<html>
+    Documentation(info = "<html>
+	<p>
+		<b>NaSaltsCO2System</b> models the system-level interactions of a CSP System using a Sodium Receiver and two-tank storage system using Chloride Salt.
+	</p>
+	</html>", 
+	revisions="<html>
 	<ul>
-	<li> Salvatore Guccione starting from SaltSCo2System (December 2019) :<br>Released first version. </li>
+		<li><i>Jan 2020</i> by <a href=\"mailto:salvatore.guccione@studenti.polito.it\">Salvatore Guccione</a>:<br>
+		Released first version starting from SaltSCo2System Model (December 2019).</li>
 	</ul>
-
 	</html>"),
-    uses(SolarTherm(version = "0.2")));
+		__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
+//    uses(SolarTherm(version = "0.2")));
 end NaSaltsCO2System;
