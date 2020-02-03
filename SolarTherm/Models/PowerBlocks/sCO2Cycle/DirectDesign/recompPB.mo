@@ -23,7 +23,7 @@ model recompPB
 
 	// PB parameters
 	parameter Boolean external_parasities = false "= true enable parasities as an input";
-	parameter Real nu_min=0.25 "Minimum turbine operation";
+	parameter Real nu_min = 0.25 "Minimum turbine operation";
 	Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
 		transformation(extent={{-12,-12},{12,12}},
 		rotation=-90,
@@ -89,26 +89,60 @@ model recompPB
 	Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
 
 	//Components instanciation
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR,P_nom_des=P_gro, ratio_m_des=1) annotation(
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(
+		N_q = N_HTR,
+		P_nom_des=P_gro,
+		ratio_m_des=1) annotation(
 		Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(eta_design = eta_comp_main, N_design=N_shaft,P_nom_des=P_gro,p_high_des=p_high) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(
+		eta_design = eta_comp_main,
+		N_design=N_shaft,
+		P_nom_des=P_gro,
+		p_high_des=p_high) annotation(
 		Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(T_low = T_low,P_nom_des=P_gro,T_amb_des=T_amb_des) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(
+		T_low = T_low,
+		P_nom_des=P_gro,
+		T_amb_des=T_amb_des) annotation(
 		Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(PR = PR, T_amb = T_amb_des, N_shaft = N_shaft, eta_design=eta_turb) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(
+		PR = PR,
+		T_amb = T_amb_des,
+		N_shaft = N_shaft,
+		eta_design = eta_turb) annotation(
 		Placement(visible = true, transformation(origin = {74, 0}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = MedRec,P_nom_des=P_gro,T_out_CO2_des=T_high,N_exch=N_exch, ratio_m_des=1) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(
+		redeclare package MedRec = MedRec,
+		P_nom_des = P_gro,
+		T_out_CO2_des = T_high,
+		N_exch = N_exch,
+		ratio_m_des=1) annotation(
 		Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft,P_nom_des=P_gro,p_high_des=p_high) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(
+		N_design = N_shaft,
+		P_nom_des = P_gro,
+		p_high_des = p_high) annotation(
 		Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR,P_nom_des=P_gro, ratio_m_des=1-gamma) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(
+		N_q = N_LTR,
+		P_nom_des = P_gro,
+		ratio_m_des=1-gamma) annotation(
 		Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+
 	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer annotation(
 		Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(gamma = gamma) annotation(
+
+	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(
+		gamma = gamma) annotation(
 		Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
 
-	parameter MedRec.ThermodynamicState state_HTF_in_des=MedRec.setState_pTX(1.0325*10^5,T_HTF_in_des);
+	parameter MedRec.ThermodynamicState state_HTF_in_des=MedRec.setState_pTX(1e5,T_HTF_in_des);
 
 	protected
 
@@ -201,13 +235,12 @@ model recompPB
 	connect(m_sup, cooler.m_sup) annotation(
 		Line);
 
-	//m_sup = true;
 	m_sup = exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min;
 
 	if m_sup then 
 		turbine.p_out=mainCompressor.p_out/PR;
 	else
-		exchanger.CO2_port_a.m_flow=exchanger.m_CO2_des;
+		exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
 	end if;
 
 	eta_cycle = W_net / exchanger.Q_HX;

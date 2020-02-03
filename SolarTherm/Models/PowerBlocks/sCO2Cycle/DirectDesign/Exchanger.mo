@@ -115,28 +115,26 @@ within SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign;
 	T_CO2_out = MedPB.temperature(state_CO2[N_exch]); // Cold outlet temperature at the last node
 	T_HTF_out = MedRec.temperature(state_HTF[1]);     // Hot outlet temperature at the first node
 
-	//deltaT_lm = if deltaT[2] * deltaT[1] < 0 then (abs(deltaT[1]) ^ (1 / 3) * sign(deltaT[1]) / 2 + abs(deltaT[2]) ^ (1 / 3) * sign(deltaT[2]) / 2) ^ 3 else (deltaT[1] - deltaT[2]) / (Modelica.Math.log(deltaT[1] / deltaT[2]) + 0.0001);
-
 	deltaTAve = (deltaT[1] + deltaT[N_exch]) / 2; // Setting an average temperature difference
 
 	h_CO2[N_exch] = CO2_port_b.h_outflow;
-	h_HTF[N_exch] = if m_sup then inStream(HTF_port_a.h_outflow) else h_in_HTF_des;
 	h_CO2[1] = inStream(CO2_port_a.h_outflow);
+
+	h_HTF[N_exch] = if m_sup then inStream(HTF_port_a.h_outflow) else h_in_HTF_des;
+
 	HTF_port_b.h_outflow = if m_sup then h_HTF[1] else inStream(HTF_port_a.h_outflow);
 
 	m_HTF_bis = if m_sup then HTF_port_a.m_flow else m_HTF_des;
+
 	Q_HX = CO2_port_a.m_flow * (h_CO2[N_exch] - h_CO2[1]);
 
 	for i in 1:(N_exch-1) loop 
-
 		m_HTF_bis*(h_HTF[i+1]-h_HTF[i])=CO2_port_a.m_flow*(h_CO2[i+1]-h_CO2[i]);
-
 		CO2_port_a.m_flow*(h_CO2[i+1]-h_CO2[i])=UA_HX_dis[i]* (1 / 2 * abs(m_HTF_bis / m_HTF_des + CO2_port_a.m_flow / m_CO2_des)) ^ 0.8* (deltaT[i] + deltaT[i+1]) / 2;
-
 	end for;
 	
-	HTF_port_a.h_outflow = inStream(HTF_port_b.h_outflow);
-	CO2_port_a.h_outflow = inStream(CO2_port_b.h_outflow);
+	HTF_port_a.h_outflow = 0; //inStream(HTF_port_b.h_outflow);
+	CO2_port_a.h_outflow = 0; //inStream(CO2_port_b.h_outflow);
 
 	//It is necessary to have one equation in a cycle that doesn't imply a circular equality on the mass flow rates
 	//CO2_port_b.m_flow + CO2_port_a.m_flow = 0;
