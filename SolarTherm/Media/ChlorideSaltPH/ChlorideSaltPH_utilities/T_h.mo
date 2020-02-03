@@ -5,7 +5,7 @@ function T_h "Temperature of Chloride Salt as a function of specific enthalpy"
 	output Modelica.SIunits.Temperature T "Temperature";
 protected
 	constant Real a = 0.0009227334;
-	constant Real b = 650.0337520883;
+	constant Real b = -177.8827009167;//650.0337520883;
 
 algorithm
 	T := a*h + b;
