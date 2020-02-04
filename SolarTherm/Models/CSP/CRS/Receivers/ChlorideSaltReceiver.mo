@@ -2,18 +2,25 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model ChlorideSaltReceiver
 	extends Interfaces.Models.ReceiverFluid;
 
+	parameter SI.Length H_tower = 175 "Tower height" annotation(Dialog(group="Technical data"));
 	parameter Integer N_pa = 20 "Number of panels" annotation(Dialog(group="Technical data"));
-	parameter SI.Diameter D_tb=25e-3 "Tube outer diameter" annotation(Dialog(group="Technical data"));
-	parameter SI.Thickness t_tb=1 "Tube wall thickness" annotation(Dialog(group="Technical data"));
+	parameter SI.Diameter D_tb = 25e-3 "Tube outer diameter" annotation(Dialog(group="Technical data"));
+	parameter SI.Thickness t_tb = 1 "Tube wall thickness" annotation(Dialog(group="Technical data"));
 
-	parameter SI.Efficiency ab=1 "Coating absorptance" annotation(Dialog(group="Technical data"));
-	parameter SI.Efficiency em=1 "Coating Emmitance" annotation(Dialog(group="Technical data"));
+	parameter SI.Efficiency ab = 1 "Coating absorptance" annotation(Dialog(group="Technical data"));
+	parameter SI.Efficiency em = 1 "Coating Emmitance" annotation(Dialog(group="Technical data"));
 
 	parameter SI.Length H_rcv = 2 "Receiver height" annotation(Dialog(group="Technical data"));
 	parameter SI.Length D_rcv = 2 "Receiver diameter" annotation(Dialog(group="Technical data")); //TODO Change W_rcv by D_rcv
 
 	parameter Boolean const_alpha = true "If true then constant convective heat transfer coefficient";
-	parameter SI.CoefficientOfHeatTransfer alpha=30 if const_alpha "Convective heat transfer coefficient";
+	parameter SI.CoefficientOfHeatTransfer alpha = 30 if const_alpha "Convective heat transfer coefficient";
+	
+	parameter SI.Length L_const = 0 "Piping length constant" annotation(Dialog(group="Piping"));
+
+	parameter Real F_mult=2.6 "Piping length multiplier " annotation(Dialog(group="Piping"));
+
+	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient" annotation(Dialog(group="Piping"));
 
 	Medium.BaseProperties medium;
 
@@ -27,6 +34,7 @@ model ChlorideSaltReceiver
 	SI.HeatFlowRate Q_rad "Radiative losses";
 	SI.HeatFlowRate Q_con "Convective losses";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF";
+	SI.HeatFlowRate Q_pip "Piping losses";
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		transformation(
@@ -43,6 +51,8 @@ protected
 	parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
 	parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
+
+	parameter SI.Length L_tot = H_tower*F_mult + L_const "Total piping length";
 
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
@@ -63,8 +73,9 @@ equation
 
 	Q_rad=A*sigma*em*(medium.T^4-Tamb^4);
 	Q_con=A*alpha*(medium.T-Tamb);
+	Q_pip = if (fluid_a.m_flow > 0.01) then -L_tot*C_pip else 0;
 
-	Q_loss=-Q_rad-Q_con;
+	Q_loss=-Q_rad-Q_con-Q_pip;
 
 	0=ab*heat.Q_flow + Q_loss + fluid_a.m_flow*(h_in-h_out);
 	Q_rcv=fluid_a.m_flow*(h_out-h_in);
