@@ -26,24 +26,24 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Weather data
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
-	parameter Real wdelay[8] = {0,0,0,0,0,0,0,0} "Weather file delays";
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab");
+	parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
 
-	parameter nSI.Angle_deg lon = 133.889 "Longitude (+ve East)";
-	parameter nSI.Angle_deg lat = -23.795 "Latitude (+ve North)";
-	parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
+	parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
+	parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
+	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
 	parameter Integer year = 1996 "Meteorological year";
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
-	parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file";
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/g3p3_opt_eff_1_azim_sud.motab");
+	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
 
 	parameter Real SM = 2.7 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
-	parameter Real he_av_design = 0.99 "Helisotats availability";
+	parameter Real he_av_design = 0.99 "Heliostats availability";
 
 	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
@@ -99,7 +99,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
 
-	parameter Real tank_ar = 20/18.667 "storage aspect ratio";
+	parameter Real tank_ar = 12/39.4 "storage aspect ratio";
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
@@ -133,6 +133,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 
+	parameter Real max_rec_op_fr = 1.3 "Maximum receiver operation fraction";
+
 	parameter SI.HeatFlowRate Q_flow_defocus = (330/294.18)*Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
 	parameter Real nu_start=0.6 "Minimum energy start-up fraction to start the receiver";
@@ -142,8 +144,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
-	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
+	parameter Real hot_tnk_full_ub = 96 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
 
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
@@ -180,14 +182,14 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";
 
 	parameter SI.MassFlowRate m_flow_fac = SM*Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to receiver at design point";
-	parameter SI.MassFlowRate m_flow_rec_max = 1.13952693353 * m_flow_fac "Maximum mass flow rate to receiver";
+	parameter SI.MassFlowRate m_flow_rec_max = max_rec_op_fr * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_rec_start = 0.81394780966 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
 
 	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
-	parameter SI.Length H_storage = ceil(((4*V_max*(tank_ar^2))/(CN.pi))^(1/3)) "Storage tank height";
+	parameter SI.Length H_storage = ceil((4*V_max*tank_ar^2/CN.pi)^(1/3))-3.0 "Storage tank height";
 	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
@@ -197,44 +199,33 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real r_disc = 0.07 "Real discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 
-	parameter Integer t_life(unit = "year") = 27 "Lifetime of plant";
-	parameter Integer t_cons(unit = "year") = 3 "Years of construction";
+	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
+	parameter Integer t_cons(unit = "year") = 0 "Years of construction";
 
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 
-	parameter FI.AreaPrice pri_field = if currency==Currency.USD then 180 else 180/r_cur "Field cost per design aperture area";
-		// SAM 2018 cost data: 177*(603.1/525.4) in USD. Note that (603.1/525.4) is CEPCI index from 2007 to 2018 
-	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 20 else 20/r_cur "Site improvements cost per area";
-		// SAM 2018 cost data: 16
-	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 37 / (1e3 * 3600) else (37 / (1e3 * 3600))/r_cur "Storage cost per energy capacity";
-		// SAM 2018 cost data: 22 / (1e3 * 3600)
-	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 1000 / 1e3 else 1000/r_cur "Power block cost per gross rated power";
-		// SAM 2018 cost data: 1040
-	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 350 / 1e3 else (350 / 1e3)/r_cur "Balance of plant cost per gross rated power";
-		//SAM 2018 cost data: 290
+	parameter FI.AreaPrice pri_field = if currency==Currency.USD then 75 else 75/r_cur "Field cost per design aperture area"; // SAM 2018 cost data: 177*(603.1/525.4) in USD. Note that (603.1/525.4) is CEPCI index from 2007 to 2018 
+	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 10 else 10/r_cur "Site improvements cost per area"; // SAM 2018 cost data: 16
+	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 40 / (1e3 * 3600) else (40 / (1e3 * 3600))/r_cur "Storage cost per energy capacity"; // SAM 2018 cost data: 22 / (1e3 * 3600)
+	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 900 / 1e3 else 900/r_cur "Power block cost per gross rated power"; // SAM 2018 cost data: 1040
+	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 0 / 1e3 else (0 / 1e3)/r_cur "Balance of plant cost per gross rated power"; //SAM 2018 cost data: 290
 	parameter FI.AreaPrice pri_land = if currency==Currency.USD then 10000 / 4046.86 else (10000 / 4046.86)/r_cur "Land cost per area";
-
-	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 56.715 / 1e3 else (56.715 / 1e3)/r_cur "Fixed O&M cost per nameplate per year";
-		//SAM 2018 cost data: 66
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 5.7320752 / (1e6 * 3600) else (5.7320752 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year";
-		//SAM 2018 cost data: 3.5
+	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 40.0 / 1e3 else (40.0 / 1e3)/r_cur "Fixed O&M cost per nameplate per year"; //SAM 2018 cost data: 66
+	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 4.0 / (1e6 * 3600) else (4.0 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; //SAM 2018 cost data: 3.5
 
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money C_tower(fixed = false) "Tower cost";
-	parameter FI.Money C_receiver = if currency==Currency.USD then 71708855 * (A_receiver / 879.8) ^ 0.7 else (71708855 * (A_receiver / 879.8) ^ 0.7)/r_cur "Receiver cost";
-		// SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
+	parameter FI.Money C_receiver = if currency==Currency.USD then 133396250.56 * (A_receiver / 1571) ^ 0.7 else (133396250.56 * (A_receiver / 1571) ^ 0.7)/r_cur "Receiver cost"; // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
 	parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money C_block = pri_block * P_gross "Power block cost";
 	parameter FI.Money C_bop = pri_bop * P_gross "Balance of plant cost";
 
-	parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";
-		// i.e. purchased equipment costs
-	parameter FI.Money C_contingency = 0.07 * C_cap_dir_sub "Contingency costs";
+	parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money C_contingency = 0.10 * C_cap_dir_sub "Contingency costs";
 	parameter FI.Money C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
-	parameter FI.Money C_EPC = 0.11 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
-		// SAM 2018 cost data: 0.13
+	parameter FI.Money C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; // SAM 2018 cost data: 0.13
 	parameter FI.Money C_land = pri_land * A_land "Land cost";
 	parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
 
@@ -527,7 +518,7 @@ initial equation
 			Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"),
 			Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
 	Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60),
+	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 300),
 	__Dymola_experimentSetupOutput,
 	Documentation(revisions = "<html>
 	<ul>
