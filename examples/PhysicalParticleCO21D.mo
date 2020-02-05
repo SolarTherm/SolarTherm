@@ -36,7 +36,7 @@ model PhysicalParticleCO21D
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
-  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/g3p3_opt_eff_SolarPILOT_Zeb.motab");
+  parameter String opt_file(fixed = false);
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 0 "Land area multiplier";
@@ -59,7 +59,6 @@ model PhysicalParticleCO21D
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
-  parameter Real n_helios = metadata_list[1] "Number of heliostats";
   parameter Real SM = 2.5 "Solar multiple";
   parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 100e06 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
@@ -280,7 +279,7 @@ model PhysicalParticleCO21D
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_helios, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, W_helio=W_helio, H_helio=H_helio, rho_helio=rho_helio,slope_error=slope_error,H_tower=H_tower, R_tower=R_tower, tilt_rcv=tilt_rcv, H_rcv=H_rcv, W_rcv=W_rcv, Q_in_rcv=Q_in_rcv) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receiver
   // Hot tank
@@ -365,6 +364,7 @@ algorithm
     eta_solartoelec := E_pb_net / E_resource;
   end if;
 initial equation
+  opt_file = heliostatsField.optical.tablefile;
   A_rcv = particleReceiver1DCalculator.particleReceiver1D_v11.H_drop ^ 2;
   rec_fr = 1 - particleReceiver1DCalculator.particleReceiver1D_v11.eta_rec;
   m_flow_fac = particleReceiver1DCalculator.particleReceiver1D_v11.mdot;
