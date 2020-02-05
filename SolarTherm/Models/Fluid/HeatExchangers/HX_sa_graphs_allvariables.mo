@@ -12,7 +12,7 @@ model HX_sa_graphs_allvariables
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des = 50e6 "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des = 500e6 "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
@@ -20,11 +20,11 @@ model HX_sa_graphs_allvariables
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
   
   //Input parameters
-  parameter SI.Length d_o_input = 0.01588 "Optimal Outer Tube Diameter";
-  parameter SI.Length L_input = 8 "Optimal Tube Length";
+  parameter SI.Length d_o_input = 0.02223 "Optimal Outer Tube Diameter";
+  parameter SI.Length L_input = 23 "Optimal Tube Length";
   parameter Integer N_p_input = 1 "Optimal Tube passes number";
   parameter Integer layout_input = 2 "Optimal Tube Layout";
-  parameter SI.Temperature T_Na2_input = 560 + 273.15 "Optimal outlet sodium temperature";
+  parameter SI.Temperature T_Na2_input = 520 + 273.15 "Optimal outlet sodium temperature";
   
   //Optimal Parameter Values
   parameter FI.MoneyPerYear TAC(fixed = false) "Minimum Total Annualized Cost";
@@ -86,7 +86,6 @@ model HX_sa_graphs_allvariables
   parameter SI.Length D_b(fixed = false) "Bundle diameter";
   parameter SI.Length D_s_out(fixed=false) "Shell Outer Diameter";
   parameter SI.Length P_t(fixed=false)  "Tube pitch";
-  parameter SI.Length t_b(fixed=false) "Baffle thickness";
   parameter SI.Length l_b(fixed=false) "Baffle spacing";
   parameter SI.Area S_m(fixed=false) "Minimal crossflow area at bundle centerline";
   parameter SI.Area S_b(fixed=false) "Bypass flow area";
@@ -137,7 +136,7 @@ model HX_sa_graphs_allvariables
   parameter Real CEPCI_18=603.1 "CEPCI 2018";
   parameter Real M_conv = if currency == Currency.USD then 1 else 0.9175 "Conversion factor";
   parameter Real eta_pump=0.75 "Pump efficiency";
-  parameter Integer n=20 "Operating years";
+  parameter Integer n=30 "Operating years";
   parameter Real k1(fixed=false) "Non dimensional factor";
   parameter Real k2(fixed=false) "Non dimensional factor";
   parameter Real k3(fixed=false) "Non dimensional factor";
@@ -158,16 +157,19 @@ model HX_sa_graphs_allvariables
   parameter Real P_tube_cost(unit= "barg", fixed=false) "Tube pressure in barg";
   parameter Real P_shell_cost(unit= "barg", fixed=false) "Shell pressure in barg";
   parameter Real P_cost(unit= "barg", fixed=false) "HX pressure in barg";
+  parameter FI.AreaPrice area_sc(fixed=false) "Area HX Specific Cost";
   
   //Other Parameters
   parameter SI.CoefficientOfHeatTransfer U_guess(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.CoefficientOfHeatTransfer U_calc(fixed=false) "Heat tranfer coefficient guess";
   parameter Real tol=0.01 "Heat transfer coefficient tollerance";
-  parameter Real condition(fixed=false) "When condition";
+  parameter Real condition(fixed=false) "While condition";
   parameter SI.CoefficientOfHeatTransfer U_calc_prev(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.Length t_tube(fixed=false) "Tube thickness";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter SI.ThermalInsulance R_ss=8.808e-5 "Fouling resistance";
+  parameter SI.Length t_shell(fixed=false) "Shell thickness";
+  parameter SI.Length t_baffle(fixed=false) "Baffle thickness";
   
   //Volume_and_Weight
   parameter SI.Mass m_Na(fixed=false) "Mass of Sodium";
@@ -175,8 +177,9 @@ model HX_sa_graphs_allvariables
   parameter SI.Volume V_Na(fixed=false) "Volume of Sodium";
   parameter SI.Volume V_MS(fixed=false) "Volume of Molten Salt";
   parameter SI.Volume V_material(fixed=false) "Volume of HX material";
-  parameter SI.Volume V_min(fixed=false) "Minimum HX Volume";
-  parameter SI.Volume DV(fixed=false) "Volume difference";
+  parameter SI.Volume V_ShellThickness(fixed=false) "External Material Volume HX";
+  parameter SI.Volume V_tubes(fixed=false) "Tube Material Volume";
+  parameter SI.Volume V_baffles(fixed=false) "Baffles Material Volume";
   
   //Fluid Properties
   parameter SI.Temperature Tm_Na(fixed = false) "Mean Sodium Fluid Temperature";
@@ -216,7 +219,6 @@ initial algorithm
   t_tube:=UF.TubeThickness(d_o);
   d_i:=d_o-2*t_tube;
   U_guess:=1200;
-  t_b:=t_tube;
   H_y:=4500;
   c_e:=0.13/0.9175;
   r:= 0.05;
@@ -317,9 +319,12 @@ while noEvent(condition>tol) loop
   L_bb:=(12+5*(D_b+d_o))/995;
   D_s:=L_bb+D_b+d_o;
   l_b:=D_s;
-  N_calc:=integer(ceil((L/(l_b+t_b)-1)*N_sp));
+  t_baffle:=UF.BaffleThickness(D_s=D_s,l_b=l_b);
+  N_calc:=integer(ceil((L/(l_b+t_baffle)-1)*N_sp));
   N_baffles:= if N_calc<10 then 10 else N_calc;
-  l_b:=L/(N_baffles/N_sp+1);
+  l_b:=L/(N_baffles/N_sp+1)-t_baffle;
+  t_baffle:=UF.BaffleThickness(D_s=D_s,l_b=l_b);
+  l_b:=L/(N_baffles/N_sp+1)-t_baffle;
   S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
   v_max_MS_design:=m_flow_MS_design/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS_design/mu_MS;
@@ -449,12 +454,14 @@ end while;
   end if;
 
   //Volume and Mass HX
-  D_s_out:=D_s+0.01; //1cm external thickness
-  V_min:=CN.pi/4*(D_s^2)*L;
+  t_shell:=UF.ShellThickness(D_s);
+  D_s_out:=D_s+t_shell;
+  V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
+  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle;
+  V_material:=V_ShellThickness+V_tubes+V_baffles;
   V_Na:=CN.pi/4*(d_i^2)*L*N_t;
-  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L;
-  DV:=V_min-V_Na-V_MS;
-  V_material:=DV+(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L-V_baffles;
   V_HX:=V_material+V_MS+V_Na;
   (k_wall, rho_wall):=UF.Haynes230_BaseProperties(Tm_wall);
   m_Na:=V_Na*rho_Na;
@@ -505,10 +512,18 @@ end while;
   end if;
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.7;
+  
+  if noEvent(A_HX<500) then
+    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
+  else
+    area_sc:=838.8093956+928112.6035/(A_HX+3135.843631);
+    C_BEC_HX:=A_HX*area_sc;
+  end if;  
+  
+//  C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.7;
   C_pump_design:=c_e*H_y/eta_pump*(m_flow_MS_design*Dp_shell_design/rho_MS+m_flow_Na_design*Dp_tube_design/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS_design<0.49 or v_max_MS_design>1.51 or v_Na_design<0.99 or v_Na_design>3) then
+  if (v_max_MS_design<0.49 or v_max_MS_design>1.51 or v_Na_design<0.99 or v_Na_design>3 or L/D_s>10) then
     TAC:=10e10;
   else
     if noEvent(C_BEC_HX>0) and noEvent(C_pump_design>0) then
