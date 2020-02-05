@@ -1,2 +1,0 @@
-hst_idx,area,sample,cos,shade,incoming,in-mat-loss,in-atm-loss,absorbed,abs-mat-loss,abs-atm-loss,vir_incoming,vir_in-mat-loss,vir_in-atm-loss,vir_absorbed,vir_abs-mat-loss,vir_abs-atm-loss,,,total,cos,shad,hst_abs,block,atm,spil,rec_refl,rec_abs
-0,100.004,100000,0.999751,5738.17,69253.0,7694.78,0.0,69253.0,7694.78,0.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-,-,85503.85983969556,21.290461100088876,5738.17,7974.439937859546,2518.95944073594,-1.0,-1.0,0.0,69253.0
