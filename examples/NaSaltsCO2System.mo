@@ -267,9 +267,23 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   // PowerBlockControl
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(visible = true, transformation(extent = {{98, 80}, {110, 66}}, rotation = 0)));
-  // Power block
-  SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(redeclare package Medium = Medium2, W_des = P_gross, enable_losses = blk_enable_losses, redeclare model Cycle = Cycle, nu_min = nu_min_blk, external_parasities = external_parasities, W_base = W_base_blk, p_bo = p_blk, T_des = blk_T_amb_des, nu_net = nu_net_blk, T_in_ref = T_in_ref_blk, T_out_ref = T_out_ref_blk, Q_flow_ref = Q_flow_des, redeclare model Cooling = Cooling(T_co = T_comp_in)) annotation(
-    Placement(visible = true, transformation(extent = {{102, 4}, {138, 42}}, rotation = 0)));
+	// Power block
+	SolarTherm.Models.PowerBlocks.sCO2CycleNREL powerBlock(/*SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(*/
+		redeclare package Medium = Medium2,
+		W_des = P_gross,
+		enable_losses = blk_enable_losses,
+		/*redeclare model Cycle = Cycle,*/
+		nu_min = nu_min_blk,
+		external_parasities = external_parasities,
+		W_base = W_base_blk,
+		p_bo = p_blk,
+		T_des = blk_T_amb_des,
+		nu_net = nu_net_blk,
+		T_in_ref = T_in_ref_blk,
+		T_out_ref = T_out_ref_blk,
+		Q_flow_ref = Q_flow_des/*,
+		redeclare model Cooling = Cooling(T_co = T_comp_in)*/)
+	annotation(Placement(visible = true, transformation(extent = {{102, 4}, {138, 42}}, rotation = 0)));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
     Placement(visible = true, transformation(extent = {{140, 12}, {160, 32}}, rotation = 0)));
