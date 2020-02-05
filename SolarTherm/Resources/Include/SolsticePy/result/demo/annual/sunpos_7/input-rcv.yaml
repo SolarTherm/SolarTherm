@@ -1,0 +1,7 @@
+- name: target_e 
+  side: FRONT_AND_BACK 
+  per_primitive: INCOMING_AND_ABSORBED 
+- name: virtual_target_e 
+  side: FRONT 
+  per_primitive: INCOMING 
+

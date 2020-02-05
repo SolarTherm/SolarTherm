@@ -1,0 +1,88 @@
+- sun: {dni:  6.82476809e+02, pillbox: {half_angle: 0.2664}}
+- material: &material_black
+   front:
+     matte: {reflectivity: 0.0000 }
+   back:
+     matte: {reflectivity: 0.0000 }
+
+- material: &material_mirror
+   front:
+     mirror: {reflectivity: 0.9000, slope_error:  2.00000000e-03 }
+   back:
+     matte: {reflectivity: 0.0000 }
+
+- material: &material_target
+   front:
+     matte: {reflectivity: 0.0000 }
+   back:
+     matte: {reflectivity: 0.0000 }
+
+- material: &material_virtual
+   virtual:
+
+- geometry: &tower_g
+  - material: *material_black
+    cylinder: {height:   0.001, radius:   0.010, slices: 10 }
+
+- geometry: &target_g
+  - material: *material_target
+    plane: 
+      clip: 
+      - operation: AND 
+        vertices: [[-5.0, -5.0], [-5.0, 5.0], [5.0, 5.0], [5.0, -5.0]]
+      slices: 10
+
+- geometry: &hst_g_0
+  - material: *material_mirror
+    parabol: 
+      focal: 212.02470614529759
+      clip: 
+      - operation: AND 
+        vertices: [[-5.0, -5.0], [-5.0, 5.0], [5.0, 5.0], [5.0, -5.0]]
+      slices: 4
+- geometry: &pylon_g
+  - material: *material_black
+    transform: { translation: [0, 0, -0.003], rotation: [0, 90, 0] }
+    cylinder: {height:   0.001, radius:   0.200, slices: 4 }
+- template: &hst_t_0
+    name: hst_0
+    primary: 0
+    geometry: *pylon_g
+    children: 
+    - name: pivot
+      zx_pivot: {target: {position: ['0.0', '0.0', '200.0']}} 
+      children: 
+      - name: reflect_surface
+        primary: 1
+        transform: {rotation: [-90,0,0]} 
+        geometry: *hst_g_0
+
+- entity:
+    name: target_e
+    primary: 0
+    transform: { translation: [0.0, 0.0, 200.0], rotation: [90.0, 0, 0] }
+    geometry: *target_g
+
+- entity:
+    name: virtual_target_e
+    primary: 0
+    transform: { translation: [0.0, 5.0, 200.0], rotation: [90.0, 0, 0] }
+    geometry: 
+      - material: *material_virtual
+        plane: 
+          clip: 
+          - operation: AND 
+            vertices: [[-100.0, -100.0], [-100.0, 100.0], [100.0, 100.0], [100.0, -100.0]]
+          slices: 4
+
+- entity:
+    name: tower_e
+    primary: 0
+    transform: { translation: [0, -0.01, 0.0005], rotation: [0, 0, 0] }
+    geometry: *tower_g
+
+- entity:
+    name: H_0
+    transform: { translation: ['7.063423060282414', '87.49619460680138', '7.0'], rotation: [0, 0, 0] }
+    children: [ *hst_t_0 ]
+
