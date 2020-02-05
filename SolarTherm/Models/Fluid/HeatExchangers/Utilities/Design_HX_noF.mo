@@ -60,6 +60,7 @@ function Design_HX_noF
   parameter SI.Length t_tube=TubeThickness(d_o) "Tube thickness";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   
+  
   //Tube Side  
   parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
@@ -69,18 +70,22 @@ function Design_HX_noF
   Real KK1(unit= "",start=0.158) "Correlation coefficient";
   Real nn1(unit= "",start=2.263) "Correlation coefficient";
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
+  SI.Length l_b "Baffle spacing";
   SI.Length D_b(start=4.42) "Bundle diameter";
+  SI.Length t_baffle "Baffle thickness";
+  SI.Length t_shell "Shell thickness";
   SI.Length D_s_out "Shell Outer Diameter";
+  parameter Real B=0.25 "Baffle cut";  
   
   //Volume_and_Weight
   SI.Mass m_Na "Mass of Sodium";
   SI.Mass m_MS "Mass of Molten Salts";
-//  SI.Mass m_material "Mass of HX material";
   SI.Volume V_Na "Volume of Sodium";
   SI.Volume V_MS "Volume of Molten Salt";
   SI.Volume V_material "Volume of HX material";
-  SI.Volume V_min "Minimum HX Volume";
-  SI.Volume DV "Volume difference";
+  SI.Volume V_tubes "Tube Material Volume";
+  SI.Volume V_baffles "Baffles Material Volume";
+  SI.Volume V_ShellThickness "External Material Volume HX";
   
   //Cost Functions
   parameter Real CEPCI_01=397 "CEPCI 2001";
@@ -107,7 +112,8 @@ function Design_HX_noF
   Real P_tube_cost(unit= "barg") "Tube pressure in barg";
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
-  FI.MassPrice material_sc "Material HX Specific Cost";
+//  FI.MassPrice material_sc "Material HX Specific Cost";
+  FI.AreaPrice area_sc "Area HX Specific Cost";
   
   //Fluid properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
@@ -248,20 +254,25 @@ end while;
       nn1:=2.675;
     end if;
   end if;
+  
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*(D_b+d_o))/995;
   D_s:=L_bb+D_b+d_o;
-  D_s_out:=D_s+0.01; //1cm external thickness
-  
-  V_min:=CN.pi/4*(D_s^2)*L;
+  l_b:=D_s;
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+  l_b:=L/(N_baffles/N_sp+1)-t_baffle;
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+  l_b:=L/(N_baffles/N_sp+1)-t_baffle;  
+  t_shell:=ShellThickness(D_s);
+  D_s_out:=D_s+t_shell;
+  V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
+  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle;
+  V_material:=V_ShellThickness+V_tubes+V_baffles;
   V_Na:=CN.pi/4*(d_i^2)*L*N_t;
-  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L;
-  DV:=V_min-V_Na-V_MS;
-  V_material:=DV+(D_s_out^2-(D_s^2))*CN.pi/4*L;
+  V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L-V_baffles;
   V_HX:=V_material+V_MS+V_Na;
-  
   (k_wall, rho_wall):=Haynes230_BaseProperties(Tm_wall);
-  
   m_Na:=V_Na*rho_Na;
   m_MS:=V_MS*rho_MS;
   m_material:=V_material*rho_wall;
@@ -301,24 +312,35 @@ end while;
   Fm:=3.7;
   B1:=1.63;
   B2:=1.66;
+  
   if noEvent(A_tot>1000) then
-    A_cost:=1000;    
+    A_cost:=1000;
     elseif noEvent(A_tot<10) then
     A_cost:=10;    
     else
     A_cost:=A_tot;    
   end if;
+  
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  if noEvent(A_tot>1000) then
-    material_sc:=97.5+110616/(m_material+5273);
-    C_BEC:=m_material*material_sc;
-  else
+  
+//  if noEvent(A_tot>1000) then
+//    material_sc:=97.5+110616/(m_material+5273);
+//    C_BEC:=m_material*material_sc;
+//  else
+//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
+//  end if;
+  
+  if noEvent(A_tot<500) then
     C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
+  else
+    area_sc:=838.8093956+928112.6035/(A_tot+3135.843631);
+    C_BEC:=A_tot*area_sc;
   end if;
+  
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>3) then
+  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>3 or L/D_s>10) then
     TAC:=10e10;
   else
     if noEvent(C_BEC>0) and noEvent(C_pump>0) then
