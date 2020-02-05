@@ -17,11 +17,14 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   
   // Input Parameters
   parameter Boolean match_sam = false "Configure to match SAM output";
-  parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
+  parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
+  // If the user wants to run a simulation with a fixed SolarField R_des needs to be an input, while if the power 
+  parameter SI.Power P_gross(fixed = if fixed_field then false else true) /*= 111e6*/ "Power block gross rating at design point";
+  parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false) = 614.9e6 "Input power to receiver at design point";
   
   // Weather data
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -30,7 +33,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   parameter nSI.Angle_deg lon = -116.78 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 34.85 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
-  parameter Integer year = 2008 "Meteorological year";
+  parameter Integer year = 2008 "Meteorological year";  
   
   // Field
   parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
@@ -41,7 +44,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
   parameter Real he_av_design = 0.99 "Helisotats availability";
   parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
-  parameter SI.Irradiance dni_des = 950 "DNI at design point";
+  parameter SI.Irradiance dni_des = 980 "DNI at design point";
   parameter Real C = 1046.460400794 "Concentration ratio";
   parameter Real gnd_cvge = 0.26648 "Ground coverage";
   parameter Real excl_fac = 0.97 "Exclusion factor";
@@ -54,8 +57,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   parameter Real ar_rec = 18.67 / 15 "Height to diameter aspect ratio of receiver aperture";
   parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
   parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-  parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false) "Input power to receiver at design point";
-  parameter Real rec_fr = 1.0 - 0.9569597659257708 "Receiver loss fraction of radiance at design point";
+  
+  parameter Real rec_fr = 1.0 - 0.88 "Receiver loss fraction of radiance at design point";
   parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
   parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
   parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
@@ -102,7 +105,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
   parameter SI.Temperature T_in_ref_blk = from_degC(720) "HTF inlet temperature to power block at design";
   parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
-  parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
   
   // Control
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
@@ -279,7 +281,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
   FI.Money_USD R_spot(start = 0, fixed = true) "Spot market revenue";
 initial equation
   if fixed_field then
-    P_gross = Q_flow_des * eff_cyc;
+    P_gross = Q_flow_des * eff_blk;
   else
     R_des = if match_sam then SM * Q_flow_des * (1 + rec_fr) else SM * Q_flow_des / (1 - rec_fr);
   end if;
