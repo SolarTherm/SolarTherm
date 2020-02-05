@@ -8,9 +8,11 @@ from uncertainties import ufloat
 from scipy.interpolate import interp1d,interp2d
 import matplotlib.cm as cm
 
-from repository.SolsticePy.input import Parameters
-from repository.SolsticePy.master_crs import *
-from repository.SolsticePy.output_solartherm import *
+from input import Parameters
+from master_crs import *
+from output_solartherm import *
+
+import sys
 
 def set_param(inputs={}):
     '''
@@ -39,7 +41,11 @@ def run_simul(inputs={}):
         print k, '=', getattr(pm, k)
     print ''
     print ''
+  
+    for p in sys.path:
+        print p
 
+    print ''
     TIME=N.array([])
 
     for r in RAYS:
