@@ -49,7 +49,6 @@ function Dp_losses
   SI.DynamicViscosity mu_MS "Molten Salts  dynamic viscosity @mean temperature";
   SI.DynamicViscosity mu_MS_wall "Molten salts dynamic viscosity @wall temperature";
   SI.SpecificHeatCapacity cp_MS "Molten Salts specific heat capacity @mean temperature";
-  parameter SI.Length t_b=t_tube "Baffle thickness";
   parameter SI.Length P_t=1.25*d_o "Tube pitch";
   parameter Real B=0.25 "Baffle cut";
   parameter SI.Length L_tb=0.0008 "Tube-to-baffle diametral clearance";
@@ -63,25 +62,10 @@ function Dp_losses
   Integer N_calc "Number of Baffles calculated";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
   Real Re_MS(start=100,min=0) "MS Reynolds Number";
+  SI.Area S_b "Bypass flow area";
   SI.Length L_c(start=1.11251222030861) "Baffle length";
-  Real F_w(unit= "") "Fraction of tubes in crossflow";
-  Real F_bp(unit= "") "Bypass Factor";
-  Real F_c(unit= "") "Fraction of tubes in crossflow";
-  Real N_c(start=90) "Number of crossflow rows";  
-  Real N_cw "Number of effective crossflow rows in the window zone";
-  Real K_f "Non dimensional factor";
   SI.Angle theta_ds "Centriangle of baffle cut";
   SI.Angle theta_ctl "Upper centriangle of baffle cut";
-  SI.Area S_wg "Window flow area";
-  SI.Area S_wt "Window flow area";
-  SI.Area S_w(start=3.04066566915712) "Window flow area";
-  SI.Area S_b "Bypass flow area";
-  SI.Pressure Dp_c "Ideal crossflow pressure drop";  
-  SI.Pressure Dp_w "Pressure drop for the window zone";
-  SI.Pressure Dp_bi "Pressure drop base";
-  SI.Pressure Dp_e "Pressure drop base";
-  Real R_B(unit= "") "Non dimensional factor";
-  Real R_L(unit= "") "Non dimensional factor";
   SI.Length L_sb "Shell-to-baffle diametral clearance";
   SI.Area S_sb "Shell-to-baffle leakage area";
   SI.Area S_tb "Tube-to-baffle leakage area";
@@ -89,7 +73,22 @@ function Dp_losses
   Real r_ss(unit= "") "Non dimensional factor";
   Real r_lm(unit= "") "Non dimensional factor";
   Real xx(unit= "") "Non dimensional factor";
-
+  Real N_c(start=90) "Number of crossflow rows";  
+  Real F_w(unit= "") "Fraction of tubes in crossflow";
+  Real F_bp(unit= "") "Bypass Factor";
+  Real F_c(unit= "") "Fraction of tubes in crossflow";
+  Real N_cw "Number of effective crossflow rows in the window zone";
+  Real K_f "Non dimensional factor";
+  SI.Area S_wg "Window flow area";
+  SI.Area S_wt "Window flow area";
+  SI.Area S_w(start=3.04066566915712) "Window flow area";
+  SI.Pressure Dp_c "Ideal crossflow pressure drop";  
+  SI.Pressure Dp_w "Pressure drop for the window zone";
+  SI.Pressure Dp_bi "Pressure drop base";
+  SI.Pressure Dp_e "Pressure drop base";
+  Real R_B(unit= "") "Non dimensional factor";
+  Real R_L(unit= "") "Non dimensional factor";
+  SI.Length t_baffle "Baffle thickness";
   
 algorithm
 
@@ -167,9 +166,13 @@ algorithm
   D_s:=L_bb+D_b+d_o;
   L_c:=B*D_s;
   l_b:=D_s;
-  N_calc:=integer(ceil((L/(l_b+t_b)-1)*N_sp));
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+//  t_baffle:=t_tube;
+  N_calc:=integer(ceil((L/(l_b+t_baffle)-1)*N_sp));
   N:= if N_calc<10 then 10 else N_calc;
-  l_b:=L/(N/N_sp+1);
+  l_b:=L/(N/N_sp+1)-t_baffle;
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+  l_b:=L/(N/N_sp+1)-t_baffle;    
   S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
