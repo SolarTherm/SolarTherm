@@ -59,7 +59,6 @@ function HTCs
   SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
   parameter SI.Length P_t=1.25*d_o "Tube pitch";
   parameter Real B=0.25 "Baffle cut";
-  parameter SI.Length t_b=t_tube "Baffle thickness";
   SI.Length D_b(start=4.42) "Bundle diameter";
   Real KK1(unit= "",start=0.158) "Correlation coefficient";
   Real nn1(unit= "",start=2.263) "Correlation coefficient";
@@ -94,8 +93,7 @@ function HTCs
   Real r_ss "Fraction";
   parameter Real N_ss=0.2 "Number of sealing strips per crossflow row";
   Real J_B(unit= "") "Bypass correction factor";
-//  parameter Real tol1=1e-4;
-
+  SI.Length t_baffle "Baffle thickness";
 
 algorithm
   
@@ -169,14 +167,16 @@ algorithm
        nn1:=2.675;
     end if;
   end if;
-  
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*(D_b+d_o))/995;
   D_s:=L_bb+D_b+d_o;
   l_b:=D_s;
-  N_calc:=integer(ceil((L/(l_b+t_b)-1)*N_sp));
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+  N_calc:=integer(ceil((L/(l_b+t_baffle)-1)*N_sp));
   N:= if N_calc<10 then 10 else N_calc;
-  l_b:=L/(N/N_sp+1);
+  l_b:=L/(N/N_sp+1)-t_baffle;
+  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
+  l_b:=L/(N/N_sp+1)-t_baffle;    
   S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
