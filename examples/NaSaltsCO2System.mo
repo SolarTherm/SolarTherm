@@ -17,15 +17,15 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Input Parameters
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
+	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Please specify a value for P_gross or a value for R_des
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false) /*= 614.9e6*/ "Input power to receiver at design point";
+	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) /*= 111e6*/ "Power block gross rating at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false, start = 623.1e6) /*= 623.1e6*/ "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -38,7 +38,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.862891892 "Solar multiple";
+	parameter Real SM = 623.1/(111/eff_blk) "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
@@ -57,7 +57,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 1.0 - 0.88 "Receiver loss fraction of radiance at design point";
+	parameter Real rec_fr = 1.0 - 111e6*SM/(R_des*eff_blk) "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
