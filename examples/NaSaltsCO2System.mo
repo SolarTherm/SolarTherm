@@ -46,7 +46,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Efficiency eff_opt = 623.1e6/(6764*A_heliostat*he_av_design*dni_des) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Real C = A_field/(CN.pi*16*24) "Concentration ratio";
-	parameter Real gnd_cvge = 0.26648 "Ground coverage";
+	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac)  "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
