@@ -48,6 +48,7 @@ model sCO2CycleNREL
 	Cooling cool(T_in=T_in,load=load,T_amb=T_amb_internal);
 
 	Real load;
+	Real eff_pb "Power Block Efficiency";
 
 	SI.Power W_gross "Gross power cycle ouput";
 	SI.Power W_cooling "Cooling system gross power";	
@@ -121,7 +122,8 @@ equation
 	Q_flow/Q_flow_ref = k_q;
 	W_gross/W_des = k_w;
 	W_cooling/W_cooling_des = cool.nu_w;
-
+    eff_pb=W_gross/max(1,Q_flow);
+    
 	der(E_gross)=W_gross;
 	der(E_net)=W_net;
 	W_loss=(1-nu_net)*W_gross + W_base + parasities_internal + W_cooling;

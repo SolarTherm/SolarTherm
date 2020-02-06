@@ -2,7 +2,7 @@ within SolarTherm.Models.PowerBlocks.Cooling;
 model NREL "sCO2 NREL Nieses SAM"
 	extends Cooling;
 	import Modelica.SIunits.Conversions.*;
-	parameter SI.Temperature T_in_ref "HTF inlet temperature at design" annotation (Dialog(enable=false,group="Design"));
+	parameter SI.Temperature T_in_ref=720+273.15 "HTF inlet temperature at design" annotation (Dialog(enable=false,group="Design"));
 	input SI.Temperature T_in "HTF inlet temperature";
 	input Real load "Load fraction";
 	parameter Real a =-0.4497189905;

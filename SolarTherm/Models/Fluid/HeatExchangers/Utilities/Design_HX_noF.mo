@@ -51,7 +51,7 @@ function Design_HX_noF
   
   protected
   parameter SI.CoefficientOfHeatTransfer U_guess=1200 "Heat tranfer coefficient guess";
-  parameter Real tol=0.01 "Heat transfer coefficient tollerance";
+  parameter Real tol=0.02 "Heat transfer coefficient tollerance";
   Real condition "When condition";
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
   SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
@@ -267,7 +267,7 @@ end while;
   D_s_out:=D_s+t_shell;
   V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
   V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
-  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle;
+  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle+t_baffle*D_s*L*(N_sp-1);
   V_material:=V_ShellThickness+V_tubes+V_baffles;
   V_Na:=CN.pi/4*(d_i^2)*L*N_t;
   V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L-V_baffles;
@@ -323,6 +323,7 @@ end while;
   
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
+  C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
   
 //  if noEvent(A_tot>1000) then
 //    material_sc:=97.5+110616/(m_material+5273);
@@ -331,12 +332,12 @@ end while;
 //    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
 //  end if;
   
-  if noEvent(A_tot<500) then
-    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
-  else
-    area_sc:=838.8093956+928112.6035/(A_tot+3135.843631);
-    C_BEC:=A_tot*area_sc;
-  end if;
+//  if noEvent(A_tot<500) then
+//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
+//  else
+//    area_sc:=838.8093956+928112.6035/(A_tot+3135.843631);
+//    C_BEC:=A_tot*area_sc;
+//  end if;
   
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
