@@ -36,16 +36,16 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
-	parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file";
-	parameter Real SM = 3.6 "Solar multiple";
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
+	parameter Real SM = 2.862891892 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
+	parameter SI.Efficiency eff_opt = 623.1e6/(6764*A_heliostat*he_av_design*dni_des) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real C = 1046.460400794 "Concentration ratio";
+	parameter Real C = A_field/(CN.pi*16*24) "Concentration ratio";
 	parameter Real gnd_cvge = 0.26648 "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
@@ -54,7 +54,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 18.67 / 15 "Height to diameter aspect ratio of receiver aperture";
+	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
 	parameter Real rec_fr = 1.0 - 0.88 "Receiver loss fraction of radiance at design point";
