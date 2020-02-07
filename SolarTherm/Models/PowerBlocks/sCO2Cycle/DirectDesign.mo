@@ -718,6 +718,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
           visible = true,transformation(origin = {100, 0}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{46, -10}, {56, 0}}, rotation = 0)));
     // PB parameters
     
+    parameter Boolean match_gen3_report_cost = true "PB cost is evaluated using gen3_cost";
     parameter Boolean external_parasities = false "= true enable parasities as an input";
     parameter Real nu_min=0.25 "Minimum turbine operation" ;
     Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
@@ -772,6 +773,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     parameter FI.Money C_cooler (fixed=false) "cost of the cooler";
     parameter FI.Money C_PB (fixed=false) "Overall cost of the power block";
     parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles";
+  
     
     
     //Results
@@ -865,15 +867,20 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     reCompressor.m_des=gamma*LTR.m_turb_des;
     
     // Financial Analysis
-    C_HTR= if HTR.T_turb_des[N_HTR]>=550+273.15 then 49.45*HTR.UA_HTR^0.7544*(1+0.02141*(HTR.T_turb_des[N_HTR]-550-273.15)) else 49.45*HTR.UA_HTR^0.7544;
-    C_LTR=49.45*LTR.UA_HTR^0.7544;
-    C_turbine= if exchanger.T_CO2_des[2]>= 550+273.15 then 406200*(-turbine.W_turb_des/10^6)^0.8*(1+1.137*10^(-5)*(exchanger.T_CO2_des[2]-550-273.15)^2) else 406200*(-turbine.W_turb_des/10^6)^0.8;
-    C_mainCompressor = 1230000*(mainCompressor.W_comp_des/10^6)^0.3392;
-    C_reCompressor = 1230000*(reCompressor.W_comp_des/10^6)^0.3392;
-    C_cooler = 32.88*cooler.UA_cooler^0.75;
-    C_generator = 108900*(P_nom/10^6)^0.5463;
-    C_exchanger = pri_exchanger*exchanger.Q_HX_des*m_HTF_des/1000;
-    C_PB=(C_HTR+C_LTR+C_turbine+C_mainCompressor+C_reCompressor+C_generator+C_cooler+C_exchanger)*1.05;
+// C_HTR= if HTR.T_turb_des[N_HTR]>=550+273.15 then 49.45*HTR.UA_HTR^0.7544*(1+0.02141*(HTR.T_turb_des[N_HTR]-550-273.15)) else 49.45*HTR.UA_HTR^0.7544;
+    C_HTR= if match_gen3_report_cost then 0 else 49.45*HTR.UA_HTR^0.7544;
+    C_LTR= if match_gen3_report_cost then 0 else 49.45*LTR.UA_HTR^0.7544;
+    //C_turbine= if exchanger.T_CO2_des[2]>= 550+273.15 then 406200*(-turbine.W_turb_des/10^6)^0.8*(1+1.137*10^(-5)*(exchanger.T_CO2_des[2]-550-273.15)^2) else 406200*(-turbine.W_turb_des/10^6)^0.8;
+    C_turbine = if match_gen3_report_cost then 0 else  9923.7*(P_gro/1000)^0.5886 "Rev 11 EES sandia"; 
+    //C_mainCompressor = 1230000*(mainCompressor.W_comp_des/10^6)^0.3392;
+    C_mainCompressor = if match_gen3_report_cost then 0 else 643.15*(mainCompressor.W_comp_des/10^3)^0.9142 "rev 11 EES";
+    //C_reCompressor = 1230000*(reCompressor.W_comp_des/10^6)^0.3392;
+    C_reCompressor = if match_gen3_report_cost then 0 else 643.15*(reCompressor.W_comp_des/10^3)^0.9142;
+    //C_cooler = 32.88*cooler.UA_cooler^0.75;
+    C_cooler = if match_gen3_report_cost then 0 else 76.25*cooler.UA_cooler^0.8919;
+    C_generator = if match_gen3_report_cost then 0 else 108900*(P_nom/10^6)^0.5463;
+    C_exchanger = if match_gen3_report_cost then 0 else pri_exchanger*exchanger.Q_HX_des*m_HTF_des/1000;
+    C_PB= if match_gen3_report_cost then 0 else (C_HTR+C_LTR+C_turbine+C_mainCompressor+C_reCompressor+C_generator+C_cooler+C_exchanger)*1.05;
     // 1.05 corresponds to inflation from 2017, as correlations are in 2017' dollars.
       algorithm
     
@@ -934,7 +941,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     der(E_net)=W_net;
     W_net = if m_sup then (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling else 0;
     W_total_compressor = mainCompressor.W_comp + reCompressor.W_comp "PG";
-    
+  
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 4}, {63, 4}}, color = {0, 127, 255}));
   connect(turbine.port_b, HTR.from_turb_port_a) annotation(

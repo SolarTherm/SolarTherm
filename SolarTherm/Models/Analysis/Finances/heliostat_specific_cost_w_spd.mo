@@ -1,5 +1,13 @@
 within SolarTherm.Models.Analysis.Finances;
 
+/*This cost model of the heliostat is taking account the cut-off wind speed. The higher the wind speed, the more expensive it will be. The paper evaluates torque, bending and pressure stress within vital parts of heliostat. The wind speed's drag formula for different axes are taken from the wind-tunnel experiment by Sandia
+Further reading :
+
+Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8. 
+
+
+Created by Philipe Gunawan*/
+
 function heliostat_specific_cost_w_spd
 import SI = Modelica.SIunits;
 input SI.Velocity Wspd_max;

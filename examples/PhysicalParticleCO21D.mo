@@ -17,11 +17,12 @@ model PhysicalParticleCO21D
   extends Modelica.Icons.Example;
   //TODO Incorporate Mosdelica HX model
   //TODO Use Coolprop for SCO2 props
-  //TODO Re-train the sCO2 cycle for the particle medium and new setpoint temperatures
+  //TODO Re-train the sCO2 cycle for the partircle medium and new setpoint temperatures
   // Input Parameters
   // *********************
-  parameter Boolean use_detail_pri_field = false;
-  parameter Boolean match_sam_cost = false;
+  parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
+  parameter Boolean match_sam_cost = false "tower height is evaluated match SAM";
+  parameter Boolean match_gen3_report_cost = true "PB, receiver+tower cost sub system are evaluated using gen3_cost";
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph "Medium props for sCO2";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
@@ -36,7 +37,7 @@ model PhysicalParticleCO21D
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
-  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/g3p3_opt_eff_SolarPILOT_Zeb.motab");
+  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/SM3p00_optics.motab");
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 0 "Land area multiplier";
@@ -60,7 +61,7 @@ model PhysicalParticleCO21D
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
-  parameter Real SM = 3.5 "Solar multiple";
+  parameter Real SM = 3 "Solar multiple";
   parameter SI.Power P_gross = 100e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
@@ -216,40 +217,45 @@ model PhysicalParticleCO21D
   parameter Real r_contg = 0.1 "Contingency rate";
   parameter Real r_indirect = 0.13 "Indirect capital costs rate";
   parameter Real r_cons = 0.06 "Construction cost rate";
-  parameter FI.AreaPrice pri_field = if use_detail_pri_field then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.";
+  parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gen3 Roadmap Report";
   parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
   parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
   parameter FI.Money pri_tower = if currency == Currency.USD then 157.44 else 157.44 / r_cur "Fixed tower cost";
   parameter Real idx_pri_tower = 1.9174 "Tower cost scaling index";
   parameter Real pri_lift = if currency == Currency.USD then 58.37 else 58.37 / r_cur "Lift cost per rated mass flow per height";
-  parameter FI.AreaPrice pri_receiver = if currency == Currency.USD then 37400 else 37400 / r_cur "Falling particle receiver cost per design aperture area";
+  parameter FI.AreaPrice pri_receiver = if match_gen3_report_cost then if currency == Currency.USD then 150 else 150 / r_cur else if currency == Currency.USD then 37400 else 37400 / r_cur "Falling particle receiver cost per design aperture area";
   parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 17.70 / (1e3 * 3600) else 17.70 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";
   parameter FI.MassPrice pri_particle = 1.0 "Unit cost of particles per kg";
   parameter FI.PowerPrice pri_hx = if currency == Currency.USD then 175.90 / 1e3 else 175.90 / 1e3 / r_cur "Heat exchnager cost per energy capacity";
   //parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 340 / 1e3 else (340 / 1e3)/r_cur "Balance of plant cost per gross rated power"; // Based on downselection criteria criteria
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0 / 1e3 else 0 / 1e3 / r_cur "Balance of plant cost per gross rated power";
+  parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 else 900 / r_cur "sCO2 PB cost per kWe based on the G3P3 Roadmap Report";
   parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   //parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.5 / (1e6 * 3600) else (3.5 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; // Based on downselection criteria criteria
   parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 0 / (1e6 * 3600) else 0 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
+  //Solar Field Sub-System Cost
   parameter FI.Money C_field = A_field * pri_field "Field cost";
   parameter FI.Money C_site = A_field * pri_site "Site improvements cost";
+  parameter FI.Money C_land = A_land * pri_land "Land cost";
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
-  parameter FI.Money C_tower = if match_sam_cost then 3 * 10 ^ 6 * ModelicaReference.Operators.exp(0.0113 * (H_tower + 0.5 * H_helio - H_rcv / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
-  parameter FI.Money C_lift_rec = pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
-  parameter FI.Money C_lift_hx = pri_lift * dh_liftHX * m_flow_blk "Heat exchanger lift cost";
+  //Receiver Sub-system Cost
+  parameter FI.Money C_tower = if match_gen3_report_cost then 0 elseif match_sam_cost then 3 * 10 ^ 6 * ModelicaReference.Operators.exp(0.0113 * (H_tower + 0.5 * H_helio - H_rcv / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
+  parameter FI.Money C_fpr = if match_gen3_report_cost then 0 else pri_receiver * A_rcv "Falling particle receiver cost";
+  parameter FI.Money C_lift_rec = if match_gen3_report_cost then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
+  parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
+  //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
-  parameter FI.Money C_fpr = pri_receiver * A_rcv "Falling particle receiver cost";
-  parameter FI.Money C_receiver = C_fpr + C_tower + C_lift_rec "Total receiver cost";
   parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
-  parameter FI.Money C_cap_total(fixed = false);
+  //PB-subsystem cost
   parameter FI.Money C_hx = Q_flow_des * pri_hx "Heat exchanger cost";
   // TODO Should be updated based on Eq. 11 in Albrecht et al's ASME conference paper draft
-  parameter FI.Money C_block(fixed = false) "Power block cost";
   // TODO Should be updated based on Eq. 17 in Albrecht et al's ASME conference paper draft
   parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
-  parameter FI.Money C_land = A_land * pri_land "Land cost";
+  parameter FI.Money C_lift_hx = pri_lift * dh_liftHX * m_flow_blk "Heat exchanger lift cost";
+  parameter FI.Money C_block(fixed = false) "Power block cost";
+  parameter FI.Money C_cap_total(fixed = false) "equipment cost";
   parameter FI.Money C_cap(fixed = false) "Capital costs";
   parameter FI.MoneyPerYear C_year = P_name * pri_om_name "Fixed O&M cost per year";
   parameter Real C_prod(unit = "$/J/year") = pri_om_prod "Variable O&M cost per production per year";
@@ -310,7 +316,7 @@ model PhysicalParticleCO21D
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // ReceiverControl
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, match_gen3_report_cost = match_gen3_report_cost, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
@@ -362,7 +368,11 @@ initial equation
   m_flow_fac = particleReceiver1DCalculator.particleReceiver1D_v11.mdot;
   T_cold_set = powerBlock.exchanger.T_HTF_des[1];
   T_cold_set = T_out_ref_blk;
-  C_block = powerBlock.C_PB;
+  if match_gen3_report_cost then
+    C_block = pri_block * P_gross / 1000;
+  else
+    C_block = powerBlock.C_PB;
+  end if;
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop;
   C_cap = (C_field + C_site + C_receiver + C_storage + C_block + C_bop) * (1 + r_contg) * (1 + r_indirect) * (1 + r_cons) + C_land;
 equation
