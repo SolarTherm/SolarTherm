@@ -12,7 +12,7 @@ model HX_sa_graphs_allvariables
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des = 500e6 "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des = 550e6 "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
@@ -21,7 +21,7 @@ model HX_sa_graphs_allvariables
   
   //Input parameters
   parameter SI.Length d_o_input = 0.02223 "Optimal Outer Tube Diameter";
-  parameter SI.Length L_input = 23 "Optimal Tube Length";
+  parameter SI.Length L_input = 24 "Optimal Tube Length";
   parameter Integer N_p_input = 1 "Optimal Tube passes number";
   parameter Integer layout_input = 2 "Optimal Tube Layout";
   parameter SI.Temperature T_Na2_input = 520 + 273.15 "Optimal outlet sodium temperature";
@@ -157,12 +157,15 @@ model HX_sa_graphs_allvariables
   parameter Real P_tube_cost(unit= "barg", fixed=false) "Tube pressure in barg";
   parameter Real P_shell_cost(unit= "barg", fixed=false) "Shell pressure in barg";
   parameter Real P_cost(unit= "barg", fixed=false) "HX pressure in barg";
-  parameter FI.AreaPrice area_sc(fixed=false) "Area HX Specific Cost";
+  parameter FI.MassPrice material_sc=84*1.65 "Material HX Specific Cost";
+  parameter SI.Mass m_material_HX_ref=95000 "Reference Heat-Exchanger Material Mass";
+  parameter SI.Area A_ref=10000 "Reference Heat-Exchanger Area";
+  parameter FI.Money_USD C_BEC_ref(fixed=false)  "Bare cost @2018";
   
   //Other Parameters
   parameter SI.CoefficientOfHeatTransfer U_guess(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.CoefficientOfHeatTransfer U_calc(fixed=false) "Heat tranfer coefficient guess";
-  parameter Real tol=0.01 "Heat transfer coefficient tollerance";
+  parameter Real tol=0.02 "Heat transfer coefficient tollerance";
   parameter Real condition(fixed=false) "While condition";
   parameter SI.CoefficientOfHeatTransfer U_calc_prev(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.Length t_tube(fixed=false) "Tube thickness";
@@ -450,7 +453,7 @@ end while;
     Dp_e:=2*Dp_bi*R_B*(1+N_cw/N_c);
     Dp_shell_design:=N_sp*(((N_baffles-1)*Dp_bi*R_B+N_baffles*Dp_w)*R_L+Dp_e);
   else
-    Dp_shell_design:=0;
+    Dp_shell_design:=0;  //parameter FI.AreaPrice area_sc(fixed=false) "Area HX Specific Cost";
   end if;
 
   //Volume and Mass HX
@@ -458,7 +461,7 @@ end while;
   D_s_out:=D_s+t_shell;
   V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
   V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
-  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle;
+  V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle+t_baffle*D_s*L*(N_sp-1);
   V_material:=V_ShellThickness+V_tubes+V_baffles;
   V_Na:=CN.pi/4*(d_i^2)*L*N_t;
   V_MS:=(D_s^2-(d_o^2)*N_t)*CN.pi/4*L-V_baffles;
@@ -503,6 +506,7 @@ end while;
   Fm:=3.7;
   B1:=1.63;
   B2:=1.66;
+  
   if noEvent(A_HX>1000) then
     A_cost:=1000;    
     elseif noEvent(A_HX<10) then
@@ -510,17 +514,25 @@ end while;
     else
     A_cost:=A_HX;    
   end if;
+  
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
+  C_BEC_ref:=material_sc*m_material_HX_ref;
+  C_BEC_HX:=C_BEC_ref*(A_HX/A_ref)^0.9;
   
-  if noEvent(A_HX<500) then
-    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
-  else
-    area_sc:=838.8093956+928112.6035/(A_HX+3135.843631);
-    C_BEC_HX:=A_HX*area_sc;
-  end if;  
-  
+//  if noEvent(A_HX>1000) then
+//    C_BEC_HX:=material_sc*1.65*m_material_HX;
+//  else
+//    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
+//  end if;
+//  if noEvent(A_HX<500) then
+//    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
+//  else
+//    area_sc:=838.8093956+928112.6035/(A_HX+3135.843631);
+//    C_BEC_HX:=A_HX*area_sc;
+//  end if;  
 //  C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.7;
+
   C_pump_design:=c_e*H_y/eta_pump*(m_flow_MS_design*Dp_shell_design/rho_MS+m_flow_Na_design*Dp_tube_design/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
   if (v_max_MS_design<0.49 or v_max_MS_design>1.51 or v_Na_design<0.99 or v_Na_design>3 or L/D_s>10) then
