@@ -42,3 +42,4 @@ SolarTherm_*.libs
 *.dat
 Modelica_Utilities_*
 resources
+results*
