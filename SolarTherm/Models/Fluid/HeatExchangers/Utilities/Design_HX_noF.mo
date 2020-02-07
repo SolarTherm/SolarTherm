@@ -85,7 +85,7 @@ function Design_HX_noF
   SI.Volume V_material "Volume of HX material";
   SI.Volume V_tubes "Tube Material Volume";
   SI.Volume V_baffles "Baffles Material Volume";
-  SI.Volume V_ShellThickness "External Material Volume HX";
+  SI.Volume V_ShellThickness "External Material Volume HX";  
   
   //Cost Functions
   parameter Real CEPCI_01=397 "CEPCI 2001";
@@ -112,8 +112,10 @@ function Design_HX_noF
   Real P_tube_cost(unit= "barg") "Tube pressure in barg";
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
-//  FI.MassPrice material_sc "Material HX Specific Cost";
-  FI.AreaPrice area_sc "Area HX Specific Cost";
+  parameter FI.MassPrice material_sc=84*1.65 "Material HX Specific Cost";
+  parameter SI.Mass m_material_HX_ref=95000 "Reference Heat-Exchanger Material Mass";
+  parameter SI.Area A_ref=10000 "Reference Heat-Exchanger Area";
+  FI.Money_USD C_BEC_ref  "Bare cost @2018";
   
   //Fluid properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
@@ -312,7 +314,6 @@ end while;
   Fm:=3.7;
   B1:=1.63;
   B2:=1.66;
-  
   if noEvent(A_tot>1000) then
     A_cost:=1000;
     elseif noEvent(A_tot<10) then
@@ -323,20 +324,17 @@ end while;
   
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
+  C_BEC_ref:=material_sc*m_material_HX_ref;
+  C_BEC:=C_BEC_ref*(A_tot/A_ref)^0.9;
+  
+  //C_BEC:=0.0000000003365304*A_tot^4 - 0.00001391267*A_tot^3 + 0.1860877*A_tot^2 + 411.577*A_tot + 264664.4;
+    //C_BEC:=material_sc*A_tot*9.5*(10000/A_tot)^0.1;
   
 //  if noEvent(A_tot>1000) then
-//    material_sc:=97.5+110616/(m_material+5273);
-//    C_BEC:=m_material*material_sc;
+    //material_sc_var:=(-1.078*log(m_material) + 18.14)/5*material_sc;
+    
 //  else
-//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
-//  end if;
-  
-//  if noEvent(A_tot<500) then
-//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.6;
-//  else
-//    area_sc:=838.8093956+928112.6035/(A_tot+3135.843631);
-//    C_BEC:=A_tot*area_sc;
+//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
 //  end if;
   
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);

@@ -11,7 +11,8 @@ model HX_sa_graphs_Q
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des[45] = {1e6, 5e6, 10e6, 15e6, 20e6, 40e6, 44e6, 45e6, 46e6, 50e6, 52e6, 60e6, 80e6, 100e6, 120e6, 140e6, 160e6, 180e6, 200e6, 220e6, 240e6, 260e6, 280e6, 300e6, 320e6, 340e6, 360e6, 380e6, 400e6, 420e6, 440e6, 460e6, 480e6, 500e6, 520e6, 540e6, 560e6, 580e6, 600e6, 650e6, 700e6, 750e6, 800e6, 850e6, 900e6} "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des[38] = {10e6, 20e6, 30e6, 50e6, 80e6, 100e6, 120e6, 140e6, 160e6, 180e6, 200e6, 240e6, 260e6, 275e6, 280e6, 300e6, 320e6, 340e6, 360e6, 380e6, 400e6, 420e6, 440e6, 460e6, 480e6, 500e6, 520e6, 540e6, 550e6, 560e6, 580e6, 600e6, 650e6, 700e6, 750e6, 800e6, 850e6, 900e6} "Design Heat Flow Rate";
+//  parameter SI.HeatFlowRate Q_d_des[2] = {275e6, 550e6} "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
