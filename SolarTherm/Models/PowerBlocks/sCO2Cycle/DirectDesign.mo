@@ -875,7 +875,15 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     C_exchanger = pri_exchanger*exchanger.Q_HX_des*m_HTF_des/1000;
     C_PB=(C_HTR+C_LTR+C_turbine+C_mainCompressor+C_reCompressor+C_generator+C_cooler+C_exchanger)*1.05;
     // 1.05 corresponds to inflation from 2017, as correlations are in 2017' dollars.
+      algorithm
     
+      when exchanger.HTF_port_a.m_flow >= (exchanger.m_HTF_des * nu_min)  then
+      
+      m_sup := true;
+      elsewhen exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des then
+      m_sup := false;
+      
+      end when;   
   
     
   equation
@@ -914,9 +922,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
       Line);
   connect(m_sup, cooler.m_sup) annotation(
       Line);
-    
-    //m_sup = true;
-    m_sup = exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min;
+  
   
   if m_sup then 
     turbine.p_out=mainCompressor.p_out/PR;
