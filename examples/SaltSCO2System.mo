@@ -214,7 +214,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 350 / 1e3 else (350 / 1e3)/r_cur "Balance of plant cost per gross rated power"; //SAM 2018 cost data: 290
 	parameter FI.AreaPrice pri_land = if currency==Currency.USD then 10000 / 4046.86 else (10000 / 4046.86)/r_cur "Land cost per area";
 	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 40.0 / 1e3 else (40.0 / 1e3)/r_cur "Fixed O&M cost per nameplate per year"; //SAM 2018 cost data: 66
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 4.0 / (1e6 * 3600) else (4.0 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; //SAM 2018 cost data: 3.5
+	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.0 / (1e6 * 3600) else (3.0 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; //SAM 2018 cost data: 3.5
 
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
