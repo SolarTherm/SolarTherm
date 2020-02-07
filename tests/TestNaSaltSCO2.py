@@ -28,9 +28,10 @@ class TestScheduler(unittest.TestCase):
 		print 'LCOE:                                     %6.2f USD/MWh'%(self.perf[1])
 		print 'Capacity factor:                          %6.2f %%'%(self.perf[2])
 		print "-----------------------------------------------------------------------"
-		print 'Input power to receiver at design point:  %6.2f MW'%(getval('R_des')/1e6)
+		print 'Receiver thermal input at design point:   %6.2f MW'%(getval('R_des')/1e6)
+		print 'Receiver thermal output at design point:  %6.2f MW'%(getval('Q_rec_out')/1e6)
 		print 'Power block gross rating at design point: %6.2f MW'%(getval('P_gross')/1e6)
-		print 'Solar multiple:                           %4.3f   '%(getval('SM'))
+		print 'Solar multiple:                           %4.1f   '%(getval('SM'))
 		print 'Receiver diameter:                        %4.2f  m'%(getval('D_receiver'))
 		print 'Receiver height:                          %4.2f  m'%(getval('H_receiver'))
 		print 'Tower height:                             %4.1f  m'%(getval('H_tower'))
