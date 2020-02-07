@@ -17,7 +17,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
-	replaceable package Medium = SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_ph "Medium props for molten salt";
+	replaceable package Medium = SolarTherm.Media.ChlorideSalt.ChlorideSalt_pT "Medium props for molten salt";
 
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -26,7 +26,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Weather data
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
 
 	parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
@@ -35,7 +35,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Integer year = 1996 "Meteorological year";
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/g3p3_opt_eff_1_azim_sud.motab");
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
 
 	parameter Real SM = 2.7 "Solar multiple";
@@ -49,7 +49,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 	parameter Real C = 574.8467275 "Concentration ratio";
 
-	parameter Real gnd_cvge = 0.26648 "Ground coverage";
+	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
@@ -69,7 +69,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// Storage
-	parameter Real t_storage(unit = "h") = 14 "Hours of storage";
+	parameter Real t_storage(fixed=true, unit = "h") = 14.0 "Hours of storage";
 
 	parameter SI.Temperature T_cold_set = CV.from_degC(500) "Cold tank target temperature";
 	parameter SI.Temperature T_hot_set = CV.from_degC(735) "Hot tank target temperature";
@@ -157,9 +157,11 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real Kp = -1000 "Gain of proportional component in receiver control";
 
 	// Calculated Parameters
+	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Receiver thermal output at design point";
+
 	parameter SI.HeatFlowRate Q_flow_des =
-		if fixed_field then (if match_sam then R_des/((1 + rec_fr)*SM)
-			else R_des*(1 - rec_fr) / SM) else P_gross/eff_blk "Heat to power block at design";
+		if fixed_field then (if match_sam then R_des/((1 + rec_fr)*SM) else R_des*(1 - rec_fr) / SM)
+			else P_gross/eff_blk "Heat to power block at design";
 
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
@@ -190,7 +192,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	parameter SI.Length H_storage = ceil((4*V_max*tank_ar^2/CN.pi)^(1/3))-3.0 "Storage tank height";
-	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
+	parameter SI.Diameter D_storage = (H_storage+3.0)/tank_ar "Storage tank diameter";
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -209,7 +211,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 10 else 10/r_cur "Site improvements cost per area"; // SAM 2018 cost data: 16
 	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 40 / (1e3 * 3600) else (40 / (1e3 * 3600))/r_cur "Storage cost per energy capacity"; // SAM 2018 cost data: 22 / (1e3 * 3600)
 	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 900 / 1e3 else 900/r_cur "Power block cost per gross rated power"; // SAM 2018 cost data: 1040
-	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 0 / 1e3 else (0 / 1e3)/r_cur "Balance of plant cost per gross rated power"; //SAM 2018 cost data: 290
+	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 350 / 1e3 else (350 / 1e3)/r_cur "Balance of plant cost per gross rated power"; //SAM 2018 cost data: 290
 	parameter FI.AreaPrice pri_land = if currency==Currency.USD then 10000 / 4046.86 else (10000 / 4046.86)/r_cur "Land cost per area";
 	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 40.0 / 1e3 else (40.0 / 1e3)/r_cur "Fixed O&M cost per nameplate per year"; //SAM 2018 cost data: 66
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 4.0 / (1e6 * 3600) else (4.0 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; //SAM 2018 cost data: 3.5
@@ -420,7 +422,7 @@ initial equation
 	end if;
 
 	if (H_tower > 120) then // then use concrete tower
-		C_tower = if currency==Currency.USD then 3117043.67 * exp(0.0113 * H_tower) else (3117043.67 * exp(0.0113 * H_tower))/r_cur "Tower cost";
+		C_tower = if currency==Currency.USD then 8046226.19 * exp(0.0113 * H_tower) else (8046226.19 * exp(0.0113 * H_tower))/r_cur "Tower cost";
 			//SAM 2018 cost data: 3e6 * exp(0.0113 * H_tower) in USD
 	else // use Latticework steel tower
 		C_tower = if currency==Currency.USD then 1.09025e6 * exp(0.00879 * H_tower) else (1.09025e6 * exp(0.00879 * H_tower))/r_cur "Tower cost";
