@@ -17,15 +17,15 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Input Parameters
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
+	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Please specify a value for P_gross or a value for R_des
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) /*= 111e6*/ "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false, start = 623.1e6) /*= 623.1e6*/ "Input power to receiver at design point";
+	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false, start = 619.77e6) /*= 623.1e6*/ "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -38,12 +38,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 623.1/(111/eff_blk) "Solar multiple";
+	parameter Real SM = 547.03/(111/eff_blk) "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 623.1e6/(6764*A_heliostat*he_av_design*dni_des) "Field optical efficiency at design point";
+	parameter SI.Efficiency eff_opt = 619.77e6/(6764*A_heliostat*he_av_design*dni_des) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Real C = A_field/(CN.pi*16*24) "Concentration ratio";
 	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac)  "Ground coverage";
@@ -65,7 +65,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
 
 	// Storage
-	parameter Real t_storage(unit = "h") = 15 "Hours of storage";
+	parameter Real t_storage(fixed=true, unit = "h") = 14.0 "Hours of storage";
 	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
@@ -122,7 +122,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
 
 	//Storage Calculated parameters
-	parameter SI.HeatFlowRate Q_flow_des = if fixed_field then if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM else P_gross / eff_blk "Heat to power block at design";
+	parameter SI.HeatFlowRate Q_flow_des = if fixed_field then (if match_sam then R_des / ((1 + rec_fr) * SM) else R_des * (1 - rec_fr) / SM ) else P_gross / eff_blk "Heat to power block at design";
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 	parameter SI.SpecificEnthalpy h_cold_set_CS = Medium2.specificEnthalpy(state_cold_set_CS) "Cold salt specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_CS = Medium2.specificEnthalpy(state_hot_set_CS) "Hot salt specific enthalpy at design";
@@ -173,13 +173,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 350 / 1e3 else 350 / 1e3 / r_cur "Balance of plant cost per gross rated power";
 	parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
 	parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
+	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 4 / (1e6 * 3600) else 4 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 
 	// Calculated costs
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 71708855 * (A_receiver / 1571) ^ 0.7 else 71708855 * (A_receiver / 1571) ^ 0.7 / r_cur "Receiver cost";
+	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 133396250.56 * (A_receiver / 1571) ^ 0.7 else 133396250.56 * (A_receiver / 1571) ^ 0.7 / r_cur "Receiver cost";
 	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
@@ -414,7 +414,7 @@ initial equation
 	end if;
 
 	if H_tower > 120 then // then use concrete tower
-		C_tower = if currency == Currency.USD then 3117043.67 * exp(0.0113 * H_tower) else 3117043.67 * exp(0.0113 * H_tower) / r_cur "Tower cost"; //SAM 2018 cost data: 3e6 * exp(0.0113 * H_tower) in USD
+		C_tower = if currency == Currency.USD then 8046226.19 * exp(0.0113 * H_tower) else 8046226.19 * exp(0.0113 * H_tower) / r_cur "Tower cost"; //SAM 2018 cost data: 3e6 * exp(0.0113 * H_tower) in USD
 	else // use Latticework steel tower
 		C_tower = if currency == Currency.USD then 1.09025e6 * exp(0.00879 * H_tower) else 1.09025e6 * exp(0.00879 * H_tower) / r_cur "Tower cost"; // SAM 2018 cost data: 1.09025e6 * (603.1/318.4) * exp(0.00879 * H_tower)
 	end if;
@@ -554,7 +554,7 @@ equation
 	annotation(
 		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 10, fontName = "CMU Serif"), Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 10, fontName = "CMU Serif"), Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 10, fontName = "CMU Serif"), Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 10, fontName = "CMU Serif"), Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 10, fontName = "CMU Serif"), Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-		experiment(StopTime = 3.1536e+7, StartTime = 0, Tolerance = 0.0001, Interval = 120),
+		experiment(StopTime = 3.1536e+7, StartTime = 0, Tolerance = 0.0001, Interval = 300),
 		__Dymola_experimentSetupOutput,
 		Documentation(info = "<html>
 	<p>
