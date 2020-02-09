@@ -25,7 +25,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 619.771931809827e6) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 600.3063e6) "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -36,28 +36,28 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
+	parameter Integer n_modules = 55 "Number of modular receivers";
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_mod_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.513401243420948 "Solar multiple"; //Calculated based on a receiver output of 547.034388273971MWt, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = 2.508291649 "Solar multiple"; //Calculated based on a receiver output of 55*9.92586 MWt, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
-	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
+	parameter Boolean polar = true "True for polar field layout, otherwise surrounded"; //Each cavity receiver requires a polar solar field
+	parameter SI.Area A_heliostat = 5.0625 "Heliostat module reflective area"; //Based on a 2.25 x 2.25 heliostat from CSIRO
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 0.6541444844630212 "Field optical efficiency at design point"; //Calculated to obtain a field area of 676552.5m2 (6764*144.375m2)
+	parameter SI.Efficiency eff_opt = 0.787455709 "Field optical efficiency at design point"; //Calculated to obtain a field area per module of 14286.4 m2 (2822*5.0625 m2)
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real C = 809.4956123111882 "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 676552.5m2 (6764*144.375m2)
-	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
+	parameter Real gnd_cvge = 0.1000656797 "Ground coverage"; //Calculated to obtain a tower height of 50m for a polar field
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
-	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
-	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
+	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
+	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
+	parameter SI.Diameter D_tb_rec = 33.4e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
-	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
-	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 0.11736179036609595 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.882638209633904
+	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance"; //Based on high performance coating
+	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity"; //Based on high performance coating
+	parameter Real rec_fr = 0.090593503 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.909406496974638
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
@@ -108,7 +108,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-	parameter SI.HeatFlowRate Q_flow_defocus = 274 / 217.647 * Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter SI.HeatFlowRate Q_flow_defocus = 274 / 217.647 * Q_flow_des/n_modules "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
@@ -145,14 +145,12 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller"; /*0.81394780966 **/
 
 	//SF Calculated Parameters
-	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
+	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des/ n_modules "Heliostat field reflective area";
 	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
-	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
-	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
-	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
-	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_receiver = 10*24*4.7*0.0334 "Receiver aperture area";
+	parameter SI.Area A_land = land_mult * A_field * n_modules + 197434.207385281 "Land area"; //TODO: Verify equation
 	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
-	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
+	parameter SI.Diameter D_tower = 1 "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to power block at design point";
@@ -184,10 +182,10 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
 
 	// Calculated costs
-	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
-	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
+	parameter FI.Money_USD C_field = pri_field * A_field * n_modules "Field cost";
+	parameter FI.Money_USD C_site = pri_site * A_field * n_modules "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 178378954.0 * (A_receiver / 1206.37) ^ 0.7 else 178378954.0 * (A_receiver / 1206.37) ^ 0.7 / r_cur "Receiver cost";
+	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 178378954.0 * (A_receiver / 1206.37) ^ 0.7 * n_modules else 178378954.0 * (A_receiver / 1206.37) ^ 0.7 * n_modules / r_cur "Receiver cost";
 	//Receiver cost updated to match estimated total cost of $178M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
 	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
@@ -273,19 +271,16 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_modular receiver(
-		em = em_rec,
 		redeclare package Medium = Medium1,
-		H_rcv = H_receiver,
-		D_rcv = D_receiver,
+		n_modules = n_modules,
 		N_pa = N_pa_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
+		em = em_rec,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na,
-		DNI_SF = data.DNI,
-		Q_flow_def = Q_flow_defocus,
-		SM = SM)
+		Q_rec_des = Q_rec_out)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
 
 	// Temperature sensor1
@@ -424,12 +419,12 @@ initial equation
 
 	if H_tower > 120 then // then use concrete tower
 
-		C_tower = if currency == Currency.USD then 8046226.19 * exp(0.0113 * H_tower) else 8046226.19 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+		C_tower = if currency == Currency.USD then 8046226.19 * exp(0.0113 * H_tower) * n_modules else 8046226.19 * exp(0.0113 * H_tower) * n_modules / r_cur "Tower cost"; 
 		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
 
 	else // use Latticework steel tower
 
-		C_tower = if currency == Currency.USD then 78933.92 * exp(0.00879 * H_tower) else 78933.92 * exp(0.00879 * H_tower) / r_cur "Tower cost";
+		C_tower = if currency == Currency.USD then 78933.92 * exp(0.00879 * H_tower) * n_modules else 78933.92 * exp(0.00879 * H_tower) * n_modules / r_cur "Tower cost";
 		//"Tower cost fixed" updated to match estimated total cost of $122.5k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
