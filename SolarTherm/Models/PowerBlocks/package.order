@@ -11,3 +11,4 @@ Cooling
 PowerBlockModel
 sCO2Cycle
 SB_PowerBlockModel
+SB_StirlingPowerBlockModel

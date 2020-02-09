@@ -12,7 +12,7 @@ model SB_PCMStorage2
   replaceable package Tank_Package = SolarTherm.Media.Materials.Inconel625;
   replaceable package Tray_Package = SolarTherm.Media.Materials.SS316L;
   //-----------------------------------------------------------------------------------
-  parameter String convection_file = "Convection.txt" "path of the convection properties data";
+  parameter String convection_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Na_Convection.txt") "path of the convection properties data";
   //Free Parameters
   //Tank
   parameter SI.Length z_tank = 2.0 "Height of the tank (m)";
@@ -102,7 +102,7 @@ model SB_PCMStorage2
   //Optimisation throws out results where x_HTF < 0 (compressed liquid) and x_HTF > 1 (superheated vapor)
   SI.ThermodynamicTemperature T_HTF(start = T_start) "Temperature of HTF, K";
   Modelica.Blocks.Interfaces.RealOutput T_storage annotation(
-    Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {0, -108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
   SI.AbsolutePressure p_HTF "Absolute pressure of HTF, Pa";
   SI.SpecificVolume v_liq "Specific volume of sat. sodium liquid at current temperature, m3/kg";
   //SI.SpecificVolume v_gas "Specific volume of sat. sodium gas at current temperature, m3/kg";
@@ -139,6 +139,8 @@ model SB_PCMStorage2
   PCM_Package.State PCM_State[n];
   Medium.BaseProperties HTF_State;
   //Interfaces
+  Medium.BaseProperties HTF_ap;
+  Medium.BaseProperties HTF_ar;
   Medium.BaseProperties HTF_bp;
   Medium.BaseProperties HTF_br;
   //PCM_Package.State PCM_State_avg;
@@ -169,8 +171,14 @@ protected
   parameter SI.SpecificHeatCapacity cp_tray = (Tray_Package.h_Tf(T_max, 0.0) - Tray_Package.h_Tf(T_min, 0.0)) / (T_max - T_min);
   parameter SI.HeatCapacity HCap_tray = m_tray * cp_tray;
   //Heat lost to surroundings
-  Modelica.Blocks.Interfaces.RealInput T_amb annotation(
-    Placement(visible = true, transformation(origin = {0, 144}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {0, 78}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
+        transformation(
+        extent={{-16,-16},{16,16}},
+        rotation=-90,
+        origin={0,118}), iconTransformation(
+        extent={{-11,-11},{11,11}},
+        rotation=-90,
+        origin={-41,97})));
   //SI.ThermodynamicTemperature T_amb;
   //For pump calculations
   //SI.SpecificEnthalpy h_fg;
@@ -272,7 +280,10 @@ equation
 //inStream(fluid_ar.h_outflow);//0.0;
   fluid_ap.h_outflow = 0.0;
 //inStream(fluid_ap.h_outflow);//0.0;
-
+  HTF_ap.h = inStream(fluid_ap.h_outflow);
+  HTF_ar.h = inStream(fluid_ar.h_outflow);
+  HTF_ap.p = fluid_ap.p;
+  HTF_ar.p = fluid_ar.p;
 //HTF mass balance
 //der(m_HTF) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
 //der(m_HTF) = 0.0;
@@ -313,5 +324,5 @@ equation
 //der(m_HTF_dynamic) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
 //assert(m_trap >= 1.0e-12, "Invalid Mass", level = AssertionLevel.error);
   annotation(
-    Icon(graphics = {Text(origin = {0, -5}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-131, 69}, extent = {{-27, 11}, {27, -11}}, textString = "from recv"), Text(origin = {-133, -49}, extent = {{-23, 7}, {27, -11}}, textString = "to recv"), Text(origin = {129, 65}, extent = {{-27, 11}, {13, -3}}, textString = "to PB"), Text(origin = {129, -53}, extent = {{-27, 11}, {21, -7}}, textString = "from PB")}));
+    Icon(graphics = {Text(origin = {2, -1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-131, 69}, extent = {{-27, 11}, {27, -11}}, textString = "from recv"), Text(origin = {-133, -49}, extent = {{-23, 7}, {27, -11}}, textString = "to recv"), Text(origin = {129, 65}, extent = {{-27, 11}, {13, -3}}, textString = "to PB"), Text(origin = {129, -53}, extent = {{-27, 11}, {21, -7}}, textString = "from PB")}, coordinateSystem(initialScale = 0.1)));
 end SB_PCMStorage2;

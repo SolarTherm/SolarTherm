@@ -17,7 +17,7 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 			min=700.0,
 			max=1500.0,
 			start=1073.0));
-	import SolarTherm.Media.Sodium.Sodium_utilities.*;
+	import SolarTherm.Media.Sodium.SodiumBoiler_utilities.*;
 	// Provide medium constants here
 
 	/* The vector substanceNames is mandatory, as the number of
@@ -70,8 +70,8 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 
 	redeclare model extends BaseProperties(final standardOrderComponents=true)
 		"Base properties of medium"
- protected
-    Real x;
+
+    Real x(max=1.0,min=0.0);
  equation
 	p = state.p;
 	h = state.h;
@@ -173,8 +173,10 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 
 	redeclare function extends density "Return density"
 	protected
+        Temperature T;
         Real x;
 	algorithm
+        T := T_p(state.p);
         x := (state.h - h_T(T))/(h_v_T(T)-h_T(T));
         d := (1-x)*rho_T(T) + x*rho_v_T(T);
 		annotation (Inline=true);

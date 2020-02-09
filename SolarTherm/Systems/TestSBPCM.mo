@@ -2,7 +2,7 @@ within SolarTherm.Systems;
 
 model TestSBPCM
   package Medium = SolarTherm.Media.Sodium.Sodium_ph;
-  SolarTherm.Models.Storage.PCM.SB_PCMStorage2 storage annotation(
+  SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 storage annotation(
     Placement(visible = true, transformation(origin = {-1, 1}, extent = {{-37, -37}, {37, 37}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink pbSink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {100, 20}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
@@ -10,17 +10,17 @@ model TestSBPCM
     Placement(visible = true, transformation(origin = {-94, -26}, extent = {{20, -20}, {-20, 20}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15)  annotation(
     Placement(visible = true, transformation(origin = {-46, 72}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.Boundary_ph sourceRecv(redeclare package Medium = Medium,h = 500000, nPorts = 1, p = 60000)  annotation(
+  Modelica.Fluid.Sources.Boundary_ph sourceRecv(redeclare package Medium = Medium,h = 1.6e7, nPorts = 1, p = 20638)  annotation(
     Placement(visible = true, transformation(origin = {-112, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.Boundary_ph sourcePB(redeclare package Medium = Medium,h = 300000, nPorts = 1, p = 60000)  annotation(
+  Modelica.Fluid.Sources.Boundary_ph sourcePB(redeclare package Medium = Medium,h = 1.45e7, nPorts = 1, p = 20638)  annotation(
     Placement(visible = true, transformation(origin = {114, -24}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpRecv(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-74, 20}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpPB(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {74, -26}, extent = {{8, -8}, {-8, 8}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_flow_Recv(y = 50)  annotation(
+  Modelica.Blocks.Sources.RealExpression m_flow_Recv(y = 10)  annotation(
     Placement(visible = true, transformation(origin = {-84, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_flow_PB(y = 25)  annotation(
+  Modelica.Blocks.Sources.RealExpression m_flow_PB(y = 5)  annotation(
     Placement(visible = true, transformation(origin = {70, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
   connect(storage.fluid_bp, pbSink.port_a) annotation(

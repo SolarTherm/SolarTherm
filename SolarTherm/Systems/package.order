@@ -1,10 +1,8 @@
 GenericSystem
-SodiumBoiler_PCM_sCO2
 Reference_2
 PhysicalParticleCO2
 TestSBPCM
-TestSBP_RecvStorage
-TestSBP_RecvStorage_PB
-TestSBP_RecvStorage_PB_Control
-TestSBP_RecvStorage_PB_Full
+SB_Reference
 TestSBP_RecvStorage_PB_Control_More
+SB_Reference_StirlingSES
+SB_Polar_StirlingSES

@@ -4,7 +4,9 @@ model SB_Receiver
   import CN = Modelica.Constants;
   extends Interfaces.Models.ReceiverFluid;
   redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph;
-  parameter String concept = "Cavity" "Type of receiver {Cavity,Billboard,Cylindrical}";
+  replaceable package Air = SolarTherm.Media.Materials.Air_Table;
+  parameter String concept = "Billboard" "Type of receiver {Billboard,Cylindrical}";
+  parameter String convection = "Siebers" "Convection loss assumption {Constant,Siebers}";
   parameter SI.Length H_tower = 20 "Tower height" annotation(
     Dialog(group = "Technical data"));
   parameter SI.Length H_rcv = 2.0 "Receiver height" annotation(
@@ -26,14 +28,19 @@ model SB_Receiver
   //parameter Real F_mult=1 "Piping length multiplier "
   parameter Real C_pip(unit = "W/m") = 1000 "Piping loss coeficient" annotation(
     Dialog(group = "Piping"));
-  parameter SI.CoefficientOfHeatTransfer h_convection = 20.0 "Convective heat transfer coefficient";
+  parameter SI.CoefficientOfHeatTransfer h_c_const = 20.0 "Constant heat transfer coefficient if model is simplified";
+  SI.CoefficientOfHeatTransfer h_c "Convective heat transfer coefficient calculated at each timestep";
+  SI.CoefficientOfHeatTransfer h_cn "Natural heat transfer coefficient calculated at each timestep";
+  SI.CoefficientOfHeatTransfer h_cf "Forced heat transfer coefficient calculated at each timestep";
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rcv;
   //SI.HeatFlowRate Q_pip;
   Real Flux = Q_rcv / A_material;
   Real receiver_efficiency;
   Modelica.Blocks.Interfaces.RealInput Tamb annotation(
-    Placement(transformation(extent = {{-12, -12}, {12, 12}}, rotation = -90, origin = {0, 84}), iconTransformation(extent = {{-6, -6}, {6, 6}}, rotation = -90, origin = {0, 78})));
+    Placement(visible = true,transformation( origin = {36, 84},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {20, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput Wspd annotation(
+    Placement(visible = true,transformation( origin = {-40, 84},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {-22, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
   //SI.SpecificEnthalpy inlet_enthalpy "Inlet specific enthalpy, also equal to storage enthalpy";
   //New stuff
   //SI.ThermodynamicTemperature T_HTF "Temperature of heat transfer fluid";
@@ -45,7 +52,10 @@ model SB_Receiver
   //Medium.BaseProperties HTF_avg "Average properties of HTF";
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
-  Modelica.Blocks.Interfaces.RealOutput m_flow_guess annotation(
+  Air.State Air_State_Film "Properties at film temperature of air";
+  Air.State Air_State_Amb "Properties at ambuent temperature";
+  SI.Temperature T_film "Film temperature of air";
+  Modelica.Blocks.Interfaces.RealOutput Q_recv_in annotation(
     Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -1}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
   /*Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
           transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
@@ -59,6 +69,10 @@ protected
   //parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
   SI.Energy E_absorbed;
   SI.Energy E_net;
+  SI.ThermalConductivity k_air "thermal conductivity of air";
+  Real Re;
+  Real Pr;
+  Real Gr;
 initial equation
 //HTF_in.T = T_0;
 //HTF_in.X[2] = 0.0;
@@ -71,7 +85,42 @@ equation
 //HTF_avg.h=(HTF_in.h+HTF_out.h)/2;
 //HTF_avg.T = HTF_in.T;
 //calculate m_flow here
-  m_flow_guess = max(0.0,(ab*heat.Q_flow+Q_loss)/(SolarTherm.Media.Sodium.Sodium_utilities.h_fg_T(HTF_in.T)));
+  //calculate convective loss
+  T_film = 0.5*(Tamb+HTF_in.T);
+  Air_State_Amb.h = Air.h_Tf(Tamb);
+  Air_State_Film.h = Air.h_Tf(T_film);
+  k_air = Air_State_Amb.k;
+  
+  if convection == "Constant" then
+    Re = 0.0;
+    Pr = 0.0;
+    Gr = 0.0;
+    h_cf = 0.0;
+    h_cn = 0.0;
+    h_c = h_c_const;
+  else
+    //Gr is for natural convection, use Tamb and y-scale
+    //Pr and Re are for forced convection, use T_film and x-scale
+    //Natural convection uses y-scale (height)
+    //Forced convection uses x-scale (diameter)
+    if concept == "Billboard" then
+      Re = Air_State_Film.rho*max(0.0,Wspd)*D_rcv/Air_State_Film.mu; //x-scale, Film temperature
+      Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film temperature
+      Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(H_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient temperature
+      h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature
+      h_cf = (k_air/D_rcv)*0.0307*(Re^0.8)*(Pr^0.6)*((HTF_in.T/Tamb)^(-0.4)); //x-scale, Film temperature
+      h_c = (h_cn^3.2+h_cf^3.2)^(1/3.2);
+    else //Cylindrical External
+      Re = Air_State_Film.rho*max(0.0,Wspd)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
+      Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film Temperature
+      Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(D_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient Temperature
+      h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature
+      h_cf = (k_air/D_rcv)*(0.3+0.488*(Re^0.5)*((1.0+((Re/282000)^0.625)))^0.8); //x-scale, Film temperature, smooth cylinder
+      h_c = (h_cn^3.2+h_cf^3.2)^(1/3.2);
+    end if;
+  end if;
+    
+  Q_recv_in = heat.Q_flow;
   
   fluid_a.h_outflow = 0;
   heat.T = HTF_in.T;
@@ -88,7 +137,7 @@ equation
 
   h_in = HTF_in.h;
   h_out = HTF_out.h;
-  if fluid_a.m_flow > 1.0e6 then
+  if fluid_a.m_flow > 1.0e-6 then
     0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);
   else
     h_in = h_out;

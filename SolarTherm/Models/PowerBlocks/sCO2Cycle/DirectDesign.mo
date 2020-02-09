@@ -713,13 +713,20 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     parameter Boolean external_parasities = false "= true enable parasities as an input";
     parameter Real nu_min=0.25 "Minimum turbine operation" ;
     Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
-          transformation(extent={{-12,-12},{12,12}},
-          rotation=-90,
-          origin={1.77636e-015,80}),                  iconTransformation(
-          extent={{-6,-6},{6,6}},
-          rotation=-90,
-          origin={20,60})));
-    input SI.ThermodynamicTemperature T_amb;
+          visible = true,transformation(
+          origin={20,80},extent={{-12,-12},{12,12}},
+          rotation=-90),                  iconTransformation(
+          
+          origin={20,60},extent={{-6,-6},{6,6}},
+          rotation=-90)));
+          
+    Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
+          visible = true,transformation(
+          origin={-24,80},extent={{-12,-12},{12,12}},
+          rotation=-90),                  iconTransformation(
+          
+          origin={-20,60},extent={{-6,-6},{6,6}},
+          rotation=-90)));
     //Cycle parameters
     parameter SI.AbsolutePressure p_high = 200 * 10 ^ 5 "high pressure of the cycle";
     parameter SI.ThermodynamicTemperature T_high = 715 + 273.15 "inlet temperature of the turbine";

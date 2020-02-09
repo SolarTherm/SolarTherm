@@ -25,7 +25,7 @@ model TwoTable
     tableName="optics",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=fileA)
-    annotation (Placement(transformation(extent={{12,12},{32,32}})));
+    annotation (Placement(visible = true, transformation(extent = {{12, 14}, {32, 34}}, rotation = 0)));
   Modelica.Blocks.Tables.CombiTable2D nu_tableB(
     tableOnFile=true,
     tableName="optics",
