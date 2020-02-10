@@ -169,7 +169,7 @@ model SB_Reference_StirlingSES
   parameter FI.Money C_tower(fixed = false) "Tower cost";
   parameter FI.Money C_receiver = if currency == Currency.USD then 71708855 * (A_receiver / 879.8) ^ 0.7 else 71708855 * (A_receiver / 879.8) ^ 0.7 / r_cur "Receiver cost";
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
-  parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
+  parameter FI.Money C_storage = tankHot.C_Storage "Storage cost";
   parameter FI.Money C_block = pri_block * P_gross "Power block cost";
   parameter FI.Money C_bop = pri_bop * P_gross "Balance of plant cost";
   parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";

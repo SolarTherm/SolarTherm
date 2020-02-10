@@ -6,7 +6,6 @@ model SB_PowerBlockControl
   parameter Real T_off=1023 "Temp of stop discharge"; //PB
   
   parameter Real m_flow_ref = 10.0 "Design heat flow rate into power block";
-  Real h_fg;
   Real PB_load;
   
   Modelica.Blocks.Interfaces.RealInput T_stor(start=1023) "Temperature of the HTF in storage"
@@ -26,7 +25,6 @@ algorithm
   end when;
 
 equation
-  h_fg = SolarTherm.Media.Sodium.Sodium_utilities.h_fg_T(T_stor);
   m_flow_PB = PB_load*(m_flow_ref);
 
 end SB_PowerBlockControl;

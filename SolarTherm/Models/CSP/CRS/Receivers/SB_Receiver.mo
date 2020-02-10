@@ -57,6 +57,9 @@ model SB_Receiver
   SI.Temperature T_film "Film temperature of air";
   Modelica.Blocks.Interfaces.RealOutput Q_recv_in annotation(
     Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -1}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+    
+  Modelica.Blocks.Interfaces.BooleanOutput net_gain annotation(
+    Placement(visible = true, transformation(origin = {108, 52}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -37}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
   /*Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
           transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
               -24,-98},{-12,-86}})));*/
@@ -146,6 +149,7 @@ equation
   Q_loss = -A_aperture * CN.sigma * em * (HTF_in.T ^ 4 - Tamb ^ 4);
   der(E_absorbed) = ab * heat.Q_flow;
   der(E_net) = Q_rcv;
+  net_gain = ab * heat.Q_flow + Q_loss > 1e-6;
   if E_absorbed > 0.0 then
     receiver_efficiency = E_net / E_absorbed;
   else

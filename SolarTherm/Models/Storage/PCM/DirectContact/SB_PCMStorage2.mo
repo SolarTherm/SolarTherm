@@ -26,7 +26,7 @@ model SB_PCMStorage2
   //PCM
   parameter SI.Length z_PCM = 7e-2 "Depth of PCM at 298.15K (m)";
   //HTF
-  parameter SI.Mass m_HTF_start = 1000.0 "Mass of sodium in tank (kg)";
+  parameter SI.Mass m_HTF = 1000.0 "Mass of sodium in tank (kg)";
   //Numerical discretization
   parameter Integer n = 20 "Number of PCM control volumes";
   parameter Real growth_ratio = 1.1 "Mesh growth ratio";
@@ -60,13 +60,13 @@ model SB_PCMStorage2
   parameter SI.SpecificEnthalpy h_PCM_theoretical = PCM_Package.h_Tf(T_max, 1.0) - PCM_Package.h_Tf(T_min, 0.0) "Theoretical specific enthalpy difference between max and min temperatures";
   parameter Real C_PCM = m_PCM * PCM_Package.cost "Total cost of the PCM material (USD)";
   //HTF
-  parameter Real C_HTF = m_HTF_start * HTF_Package.cost "Total cost of the HTF material (USD)";
+  parameter Real C_HTF = m_HTF * Medium.cost "Total cost of the HTF material (USD)";
   //Insulation
   parameter Real C_insulation = A_surf_tank * (39.89 / U_loss_tank - 0.0539);
   //Discretization
   parameter SI.Mass m_node[n] = CV_Mass(rho_PCM_ref * A_PCM * z_PCM, CV_Thickness(growth_ratio, z_PCM, n)) "Mass of Nodes does not change";
   //Misc Costs
-  parameter Real C_misc = (m_tank + m_tray + m_HTF_start + m_PCM) * 0.1722 + 0.018615 * Q_flow_ref_blk + m_PCM * (h_PCM_theoretical / 3600.0e3) * 0.6471;
+  parameter Real C_misc = (m_tank + m_tray + m_HTF + m_PCM) * 0.1722 + 0.018615 * Q_flow_ref_blk + m_PCM * (h_PCM_theoretical / 3600.0e3) * 0.6471;
   //Overall Cost
   parameter Real C_Storage = C_tank + C_tray + C_PCM + C_HTF + C_insulation + C_misc "Total storage cost";
   //-----------------------------------------------------------------------------------
@@ -94,7 +94,6 @@ model SB_PCMStorage2
   SI.Energy E_sensible "Sensible portion of heat storage by PCM, J";
   SI.Energy E_latent "Latent heat portion of PCM, J";
   //HTF Properties
-  parameter SI.Mass m_HTF = m_HTF_start;
   //SI.Enthalpy H_HTF "Combined enthalpy of both liquid and gas HTF, J";
   SI.SpecificVolume v_HTF "Combined specific volume of both liquid and gas HTF, m3/kg";
   //Specific volume of sodium liquid&vapor mixture constrained by the available space and mass
@@ -155,14 +154,15 @@ model SB_PCMStorage2
       SI.ThermalConductivity k_PCM_avg;
       SI.Density rho_PCM_avg;
       SI.Length z_PCM_avg;*/
+  SI.SpecificEnthalpy h_HTF;
+  SI.Density d_HTF;
 protected
   //PCM properties
   SI.Density rho[n];
   //(start = fill(Rho_NaCl(T_start,0.0),n)) "Node Density";
   SI.ThermalConductivity k[n];
   //(start = fill(K_NaCl(T_start,0.0),n)) "Node thermal Conductivity";
-  SI.SpecificEnthalpy h_HTF;
-  SI.Density d_HTF;
+
   //Tank and Tray properties
   //SI.SpecificEnthalpy h_tray (start = Tray_Package.h_Tf(T_start,0.0));
   //SI.SpecificEnthalpy h_tank (start = Tank_Package.h_Tf(T_start,0.0));

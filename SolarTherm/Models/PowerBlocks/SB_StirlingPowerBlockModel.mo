@@ -8,8 +8,9 @@ model SB_StirlingPowerBlockModel
   parameter SI.Temperature T_in_ref=1073.0 "HTF inlet temperature (design)" annotation (Dialog(group="Design"));
   parameter SI.Temperature T_out_ref=1073.0 "HTF outlet temperature (design)" annotation (Dialog(group="Design"));
   parameter SI.Temperature T_cool_des=323.0 "Cold temperature of Stirling (design)" annotation (Dialog(group="Design"));
-  parameter Real nu_gross_des = 0.7893*(1.0 - (T_cool_des/T_in_ref)^0.5) "Design gross efficiency of stirling cycle" annotation (Dialog(group="Design"));
-  //parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
+  parameter String engine_brand = "SES" "Brand of Stirling engine"; //SES or 75%Carnot
+  parameter Real nu_gross_des = if engine_brand == "SES" then 0.7893*(1.0 - (T_cool_des/T_in_ref)^0.5) else 0.75*(1.0 - (T_cool_des/T_in_ref)) "Design gross efficiency of stirling cycle" annotation (Dialog(group="Design"));
+
   parameter SI.HeatFlowRate Q_flow_ref=W_des/nu_gross_des "Design thermal power" annotation (Dialog(group="Design"));
 
   parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
@@ -27,7 +28,7 @@ model SB_StirlingPowerBlockModel
     "= true enable parasities as an input"
       annotation (Dialog(group="Parasities energy losses"), Evaluate=true, HideResult=true, choices(checkBox=true));
 
-  parameter Real W_base=0.0055*Q_flow_ref "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
+  parameter Real W_base=0.0055*W_des "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -125,7 +126,7 @@ equation
     //k_q=cycle.k_q;
     //k_w=cycle.k_w;
   //if fluid_a.m_flow > 1e-6 then
-    nu_gross = 0.7893*(1.0-(T_cool_des/T_in)^0.5);
+    nu_gross = if engine_brand == "SES" then 0.7893*(1.0-(T_cool_des/T_in)^0.5) else 0.75*(1.0-(T_cool_des/T_in));
     Q_flow = W_des/nu_gross;
     h_out = h_in - Q_flow/fluid_a.m_flow;
     //Q_flow=-fluid_a.m_flow*(h_out-h_in);

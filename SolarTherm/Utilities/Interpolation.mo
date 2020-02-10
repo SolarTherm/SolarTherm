@@ -43,20 +43,20 @@ protected
   algorithm
     success := false;
     count := 1;
-    pct := 100.0 * f_receiver;
+    pct := 100.0 * f_recv;
     if pct > 130.0 then
       file_opticsA := prefix + "_125%Arecv_optics.motab";
-      file_opticsB := file_optics + "_130%Arecv_optics.motab";
+      file_opticsB := prefix + "_130%Arecv_optics.motab";
       weight := (pct - 125) / (130 - 125);
     elseif pct < 70.0 then
-      file_opticsA := file_optics + "_70%Arecv_optics.motab";
-      file_opticsB := file_optics + "_75%Arecv_optics.motab";
-      weight := (pct -70) / (80 - 70);
+      file_opticsA := prefix + "_70%Arecv_optics.motab";
+      file_opticsB := prefix + "_75%Arecv_optics.motab";
+      weight := (pct -70) / (75 - 70);
     else
       while count < 13 and success == false loop
         if pct >= List[count] and pct <= List[count + 1] then
-          file_opticsA := file_optics + "_" + String(List[count]) + "%Arecv_optics.motab";
-          file_opticsB := file_optics + "_" + String(List[count + 1]) + "%Arecv_optics.motab";
+          file_opticsA := prefix + "_" + String(List[count]) + "%Arecv_optics.motab";
+          file_opticsB := prefix + "_" + String(List[count + 1]) + "%Arecv_optics.motab";
           weight := (pct - List[count]) / (List[count + 1] - List[count]);
           success := true;
         else
@@ -83,20 +83,20 @@ protected
   algorithm
     success := false;
     count := 1;
-    pct := 100.0 * f_receiver;
+    pct := 100.0 * f_recv;
     if pct > 130.0 then
       file_opticsA := prefix + "_125%Arecv_optics.motab";
-      file_opticsB := file_optics + "_130%Arecv_optics.motab";
+      file_opticsB := prefix + "_130%Arecv_optics.motab";
       weight := (pct - 125) / (130 - 125);
     elseif pct < 70.0 then
-      file_opticsA := file_optics + "_70%Arecv_optics.motab";
-      file_opticsB := file_optics + "_75%Arecv_optics.motab";
-      weight := (pct -70) / (80 - 70);
+      file_opticsA := prefix + "_70%Arecv_optics.motab";
+      file_opticsB := prefix + "_75%Arecv_optics.motab";
+      weight := (pct -70) / (75 - 70);
     else
       while count < 13 and success == false loop
         if pct >= List[count] and pct <= List[count + 1] then
-          file_opticsA := file_optics + "_" + String(List[count]) + "%Arecv_optics.motab";
-          file_opticsB := file_optics + "_" + String(List[count + 1]) + "%Arecv_optics.motab";
+          file_opticsA := prefix + "_" + String(List[count]) + "%Arecv_optics.motab";
+          file_opticsB := prefix + "_" + String(List[count + 1]) + "%Arecv_optics.motab";
           weight := (pct - List[count]) / (List[count + 1] - List[count]);
           success := true;
         else

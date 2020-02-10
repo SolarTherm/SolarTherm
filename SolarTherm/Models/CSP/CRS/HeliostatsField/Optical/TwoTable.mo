@@ -22,13 +22,13 @@ model TwoTable
   SI.Angle angle2;
   Modelica.Blocks.Tables.CombiTable2D nu_tableA(
     tableOnFile=true,
-    tableName="optics",
+    tableName="optical_efficiency",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=fileA)
     annotation (Placement(visible = true, transformation(extent = {{12, 14}, {32, 34}}, rotation = 0)));
   Modelica.Blocks.Tables.CombiTable2D nu_tableB(
     tableOnFile=true,
-    tableName="optics",
+    tableName="optical_efficiency",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=fileB);
   Modelica.Blocks.Sources.RealExpression angle2_input(y=to_deg(angle2))

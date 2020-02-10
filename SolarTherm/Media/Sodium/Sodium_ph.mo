@@ -6,6 +6,7 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 		constants (such as nX, nXi) are automatically defined by
 		definitions given in the base class Interfaces.PartialMedium"
 	*/
+	constant Real cost = 3.0 "USD/kg";
 	extends Modelica.Media.Interfaces.PartialMedium(
 		ThermoStates=Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
 		final mediumName="Sodium",
@@ -72,13 +73,19 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 		"Base properties of medium"
 
     Real x(max=1.0,min=0.0);
+    Real v_liq;
+    Real v_gas;
+    Real v;
  equation
 	p = state.p;
 	h = state.h;
-	
-	T = T_p(p);
+	p = p_v(T);
 	h = (1-x)*h_T(T) + x*h_v_T(T);
-	d = (1-x)*rho_T(T) + x*rho_v_T(T);
+	v_liq = 1/rho_T(T);
+	v_gas = 1/rho_v_T(T);
+	
+	v = (1-x)*v_liq + x*v_gas;
+	d = 1.0/v;
 	
 	u = h - p / d;
 	MM = 0.02298977;
