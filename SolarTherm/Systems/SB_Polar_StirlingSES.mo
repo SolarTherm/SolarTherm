@@ -37,11 +37,16 @@ model SB_Polar_StirlingSES
   parameter Real he_av_design = 0.99 "Helisotats availability";
 
   //Metadata
-  
+  parameter Real f_recv = 1.0 "Receiver area multiplier to be optimised";
   parameter String[2] opt_file_list = OpticsTableNames(opt_file_prefix, f_recv);
   parameter String opt_file_A = opt_file_list[1];
   parameter String opt_file_B = opt_file_list[2];
   parameter Real opt_file_weight = OpticsTableWeight(opt_file_prefix, f_recv);
+  
+  //SolarTherm.Utilities.Metadata_Optics(
+  
+  parameter Real[8] MetaA = getMetadata_opt(opt_file_A);
+  parameter Real[8] MetaB = getMetadata_opt(opt_file_B);
   // Receiver
   parameter Integer N_pa_rec = 20 "Number of panels in receiver";
   parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
@@ -54,6 +59,11 @@ model SB_Polar_StirlingSES
   parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
   // Storage
   parameter Real t_storage(unit = "h") = 4 "Hours of storage";
+  parameter SI.Temperature T_stor_start = 1028.0 "Starting temperature of storage tank";
+  parameter SI.Temperature T_up_u = 1123.0 "Temperature at which defocusing starts";
+  parameter SI.Temperature T_up_l = 1098.0 "Temperature at which defocusing stops";
+  parameter SI.Temperayure T_low_u = 1048.0 "Temperature at which PB starts";
+  parameter SI.Temperature T_low_l = 1023.0 "Temperature at which PB stops";
   //parameter SI.Temperature T_cold_set = CV.from_degC(290) "Cold tank target temperature";
   //parameter SI.Temperature T_hot_set = CV.from_degC(574) "Hot tank target temperature";
   //parameter SI.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting temperature";
@@ -62,17 +72,18 @@ model SB_Polar_StirlingSES
   //parameter SI.Temperature T_hot_aux_set = CV.from_degC(500) "Hot tank auxiliary heater set-point temperature";
   //parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
   //parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
-  parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
-  parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
-  parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
-  parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
-  parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
+  //parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
+  //parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
+  //parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
+  //parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
+  //parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
+  //parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.5 "Heat transfer coefficient of tank losses between sodium and ambient temps, W/m2K";
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
   parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
-  parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
-  parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
-  parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
+  parameter SI.Energy helio_E_start = 90e3*A_heliostat/144.375 "Heliostat startup energy consumption";
+  parameter SI.Power helio_W_track = 0.0553*A_heliostat/144.375 "Heliostat tracking power";
+  parameter Real tank_ar = 1 "storage aspect ratio";
   // Power block
   replaceable model Cycle = Models.PowerBlocks.Correlation.Rankine "Rankine cycle regression model";
   replaceable model Cooling = Models.PowerBlocks.Cooling.SAM "PB cooling model";

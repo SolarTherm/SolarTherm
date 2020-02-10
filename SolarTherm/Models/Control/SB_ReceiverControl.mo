@@ -4,8 +4,7 @@ model SB_ReceiverControl
   //replaceable package HTF = SolarTherm.Media.Sodium.Sodium_ph;
   parameter Real T_df_on=1123 "Level of start defocus"; //recv
   parameter Real T_df_off=1098 "Level of stop defocus"; //recv
-  parameter Real T_on=1048 "Temp of start discharge"; //PB
-  parameter Real T_off=1023 "Temp of stop discharge"; //PB
+
   
   parameter Real Q_flow_PB_des = 298.5e6 "Design heat flow rate into power block";
   Real h_fg;

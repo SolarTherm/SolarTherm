@@ -205,13 +205,13 @@ model TestSCO2PB_Zeb
   // Cold tank
   // Receiver lift
   // Pump Hot
-  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium = Medium, k_loss = k_loss_hot) annotation(
+  SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium, k_loss = k_loss_hot) annotation(
     Placement(transformation(origin = {74, 44}, extent = {{0, 0}, {12, 12}})));
   // Temperature sensor
   // PowerBlockControl
   // ReceiverControl
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, E_net(displayUnit = ""), P_gro = P_gross, T_amb_des = blk_T_amb_des, T_low = from_degC(36), eta_turb = 0.90, external_parasities = false, nu_min = nu_min_blk) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, E_net(displayUnit = ""), P_gro = 10e6, T_amb_des = blk_T_amb_des, T_low = from_degC(36), eta_turb = 0.90, external_parasities = false, m_HTF_des = 87.13, nu_min = nu_min_blk) annotation(
     Placement(visible = true, transformation(extent = {{84, 6}, {120, 44}}, rotation = 0)));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
@@ -221,15 +221,15 @@ model TestSCO2PB_Zeb
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-  Modelica.Blocks.Sources.RealExpression m_flow_in(y = 1000) annotation(
+  Modelica.Blocks.Sources.RealExpression m_flow_in(y = 87.13) annotation(
     Placement(visible = true, transformation(origin = {125, 125}, extent = {{22, 11}, {-22, -11}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink fluidSink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {17, 17}, extent = {{19, -19}, {-19, 19}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT boundary(redeclare package Medium = Medium, nPorts = 1, p = 101325, use_T_in = true) annotation(
     Placement(visible = true, transformation(origin = {12, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 300) annotation(
-    Placement(visible = true, transformation(origin = {19, 99}, extent = {{-15, -13}, {15, 13}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression T_in(y = 500 + 273.15 + time) annotation(
+    Placement(visible = true, transformation(origin = {13, 101}, extent = {{-15, -13}, {15, 13}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression T_in(y = 700 + 273.15 + time) annotation(
     Placement(visible = true, transformation(origin = {-40, 54}, extent = {{-24, -14}, {24, 14}}, rotation = 0)));
 initial equation
   if fixed_field then
@@ -268,7 +268,7 @@ equation
   connect(T_in.y, boundary.T_in) annotation(
     Line(points = {{-14, 54}, {0, 54}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tamb.y, powerBlock.T_amb) annotation(
-    Line(points = {{36, 100}, {98, 100}, {98, 36}, {98, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{29.5, 101}, {98, 101}, {98, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
