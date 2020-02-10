@@ -326,16 +326,7 @@ end while;
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
   C_BEC_ref:=material_sc*m_material_HX_ref;
   C_BEC:=C_BEC_ref*(A_tot/A_ref)^0.8;
-  
-  //C_BEC:=0.0000000003365304*A_tot^4 - 0.00001391267*A_tot^3 + 0.1860877*A_tot^2 + 411.577*A_tot + 264664.4;
-    //C_BEC:=material_sc*A_tot*9.5*(10000/A_tot)^0.1;
-  
-//  if noEvent(A_tot>1000) then
-    //material_sc_var:=(-1.078*log(m_material) + 18.14)/5*material_sc;
-    
-//  else
-//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
-//  end if;
+
   
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
