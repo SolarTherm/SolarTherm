@@ -187,8 +187,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 178378954.0 * (A_receiver / 1206.37) ^ 0.7 else 178378954.0 * (A_receiver / 1206.37) ^ 0.7 / r_cur "Receiver cost";
-	//Receiver cost updated to match estimated total cost of $178M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
+	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 66039471.84 * (A_receiver / 1571) ^ 0.7 else 66039471.84 * (A_receiver / 1571) ^ 0.7 / r_cur "Receiver cost";
+	//Receiver cost updated to match estimated total cost of $54.9M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
 	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
