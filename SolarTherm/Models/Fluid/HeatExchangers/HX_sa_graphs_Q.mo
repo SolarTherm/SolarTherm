@@ -11,7 +11,7 @@ model HX_sa_graphs_Q
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des[38] = {10e6, 20e6, 30e6, 50e6, 80e6, 100e6, 120e6, 140e6, 160e6, 180e6, 200e6, 240e6, 260e6, 275e6, 280e6, 300e6, 320e6, 340e6, 360e6, 380e6, 400e6, 420e6, 440e6, 460e6, 480e6, 500e6, 520e6, 540e6, 550e6, 560e6, 580e6, 600e6, 650e6, 700e6, 750e6, 800e6, 850e6, 900e6} "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des[46] = {100e6, 120e6, 140e6, 160e6, 180e6, 200e6, 220e6, 240e6, 260e6, 280e6, 300e6, 320e6, 340e6, 360e6, 380e6, 400e6, 420e6, 440e6, 460e6, 480e6, 500e6, 520e6, 540e6, 560e6, 580e6, 600e6, 620e6, 640e6, 660e6, 680e6, 700e6, 720e6, 740e6, 760e6, 780e6, 800e6, 820e6, 840e6, 860e6, 880e6, 900e6, 920e6, 940e6, 960e6, 980e6, 1000e6} "Design Heat Flow Rate";
 //  parameter SI.HeatFlowRate Q_d_des[2] = {275e6, 550e6} "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
@@ -60,6 +60,11 @@ model HX_sa_graphs_Q
   parameter FI.AreaPrice sc_A[dim_tot](each fixed=false) "HX Specific Cost - Area";
   parameter FI.MassPrice sc_m[dim_tot](each fixed=false) "HX Specific Cost - Mass";
   parameter Real sc_cap[dim_tot](each fixed=false) "HX Specific Cost - Capacity";
+  parameter Real moA[dim_tot](each fixed=false) "Mass Over Area Ratio";
+  parameter Real moA_ave(fixed=false) "Mass Over Area Ratio";
+  parameter Real A_ref(fixed=false) "Mass Over Area Ratio";
+  parameter Real m_ref(fixed=false) "Mass Over Area Ratio";
+  parameter FI.MassPrice sc_m_ref=1.65*84 "HX Specific Cost - Mass";
   
 initial algorithm
   for ii in 1:dimQ loop
@@ -68,5 +73,10 @@ initial algorithm
   sc_A[ii]:=C_BEC_HX[ii]/A_HX[ii];
   sc_m[ii]:=C_BEC_HX[ii]/m_material_HX[ii];
   sc_cap[ii]:=C_BEC_HX[ii]/Q_d_des[ii];
+  moA[ii]:=m_material_HX[ii]/A_HX[ii];
   end for;
+  moA_ave:=sum(moA)/dimQ;
+  A_ref:=max(A_HX);
+  m_ref:=max(m_material_HX);
+  
 end HX_sa_graphs_Q;
