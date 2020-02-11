@@ -13,7 +13,7 @@ import os
 
 class TestScheduler(unittest.TestCase):
 	def setUp(self):
-		fn = '../examples/NaSaltsCO2System.mo'
+		fn = '../examples/NaSaltSCO2System_modular.mo'
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
@@ -34,8 +34,6 @@ class TestScheduler(unittest.TestCase):
 		print 'Receiver thermal output at design point:  %6.2f MW'%(getval('Q_rec_out')/1e6)
 		print 'Power block gross rating at design point: %6.2f MW'%(getval('P_gross')/1e6)
 		print 'Solar multiple:                           %4.1f   '%(getval('SM'))
-		print 'Receiver diameter:                        %4.2f  m'%(getval('D_receiver'))
-		print 'Receiver height:                          %4.2f  m'%(getval('H_receiver'))
 		print 'Tower height:                             %4.1f  m'%(getval('H_tower'))
 		print 'Number of heliostats:                     %4.1f  m'%(getval('n_heliostat'))
 
@@ -43,7 +41,7 @@ class TestScheduler(unittest.TestCase):
 		content = r'''\documentclass{article}
 \begin{document}
 
-\section{Sodium-Salt single tower system}
+\section{Sodium-Salt multi-tower system}
 
 \subsection{High-level performance parameters}
 
@@ -62,15 +60,14 @@ class TestScheduler(unittest.TestCase):
 \begin{center}
 \begin{tabular}{ ll } 
 	\hline\hline
+	Number of modules:					& %i \\
 	Receiver thermal input at design point (MWt):		& %6.1f \\
 	Receiver thermal output at design point (MWt):		& %6.1f \\
 	Power block gross rating at design point (MWe):		& %6.1f \\
 	Full load hours of storage (h):				& %6.1f \\
 	Solar multiple:						& %6.1f \\
-	Receiver diameter (m):					& %6.1f \\
-	Receiver height (m):					& %6.1f \\
-	Tower height (m):					& %6.1f \\
-	Number of heliostats:					& %i \\
+	Tower height per module (m):				& %6.1f \\
+	Number of heliostats per module:			& %i \\
 	\hline\hline
 \end{tabular}
 \end{center}
@@ -128,13 +125,12 @@ class TestScheduler(unittest.TestCase):
 		self.perf[0],
 		self.perf[2],
 		self.perf[1],
+		getval('n_modules'),
 		getval('R_des')/1e6,
 		getval('Q_rec_out')/1e6,
 		getval('P_gross')/1e6,
 		getval('t_storage'),
 		getval('SM'),
-		getval('D_receiver'),
-		getval('H_receiver'),
 		getval('H_tower'),
 		getval('n_heliostat'),
 		getval('r_disc')*100,
