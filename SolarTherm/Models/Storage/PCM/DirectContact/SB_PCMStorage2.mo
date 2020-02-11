@@ -102,15 +102,15 @@ model SB_PCMStorage2
   SI.ThermodynamicTemperature T_HTF;//(start = T_start) "Temperature of HTF, K";
   Modelica.Blocks.Interfaces.RealOutput T_storage annotation(
     Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {0, -108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
-  SI.AbsolutePressure p_HTF "Absolute pressure of HTF, Pa";
+  //SI.AbsolutePressure p_HTF "Absolute pressure of HTF, Pa";
   SI.SpecificVolume v_liq "Specific volume of sat. sodium liquid at current temperature, m3/kg";
   //SI.SpecificVolume v_gas "Specific volume of sat. sodium gas at current temperature, m3/kg";
   //SI.SpecificEnthalpy h_liq "Specific enthalpy of sat. sodium liquid at current temperature, J/kg";
   //SI.SpecificEnthalpy h_gas "Specific enthalpy of sat. sodium gas at current temperature, J/kg";
   //HTF-PCM Interface
-  SI.HeatFlowRate Q_HTFPCM(start = 0.0) "Total heat rate from HTF to the PCM, J/s";
-  SI.HeatFlowRate Q_HTFPCM_top(start = 0.0) "Heat rate from HTF to PCM from the top surface (condensation/boiling), J/s";
-  SI.HeatFlowRate Q_HTFPCM_bot(start = 0.0) "Heat rate from HTF to PCM from the bottom surface (natural convection), J/s";
+  SI.HeatFlowRate Q_HTFPCM;//(start = 0.0) "Total heat rate from HTF to the PCM, J/s";
+  SI.HeatFlowRate Q_HTFPCM_top;//(start = 0.0) "Heat rate from HTF to PCM from the top surface (condensation/boiling), J/s";
+  SI.HeatFlowRate Q_HTFPCM_bot;//(start = 0.0) "Heat rate from HTF to PCM from the bottom surface (natural convection), J/s";
   //Convection
   SI.ThermalConductivity k_gas "Thermal conductivity of saturated sodium vapor";
   Real C_convection "Part of the Rayleigh number calculation";
@@ -121,7 +121,7 @@ model SB_PCMStorage2
   SI.Mass m_avail "Mass of liquid Na available for heat transfer at the receiver and power block in worst case scenario, kg";
   //PCM Discretization
   SI.ThermodynamicTemperature T[n] "Temperature array within PCM, K";
-  SI.SpecificEnthalpy h[n](start = fill(h_PCM_start, n)) "Specific energy array within PCM, J/kg";
+  SI.SpecificEnthalpy h[n];//(start = fill(h_PCM_start, n)) "Specific energy array within PCM, J/kg";
   SI.Length dz[n] "Thickness array of PCM elements, m";
   Real f[n] "Liquid fraction array of PCM elements";
   SI.Length z[n](start = CV_Location(CV_Thickness(growth_ratio, z_PCM, n))) "Location of node centes of PCM elements, m";
@@ -135,11 +135,11 @@ model SB_PCMStorage2
   //Real energy_efficiency;
   //Real exergy_efficiency;
   //material State Models
-  PCM_Package.State PCM_State[n];
-  Medium.BaseProperties HTF_State;
+  PCM_Package.State PCM_State[n](each h(start=h_PCM_start));
+  Medium.BaseProperties HTF_State;// (p(start=SolarTherm.Media.Sodium.SodiumBoiler_utilities.p_v(T_start)),d(start= m_HTF / (V_tank - V_tray - z_PCM * A_PCM)));
   //Interfaces
-  Medium.BaseProperties HTF_ap;
-  Medium.BaseProperties HTF_ar;
+  //Medium.BaseProperties HTF_ap;
+  //Medium.BaseProperties HTF_ar;
   Medium.BaseProperties HTF_bp;
   Medium.BaseProperties HTF_br;
   //PCM_Package.State PCM_State_avg;
@@ -186,9 +186,15 @@ protected
 initial equation
   for i in 1:n loop
     h[i] = h_PCM_start;
+    //T[i] = T_start;
 //set all nodes to a constant starting specific enthalpy
   end for;
-  T_HTF = T_start;
+  HTF_State.T = T_start;
+  //HTF_State.d = m_HTF/(V_tank - V_tray - sum(dz) * A_PCM);
+  //T_HTF = T_start;
+  //x_HTF = (((V_tank - V_tray - z_PCM * A_PCM)/m_HTF) - (1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start))) / 
+  //((1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_v_T(T_start))-(1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start)));
+  //h_HTF = (1-x_HTF)*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_T(T_start) + x_HTF*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_v_T(T_start);
   //HTF_State.T = T_start;
   //HTF_State.d = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
   //HTF_ap.T = T_start;
@@ -206,7 +212,7 @@ equation
   HTF_State.h = h_HTF;
   T_HTF = HTF_State.T;
   x_HTF = HTF_State.x;
-  p_HTF = HTF_State.p;
+  //p_HTF = HTF_State.p;
   v_liq = 1.0 / HTF_Package.rho_T(T_HTF);
 //h_fg = HTF_Package.h_fg_T(T_HTF);
   
@@ -292,10 +298,10 @@ equation
 //inStream(fluid_ar.h_outflow);//0.0;
   fluid_ap.h_outflow = 0.0;
 //inStream(fluid_ap.h_outflow);//0.0;
-  HTF_ap.h = inStream(fluid_ap.h_outflow);
-  HTF_ar.h = inStream(fluid_ar.h_outflow);
-  HTF_ap.p = fluid_ap.p;
-  HTF_ar.p = fluid_ar.p;
+  //HTF_ap.h = inStream(fluid_ap.h_outflow);
+  //HTF_ar.h = inStream(fluid_ar.h_outflow);
+  //HTF_ap.p = fluid_ap.p;
+  //HTF_ar.p = fluid_ar.p;
 //HTF mass balance
 //der(m_HTF) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
 //der(m_HTF) = 0.0;
@@ -304,7 +310,7 @@ equation
 //HTF energy balance
   //der(H_HTF) + der(H_tank) + der(H_tray) = Q_loss - Q_HTFPCM + fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow - (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
 //Define enthalpy
-  H_HTF = m_HTF * h_HTF;
+  h_HTF = H_HTF/m_HTF;
   H_tank = m_tank * cp_tank * (T_HTF - 298.15);
   H_tray = m_tray * cp_tray * (T_HTF - 298.15);
 

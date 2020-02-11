@@ -22,7 +22,7 @@ model SB_Polar_StirlingSES
   parameter SI.Length z_PCM = 0.20 "Vertical depth of PCM in each tray, m";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.05 "Heat transfer coefficient of tank losses between sodium and ambient temps, W/m2K";
   parameter Real SM_guess = 1.8 "Solar multiple";
-  parameter Real t_storage(unit = "h") = 8 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 4 "Hours of storage";
   parameter SI.Temperature T_low_u = 1038.0 "Temperature at which PB starts";
   
   //Constants
@@ -148,6 +148,7 @@ model SB_Polar_StirlingSES
   parameter String engine_brand = "SES" "Power block brand {SES,75%Carnot}";
   parameter SI.Power P_gross_des = 1.11e6 "Power block gross rating at design point";
   parameter SI.Power P_name_des = 1.00e6 "Power block nameplate rating";
+  parameter SI.Power P_name = P_name_des;
   parameter SI.Temperature T_pb_cool_des = 323.0 "Design cooling temperature of PB";
   parameter SI.Efficiency eff_net_des = 0.9 "Power block net efficiency rating";
   parameter SI.Efficiency eff_blk_des = if engine_brand == "SES" then 0.7893*(1.0 - (T_pb_cool_des/T_PCM_melt)^0.5) else 0.75*(1.0 - (T_pb_cool_des/T_PCM_melt)) "Power block efficiency at design point";
@@ -255,8 +256,8 @@ model SB_Polar_StirlingSES
     Placement(visible = true, transformation(origin = {103, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
-  SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
-  FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
+  SI.Energy E_elec(start = 0,fixed=true, displayUnit = "MW.h") "Generate electricity";
+  FI.Money R_spot(start = 0,fixed=true) "Spot market revenue";
   Boolean constrained(start = false);
   Real distance(start = 0);
 algorithm
@@ -342,7 +343,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {2, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, -2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-2, -10}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {14, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60, maxStep = 60),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60, maxStepSize = 60, initialStepSize = 60),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

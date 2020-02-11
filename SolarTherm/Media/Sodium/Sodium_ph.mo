@@ -71,7 +71,7 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
 
 	redeclare model extends BaseProperties(final standardOrderComponents=true)
 		"Base properties of medium"
-
+    redeclare Temperature T(start=1073,nominal=1073) "Temperature of medium";
     Real x(max=1.0,min=0.0);
     Real v_liq;
     Real v_gas;

@@ -5,6 +5,7 @@ model SB_StirlingPowerBlockModel
   parameter SI.HeatFlowRate P_name = 1.0e6 "Nameplate power block" annotation (Dialog(group="Design"));
   parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
   parameter SI.HeatFlowRate W_des=P_name/nu_net "Design turbine gross output before net losses" annotation (Dialog(group="Design"));
+  parameter SI.Temperature T_start=1023.0;
   parameter SI.Temperature T_in_ref=1073.0 "HTF inlet temperature (design)" annotation (Dialog(group="Design"));
   parameter SI.Temperature T_out_ref=1073.0 "HTF outlet temperature (design)" annotation (Dialog(group="Design"));
   parameter SI.Temperature T_cool_des=323.0 "Cold temperature of Stirling (design)" annotation (Dialog(group="Design"));
@@ -16,8 +17,8 @@ model SB_StirlingPowerBlockModel
   parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   Real nu_gross "Instantaneous pb gross efficiency";
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
-  SI.Temperature T_in=Medium.temperature(state_in);
-  SI.Temperature T_out=Medium.temperature(state_out);
+  SI.Temperature T_in(start=T_start);
+  SI.Temperature T_out(start=T_start);
 
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
@@ -99,7 +100,16 @@ algorithm
     t_ramp_initial := time;
     t_ramp_final := time + t_startup;
   end when;
+initial equation
+  //T_in = Medium.temperature(state_in_ref);
+  //T_out = Medium.temperature(state_out_ref);
+  //h_in = Medium.specificEnthalpy(state_in_ref);
+  //h_out = Medium.specificEnthalpy(state_out_ref);
+  //fluid_a.p = Medium.pressure(state_in_ref);
+  //fluid_b.p = Medium.pressure(state_out_ref);
 equation
+  T_in=Medium.temperature(state_in);
+  T_out=Medium.temperature(state_out);
   ramp_fraction = min(1.0,(time - t_ramp_initial)/(t_ramp_final-t_ramp_initial));
 
   if enable_losses then

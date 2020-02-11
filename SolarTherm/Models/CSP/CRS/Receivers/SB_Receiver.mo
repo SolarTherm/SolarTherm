@@ -52,8 +52,8 @@ model SB_Receiver
   //Medium.BaseProperties HTF_avg "Average properties of HTF";
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
-  Air.State Air_State_Film "Properties at film temperature of air";
-  Air.State Air_State_Amb "Properties at ambuent temperature";
+  Air.State Air_State_Film(h_start=Air.h_Tf(685.575)) "Properties at film temperature of air";
+  Air.State Air_State_Amb(h_start=Air.h_Tf(298.15))  "Properties at ambuent temperature";
   SI.Temperature T_film "Film temperature of air";
   Modelica.Blocks.Interfaces.RealOutput Q_recv_in annotation(
     Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -1}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
