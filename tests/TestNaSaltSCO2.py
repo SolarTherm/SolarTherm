@@ -9,11 +9,8 @@ from solartherm import postproc
 
 from math import pi
 
-<<<<<<< HEAD
-=======
 import os
 
->>>>>>> na-salt-hx
 class TestScheduler(unittest.TestCase):
 	def setUp(self):
 		fn = '../examples/NaSaltsCO2System.mo'
