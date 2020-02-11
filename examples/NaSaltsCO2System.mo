@@ -17,7 +17,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Input Parameters
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
+	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
@@ -146,7 +146,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
+	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
@@ -287,7 +287,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
-		em = em_rec,
 		redeclare package Medium = Medium1,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
@@ -295,6 +294,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
+		em = em_rec,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na,
 		DNI_SF = data.DNI,
@@ -443,8 +443,8 @@ initial equation
 
 	else // use Latticework steel tower
 
-		C_tower = if currency == Currency.USD then 78933.92 * exp(0.00879 * H_tower) else 78933.92 * exp(0.00879 * H_tower) / r_cur "Tower cost";
-		//"Tower cost fixed" updated to match estimated total cost of $122.5k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
+		C_tower = if currency == Currency.USD then  80816 * exp(0.00879 * H_tower) else 80816 * exp(0.00879 * H_tower) / r_cur "Tower cost";
+		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
 
