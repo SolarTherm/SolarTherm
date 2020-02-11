@@ -138,7 +138,7 @@ model SB_Polar_StirlingSES
   parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * ((1073 + T_superheat) ^ 4 - 298.15 ^ 4) + h_conv_recv * A_recv * (T_PCM_melt + T_superheat - 298.15) "Receiver design heat loss rate";
   parameter SI.HeatFlowRate Q_flow_tank_loss_des = A_loss_tank * U_loss_tank * (1073 - 298.15) "Tank design heat loss rate";
   parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * ab_recv - Q_flow_rec_loss_des "Receiver Thermal power output at design";
-  parameter SI.HeatFlowRate Q_flow_defocus = 0.90*(Q_flow_ref_blk_def + Q_flow_rec_loss_def + Q_flow_tank_loss_def) / ab_recv "Solar field thermal power at defocused state";
+  parameter SI.HeatFlowRate Q_flow_defocus = 0.92*(Q_flow_ref_blk_def + Q_flow_rec_loss_def + Q_flow_tank_loss_def) / ab_recv "Solar field thermal power at defocused state";
   
   //Mass flow rates
   parameter SI.MassFlowRate m_flow_blk_des = Q_flow_ref_blk / (h_in_ref_blk - h_out_ref_blk) "Design point mass flow rate of sodium vapor condensing into the power block";

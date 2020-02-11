@@ -10,7 +10,7 @@ import numpy as np
 import pylab as pl
 import random
 import time
-#import multiprocessing
+import multiprocessing
 import scoop
 from scoop import futures
 import matplotlib.pyplot as plt
@@ -199,6 +199,7 @@ if __name__ == '__main__':
 	scale = []
 	# Don't need bounds (pass None for variable to minimize)
 	for pp in args.par:
+		print("args.par:",args.par) #########
 		k, v = pp.split('=')
 		par_n.append(k)
 		vals = [simulation.parse_var_val(vv, sim.get_unit(k))
@@ -216,9 +217,13 @@ if __name__ == '__main__':
 		scale.append((ub - lb))
 		par_b.append([0, 1])
 		par_0.append((p0 - lb)/(ub - lb))
-
+		#####
+		#####
 	mat_fn = sim.model + '_res.mat'
-
+	print("par_b",par_b) #########
+	print("par_0",par_0) #########
+	print("offset",offset) #########
+	print("offset",scale) #########
 	try:
 		obj_n = args.objective.split(",") # A list of objective(s) name in string
 		perf_i = [] # perfromance index
@@ -232,6 +237,9 @@ if __name__ == '__main__':
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
+	print(args.start)
+	print(args.stop)
+	print(args.step)
 
 	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
 
@@ -355,12 +363,12 @@ if __name__ == '__main__':
 
 			ind_size = len(par_n) # Number of design parameters
 			pop_size = 100 # Set number of individuals in population
-			ngen = 2 # Total number of generation to run
+			ngen = 20 # Total number of generation to run
 			cxpb = 0.98 # Crossover probability
 			cxpb_in = 0.5 # Probability of crossover within individual
 			mutpb = 0.02 # Mutation probability
 			mutpb_in = 0.01 # Probability of mutation within individual
-			paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
+			paral_eval = True # To enable parallel evaluation. Only use it when the fitness function is slow!
 			n_cores = 4 # Number of cores for parallel evaluation of the fitness function
 
 			if args.framework == 'soo_min':
@@ -521,7 +529,7 @@ if __name__ == '__main__':
 			#mutpb = 0.02 # Mutation probability
 			#mutpb_in = 0.01 # Probability of mutation within individual
 			paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
-			n_cores = 4 # Number of cores for parallel evaluation of the fitness function
+			n_cores = 3 # Number of cores for parallel evaluation of the fitness function
 
 			creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 			creator.create("Individual", list, fitness=creator.FitnessMulti)

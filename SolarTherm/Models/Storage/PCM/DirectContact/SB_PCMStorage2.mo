@@ -99,7 +99,7 @@ model SB_PCMStorage2
   //Specific volume of sodium liquid&vapor mixture constrained by the available space and mass
   Real x_HTF "Vapor quality of sodium HTF";
   //Optimisation throws out results where x_HTF < 0 (compressed liquid) and x_HTF > 1 (superheated vapor)
-  SI.ThermodynamicTemperature T_HTF(start = T_start) "Temperature of HTF, K";
+  SI.ThermodynamicTemperature T_HTF;//(start = T_start) "Temperature of HTF, K";
   Modelica.Blocks.Interfaces.RealOutput T_storage annotation(
     Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {0, -108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
   SI.AbsolutePressure p_HTF "Absolute pressure of HTF, Pa";
@@ -155,7 +155,7 @@ model SB_PCMStorage2
       SI.Density rho_PCM_avg;
       SI.Length z_PCM_avg;*/
   SI.SpecificEnthalpy h_HTF;
-  SI.Density d_HTF;
+  SI.Density d_HTF(start = m_HTF / (V_tank - V_tray - z_PCM * A_PCM));
 protected
   //PCM properties
   SI.Density rho[n];
@@ -182,12 +182,23 @@ protected
   //SI.ThermodynamicTemperature T_amb;
   //For pump calculations
   //SI.SpecificEnthalpy h_fg;
+  
 initial equation
   for i in 1:n loop
     h[i] = h_PCM_start;
 //set all nodes to a constant starting specific enthalpy
   end for;
   T_HTF = T_start;
+  //HTF_State.T = T_start;
+  //HTF_State.d = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
+  //HTF_ap.T = T_start;
+  //HTF_ap.x = 0.001;
+  //HTF_bp.T = T_start;
+  //HTF_bp.x = 0.999;
+  //HTF_ar.T = T_start;
+  //HTF_ar.x = 0.2;
+  //HTF_br.T = T_start;
+  //HTF_br.x = 0.999;
 equation
   T_storage = T_HTF;
 //HTF Properties
@@ -198,8 +209,9 @@ equation
   p_HTF = HTF_State.p;
   v_liq = 1.0 / HTF_Package.rho_T(T_HTF);
 //h_fg = HTF_Package.h_fg_T(T_HTF);
-  d_HTF = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
+  
   v_HTF = 1.0 / d_HTF;
+  d_HTF = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
 //Figure out the volume avaibale for the sodium mixture based on vessel volume and
 //Tank and tray properties
 //PCM Section
@@ -270,9 +282,9 @@ equation
   HTF_br.T = T_HTF;
 //fluid flowing to receiver is at HTF temperatur
   HTF_bp.T = T_HTF;
-  HTF_br.x = 0.0;
+  HTF_br.x = 0.001;
 //zero vapor pumped to receiver
-  HTF_bp.x = 1.0;
+  HTF_bp.x = 0.999;
 //complete vapor pumped to powerblock
   fluid_bp.h_outflow = HTF_bp.h;
   fluid_br.h_outflow = HTF_br.h;

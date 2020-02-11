@@ -219,21 +219,42 @@ class SimResultElec(SimResult):
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
 
+		#epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+		#srev = rev_v[-1] # spot market revenue [$]
+		#lcoe = None # Levelised cost of electricity
+		#capf = None # Capacity factor
+		#if close_to_year: 
+			#lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+					#int(life_v[0]), int(cons_v[0]), epy)
+			#capf = fin.capacity_factor(name_v[0], epy)
+
+		# Convert to useful units
+		#epy = epy/(1e6*3600) # Convert from J/year to MWh/year
+		#if close_to_year: 
+			#lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
+			#capf = 100*capf
+
+		#return [epy, lcoe, capf, srev,]
+
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
 		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 		srev = rev_v[-1] # spot market revenue [$]
-		lcoe = None # Levelised cost of electricity
-		capf = None # Capacity factor
-		if close_to_year: 
+		lcoe = 10000.0 # Levelised cost of electricity
+		capf = 0.0 # Capacity factor
+		if close_to_year and (epy > 0.0): 
 			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
-		if close_to_year: 
+		if close_to_year and (epy > 0.0): 
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
-
+		print("EPY = "+str(epy)+" MWh/yr")
+		print("LCOE = "+str(lcoe)+" USD/MWhe")
+		print("CapF = "+str(capf)+" %")
+		print("$Rev = "+str(srev)+" USD/project")
 		return [epy, lcoe, capf, srev,]
 
 	def cost_breakdown(self):

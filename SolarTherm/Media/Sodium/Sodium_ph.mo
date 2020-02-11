@@ -79,7 +79,8 @@ package Sodium_ph "liquid sodium model, explicit in p and T"
  equation
 	p = state.p;
 	h = state.h;
-	p = p_v(T);
+	//p = p_v(T);
+	T = T_p(p);
 	h = (1-x)*h_T(T) + x*h_v_T(T);
 	v_liq = 1/rho_T(T);
 	v_gas = 1/rho_v_T(T);
