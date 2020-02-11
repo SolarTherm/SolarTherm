@@ -12,7 +12,7 @@ model HX_sa_graphs_allvariables
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des = 550e6 "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des = 560e6 "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
@@ -158,14 +158,14 @@ model HX_sa_graphs_allvariables
   parameter Real P_shell_cost(unit= "barg", fixed=false) "Shell pressure in barg";
   parameter Real P_cost(unit= "barg", fixed=false) "HX pressure in barg";
   parameter FI.MassPrice material_sc=84*1.65 "Material HX Specific Cost";
-  parameter SI.Mass m_material_HX_ref=95000 "Reference Heat-Exchanger Material Mass";
-  parameter SI.Area A_ref=10000 "Reference Heat-Exchanger Area";
+  parameter SI.Mass m_material_HX_ref=209781 "Reference Heat-Exchanger Material Mass";
+  parameter SI.Area A_ref=21947.3 "Reference Heat-Exchanger Area";
   parameter FI.Money_USD C_BEC_ref(fixed=false)  "Bare cost @2018";
   
   //Other Parameters
   parameter SI.CoefficientOfHeatTransfer U_guess(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.CoefficientOfHeatTransfer U_calc(fixed=false) "Heat tranfer coefficient guess";
-  parameter Real tol=0.02 "Heat transfer coefficient tollerance";
+  parameter Real tol=0.01 "Heat transfer coefficient tollerance";
   parameter Real condition(fixed=false) "While condition";
   parameter SI.CoefficientOfHeatTransfer U_calc_prev(fixed=false) "Heat tranfer coefficient guess";
   parameter SI.Length t_tube(fixed=false) "Tube thickness";
@@ -458,7 +458,7 @@ end while;
 
   //Volume and Mass HX
   t_shell:=UF.ShellThickness(D_s);
-  D_s_out:=D_s+t_shell;
+  D_s_out:=D_s+2*t_shell;
   V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
   V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
   V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle+t_baffle*D_s*L*(N_sp-1);
@@ -518,7 +518,7 @@ end while;
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
   C_BEC_ref:=material_sc*m_material_HX_ref;
-  C_BEC_HX:=C_BEC_ref*(A_HX/A_ref)^0.9;
+  C_BEC_HX:=C_BEC_ref*(A_HX/A_ref)^0.8;
   
 //  if noEvent(A_HX>1000) then
 //    C_BEC_HX:=material_sc*1.65*m_material_HX;

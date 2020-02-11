@@ -8,5 +8,6 @@ function s_T "Specific entropy of Chloride Salt as a function of temperature"
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.SpecificEntropy s "Specific entropy";
 algorithm
-	s := -0.528*log(T/298.15)+1538.7*(T-298.15);
+	s := 1538.7*log(T/298.15)-0.528*(T-298.15);
+	
 end s_T;
