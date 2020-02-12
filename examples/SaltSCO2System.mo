@@ -194,7 +194,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
 	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
 	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_cons(unit = "year") = 3 "Years of construction"; //Based on Downselect Criteria, Table 2
+	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";
@@ -219,8 +219,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping =  20867200 "Piping cost including insulation"; //Per ANU spreadsheet estimation
-	parameter FI.Money_USD C_pumps = 4648000 "Cold Salt pumps"; //Per ANU spreadsheet estimation
+	parameter FI.Money_USD C_piping =  3430000 "Piping cost including insulation"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";

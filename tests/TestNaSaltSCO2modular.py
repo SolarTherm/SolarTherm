@@ -52,14 +52,7 @@ class TestScheduler(unittest.TestCase):
 	Capacity factor (\%%):	& %6.2f \\
 	LCOE (\$/MWh):		& %6.2f \\
 	\hline\hline
-\end{tabular}
-\end{center}
-
-\subsection{High-level design parameters}
-
-\begin{center}
-\begin{tabular}{ ll } 
-	\hline\hline
+	Solar to thermal efficiency (\%%):	& %6.2f \\
 	Number of modules:					& %i \\
 	Receiver thermal input at design point (MWt):		& %6.1f \\
 	Receiver thermal output at design point (MWt):		& %6.1f \\
@@ -125,6 +118,7 @@ class TestScheduler(unittest.TestCase):
 		self.perf[0],
 		self.perf[2],
 		self.perf[1],
+		self.res.interpolate('receiver.E_rec',31536000)/getval('n_modules')/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
 		getval('n_modules'),
 		getval('R_des')/1e6,
 		getval('Q_rec_out')/1e6,

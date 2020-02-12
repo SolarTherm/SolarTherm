@@ -50,6 +50,7 @@ class TestScheduler(unittest.TestCase):
 	Energy per year (MWh):	& %6.2f \\
 	Capacity factor (\%%):	& %6.2f \\
 	LCOE (\$/MWh):		& %6.2f \\
+	Solar to thermal efficiency (\%%):	& %6.2f \\
 	\hline\hline
 \end{tabular}
 \end{center}
@@ -118,6 +119,7 @@ class TestScheduler(unittest.TestCase):
 		self.perf[0],
 		self.perf[2],
 		self.perf[1],
+		self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
 		getval('R_des')/1e6,
 		getval('Q_rec_out')/1e6,
 		getval('P_gross')/1e6,
