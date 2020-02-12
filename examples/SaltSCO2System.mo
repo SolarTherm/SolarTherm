@@ -37,18 +37,14 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
-
 	parameter Real SM = 2.7 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
-
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
-
 	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 	parameter Real C = 574.8467275 "Concentration ratio";
-
 	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
@@ -57,16 +53,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-
 	parameter Real ar_rec = 22/28.9 "Height to diameter aspect ratio of receiver aperture";
-
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
-
 	parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power to receiver at design point";
-
 	parameter Real rec_fr = (1.0 - 0.8517309312) "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
+	parameter SI.CoefficientOfHeatTransfer alpha_rec = 0 "Tank constant heat transfer coefficient with ambient";
 
 	// Storage
 	parameter Real t_storage(fixed=true, unit = "h") = 14.0 "Hours of storage";
@@ -77,8 +70,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature T_cold_start = CV.from_degC(500) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start = CV.from_degC(735) "Hot tank starting temperature";
 
-	parameter SI.Temperature T_cold_aux_set = CV.from_degC(490) "Cold tank auxiliary heater set-point temperature";
-	parameter SI.Temperature T_hot_aux_set = CV.from_degC(715) "Hot tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_cold_aux_set = CV.from_degC(390) "Cold tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_hot_aux_set = CV.from_degC(535) "Hot tank auxiliary heater set-point temperature";
 
 	parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
 	parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
@@ -91,7 +84,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
 
-	parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
@@ -125,15 +118,15 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature par_T_amb_des = from_degC(25) "Ambient temperature at design point";
 
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
-	parameter SI.Temperature T_in_ref_blk = from_degC(574) "HTF inlet temperature to power block at design";
-	parameter SI.Temperature T_out_ref_blk = from_degC(290) "HTF outlet temperature to power block at design";
+	parameter SI.Temperature T_in_ref_blk = from_degC(735) "HTF inlet temperature to power block at design";
+	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 
-	parameter Real max_rec_op_fr = 1.3 "Maximum receiver operation fraction";
+	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
 
 	parameter SI.HeatFlowRate Q_flow_defocus = (330/294.18)*Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
@@ -198,39 +191,49 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	// Cost data in USD (default) or AUD
-	parameter Real r_disc = 0.07 "Real discount rate";
-	parameter Real r_i = 0.03 "Inflation rate";
-
-	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
-	parameter Integer t_cons(unit = "year") = 0 "Years of construction";
-
+	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
+	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
+	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
+	parameter Integer t_cons(unit = "year") = 3 "Years of construction"; //Based on Downselect Criteria, Table 2
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
+	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";
+	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
+	//Site improvements cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 40 / (1e3 * 3600) else 40 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";
+	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 / 1e3 else 900 / r_cur "Power block cost per gross rated power";
+	//Power block cost should be $600/kWe + Primary HX based on Downselection Criteria, page 8, paragraph 7. NREL uses $900/kWe for now to account for PHX.
+	parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0*350 / 1e3 else 0*350 / 1e3 / r_cur "Balance of plant cost per gross rated power";
+	// Balance of plant set to 350 based on SAM 2018 default costing data
+	parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
+	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
+	parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
+	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
+	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
+	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_receiver_ref = 109459613 "Receiver reference Cost";
+	//Receiver reference cost updated to match estimated total cost of $87.34M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
+	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
-	parameter FI.AreaPrice pri_field = if currency==Currency.USD then 75 else 75/r_cur "Field cost per design aperture area"; // SAM 2018 cost data: 177*(603.1/525.4) in USD. Note that (603.1/525.4) is CEPCI index from 2007 to 2018 
-	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 10 else 10/r_cur "Site improvements cost per area"; // SAM 2018 cost data: 16
-	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 40 / (1e3 * 3600) else (40 / (1e3 * 3600))/r_cur "Storage cost per energy capacity"; // SAM 2018 cost data: 22 / (1e3 * 3600)
-	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 900 / 1e3 else 900/r_cur "Power block cost per gross rated power"; // SAM 2018 cost data: 1040
-	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 350 / 1e3 else (350 / 1e3)/r_cur "Balance of plant cost per gross rated power"; //SAM 2018 cost data: 290
-	parameter FI.AreaPrice pri_land = if currency==Currency.USD then 10000 / 4046.86 else (10000 / 4046.86)/r_cur "Land cost per area";
-	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 40.0 / 1e3 else (40.0 / 1e3)/r_cur "Fixed O&M cost per nameplate per year"; //SAM 2018 cost data: 66
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.0 / (1e6 * 3600) else (3.0 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; //SAM 2018 cost data: 3.5
 
-	parameter FI.Money C_field = pri_field * A_field "Field cost";
-	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-	parameter FI.Money C_tower(fixed = false) "Tower cost";
-	parameter FI.Money C_receiver = if currency==Currency.USD then 133396250.56 * (A_receiver / 1571) ^ 0.7 else (133396250.56 * (A_receiver / 1571) ^ 0.7)/r_cur "Receiver cost"; // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
-	parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
-	parameter FI.Money C_block = pri_block * P_gross "Power block cost";
-	parameter FI.Money C_bop = pri_bop * P_gross "Balance of plant cost";
-
-	parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
-	parameter FI.Money C_contingency = 0.10 * C_cap_dir_sub "Contingency costs";
-	parameter FI.Money C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
-	parameter FI.Money C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; // SAM 2018 cost data: 0.13
-	parameter FI.Money C_land = pri_land * A_land "Land cost";
-	parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
-
+	// Calculated costs
+	parameter FI.Money_USD C_piping =  20867200 "Piping cost including insulation"; //Per ANU spreadsheet estimation
+	parameter FI.Money_USD C_pumps = 4648000 "Cold Salt pumps"; //Per ANU spreadsheet estimation
+	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
+	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
+	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
+	parameter FI.Money_USD C_receiver = if currency == Currency.USD then C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 else C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 / r_cur "Receiver cost";
+	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
+	parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
+	parameter FI.Money_USD C_bop = pri_bop * P_gross "Balance of plant cost";
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_piping + C_pumps) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
+	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_land = pri_land * A_land "Land cost";
+	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
 	parameter FI.MoneyPerYear C_year = pri_om_name * P_name "Fixed O&M cost per year";
 	parameter Real C_prod(unit = "$/J/year") = pri_om_prod "Variable O&M cost per production per year";
 
@@ -313,6 +316,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
+		alpha = alpha_rec,
 		const_alpha = true) annotation(
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
@@ -421,12 +425,16 @@ initial equation
 		R_des = if match_sam then SM*Q_flow_des*(1 + rec_fr) else SM*Q_flow_des/(1 - rec_fr);
 	end if;
 
-	if (H_tower > 120) then // then use concrete tower
-		C_tower = if currency==Currency.USD then 8046226.19 * exp(0.0113 * H_tower) else (8046226.19 * exp(0.0113 * H_tower))/r_cur "Tower cost";
-			//SAM 2018 cost data: 3e6 * exp(0.0113 * H_tower) in USD
+	if H_tower > 120 then // then use concrete tower
+
+		C_tower = if currency == Currency.USD then 7612816 * exp(0.0113 * H_tower) else 7612816 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
+
 	else // use Latticework steel tower
-		C_tower = if currency==Currency.USD then 1.09025e6 * exp(0.00879 * H_tower) else (1.09025e6 * exp(0.00879 * H_tower))/r_cur "Tower cost";
-			// SAM 2018 cost data: 1.09025e6 * (603.1/318.4) * exp(0.00879 * H_tower)
+
+		C_tower = if currency == Currency.USD then  80816 * exp(0.00879 * H_tower) else 80816 * exp(0.00879 * H_tower) / r_cur "Tower cost";
+		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
+
 	end if;
 
 	equation
@@ -498,6 +506,9 @@ initial equation
 																		Line(points = {{109, 45.7}, {109, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(powerBlock.W_net, market.W_net) annotation(
 															Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
+
+	connect(heliostatsField.on, receiver.on) annotation(
+		Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, 5}, {-39, 5}}, color = {255, 0, 255}));
 
 	P_elec = powerBlock.W_net;
 	E_elec = powerBlock.E_net;

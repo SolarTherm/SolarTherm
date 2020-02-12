@@ -7,8 +7,8 @@ function h_T "Specific enthalpy of Chloride Salt as a function of temperature"
 algorithm
 	// h is obtained by integrating (cp dT). The integration constant was added such that the h value at T = 298.15 K becomes zero.	
 	// Integration from cp
-	 //h :=T*(-0.528/2*T+1538.7)-298.15*(-0.264*298.15+1538.7);
-	h:=1072.46353212802*T - 230607.857723372;
+	h :=T*(-0.528/2*T+1538.7)-298.15*(-0.264*298.15+1538.7);
+	//h:=1072.46353212802*T - 230607.857723372; //This is just the linearization of the previous function. Error <0.5%
 	
 	annotation(derivative=h_T_der);
 end h_T;

@@ -25,7 +25,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 600.3063e6) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 633.0440798132e6) "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -36,17 +36,17 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter Integer n_modules = 55 "Number of modular receivers";
+	parameter Integer n_modules = 58 "Number of modular receivers";
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_mod_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.508291649 "Solar multiple"; //Calculated based on a receiver output of 55*9.92586 MWt, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = 2.6711890971 "Solar multiple"; //Calculated based on a receiver output of 58*9.92586 MWt, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = true "True for polar field layout, otherwise surrounded"; //Each cavity receiver requires a polar solar field
 	parameter SI.Area A_heliostat = 5.0625 "Heliostat module reflective area"; //Based on a 2.25 x 2.25 heliostat from CSIRO
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 0.787455709 "Field optical efficiency at design point"; //Calculated to obtain a field area per module of 14286.4 m2 (2822*5.0625 m2)
+	parameter SI.Efficiency eff_opt = 0.7874493741 "Field optical efficiency at design point"; //Calculated to obtain a field area per module of 14286.4 m2 (2822*5.0625 m2)
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real gnd_cvge = 0.1000656797 "Ground coverage"; //Calculated to obtain a tower height of 50m for a polar field
+	parameter Real gnd_cvge = 0.1132475154 "Ground coverage"; //Calculated to obtain a tower height of 47m for a polar field
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
@@ -57,7 +57,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance"; //Based on high performance coating
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity"; //Based on high performance coating
-	parameter Real rec_fr = 0.090593503 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.909406496974638
+	parameter Real rec_fr = 0.0816177433970268 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.918382266900492
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
@@ -65,7 +65,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
 
 	// Storage
-	parameter Real t_storage(fixed=true, unit = "h") = 14.0 "Hours of storage";
+	parameter Real t_storage(fixed = true, unit = "h") = 14.0 "Hours of storage";
 	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
@@ -79,7 +79,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-	parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
@@ -132,7 +132,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
-	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller"; /* 0.81394780966 **/
+	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
 	parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
 
@@ -142,12 +142,12 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
 	parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_Na = 2 * m_flow_rec "Maximum mass flow rate to receiver";
-	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller"; /*0.81394780966 **/
+	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des/ n_modules "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
-	parameter SI.Area A_receiver = 10*24*4.7*0.0334 "Receiver aperture area";
+	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
+	parameter SI.Area A_receiver = 1571 "Receiver aperture area"; // TODO: Use the panels are of the cavity receiver
 	parameter SI.Area A_land = land_mult * A_field * n_modules + 197434.207385281 "Land area"; //TODO: Verify equation
 	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = 1 "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -172,7 +172,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
 	parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 / 1e3 else 900 / r_cur "Power block cost per gross rated power";
 	//Power block cost should be $600/kWe + Primary HX based on Downselection Criteria, page 8, paragraph 7. NREL uses $900/kWe for now to account for PHX.
-	parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 350 / 1e3 else 350 / 1e3 / r_cur "Balance of plant cost per gross rated power";
+	parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0*350 / 1e3 else 0*350 / 1e3 / r_cur "Balance of plant cost per gross rated power";
 	// Balance of plant set to 350 based on SAM 2018 default costing data
 	parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
 	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
@@ -180,18 +180,22 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_receiver_ref = 141663015 "Receiver reference Cost";
+	//Receiver reference cost updated to match estimated total cost of $141.7M from spreadsheet
+	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 	// Calculated costs
+	parameter FI.Money_USD C_piping = 43628500 "Piping cost including insulation"; //Per ANU spreadsheet estimation
+	parameter FI.Money_USD C_pumps =  4648000 "Cold Salt pumps"; //Per ANU spreadsheet estimation
 	parameter FI.Money_USD C_field = pri_field * A_field * n_modules "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field * n_modules "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-	parameter FI.Money_USD C_receiver = if currency == Currency.USD then 178378954.0 * (A_receiver / 1206.37) ^ 0.7 * n_modules else 178378954.0 * (A_receiver / 1206.37) ^ 0.7 * n_modules / r_cur "Receiver cost";
-	//Receiver cost updated to match estimated total cost of $178M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
+	parameter FI.Money_USD C_receiver = if currency == Currency.USD then C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 else C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 / r_cur "Receiver cost";
 	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross "Balance of plant cost";
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_hx + C_storage + C_block + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_hx + C_storage + C_block + C_bop + C_piping + C_pumps) "Direct capital cost subtotal"; // i.e. purchased equipment costs
 	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
 	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
 	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
@@ -224,19 +228,29 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 
 	//WindSpeed_input
 	Modelica.Blocks.Sources.RealExpression Wspd_input(
-		y = data.Wspd)
+		y = data.Wspd) 
 		annotation(Placement(visible = true, transformation(extent = {{-136, 20}, {-110, 40}}, rotation = 0)));
-
-	//pressure_input
+	
+	//Pressure_input
 	Modelica.Blocks.Sources.RealExpression Pres_input(
-		y = data.Pres)
+		y = data.Pres) 
 		annotation(Placement(visible = true, transformation(extent = {{140, -22}, {120, -2}}, rotation = 0)));
-
-	//parasitic inputs
+	
+	//Parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold1.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss)
+		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold1.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss) 
 		annotation(Placement(visible = true, transformation(origin = {149, 64}, extent = {{-13, -10}, {13, 10}}, rotation = -90)));
-
+	
+	//Sodium loop Pressure Losses
+	Modelica.Blocks.Sources.RealExpression PressureLosses_Na_loop(
+		y = Shell_and_Tube_HX.Dp_tube) 
+		annotation(Placement(visible = true, transformation(extent = {{-132, -50}, {-112, -30}}, rotation = 0)));
+	
+	//ChlorideSalt loop Pressure Losses
+	Modelica.Blocks.Sources.RealExpression PressureLosses_CS_loop(
+		y = Shell_and_Tube_HX.Dp_shell)
+		annotation(Placement(visible = true, transformation(extent = {{-22, 52}, {-2, 72}}, rotation = 0)));
+	
 	// Or block for defocusing
 	Modelica.Blocks.Logical.Or or1
 		annotation(Placement(visible = true, transformation(extent = {{-116, 2}, {-108, 10}}, rotation = 0)));
@@ -289,11 +303,11 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(origin = {-27, -19}, extent = {{-5, -5}, {5, 5}}, rotation = 90)));
 
 	// Pump cold1
-	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold1(
+	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold1(
 		redeclare package Medium = Medium1,
 		k_loss = k_loss_cold)
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
-
+	
 	//HX Control
 	SolarTherm.Models.Control.HX_Control_new hX_Control(
 		T_ref_rec = T_hot_set_Na,
@@ -359,11 +373,11 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{98, -42}, {78, -22}}, rotation = 0)));
 
 	// Pump cold 2NaS
-	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold2(
-		redeclare package Medium = Medium2,
-		k_loss = k_loss_cold)
+	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold2(
+		redeclare package Medium = Medium2, 
+		k_loss = k_loss_cold) 
 		annotation(Placement(visible = true, transformation(extent = {{66, 8}, {54, 20}}, rotation = 0)));
-
+	
 	// Temperature sensor 2
 	SolarTherm.Models.Fluid.Sensors.Temperature temperature2(
 		redeclare package Medium = Medium2)
@@ -419,18 +433,23 @@ initial equation
 
 	if H_tower > 120 then // then use concrete tower
 
-		C_tower = if currency == Currency.USD then 8046226.19 * exp(0.0113 * H_tower) * n_modules else 8046226.19 * exp(0.0113 * H_tower) * n_modules / r_cur "Tower cost"; 
+		C_tower = if currency == Currency.USD then 7612816 * exp(0.0113 * H_tower) else 7612816 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
 
 	else // use Latticework steel tower
 
-		C_tower = if currency == Currency.USD then 78933.92 * exp(0.00879 * H_tower) * n_modules else 78933.92 * exp(0.00879 * H_tower) * n_modules / r_cur "Tower cost";
-		//"Tower cost fixed" updated to match estimated total cost of $122.5k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
+		C_tower = if currency == Currency.USD then  80816 * exp(0.00879 * H_tower) * n_modules else 80816 * exp(0.00879 * H_tower) * n_modules / r_cur "Tower cost";
+		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
 
 equation
-
+	connect(PressureLosses_CS_loop.y, pumpCold2.Dp_loss) annotation(
+		Line(points = {{0, 62}, {38, 62}, {38, 4}, {60, 4}, {60, 8}, {60, 8}}, color = {0, 0, 127}));
+	
+	connect(PressureLosses_Na_loop.y, pumpCold1.Dp_loss) annotation(
+		Line(points = {{-110, -40}, {-70, -40}, {-70, -48}, {-16, -48}, {-16, -42}, {-16, -42}}, color = {0, 0, 127}));
+	
 	connect(Tamb_input.y, powerBlock.T_amb) annotation(
 		Line(points = {{157, 100}, {116, 100}, {116, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 

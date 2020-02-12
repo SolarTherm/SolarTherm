@@ -11,9 +11,8 @@ function T_h "Temperature of Chloride Salt as a function of specific enthalpy"
 	parameter Real c4 = 435295.541460;
     
 algorithm
-	//From h_T
-  //	T:=(-1538.7+(1538.7^2+2*0.528*(-435295.54146-h))^0.5)/(-0.528);
-    //T:=(-c2+(c2^2+4*c1*(h+c4))^0.5)/(2*c1);
-  T:=0.000932235142787*h + 215.167775245555;
+  //From h_T
+  T:=(-c2+(c2^2+4*c1*(h+c4))^0.5)/(2*c1);
+  //T:=0.000932235142787*h + 215.167775245555; //This is just the linearization of the previous function. Error <0.5%
   
 end T_h;
