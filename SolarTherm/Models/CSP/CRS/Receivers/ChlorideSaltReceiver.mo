@@ -45,6 +45,11 @@ model ChlorideSaltReceiver
 		rotation=-90,
 		origin={0,78})));
 
+	Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
+		transformation(
+		extent={{-38,-94},{2,-54}}),iconTransformation(
+		extent={{-24,-98},{-12,-86}})));
+
 	SI.Efficiency eff;
 
 protected
@@ -75,7 +80,11 @@ equation
 	Q_con=A*alpha*(medium.T-Tamb);
 	Q_pip = if (fluid_a.m_flow > 0.01) then -L_tot*C_pip else 0;
 
-	Q_loss=-Q_rad-Q_con-Q_pip;
+	if on then
+		Q_loss=-Q_rad-Q_con-Q_pip;
+	else
+		Q_loss = 0;
+	end if;
 
 	0=ab*heat.Q_flow + Q_loss + fluid_a.m_flow*(h_in-h_out);
 	Q_rcv=fluid_a.m_flow*(h_out-h_in);

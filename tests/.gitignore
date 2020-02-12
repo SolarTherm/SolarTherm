@@ -19,3 +19,4 @@ TestExternalPyStr
 TestExternalPyFunc
 optimizeInput.csv
 *.libs
+report.*

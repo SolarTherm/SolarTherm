@@ -51,7 +51,7 @@ function Design_HX_noF
   
   protected
   parameter SI.CoefficientOfHeatTransfer U_guess=1200 "Heat tranfer coefficient guess";
-  parameter Real tol=0.02 "Heat transfer coefficient tollerance";
+  parameter Real tol=0.01 "Heat transfer coefficient tollerance";
   Real condition "When condition";
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
   SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
@@ -112,9 +112,9 @@ function Design_HX_noF
   Real P_tube_cost(unit= "barg") "Tube pressure in barg";
   Real P_shell_cost(unit= "barg") "Shell pressure in barg";
   Real P_cost(unit= "barg") "HX pressure in barg";
-  parameter FI.MassPrice material_sc=84*1.65 "Material HX Specific Cost";
-  parameter SI.Mass m_material_HX_ref=95000 "Reference Heat-Exchanger Material Mass";
-  parameter SI.Area A_ref=10000 "Reference Heat-Exchanger Area";
+  parameter FI.MassPrice material_sc=84*1.65/*4.38*/ "Material HX Specific Cost";
+  parameter SI.Mass m_material_HX_ref=/*121857*//*248330*/209781 "Reference Heat-Exchanger Material Mass";
+  parameter SI.Area A_ref=/*11914.5*//*22530.8*/21947.3 "Reference Heat-Exchanger Area";
   FI.Money_USD C_BEC_ref  "Bare cost @2018";
   
   //Fluid properties
@@ -266,7 +266,7 @@ end while;
   t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
   l_b:=L/(N_baffles/N_sp+1)-t_baffle;  
   t_shell:=ShellThickness(D_s);
-  D_s_out:=D_s+t_shell;
+  D_s_out:=D_s+2*t_shell;
   V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
   V_tubes:=CN.pi*(d_o^2-d_i^2)/4*L*N_t;
   V_baffles:=(CN.pi*D_s^2)/4*(1-B)*N_baffles*t_baffle+t_baffle*D_s*L*(N_sp-1);
@@ -325,17 +325,8 @@ end while;
   C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
   C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
   C_BEC_ref:=material_sc*m_material_HX_ref;
-  C_BEC:=C_BEC_ref*(A_tot/A_ref)^0.9;
-  
-  //C_BEC:=0.0000000003365304*A_tot^4 - 0.00001391267*A_tot^3 + 0.1860877*A_tot^2 + 411.577*A_tot + 264664.4;
-    //C_BEC:=material_sc*A_tot*9.5*(10000/A_tot)^0.1;
-  
-//  if noEvent(A_tot>1000) then
-    //material_sc_var:=(-1.078*log(m_material) + 18.14)/5*material_sc;
-    
-//  else
-//    C_BEC:=C_BM*M_conv*(A_tot/A_cost)^0.7;
-//  end if;
+  C_BEC:=C_BEC_ref*(A_tot/A_ref)^0.8;
+
   
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
