@@ -33,6 +33,8 @@ model SB_Receiver
   SI.CoefficientOfHeatTransfer h_cn "Natural heat transfer coefficient calculated at each timestep";
   SI.CoefficientOfHeatTransfer h_cf "Forced heat transfer coefficient calculated at each timestep";
   SI.HeatFlowRate Q_loss;
+  SI.HeatFlowRate Q_loss_rad;
+  SI.HeatFlowRate Q_loss_conv;
   SI.HeatFlowRate Q_rcv;
   //SI.HeatFlowRate Q_pip;
   Real Flux = Q_rcv / A_material;
@@ -45,7 +47,7 @@ model SB_Receiver
   //New stuff
   //SI.ThermodynamicTemperature T_HTF "Temperature of heat transfer fluid";
   parameter SI.TemperatureDifference T_super = 50.0 "How much hotter the tube wall is compared to fluid";
-  parameter SI.Area A_aperture = if concept == "Cylindrical" then CN.pi * H_rcv * D_rcv else CN.pi * D_rcv "Area (flat)";
+  parameter SI.Area A_aperture = if concept == "Cylindrical" then CN.pi * H_rcv * D_rcv else H_rcv * D_rcv "Area (flat)";
   parameter SI.Area A_material = if concept == "Cavity" then 2.0 * A_aperture else 1.0 * A_aperture "Area used for cost relationship";
   Medium.BaseProperties HTF_in "Inlet properties of HTF";
   Medium.BaseProperties HTF_out "Outlet properties of HTF";
@@ -146,7 +148,9 @@ equation
     h_in = h_out;
   end if;
   Q_rcv = fluid_a.m_flow * (h_out - h_in);
-  Q_loss = -A_aperture * CN.sigma * em * (HTF_in.T ^ 4 - Tamb ^ 4);
+  Q_loss_rad = -A_aperture * CN.sigma * em * ((HTF_in.T+T_super) ^ 4 - Tamb ^ 4);
+  Q_loss_conv = -A_aperture * h_c * (HTF_in.T+T_super - Tamb);
+  Q_loss = Q_loss_rad + Q_loss_conv;
   der(E_absorbed) = ab * heat.Q_flow;
   der(E_net) = Q_rcv;
   net_gain = ab * heat.Q_flow + Q_loss > 1e-6;

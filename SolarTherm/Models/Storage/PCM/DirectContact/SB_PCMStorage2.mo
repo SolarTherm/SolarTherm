@@ -85,6 +85,7 @@ model SB_PCMStorage2
   SI.Energy H_HTF "Energy stored by the HTF, J";
   SI.Energy E_tank(start = 0.0);
   SI.Energy E_tray(start = 0.0);
+  SI.Energy E_stored(start=0.0) "Total energy stored in the storage subsystem";
   
   SI.Energy H_HTF_tray_tank "Enthalpy change of the HTF, Tray and Tank material, J";
   
@@ -316,7 +317,8 @@ equation
 
   H_HTF_tray_tank = H_HTF + H_tank + H_tray;
 
-  der(H_HTF_tray_tank) = Q_flow_chg - Q_flow_dis;
+  der(H_HTF_tray_tank) = Q_flow_chg - Q_flow_dis - Q_HTFPCM + Q_loss;
+  der(E_stored) = Q_flow_chg - Q_flow_dis + Q_loss;
 
 
   fluid_bp.m_flow = -1.0*fluid_ap.m_flow;

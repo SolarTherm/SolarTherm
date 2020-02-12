@@ -35,6 +35,7 @@ model TwoTable
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
+
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
