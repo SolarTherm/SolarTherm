@@ -38,6 +38,7 @@ class TestScheduler(unittest.TestCase):
 		print 'Number of heliostats:                     %4.1f  m'%(getval('n_heliostat'))
 		print 'Tank diameter:                            %4.1f  m'%(getval('D_storage'))
 		print 'Tank height:                              %4.1f  m'%(getval('H_storage'))
+		print 'Solar to thermal efficiency:              %4.1f  %%'%(self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100)
 
 		f = open('report.tex','w+')
 		content = r'''\documentclass{article}
@@ -53,6 +54,7 @@ class TestScheduler(unittest.TestCase):
 	Energy per year (MWh):	& %6.2f \\
 	Capacity factor (\%%):	& %6.2f \\
 	LCOE (\$/MWh):		& %6.2f \\
+	Solar to thermal efficiency (\%%):	& %6.2f \\
 	\hline\hline
 	Receiver thermal input at design point (MWt):		& %6.1f \\
 	Receiver thermal output at design point (MWt):		& %6.1f \\
@@ -111,6 +113,7 @@ class TestScheduler(unittest.TestCase):
 		self.perf[0],
 		self.perf[2],
 		self.perf[1],
+		self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
 		getval('R_des')/1e6,
 		getval('Q_rec_out')/1e6,
 		getval('P_gross')/1e6,
