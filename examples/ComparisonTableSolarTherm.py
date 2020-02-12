@@ -5,11 +5,11 @@ import numpy as np
 from tabulate import tabulate
 from solartherm import postproc
 
-fn_1 = 'PhysicalParticleCO21D_v11'
-resmat_1 = '/home/philgun/solartherm/examples/%s_res.mat' %(fn_1)
+fn_1 = 'case3a'
+resmat_1 = '/home/philgun/solartherm-particle/examples/%s_res.mat' %(fn_1)
 data_1 = DyMat.DyMatFile(resmat_1)
 
-fn_2 = 'PhysicalParticleCO21D'
+fn_2 = None
 if fn_2 is None :
 	data_2 = data_1
 else:
@@ -63,7 +63,7 @@ parameter_11 = "Heliostat design eff" #'eta_solartoelec'
 
 
 
-variable_code = (['A_field', 'A_receiver','eta_curtail_off','he_av_design','eta_optical','eta_curtail_defocus', 'eta_recv_abs','eta_recv_thermal','eta_storage','eta_pb_net','eta_solartoelec','C_cap_total','C_field_total','C_receiver','C_tower','C_storage','C_block'])
+variable_code = (['A_field', 'A_rcv','eta_curtail_off','he_av_design','eta_optical','eta_curtail_defocus', 'eta_recv_abs','eta_recv_thermal','eta_storage','eta_pb_net','eta_solartoelec','C_cap_total','C_field_total','C_receiver','C_tower','C_storage','C_block'])
 
 ###,'SM', 't_storage','eta_curtail_off','he_av_design','eta_optical','eta_curtail_defocus', 'eta_recv_abs','eta_recv_thermal','eta_storage','eta_pb_net','eta_solartoelec','C_cap_total','C_field_total','C_receiver','C_tower','C_storage','C_block'])
 
