@@ -22,7 +22,6 @@ model PhysicalParticleCO21D
   // *********************
   parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
   parameter Boolean match_sam_cost = false "tower height is evaluated match SAM";
-  parameter Boolean match_gen3_report_cost = true "PB, receiver+tower cost sub system are evaluated using gen3_cost";
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph "Medium props for sCO2";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
@@ -33,11 +32,14 @@ model PhysicalParticleCO21D
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab");
   parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
   parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
-  parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
+  parameter nSI.Angle_deg lat = 34.850 "Lati1tude (+ve North)";
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
-  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/SM3p00_optics.motab");
+  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/data-from-solarpilot-zeb/SM2p50/isp_fixed/_optics.motab");
+  parameter Real SM = 2.5 "Solar multiple";
+  parameter Boolean match_gen3_report_cost = false "PB, receiver+tower cost sub system are evaluated using gen3_cost";
+  parameter SI.ThermalInsulance U_value = 0.3 "Desired U_value for the tanks";
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 0 "Land area multiplier";
@@ -61,7 +63,6 @@ model PhysicalParticleCO21D
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
-  parameter Real SM = 3 "Solar multiple";
   parameter SI.Power P_gross = 100e6 "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
@@ -95,7 +96,7 @@ model PhysicalParticleCO21D
   parameter Real f_loss = 0.000001 "Fraction of particles flow lost in receiver";
   //inner parameter SI.Efficiency eta_rec_th_des = 0.8568 "PG Receiver thermal efficiency (Q_pcl / Q_sol)";
   // Storage
-  parameter Real t_storage(unit = "h") = 14 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 12 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set(fixed = false) "Cold tank target temperature";
   parameter SI.Temperature T_hot_set = CV.from_degC(800) "Hot tank target temperature";
@@ -165,7 +166,7 @@ model PhysicalParticleCO21D
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound";
   // Level (below which)s to stop disptach
-  parameter Real hot_tnk_empty_ub = 50 "Hot tank empty trigger upper bound";
+  parameter Real hot_tnk_empty_ub = 50 "FIXME ; below 31 the simon PB crash WHY?? Hot tank empty trigger upper bound";
   // Level (above which) to start disptach
   parameter Real hot_tnk_full_lb = 93 "Hot tank full trigger lower bound";
   parameter Real hot_tnk_full_ub = 95 "Hot tank full trigger upper bound";
@@ -246,8 +247,9 @@ model PhysicalParticleCO21D
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
   parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
+  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (40.299 / U_value - 0.4822654) + 2 * 3.14 * (D_storage / 2) ^ 2 * (40.299 / U_value - 0.4822654);
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
-  parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
+  parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   //PB-subsystem cost
   parameter FI.Money C_hx = Q_flow_des * pri_hx "Heat exchanger cost";
   // TODO Should be updated based on Eq. 11 in Albrecht et al's ASME conference paper draft
@@ -294,10 +296,10 @@ model PhysicalParticleCO21D
   SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti = Ti, Kp = Kp, eta_rec_th_des = eta_rec_th_des) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   // Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
   // Receiver lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftRC(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRC, CF = 0, eff = eff_lift) annotation(
