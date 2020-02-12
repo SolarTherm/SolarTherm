@@ -51,6 +51,7 @@ model ChlorideSaltReceiver
 		extent={{-24,-98},{-12,-86}})));
 
 	SI.Efficiency eff;
+	SI.Energy E_rec;
 
 protected
 	parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
@@ -90,6 +91,7 @@ equation
 	Q_rcv=fluid_a.m_flow*(h_out-h_in);
 	eff=max(Q_rcv, 0)/max(1,heat.Q_flow);
 
+	der(E_rec) = Q_rcv;
 
 	annotation (Documentation(info="<html>
 	<p>

@@ -31,6 +31,7 @@ model SodiumReceiver_modular "ReceiverSimple with convective losses"
 	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
 	SI.Efficiency eff "Calculated receiver efficiency";
 	SI.Efficiency rec_frac "Fraction of design thermal output";
+	SI.Energy E_rec;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 				transformation(
@@ -94,6 +95,9 @@ equation
 	rec_frac = Q_rcv/Q_rec_des;
 	eff = Q_rcv/max(1,heat.Q_flow*n_modules);
 	Q_out = heat.Q_flow*n_modules*eta_rec;
+
+	der(E_rec) = Q_rcv;
+
 	annotation (Documentation(info="<html>
 <h4>Brief description:</h4>
 <p>This model simulate an external receiver that is composed by a series of flat panels with the a vertical arragement of tubes. This panels are arranged around the circunference of the solar tower. The coating absortance and emittance of the tubes determine the receiver thermal losses. It assumes a single receiver temperature which is calculated acording the average temperature between the inlet and outlet fluid temperature. In this model a mass flow rate is heated as a function of the concentrated solar power considering thermal losses but neglecting effects due to receiver shape and thermal capacitances. The outlet specific enthaply is calculated in an algebraic way assuming that:</p>
