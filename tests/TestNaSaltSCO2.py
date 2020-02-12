@@ -17,7 +17,7 @@ class TestScheduler(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='120s',solver='dassl')
+		sim.simulate(start=0, stop='1y', step='120s',solver='dassl',nls='homotopy')
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
 
