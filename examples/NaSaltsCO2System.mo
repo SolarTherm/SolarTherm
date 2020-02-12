@@ -84,7 +84,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
-	parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
+	parameter Real tank_ar = 12/39.4 "storage aspect ratio"; //Updated from NREL. Changed from 20 / 18.667.
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
@@ -133,7 +133,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
-	parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
+	parameter SI.Length H_storage = (4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3) "Storage tank height";
 	parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
 
 	//Receiver Calculated parameters
