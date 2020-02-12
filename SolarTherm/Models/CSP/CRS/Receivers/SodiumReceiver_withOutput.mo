@@ -64,6 +64,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
 	Real eta_rec "Receiver efficiency as calculated from correlation";
+	SI.Energy E_rec;
 
 protected
 	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -113,6 +114,7 @@ equation
 		eta_rec = 0;
 	end if;
 	
+	der(E_rec) = Q_rcv;
 	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
 	Q_rcv = fluid_a.m_flow*(h_out-h_in);
 	eff = Q_rcv/max(1,heat.Q_flow);
