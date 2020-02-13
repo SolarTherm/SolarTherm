@@ -59,21 +59,29 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
 	parameter Real rec_fr = 0.11736179036609595 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.882638209633904
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
-	parameter SI.Temperature T_cold_set_Na = Shell_and_Tube_HX.T_Na2_design "Cold HX target temperature";
+	
+	// HX
+	parameter SI.Temperature T_cold_set_Na = CV.from_degC(520) "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
 	parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
+	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
+	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
+    parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
+	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
+	parameter Boolean optimize_HX_design=false;
+	//If optimize_HX_design is true neglect the input parameters below, otherwise provide the following values: 
+    parameter SI.Length d_o_input = 0.02223 "HX Outer Tube Diameter";
+    parameter SI.Length L_input = 23 "HX Tube Length";
+    parameter Integer N_p_input = 1 "HX Tube passes number"; //Choose between 1,2,4 or multiples of 4;
+    parameter Integer layout_input = 2 "HX Tube Layout"; //Square layout = 1, Triangular layout =2;
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 14.0 "Hours of storage";
-	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
-	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start_CS = CV.from_degC(720) "Hot tank starting temperature";
 	parameter SI.Temperature T_cold_aux_set = CV.from_degC(490) "Cold tank auxiliary heater set-point temperature";
 	parameter SI.Temperature T_hot_aux_set = CV.from_degC(710) "Hot tank auxiliary heater set-point temperature";
-	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
-	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
@@ -332,7 +340,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.Fluid.HeatExchangers.HX Shell_and_Tube_HX(
 		replaceable package Medium1 = Medium1,
 		replaceable package Medium2 = Medium2,
-		Q_d_des = Q_rec_out)
+		T_Na2_input=T_cold_set_Na,
+		Q_d_des = Q_rec_out,
+		optimize_and_run=optimize_HX_design,
+		d_o_input=d_o_input,
+		L_input=L_input,
+		N_p_input=N_p_input,
+		layout_input=layout_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
