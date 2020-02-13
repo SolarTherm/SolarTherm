@@ -282,7 +282,7 @@ model Reference_2
 												Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
 
 	//Sun
-	Models.Sources.SolarModel.Sun sun(
+	SolarTherm.Models.Sources.SolarModel.Sun sun(
 		lon = data.lon,
 		lat = data.lat,
 		t_zone = data.t_zone,
@@ -291,7 +291,7 @@ model Reference_2
 																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
-	Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
@@ -310,7 +310,7 @@ model Reference_2
 																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
 	// Receiver
-	Models.CSP.CRS.Receivers.ReceiverSimple receiver(
+	SolarTherm.Models.CSP.CRS.Receivers.ReceiverSimple receiver(
 		em = em_rec,
 		redeclare package Medium = Medium,
 		H_rcv = H_receiver,
@@ -322,7 +322,7 @@ model Reference_2
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
-	Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Tank tankHot(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -337,13 +337,13 @@ model Reference_2
 												Placement(transformation(extent = {{16, 54}, {36, 74}})));
 
 	// Pump hot
-	Models.Fluid.Pumps.PumpSimple pumpHot(
+	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_hot) annotation(
 																				Placement(transformation(extent = {{66, 38}, {78, 50}})));
 
 	// Cold tank
-	Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Tank tankCold(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -358,18 +358,18 @@ model Reference_2
 												Placement(transformation(extent = {{64, -28}, {44, -8}})));
 
 	// Pump cold
-	Models.Fluid.Pumps.PumpSimple pumpCold(
+	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_cold) annotation(
 										Placement(transformation(extent = {{10, -30}, {-2, -18}})));
 
 	// Temperature sensor
-	Models.Fluid.Sensors.Temperature temperature(
+	SolarTherm.Models.Fluid.Sensors.Temperature temperature(
 		redeclare package Medium = Medium) annotation(
 																					Placement(transformation(extent = {{-14, 74}, {-4, 64}})));
 
 	// PowerBlockControl
-	Models.Control.PowerBlockControl controlHot(
+	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on = m_flow_blk,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
@@ -378,7 +378,7 @@ model Reference_2
 																								Placement(transformation(extent = {{48, 72}, {60, 58}})));
 
 	// ReceiverControl
-	Models.Control.ReceiverControl controlCold(
+	SolarTherm.Models.Control.ReceiverControl controlCold(
 		T_ref = T_hot_set,
 		m_flow_max = m_flow_rec_max,
 		y_start = m_flow_rec_start,
@@ -391,7 +391,7 @@ model Reference_2
 									Placement(transformation(extent = {{24, -10}, {10, 4}})));
 
 	// Power block
-	Models.PowerBlocks.PowerBlockModel powerBlock(
+	SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(
 		W_des = P_gross,
 		enable_losses = blk_enable_losses,
 		redeclare model Cycle = Cycle(p_bo=p_blk),
