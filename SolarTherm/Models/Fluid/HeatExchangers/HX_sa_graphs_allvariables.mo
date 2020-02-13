@@ -12,7 +12,7 @@ model HX_sa_graphs_allvariables
   replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
   
   //Design Parameters
-  parameter SI.HeatFlowRate Q_d_des = 560e6 "Design Heat Flow Rate";
+  parameter SI.HeatFlowRate Q_d_des = 547e6 "Design Heat Flow Rate";
   parameter SI.Temperature T_Na1_des = 740 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter SI.Temperature T_MS1_des = 500 + 273.15 "Desing Molten Salt Cold Fluid Temperature";
   parameter SI.Temperature T_MS2_des = 720 + 273.15 "Desing Molten Salt Hot Fluid Temperature";
@@ -21,7 +21,7 @@ model HX_sa_graphs_allvariables
   
   //Input parameters
   parameter SI.Length d_o_input = 0.02223 "Optimal Outer Tube Diameter";
-  parameter SI.Length L_input = 24 "Optimal Tube Length";
+  parameter SI.Length L_input = 23 "Optimal Tube Length";
   parameter Integer N_p_input = 1 "Optimal Tube passes number";
   parameter Integer layout_input = 2 "Optimal Tube Layout";
   parameter SI.Temperature T_Na2_input = 520 + 273.15 "Optimal outlet sodium temperature";
@@ -132,35 +132,41 @@ model HX_sa_graphs_allvariables
   parameter FI.EnergyPrice_kWh c_e(fixed=false) "Power cost";
   parameter Real r(fixed=false) "Real interest rate";
   parameter Real H_y(unit= "h", fixed=false) "Operating hours";
-  parameter Real CEPCI_01=397 "CEPCI 2001";
-  parameter Real CEPCI_18=603.1 "CEPCI 2018";
   parameter Real M_conv = if currency == Currency.USD then 1 else 0.9175 "Conversion factor";
   parameter Real eta_pump=0.75 "Pump efficiency";
-  parameter Integer n=30 "Operating years";
-  parameter Real k1(fixed=false) "Non dimensional factor";
-  parameter Real k2(fixed=false) "Non dimensional factor";
-  parameter Real k3(fixed=false) "Non dimensional factor";
-  parameter SI.Area A_cost(fixed=false) "Area for cost function";
-  parameter FI.Money_USD C_BM(fixed=false)  "Bare module cost @operating pressure and with material";
-  parameter FI.Money_USD C_p0(fixed=false)  "Bare module cost @2001";
-  parameter Real C1(fixed=false) "Non dimensional factor";
-  parameter Real C2(fixed=false) "Non dimensional factor";
-  parameter Real C3(fixed=false) "Non dimensional factor";
-  parameter Real B1(fixed=false) "Non dimensional factor";
-  parameter Real B2(fixed=false) "Non dimensional factor";
+  parameter FI.MassPrice material_sc=84 "Material HX Specific Cost";
+  parameter Real mmm=0.37;
+  parameter Real c2=11;
+  parameter Real F_ma(fixed=false) "Manufacturing Factor";
+  parameter Real F_ma_min=1.65 "Manufacturing Factor";
   parameter Real f(fixed=false) "Annualization factor";
-  parameter Real Fp(fixed=false)"Cost pressure factor";
-  parameter Real Fm(fixed=false)"Cost material factor";
-  parameter Boolean both(fixed=false) "Condition for pressure factor correlation";
-  parameter SI.Pressure P_shell(fixed=false) "Shell-side pressure";
-  parameter SI.Pressure P_tubes(fixed=false) "Tube-side pressure";
-  parameter Real P_tube_cost(unit= "barg", fixed=false) "Tube pressure in barg";
-  parameter Real P_shell_cost(unit= "barg", fixed=false) "Shell pressure in barg";
-  parameter Real P_cost(unit= "barg", fixed=false) "HX pressure in barg";
-  parameter FI.MassPrice material_sc=84*1.65 "Material HX Specific Cost";
-  parameter SI.Mass m_material_HX_ref=209781 "Reference Heat-Exchanger Material Mass";
-  parameter SI.Area A_ref=21947.3 "Reference Heat-Exchanger Area";
-  parameter FI.Money_USD C_BEC_ref(fixed=false)  "Bare cost @2018";
+  parameter Integer n=30 "Operating years";
+  
+//  //Old Turton Cost Function
+//  parameter Real CEPCI_01=397 "CEPCI 2001";
+//  parameter Real CEPCI_18=603.1 "CEPCI 2018";
+//  parameter Real k1(fixed=false) "Non dimensional factor";
+//  parameter Real k2(fixed=false) "Non dimensional factor";
+//  parameter Real k3(fixed=false) "Non dimensional factor";
+//  parameter SI.Area A_cost(fixed=false) "Area for cost function";
+//  parameter FI.Money_USD C_BM(fixed=false)  "Bare module cost @operating pressure and with material";
+//  parameter FI.Money_USD C_p0(fixed=false)  "Bare module cost @2001";
+//  parameter Real C1(fixed=false) "Non dimensional factor";
+//  parameter Real C2(fixed=false) "Non dimensional factor";
+//  parameter Real C3(fixed=false) "Non dimensional factor";
+//  parameter Real B1(fixed=false) "Non dimensional factor";
+//  parameter Real B2(fixed=false) "Non dimensional factor";
+//  parameter Real Fp(fixed=false)"Cost pressure factor";
+//  parameter Real Fm(fixed=false)"Cost material factor";
+//  parameter Boolean both(fixed=false) "Condition for pressure factor correlation";
+//  parameter SI.Pressure P_shell(fixed=false) "Shell-side pressure";
+//  parameter SI.Pressure P_tubes(fixed=false) "Tube-side pressure";
+//  parameter Real P_tube_cost(unit= "barg", fixed=false) "Tube pressure in barg";
+//  parameter Real P_shell_cost(unit= "barg", fixed=false) "Shell pressure in barg";
+//  parameter Real P_cost(unit= "barg", fixed=false) "HX pressure in barg";
+//  parameter SI.Mass m_material_HX_ref=209781 "Reference Heat-Exchanger Material Mass";
+//  parameter SI.Area A_ref=21947.3 "Reference Heat-Exchanger Area";
+//  parameter FI.Money_USD C_BEC_ref(fixed=false)  "Bare cost @2018";
   
   //Other Parameters
   parameter SI.CoefficientOfHeatTransfer U_guess(fixed=false) "Heat tranfer coefficient guess";
@@ -472,67 +478,56 @@ end while;
   m_material_HX:=V_material*rho_wall;
   m_HX:=m_material_HX+m_MS+m_Na;
   
-  //Cost function
-  P_shell:=p_MS1_des;
-  P_tubes:=p_Na1_des;
-  P_tube_cost:=(P_tubes/10^5)-1;
-  P_shell_cost:=(P_shell/10^5)-1;
-  if ((P_tube_cost>5 and P_shell_cost>5)or(P_tube_cost<5 and P_shell_cost>5)) then
-    both:=true;
-    P_cost:=max(P_tube_cost,P_shell_cost);
-    else
-    both:=false;
-    P_cost:=P_tube_cost;
-  end if;
-  k1:=4.3247;
-  k2:=-0.3030;
-  k3:=0.1634;
-  if both then
-        C1:=0.03881;
-        C2:=-0.11272;
-        C3:=0.08183;
-    else
-    if P_cost<5 then
-      C1:=0;
-      C2:=0;
-      C3:=0;
-      else
-        C1:=-0.00164;
-        C2:=-0.00627;
-        C3:=0.0123;
-    end if;
-  end if;
-  Fp:=10^(C1+C2*log10(P_cost)+C3*(log10(P_cost))^2);
-  Fm:=3.7;
-  B1:=1.63;
-  B2:=1.66;
-  
-  if noEvent(A_HX>1000) then
-    A_cost:=1000;    
-    elseif noEvent(A_HX<10) then
-    A_cost:=10;    
-    else
-    A_cost:=A_HX;    
-  end if;
-  
-  C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
-  C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
-  C_BEC_ref:=material_sc*m_material_HX_ref;
-  C_BEC_HX:=C_BEC_ref*(A_HX/A_ref)^0.8;
+//  //Old Turton Cost function
+//  P_shell:=p_MS1_des;
+//  P_tubes:=p_Na1_des;
+//  P_tube_cost:=(P_tubes/10^5)-1;
+//  P_shell_cost:=(P_shell/10^5)-1;
+//  if ((P_tube_cost>5 and P_shell_cost>5)or(P_tube_cost<5 and P_shell_cost>5)) then
+//    both:=true;
+//    P_cost:=max(P_tube_cost,P_shell_cost);
+//    else
+//    both:=false;
+//    P_cost:=P_tube_cost;
+//  end if;
+//  k1:=4.3247;
+//  k2:=-0.3030;
+//  k3:=0.1634;
+//  if both then
+//        C1:=0.03881;
+//        C2:=-0.11272;
+//        C3:=0.08183;
+//    else
+//    if P_cost<5 then
+//      C1:=0;
+//      C2:=0;
+//      C3:=0;
+//      else
+//        C1:=-0.00164;
+//        C2:=-0.00627;
+//        C3:=0.0123;
+//    end if;
+//  end if;
+//  Fp:=10^(C1+C2*log10(P_cost)+C3*(log10(P_cost))^2);
+//  Fm:=3.7;
+//  B1:=1.63;
+//  B2:=1.66;
   
 //  if noEvent(A_HX>1000) then
-//    C_BEC_HX:=material_sc*1.65*m_material_HX;
-//  else
-//    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
-//  end if;
-//  if noEvent(A_HX<500) then
-//    C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.6;
-//  else
-//    area_sc:=838.8093956+928112.6035/(A_HX+3135.843631);
-//    C_BEC_HX:=A_HX*area_sc;
+//    A_cost:=1000;    
+//    elseif noEvent(A_HX<10) then
+//    A_cost:=10;    
+//    else
+//    A_cost:=A_HX;    
 //  end if;  
-//  C_BEC_HX:=C_BM*M_conv*(A_HX/A_cost)^0.7;
-
+//  C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
+//  C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
+//  C_BEC_ref:=material_sc*m_material_HX_ref;
+//  C_BEC_HX:=C_BEC_ref*(A_HX/A_ref)^0.8;
+  
+  //Cost Fucntion
+  F_ma:=F_ma_min+c2.*A_HX.^(-mmm);
+  C_BEC_HX:=material_sc*9.5*A_HX*F_ma;
   C_pump_design:=c_e*H_y/eta_pump*(m_flow_MS_design*Dp_shell_design/rho_MS+m_flow_Na_design*Dp_tube_design/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
   if (v_max_MS_design<0.49 or v_max_MS_design>1.51 or v_Na_design<0.99 or v_Na_design>3 or L/D_s>10) then
