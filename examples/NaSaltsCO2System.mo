@@ -82,8 +82,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
-	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
+	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
+	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
 
 	// Power block
