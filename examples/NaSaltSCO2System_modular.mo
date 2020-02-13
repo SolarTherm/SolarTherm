@@ -63,6 +63,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
 	parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
+	parameter SI.Thickness t_insulation = 0.06 "Thickness insulation of the piping network";
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 14.0 "Hours of storage";
@@ -185,7 +186,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping = 29097500 "Piping cost including insulation"; //Needs to be updated based on John's spreadsheet
+	parameter FI.Money_USD C_piping = 950143220.05466*t_insulation^2 + 282958926.1398*t_insulation + 19002307.9599 "Piping cost including insulation"; //Needs to be updated based on John's spreadsheet
 	parameter FI.Money_USD C_pumps =  0 "Cold Salt pumps"; //Based on Felix's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field * n_modules "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field * n_modules "Site improvements cost";
@@ -286,6 +287,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_modular receiver(
 		redeclare package Medium = Medium1,
+		t_insulation = t_insulation,
 		n_modules = n_modules,
 		N_pa = N_pa_rec,
 		t_tb = t_tb_rec,
