@@ -19,7 +19,7 @@ model HX_sa_graphs
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
   
   //Auxiliary parameters
-  parameter Boolean optimize_and_run(fixed = false);
+  parameter Boolean optimize_and_run = false;
   parameter FI.EnergyPrice_kWh c_e=0.13/0.9175 "Power cost";
   parameter Real r=0.05 "Real interest rate";
   parameter Real H_y(unit= "h")=4500 "Operating hours";
@@ -30,7 +30,7 @@ model HX_sa_graphs
   parameter SI.Length L_input = 8 "Optimal Tube Length";
   parameter Integer N_p_input = 1 "Optimal Tube passes number";
   parameter Integer layout_input = 2 "Optimal Tube Layout";
-  parameter SI.Temperature T_Na2_input = 560 + 273.15 "Optimal outlet sodium temperature";
+  parameter SI.Temperature T_Na2_input = 520 + 273.15 "Optimal outlet sodium temperature";
   
   //Optimal Parameter Values
   parameter FI.MoneyPerYear TAC(fixed = false) "Minimum Total Annualized Cost";
@@ -67,9 +67,10 @@ model HX_sa_graphs
   parameter Real sc_cap(fixed=false) "HX Specific Cost - Capacity";
 
 initial algorithm
-  optimize_and_run := true;
   if optimize_and_run == true then
-    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, m_material_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des, c_e = c_e, r = r, H_y = H_y, n=n);
+//    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, m_material_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des, c_e = c_e, r = r, H_y = H_y, n=n);
+    T_Na2_design:=T_Na2_input;
+    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, m_material_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, /*T_Na2_design,*/ m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := UF.Find_Opt_Design_HX_T_input(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_Na2_des = T_Na2_design, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des, c_e = c_e, r = r, H_y = H_y, n=n);
   sc_A:=C_BEC_HX/A_HX;
   sc_m:=C_BEC_HX/m_material_HX;
   sc_cap:=C_BEC_HX/Q_d_des*10^3;

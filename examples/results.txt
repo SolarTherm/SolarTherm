@@ -1,2 +1,25 @@
 index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
 0,545937.898537,74.5207639839,62.3216779083,43675031.883
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,545937.898537,74.5207639839,62.3216779083,43675031.883
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,545937.898537,74.5207639839,62.3216779083,43675031.883
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,545937.764526,74.5207815401,62.3216626102,43675021.1621
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,545937.462506,74.5208211064,62.3216281331,43674997.0005
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,545937.898537,74.5207639839,62.3216779083,43675031.883
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,473123.171469,84.0266196006,54.009494454,37849853.7176
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,546322.885964,76.99158036,62.3656262448,43705830.8771
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,546244.528092,75.6143212984,62.3566812822,43699562.2474
+index,epy (MWh/year),lcoe ($/MWh),capf (%),srev ($)
+0,546237.773254,75.6163584008,62.355910182,43699021.8603
