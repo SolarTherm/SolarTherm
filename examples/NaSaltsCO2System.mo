@@ -84,7 +84,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
-	parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
+	parameter Real tank_ar = 12/39.4 "storage aspect ratio"; //Updated from NREL. Changed from 20 / 18.667.
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
@@ -133,7 +133,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
-	parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
+	parameter SI.Length H_storage = (4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3) "Storage tank height";
 	parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
 
 	//Receiver Calculated parameters
@@ -146,7 +146,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
+	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
@@ -163,7 +163,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
 	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
 	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_cons(unit = "year") = 3 "Years of construction"; //Based on Downselect Criteria, Table 2
+	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";
@@ -187,8 +187,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping = 20867200 "Piping cost including insulation"; //Per ANU spreadsheet estimation
-	parameter FI.Money_USD C_pumps = 4648000 "Cold Salt pumps"; //Per ANU spreadsheet estimation
+	parameter FI.Money_USD C_piping = 3430000 "Piping cost including insulation"; //Updated based on Felix last spreadsheet
+	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Updated based on Felix last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
@@ -287,7 +287,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
-		em = em_rec,
 		redeclare package Medium = Medium1,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
@@ -295,6 +294,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
+		em = em_rec,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na,
 		DNI_SF = data.DNI,
@@ -443,8 +443,8 @@ initial equation
 
 	else // use Latticework steel tower
 
-		C_tower = if currency == Currency.USD then 78933.92 * exp(0.00879 * H_tower) else 78933.92 * exp(0.00879 * H_tower) / r_cur "Tower cost";
-		//"Tower cost fixed" updated to match estimated total cost of $122.5k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
+		C_tower = if currency == Currency.USD then  80816 * exp(0.00879 * H_tower) else 80816 * exp(0.00879 * H_tower) / r_cur "Tower cost";
+		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
 
