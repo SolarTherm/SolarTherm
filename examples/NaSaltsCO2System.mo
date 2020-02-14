@@ -304,10 +304,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		ab = ab_rec,
 		em = em_rec,
 		T_in_0 = T_cold_set_Na,
-		T_out_0 = T_hot_set_Na,
-		DNI_SF = data.DNI,
-		Q_flow_def = Q_flow_defocus,
-		SM = SM)
+		T_out_0 = T_hot_set_Na)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
 
 	// Temperature sensor1

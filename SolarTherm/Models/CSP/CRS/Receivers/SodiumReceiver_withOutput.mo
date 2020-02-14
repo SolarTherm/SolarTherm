@@ -18,33 +18,17 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 
-	parameter Real a1=/*-1.24e-12*/-1.09024907801536E-12;
-	parameter Real a2=/*3.79e-09*/3.48021141860044E-09;
-	parameter Real a3=/*-4.40e-06*/-4.16449447833065E-06;
-	parameter Real a4=/*0.002426622*/ 0.002345165867502;
-	parameter Real a5=/*0.267880817*/0.2702;
-	parameter Real eff_def=-0.0565*SM+0.8999;
-	parameter SI.HeatFlowRate Q_flow_def=0;
-	parameter Real tol=1e-6;
-	parameter Real SM=1;
+	parameter Real C1 = 0.9807;
+	parameter Real C2 = -85563100.0;
+	parameter Real C3 = 50378.6;
+	parameter Real C4 = 1.78494e-6;
 
-	SI.CoefficientOfHeatTransfer alphas;
 	SI.HeatFlowRate Q_loss;
-	SI.HeatFlowRate Q_rad;
-	SI.HeatFlowRate Q_con;
 	SI.HeatFlowRate Q_rcv;
 
-	Real T_av4( final unit="K4")= ((T_in^4)/5 + ((T_in^3)*(T_out))/5 + ((T_in^2)*(T_out^2))/5 + ((T_in)*(T_out^3))/5 + (T_out^4)/5);
-	SI.Temperature T_av=T_in/2+T_out/2;
-	SI.Temperature Tw_in=T_in+DT;
-	SI.Temperature Tw_out=T_out+DT;
-	Real Tw_av4( final unit="K4")=((Tw_in^4)/5 + ((Tw_in^3)*(Tw_out))/5 + ((Tw_in^2)*(Tw_out^2))/5 + ((Tw_in)*(Tw_out^3))/5 + (Tw_out^4)/5);
-	SI.Temperature Tw_av=Tw_in/2+Tw_out/2;
-	SI.TemperatureDifference DT(final start=0);
-	Real eff(start=0.7);
-	Real DNI_SF;
-	Real eff_assumed;
-	Real def;
+	SI.Efficiency eff "Calculated receiver efficiency";
+	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
+	SI.Energy E_rec;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 				transformation(
@@ -54,8 +38,10 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 				extent={{-6,-6},{6,6}},
 				rotation=-90,
 				origin={0,78})));
+
 	parameter SI.Temperature T_in_0=from_degC(540) "Start value of inlet temperature";
 	parameter SI.Temperature T_out_0=from_degC(740) "Start value of inlet temperature";
+
 	Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
 				transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
 						-24,-98},{-12,-86}})));
@@ -63,8 +49,6 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	Modelica.Blocks.Interfaces.RealOutput Q_out annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
-	Real eta_rec "Receiver efficiency as calculated from correlation";
-	SI.Energy E_rec;
 
 protected
 	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -76,15 +60,12 @@ protected
 
 	parameter Medium.ThermodynamicState state_in_0=Medium.setState_pTX(Medium.p_default,T_in_0);
 	parameter Medium.ThermodynamicState state_out_0=Medium.setState_pTX(Medium.p_default,T_out_0);
+
 	parameter SI.SpecificEnthalpy h_in_0=Medium.specificEnthalpy(state_in_0);
 	parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
 
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
-	Medium.ThermodynamicState states=Medium.setState_pTX(medium.p,T_av);
-	Medium.Density rhos=Medium.density(states) "Density";
-	Medium.ThermalConductivity lambdas= Medium.thermalConductivity(states) "Thermal conductivity";
-	SI.Velocity vs "Mean velocity of fluid flow";
 
 equation
 
@@ -98,29 +79,21 @@ equation
 	fluid_a.p=medium.p;
 	fluid_b.p=medium.p;
 
-	Q_rad=A_out*sigma*em*(Tw_av4-Tamb^4);
-	Q_con=A_out*alpha*(Tw_av-Tamb);
-
-	vs = fluid_a.m_flow/((N_fl*N_tb_pa)*rhos*(pi*(D_tb-2*t_tb)^2)/4);
-	alphas = HeatTransfer.HTC_receiver(state_mean_Na = states, v_Na=vs, d_i = D_tb-2*t_tb);
-
-	DT=max(0,Q_rcv/max(1e-3,A_in*alphas));
-
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = (-4.90018*(log10(max(1,heat.Q_flow)))+1.12861*(log10(max(1,heat.Q_flow)))^2-0.0638173*(log10(max(1,heat.Q_flow)))^3+0.0378354*(log10(max(1,Tamb))));
+		eta_rec = C1 + C2/heat.Q_flow + C3*Tamb/heat.Q_flow + C4*Tamb^4/heat.Q_flow;
 	else
 		Q_loss = 0;
 		eta_rec = 0;
 	end if;
 	
-	der(E_rec) = Q_rcv;
 	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
 	Q_rcv = fluid_a.m_flow*(h_out-h_in);
 	eff = Q_rcv/max(1,heat.Q_flow);
-	def = abs(heat.Q_flow-Q_flow_def)/Q_flow_def;
-	eff_assumed = if def<tol and SM>1.6 then eff_def else a1*DNI_SF^4+a2*DNI_SF^3+a3*DNI_SF^2+a4*DNI_SF+a5;
 	Q_out = heat.Q_flow*eta_rec;
+
+	der(E_rec) = Q_rcv;
+
 	annotation (Documentation(info="<html>
 <h4>Brief description:</h4>
 <p>This model simulate an external receiver that is composed by a series of flat panels with the a vertical arragement of tubes. This panels are arranged around the circunference of the solar tower. The coating absortance and emittance of the tubes determine the receiver thermal losses. It assumes a single receiver temperature which is calculated acording the average temperature between the inlet and outlet fluid temperature. In this model a mass flow rate is heated as a function of the concentrated solar power considering thermal losses but neglecting effects due to receiver shape and thermal capacitances. The outlet specific enthaply is calculated in an algebraic way assuming that:</p>
