@@ -38,7 +38,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.513401243420948 "Solar multiple"; //Calculated based on a receiver output of 547.034388273971MWt, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = 2.4638323303 "Solar multiple"; //Calculated based on a receiver output of 547.034388273971MWt, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
@@ -57,7 +57,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 0.11736179036609595 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.882638209633904
+	parameter Real rec_fr = 0.1347690455;//0.11736179036609595 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.882638209633904
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	
 	// HX
