@@ -17,7 +17,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 
 	// Input Parameters
 	parameter Boolean match_sam = false "Configure to match SAM output";
-	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
+	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
@@ -83,8 +83,8 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
-	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
+	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
+	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
 
 	// Power block
