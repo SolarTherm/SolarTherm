@@ -67,13 +67,13 @@ model Tank
         origin={45,97})));
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
-        transformation(
-        extent={{-16,-16},{16,16}},
-        rotation=-90,
-        origin={0,108}), iconTransformation(
-        extent={{-11,-11},{11,11}},
-        rotation=-90,
-        origin={-41,97})));
+        visible = true,transformation(
+        
+        origin={0,108},extent={{-16,-16},{16,16}},
+        rotation=-90), iconTransformation(
+        
+        origin={-41,97},extent={{-11,-11},{11,11}},
+        rotation=-90)));
   
   Modelica.Blocks.Interfaces.RealOutput T_mea annotation(
     Placement(transformation(extent = {{94, -18}, {130, 18}})));

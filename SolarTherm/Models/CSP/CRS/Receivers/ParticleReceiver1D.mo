@@ -48,16 +48,17 @@ model ParticleReceiver1D
     Dialog(group = "Technical data"));
   parameter SI.Area a = 0.25 * CONST.pi * d_p ^ 2 "cross sectional particle area [m2]";
   // Medium properties
-  parameter SI.Efficiency eps_s = 0.9973435 "Particle emissivity";
-  parameter SI.Efficiency abs_s = 0.9976785 "Particle absorptivity";
+  parameter SI.Efficiency eps_s = 0.9 "Particle emissivity";
+  parameter SI.Efficiency abs_s = 0.9"Particle absorptivity";
   parameter SI.Efficiency tau_s = 5.75335e-8 "Particle transmitivity";
   parameter SI.Density rho_s = 3300. "Particle density [kg/m3]";
   parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
   // Environment
   parameter SI.Temperature T_amb = from_degC(25) "Ambient temperature [K]";
-  parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
+  parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
+  parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (backwall) [W/m^2-K]";
   parameter Real C = 1200;
-  parameter SI.HeatFlux dni_des = 788.8;
+  parameter SI.HeatFlux dni_des = 200;
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
   parameter SI.ThermalConductivity k_w = 0.2 "Backwall thermal conductivity [W/m-K]";
@@ -98,6 +99,12 @@ model ParticleReceiver1D
   SI.HeatFlux q_conv_wall[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_conv_curtain[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_net[N] "Net heat flux gained by curtain";
+  SI.HeatFlowRate Qloss_conv_wall_discrete[N];
+  SI.HeatFlowRate Qloss_conv_curtain_discrete[N];
+  SI.HeatFlowRate Qloss_jcf_discrete[N];
+  SI.HeatFlowRate Qloss_jcb_discrete[N];
+  SI.HeatFlowRate Qgain_gcb_discrete[N];
+
   SI.HeatFlowRate Qloss_conv_wall;
   SI.HeatFlowRate Qloss_conv_curtain;
   SI.HeatFlowRate Qloss_jcf;
@@ -196,8 +203,8 @@ equation
       end if;
     end if;
 // Curtain energy balance
-    q_conv_curtain[i] = h_conv * (T_s[i + 1] - Tamb);
-    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv * (T_s[i + 1] - Tamb);
+    q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
+    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv_curtain * (T_s[i + 1] - Tamb);
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
 // Curtain-wall radiation heat fluxes (W/m²)
     gc_f[i] = q_solar;
@@ -212,12 +219,12 @@ equation
       T_w[i + 1] = Tamb;
       q_conv_wall[i] + j_w[i] = g_w[i];
     else
-      q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv + th_w / k_w);
+      q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv_backwall + th_w / k_w);
 //q loss conv wall
       0 = (if with_wall_conduction then -k_w * ((T_w[i + 2] - T_w[i + 1]) / (x[i + 2] - x[i + 1]) - (T_w[i + 1] - T_w[i]) / (x[i + 1] - x[i])) * th_w else 0) - (g_w[i] - (eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i])) * dx + q_conv_wall[i] * dx;
     end if;
   end for;
-  Qdot_inc = q_solar * A_ap;
+  
   if on == true then
     Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
     eta_rec = max(Qdot_rec / Qdot_inc, 0);
@@ -225,10 +232,20 @@ equation
     Qdot_rec = 0;
     eta_rec = 0;
   end if;
-  Qloss_conv_wall = sum(q_conv_wall) * W_rcv * H_drop;
-  Qloss_conv_curtain = sum(q_conv_curtain) * W_rcv * H_drop;
-  Qloss_jcf = sum(jc_f) * W_rcv * H_drop;
-  Qloss_jcb = sum(jc_b) * W_rcv * H_drop;
-  Qgain_gcb = sum(gc_b) * W_rcv * H_drop;
-  Q_check_curtain = mdot * h_s[1] - mdot * h_s[N + 1] + Qdot_inc + Qloss_conv_curtain - Qloss_jcf - Qloss_jcb;
+  
+  for i in 1:N loop  
+      Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
+      Qloss_conv_curtain_discrete[i]= q_conv_curtain[i]* dx * W_rcv;
+      Qloss_jcf_discrete[i] = jc_f[i] * dx * W_rcv;
+      Qloss_jcb_discrete[i] = jc_b[i] * dx * W_rcv;
+      Qgain_gcb_discrete[i] = gc_b[i] * dx * W_rcv;
+  end for;
+  
+  Qdot_inc = q_solar * A_ap;
+  Qloss_conv_wall = sum(Qloss_conv_wall_discrete);
+  Qloss_conv_curtain = sum(Qloss_conv_curtain_discrete);
+  Qloss_jcf = sum(Qloss_jcf_discrete);
+  Qloss_jcb = sum(Qloss_jcb_discrete);
+  Qgain_gcb = sum(Qgain_gcb_discrete);
+  Q_check_curtain = mdot * h_s[1] - mdot * h_s[N + 1] + Qdot_inc - Qloss_conv_curtain - Qloss_conv_wall- Qloss_jcf - Qloss_jcb + Qgain_gcb;
 end ParticleReceiver1D;

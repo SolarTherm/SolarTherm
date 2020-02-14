@@ -5,15 +5,16 @@ import numpy as np
 from tabulate import tabulate
 from solartherm import postproc
 
-fn_1 = 'case3a'
-resmat_1 = '/home/philgun/solartherm-particle/examples/%s_res.mat' %(fn_1)
+fn_1 = 'h132'
+resmat_1 = '/home/philgun/%s_res.mat' %(fn_1)
 data_1 = DyMat.DyMatFile(resmat_1)
+print(data_1.data('C_hx')[-1])
 
-fn_2 = None
+fn_2 = 'h32'
 if fn_2 is None :
 	data_2 = data_1
 else:
-	resmat_2 = '/home/philgun/solartherm/examples/%s_res.mat' %(fn_2)
+	resmat_2 = '/home/philgun/%s_res.mat' %(fn_2)
 	data_2 = DyMat.DyMatFile(resmat_2)
 
 if fn_2 is None:
