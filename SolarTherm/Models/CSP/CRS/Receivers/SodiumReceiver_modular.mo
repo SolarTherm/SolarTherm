@@ -19,6 +19,8 @@ model SodiumReceiver_modular "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 	parameter SI.HeatFlowRate Q_rec_des = 1 "Receiver thermal output at the design point";
+	parameter SI.Thickness t_insulation = 0.03 "Thickness insulation of the piping network";
+	parameter SI.HeatFlowRate Q_network = 1968192.9312*t_insulation^(-0.7381184018);
 
 	parameter Real C1 = 0.9855;
 	parameter Real C2 = -3.21e-7;
@@ -28,9 +30,9 @@ model SodiumReceiver_modular "ReceiverSimple with convective losses"
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
 
-	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
-	SI.Efficiency eff "Calculated receiver efficiency";
 	SI.Efficiency rec_frac "Fraction of design thermal output";
+	SI.Efficiency eff "Calculated receiver efficiency";
+	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
 	SI.Energy E_rec;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
@@ -51,6 +53,7 @@ model SodiumReceiver_modular "ReceiverSimple with convective losses"
 
 	Modelica.Blocks.Interfaces.RealOutput Q_out annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
+
 
 protected
 	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -82,9 +85,8 @@ equation
 	fluid_b.p=medium.p;
 
 	if on then
-		Q_loss = -n_modules*heat.Q_flow*(1-eta_rec);
+		Q_loss = -n_modules*heat.Q_flow*(1-eta_rec) - Q_network;
 		eta_rec = C1 + C2*(T_ref^4 - Tamb^4)/heat.Q_flow + C3*(T_ref - Tamb)/heat.Q_flow;
-		//eta_rec = (-4.90018*(log10(max(1,heat.Q_flow*n_modules)))+1.12861*(log10(max(1,heat.Q_flow*n_modules)))^2-0.0638173*(log10(max(1,heat.Q_flow*n_modules)))^3+0.0378354*(log10(max(1,Tamb))));
 	else
 		Q_loss = 0;
 		eta_rec = 0;
