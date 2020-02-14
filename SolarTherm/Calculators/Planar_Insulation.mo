@@ -17,7 +17,7 @@ model Planar_Insulation
   parameter Real c2 = 44.0 "USD/m3 RockWool";
   
   parameter Real T4 = 25.0 "degC ambient";
-  parameter Real h = 30.0 "W/m2K ambient convection";
+  parameter Real h = 10.0 "W/m2K ambient convection";
   parameter Real T1 = 800.0 "Sodium temperature";
   
   //This is the max temperature (degC), a severe cost penalty applies if that is exceeded in Rockwool
@@ -26,11 +26,13 @@ model Planar_Insulation
   //Vary this manually
   parameter Real U = 3.0 "W/m2K Target U value";
   
+
+  
   //Calculation
   Real T2 (start = 400);
   Real T3 (start = 30);
-  Real L1 (start=1e-3);
-  Real L2 (start=1e-3);
+  Real t1 (start=1e-3);
+  Real t2 (start=1e-3);
   
   Real CpA "Cost per Area";
   Real q "heat loss rate per area";
@@ -38,23 +40,24 @@ model Planar_Insulation
   
   
 algorithm
-  if (T2 < T3) or (T3 < T4) or (L2 < 0) then
+  if (T2 < T3) or (T3 < T4) or (t2 < 0) then
     terminate("Invalid");
   end if;
   
 equation
   if T2 > T2_Max then
-    Penalty = 1000.0;
+    Penalty = 10000.0;
   else
     Penalty = 0.0;
   end if;
   //Sweep t1
-  L1 = 1e-3 + time*1e-3;
+  t1 = 1e-3 + time*1e-3; //sweep at 1mm intervals for t1
   
-  q = ((A*(T1^3-T2^3)/3.0)+(B*(T1^2-T2^2)/2.0)+C*(T1-T2))/L1;
-  q = ((D*(T2^3-T3^3)/3.0)+(E*(T2^2-T3^2)/2.0)+F*(T2-T3))/L2;
+  q = ((A*(T1^3-T2^3)/3.0)+(B*(T1^2-T2^2)/2.0)+C*(T1-T2))/t1;
+  q = ((D*(T2^3-T3^3)/3.0)+(E*(T2^2-T3^2)/2.0)+F*(T2-T3))/t2;
   q = h*(T3-T4);
   
-  CpA = c1*L1+c2*L2 + Penalty;
+  CpA = c1*t1+c2*t2 + Penalty;
   U = q/(T1-T4);
+annotation(experiment(StopTime = 100, StartTime = 0, Tolerance = 1e-6, Interval = 1.0));
 end Planar_Insulation;
