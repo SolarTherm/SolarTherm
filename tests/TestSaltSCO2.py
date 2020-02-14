@@ -36,44 +36,64 @@ class TestScheduler(unittest.TestCase):
 		print 'Receiver height:                          %4.2f  m'%(getval('H_receiver'))
 		print 'Tower height:                             %4.1f  m'%(getval('H_tower'))
 		print 'Number of heliostats:                     %4.1f  m'%(getval('n_heliostat'))
-		print 'Tank diameter:                            %4.1f  m'%(getval('D_storage'))
-		print 'Tank height:                              %4.1f  m'%(getval('H_storage'))
-		print 'Solar to thermal efficiency:              %4.1f  %%'%(self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100)
 
 		f = open('report.tex','w+')
 		content = r'''\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,makecell,graphicx,bm,multirow,threeparttable}
+
+\title{LCOE comparison: Single and multi-tower sodium systems}
+\author{}
+
+\renewcommand\theadfont{\normalsize}
+
 \begin{document}
 
-\section{Salt single tower system}
+\maketitle
 
-\subsection{Performance and design}
+\section{Sodium-Salt single tower system}
+\subsection{High-level performance parameters}
 
-\begin{center}
+\begin{table}[!h]
+\centering
 \begin{tabular}{ ll } 
 	\hline\hline
-	Energy per year (MWh):	& %6.2f \\
-	Capacity factor (\%%):	& %6.2f \\
-	LCOE (\$/MWh):		& %6.2f \\
-	Solar to thermal efficiency (\%%):	& %6.2f \\
-	\hline\hline
-	Receiver thermal input at design point (MWt):		& %6.1f \\
-	Receiver thermal output at design point (MWt):		& %6.1f \\
-	Power block gross rating at design point (MWe):		& %6.1f \\
-	Full load hours of storage (h):				& %6.1f \\
-	Solar multiple:						& %6.1f \\
-	Receiver diameter (m):					& %6.1f \\
-	Receiver height (m):					& %6.1f \\
-	Tower height (m):					& %6.1f \\
-	Number of heliostats:					& %i \\
+	{\bfseries Item} & \thead{\bfseries Sodium \\\bfseries single-tower}\\
+	\hline
+	Energy per year (MWh):                                  & %6.2f \\
+	Capacity factor (\%%):                                  & %6.2f \\
+	LCOE (\$/MWh):                                          & %6.2f \\
+	\hline
+	Number of modules:                                      & 1 \\
+	Receiver thermal input at design point (MWt):           & %6.1f \\
+	Receiver thermal output at design point (\%%):          & %6.1f \\
+	Solar to thermal efficiency (\%%):                      & %6.2f \\
+	Solar to electric efficiency (\%%):                     & %6.2f \\
+	\hline
+	Power block gross rating at design point (MWe):         & %6.1f \\
+	Power block efficiency at design point (\%%):           & %6.1f \\
+	\hline
+	Full load hours of storage (h):                         & %6.1f \\
+	Storage capacity (kWht):                                & %6.1f \\
+	\hline
+	Solar multiple:                                         & %6.1f \\
+	\hline
+	Receiver diameter (m):                                  & %6.1f \\
+	Receiver height (m):                                    & %6.1f \\
+	Tower height (m):                                       & %6.1f \\
+	Number of heliostats:                                   & %i \\
+	Number of heliostats per module:                        & %i \\
 	\hline\hline
 \end{tabular}
-\end{center}
+\end{table}
 
-\subsection{Costs}
+\subsection{Costing assuptions}
 
 \begin{center}
 \begin{tabular}{ ll } 
 	\hline\hline
+	{\bfseries Item} & \thead{\bfseries Sodium \\\bfseries single-tower} \\
+	\hline
 	Real discount rate (\%%):					& %2.1f \\
 	Inflation rate rate (\%%):					& %2.1f \\
 	Lifetime of plant (years):					& %i \\
@@ -88,40 +108,57 @@ class TestScheduler(unittest.TestCase):
 	Fixed O\&M cost per nameplate per year (\$/year):		& %6.1f \\
 	Variable O\&M cost per production per year (\$/kWe/year):	& %6.1f \\
 	\hline\hline
+\end{tabular}
+\end{center}
+
+\subsection{Equipment and maintenance costs}
+
+\begin{center}
+\begin{tabular}{ ll } 
+	\hline\hline
+	{\bfseries Item} & \thead{\bfseries Sodium \\\bfseries single-tower} \\
+	\hline
 	Field cost (M\$):			& %6.1f \\
 	Site improvements cost (M\$):		& %6.1f \\
 	Tower cost (M\$):			& %6.1f \\
 	Receiver cost (M\$):			& %6.1f \\
+	Heat exchanger cost (M\$):		& - \\
 	Storage cost (M\$):			& %6.1f \\
 	Power block cost (M\$):			& %6.1f \\
 	Balance of plant cost (M\$):		& %6.1f \\
 	Piping cost (M\$):			& %6.1f \\
 	Cold Pumps cost (M\$):			& %6.1f \\
+	\hline
 	Direct capital cost subtotal (M\$):	& %6.1f \\
 	Contingency cost (M\$):			& %6.1f \\
+	\hline
 	Total direct capital cost (M\$):	& %6.1f \\
 	EPC and owner costs (M\$):		& %6.1f \\
 	Land cost (M\$):			& %6.1f \\
+	\hline
 	Total capital (installed cost) (M\$):	& %6.1f \\
 	\hline\hline
 \end{tabular}
 \end{center}
-
 \end{document}'''
 
 		f.write(content%(
 		self.perf[0],
 		self.perf[2],
 		self.perf[1],
-		self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
 		getval('R_des')/1e6,
 		getval('Q_rec_out')/1e6,
+		self.res.interpolate('receiver.E_rec',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
+		self.res.interpolate('powerBlock.E_net',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,
 		getval('P_gross')/1e6,
+		getval('eff_blk')*100,
 		getval('t_storage'),
+		getval('E_max')/3600/1e6,
 		getval('SM'),
 		getval('D_receiver'),
 		getval('H_receiver'),
 		getval('H_tower'),
+		getval('n_heliostat'),
 		getval('n_heliostat'),
 		getval('r_disc')*100,
 		getval('r_i')*100,
