@@ -13,5 +13,4 @@ function particleBinCost "Capital cost per unit area a vertical cylindrical bin 
 
 algorithm
 	C_cap := 1.23*(1000 + 0.3*(T-600)/400);
-
 end particleBinCost;
