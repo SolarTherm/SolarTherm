@@ -28,6 +28,7 @@ function Find_Opt_Design_HX_noF
   output SI.CoefficientOfHeatTransfer h_t_opt_des "Optimal Tube-side Heat tranfer coefficient";
   output SI.Length D_s_opt "Optimal Shell Diameter";
   output Integer N_baffles_opt "Number of Baffles";
+  output SI.Length l_b_opt;
   output SI.Velocity v_Na_opt_des "Optimal Sodium velocity in tubes";
   output SI.Velocity v_max_MS_opt_des "Optimal Molten Salt velocity in shell";
   output SI.Volume V_HX_opt_des "Optimal Heat-Exchanger Total Volume";
@@ -90,6 +91,7 @@ function Find_Opt_Design_HX_noF
   SI.CoefficientOfHeatTransfer h_t_des[dim_tot](each fixed=false) "Tube-side Heat tranfer coefficient";
   SI.Length D_s[dim_tot](each fixed=false) "Shell Diameter";
   Integer N_baffles[dim_tot](each fixed=false) "Number of baffles";
+  SI.Length l_b[dim_tot](each fixed = false);
   SI.Velocity v_Na_des[dim_tot](each fixed=false) "Sodium velocity in tubes";
   SI.Velocity v_max_MS_des[dim_tot](each fixed=false) "Molten Salt velocity in shell";
   SI.Volume V_HX_des[dim_tot](each fixed=false) "Heat-Exchanger Total Volume";
@@ -113,7 +115,7 @@ algorithm
               vec[iter, 3] := N_p[ii];
               vec[iter, 4] := layout[ww];
               vec[iter, 5] := T_Na2_des[ll];
-              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], N_baffles[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], m_material_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n=n);
+              (m_flow_Na_des[iter], m_flow_MS_des[iter], F_des[iter], UA_des[iter], N_t[iter], U_des[iter], A_tot[iter], Dp_tube_des[iter], Dp_shell_des[iter], TAC_des[iter], h_s_des[iter], h_t_des[iter], D_s[iter], N_baffles[iter], l_b[iter], v_Na_des[iter], v_max_MS_des[iter], V_HX_des[iter], m_HX_des[iter], m_material_HX_des[iter], C_BEC[iter], C_pump_des[iter], ex_eff_des[iter], en_eff_des[iter]) := Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], L = L[jj], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des[ll], p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n=n);
               iter := iter + 1;
             end for;
           end for;
@@ -131,6 +133,7 @@ algorithm
     h_t_opt_des := h_t_des[result];
     D_s_opt := D_s[result];
     N_baffles_opt:=N_baffles[result];
+    l_b_opt:=l_b[result];
     v_Na_opt_des := v_Na_des[result];
     v_max_MS_opt_des := v_max_MS_des[result];
     V_HX_opt_des := V_HX_des[result];
