@@ -18,10 +18,10 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 
-	parameter Real C1 = 0.9807;
-	parameter Real C2 = -85563100.0;
-	parameter Real C3 = 50378.6;
-	parameter Real C4 = 1.78494e-6;
+	parameter Real C1 = -6.08733;
+	parameter Real C2 = 1.39132;
+	parameter Real C3 = -0.0785322;
+	parameter Real C4 = 0.0835745;
 
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
@@ -81,7 +81,7 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = C1 + C2/heat.Q_flow + C3*Tamb/heat.Q_flow + C4*Tamb^4/heat.Q_flow;
+		eta_rec = (C1*(log10(max(1,heat.Q_flow))) + C2*(log10(max(1,heat.Q_flow)))^2 + C3*(log10(max(1,heat.Q_flow)))^3 + C4*(log10(max(1,Tamb))));
 	else
 		Q_loss = 0;
 		eta_rec = 0;
