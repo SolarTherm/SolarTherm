@@ -69,7 +69,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-	parameter Boolean optimize_HX_design=false;
+	parameter Boolean optimize_HX_design=true;
 	//If optimize_HX_design is true neglect the input parameters below, otherwise provide the following values: 
 	parameter SI.Length d_o_input = 0.02223 "HX Outer Tube Diameter";
 	parameter SI.Length L_input = 23 "HX Tube Length";
