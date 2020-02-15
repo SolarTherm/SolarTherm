@@ -144,6 +144,7 @@ function Design_HX_noF
   Real F_ma "Manufacturing Factor";
   parameter Real F_ma_min=1.65 "Manufacturing Factor";
   Real f(unit= "") "Annualization factor";
+  Real penalty;
   
   //Fluid properties
   SI.Temperature Tm_Na "Mean Sodium Fluid Temperature";
@@ -243,7 +244,6 @@ algorithm
   iter_1:=0;
   L_calc:=L;
 while noEvent(condition>0.01) and iter_1<iter_max loop
-//  L_calc:=L;
   A_tot_prev:=UA/U_calc_prev;
   A_st:=CN.pi*d_o*L_calc;
   N_t:=integer(ceil(A_tot_prev/A_st));
@@ -295,7 +295,7 @@ while noEvent(condition>0.01) and iter_1<iter_max loop
   U_calc_prev:=U_calc;
   iter_1:=iter_1+1;
 end while;
-  
+
   (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, L=L_calc, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b, N=N_baffles);
   
   t_shell:=ShellThickness(D_s);
@@ -364,16 +364,30 @@ end while;
   C_BEC:=material_sc*9.5*A_tot*F_ma;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS<v_max_MS_lim_min or v_max_MS>v_max_MS_lim_max or v_Na<v_Na_lim_min or v_Na>v_Na_lim_max or L_calc/D_s_out>10.1 or geom_error>tol or condition>0.01) then
+  if (v_max_MS<v_max_MS_lim_min or v_max_MS>v_max_MS_lim_max or v_Na<v_Na_lim_min or v_Na>v_Na_lim_max or L_calc/D_s_out>10.1 or geom_error>tol or condition>0.05) then
     TAC:=10e10;
     C_BEC:=10e10;
-  else
+    penalty:=10e10;
+  elseif condition<0.01 then
     if noEvent(C_BEC>0) and noEvent(C_pump>0) then
       C_BEC:=material_sc*9.5*A_tot*F_ma;
       TAC:=f*C_BEC+C_pump;
+      penalty:=0;
     else
       TAC:=10e10;
       C_BEC:=10e10;
+      penalty:=10e10;
+    end if;
+  else
+    if noEvent(C_BEC>0) and noEvent(C_pump>0) then
+      TAC:=(f*C_BEC+C_pump);
+      penalty:=(condition+1)*TAC;
+      C_BEC:=material_sc*9.5*A_tot*F_ma;
+      TAC:=(f*C_BEC+C_pump)+penalty;
+    else
+      TAC:=10e10;
+      C_BEC:=10e10;
+      penalty:=10e10;
     end if;
   end if;
   
