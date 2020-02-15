@@ -18,6 +18,7 @@ function HTCs
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
   input SI.Length L "Tube length";
+  input SI.Length l_b "Baffle spacing";
    
   output SI.CoefficientOfHeatTransfer U "Heat tranfer coefficient";
   output SI.CoefficientOfHeatTransfer h_s "Shell-side Heat tranfer coefficient";
@@ -63,7 +64,6 @@ function HTCs
   Real KK1(unit= "",start=0.158) "Correlation coefficient";
   Real nn1(unit= "",start=2.263) "Correlation coefficient";
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
-  SI.Length l_b "Baffle spacing";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
   SI.Area S_b "Bypass flow area";
   Real Re_MS(start=100,min=0) "MS Reynolds Number";
@@ -88,8 +88,8 @@ function HTCs
   Real F_bp(unit= "") "Bypass correction factor";
   Real F_w(unit= "") "Fraction of tubes in crossflow";
   Real N_c(start=90) "Number of crossflow rows";
-  Integer N_calc "Number of Baffles calculated";
-  Integer N "Number of baffles";
+  //Integer N_calc "Number of Baffles calculated";
+//  Integer N "Number of baffles";
   Real r_ss "Fraction";
   parameter Real N_ss=0.2 "Number of sealing strips per crossflow row";
   Real J_B(unit= "") "Bypass correction factor";
@@ -169,14 +169,7 @@ algorithm
   end if;
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*(D_b+d_o))/995;
-  D_s:=L_bb+D_b+d_o;
-  l_b:=D_s;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-  N_calc:=integer(ceil((L/(l_b+t_baffle)-1)*N_sp));
-  N:= if N_calc<10 then 10 else N_calc;
-  l_b:=L/(N/N_sp+1)-t_baffle;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-  l_b:=L/(N/N_sp+1)-t_baffle;    
+  D_s:=L_bb+D_b+d_o;  
   S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;

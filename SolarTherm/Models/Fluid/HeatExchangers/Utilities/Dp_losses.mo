@@ -18,12 +18,13 @@ function Dp_losses
   input Medium2.ThermodynamicState state_wall_MS;
   input SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   input SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
+  input SI.Length l_b "Baffle spacing";
+  input Integer N "Number of baffles";
 
   output SI.Pressure Dp_tube(min=0) "Tube-side pressure drop";
   output SI.Pressure Dp_shell(min=0) "Shell-side pressure drop";
   output SI.Velocity v_Na(min=0) "Sodium velocity in tubes";
   output SI.Velocity v_max_MS(min=0) "Molten Salt velocity in shell";
-  output Integer N "Number of baffles";
   
   protected
   parameter SI.Length t_tube=TubeThickness(d_o) "Tube thickness";
@@ -58,8 +59,6 @@ function Dp_losses
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
   SI.Length D_b(start=4.42) "Bundle diameter";
   SI.Length D_s "Shell Diameter";
-  SI.Length l_b "Baffle spacing";
-  Integer N_calc "Number of Baffles calculated";
   SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
   Real Re_MS(start=100,min=0) "MS Reynolds Number";
   SI.Area S_b "Bypass flow area";
@@ -164,15 +163,7 @@ algorithm
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*(D_b+d_o))/995;
   D_s:=L_bb+D_b+d_o;
-  L_c:=B*D_s;
-  l_b:=D_s;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-//  t_baffle:=t_tube;
-  N_calc:=integer(ceil((L/(l_b+t_baffle)-1)*N_sp));
-  N:= if N_calc<10 then 10 else N_calc;
-  l_b:=L/(N/N_sp+1)-t_baffle;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-  l_b:=L/(N/N_sp+1)-t_baffle;    
+  L_c:=B*D_s;  
   S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;

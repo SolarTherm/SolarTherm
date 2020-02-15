@@ -39,6 +39,7 @@ function Design_HX_noF
   output SI.CoefficientOfHeatTransfer h_t "Tube-side Heat tranfer coefficient";
   output SI.Length D_s "Shell Diameter";
   output Integer N_baffles "Number of baffles";
+  output SI.Length l_b "Baffle spacing";
   output SI.Velocity v_Na "Sodium velocity in tubes";
   output SI.Velocity v_max_MS "Molten Salt velocity in shell";
   output SI.Volume V_HX "Heat-Exchanger Total Volume";
@@ -53,6 +54,14 @@ function Design_HX_noF
   parameter SI.CoefficientOfHeatTransfer U_guess=1200 "Heat tranfer coefficient guess";
   parameter Real tol=0.01 "Heat transfer coefficient tollerance";
   Real condition "When condition";
+  parameter Real iter_max=1000;
+  Real iter_1;
+  Real iter_2;
+  Real error_l_b;
+  Real error_l_b2;
+  Real error_area;
+  parameter Real tol2=0.1 "Heat transfer coefficient tollerance";
+  Real geom_error;
   SI.CoefficientOfHeatTransfer U_calc_prev "Heat tranfer coefficient guess";
   SI.ThermalConductivity k_wall "Tube Thermal Conductivity";
   SI.Density rho_wall "HX material density";
@@ -60,22 +69,35 @@ function Design_HX_noF
   parameter SI.Length t_tube=TubeThickness(d_o) "Tube thickness";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   
-  
   //Tube Side  
-  parameter SI.Area A_st=CN.pi*d_o*L "Single tube exchange area";
+  SI.Area A_st/*=CN.pi*d_o*L*/ "Single tube exchange area";
   parameter SI.Length d_i=d_o-2*t_tube "Inner Tube diameter";
   Integer Tep(start=7962) "Tubes for each pass";
+  parameter SI.Area A_cs=CN.pi*(d_i^2)/4;
+  SI.Length L_calc;
+  SI.Area A_tot_prev;
   
   //Shell Side
-  Real KK1(unit= "",start=0.158) "Correlation coefficient";
-  Real nn1(unit= "",start=2.263) "Correlation coefficient";
   SI.Length L_bb(start=0.0342502444061721) "Bundle-to-shell diametral clearance";
-  SI.Length l_b "Baffle spacing";
   SI.Length D_b(start=4.42) "Bundle diameter";
   SI.Length t_baffle "Baffle thickness";
   SI.Length t_shell "Shell thickness";
   SI.Length D_s_out "Shell Outer Diameter";
-  parameter Real B=0.25 "Baffle cut";  
+  parameter Real B=0.25 "Baffle cut";
+  Integer N_calc "Number of Baffles calculated";
+  SI.Length l_b_prev "Baffle spacing";
+  SI.Area S_m(start=1.62588760919663) "Minimal crossflow area at bundle centerline";
+  parameter SI.Length P_t=1.25*d_o "Tube pitch";
+  
+  //Minimum Velocities
+  parameter SI.Velocity v_max_MS_lim_min=0.50;
+  parameter SI.Velocity v_max_MS_lim_max=1.50;
+  parameter SI.Velocity v_Na_lim_min=1.2;
+  parameter SI.Velocity v_Na_lim_max=2.5;
+  Integer N_t_min "Number of tubes";
+  Integer N_t_max "Number of tubes";
+  SI.Area S_m_min "Minimal crossflow area at bundle centerline";
+  SI.Area S_m_max "Minimal crossflow area at bundle centerline";
   
   //Volume_and_Weight
   SI.Mass m_Na "Mass of Sodium";
@@ -211,66 +233,71 @@ algorithm
     en_eff:=(T_Na1-T_Na2)./(T_Na1-T_MS1);
   end if;
   
+  N_t_min:=integer(ceil(m_flow_Na/(rho_Na*A_cs*v_Na_lim_max*0.98)));
+  N_t_max:=integer(floor(m_flow_Na/(rho_Na*A_cs*v_Na_lim_min*1.02)));
+  S_m_min:=m_flow_MS/(rho_MS*v_max_MS_lim_max*0.98);
+  S_m_max:=m_flow_MS/(rho_MS*v_max_MS_lim_min*1.02);  
+  
   U_calc_prev:=U_guess;
   condition:=10;
-  
-while noEvent(condition>tol) loop
-  A_tot:=UA/U_calc_prev;
-  N_t:=integer(ceil(A_tot/A_st));
+  iter_1:=0;
+  L_calc:=L;
+while noEvent(condition>0.01) and iter_1<iter_max loop
+//  L_calc:=L;
+  A_tot_prev:=UA/U_calc_prev;
+  A_st:=CN.pi*d_o*L_calc;
+  N_t:=integer(ceil(A_tot_prev/A_st));
   Tep:=integer(ceil(N_t/N_p));
   N_t:=Tep*N_p;
-  (U_calc, h_s, h_t):=HTCs(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, L=L);
-  condition:=abs(U_calc-U_calc_prev)/U_calc_prev;
+  error_area:=10;
+  while error_area>tol loop
+    L_calc:=A_tot_prev/(CN.pi*d_o*N_t);
+    A_st:=CN.pi*d_o*L_calc;
+    N_t:=integer(ceil(A_tot_prev/A_st));
+    if N_t<N_t_min then
+      N_t:=N_t_min;
+    elseif N_t>N_t_max then
+      N_t:=N_t_max;
+    end if;
+    A_tot:=A_st*N_t;
+    error_area:=abs(A_tot_prev-A_tot)/A_tot_prev;
+    A_tot_prev:=A_tot;
+  end while;
+  (L_bb, D_b, D_s):=ShellDiameter(d_o=d_o, N_t=N_t, layout=layout, N_p=N_p);
+  iter_2:=0;
+  error_l_b:=10;
+  l_b_prev:=D_s;
+  while error_l_b>tol2 and iter_2<iter_max loop
+    error_l_b2:=10;
+    while error_l_b2>tol loop
+        t_baffle:= BaffleThickness(D_s=D_s,l_b=l_b_prev);
+        N_baffles:=integer(ceil((L_calc/(l_b_prev+t_baffle)-1)*N_sp));
+        l_b:=L_calc/(N_baffles/N_sp+1)-t_baffle;
+        error_l_b2:=abs(l_b_prev-l_b)/l_b_prev;
+        l_b_prev:=l_b;
+    end while;
+    S_m:=(l_b/N_sp)*(L_bb+(D_b/P_t)*(P_t-d_o));
+    if S_m<S_m_min then
+        S_m:=S_m_min;
+    elseif S_m>S_m_max then
+        S_m:=S_m_max;
+    end if;
+    l_b:=S_m*N_sp/(L_bb+(D_b/P_t)*(P_t-d_o));
+    t_baffle:= BaffleThickness(D_s=D_s,l_b=l_b);
+    N_baffles:=integer(ceil((L_calc/(l_b+t_baffle)-1)*N_sp));
+    error_l_b:=abs(l_b_prev-l_b)/l_b_prev;
+    l_b_prev:=l_b;
+    iter_2:=iter_2+1;
+  end while;
+  geom_error:=abs(L_calc-(t_baffle+l_b)*(N_baffles+1))/L_calc;
+  (U_calc, h_s, h_t):=HTCs(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, L=L_calc, l_b=l_b);
+  condition:=abs(U_calc*A_tot-UA)/UA;
   U_calc_prev:=U_calc;
+  iter_1:=iter_1+1;
 end while;
-
-  (Dp_tube, Dp_shell, v_Na, v_max_MS, N_baffles):=Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
   
-  //Shell Diameter
-  if layout==1 then
-    if N_p==1 then
-      KK1:=0.215;
-      nn1:=2.207;
-    elseif N_p==2 then
-      KK1:=0.156;
-      nn1:=2.291;
-    elseif N_p==4 then
-      KK1:=0.158;
-      nn1:=2.263;
-    elseif N_p==6 then
-      KK1:=0.0402;
-      nn1:=2.617;
-    elseif N_p==8 then
-      KK1:=0.0331;
-      nn1:=2.643;
-    end if;
-  else
-    if N_p==1 then
-      KK1:=0.319;
-      nn1:=2.142;
-    elseif N_p==2 then
-      KK1:=0.249;
-      nn1:=2.207;
-    elseif N_p==4 then
-      KK1:=0.175;
-      nn1:=2.285;
-    elseif N_p==6 then
-      KK1:=0.0743;
-      nn1:=2.499;
-    elseif N_p==8 then
-      KK1:=0.0365;
-      nn1:=2.675;
-    end if;
-  end if;
+  (Dp_tube, Dp_shell, v_Na, v_max_MS):=Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_sp, layout=layout, N_t=N_t, L=L_calc, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b, N=N_baffles);
   
-  D_b:=(N_t/KK1)^(1/nn1)*d_o;
-  L_bb:=(12+5*(D_b+d_o))/995;
-  D_s:=L_bb+D_b+d_o;
-  l_b:=D_s;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-  l_b:=L/(N_baffles/N_sp+1)-t_baffle;
-  t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b);
-  l_b:=L/(N_baffles/N_sp+1)-t_baffle;  
   t_shell:=ShellThickness(D_s);
   D_s_out:=D_s+2*t_shell;
   V_ShellThickness:=(D_s_out^2-(D_s^2))*CN.pi/4*L;
@@ -337,13 +364,16 @@ end while;
   C_BEC:=material_sc*9.5*A_tot*F_ma;
   C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
   f:=(r*(1+r)^n)/((1+r)^n-1);
-  if (v_max_MS<0.49 or v_max_MS>1.51 or v_Na<0.99 or v_Na>3 or L/D_s>10) then
+  if (v_max_MS<v_max_MS_lim_min or v_max_MS>v_max_MS_lim_max or v_Na<v_Na_lim_min or v_Na>v_Na_lim_max or L_calc/D_s_out>10.1 or geom_error>tol or condition>0.01) then
     TAC:=10e10;
+    C_BEC:=10e10;
   else
     if noEvent(C_BEC>0) and noEvent(C_pump>0) then
+      C_BEC:=material_sc*9.5*A_tot*F_ma;
       TAC:=f*C_BEC+C_pump;
     else
       TAC:=10e10;
+      C_BEC:=10e10;
     end if;
   end if;
   
