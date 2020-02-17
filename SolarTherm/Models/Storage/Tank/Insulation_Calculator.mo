@@ -149,12 +149,22 @@ equation
   U = q/(T1-T4);
   CpA_min = min(CpA);  */
   
- import CN = Modelica.Constants;
+import CN = Modelica.Constants;
   import MA = Modelica.Blocks.Math;
   //Quadratic coefficients of Tuffcrete47
   parameter Real A = 6.9e-8;
   parameter Real B = 5.46e-5;
   parameter Real C = 1.46;
+  
+  //Quadratic coefficients of microporous
+  parameter Real D = 4.37e-8;
+  parameter Real E = -5.25e-6;
+  parameter Real F = 2.53e-2;
+  
+  //Quadratic coefficients of Concrete
+  parameter Real G = 1.063e-6;
+  parameter Real H = -0.002439;
+  parameter Real I = 2.002557;
   
   //FIXME
   //parameter Real A = -6.3e-7;
@@ -166,38 +176,31 @@ equation
     parameter Real A1 = -1.72e-6;
     parameter Real A2 = 8.56e-4;
     parameter Real A3 = 1.37;*/
-  //Quadratic coefficients of Concrete
-  parameter Real D = 1.063e-6;
-  parameter Real E = -0.002439;
-  parameter Real F = 2.002557;
-  
+    
   parameter Real c1 = 3264 "USD/m3 Tuffcrete47";
-  parameter Real c2 = 71 "USD/m3 Concrete";
+  parameter Real c2 = 4000 "USD/m3 MP";
+  parameter Real c3 = 71 "USD/m3 concrete";
   
-  parameter Real T4 = 25.0 "degC ambient";
-  parameter Real h = 10.0 "W/m2K ambient convection";
   parameter Real T1 = 800.0 "Particle temperature";
-  
-  //This is the max temperature (degC), a severe cost penalty applies if that is exceeded in Rockwool
-  parameter Real T2_Max = 200.0 "Maximum tolerable concrete temperature";
-  
+  parameter Real T3_max = 200 "maximum allowable in concrete";
+  parameter Real T5 = 25.0 "degC ambient";
+  parameter Real h = 10.0 "W/m2K ambient convection";
+    
   parameter Integer t1_divs = 500 "number of divisions in thickness_1 expored";
-  parameter Real t1_min = 0.5 "1mm";
-  parameter Real t1_max = 5 "1m";
+  parameter Real t1_min = 0.5 "50cm minimum of the tuffcrete47 thickness";
+  parameter Real t1_max = 5 "5m maximum of the tuffcrete47 thickness";
+  parameter Real t1[t1_divs] = ModelicaReference.Operators.linspace(t1_min,t1_max,t1_divs) "thickness of the tuffcrete47";
+ 
   Real t1_minima;
-  
-  
-  //Vary this manually
-  //parameter Real U = 3.0 "W/m2K Target U value";
   Real U;
   Real R;
   //Calculation
-  Real T2[t1_divs]  (max = fill(800,t1_divs), start = linspace(750,250,t1_divs));
-  Real T3[t1_divs] (start = fill(30,t1_divs));
-  parameter Real t1[t1_divs] = ModelicaReference.Operators.linspace(t1_min,t1_max,t1_divs);
-  //Real t2[t1_divs] (start=fill(1e-3,t1_divs));
-  parameter Real t2 = 1;
-  
+  Real T2[t1_divs]  (max = fill(800,t1_divs), start = linspace(750,620,t1_divs));
+  Real T3[t1_divs] (max = fill(800,t1_divs),start = linspace(600,150,t1_divs));
+  Real T4[t1_divs] (max = fill(200,t1_divs), start=fill(30,t1_divs));
+  Real t2[t1_divs] (start=linspace(0.05,1,t1_divs)) "thickness of MP start from 5 cm";
+  //Real t3[t1_divs] (start=linspace(0.5,3,t1_divs)) "thickness of concrete start from 5 cm";
+  parameter Real t3 = 1;
   Real CpA[t1_divs] "Cost per Area";
   Real q "heat loss rate per area";
   Real Penalty[t1_divs];
@@ -214,7 +217,7 @@ end for;
 
 equation
   for i in 1:t1_divs loop
-    if (T2[i] < T3[i]) or (T3[i] < T4) or (t2 < 0) or (T2[i] > T2_Max) then
+    if (T2[i] < T3[i]) or (T3[i]<T4[i]) or (T4[i] < T5) or (t2[i] < 0) or (T3[i] > T3_max) then
       Penalty[i] = 10000.0;
     else
       Penalty[i] = 0.0;
@@ -224,15 +227,17 @@ equation
   //Sweep t1
   1/U = 0.2 + time*1.0; //sweep U from 5 all the way down
   R = 1/U;
+  U = q/(T1-T5);
   for i in 1:t1_divs loop
     q = ((A*(T1^3-T2[i]^3)/3.0)+(B*(T1^2-T2[i]^2)/2.0)+(C*(T1^1-T2[i]^1)/1.0))/t1[i];
-    //q = ((D*(T2[i]^3-T3[i]^3)/3.0)+(E*(T2[i]^2-T3[i]^2)/2.0)+F*(T2[i]-T3[i]))/t2[i];
-    q = h*(T3[i]-T4);
-  
-    CpA[i] = max(max(0.0,c1*t1[i]+c2*t2), Penalty[i]);
+    q = ((D*(T2[i]^3-T3[i]^3)/3.0)+(E*(T2[i]^2-T3[i]^2)/2.0)+F*(T2[i]-T3[i]))/t2[i];
+    q = ((G*(T3[i]^3-T4[i]^3)/3.0)+(H*(T3[i]^2-T4[i]^2)/2.0)+I*(T3[i]-T4[i]))/t3;
+    q = h*(T4[i]-T5);
+    CpA[i] = max(max(0.0,c1*t1[i]+c2*t2[i] +c3*t3), Penalty[i]);
   end for;
-  U = q/(T1-T4);
   CpA_min = min(CpA);
+    
+
     
 
   
