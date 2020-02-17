@@ -27,12 +27,12 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
-	parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
+	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 
-	parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
+	parameter nSI.Angle_deg lon = -116.780 "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
-	parameter Integer year = 1996 "Meteorological year";
+	parameter Integer year = 2008 "Meteorological year";
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
@@ -89,8 +89,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 
-	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
-	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
+	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
+	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 
 	parameter Real tank_ar = 12/39.4 "storage aspect ratio";
 
@@ -134,7 +134,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real nu_min_sf=0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 
-	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 9.5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
 	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
