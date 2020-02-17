@@ -58,7 +58,9 @@ model ParticleReceiver1D
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (backwall) [W/m^2-K]";
   parameter Real C = 1200;
+  parameter SI.Efficiency eta_opt_des = 0.5454 "Total optical efficiency at design point()";
   parameter SI.HeatFlux dni_des = 200;
+  parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley Mills";
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
   parameter SI.ThermalConductivity k_w = 0.2 "Backwall thermal conductivity [W/m-K]";
@@ -172,7 +174,7 @@ equation
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
   if test_mode == true then
-    q_solar = C * dni_des;
+    q_solar = C * dni_des * eta_opt_des;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
@@ -208,7 +210,7 @@ equation
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
 // Curtain-wall radiation heat fluxes (W/m²)
     gc_f[i] = q_solar;
-    jc_f[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i];
+    jc_f[i] = F * (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i];
     gc_b[i] = j_w[i];
     jc_b[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - eps_c[i]) * gc_b[i]) + tau_c[i] * q_solar;
     g_w[i] = jc_b[i];

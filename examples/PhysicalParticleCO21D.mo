@@ -51,7 +51,7 @@ model PhysicalParticleCO21D
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter Real he_av_design = 0.99 "Helisotats availability";
-  parameter SI.Efficiency eff_opt = 0.5565 "Field optical efficiency at design point";
+  parameter SI.Efficiency eff_opt = 0.5454 "Field optical efficiency at design point";
   parameter SI.Length H_tower = 200 "Tower height";
   parameter SI.Length R_tower = W_rcv / 2 "Tower diameter";
   parameter Boolean single_field = true "True for single field, false for multi tower";
@@ -64,6 +64,7 @@ model PhysicalParticleCO21D
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
+  parameter SI.Efficiency eta_opt_des = eff_opt;
   //parameter SI.Area A_land = A_field * land_mult "Land area";
   parameter Real A_land = metadata_list[8] "Number of heliostats";
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
@@ -81,6 +82,7 @@ model PhysicalParticleCO21D
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM;
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed";
+  parameter SI.Efficiency packing_factor = 0.747857 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
   //Optical simulation parameters
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
@@ -199,12 +201,12 @@ model PhysicalParticleCO21D
   parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
   parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
   parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks";
-  parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max particles volume in tanks";
+  parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_min = 0 "Minimum mass flow rate to receiver";
   //parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "CHANGED PG Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_max = 1.3 * m_flow_fac "Maximum mass flow rate to receiver";
-  parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
+  parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
   parameter SI.Power P_name = P_net "Nameplate rating of power block";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
@@ -238,7 +240,7 @@ model PhysicalParticleCO21D
   parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   //parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.5 / (1e6 * 3600) else (3.5 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; // Based on downselection criteria criteria
   parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 0.003 / (1e6 * 3600) else 0.003 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
-  //Solar Field Sub-System Cost see PARAMETRIC ANALYSIS OF PARTICLE CSP SYSTEM PERFORMANCE AND COSTTO INTRINSIC PARTICLE PROPERTIES AND OPERATING CONDITIONS (Albrecht et al)
+  //Solar Field Sub-System Cost see PARAMETRIC ANALYSIS OF PARTICLEhttps://pubs.acs.org/doi/pdf/10.1021/jp206115p CSP SYSTEM PERFORMANCE AND COSTTO INTRINSIC PARTICLE PROPERTIES AND OPERATING CONDITIONS (Albrecht et al)
   parameter FI.Money C_field = A_field * pri_field "Field cost";
   parameter FI.Money C_site = A_field * pri_site "Site improvements cost";
   parameter FI.Money C_land = A_land * pri_land "Land cost";
@@ -251,8 +253,9 @@ model PhysicalParticleCO21D
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
   //parameter FI.Money C_bins = FI.particleBinCost_noInsulation(T_hot_set) * SA_storage + FI.particleBinCost_noInsulation(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
-  parameter FI.Money C_bins = 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation";
-  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (40.299 / U_value - 0.4822654);
+  parameter Boolean new_storage_calc = true;
+  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + 2 * 0.523 / U_value + 1.4018) * H_storage else 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
+  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (4222.22 / U_value + 4600);
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   //PB-subsystem cost
@@ -354,7 +357,7 @@ model PhysicalParticleCO21D
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des, eta_opt_des = eta_opt_des) annotation(
     Placement(visible = true, transformation(origin = {146, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   if time > 31449600 then
