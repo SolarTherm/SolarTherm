@@ -254,8 +254,8 @@ model PhysicalParticleCO21D
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
   //parameter FI.Money C_bins = FI.particleBinCost_noInsulation(T_hot_set) * SA_storage + FI.particleBinCost_noInsulation(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter Boolean new_storage_calc = true;
-  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + 2 * 0.523 / U_value + 1.4018) * H_storage else 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
-  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (1727.27 / U_value + 4600);
+  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage) * H_storage else 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
+  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (132.569 / U_value + 1569);
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   //PB-subsystem cost
