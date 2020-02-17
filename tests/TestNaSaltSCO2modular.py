@@ -220,6 +220,7 @@ class TestScheduler(unittest.TestCase):
 		worksheet.write(33 ,0 ,'EPC and owner costs(M\$)')
 		worksheet.write(34 ,0 ,'Land cost(M\$)')
 		worksheet.write(35 ,0 ,'Total capital (installed cost)(M\$)')
+		worksheet.write(36 ,0 ,'Annual optical efficiency (\%)')
 		# values
 		worksheet.write(0, 1, 'Value')
 		worksheet.write(1, 1, round(self.perf[0],1))
@@ -257,6 +258,7 @@ class TestScheduler(unittest.TestCase):
 		worksheet.write(33, 1, round(getval('C_EPC')/1e6,1))
 		worksheet.write(34, 1, round(getval('C_land')/1e6,1))
 		worksheet.write(35, 1, round(getval('C_cap')/1e6,1))
+		worksheet.write(36, 1, round(self.res.interpolate('heliostatsField.E_field',31536000)/self.res.interpolate('heliostatsField.E_dni',31536000)*100,1))
 		cell_format = workbook.add_format({'bold': True, 'font_color': 'red'})
 		worksheet.set_column('A:A', 50, cell_format)
 		workbook.close()
