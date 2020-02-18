@@ -255,7 +255,9 @@ model PhysicalParticleCO21D
   //parameter FI.Money C_bins = FI.particleBinCost_noInsulation(T_hot_set) * SA_storage + FI.particleBinCost_noInsulation(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter Boolean new_storage_calc = true;
   parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage) * H_storage else 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
-  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (32.216 / U_value + 63.567);
+  parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (131.0426 / U_value + 23.18);
+  parameter SI.Length t_mp = 0.03293006/U_value + 0.01518;
+  parameter SI.Length t_tuffcrete47 = 0.01;
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   //PB-subsystem cost
@@ -338,6 +340,7 @@ model PhysicalParticleCO21D
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   // Analytics PG
+  
   SI.Energy E_resource(start = 0);
   SI.Energy E_helio_incident(start = 0);
   SI.Energy E_helio_raw(start = 0);
