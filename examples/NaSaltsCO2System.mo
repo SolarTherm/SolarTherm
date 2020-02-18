@@ -25,11 +25,11 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 619.771931809827e6) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 619771931.809826) "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
-	parameter Real wdelay[8] = {8, 8, 0, 0, 0, 0, 0, 0} "Weather file delays";
+	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 	parameter nSI.Angle_deg lon = -116.78 "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat = 34.85 "Latitude (+ve North)";
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
@@ -38,12 +38,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.4638323303 "Solar multiple"; //Calculated based on a receiver output of 547.034388273971MWt, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = 2.4957988516 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 0.6541444844630212 "Field optical efficiency at design point"; //Calculated to obtain a field area of 676552.5m2 (6764*144.375m2)
+	parameter SI.Efficiency eff_opt = 0.65414652341738 "Field optical efficiency at design point"; //Calculated to obtain a field area of 676552.5m2 (6764*144.375m2)
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Real C = 809.4956123111882 "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 676552.5m2 (6764*144.375m2)
 	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
@@ -57,7 +57,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 0.1347690455;//0.11736179036609595 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.882638209633904
+	parameter Real rec_fr = 0.123543272 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	
 	// HX
@@ -77,7 +77,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer layout_input = 2 "HX Tube Layout"; //Square layout = 1, Triangular layout =2;
 
 	// Storage
-	parameter Real t_storage(fixed = true, unit = "h") = 14.0 "Hours of storage";
+	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start_CS = CV.from_degC(720) "Hot tank starting temperature";
 	parameter SI.Temperature T_cold_aux_set = CV.from_degC(490) "Cold tank auxiliary heater set-point temperature";
@@ -92,7 +92,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
-	parameter Real tank_ar = 12/39.4 "storage aspect ratio"; //Updated from NREL. Changed from 20 / 18.667.
+	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
@@ -120,8 +120,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
-	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
-	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
+	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 94 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
@@ -137,12 +137,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Density rho_cold_set = Medium2.density(state_cold_set_CS) "Cold salt density at design";
 	parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
-	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
+	parameter SI.Volume V_max = 26086/24384.4*m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
-	parameter SI.Length H_storage = (4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3) "Storage tank height";
-	parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
+	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
 	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
