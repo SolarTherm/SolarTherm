@@ -1,7 +1,20 @@
 within examples;
 
 model PhysicalParticleCO21D
-  //Run this model with maximum time step less than equal to 300. Other than that, it wont converge
+  //======================================          MODEL VERSION CONTROL               ===============================================//
+  //Base case parameter : particleReceiver1D.h_conv_curtain = 10 W/m2K, pri_bop = 0, tower_cost = cheap tower, storage cost function = EES v.9 SANDIA method, variable O&M = 0, no insulation cost, using Solstice_field =======> LCOE 66.68 USD/MWh
+  //adding changes - particleReceiver1D.h_conv_curtain = 32 W/m2K ===> LCOE 68.68 USD/MWh (everything else is kept constant),
+  //adding changes - tower cost = SAM  cost function =====> LCOE 73.259 USD/MWh,
+  //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface)  and insulation cost = model that Philipe's built based on Tuffcrete, Microporous and concrete layers =======> LCOE 72.48 USD/MWh,
+  //adding changes - incorporating land cost =========> 75.62 USD/MWh
+  //adding changes - incorporating BOP cost ==========> 77.735 USD/MWh
+  //adding changes - incorporating variable O&M ===========> 77.736 USD/MWh
+  //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface) and insulation cost = model that Philipe's built based on Tuffcrete, Pumplite60 and concrete layers ====================> 82.573 USD/MWh
+
+  //=============================================        INSTRUCTION       =================================================================//
+  //===================>     Run this model with maximum time step less than equal to 300. Bigger than that, it wont converge
+
+
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -15,10 +28,6 @@ model PhysicalParticleCO21D
   import metadata = SolarTherm.Utilities.Metadata_Optics;
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
-  //TODO Incorporate Mosdelica HX model
-  //TODO Use Coolprop for SCO2 props
-  //TODO Re-train the sCO2 cycle for the partircle medium and new setpoint temperatures
-  // Input ParametQ_rawers
   // *********************
   parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
@@ -66,7 +75,7 @@ model PhysicalParticleCO21D
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
   parameter SI.Efficiency eta_opt_des = eff_opt;
   //parameter SI.Area A_land = A_field * land_mult "Land area";
-  parameter Real A_land = metadata_list[8] "Number of heliostats";
+  parameter Real A_land = metadata_list[8];//8.30896e6 * 1.3;
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Power P_net = 90e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
@@ -252,11 +261,15 @@ model PhysicalParticleCO21D
   parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
-  //parameter FI.Money C_bins = FI.particleBinCost_noInsulation(T_hot_set) * SA_storage + FI.particleBinCost_noInsulation(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
+  //parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter Boolean new_storage_calc = true;
   parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else 1230 * SA_storage + 1230 * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
   parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (131.0426 / U_value + 23.18);
-  parameter SI.Length t_mp = 0.03293006 / U_value + 0.01518;
+  //(131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
+  //(873.11/U_value) - 322.202 ======> cost function insulation of Tuffcrete, Pumplite60 and Concrete
+  parameter SI.Length t_mp = 0.32368 / U_value - 0.146096;
+  //0.03293006 / U_value + 0.01518 =====> thickness function of Pumplite60;
+  //0.32368 / U_value - 0.146096   =====> thickness function of Microporous;
   parameter SI.Length t_tuffcrete47 = 0.01;
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
