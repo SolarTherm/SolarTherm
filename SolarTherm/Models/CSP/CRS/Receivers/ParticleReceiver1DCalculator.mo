@@ -38,7 +38,7 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  ParticleReceiver1D particleReceiver1D(C = CR, N = 30, dni_des = dni_des, fixed_geometry = false, test_mode = true, with_uniform_curtain_props = false, with_wall_conduction = true,eta_opt_des=eta_opt_des) annotation(
+  ParticleReceiver1D particleReceiver1D(C = CR, N = 30, dni_des = dni_des, fixed_geometry = false, test_mode = true, with_uniform_curtain_props = false, with_wall_conduction = true,eta_opt_des=eta_opt_des, T_out_design = T_out_design) annotation(
     Placement(visible = true, transformation(origin = {-17, 29}, extent = {{-23, -23}, {23, 23}}, rotation = 0)));
 initial equation
   Q_in = P_gross_design / eff_block_design / eta_rec_assumption * SolarMultiple;
