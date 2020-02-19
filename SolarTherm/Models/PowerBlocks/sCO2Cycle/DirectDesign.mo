@@ -930,7 +930,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     
     eta_cycle = W_net / exchanger.Q_HX;
     der(E_net)=W_net;
-    W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling)*(1-f_fixed_load)else 0;
+    W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling)*(1-f_fixed_load)*0.95 else 0;
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 4}, {63, 4}}, color = {0, 127, 255}));
   connect(turbine.port_b, HTR.from_turb_port_a) annotation(

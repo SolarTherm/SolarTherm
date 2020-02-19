@@ -10,11 +10,8 @@ model PhysicalParticleCO21D
   //adding changes - incorporating BOP cost ==========> 77.735 USD/MWh
   //adding changes - incorporating variable O&M ===========> 77.736 USD/MWh
   //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface) and insulation cost = model that Philipe's built based on Tuffcrete, Pumplite60 and concrete layers ====================> 82.573 USD/MWh
-
   //=============================================        INSTRUCTION       =================================================================//
   //===================>     Run this model with maximum time step less than equal to 300. Bigger than that, it wont converge
-
-
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -54,8 +51,8 @@ model PhysicalParticleCO21D
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 7.8 "Land area multiplier : rev 12 SANDIA";
   parameter String field_type = "polar" "Other options are : surround";
-  parameter SI.Length W_helio = sqrt(100) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(100) "height of heliostat in m";
+  parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
+  parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
   parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimumheliostat cost Fig 8.";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
@@ -75,7 +72,8 @@ model PhysicalParticleCO21D
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
   parameter SI.Efficiency eta_opt_des = eff_opt;
   //parameter SI.Area A_land = A_field * land_mult "Land area";
-  parameter Real A_land = metadata_list[8];//8.30896e6 * 1.3;
+  parameter Real A_land = metadata_list[8];
+  //8.30896e6 * 1.3;
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Power P_net = 90e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
@@ -224,7 +222,7 @@ model PhysicalParticleCO21D
   parameter SI.TemperatureDifference LMTD_des = (T_hot_set - T_out_ref_co2 - (T_cold_set - T_in_ref_co2)) / Math.log((T_hot_set - T_out_ref_co2) / (T_cold_set - T_in_ref_co2)) "Particle heat exchnager LMTD at design";
   parameter SI.Area A_hx = Q_flow_des / (U_hx * LMTD_des) "Heat transfer surface area of the particle heat exchanger";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = 0.07 "Real discount rate";
+  parameter Real r_disc = (1 + 0.0701) / (1 + r_i) "Real discount rate";
   parameter Real r_i = 0.025 "Inflation rate";
   parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 2 "Years of construction";
@@ -303,7 +301,7 @@ model PhysicalParticleCO21D
     Placement(transformation(extent = {{76, 18}, {56, 38}})));
   //parasitic inputs
   Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + liftHX.W_loss + liftRC.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
-    Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
+    Placement(visible = true, transformation(origin = {105, 59}, extent = {{-12, -8}, {12, 8}}, rotation = -90)));
   // Or block for defocusing
   Modelica.Blocks.Logical.Or or1 annotation(
     Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
@@ -467,7 +465,7 @@ equation
     Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
-    Line(points = {{109, 45.7}, {109, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+    Line(points = {{105, 46}, {105, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(powerBlock.W_net, market.W_net) annotation(
     Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
   P_elec = powerBlock.W_net;
