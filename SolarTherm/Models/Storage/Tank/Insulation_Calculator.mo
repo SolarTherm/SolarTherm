@@ -23,11 +23,11 @@ parameter Real t1_min = 0.01 "Minimum thickness of Tuffcrete47";
 parameter Integer t1_divs = 500;
 parameter Real t1[t1_divs] = ModelicaReference.Operators.linspace(t1_min,t1_max,t1_divs) "thickness of the tuffcrete47";
 
-//Quadratic coefficients of Microporous
-  parameter Real D = 4.37e-8;
-  parameter Real E = -5.25e-6;
-  parameter Real F = 2.53e-2;
-parameter Real t2_max = 1 "Max thickness of the Microporous according to J.Stent";
+//Quadratic coefficients of Pumplite
+  parameter Real D = 1e-20;
+  parameter Real E = 9.9502e-6;
+  parameter Real F = 0.319154;
+parameter Real t2_max = 1 "Max thickness of the Pumplite60 according to J.Stent";
 
 //Quadratic coefficients of Concrete
 parameter Real k_concrete = 1.7355 "conductance of the concrete with 5.4% steelbar reinforcement volume fraction tudy on Thermal Conductivity of Reinforced Concrete Plate Shun Bo Zhao DOI: 10.4028/www.scientific.net/AMM.438-439.321 ";
@@ -36,7 +36,7 @@ parameter Real t3 = 0.6 "Thickness of the concrete";
 
 //Cost ==> based on personal email with J.Stent of Sandia with philipe Gunawan and Jphn Pye (18 Feb 2020)
 parameter Real c1 = 2700 "USD/m3 Tuffcrete47";
-parameter Real c2 = 4000 "USD/m3 MP";
+parameter Real c2 = 2700 "USD/m3 MP";
 parameter Real c3 = 71 "USD/m3 concrete";
 
 
@@ -91,5 +91,5 @@ CpA_min = min(CpA);
 
   
 annotation(
-    experiment(StartTime = 0, StopTime = 20, Tolerance = 1e-06, Interval = 0.689655));
+    experiment(StartTime = 0, StopTime = 20, Tolerance = 1e-06, Interval = 1));
 end Insulation_Calculator;

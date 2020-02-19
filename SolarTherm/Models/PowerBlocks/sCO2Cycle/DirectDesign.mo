@@ -208,7 +208,7 @@ package DirectDesign
     replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
     replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
     import SI = Modelica.SIunits;
-    parameter SI.ThermodynamicTemperature T_out_CO2_des=715+273.15;
+    parameter SI.ThermodynamicTemperature T_out_CO2_des=700+273.15;
     parameter SI.Power P_nom_des = 164000;
       input Boolean m_sup "when m_sup=false, m_HTF=m_HTF_design and P_elec=0 -> allows switching off the PB";
     parameter Real ratio_m_des = 1 "ratio of m_CO2_des/m_HTF_des at design point";  
