@@ -15,24 +15,20 @@ model ChlorideSaltReceiver
 
 	parameter Boolean const_alpha = true "If true then constant convective heat transfer coefficient";
 	parameter SI.CoefficientOfHeatTransfer alpha = 30 if const_alpha "Convective heat transfer coefficient";
-	
+
 	parameter SI.Length L_const = 0 "Piping length constant" annotation(Dialog(group="Piping"));
 
 	parameter Real F_mult=2.6 "Piping length multiplier " annotation(Dialog(group="Piping"));
 
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient" annotation(Dialog(group="Piping"));
 
-	Medium.BaseProperties medium;
-
-	SI.SpecificEnthalpy h_in "Specific enthalpy at inlet";
+	SI.SpecificEnthalpy h_in(start=h_0) "Specific enthalpy at inlet";
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
 
 	SI.Temperature T_in=Medium.temperature(state_in) "Temperature at inlet";
 	SI.Temperature T_out=Medium.temperature(state_out) "Temperature at outlet";
 
 	SI.HeatFlowRate Q_loss "Total losses";
-	SI.HeatFlowRate Q_rad "Radiative losses";
-	SI.HeatFlowRate Q_con "Convective losses";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF";
 	SI.HeatFlowRate Q_pip "Piping losses";
 
@@ -50,11 +46,15 @@ model ChlorideSaltReceiver
 		extent={{-38,-94},{2,-54}}),iconTransformation(
 		extent={{-24,-98},{-12,-86}})));
 
+	Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature", final unit = "K", displayUnit = "degC", min=0) annotation (
+		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
+
 	SI.Efficiency eff;
+	SI.Efficiency eta_rec;
 	SI.Energy E_rec;
 
 protected
-	parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
+	parameter SI.Temperature T_0=from_degC(500) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
 	parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
 
@@ -67,24 +67,23 @@ protected
 	parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
 	parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
 equation
-	medium.h=(h_in+h_out)/2;
 	h_in=inStream(fluid_a.h_outflow);
 	fluid_b.h_outflow=max(h_0,h_out);
 	fluid_a.h_outflow=0;
+	T = T_out;
 
-	heat.T=medium.T;
+	heat.T=Tamb;
 	fluid_b.m_flow=-fluid_a.m_flow;
-	fluid_a.p=medium.p;
-	fluid_b.p=medium.p;
+	fluid_a.p=fluid_b.p;
 
-	Q_rad=A*sigma*em*(medium.T^4-Tamb^4);
-	Q_con=A*alpha*(medium.T-Tamb);
-	Q_pip = if (fluid_a.m_flow > 0.01) then -L_tot*C_pip else 0;
+	Q_pip = if on then L_tot*C_pip else 0;
 
 	if on then
-		Q_loss=-Q_rad-Q_con-Q_pip;
+		Q_loss = -heat.Q_flow*(1-eta_rec)-Q_pip;
+		eta_rec = 1 - (0.86434 - 2.367e-09*heat.Q_flow +2.837e-18*(heat.Q_flow)^2 -1.246e-27*(heat.Q_flow)^3 -3.48e-04*(Tamb-273.15) +3.194e-13*(Tamb-273.15)*heat.Q_flow);
 	else
 		Q_loss = 0;
+		eta_rec = 0;
 	end if;
 
 	0=ab*heat.Q_flow + Q_loss + fluid_a.m_flow*(h_in-h_out);

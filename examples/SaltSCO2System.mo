@@ -17,7 +17,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
-	replaceable package Medium = SolarTherm.Media.ChlorideSalt.ChlorideSalt_pT "Medium props for molten salt";
+	replaceable package Medium = SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_ph "Medium props for molten salt";
 
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -59,7 +59,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power to receiver at design point";
 	parameter Real rec_fr = 0.208 "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
-	parameter SI.CoefficientOfHeatTransfer alpha_rec = 19 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha_rec = 30 "Receiver transfer coefficient with ambient";
 
 	// Storage
 	parameter Real t_storage(fixed=true, unit = "h") = 12.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
@@ -361,11 +361,6 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		k_loss = k_loss_cold) annotation(
 										Placement(transformation(extent = {{10, -30}, {-2, -18}})));
 
-	// Temperature sensor
-	SolarTherm.Models.Fluid.Sensors.Temperature temperature(
-		redeclare package Medium = Medium) annotation(
-																					Placement(transformation(extent = {{-14, 74}, {-4, 64}})));
-
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on = m_flow_blk,
@@ -460,10 +455,8 @@ initial equation
 																Line(points = {{10, -24.12}, {10, -24.12}, {10, -25}, {44, -25}}, color = {0, 127, 255}));
 	connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
 																Line(points = {{-24.4, 5.8}, {-14.2, 5.8}, {-14.2, -24}, {-2, -24}}, color = {0, 127, 255}));
-	connect(receiver.fluid_b, temperature.fluid_a) annotation(
-																	Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {-14, 69}}, color = {0, 127, 255}));
-	connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-																Line(points = {{-4, 69}, {-4, 69}, {16, 69}}, color = {0, 127, 255}));
+	connect(receiver.fluid_b, tankHot.fluid_a) annotation(
+																	Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {16, 69}}, color = {0, 127, 255}));
 	connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
 															Line(points = {{36, 57}, {36, 52}, {36, 44}, {48, 44}, {48, 43.88}, {66, 43.88}}, color = {0, 127, 255}));
 	connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
@@ -472,8 +465,8 @@ initial equation
 																Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
 
 	// controlCold connections
-	connect(temperature.T, controlCold.T_mea) annotation(
-															Line(points = {{-9, 63.9}, {-10, 63.9}, {-10, 24}, {38, 24}, {38, 1.2}, {24.7, 1.2}}, color = {0, 0, 127}));
+	connect(receiver.T, controlCold.T_mea) annotation(
+															Line(points = {{-22, 18}, {32, 18}, {32, 1.25}, {24, 1.25}, {24, 1.25}}, color = {0, 0, 127}));
 	connect(tankCold.L, controlCold.L_mea) annotation(
 															Line(points = {{24.56, -3}, {38, -3}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
 	connect(heliostatsField.on, controlCold.sf_on) annotation(
