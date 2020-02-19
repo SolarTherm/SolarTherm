@@ -4,6 +4,7 @@ model ParticleReceiver1D
   /* ============================================== MODEL INFO =================================================
 
                             Max N (discretisation) = 30     Based on Version 9 EES Model by SANDIA
+                            ADDED : VIEW FACTOR
 
     =============================================== END OF MODEL INFO ==============================================
     */
@@ -44,7 +45,7 @@ model ParticleReceiver1D
   parameter SI.Temperature T_ref = from_degC(580.3);
   parameter SI.SpecificEnthalpy h_0 = Util.h_T(T_ref);
   // Solid particle geometry
-  parameter SI.Length d_p = 280e-6 "particle diameter [m]" annotation(
+  parameter SI.Length d_p = 0.00035 "particle diameter [m]" annotation(
     Dialog(group = "Technical data"));
   parameter SI.Area a = 0.25 * CONST.pi * d_p ^ 2 "cross sectional particle area [m2]";
   // Medium properties
@@ -174,7 +175,7 @@ equation
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
   if test_mode == true then
-    q_solar = C * dni_des * eta_opt_des;
+    q_solar = C * dni_des;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
