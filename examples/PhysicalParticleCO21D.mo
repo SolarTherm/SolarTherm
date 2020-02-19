@@ -80,7 +80,7 @@ model PhysicalParticleCO21D
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_in_rec = from_degC(580.3) "Particle inlet temperature to particle receiver at design";
-  parameter SI.Irradiance dni_des = 909.06 "DNI at design point Equinox";
+  parameter SI.Irradiance dni_des = 950 "DNI at design point Equinox";
   parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
   parameter SI.Temperature T_amb_des = from_degC(25) "Design point ambient temp";
