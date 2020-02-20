@@ -7,10 +7,12 @@ function ShellDiameter
   output SI.Length L_bb;
   output SI.Length D_b;
   output SI.Length D_s;
+  output SI.Length D_s_out;
   
   protected
   Real KK1;
   Real nn1;
+  SI.Length t_shell;
 
 algorithm
   //Shell Diameter
@@ -52,5 +54,7 @@ algorithm
   D_b:=(N_t/KK1)^(1/nn1)*d_o;
   L_bb:=(12+5*(D_b+d_o))/995;
   D_s:=L_bb+D_b+d_o;
+  t_shell:=ShellThickness(D_s);
+  D_s_out:=D_s+2*t_shell;
  
 end ShellDiameter;
