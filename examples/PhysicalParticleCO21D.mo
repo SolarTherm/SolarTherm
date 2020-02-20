@@ -10,6 +10,10 @@ model PhysicalParticleCO21D
   //adding changes - incorporating BOP cost ==========> 77.735 USD/MWh
   //adding changes - incorporating variable O&M ===========> 77.736 USD/MWh
   //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface) and insulation cost = model that Philipe's built based on Tuffcrete, Pumplite60 and concrete layers ====================> 82.573 USD/MWh
+  //adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.95 ====================> 62.377 USD/MWh (20 February 2020)
+//adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.90 ====================> 62.377 USD/MWh (20 February 2020)
+  
+  
   //=============================================        INSTRUCTION       =================================================================//
   //===================>     Run this model with maximum time step less than equal to 300. Bigger than that, it wont converge
   import SolarTherm.{Models,Media};
@@ -51,8 +55,8 @@ model PhysicalParticleCO21D
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 7.8 "Land area multiplier : rev 12 SANDIA";
   parameter String field_type = "polar" "Other options are : surround";
-  parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
+  parameter SI.Length W_helio = sqrt(100) "width of heliostat in m";
+  parameter SI.Length H_helio = sqrt(100) "height of heliostat in m";
   parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimumheliostat cost Fig 8.";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
@@ -75,7 +79,7 @@ model PhysicalParticleCO21D
   parameter Real A_land = metadata_list[8];
   //8.30896e6 * 1.3;
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
-  parameter SI.Power P_net = 90e6 "Power block net rating at design point";
+  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
@@ -88,7 +92,7 @@ model PhysicalParticleCO21D
   parameter Integer n_H_rcv = 20 "discretization of the height axis of the receiver";
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM;
-  parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed";
+  parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
   parameter SI.Efficiency packing_factor = 0.747857 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
   //Optical simulation parameters
   parameter Integer n_rays = 10000 "number of rays for solstice";
@@ -151,7 +155,7 @@ model PhysicalParticleCO21D
   //LTR Heat recuperator parameters
   parameter Integer N_LTR_parameter = 2 "PG";
   //Cooler parameters
-  parameter SI.ThermodynamicTemperature T_low = 45 + 273.15 "Inlet temperature of the compressor";
+  parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   //Exchanger parameters
   parameter SI.Temperature T_out_ref_blk(fixed = false) "Particle outlet temperature from particle heat exchanger at design";
   parameter SI.Temperature T_in_ref_co2 = CV.from_degC(565.3) "CO2 inlet temperature to particle heat exchanger at design";
@@ -222,7 +226,8 @@ model PhysicalParticleCO21D
   parameter SI.TemperatureDifference LMTD_des = (T_hot_set - T_out_ref_co2 - (T_cold_set - T_in_ref_co2)) / Math.log((T_hot_set - T_out_ref_co2) / (T_cold_set - T_in_ref_co2)) "Particle heat exchnager LMTD at design";
   parameter SI.Area A_hx = Q_flow_des / (U_hx * LMTD_des) "Heat transfer surface area of the particle heat exchanger";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = (1 + 0.0701) / (1 + r_i) "Real discount rate";
+  parameter Real r_disc = (1 + 0.0701) / (1 + r_i) - 1;
+  //(1 + 0.0701) / (1 + r_i) - 1 "Real discount rate";
   parameter Real r_i = 0.025 "Inflation rate";
   parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 2 "Years of construction";
@@ -230,7 +235,7 @@ model PhysicalParticleCO21D
   // Valid for 2019. See https://www.rba.gov.au/
   parameter Real r_contg = 0.1 "Contingency rate";
   parameter Real r_indirect = 0.13 "Indirect capital costs rate";
-  parameter Real r_cons = 0.09 "Construction cost rate";
+  parameter Real r_cons = 0.06 "Construction cost rate";
   parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gen3 Roadmap Report";
   parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
   parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
