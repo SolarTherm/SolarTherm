@@ -98,7 +98,7 @@ equation
 	eff = Q_rcv/max(1,heat.Q_flow*n_modules);
 	Q_out = heat.Q_flow*n_modules*eta_rec;
 
-	der(E_rec) = Q_rcv;
+	der(E_rec) = n_modules*heat.Q_flow + Q_loss;//Q_rcv;
 
 	annotation (Documentation(info="<html>
 <h4>Brief description:</h4>
