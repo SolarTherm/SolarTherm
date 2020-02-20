@@ -7,7 +7,7 @@ model sCO2CycleNREL
 	parameter SI.Temperature T_out_ref=from_degC(290) "HTF outlet temperature (design)" annotation (Dialog(group="Design"));
 	parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
 	parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power" annotation (Dialog(group="Design"));
-	parameter SI.Power W_cooling_des = 0.02*W_des "";
+	parameter SI.Power W_cooling_des = -0.02*W_des "";
 
 	parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
 	SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
@@ -121,7 +121,7 @@ equation
 
 	Q_flow/Q_flow_ref = k_q;
 	W_gross/W_des = k_w;
-	W_cooling/W_cooling_des = cool.nu_w;
+	W_cooling/W_cooling_des = max(0,cool.nu_w);
     eff_pb=W_gross/max(1,Q_flow);
     
 	der(E_gross)=W_gross;

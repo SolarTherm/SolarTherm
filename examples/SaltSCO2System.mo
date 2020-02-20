@@ -17,7 +17,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
-	replaceable package Medium = SolarTherm.Media.ChlorideSalt.ChlorideSalt_pT "Medium props for molten salt";
+	replaceable package Medium = SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_ph "Medium props for molten salt";
 
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -27,12 +27,12 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
-	parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
+	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 
-	parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
+	parameter nSI.Angle_deg lon = -116.780 "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
-	parameter Integer year = 1996 "Meteorological year";
+	parameter Integer year = 2008 "Meteorological year";
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
@@ -42,9 +42,9 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
-	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
+	parameter SI.Efficiency eff_opt = SM*Q_flow_des/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
-	parameter Real C = 574.8467275 "Concentration ratio";
+	parameter Real C = 534.0 "Concentration ratio";
 	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
@@ -53,25 +53,25 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 22/28.9 "Height to diameter aspect ratio of receiver aperture";
+	parameter Real ar_rec = 4/7 "Height to diameter aspect ratio of receiver aperture"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
 	parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power to receiver at design point";
-	parameter Real rec_fr = (1.0 - 0.8517309312) "Receiver loss fraction of radiance at design point";
+	parameter Real rec_fr = 0.208 "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
-	parameter SI.CoefficientOfHeatTransfer alpha_rec = 0 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha_rec = 30 "Receiver transfer coefficient with ambient";
 
 	// Storage
-	parameter Real t_storage(fixed=true, unit = "h") = 14.0 "Hours of storage";
+	parameter Real t_storage(fixed=true, unit = "h") = 12.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
 
-	parameter SI.Temperature T_cold_set = CV.from_degC(500) "Cold tank target temperature";
-	parameter SI.Temperature T_hot_set = CV.from_degC(735) "Hot tank target temperature";
+	parameter SI.Temperature T_cold_set = CV.from_degC(500) "Cold tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Temperature T_hot_set = CV.from_degC(720) "Hot tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 
-	parameter SI.Temperature T_cold_start = CV.from_degC(500) "Cold tank starting temperature";
-	parameter SI.Temperature T_hot_start = CV.from_degC(735) "Hot tank starting temperature";
+	parameter SI.Temperature T_cold_start = CV.from_degC(500) "Cold tank starting temperature"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Temperature T_hot_start = CV.from_degC(720) "Hot tank starting temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 
-	parameter SI.Temperature T_cold_aux_set = CV.from_degC(390) "Cold tank auxiliary heater set-point temperature";
-	parameter SI.Temperature T_hot_aux_set = CV.from_degC(535) "Hot tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_cold_aux_set = CV.from_degC(450) "Cold tank auxiliary heater set-point temperature"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Temperature T_hot_aux_set = CV.from_degC(575) "Hot tank auxiliary heater set-point temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 
 	parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
 	parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
@@ -89,10 +89,10 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
 
-	parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
-	parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
+	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
+	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 
-	parameter Real tank_ar = 12/39.4 "storage aspect ratio";
+	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio";
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
@@ -118,7 +118,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature par_T_amb_des = from_degC(25) "Ambient temperature at design point";
 
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
-	parameter SI.Temperature T_in_ref_blk = from_degC(735) "HTF inlet temperature to power block at design";
+	parameter SI.Temperature T_in_ref_blk = from_degC(720) "HTF inlet temperature to power block at design"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
@@ -128,14 +128,12 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
 
-	parameter SI.HeatFlowRate Q_flow_defocus = (330/294.18)*Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver";
+	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
-	parameter Real nu_start=0.6 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf=0.3 "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
-
-	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
-	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
+	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
 	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
 	parameter Real hot_tnk_full_ub = 96 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
@@ -174,7 +172,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
 
 	parameter SI.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
-	parameter SI.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";
+	parameter SI.Volume V_max = 26086/24384.4*m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";//Based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.MassFlowRate m_flow_fac = SM*Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_rec_max = max_rec_op_fr * m_flow_fac "Maximum mass flow rate to receiver";
@@ -184,8 +182,9 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
-	parameter SI.Length H_storage = ceil((4*V_max*tank_ar^2/CN.pi)^(1/3))-3.0 "Storage tank height";
-	parameter SI.Diameter D_storage = (H_storage+3.0)/tank_ar "Storage tank diameter";
+	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -213,8 +212,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 109459613 "Receiver reference Cost";
-	//Receiver reference cost updated to match estimated total cost of $87.34M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
+	parameter FI.Money_USD C_receiver_ref = 120856014.1 "Receiver reference Cost";
+	//Receiver reference cost updated to match estimated total cost of $152.9M for a receiver aperture area of 2199.11m2 (H=20m, D=35m)
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 
@@ -301,8 +300,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		A_h = A_heliostat,
 		nu_defocus = nu_defocus,
 		nu_min = nu_min_sf,
-		Q_design = Q_flow_defocus,
 		nu_start = nu_start,
+		Q_design = Q_rec_out,
 		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
 																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
@@ -361,11 +360,6 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		redeclare package Medium = Medium,
 		k_loss = k_loss_cold) annotation(
 										Placement(transformation(extent = {{10, -30}, {-2, -18}})));
-
-	// Temperature sensor
-	SolarTherm.Models.Fluid.Sensors.Temperature temperature(
-		redeclare package Medium = Medium) annotation(
-																					Placement(transformation(extent = {{-14, 74}, {-4, 64}})));
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
@@ -461,10 +455,8 @@ initial equation
 																Line(points = {{10, -24.12}, {10, -24.12}, {10, -25}, {44, -25}}, color = {0, 127, 255}));
 	connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
 																Line(points = {{-24.4, 5.8}, {-14.2, 5.8}, {-14.2, -24}, {-2, -24}}, color = {0, 127, 255}));
-	connect(receiver.fluid_b, temperature.fluid_a) annotation(
-																	Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {-14, 69}}, color = {0, 127, 255}));
-	connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-																Line(points = {{-4, 69}, {-4, 69}, {16, 69}}, color = {0, 127, 255}));
+	connect(receiver.fluid_b, tankHot.fluid_a) annotation(
+																	Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {16, 69}}, color = {0, 127, 255}));
 	connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
 															Line(points = {{36, 57}, {36, 52}, {36, 44}, {48, 44}, {48, 43.88}, {66, 43.88}}, color = {0, 127, 255}));
 	connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
@@ -473,8 +465,8 @@ initial equation
 																Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
 
 	// controlCold connections
-	connect(temperature.T, controlCold.T_mea) annotation(
-															Line(points = {{-9, 63.9}, {-10, 63.9}, {-10, 24}, {38, 24}, {38, 1.2}, {24.7, 1.2}}, color = {0, 0, 127}));
+	connect(receiver.T, controlCold.T_mea) annotation(
+															Line(points = {{-22, 18}, {32, 18}, {32, 1.25}, {24, 1.25}, {24, 1.25}}, color = {0, 0, 127}));
 	connect(tankCold.L, controlCold.L_mea) annotation(
 															Line(points = {{24.56, -3}, {38, -3}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
 	connect(heliostatsField.on, controlCold.sf_on) annotation(
