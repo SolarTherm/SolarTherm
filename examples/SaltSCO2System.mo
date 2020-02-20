@@ -50,9 +50,9 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
-	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
-	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
+	parameter Integer N_pa_rec = 16 "Number of panels in receiver";
+	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
+	parameter SI.Diameter D_tb_rec = 34.8e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 4/7 "Height to diameter aspect ratio of receiver aperture"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
@@ -84,7 +84,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
 
-	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha = 0.35 "Tank constant heat transfer coefficient with ambient";
 
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
@@ -126,7 +126,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 
-	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
+	parameter Real max_rec_op_fr = 1.267215419 "Maximum receiver operation fraction";
 
 	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
@@ -212,13 +212,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 120856014.1 "Receiver reference Cost";
+	parameter FI.Money_USD C_receiver_ref = 100693310.466007 "Receiver reference Cost";
 	//Receiver reference cost updated to match estimated total cost of $152.9M for a receiver aperture area of 2199.11m2 (H=20m, D=35m)
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping =  3430000 "Piping cost including insulation"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_piping =  23614200 "Piping cost including insulation"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
@@ -270,7 +270,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
+		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump) annotation(
 																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
@@ -316,6 +316,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		D_tb = D_tb_rec,
 		ab = ab_rec,
 		alpha = alpha_rec,
+		m_flow_rec_des = m_flow_fac,
 		const_alpha = true) annotation(
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
@@ -421,7 +422,7 @@ initial equation
 
 	if H_tower > 120 then // then use concrete tower
 
-		C_tower = if currency == Currency.USD then 7612816 * exp(0.0113 * H_tower) else 7612816 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
 
 	else // use Latticework steel tower

@@ -10,6 +10,8 @@ model PowerBlockControl
 
   parameter Real L_df_on=99 "Level of start defocus";
   parameter Real L_df_off=96 "Level of stop defocus";
+  parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
+  SI.Power W_loss;
 
   Modelica.Blocks.Interfaces.RealInput L_mea
     annotation (Placement(transformation(extent={{-128,-70},{-88,-30}})));
@@ -40,6 +42,7 @@ model PowerBlockControl
     m_flow_standby=0)
     annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
 equation
+  W_loss = (abs(m_flow_in - m_flow) + 2*m_flow)*k_loss_hot;
   connect(defocus_logic.level_ref, L_mea) annotation (Line(points={{
           -4.44089e-016,-34},{0,-34},{0,-20},{-38,-20},{-38,-50},{-108,-50}},
         color={0,0,127}));
