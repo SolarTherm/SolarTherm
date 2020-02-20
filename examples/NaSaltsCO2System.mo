@@ -69,12 +69,18 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-	parameter Boolean optimize_HX_design=true;
-	//If optimize_HX_design is true neglect the input parameters below, otherwise provide the following values: 
-	parameter SI.Length d_o_input = 0.02223 "HX Outer Tube Diameter";
-	parameter SI.Length L_input = 23 "HX Tube Length";
-	parameter Integer N_p_input = 1 "HX Tube passes number"; //Choose between 1,2,4 or multiples of 4;
-	parameter Integer layout_input = 2 "HX Tube Layout"; //Square layout = 1, Triangular layout =2;
+    	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
+    	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+    	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
+    	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
+    	//Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
+    	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
+    	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
+    	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
+    	parameter Boolean optimize_HX_design=true; 
+    	parameter SI.Length d_o_input = 0.00635 "Optimal Outer Tube Diameter";
+    	parameter Integer N_p_input = 1 "Optimal Tube passes number";
+    	parameter Integer layout_input = 2 "Optimal Tube Layout";
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
@@ -338,13 +344,16 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.Fluid.HeatExchangers.HX Shell_and_Tube_HX(
 		replaceable package Medium1 = Medium1,
 		replaceable package Medium2 = Medium2,
-		T_Na2_input=T_cold_set_Na,
+		T_Na2_input=T_Na2_input,
 		Q_d_des = Q_rec_out,
 		optimize_and_run=optimize_HX_design,
 		d_o_input=d_o_input,
-		L_input=L_input,
 		N_p_input=N_p_input,
-		layout_input=layout_input)
+		layout_input=layout_input,
+		ratio_cond=ratio_cond,
+		ratio_max=ratio_max,
+		L_max_cond=L_max_cond,
+		L_max_input=L_max_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
