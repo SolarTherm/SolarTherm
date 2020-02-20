@@ -872,7 +872,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     C_mainCompressor = 643.15*(mainCompressor.W_comp_des/10^3)^0.9142;
     C_reCompressor = 643.15*(reCompressor.W_comp_des/10^3)^0.9142;
     C_cooler = 76.25*cooler.UA_cooler^0.8919;
-    C_generator = 0*(P_nom/10^6)^0.5463;
+    C_generator = 108900*(P_nom/10^6)^0.5463;
     C_exchanger = pri_exchanger*exchanger.Q_HX_des*m_HTF_des/1000;
     C_PB=(C_HTR+C_LTR+C_turbine+C_mainCompressor+C_reCompressor+C_generator+C_cooler+C_exchanger)*1.05;
     // 1.05 corresponds to inflation from 2017, as correlations are in 2017' dollars.
@@ -930,7 +930,7 @@ deltaHi=psi*tipSpeed^2/(( N_compressor/N_design) ^ ((20 * phi) ^ 3));
     
     eta_cycle = W_net / exchanger.Q_HX;
     der(E_net)=W_net;
-    W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling)*(1-f_fixed_load)*0.95 else 0;
+    W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling)*(1-f_fixed_load)*0.90 else 0;
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 4}, {63, 4}}, color = {0, 127, 255}));
   connect(turbine.port_b, HTR.from_turb_port_a) annotation(
