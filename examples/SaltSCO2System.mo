@@ -36,7 +36,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
-	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real SM = 2.7 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
@@ -135,8 +135,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
-	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
-	parameter Real hot_tnk_full_ub = 96 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
+	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
+	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
 
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
