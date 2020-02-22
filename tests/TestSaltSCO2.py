@@ -23,17 +23,17 @@ class TestScheduler(unittest.TestCase):
 		def getval(n):
 			return self.res.interpolate(n,1)
 
-		self.assertAlmostEqual(self.perf[0], 577613.76, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 75.70, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 65.94, 2) # Capacity factor
-		self.assertAlmostEqual(getval('R_des')/1e6, 689.94, 2) # Receiver thermal input
+		self.assertAlmostEqual(self.perf[0], 560675.35, 2) # epy
+		self.assertAlmostEqual(self.perf[1], 78.32, 2) # LCOE
+		self.assertAlmostEqual(self.perf[2], 64.00, 2) # Capacity factor
+		self.assertAlmostEqual(getval('R_des')/1e6, 741.98, 2) # Receiver thermal input
 		self.assertAlmostEqual(getval('Q_rec_out')/1e6, 587.65, 2) # Receiver thermal output
 		self.assertAlmostEqual(getval('P_gross')/1e6, 111.0, 2) # Power block gross rating
 		self.assertAlmostEqual(getval('SM'), 2.70, 2) # Solar multiple
-		self.assertAlmostEqual(getval('D_receiver'), 28.9, 2) # Receiver diameter
-		self.assertAlmostEqual(getval('H_receiver'), 22.0, 2) # Receiver height
+		self.assertAlmostEqual(getval('D_receiver'), 35.0, 2) # Receiver diameter
+		self.assertAlmostEqual(getval('H_receiver'), 20.0, 2) # Receiver height
 		self.assertAlmostEqual(getval('H_tower'), 175.0, 2) # Tower height
-		self.assertAlmostEqual(getval('n_heliostat'), 7953.0, 2) # Number of heliostas
+		self.assertAlmostEqual(getval('n_heliostat'), 8134.0, 2) # Number of heliostas
 		print "-----------------------------------------------------------------------"
 		print 'Energy per year:                          %6.2f MWh'%(self.perf[0])
 		print 'Capacity factor:                          %6.2f %%'%(self.perf[2])

@@ -270,7 +270,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump) annotation(
+		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump + controlHot.W_loss) annotation(
 																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
@@ -364,6 +364,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
+		k_loss = k_loss_hot,
 		m_flow_on = m_flow_blk,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,

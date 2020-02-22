@@ -12,7 +12,14 @@ model NREL "sCO2 NREL Nieses SAM"
 
 equation
 	nu_q=1;
-	nu_w=a + b*to_degC(T_in) + c*load + d*to_degC(T_amb);
+//	nu_w=a + b*to_degC(T_in) + c*load + d*to_degC(T_amb);
+	if load < 0.975 then
+		nu_w = -0.0009*to_degC(T_in) + 0.9158*load + 0.0166*to_degC(T_amb);
+	elseif load > 1.01 then
+		nu_w = -0.2137*load + 0.0299*to_degC(T_amb);
+	else
+		nu_w = 0.0226*to_degC(T_amb);
+	end if;
 
 	annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(coordinateSystem(preserveAspectRatio=false)));
 end NREL;
