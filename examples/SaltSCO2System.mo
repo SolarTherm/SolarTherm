@@ -132,7 +132,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
-	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
 	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
@@ -172,7 +172,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
 
 	parameter SI.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
-	parameter SI.Volume V_max = 26086/24384.4*m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";//Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";//Based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.MassFlowRate m_flow_fac = SM*Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_rec_max = max_rec_op_fr * m_flow_fac "Maximum mass flow rate to receiver";
@@ -183,8 +183,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = 42.5 "Storage tank diameter"; //Based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -270,7 +270,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump + controlHot.W_loss) annotation(
+		y = heliostatsField.W_loss + pumpHot.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump + controlHot.W_loss) annotation(
 																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
@@ -321,7 +321,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
-	SolarTherm.Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -342,7 +342,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 																				Placement(transformation(extent = {{66, 38}, {78, 50}})));
 
 	// Cold tank
-	SolarTherm.Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -365,7 +365,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		k_loss = k_loss_hot,
-		m_flow_on = m_flow_blk,
+		m_flow_on = 0.982*m_flow_blk,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
@@ -525,7 +525,7 @@ initial equation
 			Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"),
 			Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
 	Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 300),
+	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 1800),
 	__Dymola_experimentSetupOutput,
 	Documentation(revisions = "<html>
 	<ul>
