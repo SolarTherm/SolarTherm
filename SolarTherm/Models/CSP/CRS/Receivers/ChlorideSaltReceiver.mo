@@ -32,8 +32,9 @@ model ChlorideSaltReceiver
 	SI.Temperature T_in=Medium.temperature(state_in) "Temperature at inlet";
 	SI.Temperature T_out=Medium.temperature(state_out) "Temperature at outlet";
 
-	SI.HeatFlowRate Q_loss "Total losses";
-	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF";
+	SI.HeatFlowRate Q_loss "Convective and emmisive losses from the receiver";
+	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF after piping losses";
+	SI.HeatFlowRate Q_net "Net thermal power to the HTF within the receiver";
 	SI.HeatFlowRate Q_pip "Piping losses";
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
@@ -53,8 +54,8 @@ model ChlorideSaltReceiver
 	Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature", final unit = "K", displayUnit = "degC", min=0) annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
-	SI.Efficiency eff;
-	SI.Efficiency eta_rec;
+	SI.Efficiency eta_th "Receiver thermal efficiency (Q_net/Q_abs)";
+	SI.Efficiency eta_rec "Receiver efficiency (Q_net/Q_in)";
 	SI.Energy E_rec;
 	
 	parameter SI.Thickness e = 0.002e-3 "Pipe internal roughness";
@@ -93,30 +94,32 @@ equation
 	Re = medium.d*v*(D_tb-2*t_tb)/SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities.eta_T(medium.T);
 	f = if on then (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re))^(-2) else 0;
 	dP_tube = 0.5*f*H_rcv/(D_tb - 2*t_tb)*medium.d*v^2 + 2/2*f*L_e_45*medium.d*v^2 + 4/2*f*L_e_90*medium.d*v^2;
-	dP_net = dP_tube*N_pa/N_p + H_tower*medium.d*g_n;
+	dP_net = dP_tube*N_pa/N_p + (H_tower - H_rcv/2)*medium.d*g_n;
 	est_load = max(0.25, fluid_a.m_flow/m_flow_rec_des)*100;
-	eta_pump_adj = eta_pump*(-2.8825e-9*est_load^4 + 6.0231e-7*est_load^3 - 1.3867e-4*est_load^2 + 2.0683e-2*est_load);
+	eta_pump_adj = 1.165437387*eta_pump*(-2.8825e-9*est_load^4 + 6.0231e-7*est_load^3 - 1.3867e-4*est_load^2 + 2.0683e-2*est_load);
 	W_dot_pump = dP_net*fluid_a.m_flow/medium.d/eta_pump_adj;
 
-	medium.h=(h_in+h_out)/2;	
+	medium.h=(h_in+h_out)/2;
 	heat.T=Tamb;
 	fluid_b.m_flow=-fluid_a.m_flow;
 	medium.p = fluid_b.p;
 	medium.p = fluid_a.p;
 
-	Q_pip = if on then L_tot*C_pip else 0;
-
 	if on then
-		Q_loss = -heat.Q_flow*(1-eta_rec)-Q_pip;
-		eta_rec = 1 - (0.86434 - 2.367e-09*heat.Q_flow +2.837e-18*(heat.Q_flow)^2 -1.246e-27*(heat.Q_flow)^3 -3.48e-04*(Tamb-273.15) +3.194e-13*(Tamb-273.15)*heat.Q_flow);
+		Q_pip = L_tot*C_pip;
+		Q_loss = heat.Q_flow*(1-eta_rec);
+		eta_rec = 1 - (0.86434 - 2.367e-09*heat.Q_flow +2.837e-18*(heat.Q_flow)^2 -1.246e-27*(heat.Q_flow)^3 -3.484e-04*(Tamb-273.15) +3.194e-13*(Tamb-273.15)*heat.Q_flow);
+		eta_th= Q_net/ab*heat.Q_flow;
 	else
+		Q_pip = 0;
 		Q_loss = 0;
 		eta_rec = 0;
+		eta_th= 0;
 	end if;
 
-	0=ab*heat.Q_flow + Q_loss + fluid_a.m_flow*(h_in-h_out);
-	Q_rcv=fluid_a.m_flow*(h_out-h_in);
-	eff=max(Q_rcv, 0)/max(1,heat.Q_flow);
+	Q_net = ab*heat.Q_flow - Q_loss;
+	Q_rcv = Q_net - Q_pip;
+	Q_rcv = fluid_a.m_flow*(h_out-h_in);
 
 	der(E_rec) = Q_rcv;
 

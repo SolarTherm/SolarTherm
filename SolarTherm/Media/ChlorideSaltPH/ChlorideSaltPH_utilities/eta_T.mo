@@ -3,8 +3,15 @@ function eta_T "Dynamic viscosity of liquid sodium as a function of temperature"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.DynamicViscosity eta "Dynamic viscosity";
+
+protected
+	parameter Real a = 3.12354312353038e-14;
+	parameter Real b = -1.281501061896e-10;
+	parameter Real c = 2.01613494565798e-7;
+	parameter Real d = -0.0001466121;
+	parameter Real e = 0.044260166;
 algorithm
 	//From interpolation of NREL data
-	eta := 1.685018802997650e-13*T^4 - 6.577418711267250e-10*T^3+ 9.763523744306470e-7*T^2 - 6.590412997491650e-4*T + 0.174497322937481;
+	eta := a*T^4 + b*T^3 + c*T^2 + d*T + e;
 end eta_T;
 
