@@ -1,8 +1,9 @@
-within SolarTherm.Media.ChlorideSalt.ChlorideSalt_utilities;
+within SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities;
 function eta_T "Dynamic viscosity of liquid sodium as a function of temperature"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.DynamicViscosity eta "Dynamic viscosity";
+
 protected
 	parameter Real a = 3.12354312353038e-14;
 	parameter Real b = -1.281501061896e-10;
@@ -13,3 +14,4 @@ algorithm
 	//From interpolation of NREL data
 	eta := a*T^4 + b*T^3 + c*T^2 + d*T + e;
 end eta_T;
+

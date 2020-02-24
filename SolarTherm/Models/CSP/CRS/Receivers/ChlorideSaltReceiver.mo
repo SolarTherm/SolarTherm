@@ -1,6 +1,10 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 model ChlorideSaltReceiver
 	extends Interfaces.Models.ReceiverFluid;
+	import Modelica.Math.*;
+	import Modelica.Constants.*;
+
+	Medium.BaseProperties medium;
 
 	parameter SI.Length H_tower = 175 "Tower height" annotation(Dialog(group="Technical data"));
 	parameter Integer N_pa = 20 "Number of panels" annotation(Dialog(group="Technical data"));
@@ -15,25 +19,22 @@ model ChlorideSaltReceiver
 
 	parameter Boolean const_alpha = true "If true then constant convective heat transfer coefficient";
 	parameter SI.CoefficientOfHeatTransfer alpha = 30 if const_alpha "Convective heat transfer coefficient";
-	
+
 	parameter SI.Length L_const = 0 "Piping length constant" annotation(Dialog(group="Piping"));
 
 	parameter Real F_mult=2.6 "Piping length multiplier " annotation(Dialog(group="Piping"));
 
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient" annotation(Dialog(group="Piping"));
 
-	Medium.BaseProperties medium;
-
-	SI.SpecificEnthalpy h_in "Specific enthalpy at inlet";
+	SI.SpecificEnthalpy h_in(start=h_0) "Specific enthalpy at inlet";
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
 
 	SI.Temperature T_in=Medium.temperature(state_in) "Temperature at inlet";
 	SI.Temperature T_out=Medium.temperature(state_out) "Temperature at outlet";
 
-	SI.HeatFlowRate Q_loss "Total losses";
-	SI.HeatFlowRate Q_rad "Radiative losses";
-	SI.HeatFlowRate Q_con "Convective losses";
-	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF";
+	SI.HeatFlowRate Q_loss "Convective and emmisive losses from the receiver";
+	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF after piping losses";
+	SI.HeatFlowRate Q_net "Net thermal power to the HTF within the receiver";
 	SI.HeatFlowRate Q_pip "Piping losses";
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
@@ -50,11 +51,29 @@ model ChlorideSaltReceiver
 		extent={{-38,-94},{2,-54}}),iconTransformation(
 		extent={{-24,-98},{-12,-86}})));
 
-	SI.Efficiency eff;
-	SI.Energy E_rec;
+	Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature", final unit = "K", displayUnit = "degC", min=0) annotation (
+		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
-protected
-	parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
+	SI.Efficiency eta_th "Receiver thermal efficiency (Q_net/Q_abs)";
+	SI.Efficiency eta_rec "Receiver efficiency (Q_net/Q_in)";
+	SI.Energy E_rec;
+	
+	parameter SI.Thickness e = 0.002e-3 "Pipe internal roughness";
+	parameter Real N_p = 2 "Number of flowpath";
+	Real Re "Reynolds number";
+	Real f "Darcy friction factor";
+	SI.Velocity v "Pipe internal velocity";
+	SI.PressureDifference dP_tube "Pressure drop per tube";
+	SI.PressureDifference dP_net "Net pressure drop in the receiver";
+	parameter Real L_e_45 = 16.0 "Equivalent lenght for an 45 degree elbow";
+	parameter Real L_e_90 = 30.0 "Equivalent lenght for an 90 degree elbow";
+	Real est_load "ratio of design mass flow rate in the receiver";
+	parameter SI.MassFlowRate m_flow_rec_des = 2425 "Receiver mass flow rate at design point";
+	parameter SI.Efficiency eta_pump = 0.85 "Design point efficiency of the tower/receiver pump";
+	SI.Efficiency eta_pump_adj "Adjusted efficiency of the tower/receiver pump";
+	Modelica.SIunits.Power W_dot_pump "Pumping loss of the receiver/tower";
+
+	parameter SI.Temperature T_0=from_degC(500) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
 	parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
 
@@ -67,29 +86,40 @@ protected
 	parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
 	parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
 equation
-	medium.h=(h_in+h_out)/2;
 	h_in=inStream(fluid_a.h_outflow);
 	fluid_b.h_outflow=max(h_0,h_out);
 	fluid_a.h_outflow=0;
+	T = T_out;
+	v = ((fluid_a.m_flow/N_p)/N_tb_pa)/(medium.d*pi*(D_tb/2-t_tb)^2);
+	Re = medium.d*v*(D_tb-2*t_tb)/SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities.eta_T(medium.T);
+	f = if on then (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re))^(-2) else 0;
+	dP_tube = 0.5*f*H_rcv/(D_tb - 2*t_tb)*medium.d*v^2 + 2/2*f*L_e_45*medium.d*v^2 + 4/2*f*L_e_90*medium.d*v^2;
+	dP_net = dP_tube*N_pa/N_p + (H_tower - H_rcv/2)*medium.d*g_n;
+	est_load = max(0.25, fluid_a.m_flow/m_flow_rec_des)*100;
+	eta_pump_adj = 1.165437387*eta_pump*(-2.8825e-9*est_load^4 + 6.0231e-7*est_load^3 - 1.3867e-4*est_load^2 + 2.0683e-2*est_load);
+	W_dot_pump = dP_net*fluid_a.m_flow/medium.d/eta_pump_adj;
 
-	heat.T=medium.T;
+	medium.h=(h_in+h_out)/2;
+	heat.T=Tamb;
 	fluid_b.m_flow=-fluid_a.m_flow;
-	fluid_a.p=medium.p;
-	fluid_b.p=medium.p;
-
-	Q_rad=A*sigma*em*(medium.T^4-Tamb^4);
-	Q_con=A*alpha*(medium.T-Tamb);
-	Q_pip = if (fluid_a.m_flow > 0.01) then -L_tot*C_pip else 0;
+	medium.p = fluid_b.p;
+	medium.p = fluid_a.p;
 
 	if on then
-		Q_loss=-Q_rad-Q_con-Q_pip;
+		Q_pip = L_tot*C_pip;
+		Q_loss = heat.Q_flow*(1-eta_rec);
+		eta_rec = 1 - (0.86434 - 2.367e-09*heat.Q_flow +2.837e-18*(heat.Q_flow)^2 -1.246e-27*(heat.Q_flow)^3 -3.484e-04*(Tamb-273.15) +3.194e-13*(Tamb-273.15)*heat.Q_flow);
+		eta_th= Q_net/ab*heat.Q_flow;
 	else
+		Q_pip = 0;
 		Q_loss = 0;
+		eta_rec = 0;
+		eta_th= 0;
 	end if;
 
-	0=ab*heat.Q_flow + Q_loss + fluid_a.m_flow*(h_in-h_out);
-	Q_rcv=fluid_a.m_flow*(h_out-h_in);
-	eff=max(Q_rcv, 0)/max(1,heat.Q_flow);
+	Q_net = ab*heat.Q_flow - Q_loss;
+	Q_rcv = Q_net - Q_pip;
+	Q_rcv = fluid_a.m_flow*(h_out-h_in);
 
 	der(E_rec) = Q_rcv;
 
