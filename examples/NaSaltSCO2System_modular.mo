@@ -70,12 +70,18 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-	parameter Boolean optimize_HX_design=true;
-	//If optimize_HX_design is true neglect the input parameters below, otherwise provide the following values: 
-	parameter SI.Length d_o_input = 0.02223 "HX Outer Tube Diameter";
-	parameter SI.Length L_input = 23 "HX Tube Length";
-	parameter Integer N_p_input = 1 "HX Tube passes number"; //Choose between 1,2,4 or multiples of 4;
-	parameter Integer layout_input = 2 "HX Tube Layout"; //Square layout = 1, Triangular layout =2;
+	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
+	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
+	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
+	//Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
+	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
+	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
+	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
+	parameter Boolean optimize_HX_design=true; 
+	parameter SI.Length d_o_input = 0.00635 "User defined outer tube diameter";
+	parameter Integer N_p_input = 1 "User defined tube passes number";
+	parameter Integer layout_input = 2 "User defined tube layout";
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
@@ -114,6 +120,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
+	parameter SI.Time t_ramping = 1800 "Power block startup delay";
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
@@ -138,13 +145,13 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.Density rho_cold_set = Medium2.density(state_cold_set_CS) "Cold salt density at design";
 	parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
-	parameter SI.Volume V_max = 26086/24384.4*m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
+	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
 	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
@@ -340,13 +347,16 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	SolarTherm.Models.Fluid.HeatExchangers.HX Shell_and_Tube_HX(
 		replaceable package Medium1 = Medium1,
 		replaceable package Medium2 = Medium2,
-		T_Na2_input=T_cold_set_Na,
+		T_Na2_input=T_Na2_input,
 		Q_d_des = Q_rec_out,
 		optimize_and_run=optimize_HX_design,
 		d_o_input=d_o_input,
-		L_input=L_input,
 		N_p_input=N_p_input,
-		layout_input=layout_input)
+		layout_input=layout_input,
+		ratio_cond=ratio_cond,
+		ratio_max=ratio_max,
+		L_max_cond=L_max_cond,
+		L_max_input=L_max_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
@@ -357,7 +367,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 		Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
 
 	// Hot tank
-	SolarTherm.Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
@@ -377,7 +387,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{78, 42}, {90, 54}}, rotation = 0)));
 
 	// Cold tank
-	SolarTherm.Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
@@ -405,6 +415,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on = m_flow_blk,
+		t_ramp_delay = t_ramping,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
@@ -556,6 +567,9 @@ equation
 
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 		Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
+
+	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
+		Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
 
 	//Connections from data
 	connect(Wspd_input.y, heliostatsField.Wspd) annotation(
