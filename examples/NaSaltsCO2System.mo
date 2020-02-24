@@ -144,14 +144,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Density rho_cold_set = Medium2.density(state_cold_set_CS) "Cold salt density at design";
 	parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
-	parameter SI.Volume V_max = 26086/24384.4*m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
+	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage_single = 42.5 "Storage tank diameter for a single tank"; 
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
 	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
@@ -370,7 +369,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
-		D_single = D_storage_single,
 		T_start = T_hot_start_CS,
 		L_start = (1 - split_cold) * 100,
 		alpha = alpha, use_p_top = tnk_use_p_top,
@@ -391,7 +389,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
-		D_single = D_storage_single,
 		T_start = T_cold_start_CS,
 		L_start = split_cold * 100,
 		alpha = alpha,
