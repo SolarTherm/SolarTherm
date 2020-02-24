@@ -12,6 +12,13 @@ model PowerBlockControl
   parameter Real L_df_off=96 "Level of stop defocus";
   parameter SI.SpecificEnergy k_loss = 0.55e3 "Hot tank parasitic power coefficient";
   SI.Power W_loss;
+  //Zeb Ramping
+  parameter SI.Time t_ramp_delay = 7200 "Half hour startup delay";
+  SI.Time t_ramp_start(start = 0.0) "current time of simulation when ramping starts";
+  SI.Time t_ramp_end(start = t_ramp_delay) "current time of simulation when ramping starts";
+  Modelica.Blocks.Interfaces.RealOutput PB_ramp_fraction annotation(
+    Placement(visible = true, transformation(origin = {112, -50}, extent = {{20, 20}, {-20, -20}}, rotation = 180), iconTransformation(origin = {112, -50}, extent = {{20, 20}, {-20, -20}}, rotation = 180)));
+  //End Zeb ramping
 
   Modelica.Blocks.Interfaces.RealInput L_mea
     annotation (Placement(transformation(extent={{-128,-70},{-88,-30}})));
@@ -41,6 +48,15 @@ model PowerBlockControl
     level_off=L_off,
     m_flow_standby=0)
     annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+algorithm
+//Zeb Ramping
+  when logic.m_flow > 1e-6 then
+    t_ramp_start := time;
+    t_ramp_end := time + t_ramp_delay;
+  end when;
+  
+//ramp up starts
+//End Zeb Ramping
 equation
   W_loss = (abs(m_flow_in - m_flow) + m_flow)*k_loss;
   connect(defocus_logic.level_ref, L_mea) annotation (Line(points={{
@@ -53,8 +69,14 @@ equation
           -50},{-64,-50},{-64,-50},{-108,-50},{-108,-50}}, color={0,0,127}));
   connect(logic.m_flow_in, m_flow_in) annotation (Line(points={{0,10.4},{0,50},
           {0,50},{-108,50}}, color={0,0,127}));
-  connect(logic.m_flow, m_flow)
-    annotation (Line(points={{11,0},{52,0},{112,0}}, color={0,0,127}));
+//  connect(logic.m_flow, m_flow)
+//    annotation (Line(points={{11,0},{52,0},{112,0}}, color={0,0,127}));
+//Zeb Ramping
+  PB_ramp_fraction = min(1.0, (time - t_ramp_start) / (t_ramp_end - t_ramp_start));
+//Ramp fraction cannot exceed 1;
+  m_flow = logic.m_flow * PB_ramp_fraction;
+//End Zeb Ramping
+
   annotation (Documentation(revisions="<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
