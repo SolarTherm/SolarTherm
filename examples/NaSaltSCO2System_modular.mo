@@ -130,8 +130,8 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 94 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
+	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
