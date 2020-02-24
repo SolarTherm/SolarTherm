@@ -130,7 +130,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real nu_defocus = 0.57 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
 	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
