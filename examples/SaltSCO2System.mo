@@ -122,6 +122,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
+	parameter SI.Time t_ramping = 1800 "Power block startup delay";
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
@@ -365,6 +366,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		k_loss = k_loss_hot,
+		t_ramp_delay = t_ramping,
 		m_flow_on = 0.982*m_flow_blk,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,

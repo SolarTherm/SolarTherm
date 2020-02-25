@@ -4,6 +4,7 @@ model Two_Tanks
 
 	parameter SI.Diameter D=18.667 "Equivalent 1 tank Diameter";
 	parameter SI.Height H=20 "Height";
+	parameter Integer n_parallel_tanks = 2 "Number of parallel tank pairs";
 
 	parameter Boolean use_p_top = false "= true to get p_top from an input connector" annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
 	parameter SI.AbsolutePressure p_fixed=Medium.p_default "Fixed value of pressure" annotation (Evaluate = true, Dialog(group="Assumptions",enable = not use_p_top));
@@ -85,12 +86,12 @@ equation
 	fluid_b.p=medium.p;
 	fluid_a.h_outflow=medium.h;
 	fluid_b.h_outflow=medium.h;
-	der(m)=fluid_a.m_flow/2+fluid_b.m_flow/2;
-	m*der(medium.h)+der(m)*medium.h=Q_losses+W_net+fluid_a.m_flow/2*inStream(fluid_a.h_outflow)+fluid_b.m_flow/2*medium.h;
+	der(m)=fluid_a.m_flow/n_parallel_tanks+fluid_b.m_flow/n_parallel_tanks;
+	m*der(medium.h)+der(m)*medium.h=Q_losses+W_net+fluid_a.m_flow/n_parallel_tanks*inStream(fluid_a.h_outflow)+fluid_b.m_flow/n_parallel_tanks*medium.h;
 
 	V=m/medium.d;
 	L_internal=100*V/V_t;
-	A=pi*D*H*(L_internal/100) + pi*D^2/4;
+	A=(pi*D*H + pi*D^2/4);
 
 	if noEvent(medium.T<T_set) then
 		W_net=min(-Q_losses,W_max);
