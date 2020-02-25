@@ -183,8 +183,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = 42.5 "Storage tank diameter"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -484,6 +484,8 @@ initial equation
 																	Line(points = {{47.52, 61.5}, {39.52, 61.5}, {39.52, 30}, {4, 30}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 																Line(points = {{60.72, 65}, {72, 65}, {72, 49.16}}, color = {0, 0, 127}));
+	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
+                                                              Line(points = {{60, 68}, {96, 68}, {96, 22}, {96, 22}}, color = {0, 0, 127}));
 	connect(controlHot.defocus, or1.u1) annotation(
 														Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 

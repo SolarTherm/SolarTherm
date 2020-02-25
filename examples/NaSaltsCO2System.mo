@@ -120,6 +120,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
+	parameter SI.Time t_ramping = 1800 "Power block startup delay";
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
@@ -129,8 +130,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 94 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
+	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -162,7 +163,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
+	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
@@ -413,6 +414,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on = m_flow_blk,
+		t_ramp_delay = t_ramping,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
@@ -564,6 +566,9 @@ equation
 
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 		Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
+
+	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
+		Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
 
 	//Connections from data
 	connect(Wspd_input.y, heliostatsField.Wspd) annotation(
