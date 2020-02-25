@@ -29,6 +29,8 @@ function Design_HX
   input Boolean ratio_cond "Activate ratio constraint";
   input Boolean L_max_cond "Activate maximum HX length constraint";
   input SI.Length L_max_input "Maximum HX length";
+  input Boolean N_t_input_on "Activate maximum HX length constraint";
+  input Integer N_t_input "Number of tubes";
   
   output SI.MassFlowRate m_flow_Na "Sodium mass flow rate";
   output SI.MassFlowRate m_flow_MS "Molten-Salt mass flow rate";
@@ -58,6 +60,8 @@ function Design_HX
   output SI.Length L "Tube length";
   output Real ratio;
   output Real penalty;
+  output Integer N_t_min "Minimum Number of tubes";
+  output Integer N_t_max "Maximum Number of tubes";
   
   protected
   //Other Parameters
@@ -66,7 +70,7 @@ function Design_HX
   parameter Real tol2 = 1e-2 "Heat transfer coefficient tollerance";
   parameter Real iter_max = 10;
   parameter Real iter_max_2 = 10;
-  parameter Integer l_vec=1000;
+  parameter Integer l_vec=if N_t_input_on then 1 else 1000;
   SI.CoefficientOfHeatTransfer U_calc;
   Real condition "When condition";
   Real iter;
@@ -85,8 +89,6 @@ function Design_HX
   parameter SI.Velocity v_Na_lim_min = 4/3.281;
   parameter SI.Velocity v_Na_lim_max = 8/3.281;
   parameter Integer max_length_N_b=10;
-  Integer N_t_min "Number of tubes";
-  Integer N_t_max "Number of tubes";
   Integer N_t_vec[l_vec];
   SI.Length L_max;
   SI.Length l_b_min;
@@ -97,6 +99,7 @@ function Design_HX
   Integer N_baffles_max "Maximum Number of Baffles";
   Integer N_baffles_vec[max_length_N_b];
   Real N_t_real[l_vec];
+  Real N_t_input_corr[l_vec];
   
   //Tube-side
   parameter SI.Length t_tube = TubeThickness(d_o=d_o);
@@ -122,6 +125,7 @@ function Design_HX
   SI.CoefficientOfHeatTransfer vec_h_s[max_length_N_b];
   SI.CoefficientOfHeatTransfer vec_h_t[max_length_N_b];
   Real vec_condition[max_length_N_b];
+  
   
   //Cost Function
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -260,7 +264,9 @@ algorithm
   //Minimum Nt
   N_t_min:=integer(ceil(m_flow_Na*N_p/(rho_Na*A_cs*v_Na_lim_max)));
   N_t_max:=integer(floor(m_flow_Na*N_p/(rho_Na*A_cs*v_Na_lim_min)));
-  N_t_real:=(linspace(N_t_min,N_t_max,l_vec));
+  N_t_input_corr:=min(N_t_max,max(N_t_input,N_t_min))*ones(l_vec);
+  N_t_real:= if N_t_input_on then N_t_input_corr else (linspace(N_t_min,N_t_max,l_vec));
+//  N_t_real:=(linspace(N_t_min,N_t_max,l_vec));
 
   for qq in 1:l_vec loop
     U_calc:=U_guess;
@@ -370,7 +376,7 @@ algorithm
         penalty:=10e10;
     elseif noEvent(condition<tol) then
         if noEvent(C_BEC>0 and C_pump>0) then
-          C_BEC:=material_sc*9.5*A_tot*F_ma;
+          C_BEC:=material_sc*8.6*1.1*A_tot*F_ma;
           TAC:=f*C_BEC+C_pump;
           penalty:=0;
         else
@@ -382,7 +388,7 @@ algorithm
         if noEvent(C_BEC>0 and C_pump>0) then
           TAC:=(f*C_BEC+C_pump);
           penalty:=(condition*50)*TAC;
-          C_BEC:=material_sc*9.5*A_tot*F_ma;
+          C_BEC:=material_sc*8.6*1.1*A_tot*F_ma;
           TAC:=(f*C_BEC+C_pump)+penalty;
         else
           TAC:=10e10;
