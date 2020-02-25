@@ -3,7 +3,11 @@ function lamda_T "Thermal conductivity of Chloride Salt as a function of tempera
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.ThermalConductivity lambda "Thermal conductivity";
+protected
+	Modelica.SIunits.Temp_C T_C = Modelica.SIunits.Conversions.to_degC(T) "Temperature in degree Celsius";
+	constant Real a = 7.06493506493493e-7;
+	constant Real b = -0.0014404163;
+	constant Real c = 1.1483003444;
 algorithm
-	//From interpolation of NREL data
-	lambda :=-0.0001*T+0.5355;
+	lambda := a*T^2 + b*T + c; // Constant thermal conductivity
 end lamda_T;

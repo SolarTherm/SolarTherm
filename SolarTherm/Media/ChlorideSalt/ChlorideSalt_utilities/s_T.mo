@@ -1,13 +1,13 @@
 within SolarTherm.Media.ChlorideSalt.ChlorideSalt_utilities;
 function s_T "Specific entropy of Chloride Salt as a function of temperature"
-	// Assumption: incompressible flow, so: cv=cp=c, and v*dp = 0, then T*ds= dh-v*dp=c*dT
-	// Thus, by integrating (cp/T dT) from T0 to T, the entropy change can be obtained
-	// Integration constant is added such that s is set to zero at T0 = 298.15 K
-
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	output Modelica.SIunits.SpecificEntropy s "Specific entropy";
+protected
+	constant Real a = -0.448;
+	constant Real b = 1411.6156444445;
+	constant Real c = -7909.245459;
 algorithm
-	s := 1538.7*log(T/298.15)-0.528*(T-298.15);
-	
+	// s is obtained by integrating (cp/T dT). The integration constant was added such that the s value at T = 298.15 K (i.e. 25 degC) becomes zero.
+	s := a*T^2 + b*log(T) + c;
 end s_T;
