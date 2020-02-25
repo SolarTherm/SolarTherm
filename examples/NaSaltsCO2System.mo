@@ -45,7 +45,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real he_av_design = 0.99 "Helisotats availability";
 	parameter SI.Efficiency eff_opt = 0.65414652341738 "Field optical efficiency at design point"; //Calculated to obtain a field area of 676552.5m2 (6764*144.375m2)
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real C = 809.4956123111882 "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 676552.5m2 (6764*144.375m2)
+	parameter Real C = A_field/(CN.pi*D_rec_input*H_rec_input)/*809.4956123111882*/ "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 676552.5m2 (6764*144.375m2)
 	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
@@ -54,10 +54,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
+	parameter SI.Diameter D_rec_input = 16 "Receiver diameter";
+	parameter SI.Length H_rec_input = 24 "Receiver height";
+	parameter Real ar_rec = H_rec_input / D_rec_input "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 0.123543272 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
+	parameter SI.Efficiency rec_eff_design = 0.876456728 "Receiver at the design point";
+	parameter Real rec_fr = 1-rec_eff_design "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// HX
@@ -77,10 +80,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
 	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-	parameter Boolean optimize_HX_design=true; 
-	parameter SI.Length d_o_input = 0.00635 "User defined outer tube diameter";
+	parameter Boolean optimize_HX_design = true; 
+	parameter SI.Length d_o_input = 0.00953 "User defined outer tube diameter";
 	parameter Integer N_p_input = 1 "User defined tube passes number";
 	parameter Integer layout_input = 2 "User defined tube layout";
+	parameter Boolean N_t_input_on = true "Activate fixed number of tubes";
+	parameter Integer N_t_input = 1 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
@@ -160,16 +165,16 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_Na = 2 * m_flow_rec "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
+	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
+	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
+	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
+	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
 	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
-	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
-	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
-	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
 	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
-	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
-	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to power block at design point";
@@ -312,6 +317,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		D_tb = D_tb_rec,
 		ab = ab_rec,
 		em = em_rec,
+		rec_eff_design = rec_eff_design,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
@@ -355,7 +361,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		ratio_cond=ratio_cond,
 		ratio_max=ratio_max,
 		L_max_cond=L_max_cond,
-		L_max_input=L_max_input)
+		L_max_input=L_max_input,
+		N_t_input_on = N_t_input_on,
+		N_t_input = N_t_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
