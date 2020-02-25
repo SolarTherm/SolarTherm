@@ -7,7 +7,8 @@ model sCO2CycleNREL
 	parameter SI.Temperature T_out_ref=from_degC(290) "HTF outlet temperature (design)" annotation (Dialog(group="Design"));
 	parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
 	parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power" annotation (Dialog(group="Design"));
-	parameter SI.Power W_cooling_des = -0.02*W_des "";
+	parameter SI.Power W_cooling_des = 0.02*W_des "Fraction of gross power consumed by cooling system";
+	parameter SI.Efficiency nu_sys = 0.04 "System availability loss factor due to system outages and other events";
 
 	parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
 	SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
@@ -58,6 +59,15 @@ model sCO2CycleNREL
 	SI.Energy E_net(final start=0, fixed=true, displayUnit="MW.h");
 
 	Boolean logic;
+	//Zeb Ramping
+	Modelica.Blocks.Interfaces.RealInput PB_ramp_fraction annotation (Placement(
+				visible = true,transformation(
+				origin={-72, -4},extent={{-12,-12},{12,12}},
+				rotation=0),  iconTransformation(
+	
+	origin={-52, -4},extent={{-6,-6},{6,6}},
+	rotation=0)));
+	//End Zeb ramping
 
 	 Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
 				transformation(extent={{-12,-12},{12,12}},
@@ -119,14 +129,26 @@ equation
 		h_out=h_out_ref;
 	end if;
 
-	Q_flow/Q_flow_ref = k_q;
-	W_gross/W_des = k_w;
-	W_cooling/W_cooling_des = max(0,cool.nu_w);
-    eff_pb=W_gross/max(1,Q_flow);
-    
-	der(E_gross)=W_gross;
-	der(E_net)=W_net;
-	W_loss=(1-nu_net)*W_gross + W_base + parasities_internal + W_cooling;
+	//Zeb ramping
+	if PB_ramp_fraction < 1e-6 then
+		Q_flow = 0.0;
+		W_gross = 0.0;
+		W_cooling/W_cooling_des = 0.0;
+	elseif PB_ramp_fraction > 1.0-1e-6 then
+		Q_flow/Q_flow_ref = k_q;
+		W_gross/W_des = k_w;
+		W_cooling/W_cooling_des = max(0,cool.nu_w);
+	else
+		Q_flow = PB_ramp_fraction*Q_flow_ref;
+		W_gross = 0.0;
+		W_cooling/W_cooling_des = max(0,cool.nu_w);
+	end if;
+	//End Zeb Ramping
+	eff_pb = W_gross/max(1,Q_flow);
+
+	der(E_gross)=W_gross;	
+	der(E_net)=(1 - nu_sys)*W_net;
+	W_loss = W_base + parasities_internal + W_cooling;
 	W_net = W_gross - W_loss;
 
 end sCO2CycleNREL;

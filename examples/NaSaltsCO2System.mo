@@ -59,7 +59,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
 	parameter Real rec_fr = 0.123543272 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
-	
+
 	// HX
 	parameter SI.Temperature T_cold_set_Na = CV.from_degC(520) "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
@@ -69,25 +69,25 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-    	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
-    	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
-    	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
-    	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
-    	//Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
-    	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
-    	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
-    	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-    	parameter Boolean optimize_HX_design=true; 
-    	parameter SI.Length d_o_input = 0.00635 "Optimal Outer Tube Diameter";
-    	parameter Integer N_p_input = 1 "Optimal Tube passes number";
-    	parameter Integer layout_input = 2 "Optimal Tube Layout";
+	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
+	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
+	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
+	//Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
+	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
+	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
+	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
+	parameter Boolean optimize_HX_design=true; 
+	parameter SI.Length d_o_input = 0.00635 "User defined outer tube diameter";
+	parameter Integer N_p_input = 1 "User defined tube passes number";
+	parameter Integer layout_input = 2 "User defined tube layout";
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start_CS = CV.from_degC(720) "Hot tank starting temperature";
-	parameter SI.Temperature T_cold_aux_set = CV.from_degC(490) "Cold tank auxiliary heater set-point temperature";
-	parameter SI.Temperature T_hot_aux_set = CV.from_degC(710) "Hot tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_cold_aux_set = CV.from_degC(450) "Cold tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_hot_aux_set = CV.from_degC(575) "Hot tank auxiliary heater set-point temperature";
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
@@ -96,6 +96,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold1 = 0.21e3/*4.35807e3*/ "Cold tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
@@ -119,6 +120,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
 
 	// Control
+	parameter SI.Time t_ramping = 1800 "Power block startup delay";
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
@@ -128,8 +130,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 94 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
+	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -143,13 +145,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Density rho_cold_set = Medium2.density(state_cold_set_CS) "Cold salt density at design";
 	parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
-	parameter SI.Volume V_max = 26086/24384.4*m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
+	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
 	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
@@ -161,7 +163,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
+	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
@@ -197,12 +199,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 105073717 "Receiver reference Cost";
+	parameter FI.Money_USD C_receiver_ref = 105073717.298199 "Receiver reference Cost";
 	//Receiver reference cost updated to match estimated total cost of $87.34M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping = 3430000 "Piping cost including insulation"; //Updated based on Felix last spreadsheet
+	parameter FI.Money_USD C_piping = 23614200 "Piping cost including insulation"; //Updated based on Felix last spreadsheet
 	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Updated based on Felix last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
@@ -322,7 +324,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Pump cold1
 	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold1(
 		redeclare package Medium = Medium1,
-		k_loss = k_loss_cold)
+		k_loss = k_loss_cold1)
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
 	
 	//HX Control
@@ -364,7 +366,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
 
 	// Hot tank
-	SolarTherm.Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
@@ -384,7 +386,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{78, 42}, {90, 54}}, rotation = 0)));
 
 	// Cold tank
-	SolarTherm.Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
@@ -412,6 +414,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
 		m_flow_on = m_flow_blk,
+		t_ramp_delay = t_ramping,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
@@ -459,7 +462,7 @@ initial equation
 
 	if H_tower > 120 then // then use concrete tower
 
-		C_tower = if currency == Currency.USD then 7612816 * exp(0.0113 * H_tower) else 7612816 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
 
 	else // use Latticework steel tower
@@ -563,6 +566,9 @@ equation
 
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 		Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
+
+	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
+		Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
 
 	//Connections from data
 	connect(Wspd_input.y, heliostatsField.Wspd) annotation(

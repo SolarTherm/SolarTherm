@@ -36,7 +36,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
-	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real SM = 2.7 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
@@ -50,9 +50,9 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
-	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
-	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
+	parameter Integer N_pa_rec = 16 "Number of panels in receiver";
+	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
+	parameter SI.Diameter D_tb_rec = 34.8e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 4/7 "Height to diameter aspect ratio of receiver aperture"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
@@ -84,7 +84,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
 
-	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
+	parameter SI.CoefficientOfHeatTransfer alpha = 0.35 "Tank constant heat transfer coefficient with ambient";
 
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
@@ -126,17 +126,17 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 
-	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
+	parameter Real max_rec_op_fr = 1.267215419 "Maximum receiver operation fraction";
 
 	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real nu_defocus = 0.57 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
-	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
-	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
-	parameter Real hot_tnk_full_ub = 96 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
+	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
+	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
 
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
@@ -172,7 +172,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
 
 	parameter SI.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
-	parameter SI.Volume V_max = 26086/24384.4*m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";//Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";//Based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.MassFlowRate m_flow_fac = SM*Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_rec_max = max_rec_op_fr * m_flow_fac "Maximum mass flow rate to receiver";
@@ -184,7 +184,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (4*V_max/(tank_ar*CN.pi))^(1/3) "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -212,13 +212,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 120856014.1 "Receiver reference Cost";
+	parameter FI.Money_USD C_receiver_ref = 100693310.466007 "Receiver reference Cost";
 	//Receiver reference cost updated to match estimated total cost of $152.9M for a receiver aperture area of 2199.11m2 (H=20m, D=35m)
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping =  3430000 "Piping cost including insulation"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_piping =  23614200 "Piping cost including insulation"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
@@ -270,7 +270,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
+		y = heliostatsField.W_loss + pumpHot.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump + controlHot.W_loss) annotation(
 																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
@@ -316,11 +316,12 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		D_tb = D_tb_rec,
 		ab = ab_rec,
 		alpha = alpha_rec,
+		m_flow_rec_des = m_flow_fac,
 		const_alpha = true) annotation(
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
-	SolarTherm.Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -341,7 +342,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 																				Placement(transformation(extent = {{66, 38}, {78, 50}})));
 
 	// Cold tank
-	SolarTherm.Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium,
 		D = D_storage,
 		H = H_storage,
@@ -363,7 +364,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
-		m_flow_on = m_flow_blk,
+		k_loss = k_loss_hot,
+		m_flow_on = 0.982*m_flow_blk,
 		L_on = hot_tnk_empty_ub,
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
@@ -421,7 +423,7 @@ initial equation
 
 	if H_tower > 120 then // then use concrete tower
 
-		C_tower = if currency == Currency.USD then 7612816 * exp(0.0113 * H_tower) else 7612816 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
 
 	else // use Latticework steel tower
@@ -482,6 +484,8 @@ initial equation
 																	Line(points = {{47.52, 61.5}, {39.52, 61.5}, {39.52, 30}, {4, 30}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 																Line(points = {{60.72, 65}, {72, 65}, {72, 49.16}}, color = {0, 0, 127}));
+	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
+                                                              Line(points = {{60, 68}, {96, 68}, {96, 22}, {96, 22}}, color = {0, 0, 127}));
 	connect(controlHot.defocus, or1.u1) annotation(
 														Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
@@ -523,7 +527,7 @@ initial equation
 			Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"),
 			Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
 	Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 300),
+	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 1800),
 	__Dymola_experimentSetupOutput,
 	Documentation(revisions = "<html>
 	<ul>
