@@ -22,6 +22,8 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter Real C2 = 1.22007103775149;
 	parameter Real C3 = - 0.0689349243674013;
 	parameter Real C4 = 0.0552713646754176;
+	parameter SI.Efficiency rec_eff_design = 0.876456728 "Receiver at the design point";
+	parameter SI.Efficiency ref_rec_efficiency=0.876456728 "Receiver Reference Efficiency";
 
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
@@ -81,7 +83,7 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = (C1*(log10(max(1,heat.Q_flow))) + C2*(log10(max(1,heat.Q_flow)))^2 + C3*(log10(max(1,heat.Q_flow)))^3 + C4*(log10(max(1,Tamb))));
+		eta_rec = (C1*(log10(max(1,heat.Q_flow))) + C2*(log10(max(1,heat.Q_flow)))^2 + C3*(log10(max(1,heat.Q_flow)))^3 + C4*(log10(max(1,Tamb))))*rec_eff_design/ref_rec_efficiency;
 	else
 		Q_loss = 0;
 		eta_rec = 0;
