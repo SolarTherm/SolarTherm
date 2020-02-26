@@ -1,5 +1,5 @@
 within examples;
-model NaSaltsCO2System "High temperature Sodium-sCO2 system"
+model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;
 	import SI = Modelica.SIunits;
@@ -26,7 +26,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
 	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 619771931.809826) "Input power to receiver at design point";
-
+	parameter SI.RadiantPower R_des_fixed=619771931.809826;
+	parameter SI.Power P_gross_fixed=111e6;
+	
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
@@ -38,7 +40,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.4957988516 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = Q_rec_out/(P_gross_fixed/eff_blk) "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
@@ -159,7 +161,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
-	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
+	parameter SI.HeatFlowRate Q_rec_out = R_des*rec_eff_design "Heat to HX at design";
 	parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
 	parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
@@ -172,7 +174,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used
 
 	//SF Calculated Parameters
-	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
+	parameter SI.Area A_field = R_des_fixed / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
 	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
 
@@ -638,4 +640,4 @@ equation
 	</ul>
 	</html>"),
 		__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end NaSaltsCO2System;
+end NaSaltsCO2SystemHXOptimization;

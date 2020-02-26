@@ -5,5 +5,5 @@ function drho_dT_T "Derivative of density of liquid sodium w.r.t temperature"
 	output Real drho "Derivative of density w.r.t temperature";
 algorithm
 	//From interpolation of NREL data
-	drho :=-0.406;
+	drho :=-0.5786666667;
 end drho_dT_T;
