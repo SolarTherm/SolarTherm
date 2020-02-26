@@ -127,13 +127,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 
-	parameter Real max_rec_op_fr = 1.267215419 "Maximum receiver operation fraction";
+	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
 
-	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver";
+	parameter Real nu_start = 0.25 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
 	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 0.57 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 
-	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 180/H_storage "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 
 	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
