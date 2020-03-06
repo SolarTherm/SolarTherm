@@ -9,7 +9,7 @@ package CO2_utilities
     input Modelica.SIunits.SpecificEnthalpy h "Enthalpy";
     input Modelica.Blocks.Types.ExternalCombiTable2D tableID;
     output Modelica.SIunits.SpecificHeatCapacity cp "Specific heat capacity";
-    external"C" cp = ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p)
+    external"C" cp =  ModelicaStandardTables_CombiTable2D_getValue(tableID, h, p)
         annotation (Library={"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
   end cp_p_h;
 

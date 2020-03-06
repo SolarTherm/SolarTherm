@@ -295,4 +295,80 @@ package Validation
       __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
       uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")));
   end sCO2_validation;
+
+  model test_hopper
+    extends SolarTherm.Icons.ToDo;
+    import SolarTherm.{Models,Media};
+    import Modelica.SIunits.Conversions.from_degC;
+    import SI = Modelica.SIunits;
+    import nSI = Modelica.SIunits.Conversions.NonSIunits;
+    import CN = Modelica.Constants;
+    import CV = Modelica.SIunits.Conversions;
+    import FI = SolarTherm.Models.Analysis.Finances;
+    import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
+    import Modelica.Math;
+    import Modelica.Blocks;
+    replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
+    // Design Condition
+    parameter SI.MassFlowRate m_in_fixed = 1000;
+    parameter Real T_out_design = from_degC(800);
+    parameter Real T_in_design = from_degC(580.3);
+    parameter Real T_amb_design = from_degC(10);
+    parameter Real L_start = 75;
+    parameter Real L_hopper_lower_bound = 50;
+    parameter Real L_hopper_upper_bound = 95;
+    parameter SI.MassFlowRate m_flow_fac = 20000;
+    parameter SI.Time t_sk = 1800;
+    parameter SI.Time pouring_time = 5;
+    SI.Mass m_in_hopper;
+    SI.Mass m_out_hopper;
+    Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
+      Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
+      Placement(visible = true, transformation(extent = {{48, 50}, {28, 70}}, rotation = 0)));
+    SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in_fixed, use_input = true) annotation(
+      Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+    SolarTherm.Models.Storage.Tank.Hopper hopper(T_out_design = T_out_design, L_start = L_start, L_hopper_lower_bound = L_hopper_lower_bound) annotation(
+      Placement(visible = true, transformation(origin = {-31, 13}, extent = {{-19, -19}, {19, 19}}, rotation = 90)));
+    Modelica.Blocks.Sources.RealExpression T_amb(y = T_amb_design) annotation(
+      Placement(visible = true, transformation(origin = {-126, -2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression Q_inc(y = 300e6) annotation(
+      Placement(visible = true, transformation(origin = {-126, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.BooleanExpression Operation(y = true) annotation(
+      Placement(visible = true, transformation(origin = {-158, 12}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression L_cold_tank_level(y = 70) annotation(
+      Placement(visible = true, transformation(origin = {96, -60}, extent = {{10, -10}, {-10, 10}}, rotation = -90)));
+    SolarTherm.Models.Control.PulseController pulseController(m_flow_fac = m_flow_fac, t_sk = t_sk, pouring_time = pouring_time) annotation(
+      Placement(visible = true, transformation(origin = {62, 18}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  equation
+    der(m_in_hopper) = pulseController.mass_flow_batch;
+    der(m_out_hopper) = -hopper.fluid_b.m_flow;
+/*connect(Operation.y, receiver.on) H_drop
+  		annotation(
+  		Line(points = {{-69, -4}, {-39.5, -4}, {-39.5, 5}, {-25, 5}}, color = {255, 0, 255}));*/
+    connect(source.ports[1], liftSimple.fluid_a) annotation(
+      Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
+    connect(liftSimple.fluid_b, hopper.fluid_a) annotation(
+      Line(points = {{16, -14}, {-40, -14}, {-40, -6}, {-40, -6}}, color = {0, 127, 255}));
+    connect(hopper.fluid_b, sink.ports[1]) annotation(
+      Line(points = {{-18, 32}, {28, 32}, {28, 60}, {28, 60}}, color = {0, 127, 255}));
+    connect(Q_inc.y, hopper.Q_inc) annotation(
+      Line(points = {{-114, 26}, {-50, 26}, {-50, 28}, {-50, 28}}, color = {0, 0, 127}));
+    connect(T_amb.y, hopper.T_amb) annotation(
+      Line(points = {{-114, -2}, {-50, -2}, {-50, -2}, {-50, -2}}, color = {0, 0, 127}));
+    connect(Operation.y, hopper.field_operation) annotation(
+      Line(points = {{-146, 12}, {-48, 12}, {-48, 12}, {-50, 12}}, color = {255, 0, 255}));
+    connect(pulseController.mass_flow_batch, liftSimple.m_flow) annotation(
+      Line(points = {{50, 18}, {26, 18}, {26, -4}, {24, -4}}, color = {0, 0, 127}));
+    connect(pulseController.L_mea_hopper, hopper.L_hopper_mea) annotation(
+      Line(points = {{74, 20}, {94, 20}, {94, 88}, {-36, 88}, {-36, 36}, {-36, 36}}, color = {0, 0, 127}));
+    connect(L_cold_tank_level.y, pulseController.L_mea_tank) annotation(
+      Line(points = {{96, -48}, {96, -48}, {96, 16}, {74, 16}, {74, 16}}, color = {0, 0, 127}));
+  protected
+    annotation(
+      uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")),
+      experiment(StartTime = 0, StopTime = 50000, Tolerance = 1e-06, Interval = 1),
+      __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
+      Diagram);
+  end test_hopper;
 end Validation;

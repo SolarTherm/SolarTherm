@@ -205,6 +205,7 @@ equation
 // Oles & Jackson (Sol. En., 2015), Eq 31.
       end if;
     end if;
+    
 // Curtain energy balance
     q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
     q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv_curtain * (T_s[i + 1] - Tamb);

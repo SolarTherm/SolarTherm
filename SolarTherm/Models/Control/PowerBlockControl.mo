@@ -10,6 +10,7 @@ model PowerBlockControl
 
   parameter Real L_df_on=99 "Level of start defocus";
   parameter Real L_df_off=96 "Level of stop defocus";
+  Boolean ramping;
 
   Modelica.Blocks.Interfaces.RealInput L_mea
     annotation (Placement(transformation(extent={{-128,-70},{-88,-30}})));
@@ -39,7 +40,11 @@ model PowerBlockControl
     level_off=L_off,
     m_flow_standby=0)
     annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+  Modelica.Blocks.Interfaces.BooleanOutput rampingout annotation(
+    Placement(visible = true, transformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0), iconTransformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
 equation
+  ramping = logic.startup or logic.rampdown;
+  connect(rampingout,ramping);
   connect(defocus_logic.level_ref, L_mea) annotation (Line(points={{
           -4.44089e-016,-34},{0,-34},{0,-20},{-38,-20},{-38,-50},{-108,-50}},
         color={0,0,127}));
