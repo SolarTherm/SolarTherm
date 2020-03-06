@@ -8,7 +8,7 @@ model LiftSimple "A simple particle lift model"
 	parameter Boolean cont_m_flow = true "Control m_flow else control dp";
 	parameter Boolean use_input = true "Use input else parameter";
 
-	parameter SI.MassFlowRate m_flow_fixed = 0 "Fixed m_flow when no input";
+	parameter SI.MassFlowRate m_flow_fixed = 1 "Fixed m_flow when no input";
 	parameter SI.Pressure dp_fixed = 0 "Fixed dp when no input";
 
 	parameter SI.Height dh = 0 "Vertical displacement";

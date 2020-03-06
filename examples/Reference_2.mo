@@ -210,7 +210,7 @@ model Reference_2
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
   Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
-    Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+    Placement(visible = true, transformation(extent = {{-86, 4}, {-54, 38}}, rotation = 0)));
   // Receiver
   Models.CSP.CRS.Receivers.ReceiverSimple receiver(em = em_rec, redeclare package Medium = Medium, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec) annotation(
     Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
@@ -267,7 +267,7 @@ equation
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-    Line(points = {{-112.7, 30}, {-100, 30}, {-100, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+    Line(points = {{-112.7, 30}, {-100, 30}, {-100, 21}, {-70, 21}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankCold.p_top) annotation(
     Line(points = {{55, 28}, {49.5, 28}, {49.5, 20}, {49.5, -8.3}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankHot.p_top) annotation(
@@ -301,7 +301,7 @@ equation
   connect(tankCold.L, controlCold.L_mea) annotation(
     Line(points = {{24.56, -3}, {38, -3}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
   connect(heliostatsField.on, controlCold.sf_on) annotation(
-    Line(points = {{-72, 2}, {-72, 2}, {-72, -36}, {28, -36}, {28, -6}, {24.7, -6}, {24.7, -7.2}}, color = {255, 0, 255}));
+    Line(points = {{-70, 21}, {-70, -36}, {28, -36}, {28, -6}, {24.7, -6}, {24.7, -7.2}}, color = {255, 0, 255}));
   connect(controlCold.m_flow, pumpCold.m_flow) annotation(
     Line(points = {{9.16, -3}, {4, -3}, {4, -18.84}}, color = {0, 0, 127}));
   connect(controlCold.defocus, or1.u2) annotation(
@@ -317,11 +317,11 @@ equation
     Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //Solar field connections i.e. solar.heat port and control
   connect(sun.solar, heliostatsField.solar) annotation(
-    Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
+    Line(points = {{-72, 60}, {-72, 38.5}, {-70, 38.5}, {-70, 21}}, color = {255, 128, 0}));
   connect(heliostatsField.heat, receiver.heat) annotation(
-    Line(points = {{-55.68, 27.5}, {-54.82, 27.5}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
+    Line(points = {{-70, 21}, {-54.82, 21}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
   connect(or1.y, heliostatsField.defocus) annotation(
-    Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+    Line(points = {{-93.6, 8}, {-92, 8}, {-92, 21}, {-70, 21}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{109, 45.7}, {109, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));

@@ -4,7 +4,7 @@ block Level2Logic
   Modelica.Blocks.Interfaces.RealInput level_ref
     annotation (Placement(transformation(extent={{-120,-20},{-80,20}}),
         iconTransformation(extent={{-120,-20},{-80,20}})));
-    parameter Real level_max = 90;
+    parameter Real level_max = 95;
     parameter Real level_min = 10;
 
   Modelica.Blocks.Interfaces.BooleanOutput y

@@ -8,6 +8,7 @@ model StartUpLogic5
 
   parameter Modelica.SIunits.Time t_start=0.5*3600;
   parameter Modelica.SIunits.Time t_standby=2*3600;
+  parameter Modelica.SIunits.Time t_rampdown = 0.5*3600;
   parameter Real m_flow_max;
   parameter Real m_flow_startup;
   parameter Real m_flow_standby;
@@ -15,6 +16,7 @@ model StartUpLogic5
   parameter Real level_off=5;
   Boolean standby;
   Boolean startup(start=false, fixed=true);
+  Boolean rampdown(start=false,fixed=true);
   Boolean on_charge;
   Boolean on_discharge;
 
@@ -36,12 +38,7 @@ initial equation
 equation
 //
   on_charge= m_flow_in>0;
-  //  on_discharge=level>level_min;
-//  when
-//
-//
-//
-//
+
    when level>level_on then
      on_discharge = true;
    elsewhen level<level_off then
@@ -60,6 +57,12 @@ equation
    elsewhen (time-t_on)>t_start then
      startup=false;
    end when;
+//
+  when time-(t_off+t_rampdown+t_standby)>0 then
+    rampdown=false;
+  elsewhen time-(t_off+t_rampdown+t_standby)<0 then
+    rampdown=true;
+  end when;
    standby = (time-t_off)<t_standby;
 //   y =if level then (if (startup) then y_start else y_des) else 0;
 
@@ -73,12 +76,12 @@ equation
         m_flow=min(m_flow_in,m_flow_max);
       end if;
     end if;
-  else
-    if standby then
+  elseif standby then
       m_flow=m_flow_standby;
-    else
+  elseif rampdown then
+      m_flow = m_flow_startup;    
+  else
       m_flow=0;
-    end if;
   end if;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(

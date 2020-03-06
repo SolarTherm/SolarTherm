@@ -58,18 +58,18 @@ model Tank
                                           annotation (Placement(transformation(
           extent={{96,44},{116,64}}), iconTransformation(extent={{92,34},{112,54}})));
   Modelica.Blocks.Interfaces.RealInput p_top if use_p_top annotation (Placement(
-        transformation(
-        extent={{-16,-16},{16,16}},
-        rotation=-90,
-        origin={0,108}), iconTransformation(
-        extent={{-11,-11},{11,11}},
-        rotation=-90,
-        origin={45,97})));
+        visible = true,transformation(
+        
+        origin={58, 106},extent={{-16,-16},{16,16}},
+        rotation=-90), iconTransformation(
+        
+        origin={45,97},extent={{-11,-11},{11,11}},
+        rotation=-90)));
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         visible = true,transformation(
         
-        origin={0,108},extent={{-16,-16},{16,16}},
+        origin={-50,108},extent={{-16,-16},{16,16}},
         rotation=-90), iconTransformation(
         
         origin={-41,97},extent={{-11,-11},{11,11}},

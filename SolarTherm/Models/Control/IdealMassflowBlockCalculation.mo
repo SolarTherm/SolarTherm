@@ -4,6 +4,7 @@ model IdealMassflowBlockCalculation
 import SI = Modelica.SIunits;
 import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities; 
 parameter Real y_start = 500;
+Boolean on (start=false);
 
 outer parameter Real eta_rec (start = 0, fixed =false);
 
@@ -29,8 +30,10 @@ algorithm
 
 if Q_input <= 1e-6 then
   m_flow := 0;
+  on := false;
   
 elseif Q_input > 1e-6 then
+on:=true;
     if pre(eta_rec )< 1e-20 then 
       m_flow := Q_input * eta_rec_discrete / abs(Util.h_T(T_ref) - Util.h_T(T_mea)) "Start-up condition";
     else
