@@ -59,20 +59,10 @@ model m_flow_calculations_simple
   SI.SpecificEnthalpy h_CS2= Medium2.specificEnthalpy(state_CS2);
   SI.MassFlowRate m_flow_rec_internal(start=m_flow_start_Na);
   SI.MassFlowRate m_flow_rec_internal_lim_min(start=m_flow_start_Na);
-//  SI.MassFlowRate m_flow_rec_internal_lim_max(start=m_flow_start_Na);
   SI.MassFlowRate m_flow_hs_internal(start=m_flow_start_CS, nominal=m_flow_start_CS);
   SI.MassFlowRate m_flow_hs_internal_lim_min(start=m_flow_start_CS, nominal=m_flow_start_CS);
-//  SI.MassFlowRate m_flow_hs_internal_lim_max(start=m_flow_start_CS);
 
 equation
-//  state_Na1= Medium1.setState_pTX(Medium1.p_default, T_out_rec_ref);
-//  state_Na2= Medium1.setState_pTX(Medium1.p_default, T_input_rec);
-//  state_CS1= Medium2.setState_pTX(Medium2.p_default, T_output_cs);
-//  state_CS2= Medium2.setState_pTX(Medium2.p_default, T_input_hs);
-//  h_Na1= Medium1.specificEnthalpy(state_Na1);
-//  h_Na2= Medium1.specificEnthalpy(state_Na2);
-//  h_CS1= Medium2.specificEnthalpy(state_CS1);
-//  h_CS2= Medium2.specificEnthalpy(state_CS2);
   
   if sf_on then
     if noEvent((h_Na1-h_Na2)<0) then
@@ -86,30 +76,9 @@ equation
     m_flow_rec_internal=0;
     m_flow_hs_internal=0;
   end if;
-
-//algorithm
-//  if  Q_out_rec < 1e-8 then
-//      m_flow_rec := 0;
-//      m_flow_hs := 0;
-//  end if;
-  
-//  if  Q_out_rec > 1e-8 then
-//    if noEvent((h_Na1-h_Na2)<0) then
-//      m_flow_rec_internal:=m_flow_min_Na_safe;
-//      m_flow_hs_internal:=m_flow_min_CS_safe;
-//    else
-//      m_flow_rec_internal:=Q_out_rec/(h_Na1-h_Na2);
-//      m_flow_hs_internal:=Q_out_rec/(h_CS2-h_CS1);
-//    end if;    
-//  end if;
   
   m_flow_rec_internal_lim_min=max(m_flow_min_Na, m_flow_rec_internal);
-//  m_flow_rec_internal_lim_max=min(m_flow_max_Na, m_flow_rec_internal_lim_min);
   m_flow_hs_internal_lim_min=max(m_flow_min_CS, m_flow_hs_internal);
-//  m_flow_hs_internal_lim_max=min(m_flow_max_CS, m_flow_hs_internal_lim_min);
-  
-//  m_flow_rec=max(m_flow_min_Na, m_flow_rec_internal);
-//  m_flow_hs=max(m_flow_min_CS, m_flow_hs_internal);
   m_flow_rec=min(m_flow_max_Na, m_flow_rec_internal_lim_min);
   m_flow_hs=min(m_flow_max_CS, m_flow_hs_internal_lim_min);
   

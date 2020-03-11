@@ -70,7 +70,7 @@ function Design_HX
   parameter Real tol2 = 1e-2 "Heat transfer coefficient tollerance";
   parameter Real iter_max = 10;
   parameter Real iter_max_2 = 10;
-  parameter Integer l_vec=if N_t_input_on then 1 else 1000;
+  parameter Integer l_vec=if N_t_input_on then 1 else 5000;
   SI.CoefficientOfHeatTransfer U_calc;
   Real condition "When condition";
   Real iter;
@@ -279,8 +279,8 @@ algorithm
     end if;
     (L_bb, D_b, D_s, D_s_out):= ShellDiameter(d_o=d_o, N_t=N_t, layout=layout, N_p=N_p);
     L_max:=D_s*ratio_max;
-    l_b_min:=m_flow_MS/(rho_MS*v_max_MS_lim_max)/(L_bb+(D_b/P_t)*(P_t-d_o))*N_sp;
-    l_b_max:=m_flow_MS/(rho_MS*v_max_MS_lim_min)/(L_bb+(D_b/P_t)*(P_t-d_o))*N_sp;
+    l_b_min:=m_flow_MS/(rho_MS*v_max_MS_lim_max)/(L_bb+(D_b/P_t)*(P_t-d_o));
+    l_b_max:=m_flow_MS/(rho_MS*v_max_MS_lim_min)/(L_bb+(D_b/P_t)*(P_t-d_o));
     l_b:=l_b_max;
     t_baffle_max:= BaffleThickness(D_s=D_s, l_b=l_b_max);
     t_baffle_min:= BaffleThickness(D_s=D_s, l_b=l_b_min);
@@ -296,22 +296,22 @@ algorithm
       A_st:=CN.pi*d_o*L;
       A_tot:=A_st*N_t;
       (L_bb, D_b, D_s) := ShellDiameter(d_o=d_o, N_t=N_t, layout=layout, N_p=N_p);
-      N_baffles_min:=max(0,integer(ceil((L/(l_b_max+t_baffle_max)-1)*N_sp)));
-      N_baffles_max:=max(0,integer(floor((L/(l_b_min+t_baffle_min)-1)*N_sp)));
+      N_baffles_min:=max(0,integer(ceil((L/(l_b_max+t_baffle_max)-1))));
+      N_baffles_max:=max(0,integer(floor((L/(l_b_min+t_baffle_min)-1))));
       N_baffles_vec:=integer(linspace(N_baffles_min,N_baffles_max,max_length_N_b));
       skip:=0;
       for yy in 1:size(N_baffles_vec,1) loop
         N_baffles:=N_baffles_vec[yy];
         geom_error:=10;
         iter_2:=0;
-        l_b_approx:=L/(N_baffles/N_sp+1);
+        l_b_approx:=L/(N_baffles+1);
         while noEvent(geom_error>tol2 or iter_2>iter_max_2) loop
           if N_baffles<1 then
               t_baffle:=0;
           else
               t_baffle:=BaffleThickness(D_s=D_s,l_b=l_b_approx);
           end if;
-          l_b:=L/(N_baffles/N_sp+1)-t_baffle;
+          l_b:=L/(N_baffles+1)-t_baffle;
           geom_error:=abs(l_b-l_b_approx)/l_b;
           l_b_approx:=l_b;
           iter_2:=iter_2+1;
