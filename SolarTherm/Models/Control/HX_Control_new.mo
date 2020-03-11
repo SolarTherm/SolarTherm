@@ -5,12 +5,12 @@ model HX_Control_new
   parameter SI.Temperature T_ref_hs=from_degC(570) "Setpoint of temperature";
   
   parameter SI.MassFlowRate m_flow_max_CS=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_CS=0 "Mass flow rate when control off";
-  parameter SI.MassFlowRate m_flow_min_CS_safe=0.2*m_flow_start_CS "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS=1 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS_safe=0.3*m_flow_start_CS "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_start_CS=0 "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_max_Na=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_Na=0 "Mass flow rate when control off";
-  parameter SI.MassFlowRate m_flow_min_Na_safe=0.2*m_flow_start_Na "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na=1 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na_safe=0.3*m_flow_start_Na "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_start_Na=0 "Mass flow rate when control off";
   parameter SI.HeatFlowRate Q_flow_rec=0;
   
@@ -85,10 +85,7 @@ model HX_Control_new
     Placement(visible = true, transformation(origin = {68, 2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.m_flow_calculations_simple m_flow_calculations1(m_flow_max_Na=m_flow_max_Na, m_flow_max_CS=m_flow_max_CS, m_flow_start_Na=m_flow_start_Na, m_flow_start_CS=m_flow_start_CS, m_flow_min_CS=m_flow_min_CS, m_flow_min_Na=m_flow_min_Na,m_flow_min_Na_safe=m_flow_min_Na_safe,m_flow_min_CS_safe=m_flow_min_CS_safe, Q_flow_rec=Q_flow_rec) annotation(
     Placement(visible = true, transformation(origin = {1, 49}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
-// Modelica.Blocks.Nonlinear.Limiter limiter_hs(uMax=m_flow_max_CS, uMin=m_flow_min_CS) annotation(
-//    Placement(visible = true, transformation(origin = {39, 57}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
-//  Modelica.Blocks.Nonlinear.Limiter limiter_Na(uMax = m_flow_max_Na, uMin = m_flow_min_Na) annotation(
-//    Placement(visible = true, transformation(origin = {35, 19}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+
 equation
   connect(Q_out_rec, m_flow_calculations1.Q_out_rec) annotation(
     Line(points = {{2, 108}, {2, 89}, {1, 89}, {1, 65.5}}, color = {0, 0, 127}));
@@ -96,14 +93,6 @@ equation
     Line(points = {{18, 42}, {38, 42}, {38, 4}, {56, 4}, {56, 4}}, color = {0, 0, 127}));
   connect(m_flow_calculations1.m_flow_hs, switch.in2) annotation( 
   Line(points = {{18, 56}, {48, 56}, {48, 10}, {56, 10}, {56, 10}}, color = {0, 0, 127}));
-//  connect(limiter_Na.y, switch.in1) annotation(
-//    Line(points = {{42, 20}, {46, 20}, {46, 4}, {56, 4}, {56, 4}}, color = {0, 0, 127}));
-//  connect(m_flow_calculations1.m_flow_rec, limiter_Na.u) annotation(
-//    Line(points = {{18, 42}, {22, 42}, {22, 18}, {26, 18}, {26, 20}}, color = {0, 0, 127}));
-//  connect(limiter_hs.y, switch.in2) annotation(
-//    Line(points = {{46, 58}, {52, 58}, {52, 8}, {56, 8}, {56, 10}}, color = {0, 0, 127}));
-//  connect(m_flow_calculations1.m_flow_hs, limiter_hs.u) annotation(
-//    Line(points = {{18, 56}, {30, 56}, {30, 58}, {30, 58}}, color = {0, 0, 127}));
   connect(m_flow_off_input.y, switch.u3) annotation(
     Line(points = {{34, -34}, {42, -34}, {42, -6}, {56, -6}}, color = {0, 0, 127}));
   connect(and1.y, switch.u2) annotation(

@@ -9,5 +9,5 @@ protected
 	constant Real c = -7909.245459;
 algorithm
 	// s is obtained by integrating (cp/T dT). The integration constant was added such that the s value at T = 298.15 K (i.e. 25 degC) becomes zero.
-	s := a*T^2 + b*log(T) + c;
+	s := a*T^2 + b*log(max(1,T)) + c;
 end s_T;

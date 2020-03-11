@@ -45,7 +45,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real he_av_design = 0.99 "Helisotats availability";
 	parameter SI.Efficiency eff_opt = 0.65414652341738 "Field optical efficiency at design point"; //Calculated to obtain a field area of 976552.5 m2 (6764*144.375m2)
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real C = A_field/(CN.pi*D_rec_input*H_rec_input)/*809.4956123111882*/ "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 976552.5m2 (6764*144.375m2)
+	parameter Real C = A_field/(CN.pi*D_rec_input*H_rec_input) "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 976552.5m2 (6764*144.375m2)
 	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
@@ -72,7 +72,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(720) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
+	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
@@ -101,7 +101,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-	parameter SI.SpecificEnergy k_loss_cold1 = 0.21e3/*4.35807e3*/ "Cold tank parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold1 = 0.21e3 "Cold tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
@@ -264,17 +264,17 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	Modelica.Blocks.Sources.RealExpression parasities_input(
 		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold1.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss) 
 		annotation(Placement(visible = true, transformation(origin = {149, 64}, extent = {{-13, -10}, {13, 10}}, rotation = -90)));
-	
+
 	//Sodium loop Pressure Losses
 	Modelica.Blocks.Sources.RealExpression PressureLosses_Na_loop(
 		y = Shell_and_Tube_HX.Dp_tube) 
 		annotation(Placement(visible = true, transformation(extent = {{-132, -50}, {-112, -30}}, rotation = 0)));
-	
+
 	//ChlorideSalt loop Pressure Losses
 	Modelica.Blocks.Sources.RealExpression PressureLosses_CS_loop(
 		y = Shell_and_Tube_HX.Dp_shell)
 		annotation(Placement(visible = true, transformation(extent = {{-22, 52}, {-2, 72}}, rotation = 0)));
-	
+
 	// Or block for defocusing
 	Modelica.Blocks.Logical.Or or1
 		annotation(Placement(visible = true, transformation(extent = {{-116, 2}, {-108, 10}}, rotation = 0)));
@@ -455,7 +455,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	//Other Variables:
-
 	SI.Power P_elec "Output power of power block";
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
 	FI.Money_USD R_spot(start = 0, fixed = true) "Spot market revenue";
@@ -565,7 +564,7 @@ equation
 	connect(Pres_input.y, SodiumBufferTank.p_top) annotation(
 		Line(points = {{119, -12}, {42, -12}, {42, -26}, {7, -26}, {7, -28}}, color = {0, 0, 127}));
 
-	//controlHot connections
+
 	connect(controlHot.defocus, or1.u1) annotation(
 		Line(points = {{104, 81}, {104, 86}, {-126, 86}, {-126, 6}, {-117, 6}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
