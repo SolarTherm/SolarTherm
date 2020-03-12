@@ -288,7 +288,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
-	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAM heliostatsField(
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
@@ -487,7 +487,7 @@ initial equation
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 																Line(points = {{60.72, 65}, {72, 65}, {72, 49.16}}, color = {0, 0, 127}));
 	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
-                                                              Line(points = {{60, 68}, {96, 68}, {96, 22}, {96, 22}}, color = {0, 0, 127}));
+																Line(points = {{60, 68}, {96, 68}, {96, 22}, {96, 22}}, color = {0, 0, 127}));
 	connect(controlHot.defocus, or1.u1) annotation(
 														Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
