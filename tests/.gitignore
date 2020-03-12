@@ -17,6 +17,7 @@ SolarMethanolSystem
 TestExternalC
 TestExternalPyStr
 TestExternalPyFunc
+TestSolsticeOELT
 optimizeInput.csv
 *.libs
 report.*
