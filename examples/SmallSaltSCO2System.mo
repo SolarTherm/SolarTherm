@@ -15,6 +15,8 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Input Parameters
 	// *********************
+	parameter Real power_fr = 2 "Fraction of 100 MWe case: 2 (50 MWe), 4 (25 MWe), 10 (10 MWe), etc.";
+	parameter Real tower_fr = 1 "Fraction of initial tower value: 1 (100%), 1.25 (125%), 1.5 (150%), etc.";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
@@ -36,12 +38,12 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
+	parameter String opt_file = "/home/arfontalvo/solartherm/SolarTherm/Data/Optics/dominic/"+ String(integer(tower_fr*100)) + "TH" + String(ceil(P_gross/1e6*0.9)) + "SM" + String(SM*10) + ".motab";
 	parameter Real metadata_list[8] = metadata(opt_file);
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
 	parameter SI.Height H_tower = metadata_list[6] "Number of heliostats";
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.7 "Solar multiple";
+	parameter Real SM = 2.5 "Solar multiple";
 	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
 	parameter SI.Area land_non_solar = 182108.7 "Non-solar field land area"; //45 acre. Based on NREL Gen3 SAM model v14.02.2020
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
@@ -103,7 +105,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
 
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
+	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6/power_fr "Power block gross rating at design point";
 
 	parameter SI.Efficiency eff_blk = 0.51 "Power block efficiency at design point";
 
