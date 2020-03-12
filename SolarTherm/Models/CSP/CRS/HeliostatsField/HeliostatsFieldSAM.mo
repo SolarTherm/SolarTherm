@@ -1,5 +1,5 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
-model HeliostatsField
+model HeliostatsFieldSAM
   extends Interfaces.Models.Heliostats;
   parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
   parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
@@ -160,4 +160,4 @@ equation
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
 </html>"));
-end HeliostatsField;
+end HeliostatsFieldSAM;
