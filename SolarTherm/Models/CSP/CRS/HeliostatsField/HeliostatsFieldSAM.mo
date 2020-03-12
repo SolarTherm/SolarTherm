@@ -28,6 +28,7 @@ model HeliostatsField
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
+  parameter SI.Time t_startup=720 "Receiver startup delay time";
 
   Optical optical(hra=solar.hra, dec=solar.dec, lat=lat);
   SI.HeatFlowRate Q_raw;
@@ -48,11 +49,16 @@ model HeliostatsField
         transformation(extent={{-126,50},{-86,90}}), iconTransformation(extent={
             {-110,50},{-86,74}})));
 
+  SI.Time t_ramp_start(start = 0.0) "current time of simulation when ramping starts";
+  SI.Time t_ramp_end(start = t_startup) "current time of simulation when ramping starts";
+  Real rec_ramp_fraction;
+
   SI.Angle elo;
   SI.Angle ele;
   SI.Angle zen;
   SI.Angle zen2;
   SI.Angle azi;
+  SI.Energy E_raw;
   SI.Energy E_dni;
   SI.Energy E_field;
 
@@ -75,8 +81,22 @@ protected
   parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  parameter SI.Energy E_startup=nu_start*t_startup*Q_design "Minimum energy required to startup the receiver during the delay time";
+algorithm
+
+	when E_raw>E_startup then//when Q_raw>Q_start then
+		if on_internal == false then
+		//on_internal:=true;
+			t_ramp_start := time;
+			t_ramp_end := time + t_startup;
+		end if;
+		on_internal:=true;
+	elsewhen Q_raw<Q_min then
+	on_internal:=false;
+	end when;
 initial equation
-   on_internal=Q_raw>Q_start;
+   on_internal=E_raw>E_startup;
+//   on_internal=Q_raw>Q_start;
 equation
   if use_on then
     connect(on,on_internal);
@@ -92,17 +112,19 @@ equation
     Wspd_internal = -1;
   end if;
 
-  on_hf=(ele>ele_min) and
-                     (Wspd_internal<Wspd_max);
+  on_hf=(ele>ele_min) and (Wspd_internal<Wspd_max);
+
+  E_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0)*t_startup*0.5 else 0;
+
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
 
-  when Q_raw>Q_start then
-    on_internal=true;
-  elsewhen Q_raw<Q_min then
-    on_internal=false;
-  end when;
+  if rec_ramp_fraction <1.0-1e-6 then
+    Q_net= if on_internal then (if defocus_internal then min(Q_defocus,(Q_raw - Q_start)) else (Q_raw - Q_start)) else 0;
+  else
+    Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
+  end if;
 
-  Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
+  rec_ramp_fraction = min(1.0, (time - t_ramp_start) / (t_ramp_end - t_ramp_start));
 
   heat.Q_flow= -Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
