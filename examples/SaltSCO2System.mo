@@ -38,7 +38,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_salt_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real SM = 2.7 "Solar multiple";
-	parameter Real land_mult = 6.16783860571 "Land area multiplier";
+	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
+	parameter SI.Area land_non_solar = 182108.7 "Non-solar field land area"; //45 acre. Based on NREL Gen3 SAM model v14.02.2020
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
@@ -59,7 +60,6 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power to receiver at design point";
 	parameter Real rec_fr = 0.208 "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
-	parameter SI.CoefficientOfHeatTransfer alpha_rec = 30 "Receiver transfer coefficient with ambient";
 
 	// Storage
 	parameter Real t_storage(fixed=true, unit = "h") = 12.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
@@ -164,7 +164,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
 
-	parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_land = land_mult*A_field + land_non_solar "Land area";
 
 	parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
 	parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
@@ -219,8 +219,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping =  23614200 "Piping cost including insulation"; //Based on Chad's last spreadsheet
-	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_piping =  18966200 "Piping cost (Riser/Downcomer) including insulation"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_pumps = 4648000 "Cold Salt pumps"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
@@ -316,7 +316,6 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
-		alpha = alpha_rec,
 		m_flow_rec_des = m_flow_fac,
 		const_alpha = true) annotation(
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
