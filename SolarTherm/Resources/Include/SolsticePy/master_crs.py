@@ -17,8 +17,6 @@ from input import Parameters
 from output_solartherm import *
 
 
-
-
 class CRS:
     '''
     A Central Receiver System (CRS) that includes three parts, 
@@ -74,7 +72,7 @@ class CRS:
             if not os.path.exists(savefolder):
                 os.makedirs(savefolder)
 
-            pos_and_aiming=radial_stagger(latitude=self.latitude, num_hst=num_hst, width=hst_w, height=hst_h, hst_z=hst_z, towerheight=tower_h, R1=R1, fb=fb, dsep=0., field='polar', savedir=self.casedir, plot=False)        
+            pos_and_aiming=radial_stagger(latitude=self.latitude, num_hst=num_hst, width=hst_w, height=hst_h, hst_z=hst_z, towerheight=tower_h, R1=R1, fb=fb, dsep=0., field=field, savedir=self.casedir, plot=False)        
               
             layout=pos_and_aiming[2:, :]
 
@@ -184,7 +182,6 @@ class CRS:
    
         #TODO gen YAML just once, but need to change dni
         #gen_YAML(1000, self.sunshape, self.sunsize, self.hst_pos, self.hst_foc, self.hst_aims,  self.hst_w, self.hst_h, self.hst_rho, self.slope, self.receiver, self.rec_param, self.rec_abs, annualfolder, self.tower_h, self.tower_r, spectral=False, medium=0, OneHeliostat=False)
-
         # performance of individual heliostat is recorded
         ANNUAL=N.zeros((self.n_helios, 2))   
 
@@ -194,7 +191,6 @@ class CRS:
                 azimuth=self.sol_azi[c-1]
                 elevation= self.sol_ele[c-1]
 
-                # TODO DNI from weather data
                 if N.sin(elevation*N.pi/180.)>=1.e-5:
                     dni=1618.*N.exp(-0.606/(N.sin(elevation*N.pi/180.)**0.491))
                 else:

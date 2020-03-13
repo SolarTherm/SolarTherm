@@ -10,6 +10,7 @@ model ChlorideSaltReceiver
 	parameter Integer N_pa = 20 "Number of panels" annotation(Dialog(group="Technical data"));
 	parameter SI.Diameter D_tb = 25e-3 "Tube outer diameter" annotation(Dialog(group="Technical data"));
 	parameter SI.Thickness t_tb = 1 "Tube wall thickness" annotation(Dialog(group="Technical data"));
+	parameter SI.RadiantPower R_des = 2.7*111e6/0.51/(1 - 0.208) "Input power to receiver at design point";
 
 	parameter SI.Efficiency ab = 1 "Coating absorptance" annotation(Dialog(group="Technical data"));
 	parameter SI.Efficiency em = 1 "Coating Emmitance" annotation(Dialog(group="Technical data"));
@@ -26,6 +27,13 @@ model ChlorideSaltReceiver
 
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient" annotation(Dialog(group="Piping"));
 
+	parameter Real C1 = 0.86434;
+	parameter Real C2 = -1.756263369;//-2.367e-9;
+	parameter Real C3 = 1.561860014;//2.837e-18;
+	parameter Real C4 = -0.508970016;//-1.246e-27;
+	parameter Real C5 = -0.0003484;
+	parameter Real C6 = 0.000236987968;//3.194e-13;
+	
 	SI.SpecificEnthalpy h_in(start=h_0) "Specific enthalpy at inlet";
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
 
@@ -108,7 +116,7 @@ equation
 	if on then
 		Q_pip = L_tot*C_pip;
 		Q_loss = heat.Q_flow*(1-eta_rec);
-		eta_rec = 1 - (0.86434 - 2.367e-09*heat.Q_flow +2.837e-18*(heat.Q_flow)^2 -1.246e-27*(heat.Q_flow)^3 -3.484e-04*(Tamb-273.15) +3.194e-13*(Tamb-273.15)*heat.Q_flow);
+		eta_rec = 1 - (C1 + C2*(heat.Q_flow/R_des) + C3*(heat.Q_flow/R_des)^2 + C4*(heat.Q_flow/R_des)^3 + C5*(Tamb-273.15) + C6*(Tamb-273.15)*(heat.Q_flow/R_des));
 		eta_th= Q_net/ab*heat.Q_flow;
 	else
 		Q_pip = 0;
