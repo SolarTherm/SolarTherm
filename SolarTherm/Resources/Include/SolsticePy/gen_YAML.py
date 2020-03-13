@@ -319,7 +319,7 @@ def cylindrical_receiver(rec_param, hemisphere='North'):
     slices=rec_param[2]
     x=rec_param[3]
     y=rec_param[4]
-    z=rec_param[5]
+    z=rec_param[5]-rec_r
 
     geom=''
     geom+='- geometry: &%s\n' % 'target_g'

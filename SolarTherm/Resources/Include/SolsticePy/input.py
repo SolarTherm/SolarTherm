@@ -38,6 +38,7 @@ class Parameters:
         self.sunshape='pillbox'
         self.sunsize=4.65*1.e-3*180./N.pi # convert rad to degree --> solstice convention
         self.extinction=1e-6
+        self.wea_file='/home/yewang/.local/lib/omlibrary/SolarTherm/Data/Weather/example_TMY3.motab'
 
 
 
@@ -80,7 +81,7 @@ class Parameters:
         self.concret_tower=False
         self.single_field=True 
 
-        self.R1=80.
+        self.R1=90.
         self.dsep=0.
         self.fb=0.7
 
@@ -135,7 +136,7 @@ class Parameters:
             self.hemisphere='South'
 
        # estimate a rough number of large field
-        eta_field=0.5 # assumed field effieicy at design point
+        eta_field=0.4 # assumed field effieicy at design point
         self.n_helios=self.Q_in_rcv/self.W_helio/self.H_helio/self.dni_des/eta_field
         if self.field_type=='polar':
             self.n_helios*=2.  

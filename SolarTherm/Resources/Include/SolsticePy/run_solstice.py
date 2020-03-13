@@ -44,11 +44,9 @@ def run_simul(inputs={}):
     print 'Test inputs'
     for k, v in inputs.iteritems():
         print k, '=', getattr(pm, k)
-    print ''
-    print ''
+
 
     TIME=N.array([])
-
 
     print ''
 
@@ -87,15 +85,17 @@ def run_simul(inputs={}):
 
     return tablefile
 
+
     
     
 if __name__=='__main__':
     case="./result/demo"
-    Q_in_rcv=1e6 #W
-    W_rcv=25.
-    H_rcv=25.
-    H_tower=200.
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower}
+    #wea_file='/home/yewang/.local/lib/omlibrary/SolarTherm/Data/Weather/example_TMY3.motab'
+    Q_in_rcv=10e6 #W
+    W_rcv=10.
+    H_rcv=10.
+    H_tower=100.
+    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'field_type': 'surround', 'rcv_type':'cylinder'}
 
     run_simul(inputs)
 

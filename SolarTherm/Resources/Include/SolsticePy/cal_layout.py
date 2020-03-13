@@ -234,14 +234,58 @@ def radial_stagger(latitude, num_hst, width, height, hst_z, towerheight, R1, fb,
         fts=24
         plt.figure(dpi=100.,figsize=(12,9))
         plt.plot(Xexp, Yexp, '.')
-        plt.xlim(-2000, 2000)
-        plt.ylim(0, 2500)
+        #plt.xlim(-2000, 2000)
+        #plt.ylim(0, 2500)
         plt.xticks(fontsize=fts)
         plt.yticks(fontsize=fts)
         plt.savefig(open('./%s-expand-fb%s-desp.png'%(field, fb),'w'), bbox_inches='tight')
         plt.close()
 
     return pos_and_aiming
+
+
+def aiming_cylinder(r_height,r_diameter, pos_and_aiming, savefolder, c_aiming=0.):
+
+	'''
+	The aiming method is developed following the deviation-based multiple aiming.
+	Reference: Augsburger G. Thermo-economic optimisation of large solar tower power plants[R]. EPFL, 2013.
+	The input parameters include:
+	r_height: receiver height
+	r_diameter: receiver diameter
+	c_aiming: an aiming co-efficient
+	csv: the field layout file
+	'''
+	r_radius=0.5*r_diameter
+	hst_info=pos_and_aiming[2:].astype(float)
+	num_hst=hst_info.size/7
+	#print num_hst
+	foc=hst_info[:,3] # the focal lenghts of all the heliostats
+
+	# ranked the hsts according to focal lenghts
+	hst_info_ranked = hst_info[N.argsort(foc)[::1]]
+
+	for i in range(num_hst):
+		
+		if (i+1)%2==0: # negative
+			hst_info_ranked[i,6]=hst_info_ranked[i,6]+0.5*r_height*c_aiming*(float(num_hst)-1-i)/num_hst
+		else:
+			hst_info_ranked[i,6]=hst_info_ranked[i,6]-0.5*r_height*c_aiming*(float(num_hst)-1-i)/num_hst
+		
+		hst_info_ranked[i,4]=hst_info_ranked[i,0]*r_radius/N.sqrt(hst_info_ranked[i,0]**2+hst_info_ranked[i,1]**2)
+		hst_info_ranked[i,5]=hst_info_ranked[i,1]*r_radius/N.sqrt(hst_info_ranked[i,0]**2+hst_info_ranked[i,1]**2)
+		#print hst_info_ranked[i,0],hst_info_ranked[i,1],hst_info_ranked[i,4],hst_info_ranked[i,5]
+		hst_info_ranked[i,3]=N.sqrt((hst_info_ranked[i,0]-hst_info_ranked[i,4])**2+(hst_info_ranked[i,1]-hst_info_ranked[i,5])**2+(hst_info_ranked[i,2]-hst_info_ranked[i,6])**2)
+
+
+	title=N.array(['x', 'y', 'z', 'foc', 'aim x', 'aim y', 'aim z', 'm', 'm', 'm', 'm', 'm', 'm', 'm'])
+
+	pos_and_aiming_new=N.append(title, hst_info_ranked)
+	pos_and_aiming_new=pos_and_aiming_new.reshape(len(pos_and_aiming_new)/7, 7)
+
+	csv_new=savefolder+'/pos_and_aiming.csv'# the output field file
+	N.savetxt(csv_new, pos_and_aiming_new, fmt='%s', delimiter=',')
+
+	return hst_info_ranked	
 
 
 

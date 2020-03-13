@@ -16,7 +16,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	// Input Parameters
 	// *********************
 	parameter Real power_fr = 2 "Fraction of 100 MWe case: 2 (50 MWe), 4 (25 MWe), 10 (10 MWe), etc.";
-	parameter Real tower_fr = 1 "Fraction of initial tower value: 1 (100%), 1.25 (125%), 1.5 (150%), etc.";
+	parameter Real tower_fr = 1.25 "Fraction of initial tower value: 1 (100%), 1.25 (125%), 1.5 (150%), etc.";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
@@ -41,15 +41,17 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter String opt_file = "/home/arfontalvo/solartherm/SolarTherm/Data/Optics/dominic/"+ String(integer(tower_fr*100)) + "TH" + String(ceil(P_gross/1e6*0.9)) + "SM" + String(SM*10) + ".motab";
 	parameter Real metadata_list[8] = metadata(opt_file);
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
-	parameter SI.Height H_tower = metadata_list[6] "Number of heliostats";
-	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.5 "Solar multiple";
+	parameter SI.Height H_tower = tower_fr*metadata_list[6] "Number of heliostats";
+	parameter SI.Height D_receiver = metadata_list[5] "Number of heliostats";
+	parameter SI.Height H_receiver = metadata_list[4] "Number of heliostats";
+	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
+	parameter Real SM = 2.9 "Solar multiple";
 	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
 	parameter SI.Area land_non_solar = 182108.7 "Non-solar field land area"; //45 acre. Based on NREL Gen3 SAM model v14.02.2020
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
-	parameter SI.Efficiency eff_opt = SM*Q_flow_des/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
+	parameter SI.Efficiency eff_opt = (2.7*111e6/0.51)/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 	parameter Real C = 534.0 "Concentration ratio";
 	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
@@ -68,61 +70,43 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// Storage
-	parameter Real t_storage(fixed=true, unit = "h") = 12.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
-
+	parameter Integer n_tanks_parallel = 1 "Number of parallel tank pairs";
+	parameter Real t_storage(fixed=true, unit = "h") = 4.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_cold_set = CV.from_degC(500) "Cold tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_hot_set = CV.from_degC(720) "Hot tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
-
 	parameter SI.Temperature T_cold_start = CV.from_degC(500) "Cold tank starting temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_hot_start = CV.from_degC(720) "Hot tank starting temperature"; //Based on NREL Gen3 SAM model v14.02.2020
-
 	parameter SI.Temperature T_cold_aux_set = CV.from_degC(450) "Cold tank auxiliary heater set-point temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_hot_aux_set = CV.from_degC(575) "Hot tank auxiliary heater set-point temperature"; //Based on NREL Gen3 SAM model v14.02.2020
-
 	parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
 	parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
-
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
-
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
-
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.35 "Tank constant heat transfer coefficient with ambient";
-
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
-
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio";
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
 	parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6/power_fr "Power block gross rating at design point";
-
 	parameter SI.Efficiency eff_blk = 0.51 "Power block efficiency at design point";
-
 	parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
-
 	parameter Boolean blk_enable_losses = true "true if the power heat loss calculation is enabled";
-
 	parameter Boolean external_parasities = true "true if there is external parasitic power losses";
-
 	parameter Real nu_min_blk = 0.5 "minimum allowed part-load mass flow fraction to power block";
 	parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
 	parameter SI.AbsolutePressure p_blk = 10e6 "Power block operating pressure";
-
 	parameter SI.Temperature blk_T_amb_des = from_degC(35) "Ambient temperature at design for power block";
 	parameter SI.Temperature par_T_amb_des = from_degC(25) "Ambient temperature at design point";
-
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
 	parameter SI.Temperature T_in_ref_blk = from_degC(720) "HTF inlet temperature to power block at design"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
@@ -132,22 +116,16 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-
 	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
-
 	parameter Real nu_start = 0.25 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
-	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 0.57 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
-
-	parameter Real hot_tnk_empty_lb = 180/H_storage "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_defocus = 1/(1 - rec_fr)/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-
 	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
 	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
-
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
-
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
 
@@ -167,8 +145,8 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 //	parameter Integer n_heliostat = integer(ceil(A_field/A_heliostat)) "Number of heliostats";
 
 	parameter SI.Area A_receiver = A_field/C "Receiver aperture area";
-	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
-	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
+//	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
+//	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
 
 	parameter SI.Area A_land = land_mult*A_field + land_non_solar "Land area";
 
@@ -190,8 +168,9 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+//	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (V_max/n_tanks_parallel/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 //	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
@@ -219,14 +198,14 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
 	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 100693310.466007 "Receiver reference Cost";
+	parameter FI.Money_USD C_receiver_ref = 119353799.788672 "Receiver reference Cost";
 	//Receiver reference cost updated to match estimated total cost of $152.9M for a receiver aperture area of 2199.11m2 (H=20m, D=35m)
 	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
 
 
 	// Calculated costs
-	parameter FI.Money_USD C_piping =  18966200 "Piping cost (Riser/Downcomer) including insulation"; //Based on Chad's last spreadsheet
-	parameter FI.Money_USD C_pumps = 4648000 "Cold Salt pumps"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_piping =  0 "Piping cost (Riser/Downcomer) including insulation"; //Based on Chad's last spreadsheet
+	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Based on Chad's last spreadsheet
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
@@ -318,6 +297,8 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 		em = em_rec,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
+		H_tower = H_tower,
+		R_des = R_des,
 		N_pa = N_pa_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
@@ -329,6 +310,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	// Hot tank
 	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium,
+		n_parallel_tanks = n_tanks_parallel,
 		D = D_storage,
 		H = H_storage,
 		T_start = T_hot_start,
@@ -350,6 +332,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	// Cold tank
 	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium,
+		n_parallel_tanks = n_tanks_parallel,
 		D = D_storage,
 		H = H_storage,
 		T_start = T_cold_start,
@@ -534,7 +517,7 @@ initial equation
 			Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"),
 			Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
 	Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 1800),
+	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 300),
 	__Dymola_experimentSetupOutput,
 	Documentation(revisions = "<html>
 	<ul>
