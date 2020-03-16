@@ -5,3 +5,6 @@ ParticleLift
 LiftSimple
 PumpSimple_EqualPressure
 LiftEqualPressure
+SkipHoist
+BucketModel
+SingleBucketModel

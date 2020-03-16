@@ -314,10 +314,10 @@ package Validation
     parameter Real T_out_design = from_degC(800);
     parameter Real T_in_design = from_degC(580.3);
     parameter Real T_amb_design = from_degC(10);
-    parameter Real L_start = 75;
+    parameter Real L_start = 55;
     parameter Real L_hopper_lower_bound = 50;
     parameter Real L_hopper_upper_bound = 95;
-    parameter SI.MassFlowRate m_flow_fac = 20000;
+    parameter SI.MassFlowRate m_flow_fac = 5000;
     parameter SI.Time t_sk = 1800;
     parameter SI.Time pouring_time = 5;
     SI.Mass m_in_hopper;
@@ -367,8 +367,61 @@ package Validation
   protected
     annotation(
       uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")),
-      experiment(StartTime = 0, StopTime = 50000, Tolerance = 1e-06, Interval = 1),
+      experiment(StartTime = 0, StopTime = 108000, Tolerance = 1e-06, Interval = 10),
       __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
       Diagram);
   end test_hopper;
+
+  model test_bucket
+    import Modelica.SIunits.Conversions.*;
+    import CN = Modelica.Constants;
+    import SI = Modelica.SIunits;
+    replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
+    //Particle's properties
+    parameter Real packing_factor = 0.7;
+    parameter SI.Density rho_particle = 3300;
+    //Hopper dimension
+    parameter Real L_start = 55;
+    parameter SI.Length D_hopper = 24;
+    parameter SI.Length H_hopper = 24;
+    parameter SI.Mass m_hopper_max = 0.25 * CN.pi * D_hopper ^ 2 * H_hopper * packing_factor * rho_particle;
+    parameter SI.Mass m_flow_rec_des = 500;
+    //Bucket dimenstion
+    parameter Real on_level_bucket = 50;
+    parameter SI.Time traveling_time = 600;
+    parameter SI.Mass m_bucket_max = (1 - on_level_bucket / 100) * m_hopper_max + (traveling_time + singleBucketModel.filling_time) * m_flow_rec_des;
+    SolarTherm.Models.Fluid.Pumps.SingleBucketModel singleBucketModel(packing_factor = packing_factor, rho_particle = rho_particle, on_level = on_level_bucket, traveling_time = traveling_time, m_bucket_max = m_bucket_max) annotation(
+      Placement(visible = true, transformation(origin = {-3, -43}, extent = {{-23, -23}, {23, 23}}, rotation = 0)));
+    SolarTherm.Models.Storage.Tank.Hopper hopper(L_start = L_start, H_hopper = H_hopper, D_hopper = D_hopper, packing_factor = packing_factor, rho_particle = rho_particle) annotation(
+      Placement(visible = true, transformation(origin = {-82, 16}, extent = {{-22, -22}, {22, 22}}, rotation = 90)));
+    Modelica.Blocks.Sources.RealExpression Q_inc(y = 300e6) annotation(
+      Placement(visible = true, transformation(origin = {-154, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.BooleanExpression Operation(y = true) annotation(
+      Placement(visible = true, transformation(origin = {-186, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(25)) annotation(
+      Placement(visible = true, transformation(origin = {-154, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = from_degC(580), nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
+      Placement(visible = true, transformation(origin = {104, -48}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = from_degC(25), d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
+      Placement(visible = true, transformation(extent = {{48, 50}, {28, 70}}, rotation = 0)));
+  equation
+    connect(singleBucketModel.fluid_a, source.ports[1]) annotation(
+      Line(points = {{4, -40}, {94, -40}, {94, -48}, {94, -48}}, color = {0, 127, 255}));
+    connect(singleBucketModel.fluid_b, hopper.fluid_a) annotation(
+      Line(points = {{-12, -40}, {-92, -40}, {-92, -6}, {-92, -6}}, color = {0, 127, 255}));
+    connect(T_amb.y, singleBucketModel.T_amb) annotation(
+      Line(points = {{-142, 6}, {-10, 6}, {-10, -26}, {-8, -26}}, color = {0, 0, 127}));
+    connect(T_amb.y, hopper.T_amb) annotation(
+      Line(points = {{-142, 6}, {-126, 6}, {-126, -4}, {-104, -4}, {-104, -2}}, color = {0, 0, 127}));
+    connect(Operation.y, hopper.field_operation) annotation(
+      Line(points = {{-174, 20}, {-106, 20}, {-106, 16}, {-104, 16}}, color = {255, 0, 255}));
+    connect(Q_inc.y, hopper.Q_inc) annotation(
+      Line(points = {{-142, 34}, {-106, 34}, {-106, 32}, {-104, 32}}, color = {0, 0, 127}));
+    connect(hopper.fluid_b, sink.ports[1]) annotation(
+      Line(points = {{-66, 38}, {-68, 38}, {-68, 60}, {28, 60}, {28, 60}}, color = {0, 127, 255}));
+    connect(hopper.L_hopper_mea, singleBucketModel.level_hopper) annotation(
+      Line(points = {{-88, 42}, {-88, 42}, {-88, 86}, {2, 86}, {2, -26}, {2, -26}}, color = {0, 0, 127}));
+    annotation(
+      experiment(StartTime = 0, StopTime = 100000, Tolerance = 1e-6, Interval = 1));
+  end test_bucket;
 end Validation;

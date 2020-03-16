@@ -34,7 +34,7 @@ if Q_input <= 1e-6 then
   
 elseif Q_input > 1e-6 then
 on:=true;
-    if pre(eta_rec )< 1e-20 then 
+    if pre(eta_rec)< 1e-20 then 
       m_flow := Q_input * eta_rec_discrete / abs(Util.h_T(T_ref) - Util.h_T(T_mea)) "Start-up condition";
     else
       m_flow := Q_input * eta_rec / abs(Util.h_T(T_ref) - Util.h_T(T_mea));

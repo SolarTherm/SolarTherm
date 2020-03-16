@@ -37,14 +37,6 @@ model SimpleReceiverControl2
         extent={{-20,-20},{20,20}},
         rotation=-90,
         origin={0,-114})));
-    
-    
-  SolarTherm.Models.Control.Level2Logic defocusLogic (
-    y(start=false),
-    level_max=L_df_off,
-    level_min=L_df_on
-    ) 
-   annotation(Placement(visible = true, transformation(origin = {0, -58}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
    
   Modelica.Blocks.Interfaces.RealOutput m_flow annotation(
     Placement(visible = true, transformation(extent = {{94, -18}, {130, 18}}, rotation = 0), iconTransformation(extent = {{94, -18}, {130, 18}}, rotation = 0)));
@@ -53,16 +45,19 @@ model SimpleReceiverControl2
   SolarTherm.Models.Control.PulseController pulseController(on_level=on_level,L_mea_hopper_upper_bound=L_mea_hopper_upper_bound,L_mea_tank_lower_bound=L_mea_tank_lower_bound,L_mea_tank_upper_bound=L_mea_tank_upper_bound,pouring_time=pouring_time,t_sk=t_sk,m_flow_fac=m_flow_fac) annotation(
     Placement(visible = true, transformation(origin = {-1, 55}, extent = {{-31, -31}, {31, 31}}, rotation = 0)));
 equation
-  connect(L_mea, defocusLogic.level_ref) annotation(
-    Line(points = {{-108, 0}, {-88, 0}, {-88, -26}, {0, -26}, {0, -48}}, color = {0, 0, 127}));
+  when L_mea > L_df_on then 
+    defocus = true;
+  elsewhen L_mea<L_df_off then
+    defocus = false;
+  end when;
+  
+  
   connect(L_mea_hopper, pulseController.L_mea_hopper) annotation(
     Line(points = {{-110, 62}, {-38, 62}, {-38, 62}, {-38, 62}}, color = {0, 0, 127}));
   connect(L_mea, pulseController.L_mea_tank) annotation(
     Line(points = {{-108, 0}, {-88, 0}, {-88, 52}, {-38, 52}, {-38, 52}}, color = {0, 0, 127}));
   connect(pulseController.mass_flow_batch, m_flow) annotation(
     Line(points = {{38, 56}, {70, 56}, {70, 0}, {112, 0}, {112, 0}}, color = {0, 0, 127}));
-  connect(defocusLogic.y, defocus) annotation(
-    Line(points = {{0, -69}, {0, -114}}, color = {255, 0, 255}));
 protected
   annotation (Documentation(revisions = "<html>
 <ul>

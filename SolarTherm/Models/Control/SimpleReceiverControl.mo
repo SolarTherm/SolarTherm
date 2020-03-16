@@ -12,8 +12,7 @@ model SimpleReceiverControl
   parameter Real eta_rec_th_des = 0.856;
 
   parameter Real y_start=500 "Initial value of output";
-  parameter Real Ti=1 "Integer constant";
-  parameter Real Kp=-10 "Proportional constant";
+  Boolean intermediate_on_y (start=false);
 
   Modelica.Blocks.Logical.Switch switch
     annotation (Placement(visible = true, transformation(extent = {{72, -6}, {84, 6}}, rotation = 0)));
@@ -72,7 +71,19 @@ model SimpleReceiverControl
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput T_out_receiver annotation(
     Placement(visible = true, transformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.BooleanOutput on_y annotation(
+    Placement(visible = true, transformation(origin = {-38, -110}, extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-38, -110}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
+algorithm
+  if L_mea > L_on then
+    intermediate_on_y:=true;
+  elseif L_mea<L_off then  
+    intermediate_on_y:=false;
+  else 
+    intermediate_on_y := false;
+  end if;
+  on_y := intermediate_on_y;
 equation
+
   connect(m_flow_off_input.y, switch.u3) annotation(
     Line(points = {{33.3, -22}, {44, -22}, {44, -5}, {71, -5}}, color = {0, 0, 127}));
   connect(and1.u2, sf_on) annotation(

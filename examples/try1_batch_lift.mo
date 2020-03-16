@@ -26,6 +26,7 @@ model try1_batch_lift
   import SolarTherm.Types.Currency;
   import Modelica.Math;
   import metadata = SolarTherm.Utilities.Metadata_Optics;
+  import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
   // *********************
@@ -133,26 +134,39 @@ model try1_batch_lift
   parameter SI.Power W_heater_hot = 0 "Hot tank heater capacity";
   parameter SI.Power W_heater_cold = 0 "Cold tank heater capacity";
   parameter Real tank_ar = 2 "storage aspect ratio";
-  //Hopper
+  //Hopper and batch controller parameters
   parameter SI.Temperature T_start_hopper = T_cold_start;
   parameter Real on_level = 50;
   parameter Real L_mea_cold_tank_upper_bound = 30;
   parameter Real L_mea_cold_tank_lower_bound = 10;
   parameter Real L_mea_hopper_upper_bound = 95;
-  parameter Real L_hopper_lower_bound = 5;
+  parameter Real L_hopper_lower_bound = 30;
+  parameter Real L_hopper_lower_bound_off = 5;
   parameter Real L_start_hopper = 80;
-  parameter SI.Frequency f_mtr_max = 60;
-  parameter Real poles = 2;
-  parameter Real safety_factor = 2;
-  parameter SI.AngularVelocity omega_max_mtr = 120 * f_mtr_max / 2 * 0.104719755 "converting RPM to rad/s";
+  parameter SI.Frequency f_mtr_max = 60 "maximum frequency fed into the motor";
+  parameter Real poles = 4 "electric motor poles";
   parameter SI.Length H_hopper = W_rcv;
   parameter SI.Length H_total = H_hopper + H_tower;
   parameter SI.Length D_hopper = W_rcv;
-  parameter SI.Length d_gear = 1;
-  parameter SI.Mass m_flow_hopper_max = 1 / 4 * CN.pi * D_hopper ^ 2 * H_hopper * rho_particle;
-  parameter SI.Time t_sk = 20;
-  parameter SI.Time pouring_time = 2;
-  parameter SI.Density rho_particle = 3300;
+  parameter SI.Length d_gear = 1 "diameter of the gear installed in the electric motor shaft to run the lift ";
+  parameter SI.Mass m_bucket_reference = 55440 "reference m_bucket from DESIGN AND ANALYSIS OF A HIGH TEMPERATURE PARTICULATE HOIST FOR
+   PROPOSED PARTICLE HEATING CONCENTRATOR SOLAR POWER SYSTEMS Repole et al. Proceedings of the ASME 2016 10th International Conference on Energy Sustainability ==> dimesnion 2x2x6 m.cub, system's mass flow is 979 kg/s, assuming packing factor 0.7";
+  parameter SI.MassFlowRate m_flow_ref_system = 979;
+  parameter Real m_flow_ratio = m_flow_fac / m_flow_ref_system;
+  parameter SI.Time t_sk = 300 "waiting time between 2 buckets to reach the hopper";
+  parameter SI.Time pouring_time = 0.1 * t_sk "pouring time: assume 10% of waiting time";
+  parameter SI.Time filling_time = 0.1 * t_sk "bucket filling time until it is ready to travel";
+  parameter Real n_bucket = 2 "number of bucket : skip hoist";
+  parameter SI.Mass m_bucket = m_bucket_reference * m_flow_ratio "total mass need to be hosted by the bucket";
+  parameter SI.Volume vol_bucket = m_bucket / rho_particle;
+  parameter Real bucket_dimension_ratio = 3;
+  parameter SI.Length length_bucket = (vol_bucket / 3) ^ 1 / 3;
+  parameter SI.Length width_bucket = length_bucket;
+  parameter SI.Length height_bucket = bucket_dimension_ratio * length_bucket;
+  parameter SI.Velocity v_bucket = H_total * 2 / n_bucket / t_sk "bucket traveling speed m/s when the motor is on";
+  parameter SI.AngularVelocity omega_motor = v_bucket / (d_gear / 2);
+  parameter SI.Frequency f_mtr = omega_motor / 120 * poles;
+  parameter SI.Density rho_particle = (rho_cold_set + rho_hot_set) / 2;
   // Particle heat exchanger
   parameter SI.CoefficientOfHeatTransfer U_hx = 450 "Particle heat tranfer coefficient of the particle heat exchanger";
   parameter SI.Temperature dT_approach_hx = 15 "Particle heat exchanger approach temperature";
@@ -220,7 +234,7 @@ model try1_batch_lift
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
-  parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
+  parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy : energy in the tank";
   parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "Receiver length(depth)";
@@ -230,11 +244,11 @@ model try1_batch_lift
   parameter SI.SpecificEnthalpy h_co2_out_set = MedPB.specificEnthalpy(state_co2_out_set) "Hot CO2 specific enthalpy at design";
   parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
   parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
-  parameter SI.Mass m_hopper_initial = L_start_hopper / 100 * (1 / 4 * CN.pi * D_hopper ^ 2 * H_hopper) * rho_particle;
-  parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) + m_hopper_initial "Max particles mass in tanks";
+  parameter SI.Mass m_hopper_initial = L_start_hopper / 100 * (1 / 4 * CN.pi * D_hopper ^ 2 * H_hopper) * (rho_hot_set + rho_cold_set) / 2;
+  parameter SI.Mass m_max = E_max / (Util.h_T(T_hot_set) - Util.h_T(T_cold_set)) + m_hopper_initial "Max particles mass in tanks";
   parameter SI.Volume V_max = m_max / rho_particle / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
   parameter SI.Mass m_particle_in_storage_initial = m_max - m_hopper_initial "mass of particle that must be contained by both storages exclude the initial mass in the hopper";
-  parameter Real real_height_level = m_particle_in_storage_initial / (1 / 4 * CN.pi * D_storage ^ 2 * rho_particle) / H_storage * 100 "percent height occupied by the m_particle_in_storage_initial if it is placed in one tank";
+  parameter Real real_height_level = m_particle_in_storage_initial / m_max * 100 "percent height occupied by the m_particle_in_storage_initial if it is placed in one tank";
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_min = 0 "Minimum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_max = 1.3 * m_flow_fac "Maximum mass flow rate to receiver";
@@ -312,7 +326,7 @@ model try1_batch_lift
   // *********************
   //Weather data
   SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
-    Placement(visible = true, transformation(extent = {{-144, -60}, {-114, -32}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{-142, -94}, {-112, -66}}, rotation = 0)));
   //DNI_input
   Modelica.Blocks.Sources.RealExpression DNI_input(y = data.DNI) annotation(
     Placement(visible = true, transformation(origin = {-127, 70}, extent = {{-13, -10}, {13, 10}}, rotation = 0)));
@@ -335,22 +349,22 @@ model try1_batch_lift
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_helios, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
-    Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+  /*  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_helios, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
+                              Placement(transformation(extent = {{-88, 2}, {-56, 36}})));*/
   // Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des, eta_opt_des = eta_opt_des) annotation(
     Placement(visible = true, transformation(origin = {148, 126}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = split_cold * real_height_level, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * real_height_level, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   // Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = (1 - split_cold) * real_height_level, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * real_height_level, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value) annotation(
     Placement(visible = true, transformation(extent = {{90, -114}, {70, -94}}, rotation = 0)));
   // Receiver lift
-  SolarTherm.Models.Fluid.Pumps.LiftSimple liftRcv(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRcv, CF = 0, eff = eff_lift) annotation(
-    Placement(visible = true, transformation(origin = {-7, -105}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Pumps.SkipHoist liftRcv(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, m_bucket = m_bucket, d_gear = d_gear, omega_motor = omega_motor) annotation(
+    Placement(visible = true, transformation(origin = {-5, -107}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
   // Heat exchanger lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftHX(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftHX, CF = 0, eff = eff_lift) annotation(
     Placement(visible = true, transformation(origin = {76, 42}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
@@ -358,19 +372,18 @@ model try1_batch_lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple LiftCold(redeclare package Medium = Medium, cont_m_flow = false, use_input = false, dh = dh_LiftCold, CF = 0, eff = eff_lift) annotation(
     Placement(visible = true, transformation(origin = {116, -22}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   // Temperature sensor
-  SolarTherm.Models.Fluid.Sensors.Temperature temperature(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-6, 68}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   // PowerBlockControl
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
-  // ReceiverControl
   // Power block
   SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //Hopper
+  SolarTherm.Models.Storage.Tank.Hopper hopper(D_hopper = D_hopper, H_hopper = H_hopper, L_hopper_lower_bound = L_hopper_lower_bound, L_hopper_lower_bound_off = L_hopper_lower_bound_off, L_start = L_start_hopper, T_out_design = T_hot_set, U_value = U_value, eta_rec_th_des = eta_rec_th_des, m_flow_max = m_flow_rec_max, T_Hopper_start = T_start_hopper) annotation(
+    Placement(visible = true, transformation(origin = {-28, -46}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
   //Batch Controller
-  SolarTherm.Models.Control.SimpleReceiverControl2 simpleReceiverControl2(H_hopper = H_hopper, H_total = H_total, H_tower = H_tower, L_mea_tank_lower_bound = L_mea_cold_tank_lower_bound, L_mea_tank_upper_bound = L_mea_cold_tank_upper_bound, L_mea_hopper_upper_bound = L_mea_hopper_upper_bound, d_gear = d_gear, d_hopper = D_hopper, f_mtr_max = f_mtr_max, m_flow_fac = m_flow_fac * t_sk, omega_max_mtr = omega_max_mtr, on_level = on_level, packing_factor = packing_factor, poles = poles, rho_particle = rho_particle, t_sk = t_sk, pouring_time = pouring_time) annotation(
-    Placement(visible = true, transformation(origin = {44, -74}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  SolarTherm.Models.Control.PulseController pulseController(m_flow_fac = m_bucket, on_level = on_level, L_mea_tank_lower_bound = 10, L_mea_hopper_upper_bound = L_mea_hopper_upper_bound, pouring_time = pouring_time, t_sk = t_sk, filling_time = filling_time) annotation(
+    Placement(visible = true, transformation(origin = {21, -73}, extent = {{15, -15}, {-15, 15}}, rotation = 0)));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
@@ -400,8 +413,12 @@ model try1_batch_lift
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  SolarTherm.Models.Storage.Tank.Hopper hopper(D_hopper = D_hopper, H_hopper = H_hopper, L_hopper_lower_bound = L_hopper_lower_bound, L_start = L_start_hopper, T_out_design = T_hot_set, U_value = U_value, eta_rec_th_des = eta_rec_th_des, m_flow_max = m_flow_rec_max) annotation(
-    Placement(visible = true, transformation(origin = {-28, -46}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
+  Modelica.Blocks.Sources.BooleanExpression always_false(y = false) annotation(
+    Placement(visible = true, transformation(origin = {-110, -26}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(A_h = A_helio, Q_design = Q_flow_defocus, Wspd_max = Wspd_max, ele_min(displayUnit = "deg") = ele_min, he_av = he_av_design, lat = data.lat, lon = data.lon, n_h = n_helios, nu_defocus = nu_defocus, nu_min = nu_min_sf, nu_start = nu_start, use_defocus = true, use_on = true, use_wind = use_wind) annotation(
+    Placement(visible = true, transformation(extent = {{-88, 2}, {-56, 36}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression always_zero annotation(
+    Placement(visible = true, transformation(origin = {46, 15}, extent = {{-7, -8}, {7, 8}}, rotation = 90)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -447,8 +464,6 @@ equation
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-113, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
-  connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-    Line(points = {{-112.7, 30}, {-100, 30}, {-100, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankCold.p_top) annotation(
     Line(points = {{55, 28}, {75.5, 28}, {75.5, -94}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankHot.p_top) annotation(
@@ -460,26 +475,12 @@ equation
   connect(tankCold.T_amb, Tamb_input.y) annotation(
     Line(points = {{84, -94}, {84, 20}, {92, 20}, {92, 42}, {118, 42}, {118, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 // Fluid connections
-  connect(liftRcv.fluid_a, tankCold.fluid_b) annotation(
-    Line(points = {{-1, -103}, {34.5, -103}, {34.5, -111}, {70, -111}}, color = {0, 127, 255}));
-  connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-    Line(points = {{4, 68}, {9, 68}, {9, 69}, {16, 69}}, color = {0, 127, 255}));
   connect(tankHot.fluid_b, liftHX.fluid_a) annotation(
     Line(points = {{36, 57}, {36, 52}, {36, 44}, {48, 44}, {48, 43.88}, {66, 43.88}}, color = {0, 127, 255}));
   connect(liftHX.fluid_b, powerBlock.fluid_a) annotation(
     Line(points = {{78, 44}, {86, 44}, {86, 29.46}, {98.08, 29.46}}, color = {0, 127, 255}));
   connect(powerBlock.fluid_b, LiftCold.fluid_a) annotation(
     Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -20}, {111, -20}}, color = {0, 127, 255}));
-//connect(liftHX.fluid_b, hx.port_a_in) annotation(
-//Line(points = {{78, 44}, {86, 44}, {86, 29.46}, {98.08, 29.46}}, color = {0, 127, 255}));
-//connect(hx.port_a_out, LiftCold.fluid_a) annotation(
-//Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
-//connect(hx.port_b_out1800.18, powerBlock.fluid_a) annotation(
-//Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
-//connect(powerBlock.fluid_b, hx.port_b_in) annotation(
-//Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
-// controlCold connections
-// controlHot connections
   connect(tankHot.L, controlHot.L_mea) annotation(
     Line(points = {{36.2, 68.4}, {40, 68.4}, {40, 68.5}, {47.52, 68.5}}, color = {0, 0, 127}));
   connect(controlHot.m_flow, liftHX.m_flow) annotation(
@@ -487,10 +488,6 @@ equation
   connect(controlHot.defocus, or1.u1) annotation(
     Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //Solar field connections i.e. solar.heat port and control
-  connect(sun.solar, heliostatsField.solar) annotation(
-    Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
-  connect(or1.y, heliostatsField.defocus) annotation(
-    Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{105, 46}, {105, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -501,41 +498,53 @@ equation
   R_spot = market.profit;
   connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
     Line(points = {{118, 80}, {-35, 80}, {-35, 46}}, color = {0, 0, 127}));
-  connect(temperature.fluid_a, particleReceiver1D.fluid_b) annotation(
-    Line(points = {{-16, 68}, {-16, 41}, {-29, 41}}, color = {0, 127, 255}));
-  connect(heliostatsField.heat, particleReceiver1D.heat) annotation(
-    Line(points = {{-56, 28}, {-52, 28}, {-52, 38}}, color = {191, 0, 0}));
-  connect(heliostatsField.on, particleReceiver1D.on) annotation(
-    Line(points = {{-72, 2}, {-38, 2}, {-38, 17}}, color = {255, 0, 255}));
   connect(controlHot.rampingout, powerBlock.ramping) annotation(
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
   connect(LiftCold.fluid_b, tankCold.fluid_a) annotation(
     Line(points = {{122, -20}, {138, -20}, {138, -50}, {90, -50}, {90, -99}}, color = {0, 127, 255}));
-  connect(tankCold.L, simpleReceiverControl2.L_mea) annotation(
-    Line(points = {{70, -100}, {56, -100}, {56, -74}, {55, -74}}, color = {0, 0, 127}));
-  connect(simpleReceiverControl2.defocus, or1.u2) annotation(
-    Line(points = {{44, -85}, {44, -130}, {-106, -130}, {-106, 4}, {-102, 4}}, color = {255, 0, 255}));
-  connect(simpleReceiverControl2.m_flow, liftRcv.m_flow) annotation(
-    Line(points = {{33, -74}, {-4, -74}, {-4, -91}}, color = {0, 0, 127}));
-  connect(heliostatsField.Q_incident, hopper.Q_inc) annotation(
-    Line(points = {{-54, 20}, {-48, 20}, {-48, -38}, {-38, -38}, {-38, -38}}, color = {0, 0, 127}));
-  connect(hopper.L_hopper_mea, simpleReceiverControl2.L_mea_hopper) annotation(
-    Line(points = {{-30, -34}, {-30, -26}, {68, -26}, {68, -68}, {55, -68}}, color = {0, 0, 127}));
   connect(hopper.T_amb, Tamb_input.y) annotation(
-    Line(points = {{-38, -54}, {-90, -54}, {-90, 80}, {118, 80}, {118, 80}}, color = {0, 0, 127}));
-  connect(heliostatsField.on, hopper.field_operation) annotation(
-    Line(points = {{-72, 2}, {-72, 2}, {-72, -46}, {-38, -46}, {-38, -46}}, color = {255, 0, 255}));
+    Line(points = {{-38, -54}, {-90, -54}, {-90, 80}, {118, 80}, {118, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(hopper.fluid_b, particleReceiver1D.fluid_a) annotation(
     Line(points = {{-20, -36}, {-20, -36}, {-20, 18}, {-32, 18}, {-32, 18}}, color = {0, 127, 255}));
+  connect(hopper.L_hopper_mea, pulseController.L_mea_hopper) annotation(
+    Line(points = {{-30, -34}, {-30, -10}, {50, -10}, {50, -70}, {39, -70}}, color = {0, 0, 127}));
+  connect(tankCold.T_mea, pulseController.L_mea_tank) annotation(
+    Line(points = {{68, -104}, {56, -104}, {56, -75}, {39, -75}}, color = {0, 0, 127}));
+  connect(tankCold.fluid_b, liftRcv.fluid_a) annotation(
+    Line(points = {{70, -110}, {2, -110}, {2, -106}, {0, -106}}, color = {0, 127, 255}));
   connect(liftRcv.fluid_b, hopper.fluid_a) annotation(
-    Line(points = {{-14, -103}, {-32, -103}, {-32, -56}}, color = {0, 127, 255}));
-  connect(hopper.m_flow, controlHot.m_flow_in) annotation(
-    Line(points = {{-26, -34}, {-26, -34}, {-26, 4}, {48, 4}, {48, 62}, {48, 62}}, color = {0, 0, 127}));
+    Line(points = {{-12, -106}, {-34, -106}, {-34, -56}, {-32, -56}}, color = {0, 127, 255}));
+  connect(pulseController.mass_flow_batch, liftRcv.m_flow) annotation(
+    Line(points = {{4, -68}, {0, -68}, {0, -94}, {0, -94}}, color = {0, 0, 127}));
+  connect(pulseController.on, liftRcv.on) annotation(
+    Line(points = {{4, -76}, {-4, -76}, {-4, -94}, {-6, -94}}, color = {255, 0, 255}));
+  connect(particleReceiver1D.fluid_b, tankHot.fluid_a) annotation(
+    Line(points = {{-30, 42}, {-20, 42}, {-20, 70}, {16, 70}, {16, 70}}, color = {0, 127, 255}));
+  connect(always_false.y, or1.u2) annotation(
+    Line(points = {{-110, -14}, {-110, -14}, {-110, 4}, {-102, 4}, {-102, 4}}, color = {255, 0, 255}));
+  connect(heliostatsField.on, hopper.field_operation) annotation(
+    Line(points = {{-72, 2}, {-72, 2}, {-72, -46}, {-38, -46}, {-38, -46}}, color = {255, 0, 255}));
+  connect(heliostatsField.Q_incident, hopper.Q_inc) annotation(
+    Line(points = {{-54, 20}, {-48, 20}, {-48, -38}, {-38, -38}, {-38, -38}}, color = {0, 0, 127}));
+  connect(heliostatsField.on, particleReceiver1D.on) annotation(
+    Line(points = {{-72, 2}, {-38, 2}, {-38, 17}}, color = {255, 0, 255}));
+  connect(heliostatsField.heat, particleReceiver1D.heat) annotation(
+    Line(points = {{-56, 28}, {-52, 28}, {-52, 38}}, color = {191, 0, 0}));
+  connect(or1.y, heliostatsField.defocus) annotation(
+    Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+  connect(sun.solar, heliostatsField.solar) annotation(
+    Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
+  connect(Wspd_input.y, heliostatsField.Wspd) annotation(
+    Line(points = {{-112.7, 30}, {-100, 30}, {-100, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+  connect(always_zero.y, controlHot.m_flow_in) annotation(
+    Line(points = {{46, 22}, {46, 22}, {46, 62}, {48, 62}}, color = {0, 0, 127}));
+  connect(hopper.on_y, heliostatsField.on_hopper) annotation(
+    Line(points = {{-28, -34}, {-28, -34}, {-28, -16}, {-92, -16}, {-92, 20}, {-88, 20}}, color = {255, 0, 255}));
 protected
   annotation(
-    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-36, -70}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {26, -84}, extent = {{30, -24}, {80, -46}}, textString = "tankCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {26, -44}, extent = {{-6, 20}, {42, 0}}, textString = "Batch Controller", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {-6, -126}, extent = {{-10, 8}, {10, -8}}, textString = "liftRcv", fontSize = 6, fontName = "CMU Serif"), Text(origin = {138, -10}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
+    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {26, -84}, extent = {{30, -24}, {80, -46}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, -66}, extent = {{-6, 20}, {42, 0}}, textString = "Batch Controller", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {-6, -120}, extent = {{-10, 8}, {10, -8}}, textString = "liftRcv", fontSize = 6, fontName = "CMU Serif"), Text(origin = {138, -10}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1e+07, StartTime = 0, Tolerance = 0.001, Interval = 1800),
+    experiment(StopTime = 1e5, StartTime = 0, Tolerance = 0.001, Interval = 1800.5),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

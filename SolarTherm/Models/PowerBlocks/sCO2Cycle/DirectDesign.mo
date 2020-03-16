@@ -130,6 +130,7 @@ package DirectDesign
     extends SolarTherm.Media.CO2.PropCO2;
     replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
     import SI = Modelica.SIunits;
+  
     parameter SI.Efficiency eta_design = 0.9 "isentropic efficiency of the turbine";
     parameter SI.Efficiency PR = 3 "Pressure ratio";
     parameter SI.ThermodynamicTemperature T_amb = 273.15 + 40 "Outlet temperature in Kelvin";
@@ -156,6 +157,7 @@ package DirectDesign
     parameter SI.Velocity C_spouting_des(fixed = false, start = 500);
     parameter SI.MassFlowRate m_des(fixed = false);
     parameter SI.Power W_turb_des(fixed = false);
+    
   initial equation
     state_in_des = MedPB.setState_phX(p_in_des, h_in_des);
     state_isen_des = MedPB.setState_psX(p_in_des / PR, MedPB.specificEntropy(state_in_des));

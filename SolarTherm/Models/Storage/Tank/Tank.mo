@@ -87,6 +87,7 @@ protected
 initial equation
   medium.h=Medium.specificEnthalpy(state_i);
   m=Medium.density(state_i)*V_t*L_start/100;
+  //
 equation
   if use_L then
     connect(L_internal,L);
