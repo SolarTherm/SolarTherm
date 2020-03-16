@@ -1,7 +1,6 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
-model HeliostatsField
 
-
+model HeliostatsField_Batching_System
   extends Interfaces.Models.Heliostats;
   parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
   parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
@@ -66,7 +65,7 @@ model HeliostatsField
 
   Modelica.Blocks.Interfaces.RealOutput Q_incident annotation(
     Placement(transformation(extent = {{94, -18}, {130, 18}})));
-  Modelica.Blocks.Interfaces.BooleanInput on_hopper (start=false) annotation(
+  Modelica.Blocks.Interfaces.RealInput hopper_mass_flow annotation(
     Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 protected
   SI.Power W_loss1;
@@ -85,12 +84,6 @@ protected
   parameter SI.HeatFlowRate Q_defocus =nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 initial equation
    on_internal=Q_raw>Q_start;
-algorithm
-  when Q_raw>Q_start then
-    on_internal:=true;
-  elsewhen Q_raw<Q_min then
-    on_internal:=false;
-  end when;
 equation
   if use_on then
     connect(on,on_internal);
@@ -107,12 +100,19 @@ equation
   end if;
 
   on_hf=(ele>ele_min) and
-                     (Wspd_internal<Wspd_max) and (on_hopper==true);
+                     (Wspd_internal<Wspd_max) and
+                                                  (hopper_mass_flow>1e-6);
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
   
   Q_total_loses_optical = max(((n_h * A_h * solar.dni) - Q_net),0) "PG";
   
   der(E_total_loses_optical) = -(Q_total_loses_optical) "PG";
+  
+  when Q_raw>Q_start then
+    on_internal=true;
+  elsewhen Q_raw<Q_min then
+    on_internal=false;
+  end when;
 
   Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
 
@@ -148,4 +148,4 @@ equation
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
 </html>"));
-end HeliostatsField;
+end HeliostatsField_Batching_System;

@@ -147,9 +147,6 @@ equation
   T_w[1] = T_w[2];
   T_w[N + 2] = T_w[N + 1];
   Tab[N + 1].y[1] = h_out;
-/*for i in 1 :N+1 loop
-      h_s[i] = Util.h_T(T_s[i]);
-	end for;*/
 // Node locations
   for i in 2:N + 1 loop
     x[i] = dx * (1. / 2 + i - 2);
@@ -179,31 +176,31 @@ equation
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
-//Assigning values to the TAB lookup table
+  //Assigning values to the TAB lookup table
   for i in 1:N + 1 loop
-//Temperature (input)
+  //Temperature (input)
     Tab[i].u = T_s[i];
-//Enthalpy (output)
+  //Enthalpy (output)
     Tab[i].y[1] = h_s[i];
   end for;
+  
   for i in 1:N loop
-// FIXME note that tau_c should have an adjustment for cos(theta) of rays.
     if with_uniform_curtain_props then
       eps_c[i] = eps_s;
       abs_c[i] = abs_s;
       tau_c[i] = 0.4;
     else
-      if mdot == 0 then
-        eps_c[i] = 0;
-        abs_c[i] = 0;
-        tau_c[i] = 0;
-      else
-// Curtain radiation properties
-        eps_c[i] * (1 - tau_c[i]) = function_1(eps_s * 6 * phi[i + 1] / (CONST.pi * d_p ^ 3) * t_c[i + 1] * a);
-        abs_c[i] * (1 - tau_c[i]) = function_1(abs_s * 6 * phi[i + 1] / (CONST.pi * d_p ^ 3) * t_c[i + 1] * a);
-        tau_c[i] = exp(-3 * phi[i + 1] * t_c[i + 1] / (2 * d_p) / cos(theta_c));
-// Oles & Jackson (Sol. En., 2015), Eq 31.
-      end if;
+        if mdot == 0 then
+          eps_c[i] = 0;
+          abs_c[i] = 0;
+          tau_c[i] = 0;
+        else
+  // Curtain radiation properties
+          eps_c[i] * (1 - tau_c[i]) = function_1(eps_s * 6 * phi[i + 1] / (CONST.pi * d_p ^ 3) * t_c[i + 1] * a);
+          abs_c[i] * (1 - tau_c[i]) = function_1(abs_s * 6 * phi[i + 1] / (CONST.pi * d_p ^ 3) * t_c[i + 1] * a);
+          tau_c[i] = exp(-3 * phi[i + 1] * t_c[i + 1] / (2 * d_p) / cos(theta_c));
+  // Oles & Jackson (Sol. En., 2015), Eq 31.
+        end if;
     end if;
     
 // Curtain energy balance
