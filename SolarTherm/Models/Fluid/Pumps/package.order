@@ -8,3 +8,4 @@ LiftEqualPressure
 SkipHoist
 BucketModel
 SingleBucketModel
+DoubleBucketModel
