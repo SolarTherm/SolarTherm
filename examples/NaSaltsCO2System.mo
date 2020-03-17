@@ -80,7 +80,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
-	parameter Real hx_to_rec_factor = 1;
+	parameter Real hx_to_rec_factor = 1.0;
 	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
@@ -352,7 +352,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));	
 
 	//HX Control
-	SolarTherm.Models.Control.HX_control hX_Control(
+	SolarTherm.Models.Control.HXControl hX_Control(
 		T_ref_rec = T_hot_set_Na,
 		L_df_on = cold_tnk_defocus_lb,
 		L_df_off = cold_tnk_defocus_ub,

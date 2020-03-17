@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-model m_flow_calculation
+model m_flow_calculations_simple
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import MA = Modelica.Math;
@@ -81,4 +81,4 @@ equation
   m_flow_rec=min(m_flow_max_Na, m_flow_rec_internal_lim_min);
   m_flow_hs=min(m_flow_max_CS, m_flow_hs_internal_lim_min);
 
-end m_flow_calculation;
+end m_flow_calculations_simple;

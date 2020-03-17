@@ -121,7 +121,7 @@ algorithm
   Re_Na:=M_Na*d_i/mu_Na;
   Pr_Na:=mu_Na*cp_Na/k_Na;
   Pe_Na:=Re_Na*Pr_Na;
-  if (Pe_Na>0) then
+  if (Re_Na>0) then
       if Pe_Na<=1000 then
         A:=4.5;
       elseif Pe_Na>=2000  then
@@ -141,7 +141,7 @@ algorithm
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
   Pr_MS:=mu_MS*cp_MS/k_MS;
-  if (Re_MS>0) and (Pr_MS>0)  then
+  if (Re_MS>0)  then
       if layout==1  then
           if (Re_MS<=300) then 
               aa:=0.742;
@@ -196,7 +196,7 @@ algorithm
   end if; 
   
 //Global heat transfer coefficient:
-  if (h_s<1e-6) or (h_t<1e-60)  then
+  if (Re_Na==0) or (Re_MS==0)  then
     U:=0;
   else
     U:=(1/h_s+R_ss+1/h_t*d_o/d_i+d_o*0.5/k_wall*log(d_o/d_i))^(-1);
