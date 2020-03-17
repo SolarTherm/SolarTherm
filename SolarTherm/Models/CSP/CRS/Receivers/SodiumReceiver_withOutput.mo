@@ -19,11 +19,11 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 	
 	//Efficiency Function
-	parameter Real C0 =-491.312;
-	parameter Real C1 =	169.468;
-	parameter Real C2 =	-19.476;
-	parameter Real C3 =	0.747;
-	parameter Real C4 =	0.038;
+	parameter Real C0 = -491.312;
+	parameter Real C1 = 169.468;
+	parameter Real C2 = -19.476;
+	parameter Real C3 = 0.747;
+	parameter Real C4 = 0.038;
 
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
@@ -50,7 +50,6 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 
 	Modelica.Blocks.Interfaces.RealOutput Q_out annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
-
 
 protected
 	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
@@ -89,10 +88,10 @@ equation
 		eta_rec = 0;
 	end if;
 	
-    0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
-    Q_rcv = fluid_a.m_flow*(h_out-h_in);
-    eff = Q_rcv/max(1,heat.Q_flow);
-    Q_out = heat.Q_flow*eta_rec;
+	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
+	Q_rcv = fluid_a.m_flow*(h_out-h_in);
+	eff = Q_rcv/max(1,heat.Q_flow);
+	Q_out = heat.Q_flow*eta_rec;
     
 	der(E_rec) = Q_rcv;
 

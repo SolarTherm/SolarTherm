@@ -342,7 +342,7 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
 	
 	//HX Control
-	SolarTherm.Models.Control.HX_control hX_Control(
+	SolarTherm.Models.Control.HXControl hX_Control(
 		T_ref_rec = T_hot_set_Na,
 		L_df_on = cold_tnk_defocus_lb,
 		L_df_off = cold_tnk_defocus_ub,

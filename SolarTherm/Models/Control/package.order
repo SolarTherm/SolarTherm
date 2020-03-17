@@ -7,5 +7,5 @@ ReceiverControl
 PowerBlockControl
 StartUpLogic5
 Switch2
-HX_control
-m_flow_calculation
+HXControl
+m_flow_calculations_simple

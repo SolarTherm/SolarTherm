@@ -134,7 +134,7 @@ equation
 		Q_flow = 0.0;
 		W_gross = 0.0;
 		W_cooling/W_cooling_des = 0.0;
-	elseif noEvent(PB_ramp_fraction > 1.0-1e-6) then
+	elseif PB_ramp_fraction > 1.0-1e-6 then
 		Q_flow/Q_flow_ref = k_q;
 		W_gross/W_des = k_w;
 		W_cooling/W_cooling_des = max(0,cool.nu_w);

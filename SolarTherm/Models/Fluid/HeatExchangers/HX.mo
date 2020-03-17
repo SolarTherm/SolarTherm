@@ -158,6 +158,7 @@ model HX
   Modelica.Blocks.Interfaces.BooleanInput HF_on annotation(
     Placement(visible = true, transformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90), iconTransformation(origin = {26, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
 
+
 initial algorithm
   if optimize_and_run == true then
     T_Na2_design := T_Na2_input;
