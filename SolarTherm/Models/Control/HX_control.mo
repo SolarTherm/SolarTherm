@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-model HX_Control_new
+model HX_control
   extends Icons.Control;
   parameter SI.Temperature T_ref_rec=from_degC(570) "Setpoint of temperature";
   parameter SI.Temperature T_ref_hs=from_degC(570) "Setpoint of temperature";
@@ -83,51 +83,60 @@ model HX_Control_new
   SolarTherm.Models.Control.Switch2 switch 
    annotation(
     Placement(visible = true, transformation(origin = {68, 2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.m_flow_calculations_simple m_flow_calculations1(m_flow_max_Na=m_flow_max_Na, m_flow_max_CS=m_flow_max_CS, m_flow_start_Na=m_flow_start_Na, m_flow_start_CS=m_flow_start_CS, m_flow_min_CS=m_flow_min_CS, m_flow_min_Na=m_flow_min_Na,m_flow_min_Na_safe=m_flow_min_Na_safe,m_flow_min_CS_safe=m_flow_min_CS_safe, Q_flow_rec=Q_flow_rec) annotation(
+  SolarTherm.Models.Control.m_flow_calculation m_flow_calculation1(
+      m_flow_max_Na=m_flow_max_Na, 
+      m_flow_max_CS=m_flow_max_CS, 
+      m_flow_start_Na=m_flow_start_Na, 
+      m_flow_start_CS=m_flow_start_CS, 
+      m_flow_min_CS=m_flow_min_CS, 
+      m_flow_min_Na=m_flow_min_Na,
+      m_flow_min_Na_safe=m_flow_min_Na_safe,
+      m_flow_min_CS_safe=m_flow_min_CS_safe, 
+      Q_flow_rec=Q_flow_rec) annotation(
     Placement(visible = true, transformation(origin = {1, 49}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
 
 equation
-  connect(Q_out_rec, m_flow_calculations1.Q_out_rec) annotation(
-    Line(points = {{2, 108}, {2, 89}, {1, 89}, {1, 65.5}}, color = {0, 0, 127}));
-  connect(m_flow_calculations1.m_flow_rec, switch.in1) annotation(
-    Line(points = {{18, 42}, {38, 42}, {38, 4}, {56, 4}, {56, 4}}, color = {0, 0, 127}));
-  connect(m_flow_calculations1.m_flow_hs, switch.in2) annotation( 
-  Line(points = {{18, 56}, {48, 56}, {48, 10}, {56, 10}, {56, 10}}, color = {0, 0, 127}));
-  connect(m_flow_off_input.y, switch.u3) annotation(
-    Line(points = {{34, -34}, {42, -34}, {42, -6}, {56, -6}}, color = {0, 0, 127}));
-  connect(and1.y, switch.u2) annotation(
-    Line(points = {{-12, -24}, {-4, -24}, {-4, -1}, {56, -1}}, color = {255, 0, 255}));
-  connect(switch.y1, m_flow_rec) annotation(
-    Line(points = {{79, -1}, {82, -1}, {82, -50}, {118, -50}}, color = {0, 0, 127}));
-  connect(switch.y2, m_flow_hs) annotation(
-    Line(points = {{79, 5}, {82, 5}, {82, 48}, {118, 48}}, color = {0, 0, 127}));
-  connect(sf_on, m_flow_calculations1.sf_on) annotation(
-    Line(points = {{-110, -72}, {-64, -72}, {-64, -32}, {-40, -32}, {-40, 62}, {-16, 62}, {-16, 62}}, color = {255, 0, 255}));
-  connect(T_output_cs, m_flow_calculations1.T_output_cs) annotation(
-    Line(points = {{-110, 38}, {-18, 38}, {-18, 40}, {-18, 40}}, color = {0, 0, 127}));
-  connect(T_ref_hs_in.y, m_flow_calculations1.T_input_hs) annotation(
-    Line(points = {{-46, 12}, {-32, 12}, {-32, 46}, {-18, 46}, {-18, 46}}, color = {0, 0, 127}));
-  connect(T_ref_rec_in.y, m_flow_calculations1.T_out_rec_ref) annotation(
-    Line(points = {{-46, 66}, {-34, 66}, {-34, 52}, {-18, 52}, {-18, 52}}, color = {0, 0, 127}));
-  connect(T_input_rec, m_flow_calculations1.T_input_rec) annotation(
-    Line(points = {{-112, 92}, {-26, 92}, {-26, 58}, {-18, 58}, {-18, 58}}, color = {0, 0, 127}));
-  connect(not1.y, defocus) annotation(
-    Line(points = {{0, -92.6}, {0, -116}}, color = {255, 0, 255}));
-  connect(L_mea, hotTankLogic.level_ref) annotation(
-    Line(points = {{-110, -12}, {-74, -12}}, color = {0, 0, 127}));
-  connect(not1.u, defocus_logic.y) annotation(
-    Line(points = {{0, -78.8}, {0, -76}, {-1.33227e-15, -76}, {-1.33227e-15, -72.96}}, color = {255, 0, 255}));
-  connect(and1.u2, sf_on) annotation(
-    Line(points = {{-36, -32}, {-64, -32}, {-64, -72}, {-110, -72}}, color = {255, 0, 255}));
-  connect(defocus_logic.level_ref, hotTankLogic.level_ref) annotation(
-    Line(points = {{0, -48}, {0, -42}, {-80, -42}, {-80, -12}, {-74, -12}}, color = {0, 0, 127}));
-  connect(hotTankLogic.y, and1.u1) annotation(
-    Line(points = {{-53.2, -12}, {-44, -12}, {-44, -24}, {-36, -24}}, color = {255, 0, 255}));
-  
+	connect(Q_out_rec, m_flow_calculation1.Q_out_rec) annotation(
+		Line(points = {{2, 108}, {2, 89}, {1, 89}, {1, 65.5}}, color = {0, 0, 127}));
+  	connect(m_flow_calculation1.m_flow_rec, switch.in1) annotation(
+    		Line(points = {{19, 41.5}, {38, 41.5}, {38, 4}, {56, 4}}, color = {0, 0, 127}));
+  	connect(m_flow_calculation1.m_flow_hs, switch.in2) annotation(
+		Line(points = {{19, 56}, {48, 56}, {48, 10}, {56, 10}}, color = {0, 0, 127}));
+	connect(m_flow_off_input.y, switch.u3) annotation(
+		Line(points = {{34, -34}, {42, -34}, {42, -6}, {56, -6}}, color = {0, 0, 127}));
+	connect(and1.y, switch.u2) annotation(
+		Line(points = {{-12, -24}, {-4, -24}, {-4, -1}, {56, -1}}, color = {255, 0, 255}));
+	connect(switch.y1, m_flow_rec) annotation(
+		Line(points = {{79, -1}, {82, -1}, {82, -50}, {118, -50}}, color = {0, 0, 127}));
+	connect(switch.y2, m_flow_hs) annotation(
+		Line(points = {{79, 5}, {82, 5}, {82, 48}, {118, 48}}, color = {0, 0, 127}));
+	connect(sf_on, m_flow_calculation1.sf_on) annotation(
+		Line(points = {{-110, -72}, {-64, -72}, {-64, -32}, {-40, -32}, {-40, 63}, {-16, 63}}, color = {255, 0, 255}));
+	connect(T_output_cs, m_flow_calculation1.T_output_cs) annotation(
+		Line(points = {{-110, 38}, {-17, 38}, {-17, 40}}, color = {0, 0, 127}));
+	connect(T_ref_hs_in.y, m_flow_calculation1.T_input_hs) annotation(
+		Line(points = {{-46, 12}, {-32, 12}, {-32, 46}, {-17, 46}}, color = {0, 0, 127}));
+	connect(T_ref_rec_in.y, m_flow_calculation1.T_out_rec_ref) annotation(
+		Line(points = {{-46, 66}, {-34, 66}, {-34, 52}, {-17, 52}}, color = {0, 0, 127}));
+	connect(T_input_rec, m_flow_calculation1.T_input_rec) annotation(
+		Line(points = {{-112, 92}, {-26, 92}, {-26, 58}, {-17, 58}}, color = {0, 0, 127}));
+	connect(not1.y, defocus) annotation(
+		Line(points = {{-22, -86}, {-22, -86}, {-22, -120}, {-22, -120}}, color = {255, 0, 255}));
+	connect(L_mea, hotTankLogic.level_ref) annotation(
+		Line(points = {{-110, -12}, {-74, -12}}, color = {0, 0, 127}));
+	connect(not1.u, defocus_logic.y) annotation(
+		Line(points = {{-22, -73}, {-22, -69}}, color = {255, 0, 255}));
+	connect(and1.u2, sf_on) annotation(
+		Line(points = {{-36, -32}, {-64, -32}, {-64, -72}, {-110, -72}}, color = {255, 0, 255}));
+	connect(defocus_logic.level_ref, hotTankLogic.level_ref) annotation(
+    		Line(points = {{-22, -44}, {-22, -42}, {-80, -42}, {-80, -12}, {-74, -12}}, color = {0, 0, 127}));
+	connect(hotTankLogic.y, and1.u1) annotation(
+    		Line(points = {{-53.2, -12}, {-44, -12}, {-44, -24}, {-36, -24}}, color = {255, 0, 255}));
+
   annotation (
   Documentation(revisions="<html> 
   <ul>
   <li>Salvatore Guccione:<br>Released first version. </li>
   </ul>
   </html>"));
-end HX_Control_new;
+end HX_control;

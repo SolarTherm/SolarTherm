@@ -25,6 +25,7 @@ function Design_HX
   input Real r "Real interest rate";
   input Real H_y(unit = "h") "Operating hours";
   input Integer n(unit = "h") "Operating years";
+  input FI.MassPrice material_sc /*= 84*/ "Material HX Specific Cost";
   input Real ratio_max "Maximum L/D_s ratio";
   input Boolean ratio_cond "Activate ratio constraint";
   input Boolean L_max_cond "Activate maximum HX length constraint";
@@ -126,10 +127,9 @@ function Design_HX
   SI.CoefficientOfHeatTransfer vec_h_t[max_length_N_b];
   Real vec_condition[max_length_N_b];
   
-  
   //Cost Function
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
-  parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
+  FI.AreaPrice sc_A = material_sc*8.6*1.1;
   parameter Real mmm = 0.37;
   parameter Real c2 = 11;
   parameter Real M_conv = if currency == Currency.USD then 1 else 0.9175 "Conversion factor";
@@ -137,6 +137,30 @@ function Design_HX
   Real F_ma "Manufacturing Factor";
   parameter Real F_ma_min = 1.65 "Manufacturing Factor";
   Real f(unit = "") "Annualization factor";
+  
+  //Turton Cost Function
+  parameter Real CEPCI_01=397 "CEPCI 2001";
+  parameter Real CEPCI_18=603.1 "CEPCI 2018";
+  Real k1(unit= "") "Non dimensional factor";
+  Real k2(unit= "") "Non dimensional factor";
+  Real k3(unit= "") "Non dimensional factor";
+  SI.Area A_cost "Area for cost function";
+  FI.Money_USD C_BM  "Bare module cost @operating pressure and with material";
+  FI.Money_USD C_p0  "Bare module cost @2001";
+  Real C1(unit= "") "Non dimensional factor";
+  Real C2(unit= "") "Non dimensional factor";
+  Real C3(unit= "") "Non dimensional factor";
+  Real B1(unit= "") "Non dimensional factor";
+  Real B2(unit= "") "Non dimensional factor";
+  Real Fp(unit= "") "Cost pressure factor";
+  Real Fm(unit= "") "Cost material factor";
+  Boolean both "Condition for pressure factor correlation";
+  SI.Pressure P_shell "Shell-side pressure";
+  SI.Pressure P_tubes "Tube-side pressure";
+  Real P_tube_cost(unit= "barg") "Tube pressure in barg";
+  Real P_shell_cost(unit= "barg") "Shell pressure in barg";
+  Real P_cost(unit= "barg") "HX pressure in barg";
+  FI.Money_USD C_BEC_Turton  "Bare cost @2018";
   
   //Volume_and_Weight
   SI.Mass m_Na "Mass of Sodium";
@@ -361,9 +385,54 @@ algorithm
     m_material_HX:=V_material*rho_wall;
     m_HX:=m_material_HX+m_MS+m_Na;
   
+    //Turton Cost function
+    P_shell:=p_MS1;
+    P_tubes:=p_Na1;
+    P_tube_cost:=(P_tubes/10^5)-1;
+    P_shell_cost:=(P_shell/10^5)-1;
+    if ((P_tube_cost>5 and P_shell_cost>5)or(P_tube_cost<5 and P_shell_cost>5)) then
+      both:=true;
+      P_cost:=max(P_tube_cost,P_shell_cost);
+      else
+      both:=false;
+      P_cost:=P_tube_cost;
+    end if;
+    k1:=4.3247;
+    k2:=-0.3030;
+    k3:=0.1634;
+    if both then
+          C1:=0.03881;
+          C2:=-0.11272;
+          C3:=0.08183;
+      else
+      if P_cost<5 then
+        C1:=0;
+        C2:=0;
+        C3:=0;
+        else
+          C1:=-0.00164;
+          C2:=-0.00627;
+          C3:=0.0123;
+      end if;
+    end if;
+    Fp:=10^(C1+C2*log10(P_cost)+C3*(log10(P_cost))^2);
+    Fm:=3.7;
+    B1:=1.63;
+    B2:=1.66;
+    if noEvent(A_tot>1000) then
+      A_cost:=1000;
+      elseif noEvent(A_tot<10) then
+      A_cost:=10;    
+      else
+      A_cost:=A_tot;    
+    end if;
+    C_p0:=10^(k1+k2*log10(A_cost)+k3*(log10(A_cost))^2);
+    C_BM:=C_p0*(CEPCI_18/CEPCI_01)*(B1+B2*Fm*Fp);
+    C_BEC_Turton:=C_BM*(A_tot/A_cost)^0.7;
+
     //Cost Fucntion
     F_ma:=F_ma_min+c2.*A_tot.^(-mmm);
-    C_BEC:=material_sc*9.5*A_tot*F_ma;
+    C_BEC:=max(sc_A*A_tot*F_ma,C_BEC_Turton);
     C_pump:=c_e*H_y/eta_pump*(m_flow_MS*Dp_shell/rho_MS+m_flow_Na*Dp_tube/rho_Na)/(1000);
     f:=(r*(1+r)^n)/((1+r)^n-1);
     ratio:=L/D_s_out;
@@ -376,7 +445,7 @@ algorithm
         penalty:=10e10;
     elseif noEvent(condition<tol) then
         if noEvent(C_BEC>0 and C_pump>0) then
-          C_BEC:=material_sc*8.6*1.1*A_tot*F_ma;
+          C_BEC:=max(sc_A*A_tot*F_ma,C_BEC_Turton);
           TAC:=f*C_BEC+C_pump;
           penalty:=0;
         else
@@ -388,7 +457,7 @@ algorithm
         if noEvent(C_BEC>0 and C_pump>0) then
           TAC:=(f*C_BEC+C_pump);
           penalty:=(condition*50)*TAC;
-          C_BEC:=material_sc*8.6*1.1*A_tot*F_ma;
+          C_BEC:=max(sc_A*A_tot*F_ma,C_BEC_Turton);
           TAC:=(f*C_BEC+C_pump)+penalty;
         else
           TAC:=10e10;
