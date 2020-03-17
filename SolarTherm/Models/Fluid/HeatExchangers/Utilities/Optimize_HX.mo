@@ -18,6 +18,7 @@ function Optimize_HX
   input Real r "Real interest rate";
   input Real H_y(unit = "h") "Operating hours";
   input Integer n(unit = "years") "Operating years";
+  input FI.MassPrice material_sc /*= 84*/ "Material HX Specific Cost";
   input Real ratio_max;
   input Boolean ratio_cond "Activate ratio constraint";
   input Boolean L_max_cond "Activate maximum HX length constraint";
@@ -116,7 +117,7 @@ algorithm
         vec[iter, 1] := d_o[kk];
         vec[iter, 2] := N_p[ii];
         vec[iter, 3] := layout[ww];
-        (m_flow_Na_vec[iter], m_flow_MS_vec[iter], F_vec[iter], UA_vec[iter], A_vec[iter], U_vec[iter], N_t_vec[iter], Dp_tube_vec[iter], Dp_shell_vec[iter], h_s_vec[iter], h_t_vec[iter], D_s_vec[iter], D_s_out_vec[iter], N_baffles_vec[iter], l_b_vec[iter], v_Na_vec[iter], v_max_MS_vec[iter], V_HX_vec[iter], m_HX_vec[iter], m_material_HX_vec[iter], C_BEC_vec[iter], C_pump_vec[iter], TAC_vec[iter], ex_eff_vec[iter], en_eff_vec[iter], L_vec[iter], ratio_vec[iter], penalty_vec[iter], N_t_min_vec[iter], N_t_max_vec[iter]) := Design_HX(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n = n, ratio_max=ratio_max, ratio_cond=ratio_cond, L_max_cond=L_max_cond, L_max_input=L_max_input, N_t_input_on=N_t_input_on, N_t_input=N_t_input);              
+        (m_flow_Na_vec[iter], m_flow_MS_vec[iter], F_vec[iter], UA_vec[iter], A_vec[iter], U_vec[iter], N_t_vec[iter], Dp_tube_vec[iter], Dp_shell_vec[iter], h_s_vec[iter], h_t_vec[iter], D_s_vec[iter], D_s_out_vec[iter], N_baffles_vec[iter], l_b_vec[iter], v_Na_vec[iter], v_max_MS_vec[iter], V_HX_vec[iter], m_HX_vec[iter], m_material_HX_vec[iter], C_BEC_vec[iter], C_pump_vec[iter], TAC_vec[iter], ex_eff_vec[iter], en_eff_vec[iter], L_vec[iter], ratio_vec[iter], penalty_vec[iter], N_t_min_vec[iter], N_t_max_vec[iter]) := Design_HX(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o[kk], N_p = N_p[ii], N_sp = N_p[ii], layout = layout[ww], T_Na2 = T_Na2_des, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n = n, material_sc = material_sc, ratio_max=ratio_max, ratio_cond=ratio_cond, L_max_cond=L_max_cond, L_max_input=L_max_input, N_t_input_on=N_t_input_on, N_t_input=N_t_input);              
         iter := iter + 1;
       end for;
     end for;

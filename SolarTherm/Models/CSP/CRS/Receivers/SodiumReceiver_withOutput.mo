@@ -18,6 +18,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 	
+	//Efficiency Function
 	parameter Real C0 =-491.312;
 	parameter Real C1 =	169.468;
 	parameter Real C2 =	-19.476;
@@ -49,9 +50,6 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 
 	Modelica.Blocks.Interfaces.RealOutput Q_out annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
-		
-    Modelica.Blocks.Interfaces.RealOutput T_in_Na annotation (
-		Placement(visible = true, transformation(origin = {31, 15}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -59}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
 
 protected
@@ -85,17 +83,16 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-        eta_rec = C0+C1*log10(max(1,heat.Q_flow))+C2*(log10(max(1,heat.Q_flow))^2)+C3*(log10(max(1,heat.Q_flow))^3)+C4*(log10(max(1,Tamb)));
+        	eta_rec = C0 + C1*(log10(max(1,heat.Q_flow))) + C2*(log10(max(1,heat.Q_flow)))^2 + C3*(log10(max(1,heat.Q_flow)))^3 + C4*(log10(max(1,Tamb)));
 	else
 		Q_loss = 0;
 		eta_rec = 0;
 	end if;
 	
-	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
-	Q_rcv = fluid_a.m_flow*(h_out-h_in);
-	eff = Q_rcv/max(1,heat.Q_flow);
-	Q_out = heat.Q_flow*eta_rec;
-    T_in_Na = T_in;
+    0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
+    Q_rcv = fluid_a.m_flow*(h_out-h_in);
+    eff = Q_rcv/max(1,heat.Q_flow);
+    Q_out = heat.Q_flow*eta_rec;
     
 	der(E_rec) = Q_rcv;
 
