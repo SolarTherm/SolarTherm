@@ -16,7 +16,8 @@ model DoubleBucketModel
   parameter Real packing_factor = 0.7;
   parameter SI.Length H_tower = 200;
   parameter SI.Length H_hopper = 20;
-  parameter SI.Length H_total = H_tower + H_hopper;
+  parameter SI.Length H_rcv = 25;
+  parameter SI.Length H_total = H_tower + H_rcv + H_hopper;
   parameter SI.Mass m_bucket_max = 14000;
   parameter SI.Density rho_particle = 3300;
   parameter SI.Volume vol_bucket = m_bucket_max / rho_particle / packing_factor;
@@ -40,12 +41,34 @@ model DoubleBucketModel
   parameter SI.Time start_up_time = 0.1 * traveling_time;
   parameter SI.Time stand_by_time = traveling_time;
   ///////////////////////////////////////////////////////////////////////////
-
+  parameter SI.Temperature T_particle_start = from_degC(580.3);
   ///////////////////////////////////////////////////////////////////////////
-  Real level_1(start = 0);
-  Real level_2(start = 99);
-  SI.Length height_1(start = 1e-10);
-  SI.Length height_2;
+  //Stress - strain calculation
+  //Assume : skip material SS316 alloy : DESIGN AND ANALYSIS OF A HIGH TEMPERATURE PARTICULATE HOIST FOR PROPOSED PARTICLE HEATING CONCENTRATOR SOLAR POWER SYSTEMS, Repole and Jeter, Proceedings of the ASME 2016 10th International Conference on Energy Sustainability
+  parameter SI.Torque bending_max = 0.5*height_bucket1*m_bucket_max*CN.g_n;
+  parameter SI.Stress yield_strength = 290*10^6 "yield strength of SS316 http://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ316A";
+  parameter SI.Length thickness_bucket = sqrt(6*bending_max/(length_bucket1*yield_strength));
+  ///////////////////////////////////////////////////////////////////////////
+  //U_value calculation
+  //The skip is assumed to be insulated by SuperWool blanket material (Sandia G3P3 report : Gen 3 CSP DE-FOA-0001697-1503, CPS 34211), the thermal properties are obtained from http://www.morganthermalceramics.com/media/1814/sw_blanket_data_sheet_english_1.pdf
+  //since the operating temp. is as high as 800 degC, no oxidation will occur in SS316 ==>https://www.azom.com/article.aspx?ArticleID=863 thus no inner insulation is needed..FIXME CONFIRM THIS
+  //conductivity as a function of Temperature for Superwool
+  parameter SI.Area surface_area_bucket = height_bucket1*length_bucket1;
+  parameter SI.ThermalConductivity A = 1.78e-7;
+  parameter SI.ThermalConductivity B = 8.571e-5;
+  parameter SI.ThermalConductivity C = 0.0026;
+  parameter SI.Length t_insul = 0.1;
+  parameter SI.ThermalConductance coeff_1 = (A/(3*t_insul)+B/(2*t_insul)+C/t_insul)*surface_area_bucket;
+  parameter SI.ThermalConductivity k_bucket = 16.3 "http://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ316A";
+  parameter SI.ThermalConductance coeff_2 = (k_bucket/thickness_bucket)*surface_area_bucket;
+  parameter SI.ThermalConductance coeff_3 = 33.4*surface_area_bucket "(Sandia G3P3 report : Gen 3 CSP DE-FOA-0001697-1503, CPS 34211)";
+  parameter SI.ThermalResistance R_value = 1/coeff_1+1/coeff_2+1/coeff_3;
+  parameter SI.ThermalResistance R_value_before_ambient = 1/coeff_1+1/coeff_2;
+  ///////////////////////////////////////////////////////////////////////////
+  Real level_1;
+  Real level_2;
+  SI.Length height_1(start = 1/1e5*height_bucket1);
+  SI.Length height_2(start=99/100*height_bucket2);
   ///////////////////////////////////////////////////////////////////////////
   SI.Length position_1(start = 0);
   SI.Length position_2(start = H_total);
@@ -63,14 +86,22 @@ model DoubleBucketModel
   SI.SpecificEnthalpy h_in_1;
   SI.SpecificEnthalpy h_in_2;
   SI.SpecificEnthalpy h_out_1;
-  SI.SpecificEnthalpy h_out_2;
+  SI.SpecificEnthalpy h_out_2(start=Util.h_T(T_particle_start));
   SI.Temperature T_out_1;
   SI.Temperature T_out_2;
+  SI.Temperature T_inner_casing_1;
+  SI.Temperature T_inner_casing_2;
+  SI.Temperature T_outer_casing_1;
+  SI.Temperature T_outer_casing_2;
   ///////////////////////////////////////////////////////////////////////////
   SI.HeatFlowRate Q_loss_convection_1;
   SI.HeatFlowRate Q_loss_convection_2;
   SI.HeatFlowRate Q_loss_radiation_1;
   SI.HeatFlowRate Q_loss_radiation_2;
+  ///////////////////////////////////////////////////////////////////////////
+  SI.Power W_loss_1;
+  SI.Power W_loss_2;
+  SI.Power W_loss;
   ///////////////////////////////////////////////////////////////////////////
   Modelica.Blocks.Interfaces.RealInput T_amb annotation(
     Placement(visible = true, transformation(origin = {-40, 110}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-26, 74}, extent = {{-10, -10}, {10, 10}}, rotation = -90)));
@@ -188,9 +219,7 @@ equation
       end if;
     end if;
   end if;
-//Mock mass balance equation hopper
-//  level_hopper = m_hopper / m_hopper_max * 100;
-//  der(m_hopper) = abs(mdot_out_1) + abs(mdot_out_2) + mdot_out_hopper;
+
 //bucket mass balance equation
   m_bucket_1 = rho_particle * (length_bucket1 ^ 2 * height_1 * packing_factor);
   m_bucket_2 = rho_particle * (length_bucket2 ^ 2 * height_2 * packing_factor);
@@ -201,21 +230,27 @@ equation
 //Energy balance equation
   (mdot_in_1 + mdot_out_1) * h_out_1 + der(h_out_1) * abs(m_bucket_1) = mdot_in_1 * h_in_1 + mdot_out_1 * h_out_1 - Q_loss_convection_1 - Q_loss_radiation_1;
   (mdot_in_2 + mdot_out_2) * h_out_2 + der(h_out_2) * abs(m_bucket_2) = mdot_in_2 * h_in_2 + mdot_out_2 * h_out_2 - Q_loss_convection_2 - Q_loss_radiation_2;
-  Q_loss_convection_1 = U_value * A_bucket * (T_out_1 - T_amb);
-  Q_loss_radiation_1 = CN.sigma * emissivity * (T_out_1 ^ 4 - T_amb ^ 4);
-  Q_loss_convection_2 = U_value * A_bucket * (T_out_2 - T_amb);
-  Q_loss_radiation_2 = CN.sigma * emissivity * (T_out_2 ^ 4 - T_amb ^ 4);
+  Q_loss_convection_1 = 1/R_value * (T_out_1 - T_amb);
+  T_outer_casing_1 = T_out_1-Q_loss_convection_1*R_value_before_ambient;
+  T_inner_casing_1 = T_out_1-Q_loss_convection_1*(1/coeff_1);
+  Q_loss_radiation_1 = CN.sigma * emissivity * (T_outer_casing_1 ^ 4 - T_amb ^ 4);
+  Q_loss_convection_2 = 1/R_value *  (T_out_2 - T_amb);
+  T_outer_casing_2 = T_out_2-Q_loss_convection_2*R_value_before_ambient;
+  T_inner_casing_2 = T_out_2-Q_loss_convection_2*(1/coeff_2);
+  Q_loss_radiation_2 = CN.sigma * emissivity * (T_outer_casing_2 ^ 4 - T_amb ^ 4);
   T_out_1 = Util.T_h(h_out_1);
   T_out_2 = Util.T_h(h_out_2);
-//  h_in_1 = Util.h_T(from_degC(580));
-//  h_in_2 = Util.h_T(from_degC(580));
-    h_in_1 = inStream(fluid_a.h_outflow);
-    h_in_2 = inStream(fluid_a.h_outflow);
+//Hoist electricity consumption
+  W_loss_1 = if der(position_1) == 0 then 0 else rho_particle*length_bucket1^2*height_1*CN.g_n*v_bucket;
+  W_loss_2 = if der(position_2) == 0 then 0 else rho_particle*length_bucket2^2*height_2*CN.g_n*v_bucket;
+  W_loss = W_loss_1 + W_loss_2;
 /////////////////////////////////////////////////////////
   fluid_a.h_outflow = 0;
-  fluid_b.h_outflow = if mdot_out_1 < 0 then h_out_1 elseif mdot_out_2 < 0 then h_out_2 else h_out_1;
-  fluid_a.m_flow = if mdot_in_1 > 0 then mdot_in_1 elseif mdot_in_2 < 0 then mdot_in_2 else mdot_in_1;
-  fluid_b.m_flow = if mdot_out_1 < 0 then mdot_out_1 elseif mdot_out_2 < 0 then mdot_out_2 else mdot_out_1;
+  fluid_b.h_outflow = if mdot_out_1 < 0 then h_out_1 elseif mdot_out_2 < 0 then h_out_2 else Util.h_T(T_amb);
+  fluid_a.m_flow = max(mdot_in_1,mdot_in_2);
+  fluid_b.m_flow = min(mdot_out_1,mdot_out_2);
+  h_in_1 = inStream(fluid_a.h_outflow);
+  h_in_2 = inStream(fluid_a.h_outflow);
 //////////////////////////////////////////////////////////
   annotation(
     experiment(StartTime = 0, StopTime = 100, Tolerance = 1e-06, Interval = 1));
