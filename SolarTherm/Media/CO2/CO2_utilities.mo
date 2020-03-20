@@ -141,7 +141,19 @@ package CO2_utilities
       Library = {"ModelicaStandardTables", "ModelicaMatIO", "zlib"});
   end T_out_turb;
 
-  
-  
+function T_p_h_new "Temperature of molten salt as a function of pressure and specific enthalpy"
+extends Modelica.Icons.Function;
+	input String ppath;
+	input String pname;
+	input String pfunc;
+    input Integer argc;
+    input Real var[:];
+    output Real T "Temperature";
+    external T =CO2PropertiesFunc(ppath, pname, pfunc, argc, var)
+	annotation(Library="python2.7",
+		IncludeDirectory="modelica://SolarTherm/Resources/Include",
+		Include="#include \"RunPyFunc.c\""
+		);
+  end T_p_h_new;
   annotation();
 end CO2_utilities;

@@ -373,6 +373,7 @@ package Validation
   end test_hopper;
 
   model test_bucket
+    extends SolarTherm.Icons.ToDo;
     import Modelica.SIunits.Conversions.*;
     import CN = Modelica.Constants;
     import SI = Modelica.SIunits;
@@ -380,29 +381,30 @@ package Validation
     //Particle's properties
     parameter Real packing_factor = 0.7;
     parameter SI.Density rho_particle = 3300;
+    parameter SI.Temperature T_particle_start = from_degC(580.3);
     //Hopper dimension
     parameter Real L_start = 55;
     parameter SI.Length D_hopper = 24;
     parameter SI.Length H_hopper = 24;
     parameter SI.Mass m_hopper_max = 0.25 * CN.pi * D_hopper ^ 2 * H_hopper * packing_factor * rho_particle;
-    parameter SI.Mass m_flow_rec_des = 500;
-    //Bucket dimenstion
-    parameter Real on_level_bucket = 60;
+    parameter SI.Mass m_flow_rec_des = 2500;
+    //Bucket dimension
+    parameter Real on_level_bucket = 50;
     parameter SI.Time traveling_time = 600;
-    parameter SI.Mass m_bucket_max = (1 - on_level_bucket / 100) * m_hopper_max + (traveling_time + doubleBucketModel.filling_time) * m_flow_rec_des;
-    SolarTherm.Models.Storage.Tank.Hopper hopper(L_start = L_start, H_hopper = H_hopper, D_hopper = D_hopper, packing_factor = packing_factor, rho_particle = rho_particle) annotation(
+    parameter SI.Mass m_bucket_max = (1 - on_level_bucket / 100) * m_hopper_max / 2;
+    SolarTherm.Models.Storage.Tank.Hopper hopper(L_start = L_start, H_hopper = H_hopper, D_hopper = D_hopper, packing_factor = packing_factor, rho_particle = rho_particle, m_flow_max = m_flow_rec_des, T_Hopper_start = T_particle_start) annotation(
       Placement(visible = true, transformation(origin = {-82, 16}, extent = {{-22, -22}, {22, 22}}, rotation = 90)));
-    Modelica.Blocks.Sources.RealExpression Q_inc(y = 300e6) annotation(
+    Modelica.Blocks.Sources.RealExpression Q_inc(y = 500e6) annotation(
       Placement(visible = true, transformation(origin = {-154, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Modelica.Blocks.Sources.BooleanExpression Operation(y = true) annotation(
       Placement(visible = true, transformation(origin = {-186, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(25)) annotation(
       Placement(visible = true, transformation(origin = {-154, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-    Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = from_degC(580), nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
+    Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_particle_start, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
       Placement(visible = true, transformation(origin = {104, -48}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
     Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = from_degC(25), d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
       Placement(visible = true, transformation(extent = {{48, 50}, {28, 70}}, rotation = 0)));
-    SolarTherm.Models.Fluid.Pumps.DoubleBucketModel doubleBucketModel(packing_factor = packing_factor, rho_particle = rho_particle, on_level = on_level_bucket, traveling_time = traveling_time, m_bucket_max = m_bucket_max) annotation(
+    SolarTherm.Models.Fluid.Pumps.DoubleBucketModel doubleBucketModel(packing_factor = packing_factor, rho_particle = rho_particle, on_level = on_level_bucket, traveling_time = traveling_time, m_bucket_max = m_bucket_max, T_particle_start = T_particle_start) annotation(
       Placement(visible = true, transformation(origin = {0, -46}, extent = {{-32, -32}, {32, 32}}, rotation = 0)));
   equation
     connect(T_amb.y, hopper.T_amb) annotation(
@@ -424,9 +426,25 @@ package Validation
     connect(T_amb.y, doubleBucketModel.T_amb) annotation(
       Line(points = {{-142, 6}, {-4, 6}, {-4, -20}, {-8, -20}, {-8, -22}}, color = {0, 0, 127}));
     annotation(
-      experiment(StartTime = 0, StopTime = 100000, Tolerance = 0.001, Interval = 1));
+      experiment(StartTime = 0, StopTime = 50000, Tolerance = 1e-06, Interval = 50));
   end test_bucket;
 
   //  SolarTherm.Models.Fluid.Pumps.SingleBucketModel singleBucketModel(packing_factor = packing_factor, rho_particle = rho_particle, on_level = on_level_bucket, traveling_time = traveling_time, m_bucket_max = m_bucket_max)
   //  SolarTherm.Models.Fluid.Pumps.SingleBucketModel singleBucketModel(packing_factor = packing_factor, rho_particle = rho_particle, on_level = on_level_bucket, traveling_time = traveling_time, m_bucket_max = m_bucket_max)
+
+  model TestInterpolation
+    import SI = Modelica.SIunits;
+    import Util = SolarTherm.Media.CO2.CO2_utilities;
+    parameter String ppath = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/Interpolation";
+    parameter String pname = "interpolate_T_P_h";
+    parameter String pfunc = "interpolate";
+    parameter Integer argc = 2;
+    parameter SI.Pressure p = 6232919.0847;
+    parameter SI.SpecificEnthalpy h = 317030.849;
+    SI.Temperature T;
+  equation
+    T = Util.T_p_h_new(ppath, pname, pfunc, argc, {h, p});
+    annotation(
+      experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-06, Interval = 0.002));
+  end TestInterpolation;
 end Validation;
