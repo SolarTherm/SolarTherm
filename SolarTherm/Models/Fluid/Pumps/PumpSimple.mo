@@ -16,9 +16,9 @@ equation
   fluid_a.m_flow=m_flow;
   fluid_a.h_outflow=fluid_b.h_outflow;
   fluid_b.h_outflow=inStream(fluid_a.h_outflow);
-  fluid_a.Xi_outflow=fluid_b.Xi_outflow;
-  fluid_b.Xi_outflow=inStream(fluid_a.Xi_outflow);
-  //fluid_a.p=fluid_b.p;
+ // fluid_a.Xi_outflow=fluid_b.Xi_outflow;
+  //fluid_b.Xi_outflow=inStream(fluid_a.Xi_outflow);
+  ////fluid_a.p=fluid_b.p;
   W_loss=k_loss*m_flow;
   annotation (Documentation(revisions="<html>
 <ul>

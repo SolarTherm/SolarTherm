@@ -327,15 +327,18 @@ package DirectDesign
     parameter SI.HeatFlowRate Q_dis_des(fixed = false, start = 10 ^ 5) "Heat flow rate dispatched per sub-HX in the cooler";
     parameter SI.ThermodynamicTemperature[N_cool] T_CO2_des(each fixed = false, each start = 273.15 + 75);
   initial equation
+    p_out_des = p_in_des;
+    
     for i in 1:N_cool loop
       state_des[i] = MedPB.setState_pTX(p_in_des, T_CO2_des[i]);
       h_CO2_des[i] = MedPB.specificEnthalpy(state_des[i]);
       deltaT_des[i] = T_CO2_des[i] - T_amb_des;
     end for;
+    
     T_CO2_des[N_cool] = T_low;
     h_CO2_des[1] = h_in_des;
-    h_CO2_des[N_cool] = h_out_des;
-    p_out_des = p_in_des;
+    h_CO2_des[N_cool] = h_out_des;  
+    
     for i in 1:N_cool - 1 loop
       Q_dis_des = h_CO2_des[i + 1] - h_CO2_des[i];
       m_des * Q_dis_des = -UA_dis[i] * (deltaT_des[i] + deltaT_des[i + 1]) / 2;
