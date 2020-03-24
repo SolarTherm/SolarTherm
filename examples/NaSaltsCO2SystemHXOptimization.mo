@@ -25,7 +25,7 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 637.116169736822e6) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 598.360e6) "Input power to receiver at design point";
 	parameter SI.Power P_gross_fixed = 111e6;
 
 	// Weather data
@@ -56,23 +56,23 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter SI.Diameter D_rec_input = 20 "Receiver diameter";
-	parameter SI.Length H_rec_input = 30 "Receiver height";
+	parameter SI.Diameter D_rec_input = 14 "Receiver diameter";
+	parameter SI.Length H_rec_input = 21 "Receiver height";
 	parameter Real ar_rec = H_rec_input / D_rec_input "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter SI.Efficiency rec_eff_design = 0.802850465453237 "Receiver at the design point";
-	parameter Real C0 = -2212.07107774107;
-	parameter Real C1 = 762.189239061349;
-	parameter Real C2 = -87.5719720020533;
-	parameter Real C3 = 3.35598337889391;
-	parameter Real C4 = 0.070908459;
+	parameter SI.Efficiency rec_eff_design = 0.895797098180195 "Receiver at the design point";
+	parameter Real C0 = -564.899348853894;
+	parameter Real C1 = 194.652635314243;
+	parameter Real C2 = -22.352096267571;
+	parameter Real C3 = 0.856531526853793;
+	parameter Real C4 = 0.0415818826425797;
 	parameter Real rec_fr = 1 - rec_eff_design "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// HX
-	parameter SI.Temperature T_cold_set_Na = CV.from_degC(540) "Cold HX target temperature";
-	parameter SI.Temperature T_hot_set_Na = CV.from_degC(760) "Hot Receiver target temperature";
+	parameter SI.Temperature T_cold_set_Na = CV.from_degC(508) "Cold HX target temperature";
+	parameter SI.Temperature T_hot_set_Na = CV.from_degC(728) "Hot Receiver target temperature";
 	parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
 	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
@@ -140,7 +140,7 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 	parameter Real factor_defocus=1.01;
 	parameter SI.HeatFlowRate Q_flow_defocus = (R_des-Q_rec_out+Q_flow_des)*factor_defocus "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.45 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
@@ -335,12 +335,17 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 		T_out_0 = T_hot_set_Na)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
 
+	// Temperature sensor1
+	SolarTherm.Models.Fluid.Sensors.Temperature temperature1(
+		redeclare package Medium = Medium1) 
+		annotation(Placement(visible = true, transformation(origin = {-27, -19}, extent = {{-5, -5}, {5, 5}}, rotation = 90)));
+
 	// Pump cold1
 	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold1(
 		redeclare package Medium = Medium1,
 		k_loss = k_loss_cold1)
-		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
-	
+		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));	
+
 	//HX Control
 	SolarTherm.Models.Control.HXControl hX_Control(
 		T_ref_rec = T_hot_set_Na,
@@ -378,15 +383,9 @@ model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
 		replaceable package Medium = Medium1,
 		T_start = T_cold_set_Na,
-		D = 0.01,
-		H = 0.01) 
-		annotation(Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
-
-	// Temperature sensor1
-  	SolarTherm.Models.Fluid.Sensors.Temperature temperature1(
-		redeclare package Medium = Medium1) 
-		annotation(Placement(visible = true, transformation(origin = {-27, -19}, extent = {{-5, -5}, {5, 5}}, rotation = 90)));
-
+		D = 1,
+		H = 1) annotation(
+		Placement(visible = true, transformation(origin = {9, -33}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
 
 	// Hot tank
 	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(

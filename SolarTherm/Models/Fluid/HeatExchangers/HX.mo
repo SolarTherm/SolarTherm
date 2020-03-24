@@ -36,9 +36,9 @@ model HX
   parameter Integer N_t_input = 1 "Input Number of tubes";
   
   //Auxiliary parameters
-  parameter FI.EnergyPrice_kWh c_e = 0.13 / 0.9175 "Power cost";
+  parameter FI.EnergyPrice_kWh c_e = /*0.13 / 0.9175*/ 0.073 "Power cost";
   parameter Real r = 0.05 "Real interest rate";
-  parameter Real H_y(unit = "h") = 4500 "Operating hours";
+  parameter Real H_y(unit = "h") = /*4500*/ 5600 "Operating hours";
   parameter Integer n(unit = "h") = 30 "Operating years";
   parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
   

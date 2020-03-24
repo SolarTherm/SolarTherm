@@ -62,8 +62,10 @@ function Optimize_HX
 protected
   //Sweep Parameters
   parameter SI.Length d_o[19] = {6.35e-3, 9.53e-3, 12.70e-3, 15.88e-3, 19.05e-3, 22.23e-3, 25.40e-3, 28.58e-3, 31.75e-3, 34.93e-3, 38.10e-3, 41.28e-3, 44.45e-3, 47.63e-3, 50.80e-3, 53.98e-3, 57.15e-3, 60.33e-3, 63.50e-3} "Outer Tube Diameter";
+//  parameter SI.Length d_o[10] = {6.35e-3, 9.53e-3, 12.70e-3, 15.88e-3, 19.05e-3, 22.23e-3, 25.40e-3, 28.58e-3, 31.75e-3, 34.93e-3} "Outer Tube Diameter";
   parameter Integer N_p[2] = {1,2} "Tube passes number";
-  parameter Integer layout[2] = {1,2} "Tube layout";
+//  parameter Integer layout[2] = {1,2} "Tube layout";
+  parameter Integer layout[1] = {2} "Tube layout";
   
   //Auxiliary parameters
   parameter Integer num_dim = 3;
