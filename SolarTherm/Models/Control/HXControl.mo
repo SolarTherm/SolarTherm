@@ -5,12 +5,12 @@ model HXControl
   parameter SI.Temperature T_ref_hs=from_degC(570) "Setpoint of temperature";
   
   parameter SI.MassFlowRate m_flow_max_CS=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_CS=1 "Mass flow rate when control off";
-  parameter SI.MassFlowRate m_flow_min_CS_safe=0.3*m_flow_start_CS "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS=0 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_CS_safe=0.2*m_flow_start_CS "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_start_CS=0 "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_max_Na=1400 "Maximum mass flow rate";
-  parameter SI.MassFlowRate m_flow_min_Na=1 "Mass flow rate when control off";
-  parameter SI.MassFlowRate m_flow_min_Na_safe=0.3*m_flow_start_Na "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na=0 "Mass flow rate when control off";
+  parameter SI.MassFlowRate m_flow_min_Na_safe=0.2*m_flow_start_Na "Mass flow rate when control off";
   parameter SI.MassFlowRate m_flow_start_Na=0 "Mass flow rate when control off";
   parameter SI.HeatFlowRate Q_flow_rec=0;
   

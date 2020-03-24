@@ -59,12 +59,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ar_rec = H_rec_input / D_rec_input "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter SI.Efficiency rec_eff_design = 0.876456728 "Receiver at the design point";
+	parameter SI.Efficiency rec_eff_design = 0.876456728 "Receiver efficiency at the design point";
 	parameter Real C0 = 0;
 	parameter Real C1 = -5.31430664702905;
 	parameter Real C2 = 1.22007103775149;
 	parameter Real C3 = - 0.0689349243674013;
 	parameter Real C4 = 0.0552713646754176;
+	parameter SI.Efficiency rec_eff_off_design = C0 + C1*(log10(Q_curtail_guess)) + C2*(log10(Q_curtail_guess))^2 + C3*(log10(Q_curtail_guess))^3 + C4*(log10(rec_T_amb_des)) "Receiver effciency at off-design condition";
 	parameter Real rec_fr = 1 - rec_eff_design "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
@@ -80,7 +81,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
-	parameter Real hx_to_rec_factor = 1.0;
+	parameter Real hx_to_rec_factor = 1;
 	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
@@ -88,12 +89,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
 	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-	parameter Boolean optimize_HX_design = true; 
+	parameter Boolean optimize_HX_design = true;
 	parameter SI.Length d_o_input = 0.00953 "User defined outer tube diameter";
 	parameter Integer N_p_input = 1 "User defined tube passes number";
 	parameter Integer layout_input = 2 "User defined tube layout";
 	parameter Boolean N_t_input_on = true "Activate fixed number of tubes";
-	parameter Integer N_t_input = 1 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
+	parameter Integer N_t_input = 23059 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
@@ -140,7 +141,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real factor_defocus = 1.01;
 	parameter SI.HeatFlowRate Q_flow_defocus = (R_des - Q_rec_design + Q_flow_des) * factor_defocus /* 274 / 217.647 * Q_flow_des */"Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter SI.HeatFlowRate Q_rec_max = min(m_flow_max_Na * (h_hot_set_Na - h_cold_set_Na),m_flow_max_CS * (h_hot_set_CS - h_cold_set_CS));
-	parameter SI.HeatFlowRate Q_curtail = Q_rec_max/rec_eff_design;
+	parameter SI.HeatFlowRate Q_curtail_guess = /*Q_hx_design*/Q_rec_max/rec_eff_design;
+	parameter SI.HeatFlowRate Q_curtail = /*Q_hx_design*/Q_rec_max/rec_eff_off_design;
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
@@ -504,7 +506,7 @@ equation
 	
 	connect(PressureLosses_Na_loop.y, pumpCold1.Dp_loss) annotation(
 		Line(points = {{-110, -40}, {-70, -40}, {-70, -48}, {-16, -48}, {-16, -42}, {-16, -42}}, color = {0, 0, 127}));
-	
+
 	connect(Tamb_input.y, powerBlock.T_amb) annotation(
 		Line(points = {{157, 100}, {116, 100}, {116, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
