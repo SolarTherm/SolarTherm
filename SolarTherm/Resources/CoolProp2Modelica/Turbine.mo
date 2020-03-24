@@ -2,7 +2,8 @@ model Turbine "Off-design turbine model"
 	import Modelica.SIunits.Conversions.*;
 	import SI = Modelica.SIunits;
 
-	replaceable package Medium = CarbonDioxide_ph;
+	replaceable package Medium = SolarTherm.Media.CO2.CO2_ph;
+	import Util=SolarTherm.Media.CO2.CO2_utilities;
 
 	//Design Parameters
 	parameter String fluid = "R744" "Turbine working fluid (default: CO2)";
@@ -46,11 +47,11 @@ model Turbine "Off-design turbine model"
 		iconTransformation(origin = {60, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
 
 initial algorithm
-	h_in_des := stprops("H","T",T_in_des,"P",p_in_des,fluid);
-	s_in_des := stprops("S","T",T_in_des,"P",p_in_des,fluid);
-	h_out_isen_des := stprops("H","P",p_out_des,"S",s_in_des,fluid);
+	h_in_des := Util.stprops("H","T",T_in_des,"P",p_in_des,fluid);
+	s_in_des := Util.stprops("S","T",T_in_des,"P",p_in_des,fluid);
+	h_out_isen_des := Util.stprops("H","P",p_out_des,"S",s_in_des,fluid);
 	h_out_des := h_in_des - (h_in_des - h_out_isen_des) * eta_design;
-	rho_out_des := stprops("D","P",p_out_des,"H",h_out_des,fluid);
+	rho_out_des := Util.stprops("D","P",p_out_des,"H",h_out_des,fluid);
 	m_flow_des := W_turb_des/(h_in_des - h_out_des);
 	C_spouting_des := sqrt(2 * (h_in_des - h_out_isen_des));
 	A_nozzle := m_flow_des/(C_spouting_des*rho_out_des);
@@ -69,11 +70,11 @@ equation
 
 	//Inlet and outlet enthalpies
 	h_in = inStream(port_a.h_outflow);
-	s_in = stprops("S","P",p_in,"H",h_in,fluid);
-	h_out_isen = stprops("H","P",p_out,"S",s_in,fluid);
+	s_in = Util.stprops("S","P",p_in,"H",h_in,fluid);
+	h_out_isen = Util.stprops("H","P",p_out,"S",s_in,fluid);
 	h_out = h_in - (h_in - h_out_isen) * eta_turb;
 	port_b.h_outflow = h_out;
-	rho_out = stprops("D","P",p_in,"H",h_out,fluid);
+	rho_out = Util.stprops("D","P",p_in,"H",h_out,fluid);
 
 	//Spouting velocity and turbine power output
 	C_spouting = sqrt(2 * (h_in - h_out_isen));
