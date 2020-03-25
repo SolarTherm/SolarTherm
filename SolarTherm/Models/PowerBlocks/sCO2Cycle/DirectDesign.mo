@@ -251,6 +251,7 @@ package DirectDesign
     h_in_CO2_des = state_CO2_des[1].h;
     h_out_CO2_des = state_CO2_des[N_exch].h;
     m_CO2_des = ratio_m_des * m_HTF_des;
+    
   equation
     for i in 1:N_exch loop
       deltaT[i] = if m_sup then MedRec.temperature(state_HTF[i]) - MedPB.temperature(state_CO2[i]) else deltaT_des[i];
