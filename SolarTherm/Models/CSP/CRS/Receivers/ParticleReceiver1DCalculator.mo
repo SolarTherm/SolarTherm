@@ -17,7 +17,7 @@ model ParticleReceiver1DCalculator
   parameter SI.MassFlowRate m_in(fixed = false);
   parameter SI.Power P_gross_design = 100e6;
   parameter Real eff_block_design = 0.502;
-  parameter SI.Efficiency eta_opt_des = 0.5454;
+  parameter SI.Efficiency eta_opt_des = 0.5;
   parameter Real SolarMultiple = 2.5;
   parameter Real T_out_design = from_degC(800);
   parameter Real T_in_design = from_degC(580.3);
@@ -26,6 +26,7 @@ model ParticleReceiver1DCalculator
   parameter SI.HeatFlux dni_des = 909.6;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
   parameter SI.HeatFlowRate Q_in(fixed = false);
+
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(

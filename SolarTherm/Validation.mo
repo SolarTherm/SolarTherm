@@ -449,6 +449,7 @@ package Validation
   end TestInterpolation;
 
   model PBComponentTestRig
+    extends SolarTherm.Icons.ToDo;
     import SolarTherm.{Models,Media};
     import Modelica.SIunits.Conversions.from_degC;
     import SI = Modelica.SIunits;

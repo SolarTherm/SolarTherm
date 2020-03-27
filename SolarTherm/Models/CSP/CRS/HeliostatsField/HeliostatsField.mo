@@ -30,7 +30,8 @@ model HeliostatsField
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat (W)" annotation(Dialog(group="Parasitic loads"));
-
+  
+  SI.Efficiency nu;
   Optical optical(hra=solar.hra, dec=solar.dec, lat=lat);
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
@@ -92,6 +93,7 @@ algorithm
     on_internal:=false;
   end when;
 equation
+  nu = optical.nu;
   if use_on then
     connect(on,on_internal);
   end if;
