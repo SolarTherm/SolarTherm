@@ -56,7 +56,7 @@ model PhysicalParticleCO21D
   parameter String field_type = "polar" "Other options are : surround";
   parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
   parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
-  parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimumheliostat cost Fig 8.";
+  parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter Real he_av_design = 0.99 "Helisotats availability";
@@ -353,8 +353,9 @@ model PhysicalParticleCO21D
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-  // Analytics PG
+  // Analytics
   SI.Energy E_resource(start = 0);
+  SI.Energy E_resource_after_optical_eff(start = 0);
   SI.Energy E_helio_incident(start = 0);
   SI.Energy E_helio_raw(start = 0);
   SI.Energy E_helio_net(start = 0);
@@ -363,6 +364,12 @@ model PhysicalParticleCO21D
   SI.Energy E_pb_input(start = 0);
   SI.Energy E_pb_gross(start = 0);
   SI.Energy E_pb_net(start = 0);
+  //Analytics All The Losses
+  SI.Energy E_losses_curtailment(start = 0);
+  SI.Energy E_losses_availability(start = 0);
+  SI.Energy E_losses_optical(start = 0);
+  SI.Energy E_losses_defocus(start = 0);
+  SI.Energy E_check;
   Real eta_curtail_off(start = 0);
   Real eta_optical(start = 0);
   Real eta_he_av(start = 0);
@@ -375,10 +382,12 @@ model PhysicalParticleCO21D
   Real eta_solartoelec(start = 0);
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des, eta_opt_des = eta_opt_des) annotation(
     Placement(visible = true, transformation(origin = {146, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.BooleanExpression always_on(y = true) annotation(
+    Placement(visible = true, transformation(origin = {-128, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
-    eta_optical := E_helio_raw / (E_helio_incident * he_av_design);
+    eta_optical := E_resource_after_optical_eff / E_resource;
     eta_he_av := he_av_design;
     eta_curtail_defocus := E_helio_net / E_helio_raw;
     eta_recv_abs := E_recv_incident / E_helio_net;
@@ -387,6 +396,7 @@ algorithm
     eta_pb_gross := E_pb_gross / E_pb_input;
     eta_pb_net := E_pb_net / E_pb_input;
     eta_solartoelec := E_pb_net / E_resource;
+    E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
   A_rcv = particleReceiver1DCalculator.particleReceiver1D.H_drop ^ 2;
@@ -402,7 +412,12 @@ initial equation
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop;
   C_cap = (C_field + C_site + C_receiver + C_storage + C_block + C_bop) * (1 + r_contg) * (1 + r_indirect) * (1 + r_cons) + C_land;
 equation
-  der(E_resource) = max(sun.dni * A_field, 0.0);
+  der(E_resource) = max(sun.dni * n_helios * A_helio, 0.0);
+  der(E_losses_optical) = (1 - heliostatsField.nu) * max(heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
+  der(E_losses_availability) =  (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
+  der(E_losses_curtailment) = if heliostatsField.on_hf == true then 0 else (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
+  der(E_losses_defocus) = if heliostatsField.on_internal then if heliostatsField.defocus_internal then abs(heliostatsField.Q_net - heliostatsField.Q_raw) else 0 else 0;
+  der(E_resource_after_optical_eff) = max(sun.dni * n_helios * A_helio, 0.0) * heliostatsField.nu;
   der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
@@ -493,12 +508,12 @@ equation
     Line(points = {{-6, 58}, {-6, 58}, {-6, 26}, {22, 26}, {22, 12}, {22, 12}}, color = {0, 0, 127}));
   connect(controlHot.rampingout, powerBlock.ramping) annotation(
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
-  connect(simpleReceiverControl.on_y, heliostatsField.on_hopper) annotation(
-    Line(points = {{26, -10}, {26, -10}, {26, -54}, {-90, -54}, {-90, 20}, {-88, 20}}, color = {255, 0, 255}));
+  connect(always_on.y, heliostatsField.on_hopper) annotation(
+    Line(points = {{-116, 8}, {-112, 8}, {-112, 20}, {-88, 20}, {-88, 20}}, color = {255, 0, 255}));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 100000, StartTime = 0, Tolerance = 0.001, Interval = 1800),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 1800),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

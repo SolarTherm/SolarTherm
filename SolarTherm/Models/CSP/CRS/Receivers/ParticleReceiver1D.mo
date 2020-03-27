@@ -172,7 +172,7 @@ equation
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
   if test_mode == true then
-    q_solar = C * dni_des;
+    q_solar = C * dni_des *eta_opt_des;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
