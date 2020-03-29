@@ -209,11 +209,11 @@ equation
     
 // Curtain energy balance
     q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
-    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - q_conv_curtain[i];
+    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - q_conv_curtain[i] "should I include view factor here multiply by jc_f?";
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
 // Curtain-wall radiation heat fluxes (W/m²)
     gc_f[i] = q_solar;
-    jc_f[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i] "should I include view factor here?";
+    jc_f[i] = F*(1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i] "before view factor";
     gc_b[i] = j_w[i];
     jc_b[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - eps_c[i]) * gc_b[i]) + tau_c[i] * q_solar;
     g_w[i] = jc_b[i];

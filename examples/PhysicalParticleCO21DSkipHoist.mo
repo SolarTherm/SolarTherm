@@ -1,6 +1,6 @@
 within examples;
 
-model try1_batch_lift
+model PhysicalParticleCO21DSkipHoist
   //======================================          MODEL VERSION CONTROL               ===============================================//
   //Base case parameter : particleReceiver1D.h_conv_curtain = 10 W/m2K, pri_bop = 0, tower_cost = cheap tower, storage cost function = EES v.9 SANDIA method, variable O&M = 0, no insulation cost, using Solstice_field =======> LCOE 66.68 USD/MWh
   //adding changes - particleReceiver1D.h_conv_curtain = 32 W/m2K ===> LCOE 68.68 USD/MWh (everything else is kept constant),
@@ -529,4 +529,4 @@ protected
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end try1_batch_lift;
+end PhysicalParticleCO21DSkipHoist;
