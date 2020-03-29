@@ -1,6 +1,6 @@
 import numpy as N
 
-from data_spectral import SolarSpectrum, MirrorRhoSpectrum
+#from data_spectral import SolarSpectrum, MirrorRhoSpectrum
 
 def gen_YAML(DNI, sunshape, sunsize, hst_pos, hst_foc, hst_aims,hst_w, hst_h, rho_refl, slope_error, receiver, rec_param, rec_abs, casefolder, hemisphere='North', tower_h=0.01, tower_r=0.01,  spectral=False, medium=0, OneHeliostat=False ):
     '''
@@ -41,52 +41,6 @@ def gen_YAML(DNI, sunshape, sunsize, hst_pos, hst_foc, hst_aims,hst_w, hst_h, rh
 
     iyaml='' # the input yaml file
 
-    # 
-    ### Section (1)
-    # set the spectral data: 
-    # solar radiative intensity, refractive indexes, extinction coefficients, reflectivities
-    #------------------------------
-    if spectral:
-        I_sun=SolarSpectrum()
-        # CREATE the spectrum for the sun
-        iyaml+='- spectrum: &solar_spectrum  \n'
-        for i in range(0,len(I_sun)-1):
-            iyaml+='  - {wavelength: %s, data: %s }\n' % (I_sun[i][0],I_sun[i][1])  
-        i = len(I_sun)-1
-        iyaml+='  - {wavelength: %s, data: %s }\n' % (I_sun[i][0],I_sun[i][1]) 
-        iyaml+='\n'
-
-        # CREATE the spectrum for the reflectivity (mirror)
-        mirror_rho= MirrorRhoSpectrum()
-        mirror_ref=mirror_rho
-        for i in range(0,len(mirror_rho)):
-            mirror_ref[i][0] = mirror_rho[len(mirror_rho)-1-i][0]/1000.
-            mirror_ref[i][1] = mirror_rho[len(mirror_rho)-1-i][1]/100.
-        mirror_ref.append([4,0.9])
-        iyaml+='- spectrum: &%s  \n' % 'ref_mirror'
-        for i in range(0,len(mirror_ref)-1):
-            iyaml+='  - {wavelength: %15.8e, data: %15.8e }\n' % (float(mirror_ref[i][0]),float(mirror_ref[i][1])) 
-        i = len(mirror_ref)-1
-        iyaml+='  - {wavelength: %15.8e, data: %15.8e }\n' % (float(mirror_ref[i][0]),float(mirror_ref[i][1])) 
-        iyaml+='\n'
-
-    # 
-    ### Section (2)
-    # set the medium types: 
-    # air, glass, vacuum, etc. gathering spectral data
-    #------------------------------
-    #
-    if medium>1e-99:
-        #TODO need data/info of extinction coefficient as a function of spectral
-        ke_air = I_sun
-        for i in range(0,len(I_sun)):
-            ke_air[i][1] = medium
-        iyaml+='- spectrum: &%s  \n' % 'airkext'
-        for i in range(0,len(ke_air)-1):
-            iyaml+='  - {wavelength: %s, data: %s }\n' % (ke_air[i][0],ke_air[i][1])
-        i = len(ke_air)-1
-        iyaml+='  - {wavelength: %s, data: %s }\n' % (ke_air[i][0], ke_air[i][1])
-        iyaml+='\n'
     #
     # Creation of the sun and atmosphere
     #
@@ -94,8 +48,10 @@ def gen_YAML(DNI, sunshape, sunsize, hst_pos, hst_foc, hst_aims,hst_w, hst_h, rh
         iyaml+='- sun: {dni: %15.8e, spectrum: *solar_spectrum, %s: {half_angle: %6.4f}}\n' % (DNI, sunshape,sunsize) 
     else:
         iyaml+='- sun: {dni: %15.8e, %s: {half_angle: %6.4f}}\n' % (DNI, sunshape,sunsize)  
+
     if medium>1e-99:
-        iyaml+='- atmosphere: {extinction: *airkext}\n' 
+        #iyaml+='- atmosphere: {extinction: *airkext}\n' 
+        iyaml+='- atmosphere: {extinction: %s}\n'%medium 
         iyaml+='\n'
 
            
@@ -363,7 +319,7 @@ def cylindrical_receiver(rec_param, hemisphere='North'):
     slices=rec_param[2]
     x=rec_param[3]
     y=rec_param[4]
-    z=rec_param[5]
+    z=rec_param[5]-rec_r
 
     geom=''
     geom+='- geometry: &%s\n' % 'target_g'

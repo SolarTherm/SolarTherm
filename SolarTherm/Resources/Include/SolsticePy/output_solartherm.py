@@ -32,16 +32,16 @@ def output_motab(table,savedir=None):
     f.close()
 
 
-def output_matadata_motab(table, field_type, aiming, n_helios, A_helio, eff_design, H_rcv, W_rcv, H_tower, lat, slope_error, savedir=None):
+def output_matadata_motab(table, field_type, aiming, n_helios, A_helio, eff_design, H_rcv, W_rcv, H_tower, Q_in_rcv, A_land, savedir=None):
     '''
     output the .motab table fiel
     '''
     f=open(savedir, 'w')
     f.write('#1\n')
     f.write('#Comments: Field type: %s, Aiming Strategy: %s, Date:%s\n'%(field_type, aiming, datetime.now()))
-    f.write('#METALABELS,n_helios,A_helio,Eff_design,H_rcv,W_rcv,H_tower,lat,slope_error\n')
-    f.write('##METAUNITS,real,m2,real,m,m,m,deg,rad\n')
-    f.write('#METADATA,%s,%s,%s,%s,%s,%s,%s,%s\n'%(n_helios,A_helio,eff_design,H_rcv,W_rcv,H_tower,lat,slope_error))
+    f.write('#METALABELS,n_helios,A_helio,Eff_design,H_rcv,W_rcv,H_tower, Q_in_rcv, A_land\n')
+    f.write('##METAUNITS,real,m2,real,m,m,m,W,m2\n')
+    f.write('#METADATA,%s,%s,%s,%s,%s,%s,%s,%s\n'%(n_helios,A_helio,eff_design,H_rcv,W_rcv,H_tower,Q_in_rcv,A_land))
 
     # size of the lookup table
     m=N.shape(table)[0]-2

@@ -87,92 +87,7 @@ def proces_raw_results(rawfile, savedir, rho_mirror, dni):
         vir_area=float(virtual[2])
         vir_income=float(virtual[3])
         vir_income_err=float(virtual[4])
-
-    
-    # per heliostat results, and
-    # per receiver per heliostat results
-    heliostats=N.zeros((num_hst+1,28)).astype(str)
-    heliostats[:, :]='-'
-    heliostats[0]=N.array(['hst_idx', 'area', 'sample', 'cos', 'shade', 'incoming', 'in-mat-loss','in-atm-loss', 'absorbed', 'abs-mat-loss', 'abs-atm-loss', 'vir_incoming', 'vir_in-mat-loss','vir_in-atm-loss', 'vir_absorbed', 'vir_abs-mat-loss', 'vir_abs-atm-loss', '', '', 'total', 'cos', 'shad', 'hst_abs', 'block', 'atm', 'spil', 'rec_refl', 'rec_abs' ]) 
-
-    for i in xrange(num_hst):
-        l1=2+num_res+num_rec+i # the line number of the per heliostat result
-        per_hst=content[l1].split()
-
-        hst_idx=re.findall("[-+]?\d*\.\d+|\d+", per_hst[0] ) 
-        hst_area=per_hst[2]
-        hst_sample=per_hst[3]
-        hst_cos=per_hst[4]
-        hst_shad=per_hst[6]
-
-        heliostats[i+1,0]=hst_idx[0]
-        heliostats[i+1,1]=hst_area
-        heliostats[i+1,2]=hst_sample
-        heliostats[i+1,3]=hst_cos
-        heliostats[i+1,4]=hst_shad
-
-        # per heliostat per receiver
-        l2=2+num_res+num_rec+num_hst+i  
-        per_hst=content[l2].split()   
-        hst_in=float(per_hst[2])+float(per_hst[22]) # front+back
-        hst_in_mat=float(per_hst[8])+float(per_hst[28])
-        hst_in_atm=float(per_hst[10])+float(per_hst[30])
-        hst_abs=float(per_hst[12])+float(per_hst[32])
-        hst_abs_mat=float(per_hst[18])+float(per_hst[38])
-        hst_abs_atm=float(per_hst[20])+float(per_hst[40])
-          
-        heliostats[i+1,5]=hst_in
-        heliostats[i+1,6]=hst_in_mat
-        heliostats[i+1,7]=hst_in_atm
-        heliostats[i+1,8]=hst_abs
-        heliostats[i+1,9]=hst_abs_mat
-        heliostats[i+1,10]=hst_abs_atm
-
-        # per heliostat per virtual target
-        l3=2+num_res+num_rec+2*num_hst+i  
-        per_hst=content[l3].split()   
-        hst_in=float(per_hst[2])+float(per_hst[22]) # front+back
-        hst_in_mat=float(per_hst[8])+float(per_hst[28])
-        hst_in_atm=float(per_hst[10])+float(per_hst[30])
-        hst_abs=float(per_hst[12])+float(per_hst[32])
-        hst_abs_mat=float(per_hst[18])+float(per_hst[38])
-        hst_abs_atm=float(per_hst[20])+float(per_hst[40])
-          
-        heliostats[i+1,11]=hst_in
-        heliostats[i+1,12]=hst_in_mat
-        heliostats[i+1,13]=hst_in_atm
-        heliostats[i+1,14]=hst_abs
-        heliostats[i+1,15]=hst_abs_mat
-        heliostats[i+1,16]=hst_abs_atm
-
-
-        hst_tot=float(hst_area)*dni
-        hst_cos=hst_tot*(1.-float(hst_cos))
-        hst_shad=float(hst_shad)
-        hst_abs=(hst_tot-hst_cos-hst_shad)*(1.-rho_mirror)
-        hst_atm=float(heliostats[i+1,16])
-        hst_spil=float(heliostats[i+1,11])
-        hst_rec_abs=float(heliostats[i+1,8])
-        hst_rec_refl=float(heliostats[i+1,5])-float(heliostats[i+1,8])
-        hst_block=hst_tot-hst_cos-hst_shad-hst_abs-hst_atm-hst_spil-hst_rec_abs-hst_rec_refl
-
-        heliostats[i+1,19]=hst_tot
-        heliostats[i+1,20]=hst_cos
-        heliostats[i+1,21]=hst_shad
-        heliostats[i+1,22]=hst_abs
-        heliostats[i+1,23]=hst_block
-        heliostats[i+1,24]=hst_atm
-        heliostats[i+1,25]=hst_spil
-        heliostats[i+1,26]=hst_rec_refl
-        heliostats[i+1,27]=hst_rec_abs
-
-    N.savetxt(savedir+'/results-heliostats.csv', heliostats, fmt='%s', delimiter=',')
-
-    performance_hst=N.zeros((num_hst, 10))
-    performance_hst[:,0]=heliostats[1:, 0].astype(float)
-    performance_hst[:,1:]=heliostats[1:, 19:].astype(float)
-    performance_hst=performance_hst[performance_hst[:,0].argsort()]
-       
+      
     raw_res=N.array(['name','value', 'error',
                      'sun_azimuth', azimuth,'',
                      'sun_elevation', elevation, '',
@@ -233,7 +148,37 @@ def proces_raw_results(rawfile, savedir, rho_mirror, dni):
     print 'Total     efficiency:', efficiency_total
     print 'Number of heliostats:', num_hst
 
-    return efficiency_total, performance_hst[:,1:]
+
+    # per heliostat results, and
+    # per receiver per heliostat results
+    heliostats=N.zeros((num_hst+1, 3)).astype(str)
+    heliostats[:, :]='-'
+    heliostats[0]=N.array(['hst_idx', 'total', 'rec_in']) 
+
+    for i in xrange(num_hst):
+        l1=2+num_res+num_rec+i # the line number of the per heliostat result
+        per_hst=content[l1].split()
+
+        hst_idx=re.findall("[-+]?\d*\.\d+|\d+", per_hst[0] ) 
+        hst_area=per_hst[2]
+        hst_tot=float(hst_area)*dni
+
+
+        # per heliostat per receiver
+        l2=2+num_res+num_rec+num_hst+i  
+        per_hst=content[l2].split()   
+        # ref: https://www.meso-star.com/projects/solstice/man/man5/solstice-output.5.html
+        rec_in=float(per_hst[2])+float(per_hst[22])        # flux that reaches the receiver side, front+back
+
+        heliostats[i+1,0]=hst_idx[0]
+        heliostats[i+1,1]=hst_tot
+        heliostats[i+1,2]=rec_in
+    N.savetxt(savedir+'/results-heliostats.csv', heliostats, fmt='%s', delimiter=',')
+
+    performance_hst=heliostats[1:].astype(float)
+    performance_hst=performance_hst[performance_hst[:,0].argsort()]
+
+    return Qabs.n, Qtotal.n, performance_hst[:,1:]
     
   
 

@@ -46,6 +46,7 @@ model PhysicalParticleCO21DSolstice
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
   parameter String opt_file(fixed = false);
+  parameter String casefolder = "/media/yewang/Data/ParticleSystemRes/res_HT300_fb0.4/solstice_res" "case directory";
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
@@ -53,16 +54,16 @@ model PhysicalParticleCO21DSolstice
   parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
   parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-  parameter Real fb = 0.5 "growth factor";
-  parameter SI.Length R1 = 80 "radius of the first row of heliostat from the tower";
-  parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-  parameter Real he_av_design = 0.99 "Helisotats availability";
-  parameter SI.Efficiency eff_opt = 0.5454 "Field optical efficiency at design point";
   parameter SI.Length H_tower = 200 "Tower height";
   parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
+ parameter SI.Length R1 = 80 "distance between the first row heliostat and the tower";
+  parameter Real fb = 0.6 "factor to grow the field layout";
   parameter Boolean single_field = true "True for single field, false for multi tower";
   parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
+  parameter Real he_av_design = 0.99 "Helisotats availability";
+  parameter SI.Efficiency eff_opt = 0.5454 "Field optical efficiency at design point";
+  parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
   parameter Real gnd_cvge = 0.3126 "Ground coverage";
   parameter Real excl_fac = 0.97 "Exclusion factor";
   parameter Boolean match_gen3_report_cost = false "PB, receiver+tower cost sub system are evaluated using gen3_cost";
@@ -71,7 +72,6 @@ model PhysicalParticleCO21DSolstice
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real SM = 2.5 "Solar multiple";
   parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
@@ -88,6 +88,7 @@ model PhysicalParticleCO21DSolstice
   parameter Integer n_H_rcv = 20 "discretization of the height axis of the receiver";
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM;
+  parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real A_land = metadata_list[8];
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
@@ -96,8 +97,8 @@ model PhysicalParticleCO21DSolstice
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
   //Output of the optical simulation
-  parameter Real n_row_oelt = 50 "number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 10 "number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 9 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
   // Receiver
   parameter Real ar_rec = 1 "Height to diameter aspect ratio of receiver aperture";
   parameter SI.Efficiency em_curtain = 0.86 "Emissivity of curtain";
@@ -312,7 +313,7 @@ model PhysicalParticleCO21DSolstice
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, W_helio = W_helio, H_helio = H_helio, rho_helio = rho_helio, slope_error = slope_error, H_tower = H_tower, R_tower = R_tower, tilt_rcv = tilt_rcv, H_rcv = H_rcv, W_rcv = W_rcv, Q_in_rcv = Q_in_rcv, fb = fb, R1 = R1) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(

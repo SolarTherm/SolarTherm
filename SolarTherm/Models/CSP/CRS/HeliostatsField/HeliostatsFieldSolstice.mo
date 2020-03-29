@@ -8,22 +8,25 @@ model HeliostatsFieldSolstice
     parameter SI.Area A_h=4 "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
 
-    //parameter String field_type = "polar" "Other options are : surround";
-    parameter SI.Length W_helio = 10 "width of heliostat in m";
-    parameter SI.Length H_helio = 10 "height of heliostat in m";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-    parameter SI.Length H_tower = 100 "Tower height";
-    parameter SI.Length R_tower = 0.01 "Tower diameter";
-    //parameter Boolean single_field = true "True for single field, false for multi tower";
-    //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
-    //parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
-    parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+    parameter SI.HeatFlowRate Q_in_rcv = 1e6;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
-    parameter SI.HeatFlowRate Q_in_rcv = 1e6;
-    parameter Real fb =0.5 "growth factor of the field";
-    parameter SI.Length R1 = 80 "radius of the first row of heliostat from the tower";
+    parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+    parameter SI.Length W_helio = 10 "width of heliostat in m";
+    parameter SI.Length H_helio = 10 "height of heliostat in m";
+    parameter SI.Length H_tower = 100 "Tower height";
+    parameter SI.Length R_tower = 0.01 "Tower diameter";
+    parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
+    parameter Real fb=0.7 "factor to grow the field layout";
+    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+    parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
+    parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
+    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results";  
+    parameter String field_type = "polar" "Other options are : surround";
+    parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+
 
     parameter Boolean use_on = false
     "= true to display when solar field is connected"
@@ -44,7 +47,7 @@ model HeliostatsFieldSolstice
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, W_helio=W_helio, H_helio=H_helio, rho_helio=rho_helio, slope_error=slope_error, H_tower=H_tower, R_tower=R_tower, tilt_rcv=tilt_rcv, H_rcv=H_rcv, W_rcv=W_rcv, Q_in_rcv=Q_in_rcv);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

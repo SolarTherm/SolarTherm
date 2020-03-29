@@ -13,26 +13,29 @@ extends OpticalEfficiency;
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy") "Absolute path to the Python script";
 	parameter String pname = "run_solstice" "Name of the Python script";
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
-    
-    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results";  
-	parameter Integer argc = 10 "Number of variables to be passed to the C function";
 
-    //parameter String field_type = "polar" "Other options are : surround";
-    parameter SI.Length W_helio = 10 "width of heliostat in m";
-    parameter SI.Length H_helio = 10 "height of heliostat in m";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-    parameter SI.Length H_tower = 100 "Tower height";
-    parameter SI.Length R_tower = 0.01 "Tower diameter";
+    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results"; 
+    parameter String field_type = "polar" "Other options are : surround";
+    parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
+
+	parameter Integer argc =14 "Number of variables to be passed to the C function";
+
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
-    //parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
-    parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+    parameter SI.HeatFlowRate Q_in_rcv = 1e6;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
-    parameter SI.HeatFlowRate Q_in_rcv = 1e6;
-    parameter Real fb =0.5 "growth factor of the field";
-    parameter SI.Length R1 = 80 "radius of the first row of heliostat from the tower";
+    parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+    parameter SI.Length W_helio = 10 "width of heliostat in m";
+    parameter SI.Length H_helio = 10 "height of heliostat in m";
+    parameter SI.Length H_tower = 100 "Tower height";
+    parameter SI.Length R_tower = 0.01 "Tower diameter";
+    parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
+    parameter Real fb=0.7 "factor to grow the field layout";
+    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+    parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
+    parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
 
     parameter String tablefile(fixed=false);
 
@@ -51,7 +54,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, argc, {"W_helio", "H_helio", "rho_helio","slope_error","H_tower", "R_tower", "tilt_rcv", "H_rcv", "W_rcv", "Q_in_rcv","fb"}, {W_helio, H_helio, rho_helio,slope_error,H_tower, R_tower, tilt_rcv, H_rcv, W_rcv, Q_in_rcv,fb}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, argc, {"Q_in_rcv", "H_rcv", "W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt"}, {Q_in_rcv, H_rcv, W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
