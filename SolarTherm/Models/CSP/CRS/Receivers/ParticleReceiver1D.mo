@@ -34,7 +34,6 @@ model ParticleReceiver1D
     mdot and T_in are given by the inlet port
     Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
-  // FIXME may need to revisit this
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
   parameter Boolean with_uniform_curtain_props = true "If true, ignore effect of phi_c on curtain emi/abs/tau";
@@ -61,7 +60,9 @@ model ParticleReceiver1D
   parameter Real C = 1200;
   parameter SI.Efficiency eta_opt_des = 0.5454 "Total optical efficiency at design point()";
   parameter SI.HeatFlux dni_des = 200;
-  parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley Mills";
+  parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley
+ Mills";
+ parameter SI.HeatFlowRate Q_in = 100;
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
   parameter SI.ThermalConductivity k_w = 0.2 "Backwall thermal conductivity [W/m-K]";
@@ -74,7 +75,7 @@ model ParticleReceiver1D
   SI.Temperature T_out_design = from_degC(800);
   // Receiver geometry
   parameter SI.Length H_drop_design = 25.80006;
-  SI.Length H_drop(start = 24.806280) "Receiver drop height [m]";
+  SI.Length H_drop(start = 30, min=1) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
@@ -107,6 +108,7 @@ model ParticleReceiver1D
   SI.HeatFlowRate Qloss_jcf_discrete[N];
   SI.HeatFlowRate Qloss_jcb_discrete[N];
   SI.HeatFlowRate Qgain_gcb_discrete[N];
+  SI.HeatFlowRate Qabsorbed;
 
   SI.HeatFlowRate Qloss_conv_wall;
   SI.HeatFlowRate Qloss_conv_curtain;
@@ -130,9 +132,16 @@ protected
   SI.Temperature T_out(start = from_degC(800));
   SI.SpecificEnthalpy h_out(start = Util.h_T(T_ref));
 equation
+  if test_mode == true then
+    q_solar = Q_in/A_ap;//C * dni_des *eta_opt_des;//Q_in/A_ap;
+  else
+    q_solar = heat.Q_flow / A_ap;
+  end if;
+  
   W_rcv = H_drop * AR;
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
+  
   if fixed_geometry then
     H_drop = H_drop_design;
   else
@@ -171,11 +180,6 @@ equation
   fluid_b.h_outflow = h_out;
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
-  if test_mode == true then
-    q_solar = C * dni_des *eta_opt_des;
-  else
-    q_solar = heat.Q_flow / A_ap;
-  end if;
   //Assigning values to the TAB lookup table
   for i in 1:N + 1 loop
   //Temperature (input)
@@ -205,11 +209,11 @@ equation
     
 // Curtain energy balance
     q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
-    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv_curtain * (T_s[i + 1] - Tamb);
+    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - q_conv_curtain[i];
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
 // Curtain-wall radiation heat fluxes (W/m²)
     gc_f[i] = q_solar;
-    jc_f[i] = F * (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i];
+    jc_f[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - abs_c[i]) * q_solar) + tau_c[i] * gc_b[i] "should I include view factor here?";
     gc_b[i] = j_w[i];
     jc_b[i] = (1 - tau_c[i]) * (eps_c[i] * CONST.sigma * T_s[i + 1] ^ 4 + (1 - eps_c[i]) * gc_b[i]) + tau_c[i] * q_solar;
     g_w[i] = jc_b[i];
@@ -248,5 +252,8 @@ equation
   Qloss_jcf = sum(Qloss_jcf_discrete);
   Qloss_jcb = sum(Qloss_jcb_discrete);
   Qgain_gcb = sum(Qgain_gcb_discrete);
-  Q_check_curtain = mdot * h_s[1] - mdot * h_s[N + 1] + Qdot_inc - Qloss_conv_curtain - Qloss_conv_wall- Qloss_jcf - Qloss_jcb + Qgain_gcb;
+  Qabsorbed = abs(mdot * h_s[1] - mdot * h_s[N + 1]);
+  Q_check_curtain = Qabsorbed - sum(dx * W_rcv * q_net[i] for i in 1:N);
+annotation(
+    experiment(StartTime = 0, StopTime = 140000, Tolerance = 1e-6, Interval = 1800));
 end ParticleReceiver1D;
