@@ -38,6 +38,7 @@ class Parameters:
         self.sunshape='pillbox'
         self.sunsize=4.65*1.e-3*180./N.pi # convert rad to degree --> solstice convention
         self.extinction=1e-6
+        self.wea_file='/home/yewang/.local/lib/omlibrary/SolarTherm/Data/Weather/example_TMY3.motab'
 
 
 
@@ -64,23 +65,25 @@ class Parameters:
             (10)single_filed : bool, True-one tower one field, or False-multi-tower
             (11)R1         : float, layout parameter, the distance of the first row of heliostat 
             (12)dsep       : float, layout parameter, the separation distance of heliostats (m)
+            (13)fb         : float, in (0-1), a factor to expand the field to reduce block 
             ---(*) n_helios:   int, number of heliostats for the designed field 
             ---(*) Z_helio : float, the installation height of the heliostat
         '''
 
         self.field_type='polar'
-        self.Q_in_rcv=6.e4 # required heat of the receiver  
+        self.Q_in_rcv=10e6 # required heat of the receiver  
         self.W_helio=10.
         self.H_helio=10.
         self.slope_error=2.e-3 # radian
         self.rho_helio=0.9
-        self.H_tower=200.
+        self.H_tower=100.
         self.R_tower=0.001  # shading effect of tower is neglected at the moment
         self.concret_tower=False
         self.single_field=True 
 
         self.R1=90.
         self.dsep=0.
+        self.fb=0.7
 
     def Receiver(self):
         '''
@@ -118,7 +121,7 @@ class Parameters:
         '''  
         self.n_row_oelt=5
         self.n_col_oelt=5
-        self.n_rays=int(1e5)
+        self.n_rays=int(1e6)
         self.n_procs=1
         self.casedir='.'
 
@@ -133,10 +136,10 @@ class Parameters:
             self.hemisphere='South'
 
        # estimate a rough number of large field
-        eta_field=0.5 # assumed field effieicy at design point
+        eta_field=0.4 # assumed field effieicy at design point
         self.n_helios=self.Q_in_rcv/self.W_helio/self.H_helio/self.dni_des/eta_field
         if self.field_type=='polar':
-            self.n_helios*=3.  
+            self.n_helios*=2.  
 
     def saveparam(self, savedir):
         if not os.path.exists(savedir):
@@ -155,7 +158,8 @@ class Parameters:
               ['H_tower', self.H_tower, 'm'],    
               ['R_tower', self.R_tower, 'm'], 
               ['concret_tower', self.concret_tower, '-'],    
-              ['single_field', self.single_field, '-'],     
+              ['single_field', self.single_field, '-'],  
+              ['fb factor', self.fb, '-'],     
               ['R1', self.R1, 'm'],    
               ['dsep', self.dsep, 'm'],    
               ['rcv_type', self.rcv_type, '-'],  
