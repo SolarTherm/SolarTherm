@@ -22,6 +22,8 @@ model HeliostatsFieldSolstice
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real fb =0.5 "growth factor of the field";
+    parameter SI.Length R1 = 80 "radius of the first row of heliostat from the tower";
 
     parameter Boolean use_on = false
     "= true to display when solar field is connected"
@@ -46,6 +48,8 @@ model HeliostatsFieldSolstice
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
+  
+  SI.Efficiency nu;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
         transformation(extent={{-20,-20},{20,20}},
@@ -73,6 +77,8 @@ model HeliostatsFieldSolstice
   Real damping;
 //protected
   Boolean on_hf;
+  Modelica.Blocks.Interfaces.BooleanInput on_hopper(start = false) annotation(
+    Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 protected
   SI.Power W_loss1;
   SI.Power W_loss2;
@@ -110,7 +116,10 @@ equation
   end if;
 
   on_hf=(ele>ele_min) and
-                     (Wspd_internal<Wspd_max);
+                     (Wspd_internal<Wspd_max) and (on_hopper==true);
+  
+  nu = optical.nu;
+  
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
 
   when Q_raw>Q_start then

@@ -13,13 +13,13 @@ extends OpticalEfficiency;
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy") "Absolute path to the Python script";
 	parameter String pname = "run_solstice" "Name of the Python script";
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
-
+    
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results";  
-	parameter Integer argc =10 "Number of variables to be passed to the C function";
+	parameter Integer argc = 10 "Number of variables to be passed to the C function";
 
     //parameter String field_type = "polar" "Other options are : surround";
     parameter SI.Length W_helio = 10 "width of heliostat in m";
-     parameter SI.Length H_helio = 10 "height of heliostat in m";
+    parameter SI.Length H_helio = 10 "height of heliostat in m";
     parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter SI.Length H_tower = 100 "Tower height";
@@ -31,6 +31,8 @@ extends OpticalEfficiency;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real fb =0.5 "growth factor of the field";
+    parameter SI.Length R1 = 80 "radius of the first row of heliostat from the tower";
 
     parameter String tablefile(fixed=false);
 
@@ -49,7 +51,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, argc, {"W_helio", "H_helio", "rho_helio","slope_error","H_tower", "R_tower", "tilt_rcv", "H_rcv", "W_rcv", "Q_in_rcv"}, {W_helio, H_helio, rho_helio,slope_error,H_tower, R_tower, tilt_rcv, H_rcv, W_rcv, Q_in_rcv}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, argc, {"W_helio", "H_helio", "rho_helio","slope_error","H_tower", "R_tower", "tilt_rcv", "H_rcv", "W_rcv", "Q_in_rcv","fb"}, {W_helio, H_helio, rho_helio,slope_error,H_tower, R_tower, tilt_rcv, H_rcv, W_rcv, Q_in_rcv,fb}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
