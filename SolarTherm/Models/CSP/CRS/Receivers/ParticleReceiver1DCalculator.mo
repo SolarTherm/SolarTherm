@@ -15,7 +15,7 @@ model ParticleReceiver1DCalculator
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   // Design Condition
   parameter SI.MassFlowRate m_in(fixed = false);
-  parameter SI.Power P_gross_design = 100e6;
+  parameter SI.Power P_gross_design = 111e6;
   parameter Real eff_block_design = 0.502;
   parameter SI.Efficiency eta_opt_des = 0.5;
   parameter Real SolarMultiple = 2.5;
@@ -23,10 +23,10 @@ model ParticleReceiver1DCalculator
   parameter Real T_in_design = from_degC(580.3);
   parameter Real T_amb_design = from_degC(10);
   parameter Real CR = 1200;
-  parameter SI.HeatFlux dni_des = 909.6;
+  parameter SI.HeatFlux dni_des = 950;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
   parameter SI.HeatFlowRate Q_in(fixed = false);
-
+  SI.HeatFlowRate Q_in_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
@@ -39,15 +39,13 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  ParticleReceiver1D particleReceiver1D(C = CR, N = 30, dni_des = dni_des, fixed_geometry = false, test_mode = true, with_uniform_curtain_props = false, with_wall_conduction = true,eta_opt_des=eta_opt_des, T_out_design = T_out_design) annotation(
+  ParticleReceiver1D particleReceiver1D(C = CR, N = 30, dni_des = dni_des, fixed_geometry = false, test_mode = true, with_uniform_curtain_props = false, with_wall_conduction = true, eta_opt_des = eta_opt_des, T_out_design = T_out_design, Q_in = Q_in) annotation(
     Placement(visible = true, transformation(origin = {-17, 29}, extent = {{-23, -23}, {23, 23}}, rotation = 0)));
 initial equation
   Q_in = P_gross_design / eff_block_design / eta_rec_assumption * SolarMultiple;
-  m_in = P_gross_design / eff_block_design / eta_rec_assumption * SolarMultiple / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
+  m_in = P_gross_design / eff_block_design * SolarMultiple / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
 equation
-/*connect(Operation.y, receiver.on) H_drop
-		annotation(
-		Line(points = {{-69, -4}, {-39.5, -4}, {-39.5, 5}, {-25, 5}}, color = {255, 0, 255}));*/
+  Q_in_calculated = particleReceiver1D.A_ap * particleReceiver1D.q_solar;
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
   connect(liftSimple.fluid_b, particleReceiver1D.fluid_a) annotation(
@@ -63,7 +61,7 @@ equation
 protected
   annotation(
     uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")),
-    experiment(StartTime = 0, StopTime = 35000, Tolerance = 1e-06, Interval = 972.222),
+    experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-06, Interval = 1),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
     Diagram);
 end ParticleReceiver1DCalculator;
