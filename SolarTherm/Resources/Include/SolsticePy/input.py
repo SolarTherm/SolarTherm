@@ -16,10 +16,10 @@ class Parameters:
 
             for PS10, the annual capacity of the field is around 120GWh
         '''
+        self.simulation()
         self.Sun()
         self.Heliostat()
         self.Receiver()
-        self.simulation()
         self.dependent_par()
 
     def Sun(self):
@@ -71,7 +71,10 @@ class Parameters:
         '''
 
         self.field_type='polar'
-        self.Q_in_rcv=10e6 # required heat of the receiver  
+        if self.method==1:
+            self.Q_in_rcv=10e6 # required heat of the receiver  
+        else:
+            self.n_helios=1000
         self.W_helio=10.
         self.H_helio=10.
         self.slope_error=2.e-3 # radian
@@ -124,6 +127,9 @@ class Parameters:
         self.n_rays=int(1e6)
         self.n_procs=1
         self.casedir='.'
+        self.method=1 # 1 - design the field based on the Q_in_rcv
+                      # 2 - design the field based on the n_helios
+    
 
     def dependent_par(self):
         '''
@@ -137,19 +143,21 @@ class Parameters:
 
        # estimate a rough number of large field
         eta_field=0.4 # assumed field effieicy at design point
-        self.n_helios=self.Q_in_rcv/self.W_helio/self.H_helio/self.dni_des/eta_field
-        if self.field_type=='polar':
-            self.n_helios*=2.  
+        if self.method==1:
+            self.n_helios=self.Q_in_rcv/self.W_helio/self.H_helio/self.dni_des/eta_field
+              
+            if self.field_type=='polar':
+                self.n_helios*=2.  
 
     def saveparam(self, savedir):
         if not os.path.exists(savedir):
             os.makedirs(savedir)
     
         param=N.array([
-    
+              ['method', self.method, '-'],    
               ['field', self.field_type, '-'],  
-              ['Q_in_rcv', self.Q_in_rcv, 'W'],      
-              ['n_helios(pre_des)', self.n_helios, '-'],    
+              ['Q_in_rcv', self.Q_in_rcv, 'W'],     
+              ['n_helios(pre_des if method ==1)', self.n_helios, '-'],    
               ['W_helio', self.W_helio, 'm'],    
               ['H_helio', self.H_helio, 'm'],
               ['Z_helio', self.Z_helio, 'm'],      

@@ -29,6 +29,7 @@ model PhysicalParticleCO21D_2ndApproach
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
   // *********************
+  parameter Real method = 2 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -312,9 +313,41 @@ model PhysicalParticleCO21D_2ndApproach
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
+
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
+    lon = data.lon, 
+    lat = data.lat, 
+    ele_min(displayUnit = "deg") = ele_min, 
+    use_wind = use_wind, 
+    Wspd_max = Wspd_max, 
+    he_av = he_av_design, 
+    use_on = true, 
+    use_defocus = true, 
+    nu_defocus = nu_defocus, 
+    nu_min = nu_min_sf, 
+    Q_design = Q_flow_defocus, 
+    nu_start = nu_start,
+    method=method,
+    n_h=n_helios, 
+    W_helio = W_helio, 
+    H_helio = H_helio, 
+    H_tower = H_tower, 
+    R_tower = R_tower, 
+    R1 = R1, 
+    fb = fb, 
+    rho_helio = rho_helio, 
+    slope_error = slope_error,
+    H_rcv = H_rcv, 
+    W_rcv = W_rcv, 
+    tilt_rcv = tilt_rcv,  
+    n_row_oelt = n_row_oelt, 
+    n_col_oelt = n_col_oelt, 
+    psave = casefolder, 
+    wea_file = wea_file) 
+    annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+
   // Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap=A_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, Q_in = Q_in_rcv) annotation(
     Placement(visible = true, transformation(origin = {158, 134}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
