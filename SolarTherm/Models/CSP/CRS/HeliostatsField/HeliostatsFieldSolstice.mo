@@ -5,9 +5,10 @@ model HeliostatsFieldSolstice
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
-    parameter SI.Area A_h=4 "Heliostat's Area" annotation(Dialog(group="Technical data"));
+    parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
 
+    parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
@@ -47,7 +48,7 @@ model HeliostatsFieldSolstice
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, n_helios=n_h, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

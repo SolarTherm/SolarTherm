@@ -19,10 +19,12 @@ extends OpticalEfficiency;
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-	parameter Integer argc =14 "Number of variables to be passed to the C function";
+	parameter Integer argc =16 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
+    parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
+    parameter Real n_helios=1000 "Number of heliostats";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
@@ -55,7 +57,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"Q_in_rcv", "H_rcv", "W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt"}, {Q_in_rcv, H_rcv, W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt"}, {method, Q_in_rcv, n_helios, H_rcv, W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

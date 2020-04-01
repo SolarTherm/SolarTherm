@@ -325,7 +325,7 @@ class CRS:
             plt.close()  
         return power, self.eff_des, A_land
 
-    def field_design_annual(self, Q_in_des, latitude, dni_des, num_rays, nd, nh, weafile, zipfiles=False, genvtk_hst=False, plot=False):
+    def field_design_annual(self, method, Q_in_des, n_helios, latitude, dni_des, num_rays, nd, nh, weafile, zipfiles=False, genvtk_hst=False, plot=False):
         '''
         design the field according to parameters at design point
         spring equinox, solar noon
@@ -426,16 +426,31 @@ class CRS:
         Qsolar=performance_hst_des[0,0]
         ID=ANNUAL.argsort()
         ID=ID[::-1]
-        power=0.
+
         select_hst=N.array([])
 
-        for i in xrange(len(ID)):
-            if power<Q_in_des:
-                idx=ID[i]
-                select_hst=N.append(select_hst, idx)
-                power+=Qin[idx]
+        if method==1:
+            power=0.
+            self.Q_in_rcv=Q_in_des
+            for i in xrange(len(ID)):
+                if power<Q_in_des:
+                    idx=ID[i]
+                    select_hst=N.append(select_hst, idx)
+                    power+=Qin[idx]
 
-        print 'power @design', power
+            print 'power @design', power
+        else:
+            num_hst=0
+            power=0.
+            for i in xrange(len(ID)):
+                if num_hst<n_helios:
+                    idx=ID[i]
+                    select_hst=N.append(select_hst, idx)
+                    num_hst+=1
+                    power+=Qin[idx]
+
+            self.Q_in_rcv=power
+            print 'power @design', power            
 
         select_hst=select_hst.astype(int)
 
