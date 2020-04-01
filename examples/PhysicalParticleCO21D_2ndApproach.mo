@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21DSolstice
+model PhysicalParticleCO21D_2ndApproach
   //======================================          MODEL VERSION CONTROL               ===============================================//
   //Base case parameter : particleReceiver1D.h_conv_curtain = 10 W/m2K, pri_bop = 0, tower_cost = cheap tower, storage cost function = EES v.9 SANDIA method, variable O&M = 0, no insulation cost, using Solstice_field =======> LCOE 66.68 USD/MWh
   //adding changes - particleReceiver1D.h_conv_curtain = 32 W/m2K ===> LCOE 68.68 USD/MWh (everything else is kept constant),
@@ -13,6 +13,7 @@ model PhysicalParticleCO21DSolstice
   //adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.95 ====================> 62.377 USD/MWh (20 February 2020)
   //adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.90 ====================> 65.58 USD/MWh (20 February 2020)
   //adding changes - ramp-up and down control system are implemented in PowerBlockControl.logic and recomPB, ramp-up and down time 1800 seconds ====================> 65.848 USD/MWh (25 February 2020)
+  //This model here uses 2nd approach in deisgning the system (instead of giving Q_in_rcv and rcv size to the heliostat field Solstice, it gives number of helios and rcv size
   //=============================================        INSTRUCTION       =================================================================//
   //===================>     Run this model with maximum time step less than equal to 300. Bigger than that, it wont converge
   import SolarTherm.{Models,Media};
@@ -29,7 +30,7 @@ model PhysicalParticleCO21DSolstice
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
   // *********************
-  parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
+  parameter Boolean pri_field_wspd_max = true "using wspd_max dependent cost";
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph "Medium props for sCO2";
@@ -45,34 +46,42 @@ model PhysicalParticleCO21DSolstice
   parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
-  parameter String opt_file(fixed = false);
+  //parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/data-from-solarpilot-zeb/SM2p50/isp_fixed/_optics.motab");
   parameter String casefolder = "modelica://SolarTherm/solsticeresult";
-  parameter Real metadata_list[8] = metadata(opt_file);
-  parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-  parameter String field_type = "polar" "Other options are : surround";
-  parameter Real land_mult = 0 "Land area multiplier : rev 12 SANDIA";
-  parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
-  parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-  parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-  parameter SI.Length H_tower = 200 "Tower height";
-  parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
-  parameter SI.Length R1 = 80 "distance between the first row heliostat and the tower";
-  parameter Real fb = 0.6 "factor to grow the field layout";
-  parameter Boolean single_field = true "True for single field, false for multi tower";
-  parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
-  parameter Real he_av_design = 0.99 "Helisotats availability";
-  parameter SI.Efficiency eff_opt = 0.5454 "Field optical efficiency at design point";
-  parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
-  parameter Real gnd_cvge = 0.3126 "Ground coverage";
-  parameter Real excl_fac = 0.97 "Exclusion factor";
+  parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/OELT_Solstice.motab");
   parameter Boolean match_gen3_report_cost = false "PB, receiver+tower cost sub system are evaluated using gen3_cost";
   parameter SI.ThermalInsulance U_value = 0.3 "Desired U_value for the tanks";
-  //Design Condition
+  parameter Real metadata_list[8] = metadata(opt_file);
+  parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
+  parameter Real land_mult = 7.8 "Land area multiplier : rev 12 SANDIA";
+  parameter String field_type = "polar" "Other options are : surround";
+  parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+  parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+  parameter Real he_av_design = 0.99 "Helisotats availability";
+  parameter SI.Efficiency eff_opt = 0.5454 "Field optical efficiency at design point";
+  parameter SI.Length H_tower = 200 "Tower height";
+  parameter SI.Length R_tower = W_rcv / 2 "Tower diameter";
+  parameter Boolean single_field = true "True for single field, false for multi tower";
+  parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
+  parameter Real gnd_cvge = 0.3126 "Ground coverage";
+  parameter Real excl_fac = 0.97 "Exclusion factor";
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
-  parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
+  parameter SI.Area A_rcv = 1200 "Receiver aperture area ==> input to Solstice";
+  parameter SI.Length H_rcv = sqrt(A_rcv) "Receiver aperture height";
+  parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
+  parameter SI.Length L_rcv = 1 "Receiver length(depth)";
+  parameter SI.Area A_total_helio = 1.45e6 "total mirror area";
+  parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m ==> input to Solstice";
+  parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m ==> input to Solstice";  
+  parameter SI.Area A_helio = W_helio * H_helio "area of one heliostat ==> input to Solstice";
+  parameter Real n_helios = ceil(A_total_helio/A_helio) "Number of heliostats ==> input to Solstice";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 2.5 "Solar multiple";
+  parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
+  parameter SI.Efficiency eta_opt_des = eff_opt;
+  //parameter SI.Area A_land = A_field * land_mult "Land area";
+  parameter Real A_land = metadata_list[8];
+  //8.30896e6 * 1.3;
+  parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
@@ -81,23 +90,19 @@ model PhysicalParticleCO21DSolstice
   parameter SI.Irradiance dni_des = 950 "DNI at design point Equinox";
   parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
-  parameter Real n_helios = metadata_list[1] "Number of heliostats";
-  parameter SI.Efficiency eta_opt_des = eff_opt;
   parameter SI.Temperature T_amb_des = from_degC(25) "Design point ambient temp";
   parameter Real alpha_rcv = 1;
   parameter Integer n_H_rcv = 20 "discretization of the height axis of the receiver";
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
-  parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM;
-  parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
-  parameter Real A_land = metadata_list[8];
-  parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
+  parameter SI.HeatFlowRate Q_in_rcv = metadata_list[7];
+  parameter Real SM = Q_in_rcv/(P_gross/eff_blk/eta_rcv_assumption) "Solar multiple";
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
   parameter SI.Efficiency packing_factor = 0.747857 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
   //Optical simulation parameters
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
   //Output of the optical simulation
-  parameter Real n_row_oelt = 9 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_row_oelt = 8 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
   // Receiver
   parameter Real ar_rec = 1 "Height to diameter aspect ratio of receiver aperture";
@@ -201,9 +206,6 @@ model PhysicalParticleCO21DSolstice
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
-  parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
-  parameter SI.Length L_rcv = 1 "Receiver length(depth)";
   parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold particles specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot particles specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_co2_in_set = MedPB.specificEnthalpy(state_co2_in_set) "Cold CO2 specific enthalpy at design";
@@ -313,7 +315,7 @@ model PhysicalParticleCO21DSolstice
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt , psave = casefolder) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt , psave = casefolder, wea_file=wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
@@ -380,10 +382,10 @@ model PhysicalParticleCO21DSolstice
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, eff_block_design = eff_blk, SolarMultiple = SM, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des, eta_opt_des = eta_opt_des) annotation(
-    Placement(visible = true, transformation(origin = {146, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression always_on(y = true) annotation(
-    Placement(visible = true, transformation(origin = {-128, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-128, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap=A_rcv, Q_in=Q_in_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, N=20) annotation(
+    Placement(visible = true, transformation(origin = {155, 127}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -399,10 +401,8 @@ algorithm
     E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
-  opt_file = heliostatsField.optical.tablefile;
-  A_rcv = particleReceiver1DCalculator.particleReceiver1D.H_drop ^ 2;
-  rec_fr = 1 - particleReceiver1DCalculator.particleReceiver1D.eta_rec;
-  m_flow_fac = particleReceiver1DCalculator.particleReceiver1D.mdot;
+  rec_fr = 1 - particleReceiver1DCalculator_Approach2.eta_rec;
+  m_flow_fac = particleReceiver1DCalculator_Approach2.mdot;
   T_cold_set = powerBlock.exchanger.T_HTF_des[1];
   T_cold_set = T_out_ref_blk;
   if match_gen3_report_cost then
@@ -510,11 +510,11 @@ equation
   connect(controlHot.rampingout, powerBlock.ramping) annotation(
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
   connect(always_on.y, heliostatsField.on_hopper) annotation(
-    Line(points = {{-116, -4}, {-112, -4}, {-112, 20}, {-88, 20}, {-88, 20}}, color = {255, 0, 255}));
+    Line(points = {{-116, 8}, {-112, 8}, {-112, 20}, {-88, 20}, {-88, 20}}, color = {255, 0, 255}));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 200000, StartTime = 0, Tolerance = 0.001, Interval = 1800),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
@@ -524,4 +524,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21DSolstice;
+end PhysicalParticleCO21D_2ndApproach;

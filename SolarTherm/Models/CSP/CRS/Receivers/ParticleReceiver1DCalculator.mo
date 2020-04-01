@@ -14,6 +14,10 @@ model ParticleReceiver1DCalculator
   import Modelica.Blocks;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   // Design Condition
+  //2 way in designing the receiver, specifcy the area and calculate the mass flow rate to reach certain outlet temperature
+  //Or specify the mass flow rate and calculate the area to reach certain outlet temperature
+  parameter SI.Area A_ap_des = 1000 "aperture area";
+  parameter SI.Length H_drop_design = sqrt(A_ap_des);
   parameter SI.MassFlowRate m_in(fixed = false);
   parameter SI.Power P_gross_design = 111e6;
   parameter Real eff_block_design = 0.502;
@@ -39,8 +43,8 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  ParticleReceiver1D particleReceiver1D(C = CR, N = 30, dni_des = dni_des, fixed_geometry = false, test_mode = true, with_uniform_curtain_props = false, with_wall_conduction = true, eta_opt_des = eta_opt_des, T_out_design = T_out_design, Q_in = Q_in) annotation(
-    Placement(visible = true, transformation(origin = {-17, 29}, extent = {{-23, -23}, {23, 23}}, rotation = 0)));
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = false, test_mode = true, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in=Q_in) annotation(
+    Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
 initial equation
   Q_in = P_gross_design / eff_block_design / eta_rec_assumption * SolarMultiple;
   m_in = P_gross_design / eff_block_design * SolarMultiple / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
@@ -48,16 +52,16 @@ equation
   Q_in_calculated = particleReceiver1D.A_ap * particleReceiver1D.q_solar;
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
-  connect(liftSimple.fluid_b, particleReceiver1D.fluid_a) annotation(
-    Line(points = {{16, -14}, {-12, -14}, {-12, 8}, {-12, 8}}, color = {0, 127, 255}));
-  connect(sink.ports[1], particleReceiver1D.fluid_b) annotation(
-    Line(points = {{14, 32}, {4, 32}, {4, 40}, {-10, 40}, {-10, 40}}, color = {0, 127, 255}));
+  connect(particleReceiver1D.fluid_a, liftSimple.fluid_b) annotation(
+    Line(points = {{-24, 8}, {-14, 8}, {-14, -14}, {16, -14}, {16, -14}}, color = {0, 127, 255}));
   connect(Operation.y, particleReceiver1D.on) annotation(
-    Line(points = {{-66, -4}, {-22, -4}, {-22, 8}, {-22, 8}}, color = {255, 0, 255}));
+    Line(points = {{-66, -4}, {-42, -4}, {-42, 8}, {-34, 8}, {-34, 8}}, color = {255, 0, 255}));
   connect(Heat.port, particleReceiver1D.heat) annotation(
-    Line(points = {{-68, 44}, {-40, 44}, {-40, 36}, {-40, 36}}, color = {191, 0, 0}));
+    Line(points = {{-68, 44}, {-56, 44}, {-56, 42}, {-56, 42}}, color = {191, 0, 0}));
   connect(realExpression.y, particleReceiver1D.Tamb) annotation(
-    Line(points = {{-44, 80}, {-16, 80}, {-16, 46}, {-16, 46}}, color = {0, 0, 127}));
+    Line(points = {{-44, 80}, {-30, 80}, {-30, 54}, {-28, 54}}, color = {0, 0, 127}));
+  connect(particleReceiver1D.fluid_b, sink.ports[1]) annotation(
+    Line(points = {{-20, 46}, {14, 46}, {14, 32}, {14, 32}}, color = {0, 127, 255}));
 protected
   annotation(
     uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")),

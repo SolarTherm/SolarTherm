@@ -79,11 +79,11 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 		"Base properties of medium"
 
 	equation
-	T = SolarTherm.Media.CO2.CO2_utilities.stprops("T","P",p,"H",h,"R744");
+	T = SolarTherm.Media.CO2.CO2_utilities.stprops("T","P",p,"H",h,"CO2");
 	p = state.p;
-	d = SolarTherm.Media.CO2.CO2_utilities.stprops("D","P",p,"H",h,"R744");
+	d = SolarTherm.Media.CO2.CO2_utilities.stprops("D","P",p,"H",h,"CO2");
 	h = state.h;
-	u = SolarTherm.Media.CO2.CO2_utilities.stprops("U","P",p,"H",h,"R744");
+	u = SolarTherm.Media.CO2.CO2_utilities.stprops("U","P",p,"H",h,"CO2");
 	MM = 0.044;
 	R = 8.3144 / MM;
 
@@ -106,7 +106,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p, h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","T",T,"P",p,"R744"));
+		state := ThermodynamicState(p=p, h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","T",T,"P",p,"CO2"));
 	end setState_pTX;
 
 	redeclare function setState_phX
@@ -128,7 +128,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 		input MassFraction X[:]=reference_X "Mass fractions";
 	output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=p, h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","P",p,"S",s,"R744"));
+		state := ThermodynamicState(p=p, h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","P",p,"S",s,"CO2"));
 	end setState_psX;
 
 	redeclare function setState_dTX
@@ -139,7 +139,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 		input MassFraction X[:]=reference_X "Mass fractions";
 		output ThermodynamicState state "Thermodynamic state record";
 	algorithm
-		state := ThermodynamicState(p=SolarTherm.Media.CO2.CO2_utilities.stprops("P","T",T,"D",d,"R744"), h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","T",T,"D",d,"R744"));
+		state := ThermodynamicState(p=SolarTherm.Media.CO2.CO2_utilities.stprops("P","T",T,"D",d,"CO2"), h=SolarTherm.Media.CO2.CO2_utilities.stprops("H","T",T,"D",d,"R744"));
 	end setState_dTX;
 
 	redeclare function extends pressure "Return pressure"
@@ -150,7 +150,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 
 	redeclare function extends temperature "Return temperature"
 	algorithm
-		T := SolarTherm.Media.CO2.CO2_utilities.stprops("T","P",state.p,"H",state.h,"R744");
+		T := SolarTherm.Media.CO2.CO2_utilities.stprops("T","P",state.p,"H",state.h,"CO2");
 		annotation (Inline=true);
 	end temperature;
 
@@ -162,19 +162,19 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 
 	redeclare function extends density "Return density"
 	algorithm
-		d := SolarTherm.Media.CO2.CO2_utilities.stprops("D","P",state.p,"H",state.h,"R744");
+		d := SolarTherm.Media.CO2.CO2_utilities.stprops("D","P",state.p,"H",state.h,"CO2");
 		annotation (Inline=true);
 	end density;
 
 	redeclare function extends specificInternalEnergy "Return specific internal energy"
 	algorithm
-		u := SolarTherm.Media.CO2.CO2_utilities.stprops("U","P",state.p,"H",state.h,"R744");
+		u := SolarTherm.Media.CO2.CO2_utilities.stprops("U","P",state.p,"H",state.h,"CO2");
 		annotation (Inline=true);
 	end specificInternalEnergy;
 
 	redeclare function extends thermalConductivity "Return thermal conductivity"
 	algorithm
-		lambda := SolarTherm.Media.CO2.CO2_utilities.stprops("L","P",state.p,"H",state.h,"R744");
+		lambda := SolarTherm.Media.CO2.CO2_utilities.stprops("L","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -182,7 +182,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 
 	redeclare function extends specificEntropy "Return specific entropy"
 	algorithm
-		s := SolarTherm.Media.CO2.CO2_utilities.stprops("S","P",state.p,"H",state.h,"R744");
+		s := SolarTherm.Media.CO2.CO2_utilities.stprops("S","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -190,7 +190,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 
 	redeclare function extends specificGibbsEnergy "Return specific Gibbs energy"
 	algorithm
-		g := SolarTherm.Media.CO2.CO2_utilities.stprops("G","P",state.p,"H",state.h,"R744");
+		g := SolarTherm.Media.CO2.CO2_utilities.stprops("G","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));	
@@ -198,7 +198,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 
 	redeclare function extends specificHelmholtzEnergy "Return specific Helmholtz energy"
 	algorithm
-		f := SolarTherm.Media.CO2.CO2_utilities.stprops("HELMHOLTZMASS","P",state.p,"H",state.h,"R744");
+		f := SolarTherm.Media.CO2.CO2_utilities.stprops("HELMHOLTZMASS","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));	
@@ -207,7 +207,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 	redeclare function extends specificHeatCapacityCp
 		"Return specific heat capacity at constant pressure"
 	algorithm
-		cp := SolarTherm.Media.CO2.CO2_utilities.stprops("C","P",state.p,"H",state.h,"R744");
+		cp := SolarTherm.Media.CO2.CO2_utilities.stprops("C","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -216,7 +216,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 	redeclare function extends specificHeatCapacityCv
 		"Return specific heat capacity at constant volume"
 	algorithm
-		cv := SolarTherm.Media.CO2.CO2_utilities.stprops("CVMASS","P",state.p,"H",state.h,"R744");
+		cv := SolarTherm.Media.CO2.CO2_utilities.stprops("CVMASS","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -234,7 +234,7 @@ package CarbonDioxide_ph "Carbon Dioxide model, explicit in p and h"
 	redeclare function extends density_derT_p
 		"Return density derivative w.r.t. temperature at constant pressure"
 	algorithm
-		ddTp := SolarTherm.Media.CO2.CO2_utilities.stprops("d(D)/d(T)|P","P",state.p,"H",state.h,"R744");
+		ddTp := SolarTherm.Media.CO2.CO2_utilities.stprops("d(D)/d(T)|P","P",state.p,"H",state.h,"CO2");
 		annotation (Documentation(info="<html>
 
 			</html>"));
