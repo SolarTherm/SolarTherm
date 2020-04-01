@@ -19,7 +19,7 @@ package Validation
     parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
     //	replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
     replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Chloride Salt";
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph "Medium props for sCO2";
+    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
     parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
     parameter Currency currency = Currency.USD "Currency used for cost analysis";
     parameter Boolean const_dispatch = true "Constant dispatch of energy";
@@ -217,7 +217,7 @@ package Validation
     parameter Real PR = 25 / 9.17;
     parameter SI.AbsolutePressure p_high_des = 250 * 10 ^ 5;
     parameter SI.ThermodynamicTemperature T_low = 45 + 273.15;
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, E_net(displayUnit = ""), P_gro = 10e6, T_amb_des = blk_T_amb_des, eta_turb = 0.93, external_parasities = false, gamma = gamma, m_HTF_des = 85.8, nu_min = nu_min_blk, T_high = T_out_CO2_des, PR = PR, p_high_des = p_high_des, T_low = T_low) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, E_net(displayUnit = ""), P_gro = 10e6, T_amb_des = blk_T_amb_des, eta_turb = 0.93, external_parasities = false, gamma = gamma, m_HTF_des = 85.8, nu_min = nu_min_blk, T_high = T_out_CO2_des, PR = PR, p_high = p_high_des, T_low = T_low) annotation(
       Placement(visible = true, transformation(extent = {{86, 6}, {122, 44}}, rotation = 0)));
     // Price
     SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
@@ -237,6 +237,8 @@ package Validation
       Placement(visible = true, transformation(origin = {13, 101}, extent = {{-15, -13}, {15, 13}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression T_in(y = 550 + 273.15 + time) annotation(
       Placement(visible = true, transformation(origin = {-62, 54}, extent = {{-46, -14}, {46, 14}}, rotation = 0)));
+    Modelica.Blocks.Sources.BooleanExpression always_true(y = false) annotation(
+      Placement(visible = true, transformation(origin = {6, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   initial equation
     if fixed_field then
       P_gross = Q_flow_des * eff_cyc;
@@ -275,6 +277,8 @@ package Validation
       Line(points = {{-11, 54}, {0, 54}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(Tamb.y, powerBlock.T_amb) annotation(
       Line(points = {{29.5, 101}, {100, 101}, {100, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    connect(always_true.y, powerBlock.ramping) annotation(
+      Line(points = {{18, 82}, {104, 82}, {104, 36}, {104, 36}}, color = {255, 0, 255}, pattern = LinePattern.Dot));
     annotation(
       Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
       Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
@@ -462,10 +466,13 @@ package Validation
     import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     //GENERAL PARAMETERS
-    parameter String fluid = "R744";
+    parameter String fluid = "CO2";
     parameter SI.Temperature T_amb_des = from_degC(45) "ambient temperature at design point";
+    parameter SI.Efficiency eta_cycle_des = 0.5;
     //CYCLE DESIGN PARAMETERS - Turbine and Compressor
-    parameter SI.Power P_gross = 111e6 "gross power output of the turbine";
+    parameter SI.Power P_gross = 111.1111e6 "gross power output of the turbine";
+    parameter SI.Efficiency par_fr = 0.1;
+    parameter SI.Power P_net_des = P_gross * (1 - par_fr);
     parameter SI.Temperature T_hot_set = from_degC(715) "Turbine inlet temperature at design point";
     parameter SI.Pressure p_hot_set = 24e6 "Turbine inlet pressure at design";
     parameter Real PR = 3;
@@ -474,26 +481,26 @@ package Validation
     parameter SI.Efficiency eta_design_turbine = 0.91 "compressor isentropic efficiency at design point";
     parameter SI.MassFlowRate m_flow_des(fixed = false) "mass flow of the PB medium";
     //CYCLE DESIGN PARAMETERS - Heat exchanger
-    parameter SI.HeatFlowRate Q_flow_des = 200e6 "Heat that must be supplied to the cycle to produce power";
+    parameter SI.HeatFlowRate Q_flow_des = P_gross / eta_cycle_des "Heat that must be supplied to the cycle to produce power";
     parameter SI.Temperature T_hot_tank = from_degC(800) "temperature of the hot tank at design point";
     parameter SI.Temperature T_cold_tank = from_degC(580) "temperature of the cold tank at design point";
     parameter SI.MassFlowRate m_flow_HTF_des = Q_flow_des / (Util.h_T(T_hot_tank) - Util.h_T(T_cold_tank)) "mass flow rate of the HTF at design point entering the HX";
     parameter SI.Pressure p_in_medium_des = p_hot_set "inlet pressure of the PB medium to the HX at design pooint = compressor output pressure at design point";
-    parameter SI.SpecificEnthalpy h_in_medium_des = stprops("H", "P", p_in_medium_des, "T", T_hot_set, fluid) - Q_flow_des / m_flow_des "inlet specific enthalpy of the medium to the HX at design point --> to satisfy the mass flow needed to the turbine with a certain turbine inlet temperature value";
-    parameter SI.Temperature T_in_medium_des = stprops("T", "H", h_in_medium_des, "P", p_in_medium_des, fluid) "inlet temperature of the medium to HX";
     //CYCLE DESIGN PARAMETERS - Cooler
     parameter SI.Temperature delta_T_out_des = 10 "Temerature difference of T ambient and T medium at the outlet of the cooler at design point";
     parameter SI.Temperature T_cold_set = T_amb_des + delta_T_out_des "Temperature of the medium at the putlet of the cooler at design point";
+    //VARIABLES
+    SI.Power W_net;
     //CONNECTIONS
     SolarTherm.Validation.Compressor compressor(eta_design = eta_design_compressor, p_in_des = p_cold_set, p_out_des = p_hot_set, T_in_des = T_cold_set, m_flow_des = m_flow_des, redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-114, 0}, extent = {{-36, -36}, {36, 36}}, rotation = 0)));
     SolarTherm.Validation.Turbine turbine(eta_design = eta_design_turbine, W_turb_des = P_gross, p_in_des = p_hot_set, p_out_des = p_cold_set, redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {127, 1}, extent = {{-31, -31}, {31, 31}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(45)) annotation(
-      Placement(visible = true, transformation(origin = {207, 100}, extent = {{29, -10}, {-29, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {213, 160}, extent = {{29, -10}, {-29, 10}}, rotation = 0)));
     SolarTherm.Validation.Cooler cooler(P_gross = P_gross, m_flow_des = m_flow_des, delta_T_out_des = delta_T_out_des) annotation(
-      Placement(visible = true, transformation(origin = {218, 32}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
-    SolarTherm.Validation.HeatExchanger heatExchanger(Q_flow_des = Q_flow_des, T_out_medium_des = T_hot_set, T_in_medium_des = T_in_medium_des, T_hot_tank = T_hot_tank, T_cold_tank = T_cold_tank) annotation(
+      Placement(visible = true, transformation(origin = {200, 84}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
+    SolarTherm.Validation.HeatExchanger heatExchanger(Q_flow_des = Q_flow_des, T_out_medium_des = T_hot_set, T_hot_tank = T_hot_tank, T_cold_tank = T_cold_tank, m_flow_medium_des = m_flow_des) annotation(
       Placement(visible = true, transformation(origin = {20, -56}, extent = {{-35, 35}, {35, -35}}, rotation = 0)));
     Modelica.Fluid.Sources.FixedBoundary boundary(nPorts = 1, use_T = true, redeclare package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph, T = T_hot_tank) annotation(
       Placement(visible = true, transformation(origin = {160, -98}, extent = {{18, -18}, {-18, 18}}, rotation = 0)));
@@ -503,17 +510,22 @@ package Validation
       Placement(visible = true, transformation(origin = {-89, -95}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression realExpression(y = m_flow_HTF_des) annotation(
       Placement(visible = true, transformation(origin = {102, -64}, extent = {{16, -12}, {-16, 12}}, rotation = 0)));
+    SolarTherm.Validation.Recuperator recuperator(m_flow_hot_des = m_flow_des, m_flow_cold_des = m_flow_des) annotation(
+      Placement(visible = true, transformation(origin = {-41, 15}, extent = {{-31, -31}, {31, 31}}, rotation = 0)));
   initial equation
+//MASS FLOW EQUALITIES
     m_flow_des = turbine.m_flow_des;
 //TEMPERATURE EQUALITIES
-    cooler.T_in_des = turbine.T_out_des;
+    recuperator.T_out_cold_des = heatExchanger.T_in_medium_des;
+    recuperator.T_in_hot_des = turbine.T_out_des;
+    compressor.T_out_des = recuperator.T_in_cold_des;
+    cooler.T_in_des = recuperator.T_out_hot_des;
+    cooler.T_out_des_comp = compressor.T_in_des;
   equation
-    connect(turbine.port_b, cooler.port_a) annotation(
-      Line(points = {{146, -11}, {146, -42}, {220, -42}, {220, -44.5}, {218, -44.5}, {218, 11}}, color = {0, 127, 255}));
+    W_net = turbine.W_turb + compressor.W_comp;
+//CONNECTIONS
     connect(T_amb.y, cooler.T_amb) annotation(
-      Line(points = {{175, 100}, {44, 100}, {44, 36}, {195, 36}}, color = {0, 0, 127}));
-    connect(heatExchanger.medium_port_b, turbine.port_a) annotation(
-      Line(points = {{44.5, -42}, {108, -42}, {108, 7}}, color = {0, 127, 255}));
+      Line(points = {{181, 160}, {44, 160}, {44, 88}, {177, 88}}, color = {0, 0, 127}));
     connect(boundary.ports[1], pumpSimple_EqualPressure1.fluid_a) annotation(
       Line(points = {{142, -98}, {90, -98}}, color = {0, 127, 255}));
     connect(pumpSimple_EqualPressure1.fluid_b, heatExchanger.HTF_port_a) annotation(
@@ -523,9 +535,17 @@ package Validation
     connect(realExpression.y, pumpSimple_EqualPressure1.m_flow) annotation(
       Line(points = {{84, -64}, {80, -64}, {80, -90}, {80, -90}}, color = {0, 0, 127}));
     connect(cooler.port_b, compressor.port_a) annotation(
-      Line(points = {{218, 54}, {218, 72}, {-136, 72}, {-136, 7}}, color = {0, 127, 255}));
-    connect(heatExchanger.medium_port_a, compressor.port_b) annotation(
-      Line(points = {{-4.5, -42}, {-65, -42}, {-65, -14}, {-92, -14}}, color = {0, 127, 255}));
+      Line(points = {{200, 105}, {200, 130}, {-136, 130}, {-136, 7}}, color = {0, 127, 255}));
+    connect(compressor.port_b, recuperator.cold_port_a) annotation(
+      Line(points = {{-92, -14}, {-76, -14}, {-76, 10}, {-64, 10}, {-64, 8}}, color = {0, 127, 255}));
+    connect(recuperator.cold_port_b, heatExchanger.medium_port_a) annotation(
+      Line(points = {{-20, 8}, {-14, 8}, {-14, -50}, {-6, -50}, {-6, -48}}, color = {0, 127, 255}));
+    connect(turbine.port_b, recuperator.hot_port_a) annotation(
+      Line(points = {{146, -12}, {160, -12}, {160, 22}, {-18, 22}, {-18, 22}}, color = {0, 127, 255}));
+    connect(recuperator.hot_port_b, cooler.port_a) annotation(
+      Line(points = {{-64, 22}, {-88, 22}, {-88, 44}, {200, 44}, {200, 64}, {200, 64}}, color = {0, 127, 255}));
+    connect(heatExchanger.medium_port_b, turbine.port_a) annotation(
+      Line(points = {{44, -48}, {62, -48}, {62, 8}, {108, 8}, {108, 8}}, color = {0, 127, 255}));
   protected
     annotation(
       Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
@@ -552,7 +572,7 @@ package Validation
     import Util = SolarTherm.Media.CO2.CO2_utilities;
     import Modelica.SIunits.Conversions.*;
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
-    parameter String fluid = "R744" "Turbine working fluid (default: CO2)";
+    parameter String fluid = "CO2" "Turbine working fluid (default: CO2)";
     //DESIGN PARAMETER
     parameter SI.AngularVelocity N_design = 40000 * 0.104 "Design rotational speed in rad/s";
     parameter SI.Efficiency eta_design = 0.89 "isentropic efficiency at design point";
@@ -570,8 +590,8 @@ package Validation
     parameter SI.Temperature T_out_des(fixed = false);
     //DESIGN PARAMETER -- inlet
     parameter SI.Pressure p_in_des = p_out_des / PR "Inlet pressure at design point";
-    parameter SI.Temperature T_in_des = from_degC(40) "Inlet temperature at design point";
-    parameter SI.SpecificEnthalpy h_in_des(fixed = false) "Enthalpy inlet at design point";
+    parameter SI.Temperature T_in_des(fixed = false, start = from_degC(300)) "Inlet temperature at design point";
+    parameter SI.SpecificEnthalpy h_in_des(fixed = false, start = Util.stprops("H", "P", p_in_des, "T", from_degC(150), fluid)) "Enthalpy inlet at design point";
     parameter SI.SpecificEntropy s_in_des(fixed = false);
     parameter SI.Density rho_in_des(fixed = false);
     //DYNAMIC VARIABLES
@@ -595,17 +615,17 @@ package Validation
       Placement(visible = true, transformation(origin = {-60, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-60, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {60, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {60, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-  initial algorithm
-    h_in_des := Util.stprops("H", "P", p_in_des, "T", T_in_des, fluid);
-    s_in_des := Util.stprops("S", "P", p_in_des, "H", h_in_des, fluid);
-    h_out_isen_des := Util.stprops("H", "P", p_out_des, "S", s_in_des, fluid);
-    h_out_des := h_in_des - (h_in_des - h_out_isen_des) * eta_design;
-    T_out_des := Util.stprops("T", "P", p_out_des, "H", h_out_des, fluid);
-    W_comp_des := m_flow_des * (h_in_des - h_out_des);
-    rho_in_des := Util.stprops("D", "P", p_in_des, "H", h_in_des, fluid);
-    d_rotor_des := (2 * m_flow_des / (phi_des * rho_in_des * N_design)) ^ (1 / 3);
-    tip_speed_des := d_rotor_des * N_design / 2;
-    psi_des := (h_out_isen_des - h_in_des) / tip_speed_des ^ 2;
+  initial equation
+    h_out_des = Util.stprops("H", "P", p_out_des, "T", T_out_des, fluid);
+    h_in_des = Util.stprops("H", "P", p_in_des, "T", T_in_des, fluid);
+    s_in_des = Util.stprops("S", "P", p_in_des, "H", h_in_des, fluid);
+    h_out_isen_des = Util.stprops("H", "P", p_out_des, "S", s_in_des, fluid);
+    eta_design = h_in_des - h_out_des - (h_in_des - h_out_isen_des);
+    W_comp_des = m_flow_des * (h_in_des - h_out_des);
+    rho_in_des = Util.stprops("D", "P", p_in_des, "H", h_in_des, fluid);
+    d_rotor_des = (2 * m_flow_des / (phi_des * rho_in_des * N_design)) ^ (1 / 3);
+    tip_speed_des = d_rotor_des * N_design / 2;
+    psi_des = (h_out_isen_des - h_in_des) / tip_speed_des ^ 2;
   equation
 //Mass Balance
     port_b.m_flow + port_a.m_flow = 0;
@@ -647,7 +667,7 @@ package Validation
     import stprops = SolarTherm.Media.CO2.CO2_utilities.stprops;
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     //Design Parameters
-    parameter String fluid = "R744" "Turbine working fluid (default: CO2)";
+    parameter String fluid = "CO2" "Turbine working fluid (default: CO2)";
     parameter SI.Power W_turb_des = 100e6 "Turbine power output at design";
     parameter SI.Temperature T_in_des = from_degC(715) "Turbine inlet temperature at design";
     parameter SI.Temperature T_out_des(fixed = false) "Turbine outlet temperature at design";
@@ -674,7 +694,7 @@ package Validation
     SI.SpecificEnthalpy h_out_isen "Turbine outlet isentropic enthalpy";
     SI.SpecificEnthalpy h_out "Turbine outlet enthalpy";
     SI.Density rho_out "Turbine outlet density";
-    SI.Velocity C_spouting(start = C_spouting_des) "Turbine spouting velocity";
+    SI.Velocity C_spouting(start = C_spouting_des) "Turbine spouting velociR744ty";
     SI.Efficiency eta_turb "Turbine efficiency";
     SI.Power W_turb "Turbine power output";
     SI.Temperature T_in;
@@ -708,14 +728,13 @@ package Validation
     h_in = inStream(port_a.h_outflow);
     s_in = stprops("S", "P", p_in, "H", h_in, fluid);
     h_out_isen = stprops("H", "P", p_out, "S", s_in, fluid);
-    h_out = h_in - (h_in - h_out_isen) * eta_turb;
-    port_b.h_outflow = h_out;
-    rho_out = stprops("D", "P", p_in, "H", h_out, fluid);
-//Spouting velocity and turbine power output
     C_spouting = sqrt(2 * (h_in - h_out_isen));
     eta_turb = 2 * eta_design * (v_tip_des / C_spouting) * sqrt(1 - (v_tip_des / C_spouting) ^ 2);
-    W_turb = W_turb_des;
-    m_dot_CO2 = W_turb / (h_in - h_out);
+    h_out = h_in - (h_in - h_out_isen) * eta_turb;
+    port_b.h_outflow = h_out;
+    rho_out = stprops("D", "P", p_out, "H", h_out, fluid);
+    m_dot_CO2 = C_spouting * A_nozzle * rho_out;
+    W_turb = m_dot_CO2 * (h_in - h_out);
     port_a.m_flow = m_dot_CO2;
 //Should not have reverse flow
     port_a.h_outflow = 0.0;
@@ -730,7 +749,7 @@ package Validation
   	<p>J. J. Dyreby, &laquo; Modeling the supercritical carbon dioxide Brayton cycle with recompression &raquo;, The University of Wisconsin-Madison, 2014. Available at https://sel.me.wisc.edu/publications-theses.shtml</p>
   
   	</html>"),
-      Diagram(graphics = {Text(origin = {-48, -48}, extent = {{18, 80}, {78, 16}}, textString = "TURBINA"), Polygon(origin = {0, -10}, points = {{-40, 40}, {-40, -20}, {40, -50}, {40, 70}, {-40, 40}, {-40, 40}}), Line(origin = {-50, 20}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {50.111, -40.1649}, points = {{-10, 0}, {10, 0}, {10, 0}})}, coordinateSystem(initialScale = 0.1)),
+      Diagram(graphics = {Text(origin = {-48, -48}, extent = {{18, 80}, {78, 16}}, textString = "Turbine"), Polygon(origin = {0, -10}, points = {{-40, 40}, {-40, -20}, {40, -50}, {40, 70}, {-40, 40}, {-40, 40}}), Line(origin = {-50, 20}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {50.111, -40.1649}, points = {{-10, 0}, {10, 0}, {10, 0}})}, coordinateSystem(initialScale = 0.1)),
       Icon(graphics = {Text(origin = {-20, 12}, extent = {{-10, 12}, {52, -34}}, textString = "TURBINA"), Ellipse(extent = {{56, 58}, {56, 58}}, endAngle = 360), Polygon(origin = {11, 7}, points = {{-51, 23}, {-51, -37}, {29, -67}, {29, 53}, {-51, 23}}), Line(origin = {-50, 20}, points = {{10, 0}, {-10, 0}, {-10, 0}}), Line(origin = {50, -39.8501}, points = {{-10, 0}, {10, 0}, {10, 0}})}, coordinateSystem(initialScale = 0.1)));
   end Turbine;
 
@@ -764,7 +783,7 @@ package Validation
     import stprops = SolarTherm.Media.CO2.CO2_utilities.stprops;
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     //GENERAL PARAMETERS
-    parameter String fluid = "R744";
+    parameter String fluid = "CO2";
     parameter Integer N = 20 "discretization of the cooling --number of the thermodynamic state in the cooler. Number of control volume is N-1";
     //DESIGN PARAMETER
     parameter SI.Pressure p_drop = 0;
@@ -782,8 +801,10 @@ package Validation
     parameter SI.SpecificEnthalpy h_in_des = stprops("H", "P", p_in_des, "T", T_in_des, fluid);
     //DESIGN PARAMETER - Outlet
     parameter SI.Pressure p_out_des = p_in_des "no pressure loss";
+    parameter SI.Temperature T_out_des_comp(fixed = false);
     parameter SI.Temperature T_out_des = T_amb_des + delta_T_out_des "outlet temperature of medium at design point in degC";
-    parameter SI.SpecificEnthalpy h_out_des = stprops("H", "P", p_out_des, "T", T_out_des, fluid);
+    parameter SI.Temperature T_out_des_real = if T_out_des_comp > T_out_des then T_out_des_comp else T_out_des;
+    parameter SI.SpecificEnthalpy h_out_des = stprops("H", "P", p_out_des, "T", T_out_des_real, fluid);
     //DESING PARAMETER - Discretized variables
     parameter SI.SpecificEnthalpy[N] h_des(each fixed = false, start = linspace(h_in_des, h_out_des, N));
     parameter SI.Temperature[N] T_des(each fixed = false, start = linspace(T_in_des, T_out_des, N));
@@ -850,7 +871,7 @@ package Validation
     import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     //GENERAL PARAMETERS
-    parameter String fluid = "R744";
+    parameter String fluid = "CO2";
     parameter Integer N = 15 "discretization of the HX";
     //DESIGN PARAMETERS
     parameter SI.HeatFlowRate Q_flow_des = 200e6 "heat exchanger rating at design point";
@@ -859,7 +880,7 @@ package Validation
     parameter SI.HeatFlowRate Q_max_des(fixed = false);
     parameter SI.Efficiency eta_HX_des(fixed = false);
     //DESIGN PARAMETERS - Inlet parameters of the medium
-    parameter SI.Temperature T_in_medium_des = from_degC(150.3) "inlet temperature of the medium at the design point";
+    parameter SI.Temperature T_in_medium_des(fixed = false) "inlet temperature of the medium at the design point";
     parameter SI.Pressure p_in_medium_des = 8e6 "inlet pressure of the medium at design point";
     parameter SI.SpecificEnthalpy h_in_medium_des(fixed = false);
     //DESIGN PARAMETERS - Outlet parameters of the medium
@@ -894,19 +915,18 @@ package Validation
     Real C_max(start = 1) "max off-design capacitance";
     Real C_R(start = 1) "off-design capacitance ratio of the HX";
     Real NTU "NTU method";
-    //SI.MassFlowRate m_flow_HTF_switch(start = m_flow_HTF_des) "switch for mass flow so the division by mass flow HTF is not infinity when PB is not operating";
     //PORTS
     Modelica.Fluid.Interfaces.FluidPort_a HTF_port_a(redeclare package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph) annotation(
-      Placement(visible = true, transformation(origin = {70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_a medium_port_a(redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {-70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_b HTF_port_b(redeclare package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph) annotation(
-      Placement(visible = true, transformation(origin = {-70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_b medium_port_b(redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   initial algorithm
-    h_in_medium_des := stprops("H", "P", p_in_medium_des, "T", T_in_medium_des, fluid);
-    m_flow_medium_des := Q_flow_des / (h_out_medium_des - h_in_medium_des);
+    h_in_medium_des := h_out_medium_des - Q_flow_des / m_flow_medium_des "Finding the enthalpy inlet of medium at design point --> m_flow_medium_des = m_flow_des at turbine, Q_flow_des = Q_flow_HX at design point, h_out_medium_des = f(T_out_medium) which is equal to design point of turbine inlet temp.";
+    T_in_medium_des := stprops("T", "H", h_in_medium_des, "P", p_in_medium_des, fluid) "this value will be passed as the T_out_medium_des of the high temp. recuperator";
     m_flow_HTF_des := Q_flow_des / (h_in_HTF_des - h_out_HTF_des);
     Q_max_des := m_flow_medium_des * stprops("C", "P", p_in_medium_des, "H", h_in_medium_des, fluid) * (T_hot_tank - T_in_medium_des);
     eta_HX_des := Q_flow_des / Q_max_des;
@@ -934,8 +954,7 @@ package Validation
     UA_HX = UA_HX_des * (0.5 * (medium_port_a.m_flow / m_flow_medium_des + HTF_port_a.m_flow / m_flow_HTF_des)) ^ 0.8;
     NTU = UA_HX / C_min;
     if C_R < 1 then
-      eta_HX = NTU / (1 + NTU);
-//eta_HX = (1 - exp(-NTU * (1 - C_R))) / (1 - C_R * exp(-NTU * (1 - C_R)));
+      eta_HX = (1 - exp(-NTU * (1 - C_R))) / (1 - C_R * exp(-NTU * (1 - C_R)));
     else
       eta_HX = NTU / (1 + NTU);
     end if;
@@ -949,7 +968,137 @@ package Validation
     HTF_port_b.h_outflow = h_out_HTF;
     annotation(
       Diagram(graphics = {Rectangle(extent = {{-72, 40}, {72, -40}}), Text(origin = {4, 1}, extent = {{-40, 13}, {40, -13}}, textString = "Heat Exchanger"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}, {72, 0}}), Text(origin = {0, 30}, extent = {{-26, 6}, {26, -6}}, textString = "Hot Side"), Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Text(origin = {5, -33}, extent = {{-35, 9}, {29, -3}}, textString = "Cold Side")}, coordinateSystem(initialScale = 0.1)),
-      Icon(graphics = {Rectangle(extent = {{-72, 40}, {72, -40}}), Text(origin = {11, -6}, extent = {{-49, 20}, {33, -10}}, textString = "Heat Exchanger"), Text(origin = {1, 30}, extent = {{-15, 4}, {15, -4}}, textString = "Hot Side"), Text(origin = {1, -33}, extent = {{-15, 5}, {15, -5}}, textString = "Cold Side")}, coordinateSystem(initialScale = 0.1)),
+      Icon(graphics = {Rectangle(extent = {{-72, 40}, {72, -40}}), Text(origin = {11, -6}, extent = {{-49, 20}, {33, -10}}, textString = "Heat Exchanger"), Text(origin = {1, 34}, extent = {{-15, 4}, {15, -4}}, textString = "Hot Side"), Text(origin = {1, -35}, extent = {{-15, 5}, {15, -5}}, textString = "Cold Side"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}}), Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Line(origin = {0.81235, -20}, points = {{5.18765, 0}, {-4.81235, 8}, {-4.81235, -8}, {5.18765, 0}}), Line(origin = {-1.85355, 20}, points = {{-4.14645, 0}, {3.85355, 8}, {3.85355, -8}, {-4.14645, 0}})}, coordinateSystem(initialScale = 0.1)),
       experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002));
   end HeatExchanger;
+
+  model Recuperator
+    import SI = Modelica.SIunits;
+    import Modelica.SIunits.Conversions.*;
+    import stprops = SolarTherm.Media.CO2.CO2_utilities.stprops;
+    import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
+    import ln = Modelica.Math.log;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    //GENERAL PARAMETERS
+    parameter String fluid = "CO2";
+    parameter Integer N = 30 "discretization of the HX";
+    //DESIGN PARAMETERS
+    parameter SI.Temperature pinch_point = 5 "pinch point at design condition";
+    parameter SI.HeatFlowRate Q_flow_des(fixed = false) "heat exchanger rating at design point";
+    parameter SI.MassFlowRate m_flow_hot_des = 800 "mass flow rate of the hot stream coming into the HX at design point";
+    parameter SI.MassFlowRate m_flow_cold_des = 800 "mass flow rate of the cold stream coming into the HX at design point";
+    parameter SI.HeatFlowRate Q_max_des(fixed = false) "maximum possible heat transfer occured assuming we have infinite size of HX";
+    parameter SI.Efficiency eta_HX_des(fixed = false);
+    //DESIGN PARAMETERS - Inlet parameters of the cold stream (cold side)
+    parameter SI.Temperature T_in_cold_des(fixed = false) "inlet temperature of the cold stream at the design point = T_out_des compressor";
+    parameter SI.Pressure p_in_cold_des = 8e6 "inlet pressure of the cold stream at design point = P_out_des turbine";
+    parameter SI.SpecificEnthalpy h_in_cold_des(fixed = false, start = 500000);
+    //DESIGN PARAMETERS - Outlet parameters of the cold
+    parameter SI.Temperature T_out_cold_des = from_degC(424.005);
+    //(fixed = false) "outlet temperature of the cold stream at design point =  heatExchanger.T_in_medium_des";
+    parameter SI.Pressure p_out_cold_des = p_in_cold_des "no pressure loss";
+    parameter SI.SpecificEnthalpy h_out_cold_des(fixed = false);
+    //DESIGN PARAMETERS - Inlet parameters of the hot
+    parameter SI.Temperature T_in_hot_des = from_degC(567);
+    //(fixed = false) "temperature outlet of the turbine.T_out_des";
+    parameter SI.Pressure p_in_hot_des = 24e6 "pressure of the hot from the ";
+    parameter SI.SpecificEnthalpy h_in_hot_des(fixed = false);
+    //DESIGN PARAMETERS - Outlet parameters of the hot
+    parameter SI.Temperature T_out_hot_des(fixed = false) "temperature of the hot stream out at design point";
+    parameter SI.Pressure p_out_hot_des = p_in_hot_des "pressure of the hot stream from compressor at design point";
+    parameter SI.SpecificEnthalpy h_out_hot_des(fixed = false) "enthalpy of the hot stream out at design point";
+    //DESIGN PARAMETERS - Discetized parameters
+    parameter SI.ThermalConductance UA_HX_des(fixed = false) "UA value of the HX at design point";
+    parameter SI.Temperature[N] delta_T_des(each fixed = false, each start = 25);
+    parameter SI.Temperature[N] T_cold_des(each fixed = false, start = {140 + 273.15 + i / N * 300 for i in 1:N});
+    parameter SI.Temperature[N] T_hot_des(each fixed = false, start = {160 + 273.15 + i / N * 300 for i in 1:N});
+    parameter SI.SpecificEnthalpy[N] h_cold_des(each fixed = false, start = {500000 + i / N * 500000 for i in 1:N});
+    parameter SI.SpecificEnthalpy[N] h_hot_des(each fixed = false, start = {530000 + i / N * 500000 for i in 1:N});
+    parameter SI.ThermalConductance[N - 1] UA_HX_des_dis(each fixed = false, each start = 4000);
+    parameter SI.SpecificEnthalpy delta_h_dis_des(fixed = false, each start = 18600);
+    /*/VARIABLES
+                        SI.SpecificEnthalpy h_in_hot(start = h_in_hot_des);
+                        SI.SpecificEnthalpy h_out_hot(start = h_out_hot_des);
+                        SI.SpecificEnthalpy h_in_cold(start = h_in_cold_des);
+                        SI.SpecificEnthalpy h_out_cold(start = h_out_cold_des);
+                        SI.Temperature T_in_hot(start = T_in_hot_des);
+                        SI.Temperature T_out_hot(start = T_out_hot_des);
+                        SI.Temperature T_in_cold(start = T_in_cold_des);
+                        SI.Temperature T_out_cold(start = T_out_cold_des);
+                        SI.HeatFlowRate Q_HX "total heat exchanged in the HX during operation";
+                        //VARIABLES - DISCRETIZED
+                        SI.SpecificEnthalpy[N] h_hot(start = {500000 + (i - 1) / N * 200000 for i in 1:N});
+                        SI.SpecificEnthalpy[N] h_cold(start = {480000 + (i - 1) / N * 200000 for i in 1:N});
+                        SI.Temperature[N] T_hot(start = {350 + (i - 1) / N * 150 for i in 1:N});
+                        SI.Temperature[N] T_cold(start = {320 + (i - 1) / N * 150 for i in 1:N});
+                        Real[N] delta_T(start = {30 for i in 1:N});
+                        //PORTS
+                        Modelica.Fluid.Interfaces.FluidPort_a hot_port_a(redeclare package Medium = Medium, m_flow.start = 1000) annotation(
+                          Placement(visible = true, transformation(origin = {72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                        Modelica.Fluid.Interfaces.FluidPort_a cold_port_a(redeclare package Medium = Medium) annotation(
+                          Placement(visible = true, transformation(origin = {-72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                        Modelica.Fluid.Interfaces.FluidPort_b hot_port_b(redeclare package Medium = Medium) annotation(
+                          Placement(visible = true, transformation(origin = {-72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                        Modelica.Fluid.Interfaces.FluidPort_b cold_port_b(redeclare package Medium = Medium) annotation(
+                          Placement(visible = true, transformation(origin = {72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));*/
+  initial equation
+    h_out_cold_des = stprops("H", "T", T_out_cold_des, "P", p_out_cold_des, fluid);
+    h_in_hot_des = stprops("H", "T", T_in_hot_des, "P", p_in_hot_des, fluid);
+    h_cold_des[1] = h_in_cold_des;
+    h_cold_des[end] = h_out_cold_des;
+    h_hot_des[1] = h_out_hot_des;
+    h_hot_des[end] = h_in_hot_des;
+    T_cold_des[1] = T_in_cold_des;
+    T_hot_des[end] = T_in_hot_des;
+    min(delta_T_des) = pinch_point "boundary condition";
+    for i in 1:N loop
+      delta_T_des[i] = T_hot_des[i] - T_cold_des[i];
+    end for;
+    for i in 1:N - 1 loop
+      delta_h_dis_des = h_cold_des[i + 1] - h_cold_des[i];
+      delta_h_dis_des = UA_HX_des_dis[i] / m_flow_hot_des * (delta_T_des[i + 1] + delta_T_des[i]) / 2;
+      delta_h_dis_des = h_hot_des[i + 1] - h_hot_des[i];
+    end for;
+    T_in_cold_des = stprops("T", "H", h_in_cold_des, "P", p_in_cold_des, fluid);
+    T_out_hot_des = stprops("T", "H", h_out_hot_des, "P", p_out_hot_des, fluid);
+    Q_flow_des = m_flow_hot_des * delta_h_dis_des * (N - 1);
+    UA_HX_des = sum(UA_HX_des_dis);
+/*equation
+//Mass Balance
+    cold_port_a.m_flow + cold_port_b.m_flow = 0;
+    hot_port_a.m_flow + hot_port_b.m_flow = 0;
+//Pressure balance
+    cold_port_a.p = cold_port_b.p;
+    hot_port_a.p = hot_port_b.p;
+//No reverse flow
+    cold_port_a.h_outflow = 0;
+    hot_port_a.h_outflow = 0;
+//Intermediate calculation - written in order of solving
+    h_in_hot = inStream(hot_port_a.h_outflow);
+    h_in_cold = inStream(cold_port_a.h_outflow);
+    T_in_hot = stprops("T", "P", hot_port_a.p, "H", h_in_hot, fluid);
+    T_in_cold = stprops("T", "P", cold_port_a.p, "H", h_in_cold, fluid);
+    h_cold[1] = h_in_cold;
+    h_hot[end] = h_in_hot;
+    for i in 1:N loop
+      T_cold[i] = stprops("T", "H", h_cold[i], "P", cold_port_a.p, fluid);
+      T_hot[i] = stprops("T", "H", h_hot[i], "P", hot_port_a.p, fluid);
+      delta_T[i] = T_hot[i] - T_cold[i];
+    end for;
+    for i in 2:N loop
+      hot_port_a.m_flow * (h_hot[i] - h_hot[i - 1]) = cold_port_a.m_flow * (h_cold[i] - h_cold[i - 1]);
+      hot_port_a.m_flow * (h_hot[i] - h_hot[i - 1]) = UA_HX_des_dis[i - 1] * abs(cold_port_a.m_flow / m_flow_cold_des + hot_port_a.m_flow / m_flow_hot_des) ^ 0.8 / 2 ^ 0.8 * (T_hot[i - 1] - T_cold[i - 1] + T_hot[i] - T_cold[i]) / 2;
+    end for;
+    h_cold[end] = h_out_cold;
+    h_hot[1] = h_out_hot;
+    T_out_cold = T_cold[end];
+    T_out_hot = T_hot[1];
+    Q_HX = hot_port_a.m_flow * (h_in_hot - h_out_hot);
+//Outlet port
+    cold_port_b.h_outflow = h_out_cold;
+    hot_port_b.h_outflow = h_out_hot;*/
+    annotation(
+      Diagram(graphics = {Text(origin = {0, 30}, extent = {{-26, 6}, {26, -6}}, textString = "Hot Side"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}, {72, 0}}), Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Text(origin = {4, 1}, extent = {{-40, 13}, {40, -13}}, textString = "Recuperator"), Text(origin = {5, -33}, extent = {{-35, 9}, {29, -3}}, textString = "Cold Side"), Rectangle(extent = {{-72, 40}, {72, -40}})}, coordinateSystem(initialScale = 0.1)),
+      Icon(graphics = {Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Line(origin = {-1.85355, 20}, points = {{-4.14645, 0}, {3.85355, 8}, {3.85355, -8}, {-4.14645, 0}}), Line(origin = {0.81235, -20}, points = {{5.18765, 0}, {-4.81235, 8}, {-4.81235, -8}, {5.18765, 0}}), Rectangle(extent = {{-72, 40}, {72, -40}}), Text(origin = {1, -35}, extent = {{-15, 5}, {15, -5}}, textString = "Cold Side"), Text(origin = {1, 34}, extent = {{-15, 4}, {15, -4}}, textString = "Hot Side"), Text(origin = {11, -6}, extent = {{-49, 20}, {33, -10}}, textString = "Recuperator"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}})}, coordinateSystem(initialScale = 0.1)));
+  end Recuperator;
 end Validation;

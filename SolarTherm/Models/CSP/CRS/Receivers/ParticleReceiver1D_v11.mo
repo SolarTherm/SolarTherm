@@ -58,6 +58,7 @@ model ParticleReceiver1D_v11
   parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
   parameter SI.Irradiance dni_des = 788.8;
   parameter Real CR = 1200;
+  parameter SI.HeatFlowRate Q_in = 10;
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
   parameter SI.ThermalConductivity k_w = 0.2 "Backwall thermal conductivity [W/m-K]";
@@ -108,12 +109,7 @@ model ParticleReceiver1D_v11
   SI.HeatFlux q_conv_wall[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_conv_curtain[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_net[N] "Net heat flux gained by curtain";
-  SI.HeatFlowRate Qloss_conv_wall;
-  SI.HeatFlowRate Qloss_conv_curtain;
-  SI.HeatFlowRate Qloss_jcf;
-  SI.HeatFlowRate Qloss_jcb;
-  SI.HeatFlowRate Qgain_gcb;
-  SI.HeatFlowRate Q_check_curtain;
+ 
   //Overall performance
   SI.HeatFlowRate Qdot_rec "Total heat rate absorbed by the receiver";
   SI.HeatFlowRate Qdot_inc "Total heat rate incident upon the receiver (before losses)";
@@ -233,7 +229,7 @@ equation
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
   if test_mode == true then
-    q_solar = CR * dni_des;
+    q_solar = Q_in/A_ap;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
@@ -250,7 +246,7 @@ if on then
     for i in 1:N loop
         //Curtain-wall radiation heat fluxes (W/m²)
         gc_f[i] = q_solar;
-        jc_f[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i];
+        jc_f[i] = 0.54* (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
         gc_b[i] = j_w[i];
         jc_b[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i] + tau_c[i] * gc_f[i];
         g_w[i] = jc_b[i];
@@ -295,8 +291,7 @@ else
           q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv + th_w / k_w);
           //q loss conv wall
           0 = (if with_wall_conduction then -k_w * ((T_w[i + 2] - T_w[i + 1]) / (x[i + 2] - x[i + 1]) - 
-          (T_w[i + 1] - T_w[i]) / (x[i + 1] - x[i])) * th_w else 0) - (g_w[i] - (eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * 
-          g_w[i])) * dx + q_conv_wall[i] * dx;
+          (T_w[i + 1] - T_w[i]) / (x[i + 1] - x[i])) * th_w else 0) - (g_w[i] - (eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i])) * dx + q_conv_wall[i] * dx;
         end if;
   end for;
 end if;  
@@ -309,12 +304,7 @@ end if;
     Qdot_rec = 0;
     eta_rec = 0;
   end if;
-  Qloss_conv_wall = sum(q_conv_wall) * W_rcv * H_drop;
-  Qloss_conv_curtain = sum(q_conv_curtain) * W_rcv * H_drop;
-  Qloss_jcf = sum(jc_f) * W_rcv * H_drop;
-  Qloss_jcb = sum(jc_b) * W_rcv * H_drop;
-  Qgain_gcb = sum(gc_b) * W_rcv * H_drop;
-  Q_check_curtain = mdot * h_s[1] - mdot * h_s[N + 1] + Qdot_inc + Qloss_conv_curtain - Qloss_jcf - Qloss_jcb;
+ 
   annotation(
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
 end ParticleReceiver1D_v11;
