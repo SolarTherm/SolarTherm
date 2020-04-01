@@ -87,6 +87,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", pname);
     }
+
     Py_DECREF(ppath);
     Py_DECREF(pname);
     Py_DECREF(pfunc);
@@ -97,8 +98,8 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
     Py_DECREF(varnames);
     Py_DECREF(sys_path);
 
-    Py_Finalize();
     return tablefile;
+    Py_Finalize();
 }
 
 #endif
