@@ -46,7 +46,7 @@ model PhysicalParticleCO21DSolstice
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
   parameter String opt_file(fixed = false);
-  parameter String casefolder = "modelica://SolarTherm/solsticeresult";
+  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/solsticeresult");
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
@@ -313,7 +313,7 @@ model PhysicalParticleCO21DSolstice
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt , psave = casefolder) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt , psave = casefolder, wea_file=wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
