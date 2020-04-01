@@ -17,6 +17,7 @@ extends OpticalEfficiency;
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results"; 
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 	parameter Integer argc =14 "Number of variables to be passed to the C function";
 
@@ -54,7 +55,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, argc, {"Q_in_rcv", "H_rcv", "W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt"}, {Q_in_rcv, H_rcv, W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"Q_in_rcv", "H_rcv", "W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt"}, {Q_in_rcv, H_rcv, W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

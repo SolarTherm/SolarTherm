@@ -38,7 +38,7 @@ class Parameters:
         self.sunshape='pillbox'
         self.sunsize=4.65*1.e-3*180./N.pi # convert rad to degree --> solstice convention
         self.extinction=1e-6
-        self.wea_file='/home/yewang/.local/lib/omlibrary/SolarTherm/Data/Weather/example_TMY3.motab'
+        self.wea_file=None
 
 
 
