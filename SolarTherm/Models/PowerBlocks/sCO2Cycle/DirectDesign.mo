@@ -683,6 +683,7 @@ package DirectDesign
     Modelica.Blocks.Interfaces.RealInput T_amb annotation(
       Placement(visible = true, transformation(origin = {10, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
     //Cycle parameters
+    parameter SI.Temperature pinch = 15;
     parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
     parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
     parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
@@ -727,7 +728,7 @@ package DirectDesign
     SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
     Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
     //Components instanciation
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = 1, pinchRecuperator = 15) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = 1, pinchRecuperator = pinch) annotation(
       Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(eta_design = eta_comp_main, N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
@@ -739,7 +740,7 @@ package DirectDesign
       Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR, P_nom_des = P_gro, ratio_m_des = 1 - gamma, pinchRecuperator = 15) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR, P_nom_des = P_gro, ratio_m_des = 1 - gamma, pinchRecuperator = pinch) annotation(
       Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer annotation(
       Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));

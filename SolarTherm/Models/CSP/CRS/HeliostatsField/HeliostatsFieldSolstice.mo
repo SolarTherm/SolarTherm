@@ -48,7 +48,7 @@ model HeliostatsFieldSolstice
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, n_helios=n_h, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, n_helios=n_h, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

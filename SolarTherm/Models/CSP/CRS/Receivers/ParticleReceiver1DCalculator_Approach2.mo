@@ -19,7 +19,7 @@ model ParticleReceiver1DCalculator_Approach2
   parameter Boolean with_uniform_curtain_props = false "If true, ignore effect of phi_c on curtain emi/abs/tau";
   constant SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   //Discretisation
-  parameter Integer N = 20 "Number of vertical elements";
+  parameter Integer N = 10 "Number of vertical elements";
   // temperature used to initialise screen
   parameter SI.Temperature T_ref = from_degC(580.3);
   parameter SI.SpecificEnthalpy h_0 = Util.h_T(T_ref);
@@ -52,7 +52,7 @@ model ParticleReceiver1DCalculator_Approach2
   parameter Real prob_side = 3 / 12;
   SI.Length W_rcv;
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot(start = 1000, nominal = 1000) "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot(start = 2000, nominal = 2000) "Inlet mass flow rate [kg/s]";
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
   SI.Length x[N + 2](min = zeros(N + 2), max = fill(100., N + 2)) "Vertical positions of nodes";
@@ -94,7 +94,7 @@ model ParticleReceiver1DCalculator_Approach2
   Tables.CombiTable1Ds Tab[N + 1](each tableOnFile = true, each tableName = "CarboHSP_hT", each columns = 2:2, each fileName = table_file);
   //Thermodynamic Properties in Connectors
   parameter SI.Temperature Tamb = from_degC(25);
-  parameter SI.Area A_ap = 2000;
+  parameter SI.Area A_ap = 34.64^2;
   parameter SI.Length H_drop_design = sqrt(A_ap);
   
   parameter SI.Temperature T_in_design = from_degC(580.3) "Inlet temperature [K]";
@@ -103,7 +103,7 @@ model ParticleReceiver1DCalculator_Approach2
   parameter SI.Temperature T_out_design=from_degC(800);
   parameter SI.SpecificEnthalpy h_out_design = Util.h_T(T_out_design);
 
-  parameter SI.HeatFlowRate Q_in = 628e6;
+  parameter SI.HeatFlowRate Q_in = 670e6;
   parameter Boolean on =true;
 algorithm
   for i in 1:N loop

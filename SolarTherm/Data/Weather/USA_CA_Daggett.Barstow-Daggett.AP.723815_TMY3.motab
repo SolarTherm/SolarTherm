@@ -1,5 +1,5 @@
 #1
-double weather(8760,9)
+double data(8760,9)
 #METALABELS,name,lat,lon,elev,tzone,tstart
 #METAUNITS,str,deg,deg,m,h,s
 #TABLELABELS,time,ghi,dni,dry,dew,rhum,p,wdir,wspd

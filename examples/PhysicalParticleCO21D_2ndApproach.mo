@@ -90,6 +90,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Real n_helios = ceil(A_helio_total / A_helio) "Number of heliostats";
   parameter SI.Area A_field = A_helio_total "Heliostat field reflective area";
   parameter Real A_land = metadata_list[8];
+  parameter SI.Temperature pinch = 15;
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
   parameter SI.Efficiency packing_factor = 0.747857 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
@@ -97,8 +98,8 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
   //Output of the optical simulation
-  parameter Real n_row_oelt = 9 "number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
   // Receiver
   parameter Real ar_rec = 1 "Height to diameter aspect ratio of receiver aperture";
   parameter SI.Efficiency em_curtain = 0.86 "Emissivity of curtain";
@@ -349,10 +350,27 @@ model PhysicalParticleCO21D_2ndApproach
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
   // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap=A_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, Q_in = Q_in_rcv) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(
+  A_ap=A_rcv, 
+  T_in_design = T_cold_set, 
+  T_out_design = T_hot_set, 
+  Q_in = Q_in_rcv, 
+  abs_s=ab_particle) 
+  annotation(
     Placement(visible = true, transformation(origin = {158, 134}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
+  
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(
+  H_drop_design = H_rcv,
+  N = 20, 
+  fixed_cp = false, 
+  fixed_geometry = true, 
+  test_mode = false, 
+  with_isothermal_backwall = false, 
+  with_uniform_curtain_props = false, 
+  with_wall_conduction = true, 
+  abs_s=ab_particle) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
+  
   SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
@@ -377,7 +395,7 @@ model PhysicalParticleCO21D_2ndApproach
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pinch = pinch) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
