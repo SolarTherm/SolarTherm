@@ -29,7 +29,7 @@ def get_result(A_helio_total, A_rcv, fb, R1, ab_particle, t_storage, pinch):
 
 set_params= [[1450000,1208,0.9,18,15],[1200000,2000,0.9,18,15],[1450000,1208,0.9,6,15],[1450000,1208,0.5,18,15],[1450000,1208,0.9,18,50]]
 
-for i in range(5):
+for i in range(2):
 	#Iterate fb and R1 for each case
 	fb_val=list() #N/A
 	R1_val=list() #m
@@ -43,8 +43,8 @@ for i in range(5):
 	C_total_val= list() #USD
 	EPY_val=list() #kJ
 	LCOE_val=list() #USD/kWh
-	for fb in np.arange(0.1,1.0,0.1):
-		for R1 in np.arange(50, 160, 10):
+	for fb in np.arange(0.1,0.3,0.1):
+		for R1 in np.arange(50, 70, 10):
 			A_helio_total = set_params[i][0]
 			A_rcv = set_params[i][1]
 			ab_particle = set_params[i][2]
@@ -67,8 +67,10 @@ for i in range(5):
 			newname = 'solsticeresult_case%s_fb%s_R1%s'%(i+1,fb,R1)
 			newresmatname = 'benchmark_res_case%s_fb%s_R1%s.mat'%(i+1,fb,R1)
 			#in super computer the directory of your home is /scratch/xa1/username/
-			os.system('mv /home/philgun/.local/lib/omlibrary/SolarTherm/solsticeresult /home/philgun/result/benchmark/solstice/%s'%(newname))
-			os.system('mv /home/philgun/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /home/philgun/result/benchmark/resmat/%s'%(newresmatname))
+			#os.system('mv /home/philgun/.local/lib/omlibrary/SolarTherm/solsticeresult /home/philgun/result/benchmark/solstice/%s'%(newname))
+			#os.system('mv /home/philgun/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /home/philgun/result/benchmark/resmat/%s'%(newresmatname))
+			os.system('mv /scratch/xa1/pg5707/st-inst-pg/lib/omlibrary/SolarTherm/solsticeresult /scratch/xa1/pg5707/result/benchmark/solstice/%s'%(newname))
+			os.system('mv /scratch/xa1/pg5707/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /scratch/xa1/pg5707/result/benchmark/resmat/%s'%(newresmatname))
 			os.system('rm -rf *.c *.o *.h *.json *.xml *.makefile *.cmake *.bakmo *.mat')
 			print(fb_val)
 			print(R1_val)
