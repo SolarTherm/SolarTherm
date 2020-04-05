@@ -47,7 +47,8 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
   parameter String opt_file(fixed = false);
-  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/solsticeresult");
+  parameter String casefolder = ".";
+  //;Modelica.Utilities.Files.loadResource("modelica://SolarTherm/solsticeresult");
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
@@ -86,7 +87,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
   parameter SI.HeatFlowRate Q_in_rcv = metadata_list[7];
   parameter Real SM = Q_in_rcv / (P_gross / eff_blk / eta_rcv_assumption);
-  parameter SI.Area A_helio_total = 1.46e6;
+  parameter SI.Area A_helio_total = 1.45e6;
   parameter Real n_helios = ceil(A_helio_total / A_helio) "Number of heliostats";
   parameter SI.Area A_field = A_helio_total "Heliostat field reflective area";
   parameter Real A_land = metadata_list[8];
@@ -105,7 +106,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Efficiency em_curtain = 0.86 "Emissivity of curtain";
   parameter SI.Efficiency ab_curtain = 0.98 "Absorptivity of curtain";
   parameter Real em_particle = 0.86 "Emissivity of particles";
-  parameter Real ab_particle = 0.93 "Absorptivity of curtain";
+  parameter Real ab_particle = 0.9 "Absorptivity of curtain";
   parameter SI.CoefficientOfHeatTransfer h_th_rec = 100 "Receiver heat tranfer coefficient";
   //parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false) "Input power to receiver at design point";
   parameter Real rec_fr(fixed = false) "CHANGED PG Receiver loss fraction of radiance at design point";
@@ -114,7 +115,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Real f_loss = 0.000001 "Fraction of particles flow lost in receiver";
   //inner parameter SI.Efficiency eta_rec_th_des = 0.8568 "PG Receiver thermal efficiency (Q_pcl / Q_sol)";
   // Storage
-  parameter Real t_storage(unit = "h") = 14 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 6 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set(fixed = false) "Cold tank target temperature";
   parameter SI.Temperature T_hot_set = CV.from_degC(800) "Hot tank target temperature";
@@ -202,7 +203,7 @@ model PhysicalParticleCO21D_2ndApproach
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter SI.Area A_rcv = 1200;
+  parameter SI.Area A_rcv = 1208;
   parameter SI.Length H_rcv = sqrt(A_rcv) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "Receiver length(depth)";
@@ -314,63 +315,14 @@ model PhysicalParticleCO21D_2ndApproach
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
-
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
-    lon = data.lon, 
-    lat = data.lat, 
-    ele_min(displayUnit = "deg") = ele_min, 
-    use_wind = use_wind, 
-    Wspd_max = Wspd_max, 
-    he_av = he_av_design, 
-    use_on = true, 
-    use_defocus = true, 
-    nu_defocus = nu_defocus, 
-    nu_min = nu_min_sf, 
-    Q_design = Q_flow_defocus, 
-    nu_start = nu_start,
-    method=method,
-    n_h=n_helios, 
-    W_helio = W_helio, 
-    H_helio = H_helio, 
-    H_tower = H_tower, 
-    R_tower = R_tower, 
-    R1 = R1, 
-    fb = fb, 
-    rho_helio = rho_helio, 
-    slope_error = slope_error,
-    H_rcv = H_rcv, 
-    W_rcv = W_rcv, 
-    tilt_rcv = tilt_rcv,  
-    n_row_oelt = n_row_oelt, 
-    n_col_oelt = n_col_oelt, 
-    psave = casefolder, 
-    wea_file = wea_file) 
-    annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, method = method, n_h = n_helios, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
-
   // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(
-  A_ap=A_rcv, 
-  T_in_design = T_cold_set, 
-  T_out_design = T_hot_set, 
-  Q_in = Q_in_rcv, 
-  abs_s=ab_particle) 
-  annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap = A_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, Q_in = Q_in_rcv, abs_s = ab_particle) annotation(
     Placement(visible = true, transformation(origin = {158, 134}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(
-  H_drop_design = H_rcv,
-  N = 20, 
-  fixed_cp = false, 
-  fixed_geometry = true, 
-  test_mode = false, 
-  with_isothermal_backwall = false, 
-  with_uniform_curtain_props = false, 
-  with_wall_conduction = true, 
-  abs_s=ab_particle) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, abs_s = ab_particle) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-  
   SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
@@ -564,7 +516,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
