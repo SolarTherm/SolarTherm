@@ -843,13 +843,13 @@ package DirectDesign
       Line);
     connect(m_sup, cooler.m_sup) annotation(
       Line);
-    if exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
+    when exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
       m_sup = true;
-    elseif exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des*nu_min then
+    elsewhen exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des*nu_min then
       m_sup = false;
-    else
-      m_sup = false;
-    end if;
+    //else
+    //  m_sup = false;
+    end when;
     if m_sup then
       turbine.p_out = mainCompressor.p_out / PR;
     else
