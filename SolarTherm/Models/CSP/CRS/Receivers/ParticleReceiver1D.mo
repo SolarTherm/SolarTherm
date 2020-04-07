@@ -22,7 +22,7 @@ model ParticleReceiver1D
   Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = Medium) annotation(
     Placement(transformation(extent = {{24, 38}, {44, 58}}), iconTransformation(extent = {{24, 38}, {44, 58}})));
   Modelica.Blocks.Interfaces.RealInput Tamb annotation(
-    Placement(transformation(extent = {{-12, -12}, {12, 12}}, rotation = -90, origin = {0, 84}), iconTransformation(extent = {{-6, -6}, {6, 6}}, rotation = -90, origin = {0, 78})));
+    Placement(visible = true,transformation( origin = {40, 86},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {0, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
   Modelica.Blocks.Interfaces.BooleanInput on annotation(
     Placement(transformation(extent = {{-38, -94}, {2, -54}}), iconTransformation(extent = {{-24, -98}, {-12, -86}})));
   // Medium
@@ -88,6 +88,9 @@ model ParticleReceiver1D
   SI.Temperature T_s[N + 1](start = linspace(T_ref, 1351, N + 1), max = fill(2000., N + 1), min = fill(299., N + 1)) "Curtain Temperature";
   SI.SpecificEnthalpy h_s[N + 1](start = linspace(h_0, Util.h_T(1351), N + 1), max = fill(1224994, N + 1), min = fill(735., N + 1)) "Curtain enthalpy";
   SI.Temperature T_w[N + 2](start = linspace(T_ref, 1351, N + 2), max = fill(2000., N + 2), min = fill(299., N + 2)) "Receiver wall temperature";
+  SI.Temperature T_w_avg(start=0);
+  SI.Temperature T_w_delay; 
+  //Real abc;
   //Curtain radiation properties
   SI.Efficiency eps_c[N](start = linspace(0.999, 0.971, N), max = fill(1., N), min = fill(0., N)) "Curtain emissivity";
   SI.Efficiency tau_c[N](start = linspace(1e-19, 0.004, N), max = fill(1., N), min = fill(0., N)) "Curtain tramittance";
@@ -125,12 +128,16 @@ model ParticleReceiver1D
   import Tables = Modelica.Blocks.Tables;
   Tables.CombiTable1Ds Tab[N + 1](each tableOnFile = true, each tableName = "CarboHSP_hT", each columns = 2:2, each fileName = table_file);
   //Boolean problema;
+
+    Modelica.Blocks.Interfaces.RealInput Wdir annotation(
+    Placement(visible = true, transformation(origin = {-40, 86}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-24, 78}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
 protected
   //Thermodynamic Properties in Connectors
   SI.SpecificEnthalpy h_in = inStream(fluid_a.h_outflow);
   SI.Temperature T_in = Util.T_h(h_in) "Inlet temperature [K]";
   SI.Temperature T_out(start = from_degC(800));
   SI.SpecificEnthalpy h_out(start = Util.h_T(T_ref));
+
 equation
   if test_mode == true then
     q_solar = Q_in/A_ap;//C * dni_des *eta_opt_des;//Q_in/A_ap;
@@ -237,7 +244,9 @@ equation
     Qdot_rec = 0;
     eta_rec = 0;
   end if;
-  
+  T_w_avg = sum(T_w) / (N+2);
+  T_w_delay = delay(T_w_avg,1);
+  //a = T_w_avg * 1.5;
   for i in 1:N loop  
       Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
       Qloss_conv_curtain_discrete[i]= q_conv_curtain[i]* dx * W_rcv;

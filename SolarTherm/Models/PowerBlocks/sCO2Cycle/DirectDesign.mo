@@ -706,7 +706,8 @@ package DirectDesign
     parameter Integer N_HTR = 15;
     //LTR Heat recuperator parameters
     parameter Integer N_LTR = 15;
-    parameter Real ratio_m_des = 1 - gamma;
+    parameter Real ratio_m_des_real = 1.1;
+    parameter Real ratio_m_des = (1 - gamma);
     //Cooler parameters
     parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Outlet temperature of the cooler";
     //Exchanger parameters
@@ -728,7 +729,7 @@ package DirectDesign
     SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
     Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
     //Components instanciation
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = 1, pinchRecuperator = pinch) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = ratio_m_des_real, pinchRecuperator = pinch) annotation(
       Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(eta_design = eta_comp_main, N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
@@ -736,7 +737,7 @@ package DirectDesign
       Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(PR = PR, T_amb = T_amb_des, N_shaft = N_shaft, eta_design = eta_turb) annotation(
       Placement(visible = true, transformation(origin = {72, -2}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph, P_nom_des = P_gro, T_out_CO2_des = T_high, N_exch = N_exch, ratio_m_des = 1) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph, P_nom_des = P_gro, T_out_CO2_des = T_high, N_exch = N_exch, ratio_m_des = ratio_m_des_real) annotation(
       Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
@@ -797,16 +798,16 @@ package DirectDesign
     HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
     reCompressor.m_des = gamma * LTR.m_turb_des;
   // Financial Analysis
-    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933;
-    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933;
-    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
-    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919;
-    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463;
-    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000;
+    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933 *(603.1/567.5);
+    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933*(603.1/567.5);
+    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886*(603.1/567.5);
+    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(603.1/567.5);
+    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(603.1/567.5);
+    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919*(603.1/567.5);
+    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463*(603.1/567.5);
+    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000*(603.1/567.5);
     C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger) * 1.05;
-  // 1.05 corresponds to inflation from 2017, as correlations are in 2017' dollars.
+  // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
   equation
     connect(fluid_b, exchanger.HTF_port_b) annotation(
       Line(points = {{-90, 40}, {38, 40}}, color = {0, 127, 255}));
