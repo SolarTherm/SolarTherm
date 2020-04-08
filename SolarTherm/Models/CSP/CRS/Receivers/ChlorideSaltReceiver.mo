@@ -65,6 +65,8 @@ model ChlorideSaltReceiver
 	SI.Efficiency eta_th "Receiver thermal efficiency (Q_net/Q_abs)";
 	SI.Efficiency eta_rec "Receiver efficiency (Q_net/Q_in)";
 	SI.Energy E_rec;
+	SI.Energy E_pip;
+	SI.Energy E_loss;
 	
 	parameter SI.Thickness e = 0.002e-3 "Pipe internal roughness";
 	parameter Real N_p = 2 "Number of flowpath";
@@ -129,6 +131,8 @@ equation
 	Q_rcv = Q_net - Q_pip;
 	Q_rcv = fluid_a.m_flow*(h_out-h_in);
 
+	der(E_loss) = Q_loss;
+	der(E_pip) = Q_pip;
 	der(E_rec) = Q_rcv;
 
 	annotation (Documentation(info="<html>
