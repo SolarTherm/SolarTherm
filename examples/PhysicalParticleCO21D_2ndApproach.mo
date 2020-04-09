@@ -39,7 +39,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
   // Weather data
-  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab");
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab");
   parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
   parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 34.850 "Lati1tude (+ve North)";
@@ -59,7 +59,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter SI.Length H_tower = 200 "Tower height";
   parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
-  parameter SI.Length R1 = 80 "distance between the first row heliostat and the tower";
+  parameter SI.Length R1 = 160 "distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "factor to grow the field layout";
   parameter Boolean single_field = true "True for single field, false for multi tower";
   parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";

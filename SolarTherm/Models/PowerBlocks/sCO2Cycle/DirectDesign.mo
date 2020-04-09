@@ -353,8 +353,8 @@ package DirectDesign
     deltaT = {MedPB.temperature(state_a) - T_amb, MedPB.temperature(state_b) - T_amb};
     state_a = MedPB.setState_phX(port_a.p, inStream(port_a.h_outflow));
     state_b = MedPB.setState_pTX(port_a.p, max(T_amb + 3, T_low));
-//P_cooling = P_cool_des* (deltaT_design / deltaT[2]) ^ (3 / 0.805)*(Q_cooler/Q_cooler_des);
-    P_cooling = 0;
+    P_cooling = P_cool_des* (deltaT_design / deltaT[2]) ^ (3 / 0.805)*(Q_cooler/Q_cooler_des);
+    //P_cooling = 0;
     Q_cooler = port_a.m_flow * (state_b.h - state_a.h);
     port_a.m_flow + port_b.m_flow = 0;
     port_a.p = port_b.p;
@@ -798,15 +798,15 @@ package DirectDesign
     HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
     reCompressor.m_des = gamma * LTR.m_turb_des;
   // Financial Analysis
-    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933 *(603.1/567.5);
-    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933*(603.1/567.5);
-    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886*(603.1/567.5);
-    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(603.1/567.5);
-    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(603.1/567.5);
-    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919*(603.1/567.5);
-    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463*(603.1/567.5);
-    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000*(603.1/567.5);
-    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger) * 1.05;
+    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933 *(619.2/567.5);
+    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933*(619.2/567.5);
+    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886*(619.2/541.7);
+    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(619.2/541.7);
+    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(619.2/541.7);
+    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919*(619.2/541.7);
+    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463*(619.2/541.7);
+    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000*(619.2/541.7);
+    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
   // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
   equation
     connect(fluid_b, exchanger.HTF_port_b) annotation(
