@@ -26,6 +26,8 @@ Real eta_rec_discrete (start = eta_rec_th_des);
   
   Modelica.Blocks.Interfaces.RealInput T_out_receiver annotation(
     Placement(visible = true, transformation(origin = {-2, 110}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-2, 110}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput eta_rec_in annotation(
+    Placement(visible = true, transformation(origin = {50, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {50, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 algorithm
 
 if Q_input <= 1e-6 then
@@ -39,25 +41,6 @@ on:=true;
     else
       m_flow := Q_input * eta_rec / abs(Util.h_T(T_ref) - Util.h_T(T_mea));
       eta_rec_discrete := eta_rec "updating eta_rec_discrete";
-    end if;
-    
+    end if;    
 end if;
-
-
-//old code
-/*equation
-if Q_input <= 1e-6 then
-m_flow = 0;
-
-else
-  if eta_rec == 0 and Q_input <= 1e-6 then
-    m_flow = 0;
-  elseif eta_rec == 0 and Q_input >= 1e-6 then 
-    m_flow = Q_input * eta_rec_th_des / (Util.h_T(T_ref) - Util.h_T(T_mea));
-  else
-    m_flow = Q_input * eta_rec / abs(Util.h_T(T_ref) - Util.h_T(T_mea));
-  end if;
-end if;*/
- 
- 
 end IdealMassflowBlockCalculation;

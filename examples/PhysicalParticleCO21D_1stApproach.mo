@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21DSolstice
+model PhysicalParticleCO21D_1stApproach
   //======================================          MODEL VERSION CONTROL               ===============================================//
   //Base case parameter : particleReceiver1D.h_conv_curtain = 10 W/m2K, pri_bop = 0, tower_cost = cheap tower, storage cost function = EES v.9 SANDIA method, variable O&M = 0, no insulation cost, using Solstice_field =======> LCOE 66.68 USD/MWh
   //adding changes - particleReceiver1D.h_conv_curtain = 32 W/m2K ===> LCOE 68.68 USD/MWh (everything else is kept constant),
@@ -46,7 +46,8 @@ model PhysicalParticleCO21DSolstice
   parameter Integer year = 1996 "Meteorological year";
   // Field, heliostat and tower
   parameter String opt_file(fixed = false);
-  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/solsticeresult");
+  parameter String casefolder = ".";
+  //Modelica.Utilities.Files.loadResource("modelica://SolarTherm/solsticeresult");
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
@@ -312,43 +313,11 @@ model PhysicalParticleCO21DSolstice
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
-
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
-    lon = data.lon, 
-    lat = data.lat, 
-    ele_min(displayUnit = "deg") = ele_min, 
-    use_wind = use_wind,
-    Wspd_max = Wspd_max, 
-    he_av = he_av_design, 
-    use_on = true, 
-    use_defocus = true, 
-    A_h = A_helio, 
-    nu_defocus = nu_defocus, 
-    nu_min = nu_min_sf, 
-    Q_design = Q_flow_defocus, 
-    nu_start = nu_start, 
-    Q_in_rcv = Q_in_rcv, 
-    H_rcv = H_rcv, 
-    W_rcv = W_rcv, 
-    tilt_rcv = tilt_rcv, 
-    W_helio = W_helio, 
-    H_helio = H_helio, 
-    H_tower = H_tower, 
-    R_tower = R_tower, 
-    R1 = R1, 
-    fb = fb, 
-    rho_helio = rho_helio, 
-    slope_error = slope_error, 
-    n_row_oelt = n_row_oelt, 
-    n_col_oelt = n_col_oelt, 
-    psave = casefolder, 
-    wea_file=wea_file) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice_1stApproach heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_in_rcv = Q_in_rcv, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
-
-
   // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, fixed_geometry = true, test_mode = false, with_detail_h_ambient = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
   SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -416,6 +385,8 @@ model PhysicalParticleCO21DSolstice
     Placement(visible = true, transformation(origin = {146, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression always_on(y = true) annotation(
     Placement(visible = true, transformation(origin = {-128, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Wind_dir(y = data.Wdir) annotation(
+    Placement(visible = true, transformation(origin = {-129, 51}, extent = {{-11, -13}, {11, 13}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -517,8 +488,6 @@ equation
     Line(points = {{2, -14}, {2, -14}, {2, 42}, {46, 42}, {46, 62}, {48, 62}}, color = {0, 0, 127}));
   connect(liftRC.fluid_b, particleReceiver1D.fluid_a) annotation(
     Line(points = {{-8, -26}, {-32, -26}, {-32, 18}}, color = {0, 127, 255}));
-  connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
-    Line(points = {{118, 80}, {-35, 80}, {-35, 46}}, color = {0, 0, 127}));
   connect(temperature.fluid_a, particleReceiver1D.fluid_b) annotation(
     Line(points = {{-16, 68}, {-16, 41}, {-29, 41}}, color = {0, 127, 255}));
   connect(heliostatsField.heat, particleReceiver1D.heat) annotation(
@@ -526,7 +495,7 @@ equation
   connect(heliostatsField.on, particleReceiver1D.on) annotation(
     Line(points = {{-72, 2}, {-38, 2}, {-38, 17}}, color = {255, 0, 255}));
   connect(heliostatsField.Q_incident, simpleReceiverControl.Q_in) annotation(
-    Line(points = {{-54, 20}, {24, 20}, {24, 10}, {24, 10}}, color = {0, 0, 127}));
+    Line(points = {{-54, 20}, {24, 20}, {24, 10}, {24, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(tankCold.L, simpleReceiverControl.L_mea) annotation(
     Line(points = {{44, -14}, {42, -14}, {42, 0}, {32, 0}, {32, 0}}, color = {0, 0, 127}));
   connect(tankCold.T_mea, simpleReceiverControl.T_mea) annotation(
@@ -543,10 +512,18 @@ equation
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
   connect(always_on.y, heliostatsField.on_hopper) annotation(
     Line(points = {{-116, -4}, {-112, -4}, {-112, 20}, {-88, 20}, {-88, 20}}, color = {255, 0, 255}));
+  connect(particleReceiver1D.eta_rec_out, simpleReceiverControl.eta_rec) annotation(
+    Line(points = {{-30, 30}, {18, 30}, {18, 12}, {18, 12}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Wind_dir.y, particleReceiver1D.Wdir) annotation(
+    Line(points = {{-117, 51}, {-38, 51}, {-38, 46}, {-40, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
+    Line(points = {{118, 80}, {-30, 80}, {-30, 46}, {-30, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Wspd_input.y, particleReceiver1D.Wspd) annotation(
+    Line(points = {{-112, 30}, {-100, 30}, {-100, 54}, {-34, 54}, {-34, 46}, {-34, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 100000, StartTime = 0, Tolerance = 1e-06, Interval = 3703.7),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
@@ -556,4 +533,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21DSolstice;
+end PhysicalParticleCO21D_1stApproach;
