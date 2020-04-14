@@ -688,11 +688,10 @@ package DirectDesign
     parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
     parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
     parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
-    //parameter Real PR = 25/9.17 "Pressure ratio";
     parameter Real PR = 2.5 "Pressure ratio";
     parameter SI.Power P_gro = 100 * 10 ^ 6 "first guess of power outlet";
-    parameter SI.Power P_nom(fixed = false) "Electrical power at design point";
-    parameter SI.MassFlowRate m_HTF_des = 1000 "Mass flow rate at design point";
+    parameter SI.Power P_nom = 100e6 "Electrical power at design point";
+    parameter SI.MassFlowRate m_HTF_des(fixed=false)"Mass flow rate at design point";
     parameter Real gamma = 0.33 "Part of the mass flow going to the recompression directly";
     parameter SI.AngularVelocity[4] choiceN = {75000, 30000, 10000, 3600} * 0.10471975512;
     parameter SI.AngularVelocity N_shaft = choiceN[integer(Modelica.Math.log(P_gro / 10 ^ 6) / Modelica.Math.log(10)) + 2];
@@ -702,6 +701,8 @@ package DirectDesign
     parameter SI.Efficiency eta_comp_re = 0.89 "Maximal isentropic efficiency of the compressors";
     //Turbine parameters
     parameter SI.Efficiency eta_turb = 0.93 "Maximal isentropic efficiency of the turbine";
+    //Cycle parameter
+    parameter SI.Efficiency eta_motor = 0.9 "electrical generator efficiency";
     //HTR Heat recuperator parameters
     parameter Integer N_HTR = 15;
     //LTR Heat recuperator parameters
@@ -723,7 +724,7 @@ package DirectDesign
     parameter FI.Money C_generator(fixed = false) "cost of the generator";
     parameter FI.Money C_cooler(fixed = false) "cost of the cooler";
     parameter FI.Money C_PB(fixed = false) "Overall cost of the power block";
-    parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles";
+    parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
     //Results
     SI.Efficiency eta_cycle;
     SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
@@ -748,19 +749,14 @@ package DirectDesign
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(gamma = gamma) annotation(
       Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     parameter MedRec.ThermodynamicState state_HTF_in_des = MedRec.setState_pTX(1.0325 * 10 ^ 5, T_HTF_in_des);
-    //   SolarTherm.Models.PowerBlocks.sCO2Cycle.SourceFlow src(T_out = 800+273.15, p_out = 10 ^ 5, m_flow = exchanger.m_HTF_des, redeclare package MedPB = SolarTherm.Media.SolidParticles.CarboHSP_ph, use_m_parameter = true) annotation(
-    //      Placement(visible = true, transformation(origin = {-52, 64}, extent = {{-10, -10}, {10, 10}}, rotation = 180)));
-    //    SolarTherm.Models.PowerBlocks.sCO2Cycle.SinkFlow sink annotation(
-    //      Placement(visible = true, transformation(origin = {-50, -78}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-    //Modelica.Blocks.Interfaces.RealInput parasities_internal;
     Modelica.Blocks.Interfaces.BooleanInput ramping annotation(
       Placement(visible = true, transformation(origin = {-68, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-2.22045e-16, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
-  protected
+  
   initial equation
     exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
     exchanger.p_in_HTF_des = state_HTF_in_des.p;
     exchanger.m_HTF_des = m_HTF_des;
-    P_nom = (-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des;
+    P_nom * 100/97 *1.005 = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
   // enthalpy equalities
   //main loop
     exchanger.h_in_CO2_des = HTR.h_out_comp_des;
@@ -811,15 +807,6 @@ package DirectDesign
   equation
     connect(fluid_b, exchanger.HTF_port_b) annotation(
       Line(points = {{-90, 40}, {38, 40}}, color = {0, 127, 255}));
-  //  connect(src.port_b, fluid_a) annotation(
-  //    Line(points = {{-60, 64}, {-72, 64}, {-72, 30}, {-42, 30}, {-42, 32}, {-44, 32}}, color = {0, 127, 255}));
-  //  connect(sink.port_a, fluid_b) annotation(
-  //    Line(points = {{-42, -78}, {-64, -78}, {-64, -54}, {-64, -54}, {-64, -50}}, color = {0, 127, 255}));
-  //if external_parasities then
-  //    connect(parasities_internal,parasities);
-  //  else
-  //    parasities_internal=0;
-  //  end if;
     connect(LTR.from_turb_port_b, splitter.port_a) annotation(
       Line(points = {{-39, -49}, {-43, -49}, {-43, -44}, {-45, -44}}, color = {0, 127, 255}));
     connect(LTR.from_turb_port_a, HTR.from_turb_port_b) annotation(
@@ -838,7 +825,7 @@ package DirectDesign
       Line(points = {{38, 28}, {37, 28}, {37, -15}}, color = {0, 127, 255}));
     connect(cooler.port_b, mainCompressor.port_a) annotation(
       Line(points = {{-83, -42}, {-92, -42}, {-92, -11}}, color = {0, 127, 255}));
-    connect(cooler.T_amb, T_amb) annotation(
+    connect(cooler.T_amb, T_amb) annotation(//parameter Real PR = 25/9.17 "Pressure ratio";
       Line);
     connect(m_sup, exchanger.m_sup) annotation(
       Line);
@@ -861,7 +848,7 @@ package DirectDesign
     if ramping then
       W_net = 0;
     else 
-      W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * 0.90 else 0;
+      W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor else 0;
     end if;
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 2}, {61, 2}}, color = {0, 127, 255}));
