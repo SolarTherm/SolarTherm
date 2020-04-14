@@ -1,5 +1,6 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
-model HeliostatsFieldSolstice
+
+model HeliostatsFieldSolstice_2ndApproach
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Optics;
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
@@ -83,7 +84,7 @@ model HeliostatsFieldSolstice
   Boolean on_hf;
   Modelica.Blocks.Interfaces.BooleanInput on_hopper(start = false) annotation(
     Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
-protected
+
   SI.Power W_loss1;
   SI.Power W_loss2;
   //SI.Time t_start=30*60;
@@ -167,4 +168,4 @@ equation
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
 </html>"));
-end HeliostatsFieldSolstice;
+end HeliostatsFieldSolstice_2ndApproach;

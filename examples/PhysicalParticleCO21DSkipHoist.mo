@@ -149,7 +149,7 @@ model PhysicalParticleCO21DSkipHoist
   parameter SI.Length D_hopper = W_rcv;
   parameter SI.Length d_gear = 1 "diameter of the gear installed in the electric motor shaft to run the lift ";
   parameter SI.Mass m_bucket_reference = 55440 "reference m_bucket from DESIGN AND ANALYSIS OF A HIGH TEMPERATURE PARTICULATE HOIST FOR
-       PROPOSED PARTICLE HEATING CONCENTRATOR SOLAR POWER SYSTEMS Repole et al. Proceedings of the ASME 2016 10th International Conference on Energy Sustainability ==> dimesnion 2x2x6 m.cub, system's mass flow is 979 kg/s, assuming packing factor 0.7";
+         PROPOSED PARTICLE HEATING CONCENTRATOR SOLAR POWER SYSTEMS Repole et al. Proceedings of the ASME 2016 10th International Conference on Energy Sustainability ==> dimesnion 2x2x6 m.cub, system's mass flow is 979 kg/s, assuming packing factor 0.7";
   parameter SI.Density rho_particle = (rho_cold_set + rho_hot_set) / 2;
   parameter SI.Mass m_hopper_max = 0.25 * CN.pi * D_hopper ^ 2 * H_hopper * packing_factor * rho_particle;
   parameter SI.Time traveling_time = 600;
@@ -398,6 +398,8 @@ model PhysicalParticleCO21DSkipHoist
     Placement(visible = true, transformation(origin = {-110, -26}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
   Modelica.Blocks.Sources.RealExpression always_zero annotation(
     Placement(visible = true, transformation(origin = {46, 15}, extent = {{-7, -8}, {7, 8}}, rotation = 90)));
+  Modelica.Blocks.Sources.RealExpression Wind_dir(y = data.Wdir) annotation(
+    Placement(visible = true, transformation(origin = {-128, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -475,8 +477,6 @@ equation
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
   R_spot = market.profit;
-  connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
-    Line(points = {{118, 80}, {-35, 80}, {-35, 46}}, color = {0, 0, 127}));
   connect(controlHot.rampingout, powerBlock.ramping) annotation(
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
   connect(LiftCold.fluid_b, tankCold.fluid_a) annotation(
@@ -515,11 +515,17 @@ equation
     Line(points = {{-30, -34}, {-30, -34}, {-30, -20}, {16, -20}, {16, -76}, {16, -76}}, color = {0, 0, 127}));
   connect(Tamb_input.y, doubleBucketModel.T_amb) annotation(
     Line(points = {{118, 80}, {2, 80}, {2, -76}, {4, -76}}, color = {0, 0, 127}));
+  connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
+    Line(points = {{118, 80}, {-30, 80}, {-30, 46}, {-30, 46}}, color = {0, 0, 127}));
+  connect(Wind_dir.y, particleReceiver1D.Wdir) annotation(
+    Line(points = {{-116, 50}, {-38, 50}, {-38, 46}, {-40, 46}}, color = {0, 0, 127}));
+  connect(Wspd_input.y, particleReceiver1D.Wspd) annotation(
+    Line(points = {{-112, 30}, {-96, 30}, {-96, 56}, {-36, 56}, {-36, 46}, {-34, 46}}, color = {0, 0, 127}));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {26, -84}, extent = {{30, -24}, {80, -46}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, -66}, extent = {{-6, 20}, {42, 0}}, textString = "Batch Controller", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {14, -120}, extent = {{-10, 8}, {10, -8}}, textString = "Skip Hoist", fontSize = 6, fontName = "CMU Serif"), Text(origin = {138, -10}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1000000, StartTime = 0, Tolerance = 0.001, Interval = 1800),
+    experiment(StopTime = 50000, StartTime = 0, Tolerance = 0.001, Interval = 1800),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

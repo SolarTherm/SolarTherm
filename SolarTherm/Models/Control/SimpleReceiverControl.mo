@@ -70,7 +70,8 @@ model SimpleReceiverControl
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput T_out_receiver annotation(
     Placement(visible = true, transformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-
+  Modelica.Blocks.Interfaces.RealInput eta_rec annotation(
+    Placement(visible = true, transformation(origin = {42, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {42, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 equation
 
   connect(m_flow_off_input.y, switch.u3) annotation(
@@ -108,7 +109,11 @@ equation
   connect(idealMassflowBlockCalculation.m_flow, limiter.u) annotation(
     Line(points = {{8, 54}, {38, 54}, {38, 58}, {38, 58}}, color = {0, 0, 127}));
   connect(T_out_receiver, idealMassflowBlockCalculation.T_out_receiver) annotation(
-    Line(points = {{0, 112}, {0, 112}, {0, 80}, {-4, 80}, {-4, 66}, {-4, 66}}, color = {0, 0, 127}));  protected
+    Line(points = {{0, 112}, {0, 112}, {0, 80}, {-4, 80}, {-4, 66}, {-4, 66}}, color = {0, 0, 127}));
+  connect(eta_rec, idealMassflowBlockCalculation.eta_rec_in) annotation(
+    Line(points = {{42, 112}, {42, 112}, {42, 74}, {4, 74}, {4, 66}, {4, 66}}, color = {0, 0, 127}));
+  connect(eta_rec, idealMassflowBlockCalculation.eta_rec_in) annotation(
+    Line(points = {{42, 112}, {42, 112}, {42, 76}, {0, 76}, {0, 64}, {2, 64}}, color = {0, 0, 127}));  protected
   annotation (Documentation(revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>

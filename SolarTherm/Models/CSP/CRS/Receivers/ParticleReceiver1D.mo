@@ -13,6 +13,7 @@ model ParticleReceiver1D
   import Modelica.SIunits.Conversions.*;
   import SolarTherm.Media;
   import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
+  import log =  Modelica.Math.log10;
   extends SolarTherm.Icons.ReceiverModel;
   // Ports Declaration
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_b heat annotation(
@@ -22,7 +23,7 @@ model ParticleReceiver1D
   Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = Medium) annotation(
     Placement(transformation(extent = {{24, 38}, {44, 58}}), iconTransformation(extent = {{24, 38}, {44, 58}})));
   Modelica.Blocks.Interfaces.RealInput Tamb annotation(
-    Placement(visible = true,transformation( origin = {40, 86},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {0, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+    Placement(visible = true,transformation( origin = {40, 86},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {26, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
   Modelica.Blocks.Interfaces.BooleanInput on annotation(
     Placement(transformation(extent = {{-38, -94}, {2, -54}}), iconTransformation(extent = {{-24, -98}, {-12, -86}})));
   // Medium
@@ -37,6 +38,7 @@ model ParticleReceiver1D
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
   parameter Boolean with_uniform_curtain_props = true "If true, ignore effect of phi_c on curtain emi/abs/tau";
+  parameter Boolean with_detail_h_ambient = true;
   constant SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   //Discretisation
   parameter Integer N = 2 "Number of vertical elements";
@@ -62,6 +64,7 @@ model ParticleReceiver1D
   parameter SI.HeatFlux dni_des = 200;
   parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley
  Mills";
+  parameter SI.Density rho_air = 1 "density of ambient air";
  parameter SI.HeatFlowRate Q_in = 100;
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
@@ -106,6 +109,13 @@ model ParticleReceiver1D
   SI.HeatFlux q_conv_wall[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_conv_curtain[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_net[N] "Net heat flux gained by curtain";
+  Real Nu[N] "Nusselt number evaluate";
+  Real Re[N] "Reynolds number";
+  Real Pr[N] "Prandtl number";
+  Real miu[N] "Dynamic viscocity of air";
+  SI.SpecificHeatCapacity Cp_air[N] "Cp air ==> evaluated at film temperature";
+  SI.ThermalConductance k_air "thermal conductance of air ==> evaluated at film temperature";
+  SI.CoefficientOfHeatTransfer h_ambient[N] "coefficient of heat transfer convection to ambient air from the curtain";
   SI.HeatFlowRate Qloss_conv_wall_discrete[N];
   SI.HeatFlowRate Qloss_conv_curtain_discrete[N];
   SI.HeatFlowRate Qloss_jcf_discrete[N];
@@ -129,8 +139,12 @@ model ParticleReceiver1D
   Tables.CombiTable1Ds Tab[N + 1](each tableOnFile = true, each tableName = "CarboHSP_hT", each columns = 2:2, each fileName = table_file);
   //Boolean problema;
 
-    Modelica.Blocks.Interfaces.RealInput Wdir annotation(
+  Modelica.Blocks.Interfaces.RealInput Wdir annotation(
     Placement(visible = true, transformation(origin = {-40, 86}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-24, 78}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput Wspd annotation(
+    Placement(visible = true, transformation(origin = {0, 86}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {2, 78}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealOutput eta_rec_out annotation(
+    Placement(visible = true, transformation(origin = {50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {30, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 protected
   //Thermodynamic Properties in Connectors
   SI.SpecificEnthalpy h_in = inStream(fluid_a.h_outflow);
@@ -195,6 +209,15 @@ equation
     Tab[i].y[1] = h_s[i];
   end for;
   
+  k_air = (32.1e-3-25.9e-3)/(100-20)*(Tamb-273.15) + 25.9e-3 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+  for i in 1:N loop
+    miu[i] = (21.9e-6-18.16e-6)/(100-20)*(Tamb-273.15) + 18.16e-6 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+    Cp_air[i] = 1000;
+    Re[i] = rho_air * (max(Wspd,0)*(log(220/0.0002)/log(2/0.0002))) * d_p / miu[i];
+    Pr[i] = miu[i] * Cp_air[i] / k_air;
+    Nu[i] = 2 + 0.6 * sqrt(Re[i]) * Pr[i] ^0.33 "Ranz-Marshall correlation Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+    h_ambient[i] = Nu[i] * k_air / d_p;
+  end for;
   for i in 1:N loop
     if with_uniform_curtain_props then
       eps_c[i] = eps_s;
@@ -215,7 +238,7 @@ equation
     end if;
     
 // Curtain energy balance
-    q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
+    q_conv_curtain[i] = if with_detail_h_ambient then h_ambient[i] * (T_s[i + 1] - Tamb) else h_conv_curtain * (T_s[i + 1] - Tamb);
     q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - q_conv_curtain[i] "should I include view factor here multiply by jc_f?";
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
 // Curtain-wall radiation heat fluxes (W/m²)
@@ -244,9 +267,10 @@ equation
     Qdot_rec = 0;
     eta_rec = 0;
   end if;
+  eta_rec_out = eta_rec;
   T_w_avg = sum(T_w) / (N+2);
   T_w_delay = delay(T_w_avg,1);
-  //a = T_w_avg * 1.5;
+  
   for i in 1:N loop  
       Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
       Qloss_conv_curtain_discrete[i]= q_conv_curtain[i]* dx * W_rcv;
