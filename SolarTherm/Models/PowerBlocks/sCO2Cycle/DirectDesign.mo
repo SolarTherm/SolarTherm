@@ -686,7 +686,7 @@ package DirectDesign
     parameter SI.Temperature pinch = 15;
     parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
     parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
-    parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
+    parameter SI.ThermodynamicTemperature T_high = 715 + 273.15 "inlet temperature of the turbine";
     parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
     parameter Real PR = 2.5 "Pressure ratio";
     parameter SI.Power P_gro = 100 * 10 ^ 6 "first guess of power outlet";
@@ -696,11 +696,11 @@ package DirectDesign
     parameter SI.AngularVelocity[4] choiceN = {75000, 30000, 10000, 3600} * 0.10471975512;
     parameter SI.AngularVelocity N_shaft = choiceN[integer(Modelica.Math.log(P_gro / 10 ^ 6) / Modelica.Math.log(10)) + 2];
     // main Compressor parameters
-    parameter SI.Efficiency eta_comp_main = 0.89 "Maximal isentropic efficiency of the compressors";
+    parameter SI.Efficiency eta_comp_main = 0.8 "Maximal isentropic efficiency of the compressors";
     // reCompressor parameters
-    parameter SI.Efficiency eta_comp_re = 0.89 "Maximal isentropic efficiency of the compressors";
+    parameter SI.Efficiency eta_comp_re = 0.82 "Maximal isentropic efficiency of the compressors";
     //Turbine parameters
-    parameter SI.Efficiency eta_turb = 0.93 "Maximal isentropic efficiency of the turbine";
+    parameter SI.Efficiency eta_turb = 0.87 "Maximal isentropic efficiency of the turbine";
     //Cycle parameter
     parameter SI.Efficiency eta_motor = 0.9 "electrical generator efficiency";
     //HTR Heat recuperator parameters
@@ -730,7 +730,7 @@ package DirectDesign
     SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
     Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
     //Components instanciation
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = ratio_m_des_real, pinchRecuperator = pinch) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = ratio_m_des_real, pinchRecuperator = 5) annotation(
       Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(eta_design = eta_comp_main, N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
@@ -742,7 +742,7 @@ package DirectDesign
       Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
       Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR, P_nom_des = P_gro, ratio_m_des = 1 - gamma, pinchRecuperator = pinch) annotation(
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR, P_nom_des = P_gro, ratio_m_des = 1 - gamma, pinchRecuperator = 5) annotation(
       Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer annotation(
       Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
@@ -756,7 +756,7 @@ package DirectDesign
     exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
     exchanger.p_in_HTF_des = state_HTF_in_des.p;
     exchanger.m_HTF_des = m_HTF_des;
-    P_nom * 100/97 *1.005 = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
+    P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
   // enthalpy equalities
   //main loop
     exchanger.h_in_CO2_des = HTR.h_out_comp_des;
@@ -794,15 +794,15 @@ package DirectDesign
     HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
     reCompressor.m_des = gamma * LTR.m_turb_des;
   // Financial Analysis
-    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933 *(619.2/567.5);
-    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933*(619.2/567.5);
-    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886*(619.2/541.7);
-    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(619.2/541.7);
-    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142*(619.2/541.7);
-    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919*(619.2/541.7);
-    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463*(619.2/541.7);
-    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000*(619.2/541.7);
-    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
+    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933;
+    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933;
+    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
+    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919;
+    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463;
+    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000;
+    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger) *1.05;
   // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
   equation
     connect(fluid_b, exchanger.HTF_port_b) annotation(
@@ -848,7 +848,7 @@ package DirectDesign
     if ramping then
       W_net = 0;
     else 
-      W_net = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor else 0;
+      W_net = if m_sup then max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor,0) else 0;
     end if;
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 2}, {61, 2}}, color = {0, 127, 255}));

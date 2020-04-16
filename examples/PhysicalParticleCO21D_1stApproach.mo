@@ -200,7 +200,8 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
   // Calculated Parameters
-  parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
+  parameter SI.HeatFlowRate Q_flow_des = m_flow_blk * (h_hot_set-h_cold_set);
+  //P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
   parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
@@ -218,7 +219,8 @@ model PhysicalParticleCO21D_1stApproach
   //parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "CHANGED PG Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_max = 1.3 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
-  parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
+  parameter SI.MassFlowRate m_flow_blk(fixed=false);
+  // = Q_flow_des / (h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
   parameter SI.Power P_name = P_net "Nameplate rating of power block";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
@@ -402,6 +404,7 @@ algorithm
     E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
+  m_flow_blk = powerBlock.m_HTF_des;
   opt_file = heliostatsField.optical.tablefile;
   A_rcv = particleReceiver1DCalculator.particleReceiver1D.H_drop ^ 2;
   rec_fr = 1 - particleReceiver1DCalculator.particleReceiver1D.eta_rec;

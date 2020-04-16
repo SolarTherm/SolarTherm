@@ -3,6 +3,7 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice_2ndApproach
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Optics;
+    Boolean Luis_OELT = true;
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -123,9 +124,9 @@ equation
   on_hf=(ele>ele_min) and
                      (Wspd_internal<Wspd_max) and (on_hopper==true);
   
-  nu = optical.nu;
+  nu = if Luis_OELT then optical.nu/100 else optical.nu;
   
-  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni* (if Luis_OELT then optical.nu/100 else optical.nu),0) else 0;
 
   when Q_raw>Q_start then
     on_internal=true;
