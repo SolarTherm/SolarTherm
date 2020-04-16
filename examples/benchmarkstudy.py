@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import numpy as np
 
 from solartherm import simulation
 from solartherm import postproc
@@ -14,7 +15,7 @@ def get_result(A_helio_total, A_rcv, fb, R1, ab_particle, t_storage, pinch):
 	data = DyMat.DyMatFile(resmat)
 	UA_HX = data.data("powerBlock.exchanger.UA_HX")[-1] / 1000
 	C_heliostat = data.data("C_field")[-1]
-	C_rcv = data.data("C_fpr")[-1]
+	C_rcv = data.data("C_receiver")[-1]
 	C_HX = data.data("powerBlock.C_exchanger")[-1]
 	C_cycle = data.data("C_block")[-1] - C_HX
 	C_storage = data.data("C_storage")[-1]
@@ -28,58 +29,22 @@ def get_result(A_helio_total, A_rcv, fb, R1, ab_particle, t_storage, pinch):
 	return [fb,R1,UA_HX,C_heliostat,C_rcv,C_HX,C_cycle,C_storage,C_equipment,C_total,EPY,LCOE]
 
 set_params= [[1450000,1208,0.9,18,15],[1200000,2000,0.9,18,15],[1450000,1208,0.9,6,15],[1450000,1208,0.5,18,15],[1450000,1208,0.9,18,50]]
-
-for i in range(2):
-	#Iterate fb and R1 for each case
-	fb_val=list() #N/A
-	R1_val=list() #m
-	UA_val=list() #kW/K
-	C_heliostat_val = list() #USD
-	C_rcv_val=list() #USD
-	C_HX_val=list() #USD
-	C_cycle_val=list() #USD
-	C_storage_val=list() #USD
-	C_equipment_val=list() #USD
-	C_total_val= list() #USD
-	EPY_val=list() #kJ
-	LCOE_val=list() #USD/kWh
-	for fb in np.arange(0.1,0.3,0.1):
-		for R1 in np.arange(50, 70, 10):
-			A_helio_total = set_params[i][0]
-			A_rcv = set_params[i][1]
-			ab_particle = set_params[i][2]
-			t_storage = set_params[i][3]
-			pinch = set_params[i][4]
-			print('Start Simulating Case %s'%(i+1))
-			r = get_result(A_helio_total, A_rcv, fb, R1, ab_particle, t_storage, pinch)
-			fb_val.append(r[0])
-			R1_val.append(r[1])
-			UA_val.append(r[2])
-			C_heliostat_val.append(r[3])
-			C_rcv_val.append(r[4])
-			C_HX_val.append(r[5])
-			C_cycle_val.append(r[6])
-			C_storage_val.append(r[7])
-			C_equipment_val.append(r[8])
-			C_total_val.append(r[9])
-			EPY_val.append(r[10])
-			LCOE_val.append(r[11])
-			newname = 'solsticeresult_case%s_fb%s_R1%s'%(i+1,fb,R1)
-			newresmatname = 'benchmark_res_case%s_fb%s_R1%s.mat'%(i+1,fb,R1)
-			#in super computer the directory of your home is /scratch/xa1/username/
-			#os.system('mv /home/philgun/.local/lib/omlibrary/SolarTherm/solsticeresult /home/philgun/result/benchmark/solstice/%s'%(newname))
-			#os.system('mv /home/philgun/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /home/philgun/result/benchmark/resmat/%s'%(newresmatname))
-			os.system('mv /scratch/xa1/pg5707/st-inst-pg/lib/omlibrary/SolarTherm/solsticeresult /scratch/xa1/pg5707/result/benchmark/solstice/%s'%(newname))
-			os.system('mv /scratch/xa1/pg5707/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /scratch/xa1/pg5707/result/benchmark/resmat/%s'%(newresmatname))
-			os.system('rm -rf *.c *.o *.h *.json *.xml *.makefile *.cmake *.bakmo *.mat')
-			print(fb_val)
-			print(R1_val)
-	LCOE_min = min(LCOE_val)
-	index_min = LCOE_val.index(min(LCOE_val))
-	txt_name = 'result_case_%s.txt'%(i+1)
-	f = open(txt_name,'w')
-	f.write("UA=%s [kW/K], Heliostat=%s [USD], Receiver=%s [USD], HX=%s [USD], Cycle=%s [USD], TES=%s [USD], Total cost=%s [USD], EPY=%s [kJ], LCOE_real=%s [USD/kWh]\n"%(UA_val[index_min],C_heliostat_val[index_min],C_rcv_val[index_min],C_HX_val[index_min],C_cycle_val[index_min],C_storage_val[index_min],C_total_val[index_min],EPY_val[index_min],LCOE_min))
-	f.write("Optimal field configuration fb=%s R1=%s [m]"%(fb_val[index_min],R1_val[index_min]))
-	f.close()
-	print("Finished Case %s"%(i+1))
+fb_set=[0.7,0.8,0.6,0.7,0.7]
+R1_set=[160,130,160,160,160]
+for i in range(5):
+	fb=round(fb_set[i],1)
+	R1=R1_set[i]
+	A_helio_total = set_params[i][0]
+	A_rcv = set_params[i][1]
+	ab_particle = set_params[i][2]
+	t_storage = set_params[i][3]
+	pinch = set_params[i][4]
+	print('Start Simulating Case %s'%(i+1))
+	os.system('cp /home/philgun/result-optimal/benchmark/param%s_fb%s_R1%s/OELT_Solstice.motab /home/philgun/solartherm-particle/examples/' %(i+1,round(fb,1),R1))
+	r = get_result(A_helio_total, A_rcv, fb, R1, ab_particle, t_storage, pinch)
+	#os.system('mkdir /home/philgun/solartherm-particle/examples/case%s'%(i+1))
+	#os.system('mv *.csv /home/philgun/solartherm-particle/examples/case%s'%(i+1))
+	os.system('cp /home/philgun/solartherm-particle/examples/PhysicalParticleCO21D_2ndApproach_res_0.mat /home/philgun/result-optimal/benchmark/param%s_fb%s_R1%s/'%(i+1,fb,R1))
+	os.system('rm -rf OELT_Solstice.motab *.c *.o *.h *.json *.xml *.makefile *.cmake *.bakmo *.log *.mat *.csv')
+	print('Finish')
 print("Finished all cases")		
