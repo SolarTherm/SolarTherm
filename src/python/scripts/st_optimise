@@ -562,8 +562,8 @@ if __name__ == '__main__':
 			# Parallel evaluation by running the computation multicore
 			if paral_eval:
 				#pool = multiprocessing.Pool(processes=n_cores)
-				#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
-				toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+				#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map ==> multi processing
+				toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map ==> single processing
 
 			stats = tools.Statistics(lambda ind: ind.fitness.values) # Set the optimisation statistics
 			stats.register("avg", np.mean, axis=0)

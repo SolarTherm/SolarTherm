@@ -5,6 +5,7 @@ import DyMat
 import xml.etree.ElementTree as ET
 import re
 import numpy as np
+import os #PG
 
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
@@ -233,7 +234,17 @@ class SimResultElec(SimResult):
 		if close_to_year: 
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
-
+		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
+		i=1 #PG
+		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
+		while os.path.exists(filepath): #PG
+			i=i+1
+			filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)
+		else: #print lcoe to new file
+			txt_name = 'result_%s.txt'%(i)
+			f = open(txt_name,'w')
+			f.write('%s'%lcoe)
+			f.close()
 		return [epy, lcoe, capf, srev,]
 
 	def cost_breakdown(self):
@@ -275,7 +286,7 @@ class SimResultElec(SimResult):
 		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
 		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [k$/year]
 
-		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
+		return C_cap_bd_n, C_cpopulationap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
 
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']

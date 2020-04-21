@@ -686,7 +686,7 @@ package DirectDesign
     parameter SI.Temperature pinch = 15;
     parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
     parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
-    parameter SI.ThermodynamicTemperature T_high = 715 + 273.15 "inlet temperature of the turbine";
+    parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
     parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
     parameter Real PR = 2.5 "Pressure ratio";
     parameter SI.Power P_gro = 100 * 10 ^ 6 "first guess of power outlet";
@@ -707,7 +707,7 @@ package DirectDesign
     parameter Integer N_HTR = 15;
     //LTR Heat recuperator parameters
     parameter Integer N_LTR = 15;
-    parameter Real ratio_m_des_real = 1.1;
+    parameter Real ratio_m_des_real = 1.168 "this is tailord to reach the desired T_HTF_out";
     parameter Real ratio_m_des = (1 - gamma);
     //Cooler parameters
     parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Outlet temperature of the cooler";
@@ -727,6 +727,7 @@ package DirectDesign
     parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
     //Results
     SI.Efficiency eta_cycle;
+    SI.Efficiency eta_cycle_net;
     SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
     Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
     //Components instanciation
@@ -801,8 +802,8 @@ package DirectDesign
     C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
     C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919;
     C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463;
-    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000;
-    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger) *1.05;
+    C_exchanger = pri_exchanger * exchanger.Q_HX_des;
+    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
   // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
   equation
     connect(fluid_b, exchanger.HTF_port_b) annotation(
@@ -843,13 +844,14 @@ package DirectDesign
     else
       exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
     end if;
-    eta_cycle = W_net / exchanger.Q_HX;
-    der(E_net) = W_net;
     if ramping then
       W_net = 0;
     else 
       W_net = if m_sup then max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor,0) else 0;
     end if;
+    eta_cycle = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
+    eta_cycle_net=W_net/exchanger.Q_HX;
+    der(E_net) = W_net;
   connect(exchanger.CO2_port_b, turbine.port_a) annotation(
       Line(points = {{58, 28}, {62, 28}, {62, 2}, {61, 2}}, color = {0, 127, 255}));
   connect(turbine.port_b, HTR.from_turb_port_a) annotation(
