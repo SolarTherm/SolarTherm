@@ -235,6 +235,7 @@ class SimResultElec(SimResult):
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
+		os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
 		i=1 #PG
 		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
 		while os.path.exists(filepath): #PG

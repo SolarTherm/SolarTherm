@@ -98,8 +98,8 @@ model PhysicalParticleCO21D_1stApproach
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
   //Output of the optical simulation
-  parameter Real n_row_oelt = 9 "number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
   // Receiver
   parameter Real ar_rec = 1 "Height to diameter aspect ratio of receiver aperture";
   parameter SI.Efficiency em_curtain = 0.86 "Emissivity of curtain";

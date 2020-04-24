@@ -53,8 +53,8 @@ model PhysicalParticleCO21D
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real land_mult = 7.8 "Land area multiplier : rev 12 SANDIA";
   parameter String field_type = "polar" "Other options are : surround";
-  parameter SI.Length W_helio = sqrt(144.375) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
+  parameter SI.Length W_helio = sqrt(144.35) "width of heliostat in m";
+  parameter SI.Length H_helio = sqrt(144.35) "height of heliostat in m";
   parameter SI.Area A_helio = W_helio * H_helio "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
@@ -520,7 +520,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e7, StartTime = 0, Tolerance = 0.001, Interval = 3600),
+    experiment(StopTime = 1, StartTime = 0, Tolerance = 0.001, Interval = 1),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
