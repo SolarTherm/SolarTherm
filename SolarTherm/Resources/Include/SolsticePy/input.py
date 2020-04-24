@@ -124,7 +124,7 @@ class Parameters:
         '''  
         self.n_row_oelt=5
         self.n_col_oelt=5
-        self.n_rays=int(1e6)
+        self.n_rays=int(5e6)
         self.n_procs=1
         self.casedir='.'
         self.method=1 # 1 - design the field based on the Q_in_rcv
