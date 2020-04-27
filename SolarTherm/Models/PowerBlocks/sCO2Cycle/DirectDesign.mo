@@ -715,6 +715,11 @@ package DirectDesign
     parameter SI.ThermodynamicTemperature T_HTF_in_des = 800 + 273.15;
     parameter Integer N_exch = 5;
     //Financial analysis
+    parameter Real pri_recuperator = 5.2; 
+    parameter Real pri_turbine = 9923.7;
+    parameter Real pri_compressor = 643.15;
+    parameter Real pri_cooler = 76.25; 
+    parameter Real pri_generator = 108900;
     parameter FI.Money C_HTR(fixed = false) "cost of the high temperature heat recuperator";
     parameter FI.Money C_LTR(fixed = false) "cost of the low temperature heat recuperator";
     parameter FI.Money C_turbine(fixed = false) "cost of the turbine";
@@ -795,13 +800,13 @@ package DirectDesign
     HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
     reCompressor.m_des = gamma * LTR.m_turb_des;
   // Financial Analysis
-    C_HTR = 5.2 * HTR.UA_HTR ^ 0.8933;
-    C_LTR = 5.2 * LTR.UA_HTR ^ 0.8933;
-    C_turbine = 9923.7 * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
-    C_mainCompressor = 643.15 * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_reCompressor = 643.15 * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_cooler = 76.25 * cooler.UA_cooler ^ 0.8919;
-    C_generator = 108900 * (P_nom / 10 ^ 6) ^ 0.5463;
+    C_HTR = pri_recuperator * HTR.UA_HTR ^ 0.8933;
+    C_LTR = pri_recuperator * LTR.UA_HTR ^ 0.8933;
+    C_turbine = pri_turbine * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
+    C_mainCompressor = pri_compressor * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+    C_reCompressor = pri_compressor * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+    C_cooler = pri_cooler * cooler.UA_cooler ^ 0.8919;
+    C_generator = pri_generator * (P_nom / 10 ^ 6) ^ 0.5463;
     C_exchanger = pri_exchanger * exchanger.Q_HX_des;
     C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
   // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
