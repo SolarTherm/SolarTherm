@@ -55,7 +55,10 @@ model ParticleReceiver1D_v11
   parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
   // Environment
   parameter SI.Temperature T_amb = from_degC(25) "Ambient temperature [K]";
-  parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
+  parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
+  parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";  
+  parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";  
+
   parameter SI.Irradiance dni_des = 788.8;
   parameter Real CR = 1200;
   parameter SI.HeatFlowRate Q_in = 10;
@@ -252,8 +255,8 @@ if on then
         g_w[i] = jc_b[i];
         j_w[i] = eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i];
         // Curtain energy balance
-        q_conv_curtain[i] = h_conv * (T_s[i + 1] - Tamb);
-        q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv * (T_s[i + 1] - Tamb);
+        q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
+        q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv_curtain * (T_s[i + 1] - Tamb);
         q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
               // Back wall energy balance
               if with_isothermal_backwall then
@@ -261,7 +264,7 @@ if on then
                 T_w[i + 1] = Tamb;
                 q_conv_wall[i] + j_w[i] = g_w[i];
               else
-                q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv + th_w / k_w);
+                q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv_backwall + th_w / k_w);
               //q loss conv wall
                 0 = (if with_wall_conduction then -k_w * ((T_w[i + 2] - T_w[i + 1]) / (x[i + 2] - x[i + 1]) - (T_w[i + 1] - T_w[i]) / 
                 (x[i + 1] - x[i])) * th_w else 0) - (g_w[i] - (eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i])) * dx + q_conv_wall[i] * dx;
@@ -279,8 +282,8 @@ else
     g_w[i] = 0;
     j_w[i] = 0;
     // Curtain energy balance
-    q_conv_curtain[i] = h_conv * (T_s[i + 1] - Tamb);
-    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv * (T_s[i + 1] - Tamb);
+    q_conv_curtain[i] = h_conv_curtain * (T_s[i + 1] - Tamb);
+    q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - h_conv_curtain * (T_s[i + 1] - Tamb);
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
     // Back wall energy balance
         if with_isothermal_backwall then
@@ -288,7 +291,7 @@ else
           T_w[i + 1] = Tamb;
           q_conv_wall[i] + j_w[i] = g_w[i];
         else
-          q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv + th_w / k_w);
+          q_conv_wall[i] = (T_w[i + 1] - Tamb) / (1 / h_conv_backwall + th_w / k_w);
           //q loss conv wall
           0 = (if with_wall_conduction then -k_w * ((T_w[i + 2] - T_w[i + 1]) / (x[i + 2] - x[i + 1]) - 
           (T_w[i + 1] - T_w[i]) / (x[i + 1] - x[i])) * th_w else 0) - (g_w[i] - (eps_w * CONST.sigma * T_w[i + 1] ^ 4 + (1 - eps_w) * g_w[i])) * dx + q_conv_wall[i] * dx;
