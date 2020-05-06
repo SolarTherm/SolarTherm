@@ -10,3 +10,6 @@ HeatExchangerFluid
 Temperature
 PowerBlock
 Pipe
+HeatExchangerInterface
+Compressor
+Turbine
