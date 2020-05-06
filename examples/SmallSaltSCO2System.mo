@@ -41,7 +41,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter String opt_file = "/home/arfontalvo/solartherm/SolarTherm/Data/Optics/dominic/"+ String(integer(tower_fr*100)) + "TH" + String(ceil(P_gross/1e6*0.9)) + "SM" + String(SM*10) + ".motab";
 	parameter Real metadata_list[8] = metadata(opt_file);
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
-	parameter SI.Height H_tower = tower_fr*metadata_list[6] "Number of heliostats";
+	parameter SI.Height H_tower = metadata_list[6] "Number of heliostats";
 	parameter SI.Height D_receiver = metadata_list[5] "Number of heliostats";
 	parameter SI.Height H_receiver = metadata_list[4] "Number of heliostats";
 	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
@@ -50,6 +50,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Area land_non_solar = 182108.7 "Non-solar field land area"; //45 acre. Based on NREL Gen3 SAM model v14.02.2020
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
+//	parameter SI.Area A_heliostat = 75.1689 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 	parameter SI.Efficiency eff_opt = (2.7*111e6/0.51)/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
@@ -120,6 +121,9 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real nu_start = 0.25 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
 	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1/(1 - rec_fr)/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+//	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
+//	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
+//	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
@@ -273,6 +277,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
+//	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAM heliostatsField(
 		n_h = n_heliostat,
 		lon = data.lon,
