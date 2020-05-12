@@ -30,3 +30,6 @@ AnalysisPackage
 Price
 Pipe
 HeliostatFieldModel2
+Compressor
+HeatExchangerIcon
+Turbine

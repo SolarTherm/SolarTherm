@@ -16,8 +16,7 @@ class TestExternalC(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_squaring(self):
-		self.assertEqual(self.res.interpolate('y', 1), 1)
-		self.assertEqual(self.res.interpolate('y', 2), 4)
+		self.assertEqual(self.res.interpolate('y', 1), 297.16,1)
 
 if __name__ == '__main__':
 	unittest.main()

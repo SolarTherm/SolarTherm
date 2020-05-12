@@ -5,8 +5,8 @@ function T_s "Temperature of Chloride Salt as a function of Specific entropy"
 	input Modelica.SIunits.SpecificEntropy s "Specific entropy";
 	output Modelica.SIunits.Temperature T "Temperature";
 protected
-	constant Real a = 253.9510198981;
-	constant Real b = 0.0009174265;
+	constant Real a = 257.5497198499;
+	constant Real b = 0.0009728881;
 
 algorithm
 	// Based on inverse function of s(T).

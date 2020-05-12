@@ -5,8 +5,6 @@ AO
 *.xml
 *_res.mat
 resources
-Test*
-!*.py
 SimpleSystem
 FluidSystem
 TroughWagner
@@ -19,5 +17,7 @@ SolarMethanolSystem
 TestExternalC
 TestExternalPyStr
 TestExternalPyFunc
+TestSolsticeOELT
 optimizeInput.csv
 *.libs
+report.*
