@@ -5,7 +5,9 @@ FluidSystem
 Reference_1
 Reference_1_fluid
 Reference_2
+Reference_2_solstice
 SaltSCO2System
+SmallSaltSCO2System
 SimpleSystem
 SolarFuelSystem
 SolarMethanolSystem
@@ -17,3 +19,4 @@ SimpleResistiveStorage
 SimpleParticleSystem
 NaSaltsCO2System
 Small_SolarSalt
+NaSaltSCO2System_modular

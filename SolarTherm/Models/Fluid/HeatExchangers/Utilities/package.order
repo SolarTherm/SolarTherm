@@ -1,8 +1,12 @@
-Design_HX_noF
-Dp_losses
-Find_Opt_Design_HX_noF
+Design_HX
+Optimize_HX
 HTCs
-TubeThickness
+Dp_losses
 Inconel800H_BaseProperties
 Haynes230_BaseProperties
+TubeThickness
+BaffleThickness
+ShellThickness
+ShellDiameter
 loop_breaker
+prop_fluids

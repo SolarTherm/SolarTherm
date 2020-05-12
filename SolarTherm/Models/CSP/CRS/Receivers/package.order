@@ -18,3 +18,5 @@ SodiumReceiver
 SodiumReceiver_withOutput
 ParticleReceiver
 HeatTransfer
+ChlorideSaltReceiver
+SodiumReceiver_modular

@@ -19,8 +19,27 @@ model HX
   parameter SI.Pressure p_Na1_des = 101325 "Design Sodium Inlet Pressure";
   parameter SI.Pressure p_MS1_des = 101325 "Design Molten Salt Inlet Pressure";
   
+  //Input parameters
+  parameter SI.Temperature T_Na2_input = 520 + 273.15 "Optimal outlet sodium temperature";
+  //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+  parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
+  parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
+  //Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
+  parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
+  parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)
+  //If optimize_and_run is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
+  parameter Boolean optimize_and_run = true; 
+  parameter SI.Length d_o_input = 0.00635 "Optimal Outer Tube Diameter";
+  parameter Integer N_p_input = 1 "Optimal Tube passes number";
+  parameter Integer layout_input = 2 "Optimal Tube Layout";
+  
   //Auxiliary parameters
-  parameter Boolean optimize_and_run = true annotation (Dialog(group="Input Parameters"), Evaluate=true, HideResult=true, choices(checkBox=true));
+  parameter FI.EnergyPrice_kWh c_e = 0.13 / 0.9175 "Power cost";
+  parameter Real r = 0.05 "Real interest rate";
+  parameter Real H_y(unit = "h") = 4500 "Operating hours";
+  parameter Integer n(unit = "h") = 30 "Operating years";
+  
+  //Minimum and initial states
   parameter Medium1.ThermodynamicState state_Na_in_0 = Medium1.setState_pTX(p_Na1_des, T_Na1_des);
   parameter Medium2.ThermodynamicState state_MS_in_0 = Medium2.setState_pTX(p_MS1_des, T_MS1_des);
   parameter SI.SpecificEnthalpy h_Na_in_0 = Medium1.specificEnthalpy(state_Na_in_0);
@@ -34,45 +53,44 @@ model HX
   parameter SI.Temperature T_Na2_min = 505 + 273.15 "Desing Sodium Hot Fluid Temperature";
   parameter Medium1.ThermodynamicState state_Na_min = Medium1.setState_pTX(p_Na1_des, T_Na2_min);
   parameter SI.SpecificEnthalpy h_Na_min = Medium1.specificEnthalpy(state_Na_min);
-  
-  //Input parameters
-  parameter SI.Length d_o_input = 0.04128 "Optimal Outer Tube Diameter" annotation(Dialog(group="Input Parameters"));
-  parameter SI.Length L_input = 8 "Optimal Tube Length" annotation(Dialog(group="Input Parameters"));
-  parameter Integer N_p_input = 4 "Optimal Tube passes number" annotation(Dialog(group="Input Parameters"));
-  parameter Integer layout_input = 2 "Optimal Tube Layout" annotation(Dialog(group="Input Parameters"));
-  parameter SI.Temperature T_Na2_input = 670 + 273.15 "Optimal outlet sodium temperature" annotation(Dialog(group="Input Parameters"));
-  
-  //Optimal Parameter Values
-  parameter FI.MoneyPerYear TAC(fixed = false) "Minimum Total Annualized Cost";
-  parameter SI.Area A_HX(fixed = false) "Optimal Exchange Area";
-  parameter SI.CoefficientOfHeatTransfer U_design(fixed = false) "Optimal Heat tranfer coefficient";
-  parameter Integer N_t(fixed = false) "Optimal Number of tubes";
-  parameter SI.Pressure Dp_tube_design(fixed = false) "Optimal Tube-side pressure drop";
-  parameter SI.Pressure Dp_shell_design(fixed = false) "Optimal Shell-side pressure drop";
-  parameter SI.CoefficientOfHeatTransfer h_s_design(fixed = false) "Optimal Shell-side Heat tranfer coefficient";
-  parameter SI.CoefficientOfHeatTransfer h_t_design(fixed = false) "Optimal Tube-side Heat tranfer coefficient";
-  parameter SI.Length D_s(fixed = false) "Optimal Shell Diameter";
-  parameter Integer N_baffles(fixed=false) "Number of Baffles";
-  parameter SI.Velocity v_Na_design(fixed = false) "Optimal Sodium velocity in tubes";
-  parameter SI.Velocity v_max_MS_design(fixed = false) "Optimal Molten Salt velocity in shell";
-  parameter SI.Volume V_HX(fixed = false) "Optimal Heat-Exchanger Total Volume";
-  parameter SI.Mass m_HX(fixed = false) "Optimal Heat-Exchanger Total Mass";
-  parameter FI.Money_USD C_BEC_HX(fixed = false) "Optimal Bare cost @2018";
-  parameter FI.MoneyPerYear C_pump_design(fixed = false) "Optimal Annual pumping cost";
-  parameter SI.Length d_o(fixed = false) "Optimal Outer Tube Diameter";
-  parameter SI.Length L(fixed = false) "Optimal Tube Length";
-  parameter Integer N_p(fixed = false) "Optimal Tube passes number";
-  parameter Integer layout(fixed = false) "Optimal Tube Layout";
-  parameter SI.Temperature T_Na2_design(fixed = false) "Optimal outlet sodium temperature";
-  parameter SI.MassFlowRate m_flow_Na_design(fixed = false) "Optimal Sodium mass flow rate";
-  parameter SI.MassFlowRate m_flow_MS_design(fixed = false) "Optimal Molten-Salt mass flow rate";
-  parameter Real F_design(fixed = false) "Optimal Temperature correction factor";
-  parameter SI.ThermalConductance UA_design(fixed = false) "Optimal UA";
-  parameter Real ex_eff_design(fixed = false) "Optimal HX Exergetic Efficiency";
-  parameter Real en_eff_design(fixed = false) "Optimal HX Energetic Efficiency";
   parameter SI.TemperatureDifference DT1_start=T_Na1_des-T_MS2_des;
   parameter SI.TemperatureDifference DT2_start=T_Na2_design-T_MS1_des;
   parameter SI.TemperatureDifference LMTD_start=(DT1_start - DT2_start) / MA.log(DT1_start / DT2_start);
+  
+  //Optimal Parameter Values
+  parameter SI.MassFlowRate m_flow_Na_design(fixed = false)"Sodium mass flow rate";
+  parameter SI.MassFlowRate m_flow_MS_design(fixed = false) "Molten-Salt mass flow rate";
+  parameter Real F_design(fixed = false) "Temperature correction factor";
+  parameter SI.ThermalConductance UA_design(fixed = false) "UA";
+  parameter Integer N_t(fixed = false) "Number of tubes";
+  parameter SI.CoefficientOfHeatTransfer U_design(fixed = false) "Heat tranfer coefficient";
+  parameter SI.Area A_HX(fixed = false) "Exchange Area";
+  parameter SI.Pressure Dp_tube_design(fixed = false) "Tube-side pressure drop";
+  parameter SI.Pressure Dp_shell_design(fixed = false) "Shell-side pressure drop";
+  parameter FI.MoneyPerYear TAC(fixed = false) "Total Annualized Cost";
+  parameter SI.CoefficientOfHeatTransfer h_s_design(fixed = false) "Shell-side Heat tranfer coefficient";
+  parameter SI.CoefficientOfHeatTransfer h_t_design(fixed = false) "Tube-side Heat tranfer coefficient";
+  parameter SI.Length D_s(fixed = false) "Shell Diameter";
+  parameter SI.Length D_s_out(fixed = false) "Outer Shell Diameter";
+  parameter Integer N_baffles(fixed = false) "Number of baffles";
+  parameter SI.Length l_b(fixed = false) "Baffle spacing";
+  parameter SI.Velocity v_Na_design(fixed = false) "Sodium velocity in tubes";
+  parameter SI.Velocity v_max_MS_design(fixed = false) "Molten Salt velocity in shell";
+  parameter SI.Volume V_HX(fixed = false) "Heat-Exchanger Total Volume";
+  parameter SI.Mass m_HX(fixed = false) "Heat-Exchanger Total Mass";
+  parameter SI.Mass m_material_HX(fixed = false) "Heat-Exchanger Material Mass";
+  parameter FI.Money_USD C_BEC_HX(fixed = false) "Bare cost @2018";
+  parameter FI.MoneyPerYear C_pump_design(fixed = false) "Annual pumping cost";
+  parameter Real ex_eff_design(fixed = false) "HX Exergetic Efficiency";
+  parameter Real en_eff_design(fixed = false) "HX Energetic Efficiency";
+  parameter SI.Length L(fixed = false) "Tube length";
+  parameter Real ratio_HX(fixed = false) ;
+  parameter Real penalty(fixed = false) ;
+  parameter SI.Length d_o(fixed = false) "Optimal Outer Tube Diameter";
+  parameter Integer N_p(fixed = false) "Optimal Tube passes number";
+  parameter Integer N_sp(fixed = false) "Optimal Tube passes number";
+  parameter Integer layout(fixed = false) "Optimal Tube Layout";
+  parameter SI.Temperature T_Na2_design(fixed = false) "Optimal outlet sodium temperature";
   
   //Variables
   SI.MassFlowRate m_flow_Na(start=m_flow_Na_design, nominal=m_flow_Na_design) "Sodium mass flow rate";
@@ -97,8 +115,6 @@ model HX
   SI.Pressure Dp_shell(start=Dp_shell_design, nominal=Dp_shell_design) "Shell-side pressure drop";
   SI.Velocity v_Na(start=v_Na_design, nominal=v_Na_design) "Sodium velocity in tubes";
   SI.Velocity v_max_MS(start=v_max_MS_design, nominal=v_max_MS_design) "Molten Salt velocity in shell";
-  Boolean problema(start = false);
-  Boolean problema2(start = false);
   
   //Fluid Properties
   SI.Temperature Tm_Na(start=(T_Na1_des+T_Na2_design)/2, nominal=(T_Na1_des+T_Na2_design)/2) "Mean Sodium Fluid Temperature";
@@ -134,19 +150,20 @@ model HX
 
 initial algorithm
   if optimize_and_run == true then
-    (TAC, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, d_o, L, N_p, layout, T_Na2_design, m_flow_Na_design, m_flow_MS_design, F_design, UA_design, ex_eff_design, en_eff_design) := UF.Find_Opt_Design_HX_noF(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des);
-  else
-    d_o := d_o_input;
-    L := L_input;
-    N_p := N_p_input;
-    layout := layout_input;
     T_Na2_design := T_Na2_input;
-    (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, N_t, U_design, A_HX, Dp_tube_design, Dp_shell_design, TAC, h_s_design, h_t_design, D_s, N_baffles, v_Na_design, v_max_MS_design, V_HX, m_HX, C_BEC_HX, C_pump_design, ex_eff_design, en_eff_design) := UF.Design_HX_noF(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, L = L, N_p = N_p, N_sp = N_p, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = 0.13, r = 0.05, H_y = 4500);
+    (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, D_s_out, N_baffles, l_b, v_Na_design, v_max_MS_design, V_HX, m_HX, m_material_HX, C_BEC_HX, C_pump_design, TAC, ex_eff_design, en_eff_design, L, ratio_HX, penalty, d_o, N_p, N_sp, layout):= UF.Optimize_HX(Q_d_des = Q_d_des, T_Na1_des = T_Na1_des, T_Na2_des = T_Na2_design, T_MS1_des = T_MS1_des, T_MS2_des = T_MS2_des, p_Na1_des = p_Na1_des, p_MS1_des = p_MS1_des, c_e = c_e, r = r, H_y = H_y, n = n, ratio_max=ratio_max, ratio_cond=ratio_cond, L_max_cond=L_max_cond, L_max_input=L_max_input);
+  else
+    d_o:=d_o_input;
+    N_p:=N_p_input;
+    N_sp:=N_p_input;
+    layout:=layout_input;
+    T_Na2_design := T_Na2_input;
+    (m_flow_Na_design, m_flow_MS_design, F_design, UA_design, A_HX, U_design, N_t, Dp_tube_design, Dp_shell_design, h_s_design, h_t_design, D_s, D_s_out, N_baffles, l_b, v_Na_design, v_max_MS_design, V_HX, m_HX, m_material_HX, C_BEC_HX, C_pump_design, TAC, ex_eff_design, en_eff_design, L, ratio_HX, penalty):= UF.Design_HX(Q_d = Q_d_des, T_Na1 = T_Na1_des, T_MS1 = T_MS1_des, T_MS2 = T_MS2_des, d_o = d_o, N_p = N_p, N_sp = N_sp, layout = layout, T_Na2 = T_Na2_design, p_MS1 = p_MS1_des, p_Na1 = p_Na1_des, c_e = c_e, r = r, H_y = H_y, n = n, ratio_max=ratio_max, ratio_cond=ratio_cond, L_max_cond=L_max_cond, L_max_input=L_max_input);            
   end if;
   
-  m_flow_MS_min_des := 1e-3 /*0.202 * m_flow_MS_design*/;
-  m_flow_Na_min_des := 1e-3 /*0.183 * m_flow_Na_design*/;
-
+  m_flow_MS_min_des := 1e-3;
+  m_flow_Na_min_des := 1e-3;
+  
 equation
 //Mass conservation equations
   port_a_in.m_flow + port_a_out.m_flow = 0;
@@ -213,18 +230,22 @@ equation
   Q = max(m_flow_Na_min_des, m_flow_Na) * (h_Na_in - h_Na_out);
   Q = max(m_flow_MS_min_des, m_flow_MS) * (h_MS_out - h_MS_in);
   DT1 = T_Na1 - T_MS2;
-  DT2 = T_Na2 - T_MS1;
-  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0 or abs(DT1 - DT2)<1e-3) then 0 else (DT1 - DT2) / MA.log(DT1 / DT2);
+  DT2 = T_Na2 - T_MS1;  
+  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else if noEvent(abs(DT1 - DT2)<1e-3) then DT1 else (DT1 - DT2) / MA.log(DT1 / DT2);  
   F = 1;
-  (U, h_s, h_t)=UF.HTCs(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, L=L);
+  (U, h_s, h_t)=UF.HTCs(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b);    
   Q = U * A_HX * F * LMTD;
-  (Dp_tube, Dp_shell, v_Na, v_max_MS)=UF.Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS);
-  
-//Assertions
-  problema = if m_flow_MS <= 0 and HF_on then true else false;
-  problema2 = if port_b_out.h_outflow <= 0 then true else false;
-  
-  //assert(problema == false, "Mass Flow Rate zero", level = AssertionLevel.error);
-  //assert(problema2 == false, "Enthalpy_out zero", level = AssertionLevel.error);
+  (Dp_tube, Dp_shell, v_Na, v_max_MS)=UF.Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b, N=N_baffles);
 
+annotation( Documentation(info = "<html>
+	<p>
+		<b>HX</b> provide an optimizated design of a Shell and Tubes HX, based on some input parameters and it models the HX operating conditions based on a LMTD approach.
+	</p>
+	</html>", revisions = "<html>
+	<ul>
+		<li><i>Jan 2020</i> by Salvatore Guccione:<br>
+		Released first version.</li>
+			</ul>
+	</html>"));
+	
 end HX;
