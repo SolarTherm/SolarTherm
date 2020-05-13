@@ -12,12 +12,12 @@ from time import time
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, i, par_v):
+def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""
 	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
 	sim.load_init()
 	sim.update_pars(par_n, par_v)
-	sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep,
+	sim.simulate(start=start, stop=stop, step=step, tolerance=tolerance, initStep=initStep, maxStep=maxStep,
 		integOrder=integOrder, solver=solver, nls=nls, lv=lv, args=args)
 	res = resultclass(sim.res_fn)
 	perf = res.calc_perf()
@@ -73,6 +73,8 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
+	parser.add_argument('--tolerance', type=str, default='1e-04',
+			help='simulation tolerance: <number>')
 	parser.add_argument('--initStep', type=str, default=None,
 			help='simulation initial step size used by dassl and ida methods: <number>[,y,d,m,s]')
 	parser.add_argument('--maxStep', type=str, default=None,
@@ -171,7 +173,7 @@ if __name__ == '__main__':
 		t = time()
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
-				args.stop, args.step, args.initStep, args.maxStep, args.integOrder,
+				args.stop, args.step, args.tolerance, args.initStep, args.maxStep, args.integOrder,
 				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs)
 		if args.np:
 			pool = mp.Pool(processes=args.np)
