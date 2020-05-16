@@ -12,6 +12,7 @@ Reference_1_fluid
 Reference_1_fluid*.[ch]
 Reference_2
 Reference_2*.[ch]
+Reference_2_solstice
 SaltSCO2System
 SaltSCO2System*.[ch]
 NaSaltsCO2System
