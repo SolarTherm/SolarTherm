@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package CaO
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 56.077e-3, T_melt = 3200.0, cost = 0.2);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
-  constant SI.MolarMass MM = 56.077e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 3200.0 "Melting point (K)";
-  constant Real cost = 0.2 "USD/kg";
+  //constant SI.MolarMass MM = 56.077e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 3200.0 "Melting point (K)";
+  //constant Real cost = 0.2 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
 	
@@ -56,10 +56,7 @@ package CaO
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
     output SI.SpecificEnthalpy rho "Density (kg/m3)";
-  protected
-    SI.Temperature T_table[:] = {373.15,473.15,673.15,873.15,1073.15,1273.15};
-    SI.Density rho_table[:] = {15.22976,11.0876,9.16296,8.28432,7.99144,7.78224}; 
   algorithm
-    rho := Interpolate1D(T_table,rho_table,T);
+    rho := 3382.77 - 0.155*T +(3.04e-5)*(T^2);
   end rho_Tf;
 end CaO;

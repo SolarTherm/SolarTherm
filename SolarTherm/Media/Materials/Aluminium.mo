@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package Aluminium
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 26.9815386e-3, T_melt = 933.47, cost = 1.8);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
-  constant SI.MolarMass MM = 26.9815386e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 933.47 "Melting point (K)";
-  constant Real cost = 1.8 "USD/kg";
+  //constant SI.MolarMass MM = 26.9815386e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 933.47 "Melting point (K)";
+  //constant Real cost = 1.8 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
     parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Aluminium.txt");

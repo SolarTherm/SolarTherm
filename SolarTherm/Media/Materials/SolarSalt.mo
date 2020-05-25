@@ -1,12 +1,12 @@
 within SolarTherm.Media.Materials;
 
 package SolarSalt "60% NaNO3 + 40% KNO3 wt"
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 93.04895e-3, T_melt = 260+273.15, cost = 1.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM = 93.04895e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 260+273.15 "Melting point (K)";
-  constant Real cost = 0.0 "USD/kg";
+  //constant SI.MolarMass MM = 93.04895e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 260+273.15 "Melting point (K)";
+  //constant Real cost = 1.0 "USD/kg";
   
   redeclare model State "A model which calculates state and properties"
     parameter SI.SpecificEnthalpy h_start;

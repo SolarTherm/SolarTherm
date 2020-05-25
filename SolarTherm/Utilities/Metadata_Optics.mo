@@ -10,9 +10,10 @@ function Metadata_Optics
     Integer i;
     Integer j;
   algorithm
+
     line := Streams.readLine(file, 5);
     Streams.close(file);
-
+    
     i := 10;
     j := 10;
     (meta[1], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
@@ -23,4 +24,5 @@ function Metadata_Optics
     (meta[6], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     (meta[7], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     (meta[8], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    
 end Metadata_Optics;

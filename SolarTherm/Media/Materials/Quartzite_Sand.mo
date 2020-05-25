@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package Quartzite_Sand
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 60.08e-3, T_melt = 1670+273.15, cost = 1.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM = 60.08e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 1670+273.15 "Melting point (K)";
-  constant Real cost = 1.0 "USD/kg ??";
+  //constant SI.MolarMass MM = 60.08e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 1670+273.15 "Melting point (K)";
+  //constant Real cost = 1.0 "USD/kg ??";
   
   redeclare model State "A model which calculates state and properties"
   	parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Quartzite_Sand.txt");

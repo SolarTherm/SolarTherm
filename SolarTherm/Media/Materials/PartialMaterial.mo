@@ -5,9 +5,9 @@ partial package PartialMaterial
   package Tables = Modelica.Blocks.Tables;
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt "Melting point (K)";
-  constant Real cost "Unit material cost (USD/kg)";
+  constant SI.MolarMass MM = 0.0 "Molar mass (kg/mol)";
+  constant SI.Temperature T_melt = 0.0 "Melting point (K)";
+  constant Real cost = 0.0 "USD/kg";
   
   replaceable partial function h_Tf
     "Return specific enthalpy as a function of temperature and liquid mass fraction f"

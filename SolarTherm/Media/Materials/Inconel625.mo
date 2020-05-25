@@ -1,12 +1,11 @@
 within SolarTherm.Media.Materials;
 package Inconel625
-
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 59e-3, T_melt = 1290+273.15, cost = 34.5);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM = 59e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 1290+273.15 "Melting point (K)";
-  constant Real cost = 34.5 "USD/kg";
+  //constant SI.MolarMass MM = 59e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 1290+273.15 "Melting point (K)";
+  //constant Real cost = 34.5 "USD/kg";
     
   redeclare model State "A model which calculates state and properties"
   	parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Inconel625.txt");

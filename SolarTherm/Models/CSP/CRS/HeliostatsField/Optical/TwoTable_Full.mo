@@ -42,8 +42,9 @@ model TwoTable_Full
   Real nu_blocking;
   Real nu_attenuation;
   Real nu_intercept;
+  Real isp_min;
   
-protected
+
   Modelica.Blocks.Tables.CombiTable2D shading_tableA(
     tableOnFile=true,
     tableName="shading_efficiency",
@@ -116,6 +117,16 @@ protected
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=fileB);
 
+  Modelica.Blocks.Tables.CombiTable2D isp_tableA(
+    tableOnFile=true,
+    tableName="isp",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=fileA);
+  Modelica.Blocks.Tables.CombiTable2D isp_tableB(
+    tableOnFile=true,
+    tableName="isp",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=fileB);
   
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
@@ -174,4 +185,10 @@ equation
   intercept_tableA.u2 = angle2_input.y;
   intercept_tableB.u2 = angle2_input.y;
   nu_intercept = max(0,intercept_tableA.y + weight*(intercept_tableB.y-intercept_tableA.y));
+  
+  isp_tableA.u1 = angle1_input.y;
+  isp_tableB.u1 = angle1_input.y;
+  isp_tableA.u2 = angle2_input.y;
+  isp_tableB.u2 = angle2_input.y;
+  isp_min = min(isp_tableB.y,isp_tableA.y);
 end TwoTable_Full;

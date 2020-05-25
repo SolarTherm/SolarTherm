@@ -16,7 +16,7 @@ model SB_Polar_StirlingSES
   //To be optimised
   //--Tank
   //Trays
-  parameter Real f_recv = 0.75 "Receiver area multiplier to be optimised";
+  parameter Real f_recv = 1.25 "Receiver area multiplier to be optimised";
   parameter Real f_PCM_safety = 1.05 "Safety factor such that PCM does not exceed wall height";
   parameter Real f_HTF_inventory = 1.10 "Multiplier to empty volume between PCM and wall level occupied to sodium at 1073K to calculate sodium mass inventory";
   parameter SI.Length z_PCM = 0.05 "Vertical depth of PCM in each tray, m";
@@ -39,15 +39,20 @@ model SB_Polar_StirlingSES
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   // Heliostat Field
-  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/polar/1MWe/3460c%/1073K/1000kWpm2/" + SM_string + "dSM/" + "isp_designpt/" + "100%HT";
-  //where to find the optics file
+
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   //declination-hourangle
-  parameter String SM_string = String(2 * SolarTherm.Utilities.Round(SM_guess * 5)) "Solar Multiple rounded to the nearest 0.2, multiplied by 10 and converted to string";
+  parameter String SM_string = String(1 * SolarTherm.Utilities.Round(SM_guess * 10))+ "dSM/" "Solar Multiple rounded to the nearest 0.1, multiplied by 10 and converted to string";
+  
+  parameter Real HT_pct_guess = 91;
+  parameter String phi_pct_string = (if field_type == "polar" then "100%phi_" else "100%phi_");
+  parameter String HT_pct_string = String(5 * SolarTherm.Utilities.Round(HT_pct_guess * 0.2)) + "%HT";
   parameter Real land_mult = 5.0 "Land area multiplier";
-  parameter String field_type = "polar";
+  parameter String field_type = "surround";
   //is it polar or surround??
   parameter Real he_av_design = 0.99 "Helisotats availability";
+  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/"+field_type+"/1MWe/5130c%/1073K/500kWpm2/" + SM_string + "isp_designpt/" + phi_pct_string + HT_pct_string;
+  //where to find the optics file
   parameter SI.Energy helio_E_start = 90e3 * A_heliostat / 144.375 "Heliostat startup energy consumption";
   parameter SI.Power helio_W_track = 0.0553 * A_heliostat / 144.375 "Heliostat tracking power";
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
@@ -140,7 +145,7 @@ model SB_Polar_StirlingSES
   parameter SI.MassFlowRate m_flow_blk_des = Q_flow_ref_blk / (h_in_ref_blk - h_out_ref_blk) "Design point mass flow rate of sodium vapor condensing into the power block";
   parameter SI.MassFlowRate m_flow_recv_des = Q_flow_rec_des / (h_out_ref_recv - h_in_ref_recv) "Design mass flow rate into recv";
   // Power block
-  parameter String engine_brand = "SES" "Power block brand {SES,75%Carnot}";
+  parameter String engine_brand = "75%Carnot" "Power block brand {SES,75%Carnot}";
   parameter SI.Power P_gross_des = 1.11e6 "Power block gross rating at design point";
   parameter SI.Power P_name_des = 1.00e6 "Power block nameplate rating";
   parameter SI.Power P_name = P_name_des;
@@ -205,8 +210,6 @@ model SB_Polar_StirlingSES
   Modelica.Blocks.Sources.RealExpression Wspd_input(y = data.Wspd) annotation(
     Placement(visible = true, transformation(extent = {{-140, 38}, {-114, 58}}, rotation = 0)));
   //pressure_input
-  Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
-    Placement(visible = true, transformation(extent = {{138, 86}, {118, 106}}, rotation = 0)));
   //parasitic inputs
   Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss) annotation(
     Placement(visible = true, transformation(origin = {121, 60}, extent = {{-13, -10}, {13, 10}}, rotation = 180)));
@@ -252,45 +255,44 @@ model SB_Polar_StirlingSES
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   Boolean constrained(start = false);
   Real distance(start = 0);
-
-    //Analytics
-    //Accumulated energy
-    SI.Energy E_resource(start=0) "Integral of DNI with time if greater than zero";
-    SI.Energy E_helio_incident(start=0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-    SI.Energy E_helio_raw(start=0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-    SI.Energy E_helio_net(start=0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-    SI.Energy E_recv_absorbed(start=0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-    SI.Energy E_recv_output(start=0) "Cumulative heat energy outputted by the receiver after thermal losses";
-    SI.Energy E_PB_input(start=0) "Cumulative heat energy inputted into the power block";
-    SI.Energy E_PB_gross(start=0) "Cumulative gross electrical energy produced by the power block";
-    SI.Energy E_PB_net(start=0) "Cumulative electrical output of the power block after parasitics and generator losses";
-    
-    Real sum_shading(start=0) "Shading efficiency multiplied by time when heliostats are on";
-    Real sum_cosine(start=0) "Shading efficiency multiplied by time when heliostats are on";
-    Real sum_reflection(start=0) "Shading efficiency multiplied by time when heliostats are on";
-    Real sum_blocking(start=0) "Shading efficiency multiplied by time when heliostats are on"; 
-    Real sum_attenuation(start=0) "Shading efficiency multiplied by time when heliostats are on";
-    Real sum_intercept(start=0) "Shading efficiency multiplied by time when heliostats are on";
-    Real sum_timehelio(start=0) "Sum of time when heliostat is on"; 
-    Real eta_shading;
-    Real eta_cosine;
-    Real eta_reflection;
-    Real eta_blocking;
-    Real eta_attenuation;
-    Real eta_intercept;   
-    //Annual efficiencies
-    Real eta_curtail_off "Curtailment: Heliostat off";
-    Real eta_he_av "Heliostat Availability";
-    Real eta_optical "Field optical efficiency including spillage";
-    Real eta_curtail_defocus "Curtailment: Full Storage";
-    Real eta_recv_abs "Receiver Absorptivity";
-    Real eta_recv_thermal "Receiver thermal efficiency";
-    Real eta_storage "Storage thermal efficiency";
-    Real eta_pb_gross "Power block gross efficiency";
-    Real eta_pb_net "Power block net efficiency";
-    Real eta_solartoelec "Solar to electric";
-    
-    //End Analytics
+  //Analytics
+  //Accumulated energy
+  SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+  SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+  SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+  SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+  SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+  SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+  SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+  SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+  SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+  Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+  Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+  Real eta_shading;
+  Real eta_cosine;
+  Real eta_reflection;
+  Real eta_blocking;
+  Real eta_attenuation;
+  Real eta_intercept;
+  //Annual efficiencies
+  Real eta_curtail_off "Curtailment: Heliostat off";
+  Real eta_he_av "Heliostat Availability";
+  Real eta_optical "Field optical efficiency including spillage";
+  Real eta_curtail_defocus "Curtailment: Full Storage";
+  Real eta_recv_abs "Receiver Absorptivity";
+  Real eta_recv_thermal "Receiver thermal efficiency";
+  Real eta_storage "Storage thermal efficiency";
+  Real eta_pb_gross "Power block gross efficiency";
+  Real eta_pb_net "Power block net efficiency";
+  Real eta_solartoelec "Solar to electric";
+  //End Analytics
+  Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
+    Placement(visible = true, transformation(extent = {{138, 86}, {118, 106}}, rotation = 0)));
 algorithm
   if time > 60.0 then
     if tankHot.m_avail < 1.0e-6 then
@@ -311,51 +313,54 @@ algorithm
       terminate("Invalid Quality");
     end if;
   end if;
-  
-  //Annual Efficieny
+  when time > 43200 then
+    if heliostatsField.optical.isp_min < 1e-3 then
+      constrained := true;
+      distance := 1000 + 1000 * ((31536000.0 - time) / 31536000.0);
+      terminate("Bad aiming");
+    end if;
+  end when;
+//Annual Efficieny
   if time > 31449600 then
-    eta_curtail_off := E_helio_incident/E_resource;
-    eta_optical := E_helio_raw/(E_helio_incident*he_av_design);
+    eta_curtail_off := E_helio_incident / E_resource;
+    eta_optical := E_helio_raw / (E_helio_incident * he_av_design);
     eta_he_av := he_av_design;
-    eta_curtail_defocus := E_helio_net/E_helio_raw;
-    eta_recv_abs := E_recv_absorbed/E_helio_net;
-    eta_recv_thermal := E_recv_output/E_recv_absorbed;
-    eta_storage := E_PB_input/E_recv_output;
-    eta_pb_gross := E_PB_gross/E_PB_input;
-    eta_pb_net := E_PB_net/E_PB_gross;
-    eta_solartoelec := E_PB_net/E_resource;
-    
-    eta_shading := sum_shading/sum_timehelio;
-    eta_cosine := sum_cosine/sum_timehelio;
-    eta_reflection := sum_reflection/sum_timehelio;
-    eta_blocking := sum_blocking/sum_timehelio;
-    eta_attenuation := sum_attenuation/sum_timehelio;
-    eta_intercept := sum_intercept/sum_timehelio;
+    eta_curtail_defocus := E_helio_net / E_helio_raw;
+    eta_recv_abs := E_recv_absorbed / E_helio_net;
+    eta_recv_thermal := E_recv_output / E_recv_absorbed;
+    eta_storage := E_PB_input / E_recv_output;
+    eta_pb_gross := E_PB_gross / E_PB_input;
+    eta_pb_net := E_PB_net / E_PB_gross;
+    eta_solartoelec := E_PB_net / E_resource;
+    eta_shading := sum_shading / sum_timehelio;
+    eta_cosine := sum_cosine / sum_timehelio;
+    eta_reflection := sum_reflection / sum_timehelio;
+    eta_blocking := sum_blocking / sum_timehelio;
+    eta_attenuation := sum_attenuation / sum_timehelio;
+    eta_intercept := sum_intercept / sum_timehelio;
   end if;
-  //Optics
-  
+//Optics
 equation
-  //Analytics
-  //Cumulative heat
-  der(E_resource) = max(sun.dni*A_field,0.0);
-  der(E_helio_incident) = if heliostatsField.on_internal then heliostatsField.n_h*heliostatsField.A_h*max(0.0,heliostatsField.solar.dni) else 0.0;
+//Analytics
+//Cumulative heat
+  der(E_resource) = max(sun.dni * A_field, 0.0);
+  der(E_helio_incident) = if heliostatsField.on_internal then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
-  der(E_recv_absorbed) = receiver.ab*receiver.heat.Q_flow;
+  der(E_recv_absorbed) = receiver.ab * receiver.heat.Q_flow;
   der(E_recv_output) = receiver.Q_rcv;
   der(E_PB_input) = powerBlock.Q_flow;
   der(E_PB_gross) = powerBlock.W_gross;
   der(E_PB_net) = powerBlock.W_net;
-
-  if heliostatsField.on_internal then 
-  //cumulative optics efficiency
-    der(sum_shading) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_shading;
-    der(sum_cosine) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_cosine;
-    der(sum_reflection) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_reflection;
-    der(sum_blocking) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_blocking;
-    der(sum_attenuation) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_attenuation;
-    der(sum_intercept) = max(sun.dni*A_field,0.0)*heliostatsField.optical.nu_intercept;
-    der(sum_timehelio) = max(sun.dni*A_field,0.0);
+  if heliostatsField.on_internal then
+//cumulative optics efficiency
+    der(sum_shading) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_shading;
+    der(sum_cosine) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_cosine;
+    der(sum_reflection) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_reflection;
+    der(sum_blocking) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_blocking;
+    der(sum_attenuation) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_attenuation;
+    der(sum_intercept) = max(sun.dni * A_field, 0.0) * heliostatsField.optical.nu_intercept;
+    der(sum_timehelio) = max(sun.dni * A_field, 0.0);
   else
     der(sum_shading) = 0.0;
     der(sum_cosine) = 0.0;
@@ -365,8 +370,6 @@ equation
     der(sum_intercept) = 0.0;
     der(sum_timehelio) = 0.0;
   end if;
-  
-
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-119, 70}, {-83, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));

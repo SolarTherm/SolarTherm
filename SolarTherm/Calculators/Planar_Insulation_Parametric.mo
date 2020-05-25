@@ -18,14 +18,14 @@ model Planar_Insulation_Parametric
   
   parameter Real T4 = 25.0 "degC ambient";
   parameter Real h = 10.0 "W/m2K ambient convection";
-  parameter Real T1 = 800.0 "Sodium temperature";
+  parameter Real T1 = 700.0 "Sodium temperature";
   
   //This is the max temperature (degC), a severe cost penalty applies if that is exceeded in Rockwool
   parameter Real T2_Max = 650.0 "Maximum tolerable rockwool temperature";
   
-  parameter Integer t1_divs = 500 "number of divisions in thickness_1 expored";
-  parameter Real t1_min = 1e-3 "1mm";
-  parameter Real t1_max = 1e-0 "1m";
+  parameter Integer t1_divs = 1000 "number of divisions in thickness_1 expored";
+  parameter Real t1_min = 0.5e-3 "1mm";
+  parameter Real t1_max = 0.05 "5cm";
   
   //Vary this manually
   //parameter Real U = 3.0 "W/m2K Target U value";
@@ -54,7 +54,7 @@ equation
   end for;
   
   //Sweep t1
-  1/U = 0.2 + time*1.0; //sweep U from 5 all the way down
+  1/U = 0.2 + time*0.1; //sweep U from 5 all the way down
   R = 1/U;
   for i in 1:t1_divs loop
     q = ((A*(T1^3-T2[i]^3)/3.0)+(B*(T1^2-T2[i]^2)/2.0)+C*(T1-T2[i]))/t1[i];

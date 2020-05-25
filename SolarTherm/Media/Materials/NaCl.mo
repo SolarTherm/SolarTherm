@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package NaCl "Pure sodium chloride, sharp melting point"
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 58.443e-3, T_melt = 1073.0, cost = 0.049);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM = 58.443e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 1073.0 "Melting point (K)";
-  constant Real cost = 0.049 "USD/kg";
+  //constant SI.MolarMass MM = 58.443e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 1073.0 "Melting point (K)";
+  //constant Real cost = 0.049 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
     parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/NaCl.txt");

@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package Sodium2P
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 22.989769e-3, T_melt = 97.79 + 273.15, cost = 3.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
-  constant SI.MolarMass MM = 22.989769e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 97.79 + 273.15 "Melting point (K)"; 
-  constant Real cost = 3.0 "USD/kg";
+  //constant SI.MolarMass MM = 22.989769e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 97.79 + 273.15 "Melting point (K)"; 
+  //constant Real cost = 3.0 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
   //Thermodynamic state properties

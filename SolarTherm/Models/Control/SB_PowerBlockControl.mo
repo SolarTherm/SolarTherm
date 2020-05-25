@@ -8,7 +8,7 @@ model SB_PowerBlockControl
   parameter Real m_flow_ref = 10.0 "Design heat flow rate into power block";
   Real PB_load;
   
-  Modelica.Blocks.Interfaces.RealInput T_stor(start=1023) "Temperature of the HTF in storage"
+  Modelica.Blocks.Interfaces.RealInput T_stor "Temperature of the HTF in storage"
     annotation (Placement(visible = true, transformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0), iconTransformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0)));
     
   Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start=0.0) "Power block mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -20}, {130, 20}}, rotation = 0), iconTransformation(extent = {{90, -20}, {130, 20}}, rotation = 0))) ;
@@ -25,6 +25,6 @@ algorithm
   end when;
 
 equation
-  m_flow_PB = PB_load*(m_flow_ref);
+  m_flow_PB = max(PB_load*(m_flow_ref),1e-5);
 
 end SB_PowerBlockControl;

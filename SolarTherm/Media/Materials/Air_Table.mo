@@ -1,11 +1,11 @@
 within SolarTherm.Media.Materials;
 package Air_Table
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 28.97e-3, T_melt = 58, cost = 0.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
-  constant SI.MolarMass MM = 28.97e-3 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 0.0 "Melting point (K)";
-  constant Real cost = 0.0 "USD/kg";
+  //constant SI.MolarMass MM = 28.97e-3 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 0.0 "Melting point (K)";
+  //constant Real cost = 0.0 "USD/kg";
   
   redeclare model State "A model which calculates state and properties"
     parameter SI.SpecificEnthalpy h_start;

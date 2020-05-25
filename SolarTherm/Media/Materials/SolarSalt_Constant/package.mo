@@ -1,7 +1,7 @@
 within SolarTherm.Media.Materials;
 
 package SolarSalt_Constant
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 93.04895e-3, T_melt = 260+273.15, cost = 1.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   import SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.*;
   

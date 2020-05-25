@@ -18,6 +18,6 @@ equation
   port_a.C_outflow = inStream(port_b.C_outflow);
 
 annotation(
-    Diagram(graphics = {Rectangle(extent = {{-80, 40}, {80, -40}}), Text(origin = {2, 1}, extent = {{-46, 13}, {46, -13}}, textString = "loop breaker"), Line(origin = {-89, 0}, points = {{-9, 0}, {9, 0}, {9, 0}}), Line(origin = {90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}})}, coordinateSystem(initialScale = 0.1)),
-    Icon(graphics = {Line(origin = {-90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(points = {{-80, 0}, {80, 0}}), Text(origin = {-1, 6}, extent = {{-51, 2}, {51, -2}}, textString = "Loop Breaker")}, coordinateSystem(initialScale = 0.1)));
+    Diagram(graphics = {Rectangle(extent = {{-80, 40}, {80, -40}}), Text(origin = {2, 1}, extent = {{-46, 13}, {46, -13}}, textString = "Lo Br"), Line(origin = {-89, 0}, points = {{-9, 0}, {9, 0}, {9, 0}}), Line(origin = {90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}})}, coordinateSystem(initialScale = 0.1)),
+    Icon(graphics = {Line(origin = {-90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {90, 0}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(points = {{-80, 0}, {80, 0}}), Text(origin = {-1, 20}, extent = {{-51, 2}, {47, -14}}, textString = "Lo Br")}, coordinateSystem(initialScale = 0.1)));
 end loop_breaker;

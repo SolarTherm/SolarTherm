@@ -9,7 +9,7 @@ model PowerBlockModel
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
   parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power" annotation (Dialog(group="Design"));
 
-  parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
@@ -94,7 +94,8 @@ equation
 
   logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
-  h_out=fluid_b.h_outflow;
+  //h_out=fluid_b.h_outflow;
+  fluid_b.h_outflow=max(0.0,h_out);
   fluid_a.h_outflow = 0;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
@@ -102,17 +103,24 @@ equation
   load=max(nu_eps,fluid_a.m_flow/m_flow_ref); //load=1 if it is no able partial load
 
   if logic then
-    k_q=cycle.k_q;
-    k_w=cycle.k_w;
+    k_q=max(0.1,cycle.k_q);
+    k_w=max(0.1,cycle.k_w);
     Q_flow=-fluid_a.m_flow*(h_out-h_in);
+    
+    Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
+    W_gross/(cool.nu_w*W_des*load)=k_w;
   else
     k_q=0;
     k_w=0;
     h_out=h_out_ref;
+    //h_out=h_in;
+    
+    Q_flow=0.0;
+    W_gross=0.0;
   end if;
 
-  Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
-  W_gross/(cool.nu_w*W_des*load)=k_w;
+  //Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
+  //W_gross/(cool.nu_w*W_des*load)=k_w;
 
   der(E_gross)=W_gross;
   der(E_net)=W_net;

@@ -1,12 +1,12 @@
 within SolarTherm.Media.Materials;
 
 package SS316L
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 54.97e-3, T_melt = 1371+273.15, cost = 4.00);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
-  constant SI.MolarMass MM = 10.1646 "Molar mass (kg/mol)";
-  constant SI.Temperature T_melt = 1371+273.15 "Melting point (K)";
-  constant Real cost = 4.004 "USD/kg";
+  //constant SI.MolarMass MM = 10.1646 "Molar mass (kg/mol)";
+  //constant SI.Temperature T_melt = 1371+273.15 "Melting point (K)";
+  //constant Real cost = 4.004 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
   	parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/SS316L.txt");
@@ -46,4 +46,15 @@ package SS316L
   algorithm
     rho := Interpolate1D(T_data,rho_data,T);
   end rho_Tf;
+  
+  function sigma_yield "Obtain yield stress in Pa"
+    input SI.Temperature T "Absolute temperature (K)";
+    output SI.Stress sigma "Yield stress (Pa)";
+  protected
+    Real T_C = T - 273.15 "Centigrade temperature";
+    Real T_data[8] = {27,149,260,371,482,593,704,816} "Temperature in Celcius";
+    Real sigma_data[8] = {290,201,172,159,148,140,131,110} "Yield stress in MPa";
+  algorithm
+    sigma := 1.0e6*Interpolate1D(T_data,sigma_data,T_C);
+  end sigma_yield;
 end SS316L;

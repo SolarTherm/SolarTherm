@@ -67,11 +67,17 @@ model Tank
         rotation=-90,
         origin={-41,97})));
 
-protected
   parameter SI.Volume V_t=(H*pi*D^2)/4;
   Modelica.Blocks.Interfaces.RealOutput L_internal;
   Modelica.Blocks.Interfaces.RealInput p_top_internal;
   Modelica.Blocks.Interfaces.RealInput T_amb_internal;
+
+algorithm
+  when medium.T<T_set then
+	W_net:=min(-Q_losses,W_max)*1.05;
+  elsewhen medium.T>T_set+1 then
+	W_net:=0;
+  end when;
 
 initial equation
   medium.h=Medium.specificEnthalpy(state_i);
@@ -85,7 +91,7 @@ equation
   else
     p_top_internal=p_fixed;
   end if;
-    if enable_losses then
+  if enable_losses then
     connect(T_amb_internal,T_amb);
     Q_losses=-A*alpha*(medium.T-T_amb_internal);
     else
@@ -105,11 +111,12 @@ equation
   L_internal=100*V/V_t;
   A=2*pi*(D/2)*H*(L_internal/100);
 
-  if medium.T<T_set then
-    W_net=min(-Q_losses,W_max);
-  else
-    W_net=0;
-  end if;
+//Assume overheat of 1kW and hysteresis bounds of +-1K
+  //if medium.T<T_set then
+    //W_net=min(-Q_losses,W_max);
+  //else
+    //W_net=0;
+  //end if;
 
  W_loss=W_net/e_ht;
 

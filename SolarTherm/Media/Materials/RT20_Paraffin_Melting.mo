@@ -1,10 +1,10 @@
 within SolarTherm.Media.Materials;
 package RT20_Paraffin_Melting
-  extends SolarTherm.Media.Materials.PartialMaterial;
+  extends SolarTherm.Media.Materials.PartialMaterial(MM = 353e-3, T_melt = 295.15, cost = 0.049); //DOnt trust these constants
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
-  constant SI.Temperature T_melt = 295.15 "Melting point (K)";
-  constant Real cost = 0.049 "USD/kg";
+  //constant SI.Temperature T_melt = 295.15 "Melting point (K)";
+  //constant Real cost = 0.049 "USD/kg";
 
   redeclare model State "A model which calculates state and properties"
   	parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/RT20_Paraffin_Slow.txt");
