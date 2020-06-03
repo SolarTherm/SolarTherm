@@ -73,15 +73,18 @@ def run_simul(inputs={}):
         else:
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
 
+        if pm.field_type[-3:]=='csv':
+            oelt, A_land=crs.run_annual_system(num_rays=int(pm.n_rays), nd=pm.n_row_oelt, nh=pm.n_col_oelt, zipfiles=False, genvtk_hst=False, plot=False)     
 
-        oelt, A_land=crs.field_design_annual(method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, latitude=pm.lat, dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=pm.n_row_oelt, nh=pm.n_col_oelt, weafile=pm.wea_file, zipfiles=False, genvtk_hst=True, plot=False)         
+        else:
+            oelt, A_land=crs.field_design_annual(method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, latitude=pm.lat, dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=pm.n_row_oelt, nh=pm.n_col_oelt, weafile=pm.wea_file, zipfiles=False, genvtk_hst=True, plot=False)         
 
 
         if (A_land==0):    
             tablefile=None
         else:                                                
             A_helio=pm.H_helio*pm.W_helio
-            output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=crs.Q_in_rcv, A_land=A_land, savedir=tablefile)
+            output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
             end=time.time()
             print ''
             print 'total time %.2f'%((end-start)/60.), 'min' 
@@ -97,17 +100,17 @@ if __name__=='__main__':
     W_helio=12.015614841
     H_helio=12.015614841
     H_tower=183.331344997
-    n_row_oelt=5
+    n_row_oelt=3
     n_col_oelt=5
     R1=40.
     fb=0.4
     W_rcv=14.9999995285
     H_rcv=18.6699994131
 
-
-    wea_file='/home/yewang/solartherm-integration/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab'
-    wea_file2='/home/yewang/solartherm-integration/SolarTherm/Data/Weather/example_TMY3.motab'
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'field_type':'surround', 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb}
+    field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/pos_and_aiming.csv'
+    wea_file='/home/yewang/solartherm-philipe/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab'
+    #wea_file2='/home/yewang/solartherm-integration/SolarTherm/Data/Weather/example_TMY3.motab'
+    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'field_type':'surround', 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type}
 
     run_simul(inputs)
 
