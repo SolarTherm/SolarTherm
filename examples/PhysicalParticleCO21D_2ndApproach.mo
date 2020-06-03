@@ -142,7 +142,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Real f_fixed_load = 0.0055 "Fixed load constantly consumed by PB when it operates";
   parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
   parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
-  parameter SI.ThermodynamicTemperature T_high = 715 + 273.15 "inlet temperature of the turbine";
+  parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
   parameter Real PR = 25 / 9.17 "Pressure ratio";
   parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
   // main Compressor parameters
@@ -237,7 +237,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Real r_contg = 0.1 "Contingency rate";
   parameter Real r_indirect = 0.13 "Indirect capital costs rate";
   parameter Real r_cons = 0.09 "Construction cost rate";
-  parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio)*0.3716 else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio)*0.3716 / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gen3 Roadmap Report = 37.16% of Emes cost";
+  parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gen3 Roadmap Report = 37.16% of Emes cost";
   parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
   parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
   parameter FI.Money pri_tower = if currency == Currency.USD then 157.44 else 157.44 / r_cur "Fixed tower cost";
@@ -267,8 +267,7 @@ model PhysicalParticleCO21D_2ndApproach
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
   parameter Boolean new_storage_calc = false;
-  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else 
-  (pri_bin + 3.69*(T_hot_set-600)/400) * SA_storage + (pri_bin + 3.69*(T_cold_set-600)/400)* SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
+  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else (pri_bin + 3.69 * (T_hot_set - 600) / 400) * SA_storage + (pri_bin + 3.69 * (T_cold_set - 600) / 400) * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
   parameter FI.Money C_insulation = if new_storage_calc then if U_value == 0 then 0 else 2 * SA_storage * (131.0426 / U_value + 23.18) else 0;
   //(131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
   //(873.11/U_value) - 322.202 ======> cost function insulation of Tuffcrete, Pumplite60 and Concrete
@@ -350,7 +349,7 @@ model PhysicalParticleCO21D_2ndApproach
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pinch = pinch, P_nom = P_net) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pinch = pinch, P_nom = P_net, T_high = T_high) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(

@@ -303,9 +303,9 @@ model PhysicalParticleSystem1D
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 20, H_drop_design = H_receiver, test_mode = false, fixed_geometry = true, with_wall_conduction = true, fixed_cp = false, with_isothermal_backwall = false, with_uniform_curtain_props = false) annotation(
     Placement(visible = true, transformation(origin = {-28, 28}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
-  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, Ti = Ti, Kp = Kp, eta_rec_th_des = eta_rec_th_des) annotation(
+  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des) annotation(
     Placement(visible = true, transformation(origin = {20, -4}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-// Analytics PG
+  // Analytics PG
   SI.Energy E_resource(start = 0);
   SI.Energy E_helio_incident(start = 0);
   SI.Energy E_helio_raw(start = 0);
@@ -325,6 +325,10 @@ model PhysicalParticleSystem1D
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
+  Modelica.Blocks.Sources.RealExpression realExpression(y = 1) annotation(
+    Placement(visible = true, transformation(extent = {{-140, 44}, {-114, 64}}, rotation = 0)));
+  Modelica.Blocks.Sources.BooleanExpression always_on(y = true) annotation(
+    Placement(visible = true, transformation(origin = {-128, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -338,7 +342,6 @@ algorithm
     eta_pb_net := E_pb_net / E_pb_input;
     eta_solartoelec := E_pb_net / E_resource;
   end if;
-  
 initial equation
   if fixed_field then
 /* FIXME 'fixed field' mode should assume fixed R_des, and load a pre-defined
@@ -367,7 +370,7 @@ initial equation
 // FIXME check the 'match_sam' issue again here.
   W_receiver * H_receiver = A_receiver;
 equation
- der(E_resource) = max(sun.dni * A_field, 0.0);
+  der(E_resource) = max(sun.dni * A_field, 0.0);
   der(E_helio_incident) = if heliostatsField.on_internal then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
@@ -376,7 +379,6 @@ equation
   der(E_pb_input) = powerBlock.Q_flow;
   der(E_pb_gross) = -powerBlock.W_gross;
   der(E_pb_net) = -powerBlock.W_net;
-
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -460,6 +462,14 @@ equation
     Line(points = {{96, 14}, {90, 14}, {90, 8}, {86, 8}, {86, 8}}, color = {0, 127, 255}));
   connect(temperature.T, simpleReceiverControl.T_out_receiver) annotation(
     Line(points = {{-8, 64}, {-10, 64}, {-10, 26}, {20, 26}, {20, 8}, {20, 8}}, color = {0, 0, 127}));
+  connect(particleReceiver1D.eta_rec_out, simpleReceiverControl.eta_rec) annotation(
+    Line(points = {{-22, 24}, {16, 24}, {16, 8}, {16, 8}}, color = {0, 0, 127}));
+  connect(realExpression.y, particleReceiver1D.Wdir) annotation(
+    Line(points = {{-112, 54}, {-32, 54}, {-32, 44}, {-32, 44}}, color = {0, 0, 127}));
+  connect(realExpression.y, particleReceiver1D.Wspd) annotation(
+    Line(points = {{-112, 54}, {-28, 54}, {-28, 44}, {-28, 44}}, color = {0, 0, 127}));
+  connect(always_on.y, heliostatsField.on_hopper) annotation(
+    Line(points = {{-116, -4}, {-110, -4}, {-110, 18}, {-88, 18}, {-88, 20}}, color = {255, 0, 255}));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {2, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Simple Receiver Control", fontSize = 6, fontName = "CMU Serif", textStyle = {TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold}), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -44}, extent = {{-10, 8}, {10, -8}}, textString = "LiftRC", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
@@ -473,55 +483,3 @@ equation
 
 	</html>"));
 end PhysicalParticleSystem1D;
-
-
-
-
-
-
-
-
-/*// Analytics PG
-  SI.Energy E_resource(start = 0);
-  SI.Energy E_helio_incident(start = 0);
-  SI.Energy E_helio_raw(start = 0);
-  SI.Energy E_helio_net(start = 0);
-  SI.Energy E_recv_incident(start = 0);
-  SI.Energy E_recv_net(start = 0);
-  SI.Energy E_pb_input(start = 0);
-  SI.Energy E_pb_gross(start = 0);
-  SI.Energy E_pb_net(start = 0);
-  Real eta_curtail_off(start = 0);
-  Real eta_optical(start = 0);
-  Real eta_he_av(start = 0);
-  Real eta_curtail_defocus(start = 0);
-  Real eta_recv_abs(start = 0);
-  Real eta_recv_thermal(start = 0);
-  Real eta_storage(start = 0);
-  Real eta_pb_gross(start = 0);
-  Real eta_pb_net(start = 0);
-  Real eta_solartoelec(start = 0);
-algorithm
-  if time > 31449600 then
-    eta_curtail_off := E_helio_incident / E_resource;
-    eta_optical := E_helio_raw / (E_helio_incident * he_av_design);
-    eta_he_av := he_av_design;
-    eta_curtail_defocus := E_helio_net / E_helio_raw;
-    eta_recv_abs := E_recv_incident / E_helio_net;
-    eta_recv_thermal := E_recv_net / E_recv_incident;
-    eta_storage := E_pb_input / E_recv_net;
-    eta_pb_gross := E_pb_gross / E_pb_input;
-    eta_pb_net := E_pb_net / E_pb_input;
-    eta_solartoelec := E_pb_net / E_resource;
-  end if;
-  
-  equation
-    der(E_resource) = max(sun.dni * A_field, 0.0);
-  der(E_helio_incident) = if heliostatsField.on_internal then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
-  der(E_helio_raw) = heliostatsField.Q_raw;
-  der(E_helio_net) = heliostatsField.Q_net;
-  der(E_recv_incident) = particleReceiver1D.heat.Q_flow;
-  der(E_recv_net) = particleReceiver1D.Qdot_rec;
-  der(E_pb_input) = powerBlock.Q_flow;
-  der(E_pb_gross) = -powerBlock.W_gross;
-  der(E_pb_net) = -powerBlock.W_net;*/

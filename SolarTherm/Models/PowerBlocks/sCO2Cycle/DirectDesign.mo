@@ -128,62 +128,80 @@ package DirectDesign
 
   model Turbine "OD model of a turbine"
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     import SI = Modelica.SIunits;
-  
-    parameter SI.Efficiency eta_design = 0.9 "isentropic efficiency of the turbine";
-    parameter SI.Efficiency PR = 3 "Pressure ratio";
-    parameter SI.ThermodynamicTemperature T_amb = 273.15 + 40 "Outlet temperature in Kelvin";
-    parameter Modelica.SIunits.Area A_nozzle(fixed = false);
-    parameter SI.AngularVelocity N_shaft = 3358;
-    parameter SI.Diameter diam_turb(fixed = false);
-    parameter SI.Velocity tipSpeed_des(fixed = false);
-    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-60, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-60, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {60, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {60, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    SI.Efficiency eta_turb "efficiency of the turbine";
-    SI.Density d_outlet;
-    SI.Velocity C_spouting(start = C_spouting_des);
-    MedPB.ThermodynamicState state_a(h.start = h_in_des) "thermodynamic state at the entrance";
-    MedPB.ThermodynamicState state_isen "thermodynamic state at the end of the isentropic decompression";
-    MedPB.ThermodynamicState state_b "thermodynamic state at the end of the real decompresssion";
-    SI.Power W_turb "Outlet power";
-    SI.AbsolutePressure p_out(start = p_out_des);
-    SI.SpecificEntropy s_entrance " entropy at the entrance of the turbine";
-    parameter MedPB.ThermodynamicState state_in_des(p.fixed = false, h.fixed = false, h.start = 1.2 * 10 ^ 6), state_isen_des(p.fixed = false, h.fixed = false), state_out_des(p.fixed = false, h.fixed = false, h.start = 900000);
-    parameter SI.SpecificEnthalpy h_in_des(fixed = false), h_out_des(fixed = false);
-    parameter SI.AbsolutePressure p_in_des(fixed = false), p_out_des(fixed = false, start = 80 * 10 ^ 5);
-    parameter SI.Velocity C_spouting_des(fixed = false, start = 500);
-    parameter SI.MassFlowRate m_des(fixed = false);
-    parameter SI.Power W_turb_des(fixed = false);
-    
+  
+  	parameter Modelica.SIunits.Efficiency eta_design = 0.9 "isentropic efficiency of the turbine";
+  	parameter Modelica.SIunits.Efficiency PR = 3 "Pressure ratio";
+  	parameter Modelica.SIunits.Temperature T_amb = from_degC(40) "Outlet temperature";
+  	parameter Modelica.SIunits.Area A_nozzle(fixed = false);
+  	parameter Modelica.SIunits.AngularVelocity N_shaft = 3358;
+  	parameter Modelica.SIunits.Diameter diam_turb(fixed = false);
+  	parameter Modelica.SIunits.Velocity tipSpeed_des(fixed = false);
+  
+  	Modelica.SIunits.Efficiency eta_turb "efficiency of the turbine";
+  	Modelica.SIunits.Density d_outlet;
+  	Modelica.SIunits.Velocity C_spouting(start = C_spouting_des);
+  	Medium.ThermodynamicState state_a (h.start=h_in_des) "thermodynamic state at the entrance";
+  	Medium.ThermodynamicState state_isen "thermodynamic state at the end of the isentropic decompression";
+  	Medium.ThermodynamicState state_b "thermodynamic state at the end of the real decompresssion";
+  
+  	parameter Medium.ThermodynamicState state_in_des(p.fixed = false, h.fixed = false, h.start = 1.2e6);
+  	parameter Medium.ThermodynamicState state_isen_des(p.fixed = false, h.fixed = false);
+  	parameter Medium.ThermodynamicState state_out_des(p.fixed = false, h.fixed = false, h.start = 9e5);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_des(fixed = false);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_out_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_des(fixed = false, start = 80e5);
+  	parameter Modelica.SIunits.Velocity C_spouting_des(fixed = false, start = 500);
+  	parameter Modelica.SIunits.MassFlowRate m_des(fixed = false);
+  	parameter Modelica.SIunits.Power W_turb_des(fixed = false);
+  
+  	Modelica.SIunits.Power W_turb "Outlet power";
+  	Modelica.SIunits.AbsolutePressure p_out(start = p_out_des);
+  	Modelica.SIunits.SpecificEntropy s_entrance " entropy at the entrance of the turbine";
+  
   initial equation
-    state_in_des = MedPB.setState_phX(p_in_des, h_in_des);
-    state_isen_des = MedPB.setState_psX(p_in_des / PR, MedPB.specificEntropy(state_in_des));
-    h_out_des = state_in_des.h + (state_isen_des.h - state_in_des.h) * eta_design;
-    p_out_des = p_in_des / PR;
-    state_out_des.p = p_out_des;
-    state_out_des.h = h_out_des;
-    C_spouting_des ^ 2 = 2 * (state_in_des.h - state_isen_des.h);
-    m_des = C_spouting_des * A_nozzle * MedPB.density(state_out_des);
-    W_turb_des = m_des * (h_out_des - state_in_des.h);
-    tipSpeed_des = N_shaft * diam_turb / 2;
-    tipSpeed_des / C_spouting_des = 0.707;
+  	state_in_des = Medium.setState_phX(p_in_des, h_in_des);
+  	state_isen_des = Medium.setState_psX(p_in_des / PR, Medium.specificEntropy(state_in_des));
+  
+  	h_out_des = state_in_des.h + (state_isen_des.h - state_in_des.h) * eta_design;
+  	p_out_des = p_in_des / PR;
+  
+  	state_out_des.p = p_out_des;
+  	state_out_des.h = h_out_des;
+  
+  	C_spouting_des ^ 2 = 2 * (state_in_des.h - state_isen_des.h);
+  	m_des = C_spouting_des * A_nozzle * Medium.density(state_out_des);
+  
+  	W_turb_des = m_des * (h_out_des - state_in_des.h);
+  	tipSpeed_des = N_shaft * diam_turb / 2;
+  	tipSpeed_des / C_spouting_des = 0.707;
+  
   equation
-    state_a = MedPB.setState_phX(port_a.p, inStream(port_a.h_outflow));
-    s_entrance = MedPB.specificEntropy(state_a);
-    state_isen = MedPB.setState_psX(p_out, s_entrance);
-    state_b = MedPB.setState_phX(p_out, state_a.h + (state_isen.h - state_a.h) * eta_turb);
-    port_b.p = state_b.p;
-    port_a.h_outflow = inStream(port_b.h_outflow);
-    port_b.h_outflow = state_b.h;
-    W_turb = port_a.m_flow * (state_b.h - state_a.h);
-    port_a.m_flow + port_b.m_flow = 0;
-    d_outlet = MedPB.density(state_b);
-    port_a.m_flow = C_spouting * A_nozzle * d_outlet;
-    C_spouting ^ 2 = 2 * (state_a.h - state_isen.h);
-    eta_turb = eta_design * 2 * (tipSpeed_des / C_spouting) * sqrt(1 - (tipSpeed_des / C_spouting) ^ 2);
+  	state_a = Medium.setState_phX(port_a.p, inStream(port_a.h_outflow));
+  	s_entrance = Medium.specificEntropy(state_a);
+  
+  	state_isen = Medium.setState_psX(p_out, s_entrance);
+  	state_b = Medium.setState_phX(p_out, state_a.h + (state_isen.h - state_a.h) * eta_turb);
+  
+  	port_b.p = state_b.p;
+  	port_a.h_outflow = inStream(port_b.h_outflow);
+  	port_b.h_outflow = state_b.h;
+  
+  	W_turb = port_a.m_flow * (state_b.h - state_a.h);
+  
+  	port_a.m_flow + port_b.m_flow = 0;
+  	d_outlet = Medium.density(state_b);
+  	port_a.m_flow = C_spouting * A_nozzle * d_outlet;
+  	C_spouting ^ 2 = 2 * (state_a.h - state_isen.h);
+  
+  	eta_turb = eta_design * 2 * (tipSpeed_des / C_spouting) * sqrt(1 - (tipSpeed_des / C_spouting) ^ 2);
+  
     annotation(
       Documentation(info = "<html>
   		<p>This turbine's model is based on the phD thesis of J. Dyreby.&nbsp;</p>
@@ -197,14 +215,10 @@ package DirectDesign
 
   model Exchanger
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
     replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
     import SI = Modelica.SIunits;
-    parameter SI.ThermodynamicTemperature T_out_CO2_des = 700 + 273.15;
-    parameter SI.Power P_nom_des = 164000;
-    input Boolean m_sup "when m_sup=false, m_HTF=m_HTF_design and P_elec=0 -> allows switching off the PB";
-    parameter Real ratio_m_des = 1 "ratio of m_CO2_des/m_HTF_des at design point";
-    parameter Integer N_exch = 8;
+    import Modelica.SIunits.Conversions.*;
     Modelica.Fluid.Interfaces.FluidPort_a HTF_port_a(redeclare package Medium = MedRec) annotation(
       Placement(visible = true, transformation(origin = {70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_a CO2_port_a(redeclare package Medium = MedPB) annotation(
@@ -213,74 +227,114 @@ package DirectDesign
       Placement(visible = true, transformation(origin = {-70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_b CO2_port_b(redeclare package Medium = MedPB) annotation(
       Placement(visible = true, transformation(origin = {70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    MedPB.ThermodynamicState[N_exch] state_CO2, state_HTF;
-    SI.SpecificEnthalpy[N_exch] h_CO2(start = {990000 + i / N_exch * 200000 for i in 1:N_exch}), h_HTF(start = {600000 + i / N_exch * 200000 for i in 1:N_exch});
-    Real[N_exch] deltaT "Temperature difference in the heat exchangers";
-    SI.HeatFlowRate Q_HX;
-    SI.ThermodynamicTemperature T_CO2_out, T_HTF_out;
-    //Real deltaT_lm;
-    Real deltaTAve;
-    SI.MassFlowRate m_HTF_bis(start = P_nom_des / 10 ^ 5);
-    parameter SI.HeatFlowRate Q_HX_des(fixed = false);
-    parameter SI.MassFlowRate m_CO2_des(fixed = false), m_HTF_des(fixed = false);
-    parameter SolarTherm.Types.Conductance UA_HX(fixed = false) "on-design conductance of the overall exchanger";
-    parameter SolarTherm.Types.Conductance[N_exch - 1] UA_HX_dis(each fixed = false) "on-design conductance of the exchanger";
-    parameter SI.SpecificEnthalpy h_in_HTF_des(fixed = false, start = 855000), h_out_HTF_des(fixed = false), h_in_CO2_des(fixed = false, start = 900000), h_out_CO2_des(fixed = false, start = 1.2 * 10 ^ 6);
-    parameter Real[N_exch] deltaT_des(each fixed = false, each start = 75);
-    parameter SI.AbsolutePressure p_in_CO2_des(fixed = false), p_out_CO2_des(fixed = false);
-    parameter SI.AbsolutePressure p_in_HTF_des(fixed = false), p_out_HTF_des(fixed = false);
-    parameter SI.ThermodynamicTemperature[N_exch] T_CO2_des(each fixed = false, start = {600 + 273.15 + 120 * (i / N_exch) for i in 1:N_exch}), T_HTF_des(each fixed = false, start = {650 + 273.15 + 120 * (i / N_exch) for i in 1:N_exch});
-    parameter MedPB.ThermodynamicState[N_exch] state_CO2_des(each p.fixed = false, each h.fixed = false, each p.start = 250 * 10 ^ 5, each h.start = 10 ^ 6), state_HTF_des(each p.fixed = false, each h.fixed = false, each p.start = 10 ^ 5, each h.start = 855004);
-  initial equation
-    for i in 1:N_exch loop
-      deltaT_des[i] = MedRec.temperature(state_HTF_des[i]) - MedPB.temperature(state_CO2_des[i]);
-      state_CO2_des[i] = MedPB.setState_pTX(p_in_CO2_des, T_CO2_des[i]);
-      state_HTF_des[i] = MedRec.setState_pTX(p_in_HTF_des, T_HTF_des[i]);
-    end for;
-    T_CO2_des[N_exch] = T_out_CO2_des;
-    for i in 1:N_exch - 1 loop
-      Q_HX_des = ratio_m_des * (state_CO2_des[i + 1].h - state_CO2_des[i].h);
-      Q_HX_des = state_HTF_des[i + 1].h - state_HTF_des[i].h;
-      m_HTF_des * Q_HX_des = UA_HX_dis[i] * (deltaT_des[i] + deltaT_des[i + 1]) / 2;
-    end for;
-    UA_HX = sum(UA_HX_dis);
-    p_in_CO2_des = p_out_CO2_des;
-    p_in_HTF_des = p_out_HTF_des;
-    h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_des[N_exch]);
-    h_out_HTF_des = MedRec.specificEnthalpy(state_HTF_des[1]);
-    h_in_CO2_des = state_CO2_des[1].h;
-    h_out_CO2_des = state_CO2_des[N_exch].h;
-    m_CO2_des = ratio_m_des * m_HTF_des;
     
+  	parameter Modelica.SIunits.Temperature T_out_CO2_des = from_degC(715);
+  	parameter Modelica.SIunits.Power P_nom_des = 164000;
+  	parameter Real ratio_m_des = 1 "ratio of m_CO2_des/m_HTF_des at design point";
+  	parameter Integer N_exch = 8;
+  	parameter Modelica.SIunits.HeatFlowRate Q_HX_des(fixed = false);
+  	parameter Modelica.SIunits.MassFlowRate m_CO2_des(fixed = false);
+  	parameter Modelica.SIunits.MassFlowRate m_HTF_des(fixed = false);
+  	parameter Modelica.SIunits.ThermalConductance UA_HX(fixed = false) "on-design conductance of the overall exchanger";
+  	parameter Modelica.SIunits.ThermalConductance[N_exch-1] UA_HX_dis(each fixed = false) "on-design conductance of the exchanger";
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_HTF_des(fixed = false, start = 855e3);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_CO2_des(fixed = false, start = 9e5);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_out_HTF_des(fixed = false);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_out_CO2_des(fixed = false, start = 1.2e6);
+  	parameter Real[N_exch] deltaT_des(each fixed = false, each start = 75);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_CO2_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_HTF_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_CO2_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_HTF_des(fixed = false);
+  	parameter Modelica.SIunits.Temperature[N_exch] T_CO2_des(each fixed = false, start={from_degC(600) + 120*(i/N_exch) for i in 1:N_exch});
+  	parameter Modelica.SIunits.Temperature[N_exch] T_HTF_des(each fixed = false, start = {from_degC(650) + 120*(i/N_exch) for i in 1:N_exch});
+  	parameter Modelica.SIunits.Temperature T_HTF_des_out = from_degC(580.3);
+  	parameter MedPB.ThermodynamicState[N_exch] state_CO2_des(each p.fixed = false, each h.fixed = false, each p.start = 25e6, each h.start = 1e6);
+  	parameter MedPB.ThermodynamicState[N_exch] state_HTF_des(each p.fixed = false, each h.fixed = false, each p.start = 1e5, each h.start = 855004);
+  
+  	MedPB.ThermodynamicState[N_exch] state_CO2;
+  	MedPB.ThermodynamicState[N_exch] state_HTF;
+  	Modelica.SIunits.SpecificEnthalpy[N_exch] h_CO2(start = {9.9e5 + (i/N_exch)*2e5 for i in 1:N_exch});
+  	Modelica.SIunits.SpecificEnthalpy[N_exch] h_HTF(start={6e5 + (i/N_exch)*2e5 for i in 1:N_exch});
+  	Modelica.SIunits.Temperature T_HTF_in;
+  	Modelica.SIunits.TemperatureDifference[N_exch] deltaT "Temperature difference in the heat exchangers";
+  	Modelica.SIunits.HeatFlowRate Q_HX;
+  	Modelica.SIunits.Temperature T_CO2_out;
+  	Modelica.SIunits.Temperature T_HTF_out;
+  	Modelica.SIunits.TemperatureDifference deltaTAve;
+  	Modelica.SIunits.MassFlowRate m_HTF_bis (start=P_nom_des/1e5);
+  	
+  	input Boolean m_sup "when m_sup=false, m_HTF=m_HTF_design and P_elec=0 -> allows switching off the PB";
+  	
+  initial equation
+  	for i in 1:N_exch loop
+  	deltaT_des[i] = MedRec.temperature(state_HTF_des[i]) - MedPB.temperature(state_CO2_des[i]);
+  	state_CO2_des[i] = MedPB.setState_pTX(p_in_CO2_des, T_CO2_des[i]);
+  	state_HTF_des[i] = MedRec.setState_pTX(p_in_HTF_des, T_HTF_des[i]);
+  	end for;
+  
+  	T_CO2_des[N_exch]=T_out_CO2_des;
+  
+  	for i in 1:(N_exch-1) loop
+  	Q_HX_des = ratio_m_des * (state_CO2_des[i+1].h - state_CO2_des[i].h);
+  	Q_HX_des =(state_HTF_des[i+1].h - state_HTF_des[i].h);
+  	m_HTF_des*Q_HX_des = UA_HX_dis[i] * (deltaT_des[i] + deltaT_des[i+1]) / 2;
+  	end for;
+  
+  	UA_HX=sum(UA_HX_dis);
+  
+  	p_in_CO2_des = p_out_CO2_des;
+  	p_in_HTF_des = p_out_HTF_des;
+  	h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_des[N_exch]);
+  	h_out_HTF_des = MedRec.specificEnthalpy(state_HTF_des[1]);
+  	h_in_CO2_des = state_CO2_des[1].h;
+  	h_out_CO2_des = state_CO2_des[N_exch].h;
+  	m_CO2_des = ratio_m_des * m_HTF_des;
+  
   equation
-    for i in 1:N_exch loop
-      deltaT[i] = if m_sup then MedRec.temperature(state_HTF[i]) - MedPB.temperature(state_CO2[i]) else deltaT_des[i];
-      state_CO2[i] = MedPB.setState_phX(CO2_port_a.p, h_CO2[i]);
-      state_HTF[i] = MedRec.setState_phX(HTF_port_a.p, h_HTF[i]);
-    end for;
-    T_CO2_out = MedPB.temperature(state_CO2[N_exch]);
-    T_HTF_out = MedRec.temperature(state_HTF[1]);
-//deltaT_lm = if deltaT[2] * deltaT[1] < 0 then (abs(deltaT[1]) ^ (1 / 3) * sign(deltaT[1]) / 2 + abs(deltaT[2]) ^ (1 / 3) * sign(deltaT[2]) / 2) ^ 3 else (deltaT[1] - deltaT[2]) / (Modelica.Math.log(deltaT[1] / deltaT[2]) + 0.0001);
-    deltaTAve = (deltaT[1] + deltaT[N_exch]) / 2;
-    h_CO2[N_exch] = CO2_port_b.h_outflow;
-    h_HTF[N_exch] = if m_sup then inStream(HTF_port_a.h_outflow) else h_in_HTF_des;
-    h_CO2[1] = inStream(CO2_port_a.h_outflow);
-    HTF_port_b.h_outflow = if m_sup then h_HTF[1] else inStream(HTF_port_a.h_outflow);
-    m_HTF_bis = if m_sup then HTF_port_a.m_flow else m_HTF_des;
-    Q_HX = CO2_port_a.m_flow * (h_CO2[N_exch] - h_CO2[1]);
-    for i in 1:N_exch - 1 loop
-      m_HTF_bis * (h_HTF[i + 1] - h_HTF[i]) = CO2_port_a.m_flow * (h_CO2[i + 1] - h_CO2[i]);
-      CO2_port_a.m_flow * (h_CO2[i + 1] - h_CO2[i]) = UA_HX_dis[i] * (1 / 2 * abs(m_HTF_bis / m_HTF_des + CO2_port_a.m_flow / m_CO2_des)) ^ 0.8 * (deltaT[i] + deltaT[i + 1]) / 2;
-    end for;
-    HTF_port_a.h_outflow = inStream(HTF_port_b.h_outflow);
-    CO2_port_a.h_outflow = inStream(CO2_port_b.h_outflow);
-//It is necessary to have one equation in a cycle that doesn't imply a circular equality on the mass flow rates
-//CO2_port_b.m_flow + CO2_port_a.m_flow = 0;
-    HTF_port_a.m_flow + HTF_port_b.m_flow = 0;
-//CO2_port_a.m_flow = if m_sup then HTF_port_a.m_flow else m_CO2_des * 0.8;
-// Pressure equality
-    CO2_port_b.p = CO2_port_a.p;
-    HTF_port_a.p = HTF_port_b.p;
+  	// Asigning props to each node
+  	for i in 1:N_exch loop
+  		deltaT[i] = if m_sup then MedRec.temperature(state_HTF[i]) - MedPB.temperature(state_CO2[i]) else deltaT_des[i];
+  		state_CO2[i] = MedPB.setState_phX(CO2_port_a.p, h_CO2[i]);
+  		state_HTF[i] = MedRec.setState_phX(HTF_port_a.p, h_HTF[i]);
+  	end for;
+  	
+  	T_CO2_out = MedPB.temperature(state_CO2[N_exch]); // Cold outlet temperature at the last node
+  	T_HTF_out = MedRec.temperature(state_HTF[1]);	 // Hot outlet temperature at the first node
+  	
+  	deltaTAve = (deltaT[1] + deltaT[N_exch]) / 2; // Setting an average temperature difference
+  	
+  	h_CO2[N_exch] = CO2_port_b.h_outflow;
+  	h_CO2[1] = inStream(CO2_port_a.h_outflow);
+  	
+  	h_HTF[N_exch] = if m_sup then inStream(HTF_port_a.h_outflow) else h_in_HTF_des;
+  	
+  	HTF_port_b.h_outflow = if m_sup then h_HTF[1] else inStream(HTF_port_a.h_outflow);
+  	
+  	m_HTF_bis = if m_sup then HTF_port_a.m_flow else m_HTF_des;
+  	
+  	Q_HX = CO2_port_a.m_flow * (h_CO2[N_exch] - h_CO2[1]);
+  		
+  	for i in 1:(N_exch-1) loop 
+  	m_HTF_bis*(h_HTF[i+1]-h_HTF[i])=CO2_port_a.m_flow*(h_CO2[i+1]-h_CO2[i]);
+  	CO2_port_a.m_flow*(h_CO2[i+1]-h_CO2[i])=UA_HX_dis[i]* (1 / 2 * abs(m_HTF_bis / m_HTF_des + CO2_port_a.m_flow / m_CO2_des)) ^ 0.8* (deltaT[i] + deltaT[i+1]) / 2;
+  	end for;
+  	
+  	T_HTF_in = MedRec.temperature(state_HTF[N_exch]);
+  	
+  	HTF_port_a.h_outflow = 0; //inStream(port_h_out.h_outflow);
+  	CO2_port_a.h_outflow = 0; //inStream(port_c_out.h_outflow);
+  	
+  	//It is necessary to have one equation in a cycle that doesn't imply a circular equality on the mass flow rates
+  	//port_c_out.m_flow + port_c_in.m_flow = 0;
+  	
+  	HTF_port_a.m_flow + HTF_port_b.m_flow = 0;
+  	//port_c_in.m_flow = if m_sup then port_h_in.m_flow else m_CO2_des * 0.8;
+  	
+  	// Pressure equality
+  	CO2_port_b.p = CO2_port_a.p;
+  	HTF_port_a.p = HTF_port_b.p;
+  
     annotation(
       Diagram(graphics = {Rectangle(origin = {1, 4}, extent = {{-61, 56}, {59, -64}}), Text(origin = {-1, 8}, extent = {{-47, 16}, {47, -16}}, textString = "Exchanger"), Line(origin = {0, 40}, points = {{-70, 0}, {70, 0}, {70, 0}}), Line(origin = {0, -40}, points = {{-70, 0}, {70, 0}, {70, 0}}), Polygon(origin = {-1, 40}, points = {{5, 6}, {5, -6}, {-5, 0}, {5, 6}, {5, 6}}), Polygon(origin = {-1, 40}, points = {{5, 6}, {5, -6}, {-5, 0}, {5, 6}, {5, 6}}), Polygon(origin = {-9, -40}, points = {{5, 6}, {5, -6}, {15, 0}, {5, 6}, {5, 6}})}, coordinateSystem(initialScale = 0.1)),
       experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
@@ -296,70 +350,80 @@ package DirectDesign
   model Cooler
     extends SolarTherm.Media.CO2.PropCO2;
     import SI = Modelica.SIunits;
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
-    input Boolean m_sup;
-    input SI.ThermodynamicTemperature T_amb "Ambiant temperature in Kelvin";
-    parameter SI.ThermodynamicTemperature T_amb_des = 40 + 273.15 "Ambiant temperature in Kelvin at design point";
-    parameter SolarTherm.Types.Conductance UA_cooler(fixed = false) "Conductance of the cooler in W/K";
-    parameter SI.ThermodynamicTemperature T_low = 55 + 273.15;
-    parameter SI.Power P_nom_des = 164000;
-    parameter Integer N_cool = 15;
-    parameter Real deltaT_design = 15 "Difference between ambient and outlet CO2 temperature";
-    MedPB.ThermodynamicState state_a "Thermodynamic State at the entrance";
-    MedPB.ThermodynamicState state_b "Thermodynamic State at the outlet";
-    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedPB, m_flow.start = P_nom_des / 10 ^ 5) annotation(
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium, m_flow.start = P_nom_des / 10 ^ 5) annotation(
       Placement(visible = true, transformation(origin = {0, -70}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-2.22045e-16, -70}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {0, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-2.22045e-16, 70}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Real[2] deltaT;
-    SI.HeatFlowRate Q_cooler;
-    SI.Power P_cooling;
-    parameter SolarTherm.Types.Conductance UA_dis[N_cool - 1](each fixed = false) "Conductance of the cooler per sub-HX";
-    parameter SI.Power P_cool_des(fixed = false, start = 0.01 * P_nom_des) "power necessary to cool down at design point";
-    parameter SI.SpecificEnthalpy h_in_des(fixed = false), h_out_des(fixed = false);
-    parameter SI.AbsolutePressure p_in_des(fixed = false);
-    parameter SI.AbsolutePressure p_out_des(fixed = false);
-    parameter SI.MassFlowRate m_des(fixed = false);
-    parameter SI.HeatFlowRate Q_cooler_des(fixed = false, start = 10 ^ 6);
-    parameter MedPB.ThermodynamicState[N_cool] state_des(each p.fixed = false, each h.fixed = false) "Thermodynamic State at the i-th position";
-    parameter SI.SpecificEnthalpy[N_cool] h_CO2_des(each fixed = false, start = {600000 - i / N_cool * 150000 for i in 1:N_cool});
-    //parameter Real[N_cool-1] deltaT_lm_des (each fixed=false)"logarithmic temperature difference";
-    parameter Real[N_cool] deltaT_des(each fixed = false, each start = 25) "difference with the ambiant air at the inlet and outlet";
-    parameter SI.HeatFlowRate Q_dis_des(fixed = false, start = 10 ^ 5) "Heat flow rate dispatched per sub-HX in the cooler";
-    parameter SI.ThermodynamicTemperature[N_cool] T_CO2_des(each fixed = false, each start = 273.15 + 75);
+    
+  	input Boolean m_sup;
+  	input Modelica.SIunits.ThermodynamicTemperature T_amb "Ambiant temperature in Kelvin";
+  
+  	parameter Modelica.SIunits.Temperature T_amb_des = from_degC(40) "Ambient temperature in Kelvin at design point";
+  	parameter Modelica.SIunits.ThermalConductance UA_cooler(fixed = false) "Conductance of the cooler in W/K";
+  	parameter Modelica.SIunits.Temperature T_low = from_degC(55);
+  	parameter Modelica.SIunits.Power P_nom_des = 164000;
+  	parameter Integer N_cool = 15;
+  	parameter Modelica.SIunits.TemperatureDifference deltaT_design = 6 "Difference between ambient and outlet CO2 temperature";
+  	parameter Modelica.SIunits.ThermalConductance UA_dis[N_cool - 1](each fixed = false) "Conductance of the cooler per sub-HX";
+  	parameter Modelica.SIunits.Power P_cool_des(fixed = false, start = 0.01 * P_nom_des) "power necessary to cool down at design point";
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_des(fixed = false), h_out_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_des(fixed = false);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_des(fixed = false);
+  	parameter Modelica.SIunits.MassFlowRate m_des(fixed = false);
+  	parameter Modelica.SIunits.HeatFlowRate Q_cooler_des(fixed = false, start = 1e6);
+  	parameter Medium.ThermodynamicState[N_cool] state_des(each p.fixed = false, each h.fixed = false) "Thermodynamic State at the i-th position";
+  	parameter Modelica.SIunits.SpecificEnthalpy[N_cool] h_CO2_des(each fixed = false, start = {600000 - i / N_cool * 150000 for i in 1:N_cool});
+  	parameter Real[N_cool] deltaT_des(each fixed = false, each start = 25) "difference with the ambiant air at the inlet and outlet";
+  	parameter Modelica.SIunits.HeatFlowRate Q_dis_des(fixed = false, start = 1e5) "Heat flow rate dispatched per sub-HX in the cooler";
+  	parameter Modelica.SIunits.Temperature[N_cool] T_CO2_des(each fixed = false, each start = from_degC(75));
+  
+  	Medium.ThermodynamicState state_a "Thermodynamic State at the entrance";
+  	Medium.ThermodynamicState state_b "Thermodynamic State at the outlet";
+  
+  	Modelica.SIunits.TemperatureDifference[2] deltaT;
+  
+  	Modelica.SIunits.HeatFlowRate Q_cooler;
+  	Modelica.SIunits.Power P_cooling;
+  	
+  
   initial equation
-    p_out_des = p_in_des;
-    
-    for i in 1:N_cool loop
-      state_des[i] = MedPB.setState_pTX(p_in_des, T_CO2_des[i]);
-      h_CO2_des[i] = MedPB.specificEnthalpy(state_des[i]);
-      deltaT_des[i] = T_CO2_des[i] - T_amb_des;
-    end for;
-    
-    T_CO2_des[N_cool] = T_low;
-    h_CO2_des[1] = h_in_des;
-    h_CO2_des[N_cool] = h_out_des;  
-    
-    for i in 1:N_cool - 1 loop
-      Q_dis_des = h_CO2_des[i + 1] - h_CO2_des[i];
-      m_des * Q_dis_des = -UA_dis[i] * (deltaT_des[i] + deltaT_des[i + 1]) / 2;
-//deltaT_lm_des[i] = if deltaT_des[i+1] * deltaT_des[i] < 0 then (abs(deltaT_des[i]) ^ (1 / 3) * sign(deltaT_des[i]) / 2 + abs(deltaT_des[i+1]) ^ (1 / 3) * sign(deltaT_des[i+1]) / 2) ^ 3 else (deltaT_des[i] - deltaT_des[i+1]) / (Modelica.Math.log(deltaT_des[i] / deltaT_des[i+1]) + 0.0001);
-    end for;
-    UA_cooler = abs(Q_cooler) / (T_CO2_des[1] - T_amb_des) / (T_CO2_des[N_cool] - T_amb_des) / Modelica.Math.log((T_CO2_des[1] - T_amb_des) / (T_CO2_des[N_cool] - T_amb_des));
-    Q_cooler_des = (N_cool - 1) * Q_dis_des * m_des;
-//P_cool_des * deltaT_des[N_cool]/(-Q_cooler_des)= 1.49*10^6*(35.7-30)/(136.6*10^6);
-    P_cool_des = 0.01 * P_nom_des;
+  	for i in 1:N_cool loop
+  		state_des[i] = Medium.setState_pTX(p_in_des, T_CO2_des[i]);
+  		h_CO2_des[i] = Medium.specificEnthalpy(state_des[i]);
+  		deltaT_des[i] = T_CO2_des[i] - T_amb_des;
+  	end for;
+  
+  	T_CO2_des[N_cool] = T_low;
+  	h_CO2_des[1] = h_in_des;
+  	h_CO2_des[N_cool] = h_out_des;
+  	p_out_des = p_in_des;
+  
+  	for i in 1:N_cool - 1 loop
+  		Q_dis_des = (h_CO2_des[i + 1] - h_CO2_des[i]);
+  		m_des * Q_dis_des = -UA_dis[i] * (deltaT_des[i] + deltaT_des[i + 1]) / 2;
+  	end for;
+  
+  	UA_cooler = abs(Q_cooler_des) / 
+  	(T_CO2_des[1] - T_amb_des) / (T_CO2_des[N_cool] - T_amb_des) / Modelica.Math.log((T_CO2_des[1] - T_amb_des) / (T_CO2_des[N_cool] - T_amb_des));
+  	Q_cooler_des = (N_cool - 1) * Q_dis_des*m_des;
+  	P_cool_des = 0.01 * P_nom_des;
+  
   equation
-    deltaT = {MedPB.temperature(state_a) - T_amb, MedPB.temperature(state_b) - T_amb};
-    state_a = MedPB.setState_phX(port_a.p, inStream(port_a.h_outflow));
-    state_b = MedPB.setState_pTX(port_a.p, max(T_amb + 3, T_low));
-    P_cooling = P_cool_des* (deltaT_design / deltaT[2]) ^ (3 / 0.805)*(Q_cooler/Q_cooler_des);
-    //P_cooling = 0;
-    Q_cooler = port_a.m_flow * (state_b.h - state_a.h);
-    port_a.m_flow + port_b.m_flow = 0;
-    port_a.p = port_b.p;
-    port_b.h_outflow = state_b.h;
-    port_a.h_outflow = inStream(port_b.h_outflow);
+  	deltaT = {Medium.temperature(state_a) - T_amb, Medium.temperature(state_b) - T_amb};
+  
+  	state_a = Medium.setState_phX(port_a.p, inStream(port_a.h_outflow));
+  	state_b = Medium.setState_pTX(port_a.p, max(T_amb + 3, T_low));
+  
+  	P_cooling = P_cool_des* (deltaT_design / deltaT[2]) ^ (3 / 0.805)*(Q_cooler/Q_cooler_des);
+  
+  	Q_cooler = port_a.m_flow * (state_b.h - state_a.h);
+  
+  	port_a.m_flow + port_b.m_flow = 0;
+  	port_a.p = port_b.p;
+  	port_b.h_outflow = state_b.h;
+  	port_a.h_outflow = inStream(port_b.h_outflow);
+  
     annotation(
       Documentation(info = "<html>
   		<p>The cooler is thought to be a dry-air cooling device. The outlet temperature of the CO2 is imposed as max(T_low_cycle,T_amb+3). The variation of the ambiant temperature is taken into account in the estimation of the electricity demand for the fans, such as: P_cooling*deltaT/Q_cooler is a constant, deltaT being the average of the temperature of the CO2 and the ambiant, and Q_cooler the energy to withdraw.</p>
@@ -370,84 +434,115 @@ package DirectDesign
 
   model HeatRecuperatorDTAve "The heat recuperator is subdivised in N_q segments in order to accurately represent the CO2 properties variation."
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     import SI = Modelica.SIunits;
-    parameter Integer N_q = 15 "Number of subdivision of the HX";
-    parameter Real ratio_m_des = 1 "ratio of m_comp_des/m_turb_des; we suppose m_turb_des=1, and then scale-up";
-    parameter Real pinchRecuperator = 5 "pinch of the recuperator. Imposed as a closing equation for on-design";
-    Modelica.Fluid.Interfaces.FluidPort_a from_comp_port_a(redeclare package Medium = MedPB) annotation(
+  
+    Modelica.Fluid.Interfaces.FluidPort_a from_comp_port_a(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-70, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, 30}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_a from_turb_port_a(redeclare package Medium = MedPB, m_flow.start = P_nom_des / 10 ^ 5) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_a from_turb_port_a(redeclare package Medium = Medium, m_flow.start = P_nom_des / 10 ^ 5) annotation(
       Placement(visible = true, transformation(origin = {70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -30}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b from_comp_port_b(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_b from_comp_port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {70, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, 30}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b from_turb_port_b(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_b from_turb_port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, -30}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-    SI.SpecificEnthalpy[N_q] h_from_turb(start = {500000 + (i - 1) / N_q * 200000 for i in 1:N_q});
-    MedPB.Temperature[N_q] T_from_turb(start = {350 + (i - 1) / N_q * 150 for i in 1:N_q});
-    SI.SpecificEnthalpy[N_q] h_from_comp(start = {480000 + (i - 1) / N_q * 200000 for i in 1:N_q});
-    MedPB.Temperature[N_q] T_from_comp(start = {320 + (i - 1) / N_q * 150 for i in 1:N_q});
-    Real[N_q] deltaT(start = {150 for i in 1:N_q});
-    SI.HeatFlowRate Q_HX;
-    parameter SolarTherm.Types.Conductance UA_HTR(fixed = false) "Conductance of the overall HX";
-    parameter SI.Power P_nom_des = 10 ^ 5;
-    parameter SolarTherm.Types.Conductance UA_dis[N_q - 1](each fixed = false, each start = 0.04 * P_nom_des) "on-design conductance of the heat recuperator";
-    parameter MedPB.ThermodynamicState[N_q] state_turb_des(each p.fixed = false, each h.fixed = false, h.start = {530000 + i / N_q * 500000 for i in 1:N_q}), state_comp_des(each p.fixed = false, each h.fixed = false, h.start = {500000 + i / N_q * 500000 for i in 1:N_q});
-    parameter MedPB.Temperature[N_q] T_turb_des(each fixed = false, start = {140 + 273.15 + i / N_q * 300 for i in 1:N_q});
-    parameter MedPB.Temperature[N_q] T_comp_des(each fixed = false, start = {120 + 273.15 + i / N_q * 300 for i in 1:N_q});
-    parameter SI.TemperatureDifference[N_q] deltaT_des(each fixed = false, each start = 25);
-    parameter SI.MassFlowRate m_comp_des(fixed = false, start = P_nom_des / 10 ^ 5), m_turb_des(fixed = false, start = P_nom_des / 10 ^ 5) "on-design mass flow from the compressor, turbine";
-    parameter SI.HeatFlowRate Q_HX_des(fixed = false);
-    parameter SI.HeatFlowRate Q_dis_des(fixed = false, start = 18600);
-    parameter SI.SpecificEnthalpy h_in_turb_des(fixed = false), h_out_turb_des(fixed = false, start = 550000);
-    parameter SI.SpecificEnthalpy h_in_comp_des(fixed = false), h_out_comp_des(fixed = false, start = 800000);
-    parameter SI.AbsolutePressure p_in_turb_des(fixed = false, start = 80 * 10 ^ 5), p_out_turb_des(fixed = false, start = 80 * 10 ^ 5);
-    parameter SI.AbsolutePressure p_in_comp_des(fixed = false, start = 220 * 10 ^ 5), p_out_comp_des(fixed = false, start = 220 * 10 ^ 5);
+    
+  	parameter Integer N_q = 15 "Number of subdivision of the HX";
+  	parameter Real ratio_m_des = 1 "ratio of m_comp_des/m_turb_des; we suppose m_turb_des=1, and then scale-up";
+  	parameter Real pinchRecuperator = 5 "pinch of the recuperator. Imposed as a closing equation for on-design";
+  	parameter Modelica.SIunits.ThermalConductance UA_HTR(fixed = false) "Conductance of the overall HX";
+  	parameter Modelica.SIunits.Power P_nom_des = 1e5;
+  	parameter Modelica.SIunits.ThermalConductance UA_dis[N_q - 1](each fixed = false, each start = 0.04 * P_nom_des) "on-design conductance of the heat recuperator";
+  	parameter Medium.ThermodynamicState[N_q] state_turb_des(each p.fixed = false, each h.fixed = false,h.start = {530000 + i / N_q * 500000 for i in 1:N_q});
+  	parameter Medium.ThermodynamicState[N_q] state_comp_des(each p.fixed = false, each h.fixed = false, h.start = {500000 + i / N_q * 500000 for i in 1:N_q});
+  	parameter Medium.Temperature[N_q] T_turb_des(each fixed = false, start = {140 + 273.15 + i / N_q * 300 for i in 1:N_q});
+  	parameter Medium.Temperature[N_q] T_comp_des(each fixed = false, start = {120 + 273.15 + i / N_q * 300 for i in 1:N_q});
+  	parameter Modelica.SIunits.TemperatureDifference[N_q] deltaT_des(each fixed = false, each start = 25);
+  	parameter Modelica.SIunits.MassFlowRate m_comp_des(fixed = false, start = P_nom_des / 1e5) "on-design mass flow from the compressor";
+  	parameter Modelica.SIunits.MassFlowRate m_turb_des(fixed = false, start = P_nom_des / 1e5) "on-design mass flow from the turbine";
+  	parameter Modelica.SIunits.HeatFlowRate Q_HX_des(fixed = false);
+  	parameter Modelica.SIunits.HeatFlowRate Q_dis_des(fixed = false, start=18600);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_turb_des(fixed = false);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_out_turb_des(fixed = false, start=5.5e5);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_in_comp_des(fixed = false);
+  	parameter Modelica.SIunits.SpecificEnthalpy h_out_comp_des(fixed = false, start=8e5);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_turb_des(fixed = false, start=8e6);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_turb_des(fixed = false, start=8e6);
+  	parameter Modelica.SIunits.AbsolutePressure p_in_comp_des(fixed = false, start=22e6);
+  	parameter Modelica.SIunits.AbsolutePressure p_out_comp_des(fixed = false, start=22e6);
+  
+  	Modelica.SIunits.SpecificEnthalpy[N_q] h_from_turb(start = {500000 + (i - 1) / N_q * 200000 for i in 1:N_q});
+  
+  	Medium.Temperature[N_q] T_from_turb(start = {350 + (i - 1) / N_q * 150 for i in 1:N_q});
+  	Medium.Temperature[N_q] T_from_comp(start = {320 + (i - 1) / N_q * 150 for i in 1:N_q});
+  
+  	Modelica.SIunits.SpecificEnthalpy[N_q] h_from_comp(start = {480000 + (i - 1) / N_q * 200000 for i in 1:N_q});
+  
+  	Real[N_q] deltaT(start = {150 for i in 1:N_q});
+  
+  	Modelica.SIunits.HeatFlowRate Q_HX;
+  
   protected
-    MedPB.ThermodynamicState[N_q] state_from_turb, state_from_comp;
+  	Medium.ThermodynamicState[N_q] state_from_turb, state_from_comp;
+  
   initial equation
-    for i in 1:N_q loop
-      deltaT_des[i] = T_turb_des[i] - T_comp_des[i];
-      state_turb_des[i] = MedPB.setState_pTX(p_in_turb_des, T_turb_des[i]);
-      state_comp_des[i] = MedPB.setState_pTX(p_in_comp_des, T_comp_des[i]);
-    end for;
-    min(deltaT_des) = pinchRecuperator;
-    state_turb_des[N_q].h = h_in_turb_des;
-    state_turb_des[1].h = h_out_turb_des;
-    state_comp_des[1].h = h_in_comp_des;
-    state_comp_des[N_q].h = h_out_comp_des;
-    p_out_comp_des = p_in_comp_des;
-    p_out_turb_des = p_in_turb_des;
-    Q_HX_des = m_turb_des * Q_dis_des * (N_q - 1);
-    UA_HTR = sum(UA_dis);
-    for i in 1:N_q - 1 loop
-      Q_dis_des = ratio_m_des * (state_comp_des[i + 1].h - state_comp_des[i].h);
-      m_turb_des * Q_dis_des = UA_dis[i] * (deltaT_des[i + 1] + deltaT_des[i]) / 2;
-      Q_dis_des = state_turb_des[i + 1].h - state_turb_des[i].h;
-    end for;
+  	for i in 1:N_q loop
+  	deltaT_des[i] = T_turb_des[i] - T_comp_des[i];
+  	state_turb_des[i] = Medium.setState_pTX(p_in_turb_des, T_turb_des[i]);
+  	state_comp_des[i] = Medium.setState_pTX(p_in_comp_des, T_comp_des[i]);
+  	end for;
+  
+  	min(deltaT_des) = pinchRecuperator;
+  
+  	state_turb_des[N_q].h = h_in_turb_des;
+  	state_turb_des[1].h = h_out_turb_des;
+  	state_comp_des[1].h = h_in_comp_des;
+  	state_comp_des[N_q].h = h_out_comp_des;
+  
+  	p_out_comp_des = p_in_comp_des;
+  	p_out_turb_des = p_in_turb_des;
+  
+  	Q_HX_des = m_turb_des*Q_dis_des * (N_q - 1);
+  
+  	UA_HTR = sum(UA_dis);
+  
+  	for i in 1:N_q - 1 loop
+  	Q_dis_des = ratio_m_des * (state_comp_des[i + 1].h - state_comp_des[i].h);
+  	m_turb_des*Q_dis_des = UA_dis[i] * (deltaT_des[i + 1] + deltaT_des[i]) / 2;
+  	Q_dis_des = (state_turb_des[i + 1].h - state_turb_des[i].h);
+  	end for;
+  
   equation
-    for i in 1:N_q loop
-      deltaT[i] = T_from_turb[i] - T_from_comp[i];
-      state_from_turb[i] = MedPB.setState_phX(from_turb_port_a.p, h_from_turb[i]);
-      state_from_comp[i] = MedPB.setState_phX(from_comp_port_a.p, h_from_comp[i]);
-      T_from_turb[i] = MedPB.temperature(state_from_turb[i]);
-      T_from_comp[i] = MedPB.temperature(state_from_comp[i]);
-    end for;
-    h_from_turb[N_q] = inStream(from_turb_port_a.h_outflow);
-    h_from_comp[1] = inStream(from_comp_port_a.h_outflow);
-    from_turb_port_b.h_outflow = h_from_turb[1];
-    from_comp_port_b.h_outflow = h_from_comp[N_q];
-    Q_HX = from_turb_port_a.m_flow * (h_from_turb[N_q] - h_from_turb[1]);
-    for i in 2:N_q loop
-      from_turb_port_a.m_flow * (h_from_turb[i] - h_from_turb[i - 1]) = from_comp_port_a.m_flow * (h_from_comp[i] - h_from_comp[i - 1]);
-      from_turb_port_a.m_flow * (h_from_turb[i] - h_from_turb[i - 1]) = UA_dis[i - 1] * abs(from_comp_port_a.m_flow / m_comp_des + from_turb_port_a.m_flow / m_turb_des) ^ 0.8 / 2 ^ 0.8 * (T_from_turb[i - 1] - T_from_comp[i - 1] + T_from_turb[i] - T_from_comp[i]) / 2;
-    end for;
-    from_turb_port_b.m_flow + from_turb_port_a.m_flow = 0;
-    from_comp_port_b.m_flow + from_comp_port_a.m_flow = 0;
-    from_turb_port_b.p = from_turb_port_a.p;
-    from_comp_port_b.p = from_comp_port_a.p;
-    from_turb_port_a.h_outflow = inStream(from_turb_port_b.h_outflow);
-    from_comp_port_a.h_outflow = inStream(from_comp_port_b.h_outflow);
+  	for i in 1:N_q loop
+  	deltaT[i] = T_from_turb[i] - T_from_comp[i];
+  	state_from_turb[i] = Medium.setState_phX(from_turb_port_a.p, h_from_turb[i]);
+  	state_from_comp[i] = Medium.setState_phX(from_comp_port_a.p, h_from_comp[i]);
+  	T_from_turb[i] = Medium.temperature(state_from_turb[i]);
+  	T_from_comp[i] = Medium.temperature(state_from_comp[i]);
+  	end for;
+  
+  	h_from_turb[N_q] = inStream(from_turb_port_a.h_outflow);
+  	h_from_comp[1] = inStream(from_comp_port_a.h_outflow);
+  
+  	from_turb_port_b.h_outflow = h_from_turb[1];
+  	from_comp_port_b.h_outflow = h_from_comp[N_q];
+  
+  	Q_HX=from_turb_port_a.m_flow*(h_from_turb[N_q]-h_from_turb[1]);
+  
+  	for i in 2:N_q loop
+  
+  	from_turb_port_a.m_flow * (h_from_turb[i] - h_from_turb[i - 1]) = from_comp_port_a.m_flow * (h_from_comp[i] - h_from_comp[i - 1]);
+  	from_turb_port_a.m_flow * (h_from_turb[i] - h_from_turb[i - 1]) = UA_dis[i - 1] * (abs(from_comp_port_a.m_flow / m_comp_des + from_turb_port_a.m_flow / m_turb_des) ^ 0.8)/ (2 ^ 0.8 )* (T_from_turb[i - 1] - T_from_comp[i - 1] + T_from_turb[i] - T_from_comp[i]) / 2;
+  
+  	end for;
+  
+  	from_turb_port_b.m_flow + from_turb_port_a.m_flow = 0;
+  	from_comp_port_b.m_flow + from_comp_port_a.m_flow = 0;
+  
+  	from_turb_port_b.p = from_turb_port_a.p;
+  	from_comp_port_b.p = from_comp_port_a.p;
+  
+  	from_turb_port_a.h_outflow = inStream(from_turb_port_b.h_outflow);
+  	from_comp_port_a.h_outflow = inStream(from_comp_port_b.h_outflow);
     annotation(
       Diagram(graphics = {Rectangle(origin = {-1, 9}, extent = {{-59, 31}, {61, -49}}), Text(origin = {1, 1}, extent = {{-53, -17}, {51, 17}}, textString = "RECUPERATOR"), Line(origin = {0, -30}, points = {{70, 0}, {-70, 0}, {-70, 0}}), Line(origin = {0, 30}, points = {{-70, 0}, {70, 0}, {70, 0}}), Polygon(origin = {0, 30}, points = {{-4, 4}, {-4, -4}, {4, 0}, {-4, 4}, {-4, 4}}), Polygon(origin = {0, -30}, points = {{4, 4}, {4, -4}, {-4, 0}, {4, 4}, {4, 4}})}, coordinateSystem(initialScale = 0.1)),
       Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-57, 49}, {63, -31}}), Text(origin = {0, 1}, extent = {{-48, -15}, {48, 15}}, textString = "RECUPERATOR"), Line(origin = {0, 30}, points = {{-70, 0}, {70, 0}, {70, 0}}), Line(origin = {0, -30}, points = {{-70, 0}, {70, 0}, {70, 0}}), Polygon(origin = {0, 30}, points = {{-4, 4}, {-4, -4}, {4, 0}, {-4, 4}, {-4, 4}}), Polygon(origin = {-2, -30}, points = {{4, 4}, {4, -4}, {-4, 0}, {4, 4}, {4, 4}})}, coordinateSystem(initialScale = 0.1)),
@@ -462,61 +557,68 @@ package DirectDesign
     extends SolarTherm.Media.CO2.PropCO2;
     import SI = Modelica.SIunits;
     import CV = Modelica.SIunits.Conversions;
-    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
-    parameter Real eta_design = 0.89 "Maximal isentropic efficiency of the compressor";
-    parameter SI.Diameter diam_rotor(fixed = false) "on-design diameter of the rotor";
-    parameter SI.AngularVelocity N_design = 40000 * 0.104 "Design rotationnal speed in rad/s";
-    parameter Real psi_des(fixed = false) "on-design adimensionned head";
-    parameter Real PR = 3 "pressure ratio chosen";
-    parameter SI.Power P_nom_des "nominal power at design point";
-    parameter SI.ThermodynamicTemperature T_in_des = CV.from_degC(45) "chosen inlet temperature of the compressor at design point";
-    parameter SI.AbsolutePressure p_high_des = CV.from_bar(250);
-    parameter Real phi_opt = 0.0297035 "optimal adimensionned mass flow";
-    parameter SI.AngularVelocity tipSpeed(fixed = false, start = 500) "tip Speed of the rotor";
-    SI.AbsolutePressure p_out(start = p_out_des) "outlet pressure";
-    MedPB.ThermodynamicState state_a "thermodynamic state at the entrance";
-    MedPB.ThermodynamicState state_isen "thermodynamic state at the end of the isentropic compression";
-    MedPB.ThermodynamicState state_b "thermodynamic state at the end of the real compresssion";
-    SI.Power W_comp "power used for compression";
-    SI.SpecificEntropy s_entrance "entropy at the entrance of the compressor";
-    Real phi "adimensionned mass flow rate";
-    Real psi "adimensionned head";
-    SI.Density d_entrance(start = 267) "density at the inlet";
-    SI.Efficiency eta_comp(start = eta_design) "isentropic efficiency of the compressor";
-    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedPB) annotation(
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    
+    Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-60, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-60, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = MedPB) annotation(
+    Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {60, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {60, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    parameter SI.SpecificEnthalpy h_out_des(fixed = false), h_in_des(fixed = false) "enthalpy at the outlet of the compressor";
-    parameter MedPB.ThermodynamicState state_in_des(p.fixed = false, h.fixed = false, h.start = 550000);
-    parameter MedPB.ThermodynamicState state_isen_des(p.fixed = false, h.fixed = false);
-    parameter SI.AbsolutePressure p_in_des(fixed = false), p_out_des(fixed = false);
-    parameter SI.Power W_comp_des(fixed = false);
-    parameter SI.MassFlowRate m_des(fixed = false, start = 3) "design mass flow rate in kg/s";
+    
+  	parameter SI.Efficiency eta_design = 0.89 "Maximal isentropic efficiency of the compressor";
+  	parameter SI.AngularVelocity N_design = 40000 * 0.104 "Design rotationnal speed in rad/s";
+  	parameter SI.Efficiency PR = 3 "pressure ratio chosen";
+  	parameter SI.Power P_nom_des "nominal power at design point";
+  	parameter SI.ThermodynamicTemperature T_in_des = from_degC(45) "chosen inlet temperature of the compressor at design point";
+  	parameter SI.AbsolutePressure p_high_des = from_bar(250);
+  	parameter SI.Efficiency phi_opt = 0.0297035 "optimal adimensionned mass flow";
+  	parameter SI.Efficiency psi_des(fixed = false) "on-design adimensionned head";
+  	parameter SI.AngularVelocity tipSpeed(fixed = false, start = 500) "tip Speed of the rotor";
+  	parameter SI.Diameter diam_rotor(fixed = false) "on-design diameter of the rotor";
+  	parameter SI.SpecificEnthalpy h_in_des(fixed = false) "Inlet enthalpy of the compressor";
+  	parameter SI.SpecificEnthalpy h_out_des(fixed = false) "Outlet enthalpy of the compressor";
+  	parameter Medium.ThermodynamicState state_in_des(p.fixed = false, h.fixed = false, h.start = 550000);
+  	parameter Medium.ThermodynamicState state_isen_des(p.fixed = false, h.fixed = false);
+  	parameter SI.AbsolutePressure p_in_des(fixed = false);
+  	parameter SI.AbsolutePressure p_out_des(fixed = false);
+  	parameter SI.Power W_comp_des(fixed = false);
+  	parameter SI.MassFlowRate m_des(fixed = false, start = 3) "design mass flow rate in kg/s";
+  
+  	SI.AbsolutePressure p_out(start = p_out_des) "outlet pressure";
+  	Medium.ThermodynamicState state_a "thermodynamic state at the entrance";
+  	Medium.ThermodynamicState state_isen "thermodynamic state at the end of the isentropic compression";
+  	Medium.ThermodynamicState state_b "thermodynamic state at the end of the real compresssion";
+  	SI.Power W_comp "power used for compression";
+  	SI.SpecificEntropy s_entrance "entropy at the entrance of the compressor";
+  	SI.Density d_entrance(start = 267) "density at the inlet";
+  	SI.Efficiency eta_comp(start = eta_design) "isentropic efficiency of the compressor";
+  	SI.Efficiency phi "adimensionned mass flow rate";
+  	SI.Efficiency psi "adimensionned head";
+  
   initial equation
-    2 * m_des = phi_opt * MedPB.density(state_in_des) * N_design * diam_rotor ^ 3;
-    psi_des = (state_isen_des.h - state_in_des.h) / tipSpeed ^ 2;
-    W_comp_des = m_des * (h_out_des - state_in_des.h);
-    state_in_des = MedPB.setState_phX(p_in_des, h_in_des);
-    p_out_des = p_high_des;
-    state_isen_des = MedPB.setState_psX(p_out_des, MedPB.specificEntropy(state_in_des));
-    tipSpeed = diam_rotor * N_design / 2;
-    h_out_des = state_in_des.h + (state_isen_des.h - state_in_des.h) / eta_design;
+  	2 * m_des = phi_opt * Medium.density(state_in_des) * N_design * diam_rotor ^ 3;
+  	psi_des = (state_isen_des.h - state_in_des.h) / tipSpeed ^ 2;
+  	W_comp_des = m_des * (h_out_des - state_in_des.h);
+  	p_out_des = p_high_des;
+  	state_in_des = Medium.setState_phX(p_in_des, h_in_des);
+  	state_isen_des = Medium.setState_psX(p_out_des, Medium.specificEntropy(state_in_des));
+  	tipSpeed = diam_rotor * N_design / 2;
+  	h_out_des = state_in_des.h + (state_isen_des.h - state_in_des.h) / eta_design;
+  
   equation
-    state_a = MedPB.setState_phX(port_a.p, inStream(port_a.h_outflow));
-    s_entrance = MedPB.specificEntropy(state_a);
-    state_isen = MedPB.setState_psX(p_out, s_entrance);
-    state_b = MedPB.setState_phX(p_out, state_a.h + (state_isen.h - state_a.h) / eta_comp);
-    port_b.p = state_b.p;
-    port_b.h_outflow = state_b.h;
-    W_comp = port_a.m_flow * (state_b.h - state_a.h);
-    port_a.h_outflow = 0;
-    d_entrance = MedPB.density(state_a);
-    port_a.m_flow + port_b.m_flow = 0;
-    phi = port_a.m_flow / (d_entrance * tipSpeed * diam_rotor ^ 2);
-    psi = (state_isen.h - state_a.h) / tipSpeed ^ 2;
-    psi = (0.04049 + 54.7 * phi - 2505 * phi ^ 2 + 53224 * phi ^ 3 - 498626 * phi ^ 4) * psi_des / 0.46181921979961293;
-    eta_comp = eta_design / 0.677837 * ((-0.7069) + 168.6 * phi - 8089 * phi ^ 2 + 182725 * phi ^ 3 - 1.638 * 10 ^ 6 * phi ^ 4);
+  	state_a = Medium.setState_phX(port_a.p, inStream(port_a.h_outflow));
+  	s_entrance = Medium.specificEntropy(state_a);
+  	state_isen = Medium.setState_psX(p_out, s_entrance);
+  	state_b = Medium.setState_phX(p_out, state_a.h + (state_isen.h - state_a.h) / eta_comp);
+  	port_b.p = state_b.p;
+  	port_b.h_outflow = state_b.h;
+  	W_comp = port_a.m_flow * (state_b.h - state_a.h);
+  	port_a.h_outflow = 0;
+  	d_entrance = Medium.density(state_a);
+  	port_a.m_flow + port_b.m_flow = 0;
+  	phi = port_a.m_flow / (d_entrance * tipSpeed * diam_rotor ^ 2);
+  	psi = (state_isen.h - state_a.h) / tipSpeed ^ 2;
+  	psi = (0.04049 + 54.7 * phi - 2505 * phi ^ 2 + 53224 * phi ^ 3 - 498626 * phi ^ 4) * psi_des / 0.46181921979961293;
+  	eta_comp = eta_design / 0.677837 * ((-0.7069) + 168.6 * phi - 8089 * phi ^ 2 + 182725 * phi ^ 3 - 1.638 * 10 ^ 6 * phi ^ 4);
     annotation(
       Diagram(graphics = {Text(origin = {-8, 16}, extent = {{-28, 16}, {42, -46}}, textString = "Compressor"), Polygon(origin = {-2, 10}, rotation = 180, points = {{-42, 40}, {-42, -20}, {38, -50}, {38, 70}, {-42, 40}, {-42, 40}}), Line(origin = {50, 20}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {-50, -40.1649}, points = {{10, 0}, {-10, 0}, {-10, 0}})}, coordinateSystem(initialScale = 0.1)),
       Icon(coordinateSystem(initialScale = 0.1), graphics = {Polygon(origin = {0, 2}, rotation = 180, points = {{-40, 32}, {-40, -28}, {40, -58}, {40, 62}, {-40, 32}}), Text(origin = {22, 17}, extent = {{-48, -31}, {4, -3}}, textString = "COMPRES"), Line(origin = {50, 20}, points = {{-10, 0}, {10, 0}, {10, 0}}), Line(origin = {-50, -40.1649}, points = {{10, 0}, {-10, 0}, {-10, 0}})}),
@@ -661,219 +763,612 @@ package DirectDesign
     turbine.p_out = (75 + time * 10) * 10 ^ 5;
   end testBis;
 
-  model recompPB
-    extends SolarTherm.Media.CO2.PropCO2;
-    import SI = Modelica.SIunits;
-    import FI = SolarTherm.Models.Analysis.Finances;
-    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
-    replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
-    //input SolarTherm.Interfaces.Connectors.WeatherBus wbus;
-    extends Icons.PowerBlock;
-    Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = MedRec) annotation(
-      Placement(visible = true, transformation(origin = {-74, 52}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{-48, 30}, {-40, 38}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = MedRec) annotation(
-      Placement(visible = true, transformation(origin = {-90, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{-62, -48}, {-54, -40}}, rotation = 0)));
-    Modelica.Blocks.Interfaces.RealOutput W_net(quantity = "Power", unit = "W", displayUnit = "MW") "Net electric power output" annotation(
-      Placement(visible = true, transformation(origin = {100, 0}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{46, -10}, {56, 0}}, rotation = 0)));
-    // PB parameters
-    parameter Boolean external_parasities = false "= true enable parasities as an input";
-    parameter Real nu_min = 0.25 "Minimum turbine operation";
-    Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation(
-      Placement(visible = true, transformation(origin = {82, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
-    Modelica.Blocks.Interfaces.RealInput T_amb annotation(
-      Placement(visible = true, transformation(origin = {10, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
-    //Cycle parameters
-    parameter SI.Temperature pinch = 15;
-    parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
-    parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
-    parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
-    parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
-    parameter Real PR = 2.5 "Pressure ratio";
-    parameter SI.Power P_gro = 100 * 10 ^ 6 "first guess of power outlet";
-    parameter SI.Power P_nom = 100e6 "Electrical power at design point";
-    parameter SI.MassFlowRate m_HTF_des(fixed=false)"Mass flow rate at design point";
-    parameter Real gamma = 0.33 "Part of the mass flow going to the recompression directly";
-    parameter SI.AngularVelocity[4] choiceN = {75000, 30000, 10000, 3600} * 0.10471975512;
-    parameter SI.AngularVelocity N_shaft = choiceN[integer(Modelica.Math.log(P_gro / 10 ^ 6) / Modelica.Math.log(10)) + 2];
-    // main Compressor parameters
-    parameter SI.Efficiency eta_comp_main = 0.8 "Maximal isentropic efficiency of the compressors";
-    // reCompressor parameters
-    parameter SI.Efficiency eta_comp_re = 0.82 "Maximal isentropic efficiency of the compressors";
-    //Turbine parameters
-    parameter SI.Efficiency eta_turb = 0.87 "Maximal isentropic efficiency of the turbine";
-    //Cycle parameter
-    parameter SI.Efficiency eta_motor = 0.9 "electrical generator efficiency";
-    //HTR Heat recuperator parameters
-    parameter Integer N_HTR = 15;
-    //LTR Heat recuperator parameters
-    parameter Integer N_LTR = 15;
-    parameter Real ratio_m_des_real = 1.168 "this is tailord to reach the desired T_HTF_out";
-    parameter Real ratio_m_des = (1 - gamma);
-    //Cooler parameters
-    parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Outlet temperature of the cooler";
-    //Exchanger parameters
-    parameter SI.ThermodynamicTemperature T_HTF_in_des = 800 + 273.15;
-    parameter Integer N_exch = 5;
-    //Financial analysis
-    parameter Real pri_recuperator = 5.2; 
-    parameter Real pri_turbine = 9923.7;
-    parameter Real pri_compressor = 643.15;
-    parameter Real pri_cooler = 76.25; 
-    parameter Real pri_generator = 108900;
-    parameter FI.Money C_HTR(fixed = false) "cost of the high temperature heat recuperator";
-    parameter FI.Money C_LTR(fixed = false) "cost of the low temperature heat recuperator";
-    parameter FI.Money C_turbine(fixed = false) "cost of the turbine";
-    parameter FI.Money C_mainCompressor(fixed = false) "cost of the main compressor";
-    parameter FI.Money C_reCompressor(fixed = false) "cost of the re compressor";
-    parameter FI.Money C_exchanger(fixed = false) "cost of the exchanger";
-    parameter FI.Money C_generator(fixed = false) "cost of the generator";
-    parameter FI.Money C_cooler(fixed = false) "cost of the cooler";
-    parameter FI.Money C_PB(fixed = false) "Overall cost of the power block";
-    parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
-    //Results
-    SI.Efficiency eta_cycle;
-    SI.Efficiency eta_cycle_net;
-    SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
-    Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
-    //Components instanciation
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(N_q = N_HTR, P_nom_des = P_nom, ratio_m_des = ratio_m_des_real, pinchRecuperator = 5) annotation(
-      Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(eta_design = eta_comp_main, N_design = N_shaft, P_nom_des = P_nom, p_high_des = p_high) annotation(
-      Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(T_low = T_low, P_nom_des = P_nom, T_amb_des = T_amb_des) annotation(
-      Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(PR = PR, T_amb = T_amb_des, N_shaft = N_shaft, eta_design = eta_turb) annotation(
-      Placement(visible = true, transformation(origin = {72, -2}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph, P_nom_des = P_nom, T_out_CO2_des = T_high, N_exch = N_exch, ratio_m_des = ratio_m_des_real) annotation(
-      Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(N_design = N_shaft, P_nom_des = P_nom, p_high_des = p_high) annotation(
-      Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(N_q = N_LTR, P_nom_des = P_nom, ratio_m_des = 1 - gamma, pinchRecuperator = 5) annotation(
-      Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer annotation(
-      Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(gamma = gamma) annotation(
-      Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-    parameter MedRec.ThermodynamicState state_HTF_in_des = MedRec.setState_pTX(1.0325 * 10 ^ 5, T_HTF_in_des);
-    Modelica.Blocks.Interfaces.BooleanInput ramping annotation(
-      Placement(visible = true, transformation(origin = {-68, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-2.22045e-16, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+    model recompPB
+        extends SolarTherm.Media.CO2.PropCO2;
+        import SI = Modelica.SIunits;
+        import FI = SolarTherm.Models.Analysis.Finances;
+        replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+        replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+        extends Icons.PowerBlock;
+       
+        Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = MedRec) annotation(
+          Placement(visible = true, transformation(origin = {-74, 52}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{-48, 30}, {-40, 38}}, rotation = 0)));
+        Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = MedRec) annotation(
+          Placement(visible = true, transformation(origin = {-90, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{-62, -48}, {-54, -40}}, rotation = 0)));
+        Modelica.Blocks.Interfaces.RealOutput W_net(quantity = "Power", unit = "W", displayUnit = "MW") "Net electric power output" annotation(
+          Placement(visible = true, transformation(origin = {100, 0}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{46, -10}, {56, 0}}, rotation = 0)));
+        Modelica.Blocks.Interfaces.BooleanInput ramping annotation(
+          Placement(visible = true, transformation(origin = {-68, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-2.22045e-16, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+        
+        
+        // PB parameters
+        parameter Boolean test_mode = false "if true then PB is in test rig, influence the way to decalre m_sup";
+        parameter Boolean external_parasities = false "= true enable parasities as an input";
+        parameter Real nu_min = 0.25 "Minimum turbine operation";
+        Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation(
+          Placement(visible = true, transformation(origin = {82, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+        Modelica.Blocks.Interfaces.RealInput T_amb annotation(
+          Placement(visible = true, transformation(origin = {10, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+       
+       
+        //Cycle parameters
+        parameter SI.Temperature pinch = 15;
+        parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
+        parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
+        parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
+        parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
+        parameter Real PR = 2.5 "Pressure ratio";
+        parameter SI.Power P_gro = 100 * 10 ^ 6 "first guess of power outlet";
+        parameter SI.Power P_nom = 100e6 "Electrical power at design point";
+        parameter SI.MassFlowRate m_HTF_des(fixed=false)"Mass flow rate at design point";
+        parameter Real gamma = 0.33 "Part of the mass flow going to the recompression directly";
+        parameter SI.AngularVelocity[4] choiceN = {75000, 30000, 10000, 3600} * 0.10471975512;
+        parameter SI.AngularVelocity N_shaft = 
+        choiceN[integer(Modelica.Math.log(P_gro / 10 ^ 6) / Modelica.Math.log(10)) + 2];
+        parameter Real eta_cycle_design(fixed=false);
+        parameter SI.HeatFlowRate Q_HX_des(fixed=false);
+        
+        // main Compressor parameters
+        parameter SI.Efficiency eta_comp_main = 0.8 "Maximal isentropic efficiency of the compressors";
+        // reCompressor parameters
+        parameter SI.Efficiency eta_comp_re = 0.82 "Maximal isentropic efficiency of the compressors";
+        //Turbine parameters
+        parameter SI.Efficiency eta_turb = 0.87 "Maximal isentropic efficiency of the turbine";
+        //Cycle parameter
+        parameter SI.Efficiency eta_motor = 1 "electrical generator efficiency";
+        //HTR Heat recuperator parameters
+        parameter Integer N_HTR = 15;
+        //LTR Heat recuperator parameters
+        parameter Integer N_LTR = 15;
+        parameter Real ratio_m_des_real(fixed=false) "this is tailord to reach the desired T_HTF_out";
+        parameter Real ratio_m_des = (1 - gamma);
+        //Cooler parameters
+        parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Outlet temperature of the cooler";
+        //Exchanger parameters
+        parameter SI.ThermodynamicTemperature T_HTF_in_des = 800 + 273.15;
+        parameter Integer N_exch = 5;
+        parameter SI.Temperature T_HTF_out = from_degC(550);
+        
+        
+        //Financial analysis
+        parameter Real pri_recuperator = 5.2; 
+        parameter Real pri_turbine = 9923.7;
+        parameter Real pri_compressor = 643.15;
+        parameter Real pri_cooler = 76.25; 
+        parameter Real pri_generator = 108900;
+        parameter FI.Money C_HTR(fixed = false) "cost of the high temperature heat recuperator";
+        parameter FI.Money C_LTR(fixed = false) "cost of the low temperature heat recuperator";
+        parameter FI.Money C_turbine(fixed = false) "cost of the turbine";
+        parameter FI.Money C_mainCompressor(fixed = false) "cost of the main compressor";
+        parameter FI.Money C_reCompressor(fixed = false) "cost of the re compressor";
+        parameter FI.Money C_exchanger(fixed = false) "cost of the exchanger";
+        parameter FI.Money C_generator(fixed = false) "cost of the generator";
+        parameter FI.Money C_cooler(fixed = false) "cost of the cooler";
+        parameter FI.Money C_PB(fixed = false) "Overall cost of the power block";
+        parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
+         
+        
+        //Components instanciation
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(
+        redeclare package Medium = MedPB,
+        N_q = N_HTR, 
+        P_nom_des = P_nom, 
+        ratio_m_des = 1, 
+        pinchRecuperator = 5) annotation(
+          Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+        
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(
+        redeclare package Medium = MedPB,
+        eta_design = eta_comp_main, 
+        N_design = N_shaft, 
+        P_nom_des = P_nom, 
+        p_high_des = p_high) annotation(
+          Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+        
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(
+        redeclare package Medium = MedPB,
+        T_low = T_low, 
+        P_nom_des = P_nom, 
+        T_amb_des = T_amb_des) annotation(
+          Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
+        
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(
+        redeclare package Medium = MedPB,
+        PR = PR, 
+        T_amb = T_amb_des, 
+        N_shaft = N_shaft, 
+        eta_design = eta_turb) annotation(
+          Placement(visible = true, transformation(origin = {72, -2}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
+        
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(
+        redeclare package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph, 
+        redeclare package MedPB = MedPB,
+        P_nom_des = P_nom, 
+        T_out_CO2_des = T_high, 
+        N_exch = N_exch, 
+        ratio_m_des = ratio_m_des_real) annotation(
+          Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(
+        redeclare package Medium = MedPB,
+        N_design = N_shaft, 
+        P_nom_des = P_nom, 
+        p_high_des = p_high) annotation(
+          Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(
+        redeclare package Medium = MedPB,
+        N_q = N_LTR, 
+        P_nom_des = P_nom, 
+        ratio_m_des = 1 - gamma,
+        pinchRecuperator = 5) annotation(
+          Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer(redeclare package MedRec = MedPB) annotation(
+          Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
+        
+        
+        SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(gamma = gamma,redeclare package MedRec = MedPB) annotation(
+          Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+        
+        
+        parameter MedRec.ThermodynamicState state_HTF_in_des = MedRec.setState_pTX(1.0325 * 10 ^ 5, T_HTF_in_des);
+    
+    
+        //Results
+        SI.Efficiency eta_cycle;
+        SI.Efficiency eta_cycle_net;
+        SI.Power W_cycle;
+        SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
+        Real load "mass flow fraction of the exchanger compared to design condition";
+        Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
+    
+       
+      initial equation
+        exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
+        exchanger.p_in_HTF_des = state_HTF_in_des.p;
+        exchanger.m_HTF_des = m_HTF_des;
+        P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
+        Q_HX_des = exchanger.m_CO2_des * (exchanger.h_out_CO2_des-exchanger.h_in_CO2_des);
+        eta_cycle_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) / (Q_HX_des);
+        exchanger.T_HTF_des[1] = T_HTF_out;
+      
+      // enthalpy equalities
+      //main loop
+        exchanger.h_in_CO2_des = HTR.h_out_comp_des;
+        turbine.h_in_des = exchanger.h_out_CO2_des;
+        HTR.h_in_turb_des = turbine.h_out_des;
+        LTR.h_in_turb_des = HTR.h_out_turb_des;
+        cooler.h_in_des = LTR.h_out_turb_des;
+        mainCompressor.h_in_des = cooler.h_out_des;
+        LTR.h_in_comp_des = mainCompressor.h_out_des;
+      
+      
+      // recompression loop
+        reCompressor.h_in_des = LTR.h_out_turb_des;
+        HTR.h_in_comp_des = ratio_m_des * LTR.h_out_comp_des + (1 - ratio_m_des) * reCompressor.h_out_des;
+      //pressure equalities
+      //main loop
+        exchanger.p_in_CO2_des = HTR.p_out_comp_des;
+        turbine.p_in_des = exchanger.p_out_CO2_des;
+        HTR.p_in_turb_des = turbine.p_out_des;
+        LTR.p_in_turb_des = HTR.p_out_turb_des;
+        cooler.p_in_des = LTR.p_out_turb_des;
+        mainCompressor.p_in_des = cooler.p_out_des;
+        LTR.p_in_comp_des = mainCompressor.p_out_des;
+      //recompression loop
+        reCompressor.p_in_des = LTR.p_out_turb_des;
+        HTR.p_in_comp_des = ratio_m_des * LTR.p_out_comp_des + (1 - ratio_m_des) * reCompressor.p_out_des;
+      
+      
+      //mass flow equalities
+      //main loop
+      //exchanger.m_CO2_des = HTR.m_comp_des;
+        turbine.m_des = exchanger.m_CO2_des;
+        HTR.m_turb_des = turbine.m_des;
+        LTR.m_turb_des = HTR.m_turb_des;
+        cooler.m_des = LTR.m_turb_des * ratio_m_des;
+        mainCompressor.m_des = cooler.m_des;
+        LTR.m_comp_des = mainCompressor.m_des;
+      //recompression loop
+        HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
+        reCompressor.m_des = gamma * LTR.m_turb_des;
+      
+      
+      // Financial Analysis
+        C_HTR = pri_recuperator * HTR.UA_HTR ^ 0.8933;
+        C_LTR = pri_recuperator * LTR.UA_HTR ^ 0.8933;
+        C_turbine = pri_turbine * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
+        C_mainCompressor = pri_compressor * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+        C_reCompressor = pri_compressor * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+        C_cooler = pri_cooler * cooler.UA_cooler ^ 0.8919;
+        C_generator = pri_generator * (P_nom / 10 ^ 6) ^ 0.5463;
+        C_exchanger = pri_exchanger * exchanger.Q_HX_des;
+        C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
+    
+      equation
+        connect(fluid_b, exchanger.HTF_port_b) annotation(
+          Line(points = {{-90, 40}, {38, 40}}, color = {0, 127, 255}));
+        connect(LTR.from_turb_port_b, splitter.port_a) annotation(
+          Line(points = {{-39, -49}, {-43, -49}, {-43, -44}, {-45, -44}}, color = {0, 127, 255}));
+        connect(LTR.from_turb_port_a, HTR.from_turb_port_b) annotation(
+          Line(points = {{-17, -49}, {15, -49}, {15, -25}}, color = {0, 127, 255}));
+        connect(LTR.from_comp_port_b, mixer.first_port_a) annotation(
+          Line(points = {{-17, -39}, {-17, -15}}, color = {0, 127, 255}));
+        connect(mixer.port_b, HTR.from_comp_port_a) annotation(
+          Line(points = {{11, -15}, {15, -15}}, color = {0, 127, 255}));
+        connect(splitter.gamma_port_b, reCompressor.port_a) annotation(
+          Line(points = {{-58, -34}, {-58, 15}}, color = {0, 127, 255}));
+        connect(mainCompressor.port_b, LTR.from_comp_port_a) annotation(
+          Line(points = {{-70, 1}, {-39, 1}, {-39, -39}}, color = {0, 127, 255}));
+        connect(splitter.one_gamma_port_b, cooler.port_a) annotation(
+          Line(points = {{-71, -44}, {-71, -60}, {-83, -60}}, color = {0, 127, 255}));
+        connect(exchanger.CO2_port_a, HTR.from_comp_port_b) annotation(
+          Line(points = {{38, 28}, {37, 28}, {37, -15}}, color = {0, 127, 255}));
+        connect(cooler.port_b, mainCompressor.port_a) annotation(
+          Line(points = {{-83, -42}, {-92, -42}, {-92, -11}}, color = {0, 127, 255}));
+        connect(cooler.T_amb, T_amb) annotation(//parameter Real PR = 25/9.17 "Pressure ratio";
+          Line);
+        connect(m_sup, exchanger.m_sup) annotation(
+          Line);
+        connect(m_sup, cooler.m_sup) annotation(
+          Line);
+        connect(exchanger.CO2_port_b, turbine.port_a) annotation(
+          Line(points = {{58, 28}, {62, 28}, {62, 2}, {61, 2}}, color = {0, 127, 255}));
+        connect(turbine.port_b, HTR.from_turb_port_a) annotation(
+          Line(points = {{83, -9}, {90, -9}, {90, -48}, {37, -48}, {37, -25}}, color = {0, 127, 255}));
+        connect(exchanger.HTF_port_a, fluid_a) annotation(
+          Line(points = {{58, 40}, {62, 40}, {62, 52}, {-74, 52}}, color = {0, 127, 255}));
+        connect(reCompressor.port_b, mixer.second_port_a) annotation(
+          Line(points = {{-36, 27}, {-3, 27}, {-3, -5}}, color = {0, 127, 255}));    
+    
+        if test_mode == true then
+        m_sup = exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min;
+        else
+          when exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
+            m_sup = true;
+          elsewhen exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des*nu_min then
+            m_sup = false;
+          end when;
+        end if;
+        
+        if m_sup then
+          turbine.p_out = mainCompressor.p_out / PR;
+        else
+          exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
+        end if;
+        
+        if ramping then
+          W_net = 0;
+        else 
+          W_net = if m_sup then max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor,0) else 0;
+        end if;
+        
+        W_cycle = if m_sup then
+        (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp else 0;
+        
+        eta_cycle = if m_sup then 
+        ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
+        
+        eta_cycle_net=W_net/exchanger.Q_HX;
+        der(E_net) = W_net;
+        
+        if m_sup then
+          load = fluid_a.m_flow / m_HTF_des;
+        else
+          load = 0;
+        end if;
+    
+      annotation(
+        experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002),
+        __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
+        Diagram);
+    end recompPB;
+  	/*extends SolarTherm.Media.CO2.PropCO2;
+  	import SI = Modelica.SIunits;
+  	import FI = SolarTherm.Models.Analysis.Finances;
+  	import Modelica.SIunits.Conversions.*;
+  	replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+  	replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+  	extends Icons.PowerBlock;
   
-  initial equation
-    exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
-    exchanger.p_in_HTF_des = state_HTF_in_des.p;
-    exchanger.m_HTF_des = m_HTF_des;
-    P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
-  // enthalpy equalities
-  //main loop
-    exchanger.h_in_CO2_des = HTR.h_out_comp_des;
-    turbine.h_in_des = exchanger.h_out_CO2_des;
-    HTR.h_in_turb_des = turbine.h_out_des;
-    LTR.h_in_turb_des = HTR.h_out_turb_des;
-    cooler.h_in_des = LTR.h_out_turb_des;
-    mainCompressor.h_in_des = cooler.h_out_des;
-    LTR.h_in_comp_des = mainCompressor.h_out_des;
-  // recompression loop
-    reCompressor.h_in_des = LTR.h_out_turb_des;
-    HTR.h_in_comp_des = ratio_m_des * LTR.h_out_comp_des + (1 - ratio_m_des) * reCompressor.h_out_des;
-  //pressure equalities
-  //main loop
-    exchanger.p_in_CO2_des = HTR.p_out_comp_des;
-    turbine.p_in_des = exchanger.p_out_CO2_des;
-    HTR.p_in_turb_des = turbine.p_out_des;
-    LTR.p_in_turb_des = HTR.p_out_turb_des;
-    cooler.p_in_des = LTR.p_out_turb_des;
-    mainCompressor.p_in_des = cooler.p_out_des;
-    LTR.p_in_comp_des = mainCompressor.p_out_des;
-  //recompression loop
-    reCompressor.p_in_des = LTR.p_out_turb_des;
-    HTR.p_in_comp_des = ratio_m_des * LTR.p_out_comp_des + (1 - ratio_m_des) * reCompressor.p_out_des;
-  //mass flow equalities
-  //main loop
-  //exchanger.m_CO2_des = HTR.m_comp_des;
-    turbine.m_des = exchanger.m_CO2_des;
-    HTR.m_turb_des = turbine.m_des;
-    LTR.m_turb_des = HTR.m_turb_des;
-    cooler.m_des = LTR.m_turb_des * ratio_m_des;
-    mainCompressor.m_des = cooler.m_des;
-    LTR.m_comp_des = mainCompressor.m_des;
-  //recompression loop
-    HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
-    reCompressor.m_des = gamma * LTR.m_turb_des;
-  // Financial Analysis
-    C_HTR = pri_recuperator * HTR.UA_HTR ^ 0.8933;
-    C_LTR = pri_recuperator * LTR.UA_HTR ^ 0.8933;
-    C_turbine = pri_turbine * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
-    C_mainCompressor = pri_compressor * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_reCompressor = pri_compressor * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
-    C_cooler = pri_cooler * cooler.UA_cooler ^ 0.8919;
-    C_generator = pri_generator * (P_nom / 10 ^ 6) ^ 0.5463;
-    C_exchanger = pri_exchanger * exchanger.Q_HX_des;
-    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
-  // *(603.1/567.5) corresponds to Cepci 2019/Cepci 2016. For more info please read https://www.chemengonline.com/pci-home. CEPCI 2019 and 2016 are taken from https://www.cheresources.com/invision/topic/26729-chemical-engineering-plant-cost-index-cepci-of-2016-and-2017/page-3 . 2016 is the year corresponding of the cost functions publication
-  equation
-    connect(fluid_b, exchanger.HTF_port_b) annotation(
-      Line(points = {{-90, 40}, {38, 40}}, color = {0, 127, 255}));
-    connect(LTR.from_turb_port_b, splitter.port_a) annotation(
-      Line(points = {{-39, -49}, {-43, -49}, {-43, -44}, {-45, -44}}, color = {0, 127, 255}));
-    connect(LTR.from_turb_port_a, HTR.from_turb_port_b) annotation(
-      Line(points = {{-17, -49}, {15, -49}, {15, -25}}, color = {0, 127, 255}));
-    connect(LTR.from_comp_port_b, mixer.first_port_a) annotation(
-      Line(points = {{-17, -39}, {-17, -15}}, color = {0, 127, 255}));
-    connect(mixer.port_b, HTR.from_comp_port_a) annotation(
-      Line(points = {{11, -15}, {15, -15}}, color = {0, 127, 255}));
-    connect(splitter.gamma_port_b, reCompressor.port_a) annotation(
-      Line(points = {{-58, -34}, {-58, 15}}, color = {0, 127, 255}));
-    connect(mainCompressor.port_b, LTR.from_comp_port_a) annotation(
-      Line(points = {{-70, 1}, {-39, 1}, {-39, -39}}, color = {0, 127, 255}));
-    connect(splitter.one_gamma_port_b, cooler.port_a) annotation(
-      Line(points = {{-71, -44}, {-71, -60}, {-83, -60}}, color = {0, 127, 255}));
-    connect(exchanger.CO2_port_a, HTR.from_comp_port_b) annotation(
-      Line(points = {{38, 28}, {37, 28}, {37, -15}}, color = {0, 127, 255}));
-    connect(cooler.port_b, mainCompressor.port_a) annotation(
-      Line(points = {{-83, -42}, {-92, -42}, {-92, -11}}, color = {0, 127, 255}));
-    connect(cooler.T_amb, T_amb) annotation(//parameter Real PR = 25/9.17 "Pressure ratio";
-      Line);
-    connect(m_sup, exchanger.m_sup) annotation(
-      Line);
-    connect(m_sup, cooler.m_sup) annotation(
-      Line);
-    when exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
-      m_sup = true;
-    elsewhen exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des*nu_min then
-      m_sup = false;
-    //else
-    //  m_sup = false;
-    end when;
-    if m_sup then
-      turbine.p_out = mainCompressor.p_out / PR;
-    else
-      exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
-    end if;
-    if ramping then
-      W_net = 0;
-    else 
-      W_net = if m_sup then max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor,0) else 0;
-    end if;
-    eta_cycle = if m_sup then ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
-    eta_cycle_net=W_net/exchanger.Q_HX;
-    der(E_net) = W_net;
-  connect(exchanger.CO2_port_b, turbine.port_a) annotation(
-      Line(points = {{58, 28}, {62, 28}, {62, 2}, {61, 2}}, color = {0, 127, 255}));
-  connect(turbine.port_b, HTR.from_turb_port_a) annotation(
-      Line(points = {{83, -9}, {90, -9}, {90, -48}, {37, -48}, {37, -25}}, color = {0, 127, 255}));
-    connect(exchanger.HTF_port_a, fluid_a) annotation(
-      Line(points = {{58, 40}, {62, 40}, {62, 52}, {-74, 52}}, color = {0, 127, 255}));
-    connect(reCompressor.port_b, mixer.second_port_a) annotation(
-      Line(points = {{-36, 27}, {-3, 27}, {-3, -5}}, color = {0, 127, 255}));
-    annotation(
-      experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002),
-      __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
-      Diagram);
-  end recompPB;
+  	// External ports
+  	Modelica.Fluid.Interfaces.FluidPort_a fluid_a(
+  		redeclare package Medium = MedRec) annotation (Placement(
+  		visible = true,transformation(origin = {-74, 52}, extent = {{-6, -6}, {6, 6}}, rotation = 0),	iconTransformation(extent = {{-48, 30}, {-40, 38}}, rotation = 0)));
+  	Modelica.Fluid.Interfaces.FluidPort_b fluid_b(
+  		redeclare package Medium = MedRec) annotation (Placement(
+  		visible = true,transformation(origin = {-90, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0),iconTransformation(extent = {{-62, -48}, {-54, -40}}, rotation = 0)));
+  	Modelica.Blocks.Interfaces.RealOutput W_net(
+  		quantity="Power",
+  		unit="W",
+  		displayUnit="MW") "Net electric power output" annotation (Placement(
+  		visible = true,transformation(origin = {100, 0}, extent = {{-6, -6}, {6, 6}}, rotation = 0), iconTransformation(extent = {{46, -10}, {56, 0}}, rotation = 0)));
+  
+  	// PB parameters
+  	parameter Boolean external_parasities = false "= true enable parasities as an input";
+  	parameter Real nu_min = 0.25 "Minimum turbine operation";
+  	parameter Real f_fixed_load = 1;
+  	parameter Real eta_motor=1;
+  	
+  	Modelica.Blocks.Interfaces.BooleanInput ramping annotation(
+        Placement(visible = true, transformation(origin = {-68, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-2.22045e-16, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+  	
+  	Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
+  		transformation(extent={{-12,-12},{12,12}},
+  		rotation=-90,
+  		origin={1.77636e-015,80}),									iconTransformation(
+  		extent={{-6,-6},{6,6}},
+  		rotation=-90,
+  		origin={20,60})));
+  
+  	Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
+          transformation(extent={{-12,-48},{12,-24}},
+          rotation=-90,
+          origin={1.77636e-015,80}),                  iconTransformation(
+          extent={{-6,-6},{6,6}},
+          rotation=-90,
+          origin={-20,60})));
+  
+  	//Cycle parameters
+  	parameter SI.AbsolutePressure p_high = 20e6 "high pressure of the cycle";
+  	parameter SI.ThermodynamicTemperature T_high = from_degC(715) "inlet temperature of the turbine";
+  	parameter SI.ThermodynamicTemperature T_amb_des = from_degC(30) "ambient temperature";
+  	parameter Real PR = 2.5 "Pressure ratio";
+  	parameter SI.Power P_gro = 100e6 "first guess of power outlet";
+  	parameter SI.Power P_nom (fixed=false);//= 100e6 "Electrical power at design point";
+  	parameter SI.MassFlowRate m_HTF_des=1000;//(fixed=false) "Mass flow rate at design point";
+  	parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
+  	parameter SI.AngularVelocity[4] choiceN = {75000,30000,10000,3600}*0.10471975512 ;
+  	parameter SI.AngularVelocity N_shaft=(choiceN[integer(Modelica.Math.log(P_gro/1e6)/Modelica.Math.log(10))+2]);
+  
+  	// main Compressor parameters
+  	parameter SI.Efficiency eta_comp_main = 0.89 "Maximal isentropic efficiency of the compressors";
+  
+  	// reCompressor parameters
+  	parameter SI.Efficiency eta_comp_re = 0.89 "Maximal isentropic efficiency of the compressors";
+  
+  	//Turbine parameters
+  	parameter SI.Efficiency eta_turb = 0.93 "Maximal isentropic efficiency of the turbine";
+  	
+  	//HTR Heat recuperator parameters
+  	parameter Integer N_HTR = 15;
+  
+  	//LTR Heat recuperator parameters
+  	parameter Integer N_LTR = 15;
+  	parameter Real ratio_m_des_real = 1 "this is tailord to reach the desired T_HTF_out";
+  	parameter Real ratio_m_des = 1 - gamma;
+  
+  	//Cooler parameters
+  	parameter SI.ThermodynamicTemperature T_low = from_degC(45) "Outlet temperature of the cooler";
+  	
+  	//Exchanger parameters
+  	parameter SI.ThermodynamicTemperature T_HTF_in_des = from_degC(800);
+  
+  	parameter Integer N_exch = 5;
+  
+  	//Financial analysis
+      parameter Real pri_recuperator = 5.2; 
+      parameter Real pri_turbine = 9923.7;
+      parameter Real pri_compressor = 643.15;
+      parameter Real pri_cooler = 76.25; 
+      parameter Real pri_generator = 108900;
+  	parameter FI.Money C_HTR (fixed=false) "cost of the high temperature heat recuperator";
+  	parameter FI.Money C_LTR (fixed=false) "cost of the low temperature heat recuperator";
+  	parameter FI.Money C_turbine (fixed=false) "cost of the turbine";
+  	parameter FI.Money C_mainCompressor (fixed=false) "cost of the main compressor";
+  	parameter FI.Money C_reCompressor (fixed=false) "cost of the re compressor";
+  	parameter FI.Money C_exchanger (fixed=false) "cost of the exchanger";
+  	parameter FI.Money C_generator (fixed=false) "cost of the generator";
+  	parameter FI.Money C_cooler (fixed=false) "cost of the cooler";
+  	parameter FI.Money C_PB (fixed=false) "Overall cost of the power block";
+  	parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles";
+  
+  	//Results
+  	SI.Efficiency eta_cycle;
+  
+  	SI.Energy E_net(final start=0, fixed=true, displayUnit="MW.h");
+  	Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
+  
+  	//Components instanciation
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(
+  		redeclare package Medium=MedPB,
+  		N_q = N_HTR,
+  		P_nom_des=P_gro,
+  		ratio_m_des=ratio_m_des_real) annotation(
+  		Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(
+  		redeclare package Medium=MedPB,
+  		eta_design = eta_comp_main,
+  		N_design=N_shaft,
+  		P_nom_des=P_gro,
+  		p_high_des=p_high) annotation(
+  		Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(
+  		redeclare package Medium=MedPB,
+  		T_low = T_low,
+  		P_nom_des=P_gro,
+  		T_amb_des=T_amb_des) annotation(
+  		Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(
+  		redeclare package Medium=MedPB,
+  		PR = PR,
+  		T_amb = T_amb_des,
+  		N_shaft = N_shaft,
+  		eta_design = eta_turb) annotation(
+  		Placement(visible = true, transformation(origin = {74, 0}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(
+  		redeclare package MedRec = MedRec,
+  		redeclare package MedPB = MedPB,
+  		P_nom_des = P_gro,
+  		T_out_CO2_des = T_high,
+  		N_exch = N_exch,
+  		ratio_m_des=1) annotation(
+  		Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(
+  		redeclare package Medium=MedPB,
+  		N_design = N_shaft,
+  		P_nom_des = P_gro,
+  		p_high_des = p_high) annotation(
+  		Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(
+  		redeclare package Medium=MedPB,
+  		N_q = N_LTR,
+  		P_nom_des = P_gro,
+  		ratio_m_des=1-gamma) annotation(
+  		Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer(
+          redeclare package MedRec=MedPB) annotation(
+  		Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
+  
+  	SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(
+  		gamma = gamma,
+  		redeclare package MedRec=MedPB) annotation(
+  		Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+  
+  	parameter MedRec.ThermodynamicState state_HTF_in_des=MedRec.setState_pTX(1e5,T_HTF_in_des);
+  
+  	protected
+  
+  	initial equation
+  
+  	exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
+  	exchanger.p_in_HTF_des = state_HTF_in_des.p;
+  	exchanger.m_HTF_des=m_HTF_des;
+  	P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) 
+  	* (1-f_fixed_load) * eta_motor;
+  
+  	// enthalpy equalities
+  	//main loop
+  	exchanger.h_in_CO2_des = HTR.h_out_comp_des;
+  	turbine.h_in_des = exchanger.h_out_CO2_des;
+  	HTR.h_in_turb_des = turbine.h_out_des;
+  	LTR.h_in_turb_des=HTR.h_out_turb_des;
+  	cooler.h_in_des = LTR.h_out_turb_des;
+  	mainCompressor.h_in_des = cooler.h_out_des;
+  	LTR.h_in_comp_des = mainCompressor.h_out_des;
+  
+  	// recompression loop
+  	reCompressor.h_in_des=LTR.h_out_turb_des;
+  	HTR.h_in_comp_des=ratio_m_des*LTR.h_out_comp_des+(1-ratio_m_des)*reCompressor.h_out_des;
+  
+  	//pressure equalities
+  	//main loop
+  	exchanger.p_in_CO2_des = HTR.p_out_comp_des;
+  	turbine.p_in_des = exchanger.p_out_CO2_des;
+  	HTR.p_in_turb_des = turbine.p_out_des;
+  	LTR.p_in_turb_des=HTR.p_out_turb_des;
+  	cooler.p_in_des = LTR.p_out_turb_des;
+  	mainCompressor.p_in_des = cooler.p_out_des;
+  	LTR.p_in_comp_des=mainCompressor.p_out_des;
+  
+  	//recompression loop
+  	reCompressor.p_in_des=LTR.p_out_turb_des;
+  	HTR.p_in_comp_des = ratio_m_des*LTR.p_out_comp_des+(1-ratio_m_des)*reCompressor.p_out_des;
+  
+  	//mass flow equalities
+  	//main loop
+  	//exchanger.m_CO2_des = HTR.m_comp_des;
+  	turbine.m_des = exchanger.m_CO2_des;
+  	HTR.m_turb_des = turbine.m_des;
+  	LTR.m_turb_des=HTR.m_turb_des;
+  	cooler.m_des = LTR.m_turb_des*ratio_m_des;
+  	mainCompressor.m_des = cooler.m_des;
+  	LTR.m_comp_des=mainCompressor.m_des;
+  
+  	//recompression loop
+  	HTR.m_comp_des = reCompressor.m_des+LTR.m_comp_des;
+  	reCompressor.m_des=gamma*LTR.m_turb_des;
+  
+  	// Financial Analysis
+      C_HTR = pri_recuperator * HTR.UA_HTR ^ 0.8933;
+      C_LTR = pri_recuperator * LTR.UA_HTR ^ 0.8933;
+      C_turbine = pri_turbine * (-turbine.W_turb_des / 10 ^ 3) ^ 0.5886;
+      C_mainCompressor = pri_compressor * (mainCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+      C_reCompressor = pri_compressor * (reCompressor.W_comp_des / 10 ^ 3) ^ 0.9142;
+      C_cooler = pri_cooler * cooler.UA_cooler ^ 0.8919;
+      C_generator = pri_generator * (P_nom / 10 ^ 6) ^ 0.5463;
+      C_exchanger = pri_exchanger * exchanger.Q_HX_des;
+      C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger);
+  
+  	equation
+  	connect(fluid_b, exchanger.HTF_port_b) annotation(
+  		Line(points = {{-90, 40}, {38, 40}}, color = {0, 127, 255}));
+  	connect(LTR.from_turb_port_b, splitter.port_a) annotation(
+  		Line(points = {{-39, -49}, {-43, -49}, {-43, -44}, {-45, -44}}, color = {0, 127, 255}));
+  	connect(LTR.from_turb_port_a, HTR.from_turb_port_b) annotation(
+  		Line(points = {{-17, -49}, {15, -49}, {15, -25}}, color = {0, 127, 255}));
+  	connect(LTR.from_comp_port_b, mixer.first_port_a) annotation(
+  		Line(points = {{-17, -39}, {-17, -15}}, color = {0, 127, 255}));
+  	connect(mixer.port_b, HTR.from_comp_port_a) annotation(
+  		Line(points = {{11, -15}, {15, -15}}, color = {0, 127, 255}));
+  	connect(splitter.gamma_port_b, reCompressor.port_a) annotation(
+  		Line(points = {{-58, -34}, {-58, 15}}, color = {0, 127, 255}));
+  	connect(mainCompressor.port_b, LTR.from_comp_port_a) annotation(
+  		Line(points = {{-70, 1}, {-39, 1}, {-39, -39}}, color = {0, 127, 255}));
+  	connect(splitter.one_gamma_port_b, cooler.port_a) annotation(
+  		Line(points = {{-71, -44}, {-71, -60}, {-83, -60}}, color = {0, 127, 255}));
+  	connect(exchanger.CO2_port_a, HTR.from_comp_port_b) annotation(
+  		Line(points = {{38, 28}, {37, 28}, {37, -15}}, color = {0, 127, 255}));
+  	connect(cooler.port_b, mainCompressor.port_a) annotation(
+  		Line(points = {{-83, -42}, {-92, -42}, {-92, -11}}, color = {0, 127, 255}));
+  	connect(cooler.T_amb, T_amb) annotation(
+  		Line);
+  	connect(m_sup, exchanger.m_sup) annotation(
+  		Line);
+  	connect(m_sup, cooler.m_sup) annotation(
+  		Line);
+  
+      when exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
+        m_sup = true;
+      elsewhen exchanger.HTF_port_a.m_flow < exchanger.m_HTF_des * nu_min - 0.01 * exchanger.m_HTF_des*nu_min then
+        m_sup = false;
+      end when;
+  
+  	if m_sup then 
+  		turbine.p_out=mainCompressor.p_out/PR;
+  	else
+  		exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
+  	end if;
+  	
+      if ramping then
+        W_net = 0;
+      else 
+        W_net = if m_sup then 
+        max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * 
+        (1 - f_fixed_load) * eta_motor,0) else 0;
+      end if;
+      
+  	eta_cycle = W_net / exchanger.Q_HX;
+  	der(E_net)=W_net;
+  
+  	connect(exchanger.CO2_port_b, turbine.port_a) annotation(
+  		Line(points = {{58, 28}, {62, 28}, {62, 4}, {63, 4}}, color = {0, 127, 255}));
+  	connect(turbine.port_b, HTR.from_turb_port_a) annotation(
+  		Line(points = {{85, -7}, {90, -7}, {90, -48}, {37, -48}, {37, -25}}, color = {0, 127, 255}));
+  	connect(exchanger.HTF_port_a, fluid_a) annotation(
+  		Line(points = {{58, 40}, {62, 40}, {62, 52}, {-74, 52}}, color = {0, 127, 255}));
+  	connect(reCompressor.port_b, mixer.second_port_a) annotation(
+  		Line(points = {{-36, 27}, {-3, 27}, {-3, -5}}, color = {0, 127, 255}));
+      annotation(
+        experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002),
+        __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
+        Diagram);
+    end recompPB;*/
 
   model FlowSplitter
-    extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package MedRec = SolarTherm.Media.CarbonDioxide_ph;
     parameter Real gamma;
     Real gamma_var;
     Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedRec) annotation(
@@ -898,7 +1393,7 @@ package DirectDesign
 
   model FlowMixer "This model is useful for the recompression cycle cycle, as it allows to mix two different fluid. The pressure in both should entrance should be the same; in case it is not, we ponderated it by the mass flows: as it is the same molar mass, the resulting pressure should look like that."
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedRec = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package MedRec = SolarTherm.Media.CarbonDioxide_ph;
     Modelica.Fluid.Interfaces.FluidPort_a first_port_a(redeclare package Medium = MedRec) annotation(
       Placement(visible = true, transformation(origin = {0, 60}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-80, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_a second_port_a(redeclare package Medium = MedRec) annotation(

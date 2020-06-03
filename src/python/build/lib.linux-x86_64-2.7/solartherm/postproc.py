@@ -225,7 +225,7 @@ class SimResultElec(SimResult):
 		lcoe = None # Levelised cost of electricity
 		capf = None # Capacity factor
 		if close_to_year: 
-			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy , disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
@@ -235,7 +235,7 @@ class SimResultElec(SimResult):
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
-		os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
+		#os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
 		i=1 #PG
 		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
 		while os.path.exists(filepath): #PG

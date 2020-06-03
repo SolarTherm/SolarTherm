@@ -31,9 +31,9 @@ model ParticleReceiver1D
   // Model configuration
   parameter Boolean test_mode = true "If true, q_solar = 1200 * 788.8. If False q_solar = Q_in / (W_rcv*H_drop)";
   parameter Boolean fixed_geometry = false "If true, specified H_drop, t_c_in and calculate T_out. 
-    If false, T_out = T_out_design, calculate H_drop and t_c_in 
-    mdot and T_in are given by the inlet port
-    Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
+  //  If false, T_out = T_out_design, calculate H_drop and t_c_in 
+  //  mdot and T_in are given by the inlet port
+  //  Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
@@ -56,7 +56,7 @@ model ParticleReceiver1D
   parameter SI.Density rho_s = 3300. "Particle density [kg/m3]";
   parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
   // Environment
-  parameter SI.Temperature T_amb = from_degC(25) "Ambient temperature [K]";
+  parameter SI.Temperature T_amb = from_degC(4) "Ambient temperature [K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (backwall) [W/m^2-K]";
   parameter Real C = 1200;
@@ -82,7 +82,7 @@ model ParticleReceiver1D
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot(start = 300, nominal = 300) "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot "Inlet mass flow rate [kg/s]";
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
   SI.Length x[N + 2](min = zeros(N + 2), max = fill(100., N + 2)) "Vertical positions of nodes";
@@ -154,7 +154,7 @@ protected
 
 equation
   if test_mode == true then
-    q_solar = Q_in/A_ap;//C * dni_des *eta_opt_des;//Q_in/A_ap;
+    q_solar = Q_in/A_ap;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
@@ -163,11 +163,14 @@ equation
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
   
-  if fixed_geometry then
-    H_drop = H_drop_design;
-  else
-    T_out = T_out_design;
-  end if;
+  H_drop = H_drop_design;
+  
+  //if heat.Q_flow > 1e-6 then
+  //  T_out = T_out_design;
+  //else
+  //  T_out = Tamb;
+  //end if;
+  
 //Boundary conditions
   phi[1] = phi_max;
   vp[1] = vp_in;
@@ -183,7 +186,7 @@ equation
   end for;
   x[N + 2] = H_drop;
   t_c_in = fluid_a.m_flow / (phi_max * vp_in * W_rcv * rho_s);
-  for i in 1:N + 2 loop
+/*  for i in 1:N + 2 loop
 // Curtain thickness
     t_c[i] = t_c_in + 0.0087 * x[i];
 // Oles and Jackson (Sol. En. 2015), Eq 18.
@@ -193,7 +196,33 @@ equation
     vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
 // Mass balance
     phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
-  end for;
+  end for;*/
+  if mdot > 1e-6 then 
+            for i in 1:N + 2 loop
+          // Curtain thickness
+              t_c[i] = t_c_in + 0.0087 * x[i];
+          // Oles and Jackson (Sol. En. 2015), Eq 18.
+            end for;
+            for i in 2:N + 1 loop
+          // Curtain momentum balance (gravity causing decreased curtain opacity)
+              vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
+          // Mass balance
+              phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
+            end for;
+  else
+            for i in 1:N + 2 loop
+          // Curtain thickness
+              t_c[i] = 0;
+          // Oles and Jackson (Sol. En. 2015), Eq 18.
+            end for;
+            for i in 2:N + 1 loop
+          // Curtain momentum balance (gravity causing decreased curtain opacity)
+              vp[i] = 0;
+          // Mass balance
+              phi[i] = 0;
+            end for; 
+  end if;  
+  
 //Properties in the connectors
   mdot = fluid_a.m_flow;
   fluid_a.m_flow + fluid_b.m_flow = 0;
@@ -224,7 +253,7 @@ equation
       abs_c[i] = abs_s;
       tau_c[i] = 0.4;
     else
-        if mdot == 0 then
+        if mdot <1e-6  then
           eps_c[i] = 0;
           abs_c[i] = 0;
           tau_c[i] = 0;

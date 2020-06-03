@@ -32,7 +32,7 @@ model ParticleReceiver1DCalculator
   parameter Real CR = 1200;
   parameter SI.HeatFlux dni_des = 950;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
-  parameter SI.HeatFlowRate Q_in(fixed = false);
+  parameter SI.HeatFlowRate Q_in = 100e6;
   SI.HeatFlowRate Q_in_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -49,8 +49,7 @@ model ParticleReceiver1DCalculator
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = false, test_mode = true, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall=h_conv_backwall, h_conv_curtain=h_conv_curtain) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
 initial equation
-  Q_in = P_gross_design / eff_block_design / eta_rec_assumption * SolarMultiple;
-  m_in = P_gross_design / eff_block_design * SolarMultiple / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
+  m_in = Q_in *eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
 equation
   Q_in_calculated = particleReceiver1D.A_ap * particleReceiver1D.q_solar;
   connect(source.ports[1], liftSimple.fluid_a) annotation(

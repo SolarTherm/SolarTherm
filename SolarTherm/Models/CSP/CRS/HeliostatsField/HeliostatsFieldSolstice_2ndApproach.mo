@@ -3,7 +3,7 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice_2ndApproach
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Optics;
-    Boolean Luis_OELT = true;
+    Boolean Luis_OELT = false;
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
