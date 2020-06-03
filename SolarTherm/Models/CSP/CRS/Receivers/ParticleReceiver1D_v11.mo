@@ -52,7 +52,7 @@ model ParticleReceiver1D_v11
   parameter SI.Efficiency abs_s = 0.9976785 "Particle absorptivity";
   parameter SI.Efficiency tau_s = 5.75335e-8 "Particle transmitivity";
   parameter SI.Density rho_s = 3300. "Particle density [kg/m3]";
-  parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
+  parameter Real phi_max = 0.6 "Maximum achieveable particle volume fraction";
   // Environment
   parameter SI.Temperature T_amb = from_degC(25) "Ambient temperature [K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
@@ -121,8 +121,8 @@ model ParticleReceiver1D_v11
   parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/CarboHSP/CarboHSP_hT.txt");
   import Tables = Modelica.Blocks.Tables;
   Tables.CombiTable1Ds Tab[N + 1](each tableOnFile = true, each tableName = "CarboHSP_hT", each columns = 2:2, each fileName = table_file);
-  //Boolean problema;
-protected
+   Modelica.Blocks.Interfaces.RealOutput eta_rec_out annotation(
+    Placement(visible = true, transformation(origin = {38, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {38, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Thermodynamic Properties in Connectors
   SI.SpecificEnthalpy h_in = inStream(fluid_a.h_outflow);
   SI.Temperature T_in = Util.T_h(h_in) "Inlet temperature [K]";
@@ -143,7 +143,8 @@ algorithm
       tau_c[i] := 0.4;
       reflectivity_c[i] := 1 - abs_c[i] - tau_c[i];
     else
-      if mdot < 1e-6 then
+      //if mdot < 1 then
+      if phi[i] <1e-6 or on == false  then
         C[i] := 0;
         L[i] := 0;
         phi_area[i] := 0;
@@ -158,7 +159,7 @@ algorithm
       else
         C[i] := 6 * phi[i] / (CONST.pi * d_p ^ 3);
         L[i] := (4 / 3 * CONST.pi * (d_p / 2) ^ 3 / phi[i]) ^ (1 / 3);
-        phi_area[i] := CONST.pi * (d_p / 2) ^ 2 / L[i] ^ 2;
+        phi_area[i] :=  CONST.pi * (d_p / 2) ^ 2 / L[i] ^ 2;
         N_layers[i] := t_c[i] / L[i];
         A[i] := prob_center * (1 - abs_s) * phi_area[i] + 2 * (prob_side * (1 - abs_s) * phi_area[i]) ^ 2 / phi_area[i] / (1 - (1 - abs_s));
         B[i] := min((1 - phi_area[i]) ^ 2, 0.99999);
@@ -173,6 +174,7 @@ algorithm
 
 
 equation
+
   W_rcv = H_drop * AR;
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
@@ -182,7 +184,7 @@ equation
     T_out = T_out_design;
   end if;
 //Boundary conditions
-  phi[1] = phi_max;
+  phi[1] = if mdot < 1 then 0 else phi_max;
   vp[1] = vp_in;
   x[1] = 0;
   T_s[1] = T_in;
@@ -245,7 +247,7 @@ equation
   end for;
   
 
-if on then
+  if on then
     for i in 1:N loop
         //Curtain-wall radiation heat fluxes (W/m²)
         gc_f[i] = q_solar;
@@ -307,6 +309,8 @@ end if;
     Qdot_rec = 0;
     eta_rec = 0;
   end if;
+  
+  eta_rec_out = eta_rec;
  
   annotation(
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));

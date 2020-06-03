@@ -51,7 +51,7 @@ equation
    when not (on_charge or on_discharge) then
      t_off = time;
    end when;
-//
+//20
    when t_on-(t_off+t_standby)>0 then
      startup=true;
    elsewhen (time-t_on)>t_start then

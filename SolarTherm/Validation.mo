@@ -1,7 +1,7 @@
 within SolarTherm;
 
 package Validation
-  model sCO2_validation
+  model sCO2PBTestRig
     import SolarTherm.{Models,Media};
     import SI = Modelica.SIunits;
     import nSI = Modelica.SIunits.Conversions.NonSIunits;
@@ -19,7 +19,7 @@ package Validation
     parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
     //	replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
     replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Chloride Salt";
-    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
+    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph "Medium props for sCO2";
     parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
     parameter Currency currency = Currency.USD "Currency used for cost analysis";
     parameter Boolean const_dispatch = true "Constant dispatch of energy";
@@ -60,8 +60,6 @@ package Validation
     parameter Real gamma = 0.221;
     // Storage
     parameter Real t_storage(unit = "h") = 14 "Hours of storage";
-    parameter SI.Temperature T_cold_set(fixed = false) "Cold tank target temperature";
-    parameter SI.Temperature T_hot_set = from_degC(735) "Hot tank target temperature";
     parameter SI.Temperature T_cold_start = T_cold_set "Cold tank starting temperature";
     parameter SI.Temperature T_hot_start = from_degC(735) "Hot tank starting temperature";
     parameter SI.Temperature T_cold_aux_set = from_degC(500) "Cold tank auxiliary heater set-point temperature";
@@ -79,24 +77,6 @@ package Validation
     parameter SI.Power W_heater_hot = 30e8 "Hot tank heater capacity";
     parameter SI.Power W_heater_cold = 30e8 "Cold tank heater capacity";
     parameter Real tank_ar = 20 / 18.667 "storage aspect ratio";
-    // Power block
-    replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
-    parameter SI.Temperature T_comp_in = from_degC(45) "Compressor inlet temperature at design";
-    replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-    parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6 "Power block gross rating at design point";
-    parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
-    parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
-    parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
-    parameter Boolean blk_enable_losses = true "true if the power heat loss calculation is enabled";
-    parameter Boolean external_parasities = false "True if there is external parasitic power losses";
-    parameter Real nu_min_blk = 0.5 "Minimum allowed part-load mass flow fraction to power block";
-    parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
-    parameter SI.AbsolutePressure p_blk = 25e6 "high pressure of the cycle";
-    parameter SI.Temperature blk_T_amb_des = from_degC(43) "Ambient temperature at design for power block";
-    parameter SI.Temperature par_T_amb_des = 298.15 "Ambient temperature at design point";
-    parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
-    parameter SI.Temperature T_in_ref_blk = from_degC(735) "Particle inlet temperature to particle heat exchanger at design";
-    parameter SI.Temperature T_out_ref_blk(fixed = false) "Particle outlet temperature from particle heat exchanger at design";
     // Control
     parameter SI.Angle ele_min = from_deg(8) "Heliostat stow deploy angle";
     parameter Boolean use_wind = true "True if using wind stopping strategy in the solar field";
@@ -142,7 +122,6 @@ package Validation
     parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
     //0.81394780966*m_flow_fac
     parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
-    parameter SI.Power P_net = (1 - par_fr) * P_gross "Power block net rating at design point";
     parameter SI.Power P_name = P_net "Nameplate rating of power block";
     parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / pi) ^ (1 / 3)) "Storage tank height";
     parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
@@ -199,7 +178,7 @@ package Validation
     //pressure_input
     //parasitic inputs
     Modelica.Blocks.Sources.RealExpression parasities_input(y = 0) annotation(
-      Placement(visible = true, transformation(origin = {123, 86}, extent = {{-15, -12}, {15, 12}}, rotation = 180)));
+      Placement(visible = true, transformation(origin = {73, 44}, extent = {{-15, -12}, {15, 12}}, rotation = 180)));
     // Or block for defocusing
     //Sun
     // Solar field
@@ -209,76 +188,85 @@ package Validation
     // Receiver lift
     // Pump Hot
     SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium, k_loss = k_loss_hot) annotation(
-      Placement(transformation(origin = {74, 44}, extent = {{0, 0}, {12, 12}})));
+      Placement(visible = true, transformation(origin = {24, 2}, extent = {{0, 0}, {12, 12}}, rotation = 0)));
     // Temperature sensor
     // PowerBlockControl
     // ReceiverControl
     // Power block
-    parameter Real PR = 25 / 9.17;
-    parameter SI.AbsolutePressure p_high_des = 250 * 10 ^ 5;
-    parameter SI.ThermodynamicTemperature T_low = 45 + 273.15;
-    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, E_net(displayUnit = ""), P_gro = 10e6, T_amb_des = blk_T_amb_des, eta_turb = 0.93, external_parasities = false, gamma = gamma, m_HTF_des = 85.8, nu_min = nu_min_blk, T_high = T_out_CO2_des, PR = PR, p_high = p_high_des, T_low = T_low) annotation(
-      Placement(visible = true, transformation(extent = {{86, 6}, {122, 44}}, rotation = 0)));
     // Price
     SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
-      Placement(visible = true, transformation(extent = {{138, 14}, {158, 34}}, rotation = 0)));
+      Placement(visible = true, transformation(extent = {{88, -28}, {108, -8}}, rotation = 0)));
     SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
     // Variables:
     SI.Power P_elec "Output power of power block";
     SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
     FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-    Modelica.Blocks.Sources.RealExpression m_flow_in(y = 85.8) annotation(
-      Placement(visible = true, transformation(origin = {125, 125}, extent = {{22, 11}, {-22, -11}}, rotation = 0)));
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Power block design parameter
+    parameter SI.Temperature T_comp_in = from_degC(45) "Compressor inlet temperature at design";
+    parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
+    parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
+    parameter Boolean external_parasities = false "True if there is external parasitic power losses";
+    parameter Real nu_min_blk = 0.5 "Minimum allowed part-load mass flow fraction to power block";
+    parameter SI.Temperature blk_T_amb_des = from_degC(43) "Ambient temperature at design for power block";
+    parameter SI.Temperature par_T_amb_des = 298.15 "Ambient temperature at design point";
+    parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
+    parameter SI.Temperature T_cold_set = from_degC(550) "Cold tank target temperature";
+    parameter SI.Temperature T_hot_set = from_degC(735) "Particle inlet temperature from particle heat exchanger at design";
+    parameter Real PR = 25 / 9.17;
+    parameter SI.AbsolutePressure p_high_des = 250 * 10 ^ 5;
+    parameter SI.ThermodynamicTemperature T_low = 45 + 273.15;
+    parameter Real f_fixed_load = 0.0055;
+    parameter SI.Power P_net = 100e6 "Power block gross rating at design point";
+    parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block net rating at design point";
+    //Input operation parameter
+    parameter SI.Temperature T_amb_input = from_degC(23);
+    parameter SI.Temperature T_HTF_in = from_degC(550);
+    parameter SI.MassFlowRate m_HTF_in = 1000;
+    //Components instanciation
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, redeclare package MedPB = MedPB, E_net(displayUnit = ""), N_LTR = 15, N_exch = 5, PR = PR, P_gro = P_gross, P_nom = P_net, T_HTF_in_des = T_hot_set, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, f_fixed_load = f_fixed_load, nu_min = nu_min_blk, test_mode = true) annotation(
+      Placement(visible = true, transformation(extent = {{36, -36}, {72, 2}}, rotation = 0)));
     SolarTherm.Models.Fluid.Sources.FluidSink fluidSink(redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {17, 17}, extent = {{19, -19}, {-19, 19}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-33, -25}, extent = {{19, -19}, {-19, 19}}, rotation = 0)));
     Modelica.Fluid.Sources.Boundary_pT boundary(redeclare package Medium = Medium, nPorts = 1, p = 101325, use_T_in = true) annotation(
-      Placement(visible = true, transformation(origin = {12, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-    Modelica.Blocks.Sources.RealExpression Tamb(y = 300) annotation(
-      Placement(visible = true, transformation(origin = {13, 101}, extent = {{-15, -13}, {15, 13}}, rotation = 0)));
-    Modelica.Blocks.Sources.RealExpression T_in(y = 550 + 273.15 + time) annotation(
-      Placement(visible = true, transformation(origin = {-62, 54}, extent = {{-46, -14}, {46, 14}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-38, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression Tamb(y = T_amb_input) annotation(
+      Placement(visible = true, transformation(origin = {-37, 59}, extent = {{-15, -13}, {15, 13}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression T_in(y = T_HTF_in) annotation(
+      Placement(visible = true, transformation(origin = {-112, 12}, extent = {{-46, -14}, {46, 14}}, rotation = 0)));
     Modelica.Blocks.Sources.BooleanExpression always_true(y = false) annotation(
-      Placement(visible = true, transformation(origin = {6, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-44, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression m_flow_in(y = m_HTF_in) annotation(
+      Placement(visible = true, transformation(origin = {75, 83}, extent = {{22, 11}, {-22, -11}}, rotation = 0)));
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   initial equation
-    if fixed_field then
-      P_gross = Q_flow_des * eff_cyc;
-    else
-      R_des = if match_sam then SM * Q_flow_des * (1 + rec_fr) else SM * Q_flow_des / (1 - rec_fr);
-    end if;
-    T_cold_set = powerBlock.exchanger.T_HTF_des[1];
-    T_cold_set = T_out_ref_blk;
+    R_des = if match_sam then SM * Q_flow_des * (1 + rec_fr) else SM * Q_flow_des / (1 - rec_fr);
     C_block = powerBlock.C_PB;
     C_cap = (C_field + C_site + C_receiver + C_storage + C_block + C_bop) * (1 + r_contg) * (1 + r_indirect) * (1 + r_cons) + C_land;
   equation
-//Connections from data
-// Fluid connections
     connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
-      Line(points = {{78, 50}, {86, 50}, {86, 31}, {96, 31}}, color = {0, 127, 255}));
-// controlCold connections
-//	connect(heliostatsField.on, receiver.on) annotation(
-//		Line(points = {{-31.24, 5.44}, {-44, 5.44}, {-44, -18}, {-72, -18}, {-72, -36}, {28, -36}, {28, -6}, {24.7, -6}, {24.7, -7.2}}, color = {255, 0, 255}));
-// controlHot connections
-//Solar field connections i.e. solar.heat port and control
-//PowerBlock connections
+      Line(points = {{36, 8}, {36, -11}, {46, -11}}, color = {0, 127, 255}));
     connect(parasities_input.y, powerBlock.parasities) annotation(
-      Line(points = {{106, 86}, {106, 61}, {108, 61}, {108, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{56.5, 44}, {56.5, 19}, {58, 19}, {58, -6}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(powerBlock.W_net, market.W_net) annotation(
-      Line(points = {{113, 24}, {138, 24}}, color = {0, 0, 127}));
+      Line(points = {{63, -18}, {88, -18}}, color = {0, 0, 127}));
     P_elec = powerBlock.W_net;
     der(E_elec) = P_elec;
     R_spot = market.profit;
     connect(m_flow_in.y, pumpHot.m_flow) annotation(
-      Line(points = {{101, 125}, {80, 125}, {80, 56}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{51, 83}, {30, 83}, {30, 13}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(powerBlock.fluid_b, fluidSink.port_a) annotation(
-      Line(points = {{94, 17}, {36, 17}}, color = {0, 127, 255}));
+      Line(points = {{44, -25}, {20, -25}, {20, -23}, {-14, -23}}, color = {0, 127, 255}));
     connect(boundary.ports[1], pumpHot.fluid_a) annotation(
-      Line(points = {{22, 50}, {74, 50}, {74, 50}, {74, 50}}, color = {0, 127, 255}));
+      Line(points = {{-28, 8}, {24, 8}}, color = {0, 127, 255}));
     connect(T_in.y, boundary.T_in) annotation(
-      Line(points = {{-11, 54}, {0, 54}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-61, 12}, {-50, 12}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(Tamb.y, powerBlock.T_amb) annotation(
-      Line(points = {{29.5, 101}, {100, 101}, {100, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-20.5, 59}, {50, 59}, {50, -6}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+/*connect(always_true.y, powerBlock.ramping) annotation(
+      Line(points = {{18, 82}, {104, 82}, {104, 36}, {104, 36}}, color = {255, 0, 255}, pattern = LinePattern.Dot));*/
     connect(always_true.y, powerBlock.ramping) annotation(
-      Line(points = {{18, 82}, {104, 82}, {104, 36}, {104, 36}}, color = {255, 0, 255}, pattern = LinePattern.Dot));
+      Line(points = {{-33, 40}, {54, 40}, {54, -6}}, color = {255, 0, 255}));
     annotation(
       Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
       Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
@@ -298,7 +286,7 @@ package Validation
   	</html>"),
       __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
       uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")));
-  end sCO2_validation;
+  end sCO2PBTestRig;
 
   model test_hopper
     extends SolarTherm.Icons.ToDo;
@@ -468,7 +456,9 @@ package Validation
     //GENERAL PARAMETERS
     parameter String fluid = "CO2";
     parameter SI.Temperature T_amb_des = from_degC(45) "ambient temperature at design point";
-    parameter SI.Efficiency eta_cycle_des = 0.5;
+    parameter SI.Efficiency eta_cycle_des_guess = 0.5;
+    parameter SI.Efficiency eta_cycle_des(fixed = false);
+    parameter SI.Power W_net_des = 100e6 "Net power output of the cycle";
     //CYCLE DESIGN PARAMETERS - Turbine and Compressor
     parameter SI.Power P_gross = 111.1111e6 "gross power output of the turbine";
     parameter SI.Efficiency par_fr = 0.1;
@@ -481,7 +471,7 @@ package Validation
     parameter SI.Efficiency eta_design_turbine = 0.91 "compressor isentropic efficiency at design point";
     parameter SI.MassFlowRate m_flow_des(fixed = false) "mass flow of the PB medium";
     //CYCLE DESIGN PARAMETERS - Heat exchanger
-    parameter SI.HeatFlowRate Q_flow_des = P_gross / eta_cycle_des "Heat that must be supplied to the cycle to produce power";
+    parameter SI.HeatFlowRate Q_flow_des = P_gross / eta_cycle_des_guess "Heat that must be supplied to the cycle to produce power";
     parameter SI.Temperature T_hot_tank = from_degC(800) "temperature of the hot tank at design point";
     parameter SI.Temperature T_cold_tank = from_degC(580) "temperature of the cold tank at design point";
     parameter SI.MassFlowRate m_flow_HTF_des = Q_flow_des / (Util.h_T(T_hot_tank) - Util.h_T(T_cold_tank)) "mass flow rate of the HTF at design point entering the HX";
@@ -490,14 +480,14 @@ package Validation
     parameter SI.Temperature delta_T_out_des = 10 "Temerature difference of T ambient and T medium at the outlet of the cooler at design point";
     parameter SI.Temperature T_cold_set = T_amb_des + delta_T_out_des "Temperature of the medium at the putlet of the cooler at design point";
     //VARIABLES
-    SI.Power W_net;
+    SI.Power W_net "Net pwoer output of the cycle";
     //CONNECTIONS
     SolarTherm.Validation.Compressor compressor(eta_design = eta_design_compressor, p_in_des = p_cold_set, p_out_des = p_hot_set, T_in_des = T_cold_set, m_flow_des = m_flow_des, redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-114, 0}, extent = {{-36, -36}, {36, 36}}, rotation = 0)));
-    SolarTherm.Validation.Turbine turbine(eta_design = eta_design_turbine, W_turb_des = P_gross, p_in_des = p_hot_set, p_out_des = p_cold_set, redeclare package Medium = Medium) annotation(
+    SolarTherm.Validation.Turbine turbine(eta_design = eta_design_turbine, p_in_des = p_hot_set, p_out_des = p_cold_set, redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {127, 1}, extent = {{-31, -31}, {31, 31}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(45)) annotation(
-      Placement(visible = true, transformation(origin = {213, 160}, extent = {{29, -10}, {-29, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-67, 162}, extent = {{-29, -10}, {29, 10}}, rotation = 0)));
     SolarTherm.Validation.Cooler cooler(P_gross = P_gross, m_flow_des = m_flow_des, delta_T_out_des = delta_T_out_des) annotation(
       Placement(visible = true, transformation(origin = {200, 84}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
     SolarTherm.Validation.HeatExchanger heatExchanger(Q_flow_des = Q_flow_des, T_out_medium_des = T_hot_set, T_hot_tank = T_hot_tank, T_cold_tank = T_cold_tank, m_flow_medium_des = m_flow_des) annotation(
@@ -509,23 +499,21 @@ package Validation
     SolarTherm.Models.Fluid.Sources.FluidSink fluidSink annotation(
       Placement(visible = true, transformation(origin = {-89, -95}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
     Modelica.Blocks.Sources.RealExpression realExpression(y = m_flow_HTF_des) annotation(
-      Placement(visible = true, transformation(origin = {102, -64}, extent = {{16, -12}, {-16, 12}}, rotation = 0)));
-    SolarTherm.Validation.Recuperator recuperator(m_flow_hot_des = m_flow_des, m_flow_cold_des = m_flow_des) annotation(
-      Placement(visible = true, transformation(origin = {-41, 15}, extent = {{-31, -31}, {31, 31}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {116, -56}, extent = {{30, -20}, {-30, 20}}, rotation = 0)));
   initial equation
 //MASS FLOW EQUALITIES
     m_flow_des = turbine.m_flow_des;
 //TEMPERATURE EQUALITIES
-    recuperator.T_out_cold_des = heatExchanger.T_in_medium_des;
-    recuperator.T_in_hot_des = turbine.T_out_des;
-    compressor.T_out_des = recuperator.T_in_cold_des;
-    cooler.T_in_des = recuperator.T_out_hot_des;
+    turbine.T_out_des = cooler.T_in_des;
     cooler.T_out_des_comp = compressor.T_in_des;
+//SYSTEM PERFORMANCE AT DESIGN POINT
+    W_net_des = turbine.W_turb_des + compressor.W_comp_des + cooler.P_fan_cooler_des;
+    eta_cycle_des = W_net_des / Q_flow_des;
   equation
     W_net = turbine.W_turb + compressor.W_comp;
 //CONNECTIONS
     connect(T_amb.y, cooler.T_amb) annotation(
-      Line(points = {{181, 160}, {44, 160}, {44, 88}, {177, 88}}, color = {0, 0, 127}));
+      Line(points = {{-35, 162}, {44, 162}, {44, 88}, {177, 88}}, color = {0, 0, 127}));
     connect(boundary.ports[1], pumpSimple_EqualPressure1.fluid_a) annotation(
       Line(points = {{142, -98}, {90, -98}}, color = {0, 127, 255}));
     connect(pumpSimple_EqualPressure1.fluid_b, heatExchanger.HTF_port_a) annotation(
@@ -533,19 +521,15 @@ package Validation
     connect(fluidSink.port_a, heatExchanger.HTF_port_b) annotation(
       Line(points = {{-68, -93}, {-4.5, -93}, {-4.5, -70}}, color = {0, 127, 255}));
     connect(realExpression.y, pumpSimple_EqualPressure1.m_flow) annotation(
-      Line(points = {{84, -64}, {80, -64}, {80, -90}, {80, -90}}, color = {0, 0, 127}));
+      Line(points = {{83, -56}, {80, -56}, {80, -90}}, color = {0, 0, 127}));
     connect(cooler.port_b, compressor.port_a) annotation(
       Line(points = {{200, 105}, {200, 130}, {-136, 130}, {-136, 7}}, color = {0, 127, 255}));
-    connect(compressor.port_b, recuperator.cold_port_a) annotation(
-      Line(points = {{-92, -14}, {-76, -14}, {-76, 10}, {-64, 10}, {-64, 8}}, color = {0, 127, 255}));
-    connect(recuperator.cold_port_b, heatExchanger.medium_port_a) annotation(
-      Line(points = {{-20, 8}, {-14, 8}, {-14, -50}, {-6, -50}, {-6, -48}}, color = {0, 127, 255}));
-    connect(turbine.port_b, recuperator.hot_port_a) annotation(
-      Line(points = {{146, -12}, {160, -12}, {160, 22}, {-18, 22}, {-18, 22}}, color = {0, 127, 255}));
-    connect(recuperator.hot_port_b, cooler.port_a) annotation(
-      Line(points = {{-64, 22}, {-88, 22}, {-88, 44}, {200, 44}, {200, 64}, {200, 64}}, color = {0, 127, 255}));
     connect(heatExchanger.medium_port_b, turbine.port_a) annotation(
       Line(points = {{44, -48}, {62, -48}, {62, 8}, {108, 8}, {108, 8}}, color = {0, 127, 255}));
+    connect(compressor.port_b, heatExchanger.medium_port_a) annotation(
+      Line(points = {{-92, -14}, {-34, -14}, {-34, -48}, {-6, -48}, {-6, -48}}, color = {0, 127, 255}));
+    connect(turbine.port_b, cooler.port_a) annotation(
+      Line(points = {{146, -12}, {200, -12}, {200, 64}, {200, 64}}, color = {0, 127, 255}));
   protected
     annotation(
       Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
@@ -668,7 +652,7 @@ package Validation
     replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
     //Design Parameters
     parameter String fluid = "CO2" "Turbine working fluid (default: CO2)";
-    parameter SI.Power W_turb_des = 100e6 "Turbine power output at design";
+    parameter SI.Power W_turb_des(fixed = false) "Turbine power output at design";
     parameter SI.Temperature T_in_des = from_degC(715) "Turbine inlet temperature at design";
     parameter SI.Temperature T_out_des(fixed = false) "Turbine outlet temperature at design";
     parameter SI.Pressure p_in_des = 24e6 "Turbine inlet pressure at design";
@@ -689,9 +673,9 @@ package Validation
     //Dynamic variables
     SI.AbsolutePressure p_in(start = p_in_des) "Turbine inlet pressure";
     SI.AbsolutePressure p_out(start = p_out_des) "Turbine outlet pressure";
-    SI.SpecificEnthalpy h_in "Turbine inlet enthalpy";
+    SI.SpecificEnthalpy h_in(start = h_in_des) "Turbine inlet enthalpy";
     SI.SpecificEntropy s_in "Turbine inlet entropy";
-    SI.SpecificEnthalpy h_out_isen "Turbine outlet isentropic enthalpy";
+    SI.SpecificEnthalpy h_out_isen(start = h_out_isen_des) "Turbine outlet isentropic enthalpy";
     SI.SpecificEnthalpy h_out "Turbine outlet enthalpy";
     SI.Density rho_out "Turbine outlet density";
     SI.Velocity C_spouting(start = C_spouting_des) "Turbine spouting velociR744ty";
@@ -791,7 +775,7 @@ package Validation
     parameter SI.MassFlowRate m_flow_des = 1000 "mass flow rate at design point = mass flow rate of the medium after the splitter";
     parameter SI.Temperature delta_T_out_des = 10 "delta temperature of outlet temperature of the medium and ambient at design point";
     parameter SI.Power P_gross = 100e6 "Gross power output of the turbine";
-    parameter SI.Power P_fan_cooler_des = 0.01 * P_gross "fan power rating";
+    parameter SI.Power P_fan_cooler_des = -0.01 * P_gross "fan power rating";
     parameter SI.HeatFlowRate Q_cooler_des(fixed = false) "Cooling power at design point";
     parameter SI.SpecificEnthalpy delta_h_discretized_des(fixed = false) "discretized delta enthalpy";
     parameter SI.ThermalConductance UA_cooler(fixed = false) "UA rating of the cooler";
@@ -1017,30 +1001,30 @@ package Validation
     parameter SI.ThermalConductance[N - 1] UA_HX_des_dis(each fixed = false, each start = 4000);
     parameter SI.SpecificEnthalpy delta_h_dis_des(fixed = false, each start = 18600);
     /*/VARIABLES
-                        SI.SpecificEnthalpy h_in_hot(start = h_in_hot_des);
-                        SI.SpecificEnthalpy h_out_hot(start = h_out_hot_des);
-                        SI.SpecificEnthalpy h_in_cold(start = h_in_cold_des);
-                        SI.SpecificEnthalpy h_out_cold(start = h_out_cold_des);
-                        SI.Temperature T_in_hot(start = T_in_hot_des);
-                        SI.Temperature T_out_hot(start = T_out_hot_des);
-                        SI.Temperature T_in_cold(start = T_in_cold_des);
-                        SI.Temperature T_out_cold(start = T_out_cold_des);
-                        SI.HeatFlowRate Q_HX "total heat exchanged in the HX during operation";
-                        //VARIABLES - DISCRETIZED
-                        SI.SpecificEnthalpy[N] h_hot(start = {500000 + (i - 1) / N * 200000 for i in 1:N});
-                        SI.SpecificEnthalpy[N] h_cold(start = {480000 + (i - 1) / N * 200000 for i in 1:N});
-                        SI.Temperature[N] T_hot(start = {350 + (i - 1) / N * 150 for i in 1:N});
-                        SI.Temperature[N] T_cold(start = {320 + (i - 1) / N * 150 for i in 1:N});
-                        Real[N] delta_T(start = {30 for i in 1:N});
-                        //PORTS
-                        Modelica.Fluid.Interfaces.FluidPort_a hot_port_a(redeclare package Medium = Medium, m_flow.start = 1000) annotation(
-                          Placement(visible = true, transformation(origin = {72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-                        Modelica.Fluid.Interfaces.FluidPort_a cold_port_a(redeclare package Medium = Medium) annotation(
-                          Placement(visible = true, transformation(origin = {-72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-                        Modelica.Fluid.Interfaces.FluidPort_b hot_port_b(redeclare package Medium = Medium) annotation(
-                          Placement(visible = true, transformation(origin = {-72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-                        Modelica.Fluid.Interfaces.FluidPort_b cold_port_b(redeclare package Medium = Medium) annotation(
-                          Placement(visible = true, transformation(origin = {72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));*/
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy h_in_hot(start = h_in_hot_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy h_out_hot(start = h_out_hot_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy h_in_cold(start = h_in_cold_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy h_out_cold(start = h_out_cold_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature T_in_hot(start = T_in_hot_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature T_out_hot(start = T_out_hot_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature T_in_cold(start = T_in_cold_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature T_out_cold(start = T_out_cold_des);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.HeatFlowRate Q_HX "total heat exchanged in the HX during operation";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    //VARIABLES - DISCRETIZED
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy[N] h_hot(start = {500000 + (i - 1) / N * 200000 for i in 1:N});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.SpecificEnthalpy[N] h_cold(start = {480000 + (i - 1) / N * 200000 for i in 1:N});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature[N] T_hot(start = {350 + (i - 1) / N * 150 for i in 1:N});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    SI.Temperature[N] T_cold(start = {320 + (i - 1) / N * 150 for i in 1:N});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Real[N] delta_T(start = {30 for i in 1:N});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    //PORTS
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Modelica.Fluid.Interfaces.FluidPort_a hot_port_a(redeclare package Medium = Medium, m_flow.start = 1000) annotation(
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      Placement(visible = true, transformation(origin = {72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Modelica.Fluid.Interfaces.FluidPort_a cold_port_a(redeclare package Medium = Medium) annotation(
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      Placement(visible = true, transformation(origin = {-72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Modelica.Fluid.Interfaces.FluidPort_b hot_port_b(redeclare package Medium = Medium) annotation(
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      Placement(visible = true, transformation(origin = {-72, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-72, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Modelica.Fluid.Interfaces.FluidPort_b cold_port_b(redeclare package Medium = Medium) annotation(
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      Placement(visible = true, transformation(origin = {72, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));*/
   initial equation
     h_out_cold_des = stprops("H", "T", T_out_cold_des, "P", p_out_cold_des, fluid);
     h_in_hot_des = stprops("H", "T", T_in_hot_des, "P", p_in_hot_des, fluid);
@@ -1101,4 +1085,436 @@ package Validation
       Diagram(graphics = {Text(origin = {0, 30}, extent = {{-26, 6}, {26, -6}}, textString = "Hot Side"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}, {72, 0}}), Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Text(origin = {4, 1}, extent = {{-40, 13}, {40, -13}}, textString = "Recuperator"), Text(origin = {5, -33}, extent = {{-35, 9}, {29, -3}}, textString = "Cold Side"), Rectangle(extent = {{-72, 40}, {72, -40}})}, coordinateSystem(initialScale = 0.1)),
       Icon(graphics = {Line(origin = {0, -20}, points = {{-72, 0}, {72, 0}}), Line(origin = {-1.85355, 20}, points = {{-4.14645, 0}, {3.85355, 8}, {3.85355, -8}, {-4.14645, 0}}), Line(origin = {0.81235, -20}, points = {{5.18765, 0}, {-4.81235, 8}, {-4.81235, -8}, {5.18765, 0}}), Rectangle(extent = {{-72, 40}, {72, -40}}), Text(origin = {1, -35}, extent = {{-15, 5}, {15, -5}}, textString = "Cold Side"), Text(origin = {1, 34}, extent = {{-15, 4}, {15, -4}}, textString = "Hot Side"), Text(origin = {11, -6}, extent = {{-49, 20}, {33, -10}}, textString = "Recuperator"), Line(origin = {0, 20}, points = {{-72, 0}, {72, 0}})}, coordinateSystem(initialScale = 0.1)));
   end Recuperator;
+
+  model PIDtesting
+    import SI = Modelica.SIunits;
+    import Modelica.SIunits.Conversions.*;
+    replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
+    import sin = Modelica.Math.Sin;
+    // Receiver design params
+    parameter SI.Length H_rcv(fixed = false);
+    parameter SI.MassFlowRate m_flow_des(fixed = false);
+    parameter SI.Irradiance dni_des = 950;
+    parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10;
+    parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32;
+    parameter SI.Efficiency eta_opt_des = 0.88;
+    parameter SI.HeatFlowRate Q_in = 500e6;
+    parameter SI.Temperature T_in_design = from_degC(580.3);
+    parameter SI.Temperature T_out_design = from_degC(800);
+    parameter SI.Temperature T_amb_des = from_degC(25);
+    parameter SI.Temperature T_amb = from_degC(5);
+    parameter SI.Power P_net = 100e6;
+    parameter SI.Efficiency par_fr = 0.1;
+    parameter SI.Power P_gross = P_net / (1 - par_fr);
+    parameter Real SM = 2.5;
+    parameter Real eff_blk = 0.501;
+    // Params PID
+    parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
+    parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+    parameter SI.MassFlowRate m_flow_max = 3 * m_flow_des;
+    parameter SI.MassFlowRate m_flow_min = 0;
+    //Connections
+    SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, test_mode = false, with_detail_h_ambient = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, h_conv_curtain = h_conv_curtain, h_conv_backwall = h_conv_backwall) annotation(
+      Placement(visible = true, transformation(origin = {-28, 22}, extent = {{-26, -26}, {26, 26}}, rotation = 0)));
+    Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
+      Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = 0, CF = 0, eff = 0.8) annotation(
+      Placement(visible = true, transformation(origin = {12, -24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+    Modelica.Blocks.Sources.BooleanExpression Operation(y = true) annotation(
+      Placement(visible = true, transformation(origin = {-84, -20}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression realExpression(y = T_amb) annotation(
+      Placement(visible = true, transformation(origin = {-80, 84}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression Wind_dir(y = 1) annotation(
+      Placement(visible = true, transformation(origin = {-83, 53}, extent = {{-11, -13}, {11, 13}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression Wspd_input(y = 1) annotation(
+      Placement(visible = true, transformation(extent = {{-96, 60}, {-70, 80}}, rotation = 0)));
+    Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
+      Placement(visible = true, transformation(extent = {{76, 58}, {56, 78}}, rotation = 0)));
+    SolarTherm.Models.Fluid.Sensors.Temperature temperature annotation(
+      Placement(visible = true, transformation(origin = {22, 70}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
+    SolarTherm.Models.Control.ReceiverControl receiverControl(Kp = Kp, T_ref = T_out_design, Ti = Ti, m_flow_max = m_flow_max, m_flow_min = m_flow_min) annotation(
+      Placement(visible = true, transformation(origin = {30, 20}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression realExpression1(y = 80) annotation(
+      Placement(visible = true, transformation(origin = {107, 20}, extent = {{13, -10}, {-13, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression heat_in(y = Q_in) annotation(
+      Placement(visible = true, transformation(origin = {-110, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow prescribedHeatFlow annotation(
+      Placement(visible = true, transformation(origin = {-74, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(P_gross_design = P_gross, SolarMultiple = SM, T_amb_design = T_amb_des, T_in_design = T_in_design, T_out_design = T_out_design, dni_des = dni_des, eff_block_design = eff_blk, eta_opt_des = eta_opt_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain) annotation(
+      Placement(visible = true, transformation(origin = {88, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  initial equation
+    m_flow_des = particleReceiver1DCalculator.m_in;
+    H_rcv = particleReceiver1DCalculator.particleReceiver1D.H_drop;
+  equation
+    connect(particleReceiver1D.fluid_a, liftSimple.fluid_b) annotation(
+      Line(points = {{-22, -2}, {-10, -2}, {-10, -22}, {6, -22}, {6, -22}}, color = {0, 127, 255}));
+    connect(liftSimple.fluid_a, source.ports[1]) annotation(
+      Line(points = {{18, -22}, {30, -22}, {30, -14}, {50, -14}, {50, -14}}, color = {0, 127, 255}));
+    connect(Operation.y, particleReceiver1D.on) annotation(
+      Line(points = {{-72, -20}, {-56, -20}, {-56, -2}, {-32, -2}, {-32, -2}}, color = {255, 0, 255}));
+    connect(realExpression.y, particleReceiver1D.Tamb) annotation(
+      Line(points = {{-68, 84}, {-22, 84}, {-22, 42}, {-22, 42}}, color = {0, 0, 127}));
+    connect(Wind_dir.y, particleReceiver1D.Wdir) annotation(
+      Line(points = {{-70, 54}, {-34, 54}, {-34, 42}, {-34, 42}}, color = {0, 0, 127}));
+    connect(Wspd_input.y, particleReceiver1D.Wspd) annotation(
+      Line(points = {{-68, 70}, {-28, 70}, {-28, 42}, {-28, 42}}, color = {0, 0, 127}));
+    connect(temperature.fluid_b, sink.ports[1]) annotation(
+      Line(points = {{32, 70}, {56, 70}, {56, 68}, {56, 68}}, color = {0, 127, 255}));
+    connect(temperature.fluid_a, particleReceiver1D.fluid_b) annotation(
+      Line(points = {{12, 70}, {-2, 70}, {-2, 34}, {-20, 34}, {-20, 34}}, color = {0, 127, 255}));
+    connect(receiverControl.m_flow, liftSimple.m_flow) annotation(
+      Line(points = {{18, 20}, {14, 20}, {14, -12}, {14, -12}}, color = {0, 0, 127}));
+    connect(temperature.T, receiverControl.T_mea) annotation(
+      Line(points = {{22, 60}, {22, 60}, {22, 36}, {60, 36}, {60, 26}, {42, 26}, {42, 26}}, color = {0, 0, 127}));
+    connect(Operation.y, receiverControl.sf_on) annotation(
+      Line(points = {{-72, -20}, {-56, -20}, {-56, -44}, {84, -44}, {84, 14}, {42, 14}, {42, 14}}, color = {255, 0, 255}));
+    connect(realExpression1.y, receiverControl.L_mea) annotation(
+      Line(points = {{92, 20}, {42, 20}, {42, 20}, {40, 20}}, color = {0, 0, 127}));
+    connect(heat_in.y, prescribedHeatFlow.Q_flow) annotation(
+      Line(points = {{-98, 30}, {-84, 30}, {-84, 30}, {-84, 30}}, color = {0, 0, 127}));
+    connect(prescribedHeatFlow.port, particleReceiver1D.heat) annotation(
+      Line(points = {{-64, 30}, {-54, 30}, {-54, 30}, {-54, 30}}, color = {191, 0, 0}));
+    connect(prescribedHeatFlow.Q_flow, receiverControl.Q_input) annotation(
+      Line(points = {{-84, 30}, {20, 30}, {20, 32}, {20, 32}}, color = {0, 0, 127}));
+    connect(particleReceiver1D.eta_rec_out, receiverControl.eta_rec_in) annotation(
+      Line(points = {{-20, 16}, {6, 16}, {6, 44}, {40, 44}, {40, 32}, {40, 32}}, color = {0, 0, 127}));
+    annotation(
+      experiment(StartTime = 0, StopTime = 6000, Tolerance = 1e-06, Interval = 1));
+  end PIDtesting;
+
+  model PBTestRig
+    import FI = SolarTherm.Models.Analysis.Finances;
+    import Modelica.SIunits.Conversions.*;
+    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+    Modelica.SIunits.Power W_net "Net electric power output";
+    // PB parameters
+    parameter Real nu_min = 0.25 "Minimum turbine operation";
+    Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(45));
+    //Cycle parameters
+    parameter Modelica.SIunits.AbsolutePressure p_high = 20e6 "high pressure of the cycle";
+    parameter Modelica.SIunits.ThermodynamicTemperature T_high = from_degC(715) "inlet temperature of the turbine";
+    parameter Modelica.SIunits.ThermodynamicTemperature T_amb_des = from_degC(30) "ambient temperature";
+    parameter Modelica.SIunits.Efficiency PR = 2.5 "Pressure ratio";
+    parameter Modelica.SIunits.Power P_gro = 100e6 "first guess of power outlet";
+    parameter Modelica.SIunits.Power P_nom(fixed = false) "Electrical power at design point";
+    parameter Modelica.SIunits.MassFlowRate m_HTF_des = 1000 "Mass flow rate at design point";
+    parameter Modelica.SIunits.Efficiency gamma = 0.28 "Part of the mass flow going to the recompression directly";
+    parameter Modelica.SIunits.AngularVelocity[4] choiceN = {75000, 30000, 10000, 3600} * 0.10471975512;
+    parameter Modelica.SIunits.AngularVelocity N_shaft = choiceN[integer(Modelica.Math.log(P_gro / 1e6) / Modelica.Math.log(10)) + 2];
+    // main Compressor parameters
+    parameter Modelica.SIunits.Efficiency eta_comp_main = 0.89 "Maximal isentropic efficiency of the compressors";
+    // reCompressor parameters
+    parameter Modelica.SIunits.Efficiency eta_comp_re = 0.89 "Maximal isentropic efficiency of the compressors";
+    //Turbine parameters
+    parameter Modelica.SIunits.Efficiency eta_turb = 0.93 "Maximal isentropic efficiency of the turbine";
+    //HTR Heat recuperator parameters
+    parameter Integer N_HTR = 15;
+    //LTR Heat recuperator parameters
+    parameter Integer N_LTR = 15;
+    parameter Real ratio_m_des = 1 - gamma;
+    //Cooler parameters
+    parameter Modelica.SIunits.ThermodynamicTemperature T_low = from_degC(45) "Outlet temperature of the cooler";
+    //Exchanger parameters
+    parameter Modelica.SIunits.ThermodynamicTemperature T_HTF_in_des = from_degC(800);
+    parameter Integer N_exch = 5;
+    //Financial analysis
+    parameter FI.Money C_HTR(fixed = false) "cost of the high temperature heat recuperator";
+    parameter FI.Money C_LTR(fixed = false) "cost of the low temperature heat recuperator";
+    parameter FI.Money C_turbine(fixed = false) "cost of the turbine";
+    parameter FI.Money C_mainCompressor(fixed = false) "cost of the main compressor";
+    parameter FI.Money C_reCompressor(fixed = false) "cost of the re compressor";
+    parameter FI.Money C_exchanger(fixed = false) "cost of the exchanger";
+    parameter FI.Money C_generator(fixed = false) "cost of the generator";
+    parameter FI.Money C_cooler(fixed = false) "cost of the cooler";
+    parameter FI.Money C_PB(fixed = false) "Overall cost of the power block";
+    parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles";
+    //Results
+    Modelica.SIunits.Efficiency eta_cycle;
+    Modelica.SIunits.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
+    Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
+    //Components instanciation
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve HTR(redeclare package Medium = MedPB, N_q = N_HTR, P_nom_des = P_gro, ratio_m_des = 1) annotation(
+      Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft mainCompressor(redeclare package Medium = MedPB, eta_design = eta_comp_main, N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
+      Placement(visible = true, transformation(origin = {-81, -3}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Cooler cooler(redeclare package Medium = MedPB, T_low = T_low, P_nom_des = P_gro, T_amb_des = T_amb_des) annotation(
+      Placement(visible = true, transformation(origin = {-83, -51}, extent = {{-13, -13}, {13, 13}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Turbine turbine(redeclare package Medium = MedPB, PR = PR, T_amb = T_amb_des, N_shaft = N_shaft, eta_design = eta_turb) annotation(
+      Placement(visible = true, transformation(origin = {74, 0}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.Exchanger exchanger(redeclare package MedRec = MedRec, redeclare package MedPB = MedPB, P_nom_des = P_gro, T_out_CO2_des = T_high, N_exch = N_exch, ratio_m_des = 1) annotation(
+      Placement(visible = true, transformation(origin = {48, 34}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.CompressorOnShaft reCompressor(redeclare package Medium = MedPB, N_design = N_shaft, P_nom_des = P_gro, p_high_des = p_high) annotation(
+      Placement(visible = true, transformation(origin = {-47, 23}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.HeatRecuperatorDTAve LTR(redeclare package Medium = MedPB, N_q = N_LTR, P_nom_des = P_gro, ratio_m_des = 1 - gamma) annotation(
+      Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer(redeclare package MedRec = MedPB) annotation(
+      Placement(visible = true, transformation(origin = {-3, -15}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowSplitter splitter(gamma = gamma, redeclare package MedRec = MedPB) annotation(
+      Placement(visible = true, transformation(origin = {-58, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+    Modelica.Fluid.Sources.MassFlowSource_T source(replaceable package Medium = MedRec, T = from_degC(720), m_flow = 1200, nPorts = 1) annotation(
+      Placement(visible = true, transformation(origin = {86, 81.5}, extent = {{14, -14}, {-14, 14}}, rotation = 90)));
+    Modelica.Fluid.Sources.FixedBoundary sink(replaceable package Medium = MedRec, nPorts = 1) annotation(
+      Placement(visible = true, transformation(origin = {28, 88}, extent = {{13, 13}, {-13, -13}}, rotation = 90)));
+    parameter MedRec.ThermodynamicState state_HTF_in_des = MedRec.setState_pTX(1e5, T_HTF_in_des);
+  initial equation
+    exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
+    exchanger.p_in_HTF_des = state_HTF_in_des.p;
+    exchanger.m_HTF_des = m_HTF_des;
+    P_nom = (-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des;
+// enthalpy equalities
+//main loop
+    exchanger.h_in_CO2_des = HTR.h_out_comp_des;
+    turbine.h_in_des = exchanger.h_out_CO2_des;
+    HTR.h_in_turb_des = turbine.h_out_des;
+    LTR.h_in_turb_des = HTR.h_out_turb_des;
+    cooler.h_in_des = LTR.h_out_turb_des;
+    mainCompressor.h_in_des = cooler.h_out_des;
+    LTR.h_in_comp_des = mainCompressor.h_out_des;
+// recompression loop
+    reCompressor.h_in_des = LTR.h_out_turb_des;
+    HTR.h_in_comp_des = ratio_m_des * LTR.h_out_comp_des + (1 - ratio_m_des) * reCompressor.h_out_des;
+//pressure equalities
+//main loop
+    exchanger.p_in_CO2_des = HTR.p_out_comp_des;
+    turbine.p_in_des = exchanger.p_out_CO2_des;
+    HTR.p_in_turb_des = turbine.p_out_des;
+    LTR.p_in_turb_des = HTR.p_out_turb_des;
+    cooler.p_in_des = LTR.p_out_turb_des;
+    mainCompressor.p_in_des = cooler.p_out_des;
+    LTR.p_in_comp_des = mainCompressor.p_out_des;
+//recompression loop
+    reCompressor.p_in_des = LTR.p_out_turb_des;
+    HTR.p_in_comp_des = ratio_m_des * LTR.p_out_comp_des + (1 - ratio_m_des) * reCompressor.p_out_des;
+//mass flow equalities
+//main loop
+//exchanger.m_CO2_des = HTR.m_comp_des;
+    turbine.m_des = exchanger.m_CO2_des;
+    HTR.m_turb_des = turbine.m_des;
+    LTR.m_turb_des = HTR.m_turb_des;
+    cooler.m_des = LTR.m_turb_des * ratio_m_des;
+    mainCompressor.m_des = cooler.m_des;
+    LTR.m_comp_des = mainCompressor.m_des;
+//recompression loop
+    HTR.m_comp_des = reCompressor.m_des + LTR.m_comp_des;
+    reCompressor.m_des = gamma * LTR.m_turb_des;
+// Financial Analysis
+    C_HTR = if HTR.T_turb_des[N_HTR] >= from_degC(550) then 49.45 * HTR.UA_HTR ^ 0.7544 * (1 + 0.02141 * (HTR.T_turb_des[N_HTR] - from_degC(550))) else 49.45 * HTR.UA_HTR ^ 0.7544;
+    C_LTR = 49.45 * LTR.UA_HTR ^ 0.7544;
+    C_turbine = if exchanger.T_CO2_des[2] >= from_degC(550) then 406200 * (-turbine.W_turb_des / 1e6) ^ 0.8 * (1 + 1.137e-5 * (exchanger.T_CO2_des[2] - from_degC(550)) ^ 2) else 406200 * (-turbine.W_turb_des / 1e6) ^ 0.8;
+    C_mainCompressor = 1230000 * (mainCompressor.W_comp_des / 1e6) ^ 0.3392;
+    C_reCompressor = 1230000 * (reCompressor.W_comp_des / 1e6) ^ 0.3392;
+    C_cooler = 32.88 * cooler.UA_cooler ^ 0.75;
+    C_generator = 108900 * (P_nom / 1e6) ^ 0.5463;
+    C_exchanger = pri_exchanger * exchanger.Q_HX_des * m_HTF_des / 1000;
+    C_PB = (C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_generator + C_cooler + C_exchanger) * 1.05;
+// 1.05 factor due to cost scaling to 2017 USD
+  equation
+    connect(LTR.from_turb_port_b, splitter.port_a) annotation(
+      Line(points = {{-43, -44}, {-14, -44}}, color = {0, 127, 255}));
+    connect(LTR.from_turb_port_a, HTR.from_turb_port_b) annotation(
+      Line(points = {{14, -56}, {32, -56}}, color = {0, 127, 255}));
+    connect(LTR.from_comp_port_b, mixer.first_port_a) annotation(
+      Line(points = {{4, -65}, {4, -71}}, color = {0, 127, 255}));
+    connect(mixer.port_b, HTR.from_comp_port_a) annotation(
+      Line(points = {{13, -80}, {41, -80}, {41, -63}}, color = {0, 127, 255}));
+    connect(splitter.gamma_port_b, reCompressor.port_a) annotation(
+      Line(points = {{-50, -38}, {-50, -15}}, color = {0, 127, 255}));
+    connect(mainCompressor.port_b, LTR.from_comp_port_a) annotation(
+      Line(points = {{-70, 48}, {-4, 48}, {-4, -36}}, color = {0, 127, 255}));
+    connect(splitter.one_gamma_port_b, cooler.port_a) annotation(
+      Line(points = {{-58, -44}, {-91, -44}, {-91, -41}}, color = {0, 127, 255}));
+    connect(exchanger.CO2_port_a, HTR.from_comp_port_b) annotation(
+      Line(points = {{49.5, -36}, {49.5, -19}}, color = {0, 127, 255}));
+    connect(cooler.port_b, mainCompressor.port_a) annotation(
+      Line(points = {{-91, 1}, {-91, 25}}, color = {0, 127, 255}));
+    connect(exchanger.CO2_port_b, turbine.port_a) annotation(
+      Line(points = {{50, 19}, {50, 32}}, color = {0, 127, 255}));
+    connect(turbine.port_b, HTR.from_turb_port_a) annotation(
+      Line(points = {{70, 55}, {140, 55}, {140, -44}, {59, -44}}, color = {0, 127, 255}));
+    connect(reCompressor.port_b, mixer.second_port_a) annotation(
+      Line(points = {{-30, 8}, {-20, 8}, {-20, -80}, {-5, -80}}, color = {0, 127, 255}));
+    connect(source.ports[1], exchanger.HTF_port_a) annotation(
+      Line(points = {{88, 11.5}, {100, 11.5}}, color = {0, 127, 255}));
+    connect(sink.ports[1], exchanger.HTF_port_b) annotation(
+      Line(points = {{88, -11.5}, {88, -20}, {100, -20}}, color = {0, 127, 255}));
+    connect(cooler.T_amb, T_amb.y);
+    connect(m_sup, exchanger.m_sup);
+    connect(m_sup, cooler.m_sup);
+    m_sup = exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min;
+    if m_sup then
+      turbine.p_out = mainCompressor.p_out / PR;
+    else
+      exchanger.CO2_port_a.m_flow = exchanger.m_CO2_des;
+    end if;
+    eta_cycle = W_net / exchanger.Q_HX;
+    der(E_net) = W_net;
+    W_net = if m_sup then (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling else 0;
+    annotation(
+      experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002));
+  end PBTestRig;
+
+  model PBTestRig2
+    extends SolarTherm.Media.CO2.PropCO2;
+    import Modelica.SIunits.Conversions.*;
+    import SI = Modelica.SIunits;
+    replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
+    replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+    parameter SI.Power P_net = 100e6;
+    parameter SI.Power P_gross = 111e6;
+    parameter SI.Temperature T_in_ref_blk = from_degC(800);
+    parameter SI.Temperature blk_T_amb_des = from_degC(45);
+    parameter SI.Temperature T_comp_in = from_degC(41);
+    parameter Real nu_min_blk = 0.5;
+    parameter Real f_fixed_load = 0;
+    parameter Real eta_motor = 1;
+    Modelica.Blocks.Sources.RealExpression T_amb_des(y = from_degC(45)) annotation(
+      Placement(visible = true, transformation(origin = {-76, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.BooleanExpression always_false annotation(
+      Placement(visible = true, transformation(origin = {-76, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Sources.RealExpression always_zero annotation(
+      Placement(visible = true, transformation(origin = {-76, 58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB recompPB(redeclare package MedRec = MedRec, P_gro = P_gross, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = 5 "PG", N_LTR = 15, f_fixed_load = f_fixed_load, eta_motor = eta_motor) annotation(
+      Placement(visible = true, transformation(origin = {-2, -12}, extent = {{-40, -40}, {40, 40}}, rotation = 0)));
+    Modelica.Fluid.Sources.MassFlowSource_T source(T = from_degC(720), m_flow = 1200, nPorts = 1, redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-90, 5.5}, extent = {{14, -14}, {-14, 14}}, rotation = 180)));
+    Modelica.Fluid.Sources.FixedBoundary sink(nPorts = 1, redeclare package Medium = MedRec) annotation(
+      Placement(visible = true, transformation(origin = {-92, -54}, extent = {{13, 13}, {-13, -13}}, rotation = 180)));
+  equation
+    connect(always_false.y, recompPB.ramping) annotation(
+      Line(points = {{-64, 40}, {-2, 40}, {-2, 12}, {-2, 12}}, color = {255, 0, 255}));
+    connect(T_amb_des.y, recompPB.T_amb) annotation(
+      Line(points = {{-64, 24}, {-10, 24}, {-10, 12}, {-10, 12}}, color = {0, 0, 127}));
+    connect(always_zero.y, recompPB.parasities) annotation(
+      Line(points = {{-64, 58}, {6, 58}, {6, 12}, {6, 12}}, color = {0, 0, 127}));
+    connect(source.ports[1], recompPB.fluid_a) annotation(
+      Line(points = {{-76, 6}, {-20, 6}, {-20, 2}, {-20, 2}}, color = {0, 127, 255}));
+    connect(sink.ports[1], recompPB.fluid_b) annotation(
+      Line(points = {{-79, -54}, {-26, -54}, {-26, -30}}, color = {0, 127, 255}));
+    annotation(
+      experiment(StartTime = 0, StopTime = 20, Tolerance = 1e-06, Interval = 1));
+  end PBTestRig2;
+
+  model test_interpolation_3D
+    import SI = Modelica.SIunits;
+    import Modelica.SIunits.Conversions.*;
+    parameter SI.Temperature T_amb = 275.661111111;
+    parameter SI.HeatFlowRate Q_in = 100e6;
+    parameter Integer table_number = 11;
+    parameter SI.Temperature T_cold_in = 720;
+    parameter SI.Temperature T_cold_in_set[table_number] = linspace(730, 830, table_number);
+    parameter Real step = T_cold_in_set[2] - T_cold_in_set[1];
+    // Combitable2D params
+    parameter String table_name = "mdot";
+    parameter String[table_number] tablefile = {Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_730.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_740.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_750.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_760.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_770.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_780.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_790.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_800.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_810.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_820.motab"), Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/mdot_830.motab")};
+    // Instantiation of table_number combi table 2Ds
+    Modelica.Blocks.Tables.CombiTable2D mdot_730(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[1]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_740(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[2]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_750(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[3]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_760(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[4]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_770(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[5]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_780(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[6]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_790(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[7]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_800(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[8]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_810(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[9]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_820(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[10]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    Modelica.Blocks.Tables.CombiTable2D mdot_830(tableOnFile = true, tableName = table_name, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = tablefile[11]) annotation(
+      Placement(visible = true, transformation(extent = {{-12, -8}, {8, 12}}, rotation = 0)));
+    // Variables
+    Integer index[2](start = fill(0, 2));
+    Real table_1D[table_number];
+    Real weight_table[table_number];
+    Real weight_val;
+    Real iter_weight;
+    Real T_cold_low;
+    Real T_cold_high;
+    Integer index_1;
+    Integer index_2;
+    SI.MassFlowRate mdot;
+  algorithm
+// Creating a 1-D table for given Q_in and T_amb
+    mdot_730.u1 := Q_in;
+    mdot_730.u2 := T_amb;
+    table_1D[1] := mdot_730.y;
+    mdot_740.u1 := Q_in;
+    mdot_740.u2 := T_amb;
+    table_1D[2] := mdot_740.y;
+    mdot_750.u1 := Q_in;
+    mdot_750.u2 := T_amb;
+    table_1D[3] := mdot_750.y;
+    mdot_760.u1 := Q_in;
+    mdot_760.u2 := T_amb;
+    table_1D[4] := mdot_760.y;
+    mdot_770.u1 := Q_in;
+    mdot_770.u2 := T_amb;
+    table_1D[5] := mdot_770.y;
+    mdot_780.u1 := Q_in;
+    mdot_780.u2 := T_amb;
+    table_1D[6] := mdot_780.y;
+    mdot_790.u1 := Q_in;
+    mdot_790.u2 := T_amb;
+    table_1D[7] := mdot_790.y;
+    mdot_800.u1 := Q_in;
+    mdot_800.u2 := T_amb;
+    table_1D[8] := mdot_800.y;
+    mdot_810.u1 := Q_in;
+    mdot_810.u2 := T_amb;
+    table_1D[9] := mdot_810.y;
+    mdot_820.u1 := Q_in;
+    mdot_820.u2 := T_amb;
+    table_1D[10] := mdot_820.y;
+    mdot_830.u1 := Q_in;
+    mdot_830.u2 := T_amb;
+    table_1D[11] := mdot_830.y;
+// Checking in between which index the T_cold_in lies
+    for i in 1:table_number loop
+      weight_val := abs(T_cold_in - T_cold_in_set[i]) / step;
+      if weight_val > 0 and weight_val <= 1 then
+        weight_table[i] := weight_val;
+      elseif weight_val == 0 then
+        weight_table[i] := 1e-2 "make sure there is no 0 in the weight table to avoid confusion of the solver";
+      else
+        weight_table[i] := -1000;
+      end if;
+    end for;
+// Take the index
+    for i in 1:table_number loop
+      iter_weight := weight_table[i];
+      if iter_weight >= 0 and iter_weight <= 1 then
+        if index[1] == 0 then
+          index[1] := i;
+        elseif index[1] >= 0 then
+          index[2] := i;
+        end if;
+      end if;
+    end for;
+// Interpolate
+    index_1 := index[1];
+    index_2 := index[2];
+    T_cold_low := if T_cold_in < T_cold_in_set[1] or T_cold_in > T_cold_in_set[end] then T_cold_in_set[1] else T_cold_in_set[index_1];
+    T_cold_high := if T_cold_in < T_cold_in_set[1] or T_cold_in > T_cold_in_set[end] then T_cold_in_set[1] else T_cold_in_set[index_2];
+    if Q_in >= 100e6 then
+      if T_cold_in < T_cold_in_set[1] then
+        mdot := table_1D[1] - (table_1D[2] - table_1D[1]) / (T_cold_in_set[2] - T_cold_in_set[1]) * (T_cold_in_set[1] - T_cold_in) "possibility of having extrapolation == linear";
+      elseif T_cold_in > T_cold_in_set[table_number] then
+        mdot := table_1D[table_number] + (table_1D[end] - table_1D[end - 1]) / (T_cold_in_set[end] - T_cold_in_set[end - 1]) * (T_cold_in - T_cold_in_set[end]) "possibility of having extrapolation == linear";
+      else
+        mdot := (T_cold_in - T_cold_low) / (T_cold_high - T_cold_low) * (table_1D[index_2] - table_1D[index_1]) + table_1D[index_1];
+      end if;
+    else
+      mdot := 0;
+    end if;
+    annotation(
+      experiment(StartTime = 0, StopTime = 70, Tolerance = 1e-06, Interval = 0.002));
+  end test_interpolation_3D;
 end Validation;
