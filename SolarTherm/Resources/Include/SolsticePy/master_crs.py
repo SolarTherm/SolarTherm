@@ -517,6 +517,74 @@ class CRS:
         return oelt, A_land
         
 
+    def run_annual_system(self, num_rays, nd, nh, zipfiles=False, genvtk_hst=False, plot=False):
+
+        self.annualsolar(nd, nh)
+
+        oelt=self.table
+        run=N.r_[0]
+
+        self.n_helios=len(self.hst_pos)
+        self.eff_des=0  
+
+        for i in xrange(len(self.case_list)):    
+            c=int(self.case_list[i,0].astype(float))
+            if c not in run:
+                azimuth=self.sol_azi[c-1]
+                elevation= self.sol_ele[c-1]
+
+                if N.sin(elevation*N.pi/180.)>=1.e-5:
+                    dni=1618.*N.exp(-0.606/(N.sin(elevation*N.pi/180.)**0.491))
+                else:
+                    dni=0.
+  
+                print ''
+                print ''
+                print 'sun position:', (c)
+                print 'azimuth:',  azimuth, ', elevation:',elevation
+
+                onesunfolder=self.casedir+'/sunpos_%s'%(c)
+                if not os.path.exists(onesunfolder):
+                    os.makedirs(onesunfolder) 
+                # run solstice
+                if elevation<1.:
+                    efficiency_total=0.
+                else:
+                    Qabs, Qtot, performance_hst=self.run(azimuth, elevation, dni, savefolder=onesunfolder, num_rays=num_rays, yamlfile=None, genvtk_hst=genvtk_hst, visualise=False)
+                    efficiency_total=Qabs/Qtot
+
+                print 'eff', efficiency_total
+             
+                os.system('rm %s/simul'%onesunfolder)
+                os.system('rm %s/*yaml'%onesunfolder)
+                os.system('rm %s/*raw*'%onesunfolder)
+                if zipfiles:
+                    os.system('zip -r -D %s/optical.zip %s'%(self.casedir, onesunfolder))
+                    os.system('rm -r %s'%onesunfolder)
+
+            for a in xrange(len(oelt[3:])):
+                for b in xrange(len(oelt[0,3:])):
+                    val=re.findall(r'\d+',oelt[a+3,b+3])
+                    if val==[]:
+                        oelt[a+3,b+3]=0
+                    else:
+                        if c==float(val[0]):
+                            oelt[a+3,b+3]=efficiency_total
+
+            run=N.append(run,c)               
+ 
+        Xmax=max(self.hst_pos[:,0])
+        Xmin=min(self.hst_pos[:,0])
+        Ymax=max(self.hst_pos[:,1])
+        Ymin=min(self.hst_pos[:,1])
+        A_land=(Xmax-Xmin)*(Ymax-Ymin)
+        print 'land area', A_land
+
+
+        N.savetxt(self.casedir+'/lookup_table.csv', oelt, fmt='%s', delimiter=',')
+
+        return oelt, A_land
+
 
     def annualsolar(self, nd, nh, sunshape='pillbox', sunsize=0.2664):
         '''
