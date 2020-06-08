@@ -1,7 +1,7 @@
 within SolarTherm.Materials;
 
 package SS316L
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 54.97e-3, T_melt = 1371+273.15, cost = 4.00);
+  extends SolarTherm.Materials.PartialMaterial(MM = 54.97e-3, T_melt = 1371+273.15, cost = 4.00);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 10.1646 "Molar mass (kg/mol)";

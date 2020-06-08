@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package CaO
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 56.077e-3, T_melt = 3200.0, cost = 0.2);
+  extends SolarTherm.Materials.PartialMaterial(MM = 56.077e-3, T_melt = 3200.0, cost = 0.2);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 56.077e-3 "Molar mass (kg/mol)";

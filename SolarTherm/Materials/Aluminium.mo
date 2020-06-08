@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Aluminium
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 26.9815386e-3, T_melt = 933.47, cost = 1.8);
+  extends SolarTherm.Materials.PartialMaterial(MM = 26.9815386e-3, T_melt = 933.47, cost = 1.8);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 26.9815386e-3 "Molar mass (kg/mol)";

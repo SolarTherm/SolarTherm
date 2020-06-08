@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package PigIron_Constant
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 55.845e-3, T_melt = 1811.150, cost = 0.5);
+  extends SolarTherm.Materials.PartialMaterial(MM = 55.845e-3, T_melt = 1811.150, cost = 0.5);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 55.845e-3 "Molar mass (kg/mol)"; //not used

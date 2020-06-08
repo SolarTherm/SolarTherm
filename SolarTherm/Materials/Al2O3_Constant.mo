@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Al2O3_Constant
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 101.9613e-3, T_melt = 2327.0, cost = 1.5);
+  extends SolarTherm.Materials.PartialMaterial(MM = 101.9613e-3, T_melt = 2327.0, cost = 1.5);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 101.9613e-3 "Molar mass (kg/mol)";
