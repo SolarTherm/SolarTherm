@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package RT20_Paraffin_Melting
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 353e-3, T_melt = 295.15, cost = 0.049); //DOnt trust these constants
+  extends SolarTherm.Materials.PartialMaterial(MM = 353e-3, T_melt = 295.15, cost = 0.049); //DOnt trust these constants
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.Temperature T_melt = 295.15 "Melting point (K)";

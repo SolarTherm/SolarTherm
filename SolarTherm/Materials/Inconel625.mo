@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Inconel625
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 59e-3, T_melt = 1290+273.15, cost = 34.5);
+  extends SolarTherm.Materials.PartialMaterial(MM = 59e-3, T_melt = 1290+273.15, cost = 34.5);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
   //constant SI.MolarMass MM = 59e-3 "Molar mass (kg/mol)";

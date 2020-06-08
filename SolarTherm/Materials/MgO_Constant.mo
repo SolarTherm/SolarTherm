@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package MgO_Constant
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 40.3044e-4, T_melt = 3105.0, cost = 1.0);
+  extends SolarTherm.Materials.PartialMaterial(MM = 40.3044e-4, T_melt = 3105.0, cost = 1.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 40.3044e-3 "Molar mass (kg/mol)";

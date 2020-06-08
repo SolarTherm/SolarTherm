@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Quartzite
-  extends SolarTherm.Media.Materials.PartialMaterial(MM = 60.08e-3, T_melt = 1670+273.15, cost = 1.0);
+  extends SolarTherm.Materials.PartialMaterial(MM = 60.08e-3, T_melt = 1670+273.15, cost = 1.0);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 60.08e-3 "Molar mass (kg/mol)";
