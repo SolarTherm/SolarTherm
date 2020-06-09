@@ -19,7 +19,7 @@ model ReceiverSimple_3
   parameter SI.Efficiency em=1 "Coating Emitance"
                                                  annotation(Dialog(group="Technical data"));
 
-  SI.HeatFlowRate Q_loss;
+  //SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rcv;
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
         transformation(
@@ -30,11 +30,14 @@ model ReceiverSimple_3
         rotation=-90,
         origin={0,78})));
         
-          Modelica.Blocks.Interfaces.RealOutput Q_recv_in annotation(
-    Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -1}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+    Modelica.Blocks.Interfaces.RealOutput Q_recv_in annotation(
+    Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, 9}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+    
+    Modelica.Blocks.Interfaces.RealOutput Q_loss = -A*sigma*em*(medium.T^4-Tamb^4) annotation(
+    Placement(visible = true, transformation(origin = {108, 64}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -13}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
     
   Modelica.Blocks.Interfaces.BooleanOutput net_gain annotation(
-    Placement(visible = true, transformation(origin = {108, 52}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -37}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {108, 30}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -37}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
 
   parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
   parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
@@ -58,11 +61,11 @@ equation
   else
     h_in = h_out;
   end if;
-  Q_loss=-A*sigma*em*(medium.T^4-Tamb^4);
+  //Q_loss=-A*sigma*em*(medium.T^4-Tamb^4);
   //0=ab*heat.Q_flow+Q_loss+fluid_a.m_flow*(h_in-h_out);
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
   
-  Q_recv_in = heat.Q_flow;
+  Q_recv_in = ab*heat.Q_flow;
   net_gain = ab * heat.Q_flow + Q_loss > 1e-6;
 
   annotation (Documentation(info="<html>

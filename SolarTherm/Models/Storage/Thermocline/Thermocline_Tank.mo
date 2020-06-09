@@ -28,6 +28,10 @@ extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   Modelica.Blocks.Interfaces.RealOutput T_bot_measured "Temperature at the bottom of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {45, -55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+  
+  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)"
+                                          annotation (Placement(visible = true,transformation(
+          extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
         visible = true,transformation(
         
@@ -77,13 +81,15 @@ equation
   fluid_top.T = Tank_A.T_top;
   fluid_bot.T = Tank_A.T_bot;
   
+  h_bot_outlet = max(Tank_A.h_f[1],fluid_bot.h);
+  
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
-  if fluid_a.m_flow > 1e-6 then// charging
+  if fluid_a.m_flow > 1e-2 then// charging
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_top = inStream(fluid_a.h_outflow);
     fluid_a.h_outflow = fluid_top.h;
     fluid_b.h_outflow = fluid_bot.h;
-  elseif fluid_a.m_flow < -1e-6 then //discharing
+  elseif fluid_a.m_flow < -1e-2 then //discharing
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_bot = inStream(fluid_b.h_outflow);
     fluid_a.h_outflow = fluid_top.h;
@@ -102,8 +108,8 @@ equation
   fluid_a.p = p_amb;
   fluid_b.p = p_amb;
   T_amb = Tank_A.T_amb;
-  T_top_measured = Tank_A.T_f[N_f-1];
-  T_bot_measured = Tank_A.T_f[2];
+  T_top_measured = Tank_A.T_f[N_f];
+  T_bot_measured = Tank_A.T_f[1];
 
 annotation(
     Icon(graphics = {Text(origin = {7, -16}, extent = {{-49, 42}, {35, -10}}, textString = "TC")}, coordinateSystem(initialScale = 0.1)));

@@ -11,3 +11,5 @@ SimpleReceiverControl
 IdealMassflowBlockCalculation
 SB_ReceiverControl
 SB_PowerBlockControl
+Thermocline_ReceiverControl
+Thermocline_ReceiverControl2

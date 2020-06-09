@@ -1,6 +1,7 @@
 within SolarTherm.Systems;
 
 model OpticsFileReader
+  import SolarTherm.Types.Solar_angles;
   parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/surround/100MWe/3774c%/706K/";
   parameter Integer dSM = 18;
   parameter Integer T_recv_avg = 706;
@@ -22,9 +23,10 @@ model OpticsFileReader
   parameter SI.Length D_recv = Meta[5] "Diameter/Width of the receiver";
   parameter SI.Length H_tower = Meta[6] "Height of the tower";
   
-
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table_Full OpticsModel(angles=Solar_angles.dec_hra,file=opt_file);
   Real A_recv(start=Modelica.Constants.pi*H_recv*D_recv);
 equation
   der(A_recv)=0.0;
-
+  OpticsModel.dec = 0.0;
+  OpticsModel.hra = 0.0;
 end OpticsFileReader;

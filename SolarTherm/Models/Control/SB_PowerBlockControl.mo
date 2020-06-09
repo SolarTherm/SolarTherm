@@ -25,6 +25,6 @@ algorithm
   end when;
 
 equation
-  m_flow_PB = max(PB_load*(m_flow_ref),1e-5);
+  m_flow_PB = max(PB_load*(m_flow_ref),1e-6);
 
 end SB_PowerBlockControl;

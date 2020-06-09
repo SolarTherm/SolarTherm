@@ -13,6 +13,8 @@ model PowerBlockModel
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
+  
+
 
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
@@ -24,6 +26,8 @@ model PowerBlockModel
       annotation (Dialog(group="Parasities energy losses"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
   parameter Real W_base=0.0055*294.188e6 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
+
+  Modelica.Blocks.Interfaces.RealOutput h_out_signal=h_out "outlet specific enthalpy" annotation (Placement(visible = true, transformation(origin = {-80, -72}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = { -61, -59}, extent = {{5, -5}, {-5, 5}}, rotation = 0))) ;
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},

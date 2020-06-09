@@ -334,7 +334,8 @@ class Simulator(object):
 
 		sim_args = [
 			'-override',
-			'startTime='+start+',stopTime='+stop+',stepSize='+step,
+			#'startTime='+start+',stopTime='+stop+',stepSize='+step,
+			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+'1.0e-4',
 			'-s', solver,
 			'-nls', nls, #Nonlinear solver
 			'-initialStepSize', initStep,

@@ -44,9 +44,9 @@ algorithm
   
 equation
   if net_gain == true and critical_shutdown == false then
-  m_flow_recv = max(1e-5,m_flow_recv_des*(Q_recv_in/Q_flow_recv_des)); //proportional
+  m_flow_recv = max(1e-10,m_flow_recv_des*(Q_recv_in/Q_flow_recv_des)); //proportional
   else
-  m_flow_recv = 1e-5;
+  m_flow_recv = 1e-10;
   end if;
 
 end SB_ReceiverControl;
