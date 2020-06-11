@@ -27,8 +27,6 @@ model HeliostatsFieldSolstice_1stApproach
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
-
-
     parameter Boolean use_on = false
     "= true to display when solar field is connected"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -45,10 +43,10 @@ model HeliostatsFieldSolstice_1stApproach
 
     parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
     parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
-   parameter String opt_file(fixed=false);
-   parameter Real metadata_list[8] = metadata(opt_file);
+    parameter String opt_file(fixed=false);
+    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+    SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
@@ -79,7 +77,6 @@ model HeliostatsFieldSolstice_1stApproach
 
   SI.Power W_loss;
   Real damping;
-//protected
   Boolean on_hf;
   Modelica.Blocks.Interfaces.BooleanInput on_hopper(start = false) annotation(
     Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
@@ -101,9 +98,6 @@ model HeliostatsFieldSolstice_1stApproach
 initial equation
    on_internal=Q_raw>Q_start;
    opt_file=optical.tablefile;
-
-   
-
 equation
   if use_on then
     connect(on,on_internal);

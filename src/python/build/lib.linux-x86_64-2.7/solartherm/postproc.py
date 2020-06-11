@@ -287,7 +287,7 @@ class SimResultElec(SimResult):
 		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
 		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [k$/year]
 
-		return C_cap_bd_n, C_cpopulationap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
 
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']

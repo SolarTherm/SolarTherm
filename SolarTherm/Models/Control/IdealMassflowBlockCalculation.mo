@@ -8,7 +8,7 @@ model IdealMassflowBlockCalculation
 
   outer parameter Real eta_rec (start = 0, fixed =false);
 
-  outer parameter Real eta_rec_th_des "outer prefix refers to the inner parameters with the same neame within the same, in this cas, it refers to eta_rec_th_desin hte system big code";
+  parameter Real eta_rec_th_des;
   Real eta_rec_discrete (start = eta_rec_th_des);
 
   Modelica.Blocks.Interfaces.RealInput Q_input annotation (Placement(visible = true, transformation(origin = {-116, 80},extent = {{-24, 12}, {24, -12}}, rotation = 0), iconTransformation(origin = {-116, 80},extent = {{-24, 12}, {24, -12}}, rotation = 0)));

@@ -66,8 +66,13 @@ model SimpleReceiverControl
    
   Modelica.Blocks.Interfaces.RealOutput m_flow annotation(
     Placement(visible = true, transformation(extent = {{94, -18}, {130, 18}}, rotation = 0), iconTransformation(extent = {{94, -18}, {130, 18}}, rotation = 0)));
-  SolarTherm.Models.Control.IdealMassflowBlockCalculation idealMassflowBlockCalculation (eta_rec_th_des = eta_rec_th_des, y_start =y_start) annotation(
+  
+  SolarTherm.Models.Control.IdealMassflowBlockCalculation idealMassflowBlockCalculation (
+  eta_rec_th_des = eta_rec_th_des, 
+  y_start =y_start) 
+  annotation(
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  
   Modelica.Blocks.Interfaces.RealInput T_out_receiver annotation(
     Placement(visible = true, transformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   Modelica.Blocks.Interfaces.RealInput eta_rec annotation(
