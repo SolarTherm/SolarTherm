@@ -1,6 +1,7 @@
 #! /bin/env python2
 
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -18,6 +19,11 @@ class TestWeatherTable(unittest.TestCase):
 		self.assertEqual(round(self.res.interpolate('T_p', 0),0), 575)
 		self.assertEqual(round(self.res.interpolate('k_p', 0),0), 106)
 		self.assertEqual(round(self.res.interpolate('rho_p', 0),0), 1880)
+		os.system('rm TestGraphiteProperty_*')
+		os.system('rm TestGraphiteProperty')
+		os.system('rm TestGraphiteProperty.c')
+		os.system('rm TestGraphiteProperty.o')
+		os.system('rm TestGraphiteProperty.makefile')
 
 if __name__ == '__main__':
 	unittest.main()
