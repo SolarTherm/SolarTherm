@@ -18,7 +18,12 @@ class TestSolsticePyFunc(unittest.TestCase):
 
 
 	def test_touching(self):
-		self.assertEqual(round(self.res.interpolate('nu', 0),4), 0.7749)
+		self.assertEqual(round(self.res.interpolate('nu', 0),4), 0.8785)
+		os.system('rm TestSolsticePyFunc_*')
+		os.system('rm TestSolsticePyFunc')
+		os.system('rm TestSolsticePyFunc.c')
+		os.system('rm TestSolsticePyFunc.o')
+		os.system('rm TestSolsticePyFunc.makefile')
 
 if __name__ == '__main__':
 	unittest.main()
