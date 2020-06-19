@@ -4,9 +4,9 @@
 #include <python2.7/Python.h>
 #include <stdio.h>
 
-const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, int argc, const char *varnames[], const double var[]);
+const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[]);
 
-const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, int argc, const char *varnames[], const double var[])
+const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[])
 {
     // ppath: path of the Python script
     // pname: name of the Python script
@@ -42,6 +42,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
             PyDict_SetItemString(inputs, "casedir", PyString_FromString((char *)psave));
             PyDict_SetItemString(inputs, "field_type", PyString_FromString((char *)field_type));
             PyDict_SetItemString(inputs, "rcv_type", PyString_FromString((char *)rcv_type));
+            PyDict_SetItemString(inputs, "wea_file", PyString_FromString((char *)wea_file));
             for (i = 0; i < argc; ++i) {
 
                 pValue = PyFloat_FromDouble(var[i]);
@@ -86,17 +87,19 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", pname);
     }
+
     Py_DECREF(ppath);
     Py_DECREF(pname);
     Py_DECREF(pfunc);
     Py_DECREF(psave);
     Py_DECREF(rcv_type);
     Py_DECREF(field_type);
+    Py_DECREF(wea_file);
     Py_DECREF(varnames);
     Py_DECREF(sys_path);
 
-    Py_Finalize();
     return tablefile;
+    Py_Finalize();
 }
 
 #endif
