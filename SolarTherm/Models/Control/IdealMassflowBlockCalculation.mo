@@ -35,9 +35,9 @@ model IdealMassflowBlockCalculation
   elseif Q_input > 1e-6 then
     on:=true;
     if pre(eta_rec)< 1e-20 then 
-      m_flow := Q_input * eta_rec_discrete / abs(Util.h_T(T_ref) - Util.h_T(T_mea))*1.05 "Start-up condition";
+      m_flow := Q_input * eta_rec_discrete  / abs(Util.h_T(T_ref) - Util.h_T(T_mea)) * 0.95 "Start-up condition";
     else
-      m_flow := Q_input * eta_rec / abs(Util.h_T(T_ref) - Util.h_T(T_mea))*1.05;
+      m_flow := Q_input * eta_rec / abs(Util.h_T(T_ref) - Util.h_T(T_mea)) * 0.95;
       eta_rec_discrete := eta_rec "updating eta_rec_discrete";
     end if;    
   end if;

@@ -6,22 +6,26 @@ model StartUpLogic5
   Modelica.Blocks.Interfaces.RealOutput m_flow
     annotation (Placement(transformation(extent={{90,-20},{130,20}})));
 
-  parameter Modelica.SIunits.Time t_start=0.5*3600;
-  parameter Modelica.SIunits.Time t_standby=2*3600;
-  parameter Modelica.SIunits.Time t_rampdown = 0.5*3600;
+  parameter Modelica.SIunits.Time t_start=0.25*3600;
+  parameter Modelica.SIunits.Time t_standby=1*3600;
+  parameter Modelica.SIunits.Time t_rampdown = 0.25*3600;
   parameter Real m_flow_max;
   parameter Real m_flow_startup;
   parameter Real m_flow_standby;
   parameter Real level_on=20;
   parameter Real level_off=5;
+  parameter Boolean dispatch_optimiser = false;
+
   Boolean standby;
   Boolean startup(start=false, fixed=true);
   Boolean rampdown(start=false,fixed=true);
   Boolean on_charge;
   Boolean on_discharge;
+  
+  Real optimalMassFlow;
 
-   discrete Modelica.SIunits.Time t_off;
-   discrete Modelica.SIunits.Time t_on;
+  discrete Modelica.SIunits.Time t_off;
+  discrete Modelica.SIunits.Time t_on;
 public
   Modelica.Blocks.Interfaces.RealInput m_flow_in annotation (Placement(
         transformation(
@@ -37,6 +41,7 @@ initial equation
 
 equation
 //
+  
   on_charge= m_flow_in>0;
 
    when level>level_on then
@@ -68,18 +73,18 @@ equation
 
   if on_charge or on_discharge then
     if startup then
-      m_flow=m_flow_startup;
+      m_flow= m_flow_startup;
     else
       if on_discharge then
-        m_flow=m_flow_max;
+        m_flow= if dispatch_optimiser == true then optimalMassFlow else m_flow_max;
       else
-        m_flow=min(m_flow_in,m_flow_max);
+        m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max);
       end if;
     end if;
   elseif standby then
       m_flow=m_flow_standby;
   elseif rampdown then
-      m_flow = m_flow_startup;    
+      m_flow = if dispatch_optimiser == true then optimalMassFlow/2 else m_flow_startup;   
   else
       m_flow=0;
   end if;

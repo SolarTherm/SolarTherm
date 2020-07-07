@@ -132,7 +132,7 @@ model ParticleReceiver1D
   //Overall performance
   SI.HeatFlowRate Qdot_rec "Total heat rate absorbed by the receiver";
   SI.HeatFlowRate Qdot_inc "Total heat rate incident upon the receiver (before losses)";
-  inner Real eta_rec(min = 0, max = 1) "Receiver efficiency, Make it inner so it can be accessed by every component in the system";
+  Real eta_rec(min = 0, max = 1) "Receiver efficiency, Make it inner so it can be accessed by every component in the system";
   //Declaring the table TAB for h (output) and T (input), ditching out the h_T enthalpy function
   parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/CarboHSP/CarboHSP_hT.txt");
   import Tables = Modelica.Blocks.Tables;
