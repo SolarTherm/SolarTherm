@@ -6,7 +6,7 @@ model Table "Price from a table"
       enable=tableOnFile,
       loadSelector(filter="TMY3 custom-built files (*.motab);;MATLAB MAT-files (*.mat)",
           caption="Open file in which optical data is present")));
-  Modelica.Blocks.Sources.CombiTimeTable table(tableOnFile=true, columns={2}, tableName="price",smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+  Modelica.Blocks.Sources.CombiTimeTable table(tableOnFile=true, columns={2}, tableName="prices",smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file)
   annotation (Placement(transformation(extent={{-78,42},{-58,62}})));
 equation
