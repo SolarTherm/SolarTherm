@@ -19,7 +19,7 @@ model SB_Reference
   algorithm
     SM := max(14,min(38,1 * round(SM_guess * 10)));//Actually SM*10"
     HT_pct := max(70,min(130,5 * round(HT_pct_guess * 0.2)));
-    f_recv := max(70,min(130,5 * round(f_recv_guess * 0.2)));
+    f_recv := max(70,min(130,5 * round(f_recv_guess * 20)));
     SM_string := String(SM);
     HT_pct_string := String(HT_pct);
     f_recv_string := String(f_recv);
@@ -440,4 +440,6 @@ equation
   P_elec = powerBlock.W_net;
   E_elec = powerBlock.E_net;
   R_spot = market.profit;
+  connect(Wspd_input.y, receiver.Wspd) annotation(
+    Line(points = {{-112, 30}, {-102, 30}, {-102, 44}, {-32, 44}, {-32, 36}, {-32, 36}}, color = {0, 0, 127}));
 end SB_Reference;

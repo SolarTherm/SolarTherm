@@ -8,6 +8,8 @@ model PowerBlockModel
                                                                                      annotation (Dialog(group="Design"));
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
   parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power" annotation (Dialog(group="Design"));
+  //parameter SI.HeatFlowRate Q_flow_ref=m_flow_ref*(h_in_ref-h_out_ref);
+
 
   parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
@@ -70,7 +72,7 @@ protected
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
   parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
-
+  //parameter SI.MassFlowRate m_flow_ref=1000.0;
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
   parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);

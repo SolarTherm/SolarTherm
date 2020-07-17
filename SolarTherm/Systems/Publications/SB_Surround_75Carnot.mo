@@ -21,7 +21,7 @@ model SB_Surround_75Carnot
     SM := max(14, min(38, 1 * round(SM_guess * 10)));
 //Actually SM*10"
     HT_pct := max(70, min(130, 5 * round(HT_pct_guess * 0.2)));
-    f_recv := max(70, min(130, 5 * round(f_recv_guess * 0.2)));
+    f_recv := max(70, min(200, 5 * round(f_recv_guess * 20.0)));
     SM_string := String(SM);
     HT_pct_string := String(HT_pct);
     f_recv_string := String(f_recv);
