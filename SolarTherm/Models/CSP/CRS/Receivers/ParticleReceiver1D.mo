@@ -164,13 +164,7 @@ equation
   dx = H_drop / N;
   
   H_drop = H_drop_design;
-  
-  //if heat.Q_flow > 1e-6 then
-  //  T_out = T_out_design;
-  //else
-  //  T_out = Tamb;
-  //end if;
-  
+
 //Boundary conditions
   phi[1] = phi_max;
   vp[1] = vp_in;
@@ -186,17 +180,6 @@ equation
   end for;
   x[N + 2] = H_drop;
   t_c_in = fluid_a.m_flow / (phi_max * vp_in * W_rcv * rho_s);
-/*  for i in 1:N + 2 loop
-// Curtain thickness
-    t_c[i] = t_c_in + 0.0087 * x[i];
-// Oles and Jackson (Sol. En. 2015), Eq 18.
-  end for;
-  for i in 2:N + 1 loop
-// Curtain momentum balance (gravity causing decreased curtain opacity)
-    vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
-// Mass balance
-    phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
-  end for;*/
   if mdot > 1e-6 then 
             for i in 1:N + 2 loop
           // Curtain thickness
