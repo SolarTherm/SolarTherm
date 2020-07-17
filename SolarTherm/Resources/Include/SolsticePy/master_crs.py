@@ -88,7 +88,7 @@ class CRS:
         self.tower_h=tower_h    
         self.tower_r=tower_r
 
-    def receiversystem(self, receiver, rec_w=0., rec_h=0., rec_x=0., rec_y=0., rec_z=100., rec_tilt=0., rec_grid=10, rec_abs=1.):
+    def receiversystem(self, receiver, rec_w=0., rec_h=0., rec_x=0., rec_y=0., rec_z=100., rec_tilt=0., rec_grid_w=10, rec_grid_h=10, rec_abs=1.):
 
         '''
         Arguements:
@@ -108,9 +108,9 @@ class CRS:
         if receiver[-3:]=='stl':
             self.rec_param=N.r_[rec_w, rec_h, receiver, rec_x, rec_y, rec_z, rec_tilt]
         elif receiver=='flat':
-            self.rec_param=N.r_[rec_w, rec_h, rec_grid, rec_x, rec_y, rec_z, rec_tilt]
+            self.rec_param=N.r_[rec_w, rec_h, rec_grid_w, rec_grid_h, rec_x, rec_y, rec_z, rec_tilt]
         elif receiver=='cylinder': 
-            self.rec_param=N.r_[rec_w, rec_h, rec_grid, rec_x, rec_y, rec_z, rec_tilt]  
+            self.rec_param=N.r_[rec_w, rec_h, rec_grid_w, rec_grid_h, rec_x, rec_y, rec_z, rec_tilt]  
 
         
 
@@ -155,6 +155,7 @@ class CRS:
             self.generateVTK(eta_hst=performance_hst, savevtk=savefolder)
 
         if visualise:
+
             # preparing post processing
             os.system('solstice -D%s,%s -g format=obj:split=geometry -fo %s/geom %s/input.yaml'%(azimuth, elevation, savefolder, savefolder))
             os.system('solstice -D%s,%s -q -n 100 -R %s/input-rcv.yaml -p default %s/input.yaml > %s/solpaths'%(azimuth, elevation, savefolder, savefolder, savefolder))
@@ -164,6 +165,8 @@ class CRS:
             os.system('solmaps %s/simul'%(savefolder))
             os.system('solpp %s/geom %s/simul'%(savefolder, savefolder))
             os.system('solpath %s/solpaths'%(savefolder))
+            print 'mv %s-%s* '%(azimuth, elevation) +savefolder
+            os.system('mv %s*-%s* '%(int(azimuth), int(elevation)) +savefolder)
 
         return Qabs, Qtot, performance_hst
      
@@ -353,12 +356,14 @@ class CRS:
         per_helio=N.hstack((self.hst_pos, performance_hst_des))
         N.savetxt(designfolder+'/results-heliostats.csv', per_helio, fmt='%.2f', delimiter=',')        
 
-        os.system('rm %s/simul'%designfolder)
-        os.system('rm %s/*yaml'%designfolder)
-        os.system('rm %s/*raw*'%designfolder)
+
         if zipfiles:
+
             os.system('zip -r -D %s/optical.zip %s'%(self.casedir, designfolder))
             os.system('rm -r %s'%designfolder)
+            os.system('rm %s/simul'%designfolder)
+            os.system('rm %s/*yaml'%designfolder)
+            os.system('rm %s/*raw*'%designfolder)
 
         hst_annual={}
         des_table=self.table
@@ -400,12 +405,13 @@ class CRS:
                     N.savetxt(onesunfolder+'/results-heliostats.csv', performance_hst, fmt='%.2f', delimiter=',')   
                 hst_annual[c]=performance_hst
               
-                os.system('rm %s/simul'%onesunfolder)
-                os.system('rm %s/*yaml'%onesunfolder)
-                os.system('rm %s/*raw*'%onesunfolder)
+
                 if zipfiles:
                     os.system('zip -r -D %s/optical.zip %s'%(self.casedir, onesunfolder))
                     os.system('rm -r %s'%onesunfolder)
+                    os.system('rm %s/simul'%onesunfolder)
+                    os.system('rm %s/*yaml'%onesunfolder)
+                    os.system('rm %s/*raw*'%onesunfolder)
 
             cc=0
             for a in xrange(len(des_table[3:])):
@@ -555,12 +561,13 @@ class CRS:
 
                 print 'eff', efficiency_total
              
-                os.system('rm %s/simul'%onesunfolder)
-                os.system('rm %s/*yaml'%onesunfolder)
-                os.system('rm %s/*raw*'%onesunfolder)
+
                 if zipfiles:
                     os.system('zip -r -D %s/optical.zip %s'%(self.casedir, onesunfolder))
                     os.system('rm -r %s'%onesunfolder)
+                    os.system('rm %s/simul'%onesunfolder)
+                    os.system('rm %s/*yaml'%onesunfolder)
+                    os.system('rm %s/*raw*'%onesunfolder)
 
             for a in xrange(len(oelt[3:])):
                 for b in xrange(len(oelt[0,3:])):
@@ -787,7 +794,7 @@ if __name__=='__main__':
     weafile='/home/yewang/solartherm-integration/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab'
     crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
 
-    crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
+    crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
     crs.field_design_annual(Q_in_des=pm.Q_in_rcv, latitude=pm.lat, dni_des=900., num_rays=int(1e6), nd=pm.nd, nh=pm.nh, weafile=weafile, genvtk_hst=False, plot=False)
 
