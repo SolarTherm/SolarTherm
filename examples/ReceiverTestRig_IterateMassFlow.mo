@@ -1,6 +1,6 @@
 within examples;
 
-model receivervalidation
+model ReceiverTestRig_IterateMassFlow
   extends SolarTherm.Icons.ToDo;
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
@@ -32,10 +32,8 @@ model receivervalidation
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(use_input = true) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 20, fixed_geometry = true, test_mode = false, with_uniform_curtain_props = false, with_wall_conduction = true, H_drop_design = H_drop_design, with_detail_h_ambient = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_IterateMassFlow particleReceiver1D(N = 20, fixed_geometry = true, test_mode = false, with_uniform_curtain_props = false, with_wall_conduction = true, H_drop_design = H_drop_design, with_detail_h_ambient = false, iterate_mdot = true) annotation(
     Placement(visible = true, transformation(origin = {-25, 37}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_in(y = 401.057) annotation(
-    Placement(visible = true, transformation(origin = {75, 30}, extent = {{-23, -18}, {23, 18}}, rotation = 180)));
 equation
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
@@ -47,8 +45,6 @@ equation
     Line(points = {{16, -14}, {-22, -14}, {-22, 22}, {-22, 22}}, color = {0, 127, 255}));
   connect(Operation.y, particleReceiver1D.on) annotation(
     Line(points = {{-66, -4}, {-28, -4}, {-28, 22}, {-28, 22}}, color = {255, 0, 255}));
-  connect(m_in.y, liftSimple.m_flow) annotation(
-    Line(points = {{50, 30}, {38, 30}, {38, 2}, {24, 2}, {24, -4}, {24, -4}}, color = {0, 0, 127}));
   connect(realExpression.y, particleReceiver1D.Tamb) annotation(
     Line(points = {{-44, 80}, {-20, 80}, {-20, 50}, {-20, 50}}, color = {0, 0, 127}));
   connect(realExpression.y, particleReceiver1D.Wspd) annotation(
@@ -61,4 +57,4 @@ protected
     experiment(StartTime = 0, StopTime = 2000, Tolerance = 1e-06, Interval = 1),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
     Diagram);
-end receivervalidation;
+end ReceiverTestRig_IterateMassFlow;

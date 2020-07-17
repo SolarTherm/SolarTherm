@@ -1,0 +1,22 @@
+Since st_linprog.c use GLPK which is an external library, it has dependency on it:
+
+Step by step :
+
+1. Got to ~/SolarTherm/Resources/Include/
+2. Convert st_linprog.c into a dynamic library namely liblinprog.so using this command
+			gcc -fPIC -shared -ltensorflow -o libsurrogate.so st_surrogate_controller.c && cp libsurrogate.so ./lib/ && rm -rf libsurrogate.so
+3. Since liblinprog.so is depending on glpk.h then we have to compile glpk.h and turn it into an object *.o using this command
+			gcc -c /usr/local/include/tensorflow/c/c_api.h -o libtensorflow.o && cp libtensorflow.o ./lib/ && rm -rf libtensorflow.o
+		* the directory where glpk.h is located may differ
+		* if using standard installation, then glpk.h will be located in /usr/local/include
+4. External function Modelica (LinProgFunc.mo):
+		-at annotation part, use:
+    	(Library ={"surrogate","tensorflow"},
+     	LibraryDirectory="modelica://SolarTherm/Resources/Include/lib");
+
+
+Source:
+https://openmodelica.org/forum/default-topic/1086-calling-external-c-function
+https://stackoverflow.com/questions/62630114/external-functions-calling-a-c-script-that-use-external-library/62634833#62634833
+   
+
