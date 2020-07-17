@@ -40,6 +40,7 @@ model Reference_2_solstice
 	parameter String field_type = "surround" "Other options are : surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
+
 	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
 	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
 	//parameter SI.Length H_tower = 150 "Tower height";
@@ -47,8 +48,10 @@ model Reference_2_solstice
 	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
 	parameter Real fb = 0.4 "factor to grow the field layout";
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
-	parameter Real n_row_oelt = 9 "number of rows of the look up table (simulated days in a year)";
-	parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
+	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
 	parameter Real metadata_list[8] = metadata(opt_file);
 	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
@@ -184,6 +187,9 @@ model Reference_2_solstice
 	parameter SI.Area A_receiver = A_field/C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
+    parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
+    parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
+
 
 	parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
 
@@ -327,6 +333,8 @@ model Reference_2_solstice
 		Q_in_rcv = R_des,
 		H_rcv = H_receiver,
 		W_rcv = D_receiver,
+		n_H_rcv = n_H_rcv,
+		n_W_rcv = n_W_rcv,
 		tilt_rcv = tilt_rcv,
 		W_helio = W_helio,
 		H_helio = H_helio,
@@ -338,6 +346,7 @@ model Reference_2_solstice
 		slope_error = slope_error,
 		n_row_oelt = n_row_oelt,
 		n_col_oelt = n_col_oelt,
+		n_rays=n_rays,
 		field_type=field_type,
 		rcv_type=rcv_type)
 		annotation(																																								Placement(transformation(extent = {{-88, 2}, {-56, 36}})));

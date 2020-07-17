@@ -241,11 +241,11 @@ def flat_receiver(rec_param, hemisphere='North'):
     '''
     rec_w=rec_param[0]
     rec_h=rec_param[1]
-    slices=rec_param[2]
-    x=rec_param[3]
-    y=rec_param[4]
-    z=rec_param[5]
-    tilt=rec_param[6]
+    slices=rec_param[2] # it assumes the grid x=y
+    x=rec_param[4]
+    y=rec_param[5]
+    z=rec_param[6]
+    tilt=rec_param[7]
     # receiver tilt angle:
     # 0 is vertical
     # the standby posiion of a plane in solstice is normal points to the +z axis
@@ -314,12 +314,13 @@ def cylindrical_receiver(rec_param, hemisphere='North'):
                      if the front surface always facing to the field is desirable
                  (2) the position of the virtual target
     '''
-    rec_r=rec_param[0]
+    rec_r=rec_param[0]/2.
     rec_h=rec_param[1]
     slices=rec_param[2]
-    x=rec_param[3]
-    y=rec_param[4]
-    z=rec_param[5]-rec_r
+    stacks=rec_param[3]
+    x=rec_param[4]
+    y=rec_param[5]
+    z=rec_param[6]
 
     geom=''
     geom+='- geometry: &%s\n' % 'target_g'
@@ -327,7 +328,8 @@ def cylindrical_receiver(rec_param, hemisphere='North'):
     geom+='    cylinder: \n'
     geom+='      height: %s\n'%rec_h 
     geom+='      radius: %s\n'%rec_r 
-    geom+='      slices: %d\n' % slices 
+    geom+='      slices: %d\n' % slices
+    geom+='      stacks: %d\n' % stacks  
     geom+='\n'
 
     # CREATE a receiver entity from "target_g" geometry (primary = 0)

@@ -66,7 +66,7 @@ def run_simul(inputs={}):
 
         crs=CRS(latitude=pm.lat, casedir=casedir)
 
-        crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
+        crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
         if pm.method==1:
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
@@ -95,7 +95,7 @@ def run_simul(inputs={}):
     
     
 if __name__=='__main__':
-    case="./result/field_annual_ranking"
+    case="./test"
     Q_in_rcv=553e6 #W
     W_helio=12.015614841
     H_helio=12.015614841
@@ -106,11 +106,14 @@ if __name__=='__main__':
     fb=0.4
     W_rcv=14.9999995285
     H_rcv=18.6699994131
+    n_W_rcv=50
+    n_H_rcv=10
+    n_rays=10e6
 
-    field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/pos_and_aiming.csv'
+    #field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/default-case/optics/pos_and_aiming.csv'
+    field_type='polar'
     wea_file='/home/yewang/solartherm-philipe/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab'
-    #wea_file2='/home/yewang/solartherm-integration/SolarTherm/Data/Weather/example_TMY3.motab'
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'field_type':'surround', 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type}
+    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'field_type':'surround', 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
 
     run_simul(inputs)
 
