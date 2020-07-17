@@ -32,6 +32,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
   parameter Boolean detail_field_om = false "true if want to use detail washing and field O&M cost";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
+  parameter Boolean dispatch_optimiser = false;
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
@@ -388,10 +389,10 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.Fluid.Sensors.Temperature temperature(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-6, 68}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   // PowerBlockControl
-  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
+  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_gro = P_gross, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
@@ -459,6 +460,7 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
+  controlHot.logic.optimalMassFlow = 0;
   der(E_resource) = max(sun.dni * n_helios * A_helio, 0.0);
   der(E_losses_optical) = (1 - heliostatsField.nu) * max(heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
   der(E_losses_availability) = (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);

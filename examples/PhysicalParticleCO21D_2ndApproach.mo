@@ -23,6 +23,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
+  parameter Boolean dispatch_optimiser = false;
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
   // Weather data
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab");
@@ -331,7 +332,7 @@ model PhysicalParticleCO21D_2ndApproach
   SolarTherm.Models.Fluid.Sensors.Temperature temperature(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-6, 68}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   // PowerBlockControl
-  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb) annotation(
+  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
   SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pinch = pinch, P_nom = P_net, T_high = T_high) annotation(

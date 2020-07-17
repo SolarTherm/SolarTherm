@@ -1,0 +1,3 @@
+gcc -c $(python3.5m-config --cflags) st_surrogate_controller.c
+gcc st_surrogate_controller.o $(python3.5m-config --ldflags)
+./a.out

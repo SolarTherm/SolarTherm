@@ -1,0 +1,4 @@
+cd to folder where your model is saved
+saved_model_cli show --dir ./my_model/ --all
+
+more: https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f
