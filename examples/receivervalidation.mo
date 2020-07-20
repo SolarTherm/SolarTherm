@@ -18,7 +18,7 @@ model receivervalidation
   parameter Real T_in_design = from_degC(550);
   parameter Real T_amb_design = from_degC(-5);
   parameter SI.Efficiency eta_rec_assumption = 0.88;
-  parameter SI.HeatFlowRate Q_in = 280e6;
+  parameter SI.HeatFlowRate Q_in = 800e6;
   parameter SI.Length H_drop_design = sqrt(2000);
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -34,7 +34,7 @@ model receivervalidation
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 20, fixed_geometry = true, test_mode = false, with_uniform_curtain_props = false, with_wall_conduction = true, H_drop_design = H_drop_design, with_detail_h_ambient = false) annotation(
     Placement(visible = true, transformation(origin = {-25, 37}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_in(y = 401.057) annotation(
+  Modelica.Blocks.Sources.RealExpression m_in(y = 2192.54) annotation(
     Placement(visible = true, transformation(origin = {75, 30}, extent = {{-23, -18}, {23, 18}}, rotation = 180)));
 equation
   connect(source.ports[1], liftSimple.fluid_a) annotation(

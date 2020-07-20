@@ -420,7 +420,7 @@ package DirectDesign
   	
   	T_out = Medium.temperature(state_b);
   
-  	P_cooling = P_cool_des*(Q_cooler/Q_cooler_des);
+  	P_cooling = min(0.0002 * 1e6 * exp(0.3537 * (T_amb-273.15)),P_cool_des);
   
   	Q_cooler = port_a.m_flow * (state_b.h - state_a.h);
   

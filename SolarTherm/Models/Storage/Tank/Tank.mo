@@ -12,6 +12,8 @@ model Tank
   parameter SI.ThermalConductance k_insul = 0.08 "W/m/K microporous insulation board', https://is.gd/5j9Gkw";
 
   parameter SI.Emissivity em = 0.8;
+  
+  parameter Real packing_factor = 0.747857;
 
 //protected
 
@@ -39,7 +41,6 @@ model Tank
                                                             annotation (Dialog(group="Heater"));
 
   SI.Volume V;
-  SI.Temperature T_outer_layer_insul;
   SI.HeatFlowRate Q_losses_before_radiation;
   SI.HeatFlowRate Q_losses_total;
   SI.Mass m;  
@@ -86,7 +87,7 @@ protected
 
 initial equation
   medium.h=Medium.specificEnthalpy(state_i);
-  m=Medium.density(state_i)*V_t*L_start/100;
+  m=Medium.density(state_i)*(V_t*packing_factor)*L_start/100;
   //
 equation
   if use_L then
@@ -105,22 +106,19 @@ equation
     Q_losses_before_radiation=0;
   end if;
 
-  T_outer_layer_insul = T_amb_internal "FIX_ME, supposed to be 77.4777 * U_value +24.9888 but if this value is used, the model crash ==> spouting issue in the sCO2 PB";
-  
-
   p_top_internal=medium.p;
   fluid_a.p=medium.p;
   fluid_b.p=medium.p;
   fluid_a.h_outflow=0;//medium.h;
   fluid_b.h_outflow=medium.h;
   der(m)=fluid_a.m_flow+fluid_b.m_flow;
-  m*der(medium.h)+der(m)*medium.h=Q_losses_before_radiation-CN.sigma * em * (T_outer_layer_insul^4 - T_amb^4) * A +W_net+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
+  m*der(medium.h)+der(m)*medium.h=Q_losses_before_radiation+W_net+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
   T_mea = medium.T;
   
-  der(Q_losses_total)= Q_losses_before_radiation - CN.sigma * em * (T_outer_layer_insul^4 - T_amb^4);
+  der(Q_losses_total)= Q_losses_before_radiation;
 
   V=m/medium.d;
-  L_internal=100*V/V_t;
+  L_internal=100*V/(V_t*packing_factor);
   A=2*CN.pi*(D/2)*H*(L_internal/100) + CN.pi*(D/2)^2;
 
   if medium.T<T_set then

@@ -29,8 +29,6 @@ model HeliostatsFieldSolstice_2ndApproach
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
-
-
     parameter Boolean use_on = false
     "= true to display when solar field is connected"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -103,9 +101,6 @@ model HeliostatsFieldSolstice_2ndApproach
 initial equation
    on_internal=Q_raw>Q_start;
    opt_file=optical.tablefile;
-
-   
-
 equation
   if use_on then
     connect(on,on_internal);
@@ -138,8 +133,6 @@ equation
 
   heat.Q_flow= -Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
-//   optical.hra=solar.hra;
-//   optical.dec=solar.dec;
 
   ele=SolarTherm.Models.Sources.SolarFunctions.elevationAngle(
     solar.dec,
