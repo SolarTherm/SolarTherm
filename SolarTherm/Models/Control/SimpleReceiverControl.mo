@@ -10,6 +10,8 @@ model SimpleReceiverControl
   parameter Real L_df_on=99 "Level of start defocus";
   parameter Real L_df_off=96 "Level of stop defocus";
   parameter Real eta_rec_th_des = 0.856;
+  
+  parameter Boolean feedforward = true;
 
   parameter Real y_start=500 "Initial value of output";
 
@@ -69,7 +71,8 @@ model SimpleReceiverControl
   
   SolarTherm.Models.Control.IdealMassflowBlockCalculation idealMassflowBlockCalculation (
   eta_rec_th_des = eta_rec_th_des, 
-  y_start =y_start) 
+  y_start =y_start,
+  feedforward=feedforward) 
   annotation(
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   

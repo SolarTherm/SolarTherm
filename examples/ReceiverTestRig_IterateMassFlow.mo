@@ -15,11 +15,11 @@ model ReceiverTestRig_IterateMassFlow
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   // Design Condition
   parameter Real T_out_design = from_degC(800);
-  parameter Real T_in_design = from_degC(550);
-  parameter Real T_amb_design = from_degC(-5);
+  parameter Real T_in_design = 803.15;
+  parameter Real T_amb_design = 268.15;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
-  parameter SI.HeatFlowRate Q_in = 280e6;
-  parameter SI.Length H_drop_design = sqrt(2000);
+  parameter SI.HeatFlowRate Q_in = 302800000;
+  parameter SI.Length H_drop_design = 30;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(

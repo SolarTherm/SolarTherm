@@ -15,13 +15,14 @@ model ParticleReceiver
 
 	parameter Boolean const_alpha = true "If true then constant convective heat transfer coefficient";
 	parameter SI.CoefficientOfHeatTransfer alpha=1 if const_alpha "Convective heat transfer coefficient";
+	
+	parameter Real c0 = -0.00000000000812828041;
+	parameter Real c1 = 0.0000000221705242;
+	parameter Real c2 = -0.0000229149451;
+	parameter Real c3 = 0.0109275916;
+	parameter Real c4 = -1.25070245;
 
-	// this object represents the state of the particles in the curtain:
 	Medium.BaseProperties medium;
-
-	// from ReceiverFluid and Receiver, we inherit
-	//   * fluid_a, fluid_b (inlet and outlet ports)
-	//   * heat (heat port, supply of heat to the receiver)
 
 	SI.SpecificEnthalpy h_in "Specific enthalpy at inlet";
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
@@ -30,9 +31,8 @@ model ParticleReceiver
 	SI.Temperature T_out=Medium.temperature(state_out) "Temperature at outlet";
 
 	SI.HeatFlowRate Q_loss "Total losses";
-	SI.HeatFlowRate Q_rad "Radiative losses";
-	SI.HeatFlowRate Q_con "Convective losses";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by curtain";
+	SI.Efficiency eta_rcv;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		transformation(
@@ -47,12 +47,9 @@ model ParticleReceiver
 		transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
 		-24,-98},{-12,-86}})));
 
-	Real eff;
-
-protected
-	parameter SI.Temperature T_0=from_degC(580.3) "Start value of temperature";
+	parameter SI.Temperature T_0=from_degC(550) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
-	parameter SI.SpecificEnthalpy  h_0=SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_0);
+	parameter SI.SpecificEnthalpy h_0=SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_0);
 
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
@@ -68,19 +65,17 @@ equation
 	fluid_a.p=medium.p; // no pressure drops (it should all be ambient pressure)
 	fluid_b.p=medium.p;
 
-	Q_rad=A*sigma*em*(medium.T^4-Tamb^4); // radiative losses
-	Q_con=A*alpha*(medium.T-Tamb); // convective losses
-
 	if on then
-		Q_loss=-Q_rad-Q_con;
+        eta_rcv = (heat.Q_flow/1e6)^4*c0 + (heat.Q_flow/1e6)^3 *c1 + (heat.Q_flow/1e6)^2 *c2 + (heat.Q_flow/1e6)*c3 + c4;
+		Q_loss= (1-eta_rcv) * heat.Q_flow;
 	else
+        eta_rcv = 0;
 		Q_loss=0; // when the receiver is 'off', assume no thermal losses
 	end if;
 
 	// energy balance: mdot(h_out - h_in) = Q_abs - Q_loss, with some handling of low flow
-	0=ab*heat.Q_flow+Q_loss+fluid_a.m_flow*(h_in-h_out);
+	heat.Q_flow = Q_loss + Q_rcv;
 	Q_rcv=fluid_a.m_flow*(h_out-h_in);
-	eff=max(Q_rcv, 0)/max(1,heat.Q_flow);
 
 	annotation (Documentation(info="<html>
 </html>", revisions="<html>

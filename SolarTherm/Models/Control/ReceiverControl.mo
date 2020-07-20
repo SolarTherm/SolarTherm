@@ -53,10 +53,6 @@ model ReceiverControl
         extent={{-20,-20},{20,20}},
         rotation=-90,
         origin={0,-114})));
-  Modelica.Blocks.Interfaces.RealInput Q_input annotation(
-    Placement(visible = true, transformation(origin = {6, 120}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {100, 120}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-  Modelica.Blocks.Interfaces.RealInput eta_rec_in annotation(
-    Placement(visible = true, transformation(origin = {42, 120}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-100, 120}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   SolarTherm.Models.Control.PID_AW_reset3_voriginal PID(
     Tt = 1,
     uMax=m_flow_max,

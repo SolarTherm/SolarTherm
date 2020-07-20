@@ -1,20 +1,6 @@
 within examples;
 
 model PhysicalParticleCO21D_1stApproach
-  //======================================          MODEL VERSION CONTROL               ===============================================//
-  //Base case parameter : particleReceiver1D.h_conv_curtain = 10 W/m2K, pri_bop = 0, tower_cost = cheap tower, storage cost function = EES v.9 SANDIA method, variable O&M = 0, no insulation cost, using Solstice_field =======> LCOE 66.68 USD/MWh
-  //adding changes - particleReceiver1D.h_conv_curtain = 32 W/m2K ===> LCOE 68.68 USD/MWh (everything else is kept constant),
-  //adding changes - tower cost = SAM  cost function =====> LCOE 73.259 USD/MWh,
-  //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface)  and insulation cost = model that Philipe's built based on Tuffcrete, Microporous and concrete layers =======> LCOE 72.48 USD/MWh,
-  //adding changes - incorporating land cost =========> 75.62 USD/MWh
-  //adding changes - incorporating BOP cost ==========> 77.735 USD/MWh
-  //adding changes - incorporating variable O&M ===========> 77.736 USD/MWh
-  //adding changes - bin cost function = Jeremy Stent information (75 USD/m.sq inner surface) and insulation cost = model that Philipe's built based on Tuffcrete, Pumplite60 and concrete layers ====================> 82.573 USD/MWh
-  //adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.95 ====================> 62.377 USD/MWh (20 February 2020)
-  //adding changes - discount rate to match fisher equation (1+nominal_discount_rate)/(1+inflation_rate)-1, DNI_design = 950 W/m.sq , generator efficiency of 0.90 ====================> 65.58 USD/MWh (20 February 2020)
-  //adding changes - ramp-up and down control system are implemented in PowerBlockControl.logic and recomPB, ramp-up and down time 1800 seconds ====================> 65.848 USD/MWh (25 February 2020)
-  //=============================================        INSTRUCTION       =================================================================//
-  //===================>     Run this model with maximum time step less than equal to 300. Bigger than that, it wont converge
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -22,6 +8,7 @@ model PhysicalParticleCO21D_1stApproach
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   import FI = SolarTherm.Models.Analysis.Finances;
+  import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SolarTherm.Types.Solar_angles;
   import SolarTherm.Types.Currency;
   import Modelica.Math;
@@ -32,7 +19,6 @@ model PhysicalParticleCO21D_1stApproach
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
   parameter Boolean detail_field_om = false "true if want to use detail washing and field O&M cost";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
-  parameter Boolean dispatch_optimiser = false;
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
@@ -81,7 +67,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Efficiency eff_blk = 0.502 "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = from_degC(800) "Particle inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_in_rec = from_degC(580.3) "Particle inlet temperature to particle receiver at design";
-  parameter SI.Irradiance dni_des = 950 "DNI at design point Equinox";
+  parameter SI.Irradiance dni_des = 950 "DNI at design poinop Equinox";
   parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
@@ -201,6 +187,17 @@ model PhysicalParticleCO21D_1stApproach
   // Level (above which) to start disptach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
+  // Dispatch optimiser
+  parameter String DNI_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab";
+  parameter String price_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab";
+  parameter Integer horison = 24;
+  parameter Real dt = 1 "delta t of the optimisation";
+  parameter Real etaG(fixed = false);
+  parameter Real etaC = metadata_list[3];
+  parameter Real SLminrel = hot_tnk_empty_lb / 100 "hot tank empt trigger point";
+  parameter Real Ahelio = A_field;
+  parameter Real const_t = -dt * 3600;
+  parameter Boolean dispatch_optimiser = true;
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
@@ -226,8 +223,6 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
-  //  parameter SI.TemperatureDifference LMTD_des = (T_hot_set - T_out_ref_co2 - (T_cold_set - T_in_ref_co2)) / Math.log((T_hot_set - T_out_ref_co2) / (T_cold_set - T_in_ref_co2)) "Particle heat exchnager LMTD at design";
-  // parameter SI.Area A_hx = Q_flow_des / (U_hx * LMTD_des) "Heat transfer surface area of the particle heat exchanger";
   // Cost data in USD (default) or AUD
   parameter Real r_disc = (1 + 0.0701) / (1 + r_i) - 1;
   //(1 + 0.0701) / (1 + r_i) - 1 "Real discount rate";
@@ -368,13 +363,13 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(Q_in = Q_in_rcv, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des, CR = CR, dni_des = dni_des, eta_opt_des = eta_opt_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // Receiver control
-  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des) annotation(
+  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des, feedforward = false) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   // Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
   // Receiver lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftRC(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRC, CF = 0, eff = eff_lift) annotation(
@@ -395,7 +390,7 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_comp_in, external_parasities = false, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
-  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
+  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab")) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
@@ -429,6 +424,14 @@ model PhysicalParticleCO21D_1stApproach
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
+  //Dispatch optimiser variables
+  Real SLinit;
+  Real counter(start = const_t);
+  Real time_simul;
+  Real optimalDispatch;
+  Real DEmax(start = Q_flow_des / 1e6) "Maximum dispatchable heat from the storage in MWth";
+  Real SLmax(start = E_max * 2.77778e-10) "Storage capacity in MWh th";
+  Real dummyRatio;
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -444,6 +447,7 @@ algorithm
     E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
+  etaG = powerBlock.eta_net_design;
   omega_twister = ceil(washingFrequencyCalculator.omega);
   m_flow_blk = powerBlock.m_HTF_des;
   opt_file = heliostatsField.optical.tablefile;
@@ -460,7 +464,27 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
-  controlHot.logic.optimalMassFlow = 0;
+  simpleReceiverControl.idealMassflowBlockCalculation.Tamb = particleReceiver1D.Tamb;
+//Dispatch optimiser variables
+  SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
+  DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
+  SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10;
+  if dispatch_optimiser == true then
+    der(counter) = 1;
+  else
+    der(counter) = 0;
+  end if;
+  when counter > 0 then
+    time_simul = floor(time);
+    if dispatch_optimiser then
+      optimalDispatch = SolarTherm.Utilities.LinProgFunc(DNI_file, price_file, horison, dt, time_simul, etaC, etaG, t_storage, DEmax, SLmax, SLinit, SLminrel, A_field);
+    else
+      optimalDispatch = DEmax;
+    end if;
+    reinit(counter, const_t);
+  end when;
+  controlHot.logic.optimalMassFlow = if dispatch_optimiser == true then min(optimalDispatch / DEmax * m_flow_blk, m_flow_blk) else 0;
+  dummyRatio = optimalDispatch / DEmax;
   der(E_resource) = max(sun.dni * n_helios * A_helio, 0.0);
   der(E_losses_optical) = (1 - heliostatsField.nu) * max(heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
   der(E_losses_availability) = (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
