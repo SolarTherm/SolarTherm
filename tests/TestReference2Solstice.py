@@ -24,9 +24,9 @@ class TestReference2Solstice(unittest.TestCase):
 		# version.  They are not validated against anything or independently
 		# calculated.
 		print self.perf
-		self.assertTrue(abs(self.perf[0]- 358949.56)<20.) # epy
-		self.assertTrue(abs(self.perf[1]- 175.42)<5.) # LCOE
-		self.assertTrue(abs(self.perf[2]- 40.98)<1) # Capacity factor
+		self.assertTrue(abs(self.perf[0]- 358949.56)/358949.56<0.01) # epy
+		self.assertTrue(abs(self.perf[1]- 175.42)/175.42<0.01) # LCOE
+		self.assertTrue(abs(self.perf[2]- 40.98)/40.98<0.01) # Capacity factor
 		os.system('rm Reference_2_solstice*')
     		
 
