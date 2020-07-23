@@ -1,22 +1,12 @@
 import os
-import sys
 import time
+import numpy as np
 
-import numpy as N
-import matplotlib.pyplot as plt
-from uncertainties import ufloat
-from scipy.interpolate import interp1d,interp2d
-import matplotlib.cm as cm
+import solsticepy
+from solsticepy.design_crs import CRS
+from solsticepy.input import Parameters
+from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
 
-from proces_raw import *
-from cal_layout import radial_stagger
-from cal_field import *
-from cal_sun import *
-from gen_YAML import gen_YAML
-from gen_vtk import *
-from input import Parameters
-from master_crs import *
-from output_solartherm import *
 
 def set_param(inputs={}):
     '''
@@ -28,7 +18,6 @@ def set_param(inputs={}):
 
         if hasattr(pm, k):
             setattr(pm, k, v)
-
         else:
             raise RuntimeError("invalid paramter '%s'"%(k,)) 
 
@@ -43,15 +32,15 @@ def run_simul(inputs={}):
 
     pm=set_param(inputs)
 
-    print ''
-    print 'Test inputs'
+    print('')
+    print('Test inputs')
     for k, v in inputs.iteritems():
-        print k, '=', getattr(pm, k)
+        print(k, '=', getattr(pm, k))
     print ''
     print ''
 
-    TIME=N.array([])
-    print ''
+    TIME=np.array([])
+    print('')
 
     start=time.time()
 
@@ -59,8 +48,8 @@ def run_simul(inputs={}):
     pm.saveparam(casedir)
     tablefile=casedir+'/OELT_Solstice.motab'
     if os.path.exists(tablefile):    
-        print ''
-        print 'Load exsiting OELT'
+		print('')
+		print('Load exsiting OELT')
 
     else:
 
@@ -72,13 +61,10 @@ def run_simul(inputs={}):
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
         else:
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
+ 
+        crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
-        if pm.field_type[-3:]=='csv':
-            oelt, A_land=crs.run_annual_system(num_rays=int(pm.n_rays), nd=pm.n_row_oelt, nh=pm.n_col_oelt, zipfiles=False, genvtk_hst=False, plot=False)     
-
-        else:
-            oelt, A_land=crs.field_design_annual(method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, latitude=pm.lat, dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=pm.n_row_oelt, nh=pm.n_col_oelt, weafile=pm.wea_file, zipfiles=False, genvtk_hst=True, plot=False)         
-
+        oelt, A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=False, plot=False)
 
         if (A_land==0):    
             tablefile=None
@@ -86,9 +72,9 @@ def run_simul(inputs={}):
             A_helio=pm.H_helio*pm.W_helio
             output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
             end=time.time()
-            print ''
-            print 'total time %.2f'%((end-start)/60.), 'min' 
-            N.savetxt(casedir+'/time.csv', N.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
+            print('')
+            print('total time %.2f'%((end-start)/60.), 'min')
+            np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
     return tablefile
 
@@ -109,11 +95,12 @@ if __name__=='__main__':
     n_W_rcv=50
     n_H_rcv=10
     n_rays=10e6
+    rcv_type='cylinder'    
 
     #field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/default-case/optics/pos_and_aiming.csv'
-    field_type='polar'
+    field_type='surround'
     wea_file='/home/yewang/solartherm-philipe/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3.motab'
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'field_type':'surround', 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
+    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
 
     run_simul(inputs)
 
