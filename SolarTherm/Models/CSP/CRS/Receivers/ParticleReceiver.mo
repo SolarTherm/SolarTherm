@@ -18,7 +18,7 @@ model ParticleReceiver
 	parameter Boolean const_alpha = true "If true then constant convective heat transfer coefficient";
 	parameter SI.CoefficientOfHeatTransfer alpha=1 if const_alpha "Convective heat transfer coefficient";
 	
-	parameter Boolean use_neural_network = false;
+	parameter Boolean use_neural_network = true;
 	parameter Integer inputsize = 4;
     parameter String saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver";
 	
