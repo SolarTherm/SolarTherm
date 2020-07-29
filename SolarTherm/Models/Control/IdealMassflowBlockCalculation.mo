@@ -12,7 +12,7 @@ model IdealMassflowBlockCalculation
   parameter Boolean feedforward = true;
   parameter Real Q_input_limit_low = 280e6;
   parameter Real Q_input_limit_high = Q_input_limit_low + 1e6;
-  
+  parameter Real H_drop = sqrt(2000);
   
   Real Tamb;
   Real eta_rec_discrete (start = eta_rec_th_des);
@@ -37,7 +37,11 @@ model IdealMassflowBlockCalculation
   algorithm
   if feedforward == true then
     if Q_input > Q_input_limit_high then
-      m_flow := Q_input/1e6 * 3.293790 + 5.117597 * T_mea + 0.242137 * Tamb - 4725.400507;
+      //m_flow := Q_input/1e6 * 3.293790 + 5.117597 * T_mea + 0.242137 * Tamb - 4725.400507;
+      m_flow := max(Q_input/1e6 * 3.051917 + 
+                0.142194 * Tamb + 
+                Modelica.Math.log10(Q_input/1e6) * 215.784613 + 
+                0.003562 * T_mea^2 - 0.203024 * H_drop^2 - 2938.106877,0);
       on:=true;
     else
       m_flow := 0;

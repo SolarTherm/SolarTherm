@@ -5,10 +5,10 @@ Step by step :
 1. Got to ~/SolarTherm/Resources/Include/
 2. Convert st_linprog.c into a dynamic library namely liblinprog.so using this command
 			gcc -fPIC -shared -lglpk -o liblinprog.so st_linprog.c && cp liblinprog.so ./lib/ && rm -rf liblinprog.so
-3. Since liblinprog.so is depending on glpk.h then we have to compile glpk.h and turn it into an object *.o using this command
-			gcc -c /usr/local/include/glpk.h -o libglpk.o && cp libglpk.o ./lib/ && rm -rf libglpk.o
+3. Since liblinprog.so is depending on glpk.h then we have to copy liblinprog.so 
+			cp /usr/local/lib/libglpk.so ~/solartherm-particle/SolarTherm/Resources/Include/lib/
 		* the directory where glpk.h is located may differ
-		* if using standard installation, then glpk.h will be located in /usr/local/include
+		* if using standard installation, then glpk.h will be located in /usr/local/
 4. External function Modelica (LinProgFunc.mo):
 		-at annotation part, use:
 			annotation(Library ={"linprog","glpk"},

@@ -39,7 +39,7 @@ model ParticleReceiver1D
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
   parameter Boolean with_uniform_curtain_props = true "If true, ignore effect of phi_c on curtain emi/abs/tau";
   parameter Boolean with_detail_h_ambient = true;
-  constant SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
+  parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   //Discretisation
   parameter Integer N = 2 "Number of vertical elements";
   // temperature used to initialise screen
@@ -60,7 +60,6 @@ model ParticleReceiver1D
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (backwall) [W/m^2-K]";
   parameter Real C = 1200;
-  parameter SI.Efficiency eta_opt_des = 0.5454 "Total optical efficiency at design point()";
   parameter SI.HeatFlux dni_des = 200;
   parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley
  Mills";
@@ -91,8 +90,7 @@ model ParticleReceiver1D
   SI.Temperature T_s[N + 1](start = linspace(T_ref, 1351, N + 1), max = fill(2000., N + 1), min = fill(299., N + 1)) "Curtain Temperature";
   SI.SpecificEnthalpy h_s[N + 1](start = linspace(h_0, Util.h_T(1351), N + 1), max = fill(1224994, N + 1), min = fill(735., N + 1)) "Curtain enthalpy";
   SI.Temperature T_w[N + 2](start = linspace(T_ref, 1351, N + 2), max = fill(2000., N + 2), min = fill(299., N + 2)) "Receiver wall temperature";
-  SI.Temperature T_w_avg(start=0);
-  SI.Temperature T_w_delay; 
+
   //Real abc;
   //Curtain radiation properties
   SI.Efficiency eps_c[N](start = linspace(0.999, 0.971, N), max = fill(1., N), min = fill(0., N)) "Curtain emissivity";
@@ -280,8 +278,6 @@ equation
     eta_rec = 0;
   end if;
   eta_rec_out = eta_rec;
-  T_w_avg = sum(T_w) / (N+2);
-  T_w_delay = delay(T_w_avg,1);
   
   for i in 1:N loop  
       Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
