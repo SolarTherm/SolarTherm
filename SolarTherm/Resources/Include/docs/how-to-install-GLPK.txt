@@ -1,0 +1,17 @@
+# glpk install
+	cd to your home folder
+	sudo wget http://ftp.gnu.org/gnu/glpk/glpk-4.65.tar.gz
+	sudo wget http://ftp.gnu.org/gnu/glpk/glpk-4.65.tar.gz.sig
+	cd to glpk-4.65 folder
+	sudo gpg --verify glpk-4.65.tar.gz.sig ~> if it fails, run sudo gpg --keyserver keys.gnupg.net --recv-keys 5981E818 and rerun the previous command
+	
+	#UNPACKING
+	sudo tar zx < glpk-4.65.tar.gz
+
+	#INSTALLING
+	cd glpk-4.65
+	sudo ./configure
+	sudo make
+
+	#CHECKING THE PACKAGE
+	sudo make check (Should print OPTIMAL LP SOLUTION FOUND at the end of terminal)
