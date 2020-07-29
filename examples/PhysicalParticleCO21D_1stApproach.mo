@@ -21,6 +21,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
   parameter Boolean feedforward = true;
   parameter Boolean dispatch_optimiser = false;
+  parameter Boolean new_storage_calc = false;
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
@@ -141,8 +142,9 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   //Exchanger parameters
   parameter Real pinch_recuperator = 5;
+  parameter Real pinch_exchanger = 15;
   parameter SI.Temperature T_out_ref_blk = T_cold_set "Particle outlet temperature from particle heat exchanger at design";
-  parameter SI.Temperature T_in_ref_co2 = T_cold_set "CO2 inlet temperature to particle heat exchanger at design";
+  parameter SI.Temperature T_in_ref_co2 = T_cold_set - pinch_exchanger "CO2 inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
   parameter Integer N_exch_parameter = 2 "PG";
   parameter Real par_fix_fr = 0 "Fixed parasitics as fraction of gross rating";
@@ -216,13 +218,12 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = (1 + r_disc_nom) / (1 + r_i) - 1;
   parameter Real r_i = 0.025 "Inflation rate";
-  parameter Real r_disc_nom = 0.0701;
+  parameter Real r_disc_nom = 0.0701 "Nominal discount rate";
+  parameter Real r_disc = (1 + r_disc_nom) / (1 + r_i) - 1;
   parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 2 "Years of construction";
-  parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
-  // Valid for 2019. See https://www.rba.gov.au/
+  parameter Real r_cur = 0.71 "The currency rate from AUD to USD valid for 2019. See https://www.rba.gov.au/";
   parameter Real r_contg = 0.1 "Contingency rate";
   parameter Real r_indirect = 0.13 "Indirect capital costs rate";
   parameter Real r_cons = 0.09 "Construction cost rate";
@@ -285,7 +286,6 @@ model PhysicalParticleCO21D_1stApproach
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
   //parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
-  parameter Boolean new_storage_calc = true;
   parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
   parameter FI.Money C_insulation = if U_value == 0 then 0 else 2 * SA_storage * (131.0426 / U_value + 23.18);
   //(131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
