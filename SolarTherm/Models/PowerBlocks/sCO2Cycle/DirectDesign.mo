@@ -214,20 +214,20 @@ package DirectDesign
   end Turbine;
 
   model Exchanger
-    extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
-    replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
-    import SI = Modelica.SIunits;
-    import Modelica.SIunits.Conversions.*;
-    Modelica.Fluid.Interfaces.FluidPort_a HTF_port_a(redeclare package Medium = MedRec) annotation(
-      Placement(visible = true, transformation(origin = {70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_a CO2_port_a(redeclare package Medium = MedPB) annotation(
-      Placement(visible = true, transformation(origin = {-70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b HTF_port_b(redeclare package Medium = MedRec) annotation(
-      Placement(visible = true, transformation(origin = {-70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    Modelica.Fluid.Interfaces.FluidPort_b CO2_port_b(redeclare package Medium = MedPB) annotation(
-      Placement(visible = true, transformation(origin = {70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
-    
+      extends SolarTherm.Media.CO2.PropCO2;
+      replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
+      replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+      import SI = Modelica.SIunits;
+      import Modelica.SIunits.Conversions.*;
+      Modelica.Fluid.Interfaces.FluidPort_a HTF_port_a(redeclare package Medium = MedRec) annotation(
+        Placement(visible = true, transformation(origin = {70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Modelica.Fluid.Interfaces.FluidPort_a CO2_port_a(redeclare package Medium = MedPB) annotation(
+        Placement(visible = true, transformation(origin = {-70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Modelica.Fluid.Interfaces.FluidPort_b HTF_port_b(redeclare package Medium = MedRec) annotation(
+        Placement(visible = true, transformation(origin = {-70, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-70, 40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      Modelica.Fluid.Interfaces.FluidPort_b CO2_port_b(redeclare package Medium = MedPB) annotation(
+        Placement(visible = true, transformation(origin = {70, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {70, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+      
   	parameter Modelica.SIunits.Temperature T_out_CO2_des = from_degC(715);
   	parameter Modelica.SIunits.Power P_nom_des = 164000;
   	parameter Real ratio_m_des = 1 "ratio of m_CO2_des/m_HTF_des at design point";
@@ -797,7 +797,7 @@ package DirectDesign
      
      
       //Cycle parameters
-      parameter SI.Temperature pinch = 15;
+      parameter SI.Temperature pinch_recuperator = 5;
       parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
       parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
       parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
@@ -851,7 +851,7 @@ package DirectDesign
       parameter FI.Money C_generator(fixed = false) "cost of the generator";
       parameter FI.Money C_cooler(fixed = false) "cost of the cooler";
       parameter FI.Money C_PB(fixed = false) "Overall cost of the power block";
-      parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
+      parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(W_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
        
       
       //Components instanciation

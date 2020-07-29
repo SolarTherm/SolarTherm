@@ -37,7 +37,7 @@ model ParticleReceiver1D_v11
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
   parameter Boolean with_uniform_curtain_props = true "If true, ignore effect of phi_c on curtain emi/abs/tau";
-  constant SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
+  parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   //Discretisation
   parameter Integer N = 2 "Number of vertical elements";
   // temperature used to initialise screen
@@ -58,7 +58,7 @@ model ParticleReceiver1D_v11
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";  
   parameter SI.CoefficientOfHeatTransfer h_conv = 100. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";  
-
+  parameter Real F = 0.54  "view factor";
   parameter SI.Irradiance dni_des = 788.8;
   parameter Real CR = 1200;
   parameter SI.HeatFlowRate Q_in = 10;
@@ -251,7 +251,7 @@ equation
     for i in 1:N loop
         //Curtain-wall radiation heat fluxes (W/m²)
         gc_f[i] = q_solar;
-        jc_f[i] = 0.54* (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
+        jc_f[i] = F * (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
         gc_b[i] = j_w[i];
         jc_b[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i] + tau_c[i] * gc_f[i];
         g_w[i] = jc_b[i];

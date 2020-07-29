@@ -14,6 +14,7 @@ model SimpleReceiverControl
   parameter Boolean feedforward = true;
 
   parameter Real y_start=500 "Initial value of output";
+  parameter Real H_drop = sqrt(2000);
 
   Modelica.Blocks.Logical.Switch switch
     annotation (Placement(visible = true, transformation(extent = {{72, -6}, {84, 6}}, rotation = 0)));
@@ -72,7 +73,8 @@ model SimpleReceiverControl
   SolarTherm.Models.Control.IdealMassflowBlockCalculation idealMassflowBlockCalculation (
   eta_rec_th_des = eta_rec_th_des, 
   y_start =y_start,
-  feedforward=feedforward) 
+  feedforward=feedforward,
+  H_drop=H_drop) 
   annotation(
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   

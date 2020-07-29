@@ -2,17 +2,6 @@
 #include <stdio.h>
 #include "tensorflow/c/c_api.h"
 
-/*UNIT MEASUREMENT OF THE INPUTS
-q = W
-tamb = K
-tin = K
-output:
-mdot = kg/s
-                    	q         tamb    tin
-float raw_input[3] = {288550000, 268.15, 798.15}
-*/
-
-
 void NoOpDeallocator(void* data, size_t a, void* b) {}
 double st_surrogate(double [], int , char*);
 
@@ -31,11 +20,11 @@ double st_surrogate(double raw_input[], int inputsize, char* saved_model_dir)
     */
 
     //*********************Scaler ~ to scaledown the input
-    const float X_max[3] = {850000000, 318.15,833.15};
-    const float X_min[3] = {280000000, 268.15,798.15};
+    const float X_max[4] = {850000000, 318.15,833.15,45};
+    const float X_min[4] = {280000000, 268.15,803.15,23};
 
-    const float Y_max = 1957.150628;
-    const float Y_min = 31.976643;
+    const float Y_max = 0.964303;
+    const float Y_min = 0.427611;
 
     //Allocate memory for scaled input
     float* input = malloc(sizeof(float*)*inputsize);
@@ -54,15 +43,34 @@ double st_surrogate(double raw_input[], int inputsize, char* saved_model_dir)
     TF_Buffer* RunOpts = NULL;
 
     const char* tags = "serve"; // default model serving tag
-    int ntags =1;
+    int ntags = 1;
+    
 
-    TF_Session* Session = TF_LoadSessionFromSavedModel(SessionOpts, RunOpts, saved_model_dir, &tags,ntags, Graph, NULL, Status);
+    TF_Session* Session = TF_LoadSessionFromSavedModel(SessionOpts, RunOpts, saved_model_dir, &tags, ntags, Graph, NULL, Status);
+    
+    if(TF_GetCode(Status) == TF_OK)
+    {
+        printf("TF Loading Pre-Trained Model : Complete!\n");
+    }
+    else
+    {
+        printf("%s",TF_Message(Status));
+    }
 
     //*********************Get input tensor
     int NumInputs = 1; // number of input tensor
     TF_Output* Input = malloc(sizeof(TF_Output*)*NumInputs); //allocate memory for input tensor (dType TF_Output)
 
     TF_Output t0 = {TF_GraphOperationByName(Graph,"serving_default_Input_input"),0}; //take the input tensor from loaded model
+
+    if(t0.oper == NULL)
+    {
+        printf("ERROR: Failed TF_GraphOperationByName serving_default_Input_input\n");
+    }
+    else
+    {
+        printf("SUCCESS: TF_GraphOperationByName serving_default_Input_input\n");
+    }
 
     Input[0] = t0; // assign to allocated memory Input
 
@@ -71,6 +79,15 @@ double st_surrogate(double raw_input[], int inputsize, char* saved_model_dir)
     TF_Output* Output = malloc(sizeof(TF_Output) * NumOutputs); //allocate memory for output tensor (dType TF_Output)
 
     TF_Output t2 = {TF_GraphOperationByName(Graph,"StatefulPartitionedCall"),0}; //take the output tensor from loaded model
+
+    if(t2.oper == NULL)
+    {
+        printf("ERROR: Failed TF_GraphOperationByName StatefulPartitionedCall\n");
+    }
+    else
+    {
+        printf("SUCCESS: TF_GraphOperationByName StatefulPartitionedCall \n");
+    }
     
     Output[0] = t2; // assign to allocated memory Output
 
@@ -93,10 +110,28 @@ double st_surrogate(double raw_input[], int inputsize, char* saved_model_dir)
 
     TF_Tensor* int_tensor = TF_NewTensor(TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocator, 0);
 
+    if (int_tensor != NULL)
+    {
+        printf("TF_NewTensor is OK\n");
+    }
+    else
+    {
+	    printf("ERROR: Failed TF_NewTensor\n");
+    }
+
     InputValues[0] = int_tensor;
 
     //********* Run the session
     TF_SessionRun(Session, NULL, Input, InputValues, NumInputs, Output, OutputValues, NumOutputs, NULL, 0,NULL , Status);
+
+    if(TF_GetCode(Status) == TF_OK)
+    {
+        printf("Session is OK\n");
+    }
+    else
+    {
+        printf("%s",TF_Message(Status));
+    }
 
     //********* Free memory
     TF_DeleteGraph(Graph);
@@ -107,7 +142,8 @@ double st_surrogate(double raw_input[], int inputsize, char* saved_model_dir)
     void* buff = TF_TensorData(OutputValues[0]);
     float* offsets = buff;
     double res = offsets[0] * (Y_max-Y_min) + Y_min;
-    printf("Y_predicted: %f [kg/s]\n",res);
+    printf("Result Tensor :\n");
+    printf("Y_predicted: %f \n",res);
 
     free(InputValues);
     free(OutputValues);

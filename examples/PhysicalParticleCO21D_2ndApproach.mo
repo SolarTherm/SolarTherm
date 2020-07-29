@@ -68,7 +68,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
   parameter SI.Efficiency eta_opt_des = eff_opt;
-  parameter SI.Temperature T_amb_des = from_degC(25) "Design point ambient temp";
+  parameter SI.Temperature T_amb_des_rcv = from_degC(10) "Design point ambient temp";
   parameter Real alpha_rcv = 1;
   parameter Integer n_H_rcv = 20 "discretization of the height axis of the receiver";
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
@@ -81,7 +81,7 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Temperature pinch = 15;
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestion";
-  parameter SI.Efficiency packing_factor = 0.747857 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
+  parameter SI.Efficiency packing_factor = 0.6 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
   //Optical simulation parameters
   parameter Integer n_rays = 10000 "number of rays for solstice";
   parameter Integer n_procs = 1 "number of processors in soltice";
@@ -167,9 +167,11 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Boolean feedforward = true;
   parameter SI.Angle ele_min = 0.0872665 "Heliostat stow deploy angle = 5 degree";
   parameter Boolean use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter SI.HeatFlowRate Q_flow_defocus = 280e6 "Solar field thermal power at defocused state = Minimum of heat for feedforward";
-  parameter Real nu_start = 1.01 "Minimum energy start-up fraction to start the receiver";
-  parameter Real nu_min_sf = 1 "Minimum turn-down energy fraction to stop the receiver";
+  parameter SI.HeatFlowRate Q_flow_defocus = Q_flow_des / (1 - rec_fr) "Solar field thermal power at defocused state = Minimum of heat for feedforward";
+  parameter Real nu_start = 0.6;
+  //1.01 "Minimum energy start-up fraction to start the receiver";
+  parameter Real nu_min_sf = 0.3;
+  // "Minimum turn-down energy fraction to stop the receiver";
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound";
   // Level (below which)s to stop disptach
@@ -214,9 +216,10 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = (1 + 0.0701) / (1 + r_i) - 1;
+  parameter Real r_disc = (1 + r_disc_nom) / (1 + r_i) - 1;
   //(1 + 0.0701) / (1 + r_i) - 1 "Real discount rate";
   parameter Real r_i = 0.025 "Inflation rate";
+  parameter Real r_disc_nom = 0.0701;
   parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 2 "Years of construction";
   parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
@@ -239,7 +242,6 @@ model PhysicalParticleCO21D_2ndApproach
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 102 / 1e3 else 102 / 1e3 / r_cur "USD/We Balance of plant cost per gross rated power";
   parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 else 900 / r_cur "sCO2 PB cost per kWe based on the G3P3 Roadmap Report";
   parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
-  //parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.5 / (1e6 * 3600) else (3.5 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year"; // Based on downselection criteria criteria
   parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 0.003 / (1e6 * 3600) else 0.003 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
   //Solar Field Sub-System Cost see PARAMETRIC ANALYSIS OF PARTICLEhttps://pubs.acs.org/doi/pdf/10.1021/jp206115p CSP SYSTEM PERFORMANCE AND COSTTO INTRINSIC PARTICLE PROPERTIES AND OPERATING CONDITIONS (Albrecht et al)
   parameter FI.Money C_field = A_field * pri_field "Field cost";
@@ -308,17 +310,17 @@ model PhysicalParticleCO21D_2ndApproach
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice_2ndApproach heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, method = method, n_h = n_helios, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, H_rcv = H_rcv, W_rcv = W_rcv, tilt_rcv = tilt_rcv, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap = A_rcv, Q_in = Q_in_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, abs_s = ab_particle, with_detail_h_ambient = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator_Approach2 particleReceiver1DCalculator_Approach2(A_ap = A_rcv, Q_in = Q_in_rcv, T_in_design = T_cold_set, T_out_design = T_hot_set, abs_s = ab_particle, with_detail_h_ambient = false, Tamb = T_amb_des_rcv) annotation(
     Placement(visible = true, transformation(origin = {156, 132}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, abs_s = ab_particle, fixed_cp = false, fixed_geometry = true, test_mode = false, with_detail_h_ambient = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des, feedforward = feedforward) annotation(
+  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des, feedforward = feedforward, H_drop = H_rcv) annotation(
     Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value,packing_factor=packing_factor) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   // Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value,packing_factor=packing_factor) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_start, L_start = split_cold * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_cold, T_set = T_cold_aux_set, U_value = U_value, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
   // Receiver lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftRC(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRC, CF = 0, eff = eff_lift) annotation(
