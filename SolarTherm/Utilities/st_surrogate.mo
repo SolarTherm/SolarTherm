@@ -6,7 +6,7 @@ function st_surrogate
  input String saved_model_dir;
  output Real result;
  external result = st_surrogate(raw_input,inputsize,saved_model_dir)
- annotation
-    (Library = {"surrogate","tensorflow"},
-     LibraryDirectory="modelica://SolarTherm/Resources/Include/lib/");
+ annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+            Include="#include \"st_surrogate.c\"",
+            Library = "tensorflow");
 end st_surrogate;
