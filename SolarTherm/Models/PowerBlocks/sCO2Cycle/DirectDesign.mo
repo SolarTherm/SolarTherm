@@ -769,6 +769,11 @@ package DirectDesign
   end testBis;
 
   model recompPB
+  
+      /*                                               DEFINITION                                                                         */
+      //          Cooling power belongs to parasities which makes during the sizing process, cooling power is not included                //
+      //                W_gross is the power output before parasities i.e. heliostat, lift and cooling power consumption                  //
+      
       extends SolarTherm.Media.CO2.PropCO2;
       import SI = Modelica.SIunits;
       import FI = SolarTherm.Models.Analysis.Finances;
@@ -799,6 +804,7 @@ package DirectDesign
       //Cycle parameters
       parameter SI.Temperature pinch_recuperator = 5;
       parameter Real f_fixed_load = 0.0055 "fixed load consumed by power cycle kw/kw";
+      parameter Real par_fr = 0.1 "Parasitites power fraction [W/W]";
       parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
       parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
       parameter SI.ThermodynamicTemperature T_amb_des = 30 + 273.15 "ambiant temperature";
@@ -860,7 +866,7 @@ package DirectDesign
       N_q = N_HTR, 
       P_nom_des = P_gross_des, 
       ratio_m_des = 1, 
-      pinchRecuperator = 5) annotation(
+      pinchRecuperator = pinch_recuperator) annotation(
         Placement(visible = true, transformation(origin = {26, -20}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
       
       
@@ -911,7 +917,7 @@ package DirectDesign
       N_q = N_LTR, 
       P_nom_des = P_nom, 
       ratio_m_des = 1 - gamma,
-      pinchRecuperator = 5) annotation(
+      pinchRecuperator = pinch_recuperator) annotation(
         Placement(visible = true, transformation(origin = {-28, -44}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
       
       SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.FlowMixer mixer(redeclare package MedRec = MedPB) annotation(
@@ -929,6 +935,7 @@ package DirectDesign
       SI.Efficiency eta_cycle;
       SI.Efficiency eta_cycle_net;
       SI.Power W_cycle;
+      SI.Power W_gross;
       SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
       Real load "mass flow fraction of the exchanger compared to design condition";
       Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
@@ -938,12 +945,13 @@ package DirectDesign
       exchanger.h_in_HTF_des = MedRec.specificEnthalpy(state_HTF_in_des);
       exchanger.p_in_HTF_des = state_HTF_in_des.p;
       exchanger.m_HTF_des = m_HTF_des;
-      P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1 - f_fixed_load) * eta_motor;
+      P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * (1 - f_fixed_load) * eta_motor * (1-par_fr);
       P_gross_des = (-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des;
       Q_HX_des = exchanger.m_CO2_des * (exchanger.h_out_CO2_des-exchanger.h_in_CO2_des);
       eta_cycle_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) / (Q_HX_des);
       exchanger.T_HTF_des[1] = T_HTF_out;
-      eta_net_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des - cooler.P_cool_des) * (1-f_fixed_load)*eta_motor / Q_HX_des;
+      eta_net_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * 
+                       (1-f_fixed_load)* eta_motor * (1-par_fr) / Q_HX_des;
     
     // enthalpy equalities
     //main loop
@@ -1051,16 +1059,22 @@ package DirectDesign
       end if;
       
       if ramping then
+        W_gross = 0;
         W_net = 0;
+        W_cycle = 0;
+        eta_cycle = 0;
       else 
-        W_net = if m_sup then max(((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp - cooler.P_cooling) * (1 - f_fixed_load) * eta_motor,0) else 0;
+        W_gross = if m_sup then 
+            max(((-turbine.W_turb) - mainCompressor.W_comp - 
+            reCompressor.W_comp) * (1 - f_fixed_load) * eta_motor ,0) else 0;
+        W_net = if m_sup then 
+            max(W_gross - parasities - cooler.P_cooling,0) else 0;
+        W_cycle = if m_sup then
+            (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp else 0;
+        eta_cycle = if m_sup then 
+            ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
       end if;
       
-      W_cycle = if m_sup then
-      (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp else 0;
-      
-      eta_cycle = if m_sup then 
-      ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
       
       eta_cycle_net=W_net/exchanger.Q_HX;
       der(E_net) = W_net;

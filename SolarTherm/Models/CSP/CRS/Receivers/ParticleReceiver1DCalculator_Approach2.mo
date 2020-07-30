@@ -18,7 +18,7 @@ model ParticleReceiver1DCalculator_Approach2
   parameter Boolean with_uniform_curtain_props = false "If true, ignore effect of phi_c on curtain emi/abs/tau";
   parameter Boolean with_detail_h_ambient = true;
   parameter Boolean on = true;
-  constant SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
+  parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   //Discretisation
   parameter Integer N = 10 "Number of vertical elements";
   // temperature used to initialise screen
@@ -43,6 +43,7 @@ model ParticleReceiver1DCalculator_Approach2
   parameter SI.Density rho_air = 1 "density of ambient air";
   parameter SI.Velocity Wspd = 5 "average wind speed over a year";
   parameter SI.Length H_total = 220 "height of tower + receiver";
+  parameter Real F = 0.54;
   //Wall properties
   parameter SI.Efficiency eps_w = 0.8 "Receiver wall emissivity";
   parameter SI.ThermalConductivity k_w = 0.2 "Backwall thermal conductivity [W/m-K]";
@@ -209,7 +210,7 @@ solar parabolic dish modified cavity receiver, K.S. Reddy , Solar Energy 131 (20
     for i in 1:N loop
 //Curtain-wall radiation heat fluxes (W/m²)
       gc_f[i] = q_solar;
-      jc_f[i] = 0.54 * (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
+      jc_f[i] = F * (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
       gc_b[i] = j_w[i];
       jc_b[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i] + tau_c[i] * gc_f[i];
       g_w[i] = jc_b[i];
