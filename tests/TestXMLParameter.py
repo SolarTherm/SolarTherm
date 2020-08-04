@@ -67,6 +67,7 @@ class TestXMLparameter(unittest.TestCase):
 
 		self.assertEqual(sm[0], self.sm)
 		self.assertEqual(st[0], self.t_storage)
+		os.system('rm Reference_2*')
 
 
 if __name__ == '__main__':
