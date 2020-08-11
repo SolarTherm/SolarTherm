@@ -15,8 +15,6 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Input Parameters
 	// *********************
-	parameter Real power_fr = 2 "Fraction of 100 MWe case: 2 (50 MWe), 4 (25 MWe), 10 (10 MWe), etc.";
-	parameter Real tower_fr = 1.25 "Fraction of initial tower value: 1 (100%), 1.25 (125%), 1.5 (150%), etc.";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
@@ -71,7 +69,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Efficiency eff_opt = (2.7*111e6/0.51)/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 	parameter Real C = 534.0 "Concentration ratio";
-	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
+	parameter Real gnd_cvge = 8134*144.375 / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
@@ -113,7 +111,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
 	parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6/power_fr "Power block gross rating at design point";
+	parameter SI.Power P_gross = P_name/(1 - par_fr) "Power block gross rating at design point";
 	parameter SI.Efficiency eff_blk = 0.51 "Power block efficiency at design point";
 	parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -137,11 +135,11 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
 	parameter Real nu_start = 0.6*330/294.18 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
 	parameter Real nu_min_sf = 0.3*330/294.18 "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 0.57 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real nu_defocus = 0.5 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
-	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
+	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
+	parameter Real hot_tnk_full_ub = 93 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -183,8 +181,8 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.MassFlowRate m_flow_rec_start = 0.81394780966 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
 
-	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
-	parameter SI.Power P_name = P_net "Nameplate rating of power block";
+	parameter SI.Power P_net = P_name "Power block net rating at design point";
+	parameter SI.Power P_name(fixed = if fixed_field then false else true) = 50e6 "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
@@ -297,6 +295,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	// Solar field
 //	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAMSolstice heliostatsField(
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
+		psave = psave,
 		wea_file = wea_file,
 		lon = data.lon,
 		lat = data.lat,
