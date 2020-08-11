@@ -20,12 +20,12 @@ model PhysicalParticleCO21D_1stApproach
   parameter Boolean detail_field_om = false "true if want to use detail washing and field O&M cost";
   parameter Boolean const_dispatch = true "Constant dispatch of energy";
   parameter Boolean feedforward = true;
-  parameter Boolean dispatch_optimiser = false;
+  parameter Boolean dispatch_optimiser = true;
   parameter Boolean new_storage_calc = false;
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
-  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
+  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
   // Weather data
@@ -185,7 +185,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
   // Dispatch optimiser
   parameter String DNI_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab";
-  parameter String price_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab";
+  parameter String price_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab";
   parameter Integer horison = 48;
   parameter Real dt = 1 "delta t of the optimisation";
   parameter Real etaG(fixed = false);
@@ -343,7 +343,7 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.CSP.CRS.HeliostatsField.WashingFrequencyCalculator washingFrequencyCalculator(C_tw = C1, C_dl = C2, R_soil = R_soil, P_w = P_w, omega_n = omega_n, C_target = C_target) annotation(
     Placement(visible = true, transformation(origin = {-130, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, test_mode = false, with_detail_h_ambient = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, phi_max = packing_factor, T_amb = T_amb_des_rcv, eps_w = eps_w, th_w = th_w, k_w = k_w, h_conv_curtain = h_conv_curtain, h_conv_backwall = h_conv_backwall, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, test_mode = false, with_detail_h_ambient = false, with_wind_effect = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, phi_max = packing_factor, T_amb = T_amb_des_rcv, eps_w = eps_w, th_w = th_w, k_w = k_w, h_conv_curtain = h_conv_curtain, h_conv_backwall = h_conv_backwall, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s) annotation(
     Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(Q_in = Q_in_rcv, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -375,7 +375,7 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set, pinch_recuperator = pinch_recuperator, par_fr = par_fr) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
-  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab")) annotation(
+  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.Finances.SpotPriceTable(file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab")) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
@@ -492,7 +492,7 @@ equation
   der(E_pb_net) = powerBlock.W_net;
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
-  R_spot = market.profit;
+  R_spot = market.profit * 3.6e9;
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-113, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -577,7 +577,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 1e+06, StartTime = 0, Tolerance = 1e-06, Interval = 228.415),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

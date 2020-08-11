@@ -3,6 +3,7 @@ model ParticleReceiver
 	extends Interfaces.Models.ReceiverFluid;
 	
 	import Modelica.SIunits.Conversions.*;
+	import SolarTherm.Utilities.*;
 
 	parameter SI.Length H_drop_design = 2 "Receiver drop height" annotation(Dialog(group="Technical data"));
 	parameter SI.Length W_rcv = 2 "Receiver width" annotation(Dialog(group="Technical data"));
@@ -21,41 +22,40 @@ model ParticleReceiver
 	parameter Boolean use_neural_network = true;
 	parameter Integer inputsize = 4;
     parameter String saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver";
+    parameter Real[inputsize] X_max = {850e6, 318.15, 833.15, 45};
+    parameter Real[inputsize] X_min = {280e6, 268.15, 803.15, 23};
+    parameter Real out_max = 0.964303;
+    parameter Real out_min = 0.427611;
 	
-	parameter Real c0 = -0.00000000000812828041;
-	parameter Real c1 = 0.0000000221705242;
-	parameter Real c2 = -0.0000229149451;
-	parameter Real c3 = 0.0109275916;
-	parameter Real c4 = -1.25070245;
+	parameter SI.Temperature T_0=from_degC(550) "Start value of temperature";
+	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
+	parameter SI.SpecificEnthalpy h_0=SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_0);
+	parameter SI.Temperature T_out = from_degC(800) "Temperature at outlet";
 
 	Medium.BaseProperties medium;
 
 	SI.SpecificEnthalpy h_in "Specific enthalpy at inlet";
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
 
-	SI.Temperature T_in=Medium.temperature(state_in) "Temperature at inlet";
+	Modelica.SIunits.ThermodynamicTemperature T_in=Medium.temperature(state_in) "Temperature at inlet";
 
 	SI.HeatFlowRate Q_loss "Total losses";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by curtain";
 	SI.Efficiency eta_rcv;
+	SI.Efficiency eta_rcv_dummy;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
-		transformation(
-		extent={{-12,-12},{12,12}},
-		rotation=-90,
-		origin={0,84}), iconTransformation(
-		extent={{-6,-6},{6,6}},
-		rotation=-90,
-		origin={0,78})));
+		visible = true,transformation(
+		
+		origin={0, 88},extent={{-12,-12},{12,12}},
+		rotation=-90), iconTransformation(
+		
+		origin={24, 80},extent={{-6,-6},{6,6}},
+		rotation=-90)));
 
 	Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
 		transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
 		-24,-98},{-12,-86}})));
-
-	parameter SI.Temperature T_0=from_degC(550) "Start value of temperature";
-	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
-	parameter SI.SpecificEnthalpy h_0=SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_0);
-	parameter SI.Temperature T_out = from_degC(800) "Temperature at outlet";
 	
 	Real const_coeff;
 	Real Qin_coeff;
@@ -64,10 +64,18 @@ model ParticleReceiver
 	Real log10Qin_coeff;
 	Real log10Tin_coeff;
 	Real log10Tamb_coeff;
+	Real raw_input[4];
+    SurrogateModels.STNeuralNetwork session = SurrogateModels.STNeuralNetwork(saved_model_dir) if use_neural_network == true
+    "Initialise neural network session if use_neural_network == true";
 	
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
-
+    Modelica.Blocks.Interfaces.RealInput Wdir annotation(
+        Placement(visible = true, transformation(origin = {-38, 88}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-24, 80}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+    Modelica.Blocks.Interfaces.RealInput Wspd annotation(
+        Placement(visible = true, transformation(origin = {38, 88}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {2.22045e-16, 80}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+    Modelica.Blocks.Interfaces.RealOutput m_flow_out annotation(
+    Placement(visible = true, transformation(origin = {106, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {30, -16}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
 	medium.h=(h_in+h_out)/2; // temperature for thermal losses = average of inlet and outlet pcl temperatures
 	h_in=inStream(fluid_a.h_outflow);
@@ -80,7 +88,6 @@ equation
 	fluid_b.m_flow=-fluid_a.m_flow; // mass conservation
 	fluid_a.p=medium.p; // no pressure drops (it should all be ambient pressure)
 	fluid_b.p=medium.p;
-	
     
     // Coefficient of regression as a function of H_drop_design
     //https://arachnoid.com/polysolve/ ~> good online regression tool that can copy paste!
@@ -184,9 +191,7 @@ equation
       -1.9202741644142080e-033 * H_drop_design^20
      +  2.6869689899639818e-035 * H_drop_design^21
       -5.4874279637055902e-038 * H_drop_design^22;
-     
-     
-     
+          
      log10Qin_coeff =  -1.5036796879434187e+001 * H_drop_design^0
      +  3.1859519830340299e+000 * H_drop_design^1
       -2.8397428738380265e-001 * H_drop_design^2
@@ -225,29 +230,40 @@ equation
     else
       log10Tamb_coeff = 0;
     end if;
-
+    
+    raw_input[1] = heat.Q_flow;
+    raw_input[2] = Tamb;
+    raw_input[3] = T_in;
+    raw_input[4] = H_drop_design;
+    
     //Energy Balance
     heat.Q_flow = Q_loss + Q_rcv;
     if on then
-          if use_neural_network == true then
-            eta_rcv = SolarTherm.Utilities.st_surrogate({heat.Q_flow, Tamb, T_in, H_drop_design},inputsize,saved_model_dir);
-          else
-            eta_rcv = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
+      if use_neural_network == true then
+        eta_rcv_dummy  = SurrogateModels.predict(session, raw_input, inputsize, time,X_max,X_min,out_max,out_min);
+      else
+        eta_rcv_dummy = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
                       T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
                       log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
-          end if;
+      end if;
+      eta_rcv = eta_rcv_dummy;
       Q_loss= (1-eta_rcv) * heat.Q_flow;
       fluid_a.m_flow = Q_rcv/(h_out-h_in);
 	else
+      eta_rcv_dummy = 0;
       eta_rcv = 0;
-      Q_loss=0; // when the receiver is 'off', assume no thermal losses
+      Q_loss = 0; // when the receiver is 'off', assume no thermal losses
       fluid_a.m_flow = 0;
 	end if;
-	//eta_rcv = (heat.Q_flow/1e6)^4*c0 + (heat.Q_flow/1e6)^3 *c1 + (heat.Q_flow/1e6)^2 *c2 + (heat.Q_flow/1e6)*c3 + c4;
-	annotation (Documentation(info="<html>
-</html>", revisions="<html>
+	
+	//M flow signal
+	m_flow_out = fluid_a.m_flow;
+	
+	annotation (Documentation(info = "<html>
+</html>", revisions = "<html>
 <ul>
 <li>A Shirazi:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+    experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
 end ParticleReceiver;

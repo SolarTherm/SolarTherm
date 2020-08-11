@@ -54,18 +54,12 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     }
 
     // Get the price data
-    double* price_half_hourly  = malloc(sizeof(double*)*8760*2);
-    double* time_price = malloc(sizeof(double*)*8760*2);
-    getPriceMotabData(filepathPrice,price_half_hourly,time_price,8760*2);
-    double* price_yearly = malloc(sizeof(double*)*8760) /*price in USD cent per kWh ~ equal to USD / MWh*/;
-    for(size_t i=0;i<8760*2;i++)
-    {
-        if(i%2 == 0)
-        {
-            price_yearly[i/2] = price_half_hourly[i];
-        }
-    }
+    double* price_yearly  = malloc(sizeof(double*)*8760);
+    double* time_price = malloc(sizeof(double*)*8760);
+    getPriceMotabData(filepathPrice,price_yearly,time_price,8760);
     double* price = malloc(sizeof(double*)*lengthDNI);
+
+
     for(size_t i=0;i<8760;i++)
     {
         price[i] = price_yearly[i];
@@ -75,8 +69,8 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     {
         price[i] = price_yearly[i-8760];
     }
+
     /*Free unused address*/
-    free(price_half_hourly);
     free(price_yearly);
     free(DNI_yearly);
     free(time_price);
@@ -249,7 +243,7 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     // Get the value of the optimal obj. function
     z = glp_get_obj_val(lp);
     printf("OPTIMAL OBJ FUNCTION = %f USD\n",z);
-
+	
     printf("DNI [W/m.sq] :\n");
     for(size_t i=1;i<horison+1;i++)
     {

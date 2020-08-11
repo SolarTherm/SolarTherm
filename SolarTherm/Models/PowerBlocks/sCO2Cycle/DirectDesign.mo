@@ -268,17 +268,17 @@ package DirectDesign
   	
   initial equation
   	for i in 1:N_exch loop
-  	deltaT_des[i] = MedRec.temperature(state_HTF_des[i]) - MedPB.temperature(state_CO2_des[i]);
-  	state_CO2_des[i] = MedPB.setState_pTX(p_in_CO2_des, T_CO2_des[i]);
-  	state_HTF_des[i] = MedRec.setState_pTX(p_in_HTF_des, T_HTF_des[i]);
+        deltaT_des[i] = MedRec.temperature(state_HTF_des[i]) - MedPB.temperature(state_CO2_des[i]);
+        state_CO2_des[i] = MedPB.setState_pTX(p_in_CO2_des, T_CO2_des[i]);
+        state_HTF_des[i] = MedRec.setState_pTX(p_in_HTF_des, T_HTF_des[i]);
   	end for;
   
   	T_CO2_des[N_exch]=T_out_CO2_des;
   
   	for i in 1:(N_exch-1) loop
-  	Q_HX_des = ratio_m_des * (state_CO2_des[i+1].h - state_CO2_des[i].h);
-  	Q_HX_des =(state_HTF_des[i+1].h - state_HTF_des[i].h);
-  	m_HTF_des*Q_HX_des = UA_HX_dis[i] * (deltaT_des[i] + deltaT_des[i+1]) / 2;
+        Q_HX_des = ratio_m_des * (state_CO2_des[i+1].h - state_CO2_des[i].h);
+        Q_HX_des =(state_HTF_des[i+1].h - state_HTF_des[i].h);
+        m_HTF_des*Q_HX_des = UA_HX_dis[i] * (deltaT_des[i] + deltaT_des[i+1]) / 2;
   	end for;
   
   	UA_HX=sum(UA_HX_dis);
@@ -937,6 +937,7 @@ package DirectDesign
       SI.Power W_cycle;
       SI.Power W_gross;
       SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
+      SI.Power W_fixed_load;
       Real load "mass flow fraction of the exchanger compared to design condition";
       Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
   
@@ -1063,6 +1064,7 @@ package DirectDesign
         W_net = 0;
         W_cycle = 0;
         eta_cycle = 0;
+        W_fixed_load=0;
       else 
         W_gross = if m_sup then 
             max(((-turbine.W_turb) - mainCompressor.W_comp - 
@@ -1073,6 +1075,9 @@ package DirectDesign
             (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp else 0;
         eta_cycle = if m_sup then 
             ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
+        W_fixed_load = if m_sup then
+            max(((-turbine.W_turb) - mainCompressor.W_comp - 
+            reCompressor.W_comp) * (f_fixed_load) ,0) else 0;
       end if;
       
       

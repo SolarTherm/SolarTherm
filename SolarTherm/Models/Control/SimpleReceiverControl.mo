@@ -83,7 +83,8 @@ model SimpleReceiverControl
   Modelica.Blocks.Interfaces.RealInput eta_rec annotation(
     Placement(visible = true, transformation(origin = {42, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {42, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 equation
-
+  
+  connect(sf_on,idealMassflowBlockCalculation.on) "Equation to even out the number of variable. FIXME: Add graphical connector";
   connect(m_flow_off_input.y, switch.u3) annotation(
     Line(points = {{33.3, -22}, {44, -22}, {44, -5}, {71, -5}}, color = {0, 0, 127}));
   connect(and1.u2, sf_on) annotation(
