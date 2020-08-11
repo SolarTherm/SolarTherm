@@ -15,6 +15,14 @@ model PhysicalParticleCO21D_2ndApproach
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
   // *********************
+  // Parameter for benchmark
+  parameter SI.Area A_helio_total = 1.5e6;
+  parameter SI.Area A_rcv = 1200;
+  parameter SI.Length H_tower = 200 "Tower height";
+  parameter Real abs_s = 0.9 "Particle absorptivity";
+  parameter Real t_storage(unit = "h") = 8 "Hours of storage";
+  parameter Boolean PB_cost_according_to_benchmark = true "Cost PB 600 USD / kWe";
+  // *********************
   parameter Real method = 2 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   parameter Boolean pri_field_wspd_max = false "using wspd_max dependent cost";
   parameter Boolean match_sam_cost = true "tower cost is evaluated to match SAM";
@@ -44,7 +52,6 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.Length H_helio = sqrt(144.375) "height of heliostat in m";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-  parameter SI.Length H_tower = 200 "Tower height";
   parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
   parameter SI.Length R1 = 160 "distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "factor to grow the field layout";
@@ -74,7 +81,6 @@ model PhysicalParticleCO21D_2ndApproach
   parameter Integer n_W_rcv = 1 "discretization of the width axis of the receiver";
   parameter SI.HeatFlowRate Q_in_rcv = metadata_list[7];
   parameter Real SM = Q_in_rcv / (P_gross / eff_blk / eta_rcv_assumption);
-  parameter SI.Area A_helio_total = 1.2e6;
   parameter Real n_helios = ceil(A_helio_total / A_helio) "Number of heliostats";
   parameter SI.Area A_field = A_helio_total "Heliostat field reflective area";
   parameter Real A_land = metadata_list[8];
@@ -102,12 +108,10 @@ model PhysicalParticleCO21D_2ndApproach
   parameter SI.SpecificHeatCapacity cp_s = 1200 "particle specific heat capacity [J/kgK]";
   parameter SI.Density rho_s = 3300 "Particle density [kg/m3]";
   parameter Real eps_s = 0.9 "Particle emmisivity";
-  parameter Real abs_s = 0.9 "Particle absorptivity";
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   //inner parameter SI.Efficiency eta_rec_th_des = 0.8568 "PG Receiver thermal efficiency (Q_pcl / Q_sol)";
   // Storage
-  parameter Real t_storage(unit = "h") = 18 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set(fixed = false) "Cold tank target temperature";
   parameter SI.Temperature T_hot_set = CV.from_degC(800) "Hot tank target temperature";
@@ -197,7 +201,6 @@ model PhysicalParticleCO21D_2ndApproach
   // Calculated Parameters
   parameter SI.HeatFlowRate Q_flow_des = P_gross / eff_blk "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter SI.Area A_rcv = 2000;
   parameter SI.Length H_rcv = sqrt(A_rcv) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "Receiver length(depth)";
@@ -405,8 +408,8 @@ initial equation
   m_flow_fac = particleReceiver1DCalculator_Approach2.mdot;
   T_cold_set = powerBlock.exchanger.T_HTF_des[1];
   T_cold_set = T_out_ref_blk;
-  if match_gen3_report_cost then
-    C_block = pri_block * P_gross / 1000;
+  if PB_cost_according_to_benchmark then
+    C_block = P_gross * 600 / 1000 + powerBlock.C_exchanger;
   else
     C_block = powerBlock.C_PB;
   end if;
@@ -525,7 +528,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {-32, -2}, lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {0, 4}, extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 2}, extent = {{80, 12}, {128, -8}}, textString = "sCO2 Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {-2, -38}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {106, -48}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-114, -11}, extent = {{-38, -1}, {8, -1}}, textString = "Hopper control (always on)"), Text(origin = {130, 132}, extent = {{-106, 8}, {14, -4}}, textString = "Particle Receiver Design Point Calculation")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e7, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

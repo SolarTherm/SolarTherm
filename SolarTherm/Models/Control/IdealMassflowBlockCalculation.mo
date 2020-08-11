@@ -35,24 +35,20 @@ model IdealMassflowBlockCalculation
   
   
   algorithm
+  
   if feedforward == true then
-    if Q_input > Q_input_limit_high then
-      //m_flow := Q_input/1e6 * 3.293790 + 5.117597 * T_mea + 0.242137 * Tamb - 4725.400507;
+    if on == true then
       m_flow := max(Q_input/1e6 * 3.051917 + 
                 0.142194 * Tamb + 
                 Modelica.Math.log10(Q_input/1e6) * 215.784613 + 
                 0.003562 * T_mea^2 - 0.203024 * H_drop^2 - 2938.106877,0);
-      on:=true;
     else
-      m_flow := 0;
-      on:=false;
+      m_flow:=0;
     end if; 
   else
     if Q_input <= 1e-6 then
       m_flow := 0;
-      on := false; 
     elseif Q_input > 1e-6 then
-      on:=true;
       if pre(eta_rec)< 1e-20 then 
         m_flow := Q_input * eta_rec_discrete  / abs(Util.h_T(T_ref) - Util.h_T(T_mea)) "Start-up condition";
       else

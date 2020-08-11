@@ -208,7 +208,7 @@ class SimResultElec(SimResult):
 		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
 		cap_v = self.mat.data('C_cap') # Capital costs [$]
 		om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
-		om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
+		om_p_v = self.mat.data('pri_om_prod') # O&M costs per production per year [$/J/year]
 		disc_v = self.mat.data('r_disc') # Discount rate [-]
 		life_v = self.mat.data('t_life') # Plant lifetime [year]
 		cons_v = self.mat.data('t_cons') # Construction time [year]
@@ -506,3 +506,4 @@ class CSVResult(object):
 
 	def get_unit(self, name):
 		return self.units[name]
+

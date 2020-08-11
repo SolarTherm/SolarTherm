@@ -12,9 +12,13 @@ void getPriceMotabData(char* filepath, double* price, double* time, int length)
     pri_file = fopen(filepath,"r");    
     if (pri_file == NULL)
     {   
-        printf("File doesn't exist in the directory. Please check the file name");
+        printf("Price ile doesn't exist in the directory. Please check the file name");
         return;
     }
+	else
+	{
+		printf("Price file: %s",filepath);
+	}
 
     // Skipping the first 2 lines
     fgets(line,limitSize,pri_file);
@@ -50,9 +54,13 @@ void getDNIMotabData(char* filepath, double* DNI, double* time, int length)
     DNI_file = fopen(filepath,"r");    
     if (DNI_file == NULL)
     {   
-        printf("File doesn't exist in the directory. Please check the file name");
+        printf("Weather file doesn't exist in the directory. Please check the file name");
         return;
     }
+	else
+	{
+		printf("Weather file: %s",filepath);
+	}
 
     // Skipping the first 2 lines
     fgets(line,limitSize,DNI_file);

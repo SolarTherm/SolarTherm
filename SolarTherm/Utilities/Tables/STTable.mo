@@ -8,7 +8,6 @@ class STTable "Table"
   external "C" table = st_table_init_csv(file, delim)
    annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="#include \"st_tables.c\"");
-   //annotation(Library="st_tables");
  end constructor;
 
  function destructor
@@ -16,6 +15,5 @@ class STTable "Table"
   external "C" st_table_free(table)
    annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="#include \"st_tables.c\"");
-   //annotation(Library="st_tables");
  end destructor;
 end STTable;
