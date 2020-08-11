@@ -66,6 +66,10 @@ def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, 
 	# (4) variables
 	sample+='\nvariables\n'
 	if mode=='uncertainty':
+		# TODO multiple different distributions
+		# suggestion: class of distribution, input, output, spreadsheet
+		# sample+=distribution.dakotainput  
+		# TODO class of DAKOTA, optimisation, parametric
 		sample+='    %s_uncertain=%s\n'%(dist_type,var_num)
 		if dist_type=='uniform':
 			lb=''
@@ -78,6 +82,8 @@ def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, 
 			sample+='    lower_bounds'+lb+'\n'
 			sample+='    upper_bounds'+ub+'\n'
 			sample+='    descriptors'+descriptor+'\n'
+
+
 
 	# (5) interface
 	sample+='\ninterface\n'
@@ -106,7 +112,7 @@ def gen_system_bb(var_names, savedir):
 	* `var_names` (list of str): names of the variables
 	* `savedir` (str): directory to save the sample.in file	
 	'''
-
+	# TODO compile the mofile here, so that all the simulations can work
 	system='#!/usr/bin/env python\n\n'
 	system+='# Dakota will execute this script\n'
 	system+='# The command line arguments will be extracted by dakota.interfacing automatically.\n'
@@ -115,6 +121,8 @@ def gen_system_bb(var_names, savedir):
 	system+='import dakota.interfacing as di\n'
 
 	system+='\n# Parse Dakota parameters file\n'
+	# TODO check params, dictionary, key and value
+	# don't need to change system_bb each time
 	system+='params, results = di.read_parameters_file()\n'
 	system+='\n# Convert and send to application\n'
 	system+='\n# set up the data structures\n# for this simple example, put all the\n# variables into a single hardwired array\n# The asv has to be mapped back into an integer\n'
@@ -136,8 +144,16 @@ def gen_system_bb(var_names, savedir):
 	# TODO	
 	# use st_simulate directly, instead of another run_solartherm script??
 	system+='\n\n# execute the analysis as a separate Python module\n'
+
+	# TODO
+	# change this section 
+	# pass the file name from DAKOTA input file??
+	# how params.in be generated
+	# 
 	system+='from run_solartherm import run_solartherm\n'
 	system+='solartherm_results = run_solartherm(**solartherm_params)\n'
+
+
 	system+='\n\n# Return the results to Dakota\n'
 	system+='for i, r in enumerate(results.responses()):\n'
 	system+='    if r.asv.function:\n'
@@ -193,6 +209,7 @@ def gen_run(var_names, modir, mofn, savedir):
 	run+='    os.system("cp %s %s"%(mofile, casefolder))\n'
 	run+='    os.chdir(casefolder)\n'
 
+	# TODO consider use simulation.py directly
 	run+='    cmd="st_simulate --np 0 %s.mo"%fn_mo\n'
 	run+='    for i,n in enumerate(names):\n'
 	run+='        cmd+=" %s=%s"%(n,x[i])\n'
