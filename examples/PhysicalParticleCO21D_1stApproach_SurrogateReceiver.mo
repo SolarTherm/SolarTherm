@@ -43,9 +43,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
   parameter Real land_mult = 0 "Land area multiplier : will be calculated from Solstice";
-  parameter SI.Area A_helio = 144.35 "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
-  parameter SI.Length W_helio = sqrt(A_helio) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(A_helio) "height of heliostat in m";
+  parameter SI.Area A_helio = 144.375 "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
+  parameter Real AR_helio = 1 "H_helio/W_helio";
+  parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
+  parameter SI.Length H_helio = AR_helio * W_helio "height of heliostat in m";
   parameter SI.Efficiency rho_helio = 0.95 "reflectivity of heliostat max =1, min 0.94";
   parameter SI.Angle slope_error = 1.53e-3 "slope error of the heliostat in rad";
   parameter SI.Length H_tower = 200 "Tower height";
@@ -240,13 +241,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver
   parameter FI.Money pri_tower = if currency == Currency.USD then 157.44 else 157.44 / r_cur "Fixed tower cost";
   parameter Real idx_pri_tower = 1.9174 "Tower cost scaling index";
   parameter Real pri_tower_fix = 3e6 "Fix tower cost according to SAM cost function";
-  parameter Real pri_tower_scalling_exp = 0.0113 "Scaler for tower cost according to SAM";
+  parameter Real pri_tower_scalar_exp = 0.0113 "Scaler for tower cost according to SAM";
   parameter Real pri_lift = if currency == Currency.USD then 58.37 else 58.37 / r_cur "Lift cost per rated mass flow per height";
   parameter FI.AreaPrice pri_receiver = if match_gen3_report_cost then if currency == Currency.USD then 150 else 150 / r_cur else if currency == Currency.USD then 37400 else 37400 / r_cur "Falling particle receiver cost per design aperture area";
   parameter FI.MassPrice pri_particle = 1.0 "Unit cost of particles per kg";
-  parameter Real pri_bin = 1000 "bin specific cost";
-  parameter Real pri_bin_linear = 0.3;
-  parameter Real pri_bin_multiplier = 1.23;
+  parameter Real pri_bin = 1230 "bin specific cost";
+  parameter Real pri_bin_linear = 0.369;
+  parameter Real pri_bin_multiplier = 1;
   //PB specific cost & eta motor
   parameter Real pri_recuperator = 5.2;
   parameter Real pri_turbine = 9923.7;
@@ -286,7 +287,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver
   parameter FI.Money C_land = A_land * pri_land "Land cost";
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
   //Receiver Sub-system Cost
-  parameter FI.Money C_tower = if match_gen3_report_cost then 0 elseif match_sam_cost then pri_tower_fix * Modelica.Math.exp(pri_tower_scalling_exp * (H_tower + 0.5 * H_helio - H_rcv / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
+  parameter FI.Money C_tower = if match_gen3_report_cost then 0 elseif match_sam_cost then pri_tower_fix * Modelica.Math.exp(pri_tower_scalar_exp * (H_tower + 0.5 * H_helio - H_rcv / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
   parameter FI.Money C_fpr = if match_gen3_report_cost then 0 else pri_receiver * A_rcv "Falling particle receiver cost";
   parameter FI.Money C_lift_rec = if match_gen3_report_cost then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
   parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
@@ -569,7 +570,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {12, 24}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 1e5, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
