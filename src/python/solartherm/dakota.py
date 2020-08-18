@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##
 # The Python wrapper to call DAKOTA to perform:
 # I.   Parametric study, e.g. uniform, LHS etc
@@ -26,7 +27,7 @@
 
 import os
 
-def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, var_vals, savedir):
+def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, var_vals, mofn, savedir):
 	'''
 	Generate dakota input file: sample.in
 
@@ -39,32 +40,47 @@ def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, 
 	* `var_num` (int): number of variables
 	* `var_names` (list of str): names of the variables
 	* `var_vals` (list of float): value range of the variables, e.g. [[lb1,ub1],[lb2,ub2],[lb3,ub3]] for the three variables
+	* `mofn` (str): the absolute directory of the modelica file
 	* `savedir` (str): directory to save the sample.in file	
 
 	'''
-	sample='\n' # the input sample.in of dakota
-	sample+='# Dakota Input File: sample.in\n# Usage:\n#    dakota -i sample.in -o sample.out > sample.stdout\n# or if run in multi-level parallelism:\n#    mpirun dakota -i sample.in -o sample.out > sample.stdout\n\n'
 
-	# Six Sections 
+	sample='''
+# Dakota Input File: sample.in
+# Usage:
+#    dakota -i sample.in -o sample.out > sample.stdout
+# or if run in multi-level parallelism:
+#    mpirun dakota -i sample.in -o sample.out > sample.stdout
 
-	# (1) environment
-	sample+='\nenvironment\n'
-	sample+='    tabular_data\n'	
-	sample+='    tabular_data_file = "sample.dat"\n'
+environment
+    tabular_data
+    tabular_data_file = "sample.dat"
 
-	# (2) mothod
-	sample+='\nmethod\n'
-	if mode=='uncertainty':
-		sample+='    sampling\n'
-		sample+='        sample_type %s\n'%sample_type		
-		sample+='        samples = %s\n'%num_sample
+model
+    single
 
-	# (3) model
-	sample+='\nmodel\n'
-	sample+='    single\n'
+interface
+    fork
+    analysis_drivers = "%s/interface_bb.py"
+    parameters_file = "params.in"
+    results_file = "results.out"
+	file_tag 
+	#file_save 
 
-	# (4) variables
-	sample+='\nvariables\n'
+responses
+    response_functions = 1
+    no_gradients
+    no_hessians
+
+variables
+	discrete_state_set
+		string 1
+		set_values "%s"
+		descriptors "fn"
+
+'''%(savedir,mofn)
+
+	# variables
 	if mode=='uncertainty':
 		# TODO multiple different distributions
 		# suggestion: class of distribution, input, output, spreadsheet
@@ -79,177 +95,104 @@ def gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, 
 				lb+=' %s'%var_vals[i][0]
 				ub+=' %s'%var_vals[i][1]
 				descriptor+=' "%s"'%var_names[i]							
-			sample+='    lower_bounds'+lb+'\n'
-			sample+='    upper_bounds'+ub+'\n'
-			sample+='    descriptors'+descriptor+'\n'
+			sample+='        lower_bounds'+lb+'\n'
+			sample+='        upper_bounds'+ub+'\n'
+			sample+='        descriptors'+descriptor+'\n'
 
+	# mothod
+	sample+='\nmethod\n'
+	if mode=='uncertainty':
+		sample+='    sampling\n'
+		sample+='        sample_type %s\n'%sample_type		
+		sample+='        samples = %s\n'%num_sample
 
-
-	# (5) interface
-	sample+='\ninterface\n'
-	sample+='    fork\n'
-	sample+='    analysis_drivers = "system_bb.py"\n'
-	sample+='    parameters_file = "params.in"\n'
-	sample+='    results_file = "results.out"\n'
-
-
-	# (6) responses
-	sample+='\nresponses\n'
-	sample+='    response_functions = 1\n'
-	sample+='    no_gradients\n'
-	sample+='    no_hessians\n'
 
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
 	with open(savedir+'/sample.in', 'w') as f:
 		f.write(sample)
 
-def gen_system_bb(var_names, savedir):
+
+def gen_interface_bb(savedir):
 	'''
-	Generate system_bb.py
+	This function generate the interface_bb.py script 
+	which will be excuted by DAKOTA
 
-	Arguments:
-	* `var_names` (list of str): names of the variables
-	* `savedir` (str): directory to save the sample.in file	
+	* `savedir` (str): directory to save the interface_bb.py file	
 	'''
-	# TODO compile the mofile here, so that all the simulations can work
-	system='#!/usr/bin/env python\n\n'
-	system+='# Dakota will execute this script\n'
-	system+='# The command line arguments will be extracted by dakota.interfacing automatically.\n'
 
-	system+='\n# load the necessary Python modeuls\n' 		
-	system+='import dakota.interfacing as di\n'
+	bb='''#!/usr/bin/env python
 
-	system+='\n# Parse Dakota parameters file\n'
-	# TODO check params, dictionary, key and value
-	# don't need to change system_bb each time
-	system+='params, results = di.read_parameters_file()\n'
-	system+='\n# Convert and send to application\n'
-	system+='\n# set up the data structures\n# for this simple example, put all the\n# variables into a single hardwired array\n# The asv has to be mapped back into an integer\n'
+# Dakota will execute this script
+# The command line arguments will be extracted by dakota.interfacing automatically.
 
-	var_num=len(var_names)
-	pm=''
-	for i in range(var_num):
-		if i==0:
-			pm+='params["%s"]'%var_names[i]
-		else:
-			pm+=',\n                    params["%s"]'%var_names[i]
-	system+='continuous_vars =  ['+pm+']\n'
-	system+='active_set_vector = 1\n'
-	system+='\n# set a dictionary for passing to via Python kwargs\n'
-	system+='solartherm_params = {}\n'
-	system+='solartherm_params["cv"] = continuous_vars\n'
-	system+='solartherm_params["asv"] = [active_set_vector]\n'	
-	system+='solartherm_params["functions"] = 1\n'
-	# TODO	
-	# use st_simulate directly, instead of another run_solartherm script??
-	system+='\n\n# execute the analysis as a separate Python module\n'
+# load the necessary Python modeuls
+import dakota.interfacing as di
+import os
 
-	# TODO
-	# change this section 
-	# pass the file name from DAKOTA input file??
-	# how params.in be generated
-	# 
-	system+='from run_solartherm import run_solartherm\n'
-	system+='solartherm_results = run_solartherm(**solartherm_params)\n'
+# Parse Dakota parameters file
+params, results = di.read_parameters_file()
 
+# obtain the modelica file name
+# variable names and values
+# index of the case (suffix for output)
+names=params.descriptors
+fn=params.__getitem__("fn") #the modelica file
+model=os.path.splitext(os.path.split(fn)[1])[0] # model name
 
-	system+='\n\n# Return the results to Dakota\n'
-	system+='for i, r in enumerate(results.responses()):\n'
-	system+='    if r.asv.function:\n'
-	system+='        r.function = solartherm_results["fns"][i]\n\n'
-	system+='results.write()'
+var_n=[] # variable names
+var_v=[] # variable values
+for n in names[:-1]:
+	var_n.append(n.encode("UTF-8"))
+	var_v.append(str(params.__getitem__(n)))
+# case suffix
+suffix=results.results_file.split(".")[-1]
 
+# run solartherm
+from solartherm import postproc
+from solartherm import simulation
+sim = simulation.Simulator(fn=fn, suffix=suffix, fusemount=False)
+if not os.path.exists(model):
+	sim.compile_model()
+	sim.compile_sim(args=['-s'])
 
+sim.update_pars(var_n, var_v)
+sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
+
+resultclass = postproc.SimResultElec(sim.res_fn)
+perf = resultclass.calc_perf()
+
+epy=perf[0]
+lcoe=perf[1]
+capf=perf[2]
+solartherm_res=[lcoe, capf, epy]
+print solartherm_res	
+# Return the results to Dakota
+for i, r in enumerate(results.responses()):
+    if r.asv.function:
+        print i
+        r.function = solartherm_res[i]
+
+results.write()
+	'''
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
-	with open(savedir+'/system_bb.py', 'w') as f:
-		f.write(system)
-
-def gen_run(var_names, modir, mofn, savedir):
-	'''
-	Generate system_bb.py
-
-	Arguments:
-	* `var_names` (list of str): names of the variables
-	* `modir` (str): path of the modelica file 
-	* `mofn` (str): name of the modelica file (.mo)
-	* `savedir` (str): directory to save the sample.in file	
-	'''
-
-	run='import DyMat\nimport os\nimport numpy as N\nfrom solartherm import postproc\nimport datetime,time\n\n'
-	run+='def run_solartherm(**kwargs):\n\n'
-	run+='    names=%s\n'%var_names
-	run+='    mofile="%s"\n'%modir
-	run+='    fn_mo="%s"\n'%mofn
-	run+='    num_fns = kwargs["functions"]\n'
-	run+='    x = kwargs["cv"]\n'
-	run+='    ASV = kwargs["asv"]\n'
-	run+='    retval = dict([])\n'
-	run+='    cwd=os.getcwd()\n'
-
-	run+='    suffix = ""\n'
-	run+='    snum = 0\n'
-	run+='    while 1:\n'
-	run+='        dt = datetime.datetime.now()\n'
-	run+='        ds = dt.strftime("%a-%H-%M")\n'
-	run+='        casefolder = os.path.join(os.getcwd(),"case-%s%s"%(ds,suffix))\n'
-	run+='        if os.path.exists(casefolder):\n'
-	run+='            snum+=1\n'
-	run+='            suffix = "-%d"%(snum,)\n'
-	run+='            if snum > 200:\n'
-	run+='                raise RuntimeError("Some problem with creating casefolder")\n'
-	run+='        else:\n'
-	run+='            # good, we have a new case dir\n'
-	run+='            os.makedirs(casefolder)\n'
-	run+='            break\n'
-	run+='    resfile=casefolder+"/%s_res_0.mat"%fn_mo\n'
-
-
-	run+='    os.system("cp %s %s"%(mofile, casefolder))\n'
-	run+='    os.chdir(casefolder)\n'
-
-	# TODO consider use simulation.py directly
-	run+='    cmd="st_simulate --np 0 %s.mo"%fn_mo\n'
-	run+='    for i,n in enumerate(names):\n'
-	run+='        cmd+=" %s=%s"%(n,x[i])\n'
-
-	run+='    os.system(cmd)\n'
-	run+='    os.system("rm *.c")\n'
-	run+='    os.system("rm *.h")\n'
-	run+='    os.system("rm *.o")\n'
-	run+='    os.system("rm *.makefile")\n'
-	run+='    os.system("rm *.xml")\n'
-	run+='    os.system("rm *.json")\n'
-	run+='    os.system("rm *.log")\n'
-
-	run+='    os.chdir(cwd)\n'
-    
-	run+='    res = postproc.SimResultElec(resfile)\n' 
-	run+='    perf=res.calc_perf()\n'
-	run+='    lcoe=perf[1]\n'
-
-	run+='    f=[float(lcoe)]\n'
-	run+='    retval["fns"] = f\n'
-	run+='    return(retval)\n'  
-
-	if not os.path.exists(savedir):
-		os.makedirs(savedir)
-	with open(savedir+'/run_solartherm.py', 'w') as f:
-		f.write(run)
+	with open(savedir+'/interface_bb.py', 'w') as f:
+		f.write(bb)
 
 if __name__=='__main__':
+	'''
 	mode='uncertainty'
 	sample_type='lhs'
-	num_sample=200
+	num_sample=20
 	dist_type='uniform'
 	var_num=3
 	var_names=["rec_fr","eff_blk","he_av_design"]
-	var_vals=[[1,2],[3,4],[5,6]]
-	savedir='.'
-	gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, var_vals, savedir)
-	gen_system_bb(var_names, savedir)
-	modir="~/solartherm-master/examples/Reference_2.mo"
-	mofn="Reference_2"
-	gen_run(var_names, modir, mofn, savedir)
+	var_vals=[[0.01,0.09],[0.25,0.42],[0.985,0.995]]
+	mofn="/home/yewang/solartherm-master/examples/Reference_2.mo"
+	savedir='/media/yewang/Data/svn_gen3p3/system-modelling/research/sensitivity-analysis-DAKOTA/test'
+	gen_dakota_in(mode, sample_type, num_sample, dist_type, var_num, var_names, var_vals, mofn, savedir)
+	'''
+
+
 
