@@ -176,27 +176,41 @@ def load_values_from_excel(filename,tree):
 			#print("col =",col)
 			for c in col:
 				if c.value is not None: # name is there
-					v = ws.cell(c.row,c.column+1).value
-					assert v is not None, "No value next to label '%s'"%(c.value,)
-					ref = ".".join((wsname,c.value))
-					assert tree.exists(ref),\
-							"Unrecognised parameter '%s' in sheet '%s'"%(c.value,wsname)
-					#print("Setting '%s' to"%(ref,),v)	 
-					tree.update(ref,v)
+					study = ws.cell(c.row,6).value
+					if study in [0,1,2]:
+						r=tree.add_child(c.value)
+						v = ws.cell(c.row,3).value
+						assert v is not None, "No value next to label '%s'"%(c.value,)
+						r.add_value('type', study)
+						r.add_value('nominal', v)
+						r.add_value('unit', ws.cell(c.row,4).value)
+						r.add_value('distribution', ws.cell(c.row,7).value)
+						r.add_value('boundary1', ws.cell(c.row,8).value)	
+						r.add_value('boundary2', ws.cell(c.row,9).value)						
+
 	return tree
 
 # FIXME need to implement a way for the allowable parameter list to be
 # loaded from Modelica. There is stuff for this in the Simulation class, as
 # I recall.
 
+# TODO need to revise the tree structure
+# there is only one tab in the spreadsheet
+
+# TODO need a function to filter different type of parameters, e.g. 0, 1, 2
+
+# TODO a new class to specify different distributions for uncertainty analysis
+# e.g. uniform, normal, pert-beta distributions
+
+# TODO this script is working with Python3, only? Can it also work for Python2?
+
+
 
 if __name__ == "__main__":
+	excel='/home/yewang/solartherm-master/examples/Reference_2_params.xlsx'
+
 	T = Tree()
-	T.insert('recv.H',None)
-	T.insert('recv.W',None)
-	T.insert('recv.t',3)
-	T.insert('field.helio.W',10)
-	load_values_from_excel('parameters1.xlsx',T)
+	load_values_from_excel(excel,T)
 	print(T)
 
 
