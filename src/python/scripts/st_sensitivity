@@ -1,6 +1,7 @@
 #! /bin/env python
 
-from solartherm.dakota import gen_dakota_in, gen_system_bb, gen_run
+from solartherm.dakota import gen_dakota_in, gen_interface_bb
+from solartherm import simulation
 import multiprocessing as mp
 import numpy as np
 import time
@@ -61,18 +62,25 @@ if __name__=='__main__':
 		assert lb <= ub, 'Lower bound greater than upper bound'
 		par_b.append([lb, ub])
 
-	
-	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, dist_type=args.dist, var_num=len(par_n), var_names=par_n, var_vals=par_b, savedir=args.wd)
-	gen_system_bb(var_names=par_n, savedir=args.wd)
 	fn=os.path.abspath(args.file)
-	mofn=os.path.splitext(os.path.split(fn)[1])[0]
-	gen_run(var_names=par_n, modir=fn, mofn=mofn, savedir=args.wd)
+	if not os.path.exists(args.wd):
+		os.makedirs(args.wd)	
+	if not os.path.isabs(args.wd):
+		savedir=os.path.join(os.getcwd(),args.wd)
+	else:
+		savedir=args.wd
 
-	os.system('chmod a+x %s/system_bb.py'%args.wd)
+	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, dist_type=args.dist, var_num=len(par_n), var_names=par_n, var_vals=par_b,mofn=fn, savedir=savedir)
+	gen_interface_bb(savedir)
+
+	os.system('chmod a+x %s/interface_bb.py'%savedir)
 
 	os.chdir(args.wd)
 	if args.np!=0:
-		os.system('mpirun dakota -i sample.in -o sample.out > sample.stdout')
+		sim = simulation.Simulator(fn=fn, fusemount=False)
+		sim.compile_model()
+		sim.compile_sim(args=['-s'])
+		os.system('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np)
 	else:
 		os.system('dakota -i sample.in -o sample.out > sample.stdout')
 
