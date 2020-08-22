@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
 from __future__ import print_function
-#from __future__ import unicode_literals
+from __future__ import unicode_literals
 
 from openpyxl import Workbook, load_workbook
 
@@ -12,55 +12,62 @@ class Tree(object):
 	""" Tree structure, for storing available parameters.
 	
 	We will use this tree structure to save the names of the allowable 
-	parameters from our Modelica code. Then we will read the parameter values
-	from an Excel file, and pass them to Modelica when initialising our model.
+	parameters from our Modelica code. Then we will read the information of the 		
+	parameters from an Excel file. The information includes:
+	1) nominal value
+	2) unit
+	3) type, i.e. 0-certain constant, 1-uncertain constant, 2-variable
+	4) distribution
+	5) boundary 1&2
+ 	The information will be passed to st_DAKOTA for sampling, and the sampled values 
+	will be passed to Modelica when initialising our model. Alternatively, the nominal 
+	values can be passed directly to Modelica when initilising our model.
 
 	>>> T = Tree()
-	>>> r = T.add_child('recv')	
-	>>> r.add_value('H',10)
-	>>> r.add_value('W',20)
-	>>> r.add_value('type','billboard')
+	>>> r = T.add_child('SM')	
+	>>> r.add_value('type',2)
+	>>> r.add_value('nominal',2.5)
+	>>> r.add_value('unit',None)
+
+
 	>>> T
 	/
-	  recv
-	    H = 10
-	    W = 20
-	    type = 'billboard'
-	>>> T.insert('recv.t',3)
+	  SM
+		nominal = 2.5
+		type = 2
+		unit = None
+
+	>>> T.insert('SM.distribution','uniform')
+	>>> T.insert('SM.boundary1',1)
+	>>> T.insert('SM.boundary2',5)
+
 	>>> T
 	/
-	  recv
-	    H = 10
-	    W = 20
-	    t = 3
-	    type = 'billboard'
-	>>> T.insert('field.helio.W',10)
-	>>> T
-	/
-	  field
-	    helio
-	      W = 10
-	  recv
-	    H = 10
-	    W = 20
-	    t = 3
-	    type = 'billboard'
-	>>> assert T.exists('field.helio')
+	  SM
+		boundary1 = 1
+		boundary2 = 5
+		distribution = 'uniform'
+		nominal = 2.5
+		type = 2
+		unit = None
+
+	>>> assert T.exists('SM.distribution')
 	>>> assert not T.exists('field.foo')
 	>>> assert not T.exists('foo.bar')
-	>>> T.get('recv.type')
-	'billboard'
-	>>> T.update('recv.W',25)
+
+	>>> T.get('SM.nominal')
+	2.5
+	>>> T.update('SM.nominal',6)
 	>>> T
 	/
-	  field
-	    helio
-	      W = 10
-	  recv
-	    H = 10
-	    W = 25
-	    t = 3
-	    type = 'billboard'
+	  SM
+		boundary1 = 1
+		boundary2 = 5
+		distribution = 'uniform'
+		nominal = 6
+		type = 2
+		unit = None
+
 	"""
 	def __init__(self):
 		self.children = {}
@@ -135,38 +142,57 @@ class ValueNode(object):
 
 def load_values_from_excel(filename,tree):
 	"""
-	Load allowable values from an Excel spreadsheet. Currently this just uses
-	the sheet name and values in column B to create values eg 'recv.H'.
-
-	FIXME we should also use column A, and perhaps it should be optional
-	to use multiple sheets, somehow.
-	Also, nothing done yet for values with uncertainty. Need some way of
-	identifying whether or not a value has an uncertainty (eg via the presence
-	of data in column D...?)
-
-	FIXME as much as possible, we want to allow comments and annotaions in these
-	Excel files.
-
-	FIXME currently no way to set field.helio.W using this system.
-
-	FIXME do the parameter names correspond to Modelica variable names? How do we
-	define groupings of parameters? Or is that just a user choice in the layout
-	of the Excel spreadsheet.
+	Load allowable values from an Excel spreadsheet. 
+	The template of the Excel spreadsheet is in the examples folder.
+		Column A: classification
+		Column B: symbol, should correspond to the names in Modelica
+		Column C: nominal value
+		Column D: unit
+		Column E: name (description)
+		Column F: type (0-certain constant, 1-uncertain constant, 2-variable)
+				  type 1 is for uncertainty analysis
+				  type 2 is for optimisation or parametric study 
+		Column G: distribution of sampling, e.g. normal, uniform, pert-beta
+		Column H: boundary1 (lower boundary or standard deviation)
+		Column I: boundary2 (upper boundary if needed)
+		Column J: description
+		Column K: source or reference
 
 	>>> T = Tree()
-	>>> T.insert('recv.H',None)
-	>>> T.insert('recv.W',None)
-	>>> T.insert('recv.t',3)
-	>>> T.insert('field.helio.W',10)
-	>>> load_values_from_excel('parameters1.xlsx',T)
+	>>> T.insert('SM.nominal',None)
+	>>> T.insert('SM.distribution',None)
+	>>> T.insert('rcv_H',None)
+	>>> load_values_from_excel('Reference_2_params.xlsx',T)
 	/
-	  field
-	    helio
-	      W = 10
-	  recv
-	    H = 30
-	    W = 25
-	    t = 2
+	  SM
+		boundary1 = None
+		boundary2 = None
+		distribution = None
+		nominal = 2.5
+		type = 2
+		unit = None
+	  eff_blk
+		boundary1 = 0.05
+		boundary2 = None
+		distribution = 'normal'
+		nominal = 0.3774
+		type = 1
+		unit = None
+	  he_av_design
+		boundary1 = 0.985
+		boundary2 = 0.995
+		distribution = 'uniform'
+		nominal = 0.99
+		type = 1
+		unit = None
+	  rec_fr
+		boundary1 = 0.01
+		boundary2 = 0.09
+		distribution = 'pert'
+		nominal = 0.05
+		type = 1
+		unit = None
+	  rcv_H
 	"""
 	wb = load_workbook(filename)
 
@@ -193,6 +219,10 @@ def load_values_from_excel(filename,tree):
 # FIXME need to implement a way for the allowable parameter list to be
 # loaded from Modelica. There is stuff for this in the Simulation class, as
 # I recall.
+# -- parameters from xml
+# -- update values from spreadsheet
+# -- update the xml file
+
 
 # TODO need to revise the tree structure
 # there is only one tab in the spreadsheet
@@ -201,6 +231,7 @@ def load_values_from_excel(filename,tree):
 
 # TODO a new class to specify different distributions for uncertainty analysis
 # e.g. uniform, normal, pert-beta distributions
+
 
 # TODO this script is working with Python3, only? Can it also work for Python2?
 
