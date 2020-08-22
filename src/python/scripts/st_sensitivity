@@ -2,12 +2,14 @@
 
 from solartherm.dakota import gen_dakota_in, gen_interface_bb
 from solartherm import simulation
+from solartherm import params
 import multiprocessing as mp
 import numpy as np
 import time
 import os
 import argparse
 import itertools
+import subprocess
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()	
@@ -73,16 +75,16 @@ if __name__=='__main__':
 	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, dist_type=args.dist, var_num=len(par_n), var_names=par_n, var_vals=par_b,mofn=fn, savedir=savedir)
 	gen_interface_bb(savedir)
 
-	os.system('chmod a+x %s/interface_bb.py'%savedir)
+	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
 	os.chdir(args.wd)
 	if args.np!=0:
 		sim = simulation.Simulator(fn=fn, fusemount=False)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		os.system('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np)
+		subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 	else:
-		os.system('dakota -i sample.in -o sample.out > sample.stdout')
+		subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
 	
 
