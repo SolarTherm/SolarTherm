@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
-from __future__ import print_function
+#from __future__ import print_function
 from __future__ import unicode_literals
-
+import sys
 from openpyxl import Workbook, load_workbook
-
+import xml.etree.ElementTree as ET
 # from the modelica code, we will figure out what parameters are available
 # for use to set...
 
@@ -74,10 +74,12 @@ class Tree(object):
 	def add_value(self,name,value,replace=False):
 		assert replace is True or name not in self.children, "Child '%s' already exists"%(name,)
 		self.children[name] = ValueNode(name,value)
+
 	def add_child(self,name,replace=False):	
 		assert replace is True or name not in self.children, "Child '%s' already exists"%(name,)
 		self.children[name] = Tree()
 		return self.children[name]
+
 	def __repr__(self,prefix="",name="/"):
 		if len(self.children) == 0:
 			s = prefix + name + " {empty}\n"
@@ -89,6 +91,7 @@ class Tree(object):
 		if prefix == "":
 			s = s.rstrip()
 		return s
+
 	def insert(self,ref,value,replace=False):
 		#print("inserting",ref)
 		if isinstance(ref,str):
@@ -101,21 +104,32 @@ class Tree(object):
 				self.add_child(ref[0]).insert(ref[1:],value,replace=replace)
 		else:
 			self.children[ref[0]].insert(ref[1:],value,replace=replace)
+
 	def exists(self,ref):
 		try:
 			self.get(ref,raise_missing=True)
 		except:
 			return False
 		return True
+
 	def get(self,ref,raise_missing=False):
 		#print("checking for",ref)
-		if isinstance(ref,str):
+		
+		if sys.version_info[0] >= 3:
+			tp= str
+		else:
+			tp= unicode
+
+		if isinstance(ref,str) or isinstance(ref,tp):
 			ref = ref.split(".")
+
 		if ref[0] not in self.children:
 			#print("missing '%s'" % ref[0])
 			if raise_missing:
 				raise IndexError
 			else:
+				print(ref[0])
+				print('not in the tree')
 				return None
 		if len(ref) == 1:
 			if isinstance(self.children[ref[0]],Tree):
@@ -125,6 +139,7 @@ class Tree(object):
 		else:
 			assert isinstance(self.children[ref[0]],Tree),"should be tree node"
 			return self.children[ref[0]].get(ref[1:],raise_missing)
+
 	def update(self,ref,value):
 		if isinstance(ref,str):
 			ref = ref.split(".")
@@ -134,11 +149,67 @@ class Tree(object):
 		else:
 			self.children[ref[0]].update(ref[1:],value)
 
+	def load_xml(self, input_xml):
+		"""
+		input_xml: str, directory of the input xml file
+		"""
+		self.xml_tree = ET.parse(input_xml)	
+		self.xml_root=self.xml_tree.getroot()
+		
+		isChangable=self.xml_root.findall("*ScalarVariable[@isValueChangeable='true']") # a list
+
+		for par in isChangable:
+			name=par.attrib["name"]
+			name=name.split(".")
+			if len(name)==1: # direct parameters in the main model (system-level)
+				name=name[0]
+				start=self.xml_root.find('*ScalarVariable[@name=\''+name+'\']/*[@start]')
+				#note: some of the variable does not have a 'start' value
+				if start!=None:
+					value=start.attrib['start']
+					r=self.add_child(name, replace=True)
+					r.add_value('nominal', value, replace=True)
+
+
+	def write_xml(self, output_xml):
+		"""
+		Export the nominal values in the tree to the xml file
+
+		Argument:
+		output_xml: str, directory of the updated (output) xml file
+		"""		
+		names=self.children.keys()
+		for n in names:
+			v=self.get(n+'.nominal')
+			self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)	
+			self.xml_tree.write(output_xml)
+
+
+	def filter_type(self, pmtype):
+		"""
+		Filter the specific type of parameters
+
+		Argument:
+		pmtype: int, 
+				0-certain constant
+				1-uncertain constant (for sensitivity analysis)
+				2-variable (for optimisation or parametric study)
+		"""
+		pmlist=[]
+		for n in self.children.keys():
+			t=self.get(n+'.type')
+			if t==pmtype:
+				pmlist.append(n)
+
+		return pmlist
+
+
 class ValueNode(object):
 	def __init__(self,name,value):
 		self.value = value
 	def __repr__(self,prefix="",name="{unnamed}"):
 		return prefix + name + " = " + repr(self.value) + "\n"
+
 
 def load_values_from_excel(filename,tree):
 	"""
@@ -204,24 +275,17 @@ def load_values_from_excel(filename,tree):
 				if c.value is not None: # name is there
 					study = ws.cell(c.row,6).value
 					if study in [0,1,2]:
-						r=tree.add_child(c.value)
+						r=tree.add_child(c.value,replace=True)
 						v = ws.cell(c.row,3).value
 						assert v is not None, "No value next to label '%s'"%(c.value,)
-						r.add_value('type', study)
-						r.add_value('nominal', v)
-						r.add_value('unit', ws.cell(c.row,4).value)
-						r.add_value('distribution', ws.cell(c.row,7).value)
-						r.add_value('boundary1', ws.cell(c.row,8).value)	
-						r.add_value('boundary2', ws.cell(c.row,9).value)						
+						r.add_value('type', study,replace=True)
+						r.add_value('nominal', v,replace=True)
+						r.add_value('unit', ws.cell(c.row,4).value,replace=True)
+						r.add_value('distribution', ws.cell(c.row,7).value,replace=True)
+						r.add_value('boundary1', ws.cell(c.row,8).value,replace=True)	
+						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)						
 
 	return tree
-
-# FIXME need to implement a way for the allowable parameter list to be
-# loaded from Modelica. There is stuff for this in the Simulation class, as
-# I recall.
-# -- parameters from xml
-# -- update values from spreadsheet
-# -- update the xml file
 
 
 # TODO need to revise the tree structure
@@ -233,15 +297,22 @@ def load_values_from_excel(filename,tree):
 # e.g. uniform, normal, pert-beta distributions
 
 
-# TODO this script is working with Python3, only? Can it also work for Python2?
-
-
-
 if __name__ == "__main__":
 	excel='/home/yewang/solartherm-master/examples/Reference_2_params.xlsx'
+	input_xml='/media/yewang/Data/svn_gen3p3/system-modelling/research/sensitivity-analysis-DAKOTA/Reference_2_init.xml'
+	output_xml='test_output.xml'
 
 	T = Tree()
+	T.load_xml(input_xml)
+	print('original sm',T.get('SM.nominal'))
 	load_values_from_excel(excel,T)
-	print(T)
+	print('')
+	print('updated sm',T.get('SM.nominal'))
+	print('eff_blk',T.get('eff_blk.type'))
+	#T.write_xml(output_xml)
+	pmlist=T.filter_type(1)
+	print(pmlist)
+
+
 
 
