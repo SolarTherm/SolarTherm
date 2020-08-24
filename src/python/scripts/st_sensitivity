@@ -36,7 +36,9 @@ if __name__=='__main__':
 			help='number of processes (set to 0 for serial mode)')	
 	parser.add_argument('--lv', type=str, default='-LOG_SUCCESS,-stdout',
 			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
-
+	
+	parser.add_argument('--excel', type=str, default=None,
+			help='the directry of the input excel data sheet')
 	parser.add_argument('--mode', type=str, default='uncertainty',
 			help='type of study: uncertainty, parametric or optimisation')
 	parser.add_argument('--sample', type=str, default='lhs',
@@ -52,19 +54,9 @@ if __name__=='__main__':
 
 	args = parser.parse_args()
 
-	par_n = [] # names
-	par_b = [] # bounds
-	for pp in args.par:
-		k, v = pp.split('=')
-		par_n.append(k)
-		vals = [(vv) for vv in v.split(',')]
-		assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
-		lb = vals[0]
-		ub = vals[1]
-		assert lb <= ub, 'Lower bound greater than upper bound'
-		par_b.append([lb, ub])
-
 	fn=os.path.abspath(args.file)
+	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
+
 	if not os.path.exists(args.wd):
 		os.makedirs(args.wd)	
 	if not os.path.isabs(args.wd):
@@ -72,16 +64,48 @@ if __name__=='__main__':
 	else:
 		savedir=args.wd
 
+	os.chdir(args.wd)
+	if args.excel!=None:
+		if not os.path.exists(mn):
+			sim = simulation.Simulator(fn=fn, fusemount=False)
+			sim.compile_model()
+			sim.compile_sim(args=['-s'])
+		input_xml=mn+'_init.xml'
+		tree=params.Tree()
+		tree.load_xml(input_xml)
+		params.load_values_from_excel(args.excel, tree)
+		if args.mode=='uncertainty':
+			tp=1
+		par_n=tree.filter_type(tp)
+		par_b=[] # bounds
+		for n in par_n:
+			b1=tree.get(n+'.boundary1')
+			b2=tree.get(n+'.boundary2')		
+			par_b.append([b1, b2])
+	else:
+		par_n = [] # names
+		par_b = [] # bounds
+		for pp in args.par:
+			k, v = pp.split('=')
+			par_n.append(k)
+			vals = [(vv) for vv in v.split(',')]
+			assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
+			lb = vals[0]
+			ub = vals[1]
+			assert lb <= ub, 'Lower bound greater than upper bound'
+			par_b.append([lb, ub])
+
+
 	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, dist_type=args.dist, var_num=len(par_n), var_names=par_n, var_vals=par_b,mofn=fn, savedir=savedir)
 	gen_interface_bb(savedir)
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
-	os.chdir(args.wd)
 	if args.np!=0:
-		sim = simulation.Simulator(fn=fn, fusemount=False)
-		sim.compile_model()
-		sim.compile_sim(args=['-s'])
+		if not os.path.exists(mn):
+			sim = simulation.Simulator(fn=fn, fusemount=False)
+			sim.compile_model()
+			sim.compile_sim(args=['-s'])
 		subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 	else:
 		subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
