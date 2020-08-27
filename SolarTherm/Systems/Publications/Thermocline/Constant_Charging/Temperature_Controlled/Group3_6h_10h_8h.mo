@@ -1,6 +1,6 @@
-within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Time_Controlled;
+within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
-model PigIron_6h_10h_8h
+model Group3_6h_10h_8h
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -15,20 +15,32 @@ model PigIron_6h_10h_8h
   parameter Integer Correlation = 3 "Conservative";
   parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
+  
+  parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
-  parameter Integer N_f = 50 "Number of fluid CVs";
-  parameter Integer N_p = 5 "Number of filler CVs";
+  //Tanks
+  parameter Integer N_f_A = 20 "Number of fluid CVs in topper";
+  parameter Integer N_p_A = 5 "Number of filler CVs  in topper";
+  parameter Integer N_f_B = 10 "Number of fluid CVs in main tank";
+  parameter Integer N_p_B = 5 "Number of filler CVs  in main tank";
+  parameter Integer N_f_C = 20 "Number of fluid CVs in bottomer";
+  parameter Integer N_p_C = 5 "Number of filler CVs  in bottomer";
+
+  
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.15 "Filler diameter";
+  parameter SI.Length d_p = 0.20 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
+  parameter Real frac_1 = 0.40 "fraction of energy storage capacity in topper";
   //Derived
+  parameter Real frac_2 = frac_1 "fraction of energy storage capacity in bottomer";
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
@@ -44,10 +56,12 @@ model PigIron_6h_10h_8h
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SI.MassFlowRate m_Recv_signal(start = 1e-6);
-  SI.MassFlowRate m_PB_signal(start = 1e-6);
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
+
+  
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+    
+    
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
@@ -87,13 +101,60 @@ model PigIron_6h_10h_8h
   SI.Energy E_discharged(start=0);
   SI.Energy E_lost(start=0);
   SI.Energy E_pump(start=0);
+
+
+  SI.MassFlowRate m_Recv_signal(start = m_charge); //starts in charging state
+  SI.MassFlowRate m_PB_signal(start = 0.0);
+  
+  Real T_top_degC;
+  Real T_bot_degC;
+  Real T_outlet_degC;
+  
+algorithm
+  when rem(time, t_cycle) > 1e-6 then
+    m_Recv_signal := m_charge;
+    m_PB_signal := 0.0;
+  end when;
+  when rem(time, t_cycle) > t_charge + 1e-6  then
+    m_Recv_signal := 0.0;
+    m_PB_signal := m_discharge;
+  end when;
+  when rem(time, t_cycle) > t_charge + t_discharge + 1e-6  then
+    m_Recv_signal := 0.0;
+    m_PB_signal := 0.0;
+  end when;
+
+  when thermocline_Tank.T_bot_measured > T_Recv_max then
+  //when thermocline_Tank.fluid_bot.T > T_Recv_max then
+    //if rem(time, t_cycle) < t_charge then
+      m_Recv_signal := 0.0;
+    //end if;
+  end when;
+  
+  when thermocline_Tank.T_top_measured < T_PB_min then
+  //when thermocline_Tank.fluid_top.T < T_PB_min then
+    //if rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge then
+      m_PB_signal := 0.0;
+    //end if;
+  end when;
+  
 equation
+  T_top_degC = thermocline_Tank.T_top_measured - 273.15;
+  T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
+  if thermocline_Tank.Tank_A.m_flow > 1e-3 then //dicharging
+    T_outlet_degC = T_top_degC;
+  elseif thermocline_Tank.Tank_A.m_flow < -1e-3 then //charging
+    T_outlet_degC = T_bot_degC;
+  else
+    T_outlet_degC = 298.15; //reference value
+  end if;
+/*
 //controls
-  if rem(time, t_cycle) < t_charge then
+  if rem(time, t_cycle) < t_charge and thermocline_Tank.T_bot_measured < T_Recv_max then
 //charging
     m_Recv_signal = m_charge;
     m_PB_signal = 0.0;
-  elseif rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge then
+  elseif rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge and thermocline_Tank.T_top_measured > T_PB_min then
 //discharging
     m_Recv_signal = 0.0;
     m_PB_signal = m_discharge;
@@ -101,6 +162,7 @@ equation
     m_Recv_signal = 0.0;
     m_PB_signal = 0.0;
   end if;
+*/
 //efficiency
   if time > t_cycle*5.0 and time < t_cycle*6.0 then
     der(numer) = PB_Sink.port_a.m_flow*(inStream(PB_Sink.port_a.h_outflow)-h_f_min);
@@ -114,8 +176,8 @@ equation
       der(E_charged)=0.0;
       der(E_discharged) = 0.0;
     end if;
-    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
-    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
+    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
+    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
   else
     der(numer) = 0.0;
     der(E_charged)=0.0;
@@ -166,5 +228,6 @@ equation
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-6, Interval = 300));
-end PigIron_6h_10h_8h;
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 300));
+
+end Group3_6h_10h_8h;

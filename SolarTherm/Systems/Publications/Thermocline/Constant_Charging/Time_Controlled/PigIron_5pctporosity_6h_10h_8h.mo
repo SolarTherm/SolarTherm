@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Time_Controlled;
 
-model PigIron_6h_10h_8h
+model PigIron_5pctporosity_6h_10h_8h
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -15,7 +15,7 @@ model PigIron_6h_10h_8h
   parameter Integer Correlation = 3 "Conservative";
   parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
-  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
+  parameter Real eta = 0.05 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   parameter Integer N_f = 50 "Number of fluid CVs";
   parameter Integer N_p = 5 "Number of filler CVs";
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
@@ -167,4 +167,4 @@ equation
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-6, Interval = 300));
-end PigIron_6h_10h_8h;
+end PigIron_5pctporosity_6h_10h_8h;

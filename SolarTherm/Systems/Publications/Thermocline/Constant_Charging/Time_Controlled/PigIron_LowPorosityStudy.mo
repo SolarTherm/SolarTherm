@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Time_Controlled;
 
-model PigIron_6h_10h_8h
+model PigIron_LowPorosityStudy
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -13,16 +13,16 @@ model PigIron_6h_10h_8h
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
-  parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
-  parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
-  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
+  parameter SI.Temperature T_min = 520 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature";
+  parameter Real eta = 0.05 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   parameter Integer N_f = 50 "Number of fluid CVs";
   parameter Integer N_p = 5 "Number of filler CVs";
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.15 "Filler diameter";
+  parameter SI.Length d_p = 0.1482 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
@@ -87,7 +87,12 @@ model PigIron_6h_10h_8h
   SI.Energy E_discharged(start=0);
   SI.Energy E_lost(start=0);
   SI.Energy E_pump(start=0);
+  
+  Real T_top_degC;
+  Real T_bot_degC;
 equation
+  T_top_degC = thermocline_Tank.T_top_measured - 273.15;
+  T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
 //controls
   if rem(time, t_cycle) < t_charge then
 //charging
@@ -166,5 +171,5 @@ equation
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-6, Interval = 300));
-end PigIron_6h_10h_8h;
+    experiment(StopTime = 600000, StartTime = 0, Tolerance = 1e-6, Interval = 300));
+end PigIron_LowPorosityStudy;

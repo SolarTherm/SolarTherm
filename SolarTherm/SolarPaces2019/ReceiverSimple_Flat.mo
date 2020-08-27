@@ -57,7 +57,12 @@ protected
   parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
   parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
   parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
+  
+  parameter SI.Length H_tower=30.0 "Tower Height";
+  SI.Velocity Wspd_tower "Windspeed at tower height";
 equation
+  Wspd_tower=Wspd*((H_tower/10)^0.14);
+  
   medium.h=(h_in+h_out)/2;
   h_in=inStream(fluid_a.h_outflow);
   fluid_b.h_outflow=max(h_0,h_out);
@@ -100,7 +105,7 @@ equation
       h_cf = (k_air/D_rcv)*0.0307*(Re^0.8)*(Pr^0.6)*((HTF_in.T/Tamb)^(-0.4)); //x-scale, Film temperature
       h_c = (h_cn^3.2+h_cf^3.2)^(1/3.2);
     else //Cylindrical External*/
-      Re = Air_State_Film.rho*max(0.0,Wspd)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
+      Re = Air_State_Film.rho*max(0.0,Wspd_tower)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
       Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film Temperature
       Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(D_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient Temperature
       h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature

@@ -522,14 +522,14 @@ if __name__ == '__main__':
 			ub = [v[1] for v in par_b] # Normalised upper bound
 
 			ind_size = len(par_n) # Number of design parameters
-			pop_size = 100 # Set number of individuals in population
+			pop_size = 48 # Set number of individuals in population #must be multiple of 4
 			ngen = 20 # Total number of generation to run
 			cxpb = 0.98 # Crossover probability
 			#cxpb_in = 0.5 # Probability of crossover within individual
 			#mutpb = 0.02 # Mutation probability
 			#mutpb_in = 0.01 # Probability of mutation within individual
 			paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
-			n_cores = 3 # Number of cores for parallel evaluation of the fitness function
+			n_cores = 4 # Number of cores for parallel evaluation of the fitness function
 
 			creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
 			creator.create("Individual", list, fitness=creator.FitnessMulti)

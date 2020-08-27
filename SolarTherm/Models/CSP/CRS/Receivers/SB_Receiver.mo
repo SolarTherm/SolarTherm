@@ -78,6 +78,8 @@ protected
   Real Re;
   Real Pr;
   Real Gr;
+  
+  SI.Velocity Wspd_tower "Windspeed at tower height";
 initial equation
 //HTF_in.T = T_0;
 //HTF_in.X[2] = 0.0;
@@ -86,7 +88,10 @@ initial equation
 //HTF_avg.T = T_0;
 //HTF_avg.X[2] = 0.1;
 //on = false;
+
+
 equation
+  Wspd_tower=Wspd*((H_tower/10)^0.14);
 //HTF_avg.h=(HTF_in.h+HTF_out.h)/2;
 //HTF_avg.T = HTF_in.T;
 //calculate m_flow here
@@ -109,14 +114,14 @@ equation
     //Natural convection uses y-scale (height)
     //Forced convection uses x-scale (diameter)
     if concept == "Billboard" then
-      Re = Air_State_Film.rho*max(0.0,Wspd)*D_rcv/Air_State_Film.mu; //x-scale, Film temperature
+      Re = Air_State_Film.rho*max(0.0,Wspd_tower)*D_rcv/Air_State_Film.mu; //x-scale, Film temperature
       Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film temperature
       Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(H_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient temperature
       h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature
       h_cf = (k_air/D_rcv)*0.0307*(Re^0.8)*(Pr^0.6)*((HTF_in.T/Tamb)^(-0.4)); //x-scale, Film temperature
       h_c = (h_cn^3.2+h_cf^3.2)^(1/3.2);
     else //Cylindrical External
-      Re = Air_State_Film.rho*max(0.0,Wspd)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
+      Re = Air_State_Film.rho*max(0.0,Wspd_tower)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
       Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film Temperature
       Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(D_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient Temperature
       h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature

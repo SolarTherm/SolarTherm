@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging;
 
-model Time_Controlled
+model Temp_Controlled
 equation
 
-end Time_Controlled;
+end Temp_Controlled;

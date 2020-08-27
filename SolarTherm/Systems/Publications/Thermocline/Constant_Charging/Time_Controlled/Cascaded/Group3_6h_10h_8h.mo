@@ -13,15 +13,15 @@ model Group3_6h_10h_8h
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
-  parameter SI.Temperature T_min = 515 + 273.15 "Minimum temperature";
-  parameter SI.Temperature T_max = 725 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f_A = 15 "Number of fluid CVs in topper";
+  parameter Integer N_f_A = 10 "Number of fluid CVs in topper";
   parameter Integer N_p_A = 5 "Number of filler CVs  in topper";
-  parameter Integer N_f_B = 20 "Number of fluid CVs in main tank";
+  parameter Integer N_f_B = 30 "Number of fluid CVs in main tank";
   parameter Integer N_p_B = 5 "Number of filler CVs  in main tank";
-  parameter Integer N_f_C = 15 "Number of fluid CVs in bottomer";
+  parameter Integer N_f_C = 10 "Number of fluid CVs in bottomer";
   parameter Integer N_p_C = 5 "Number of filler CVs  in bottomer";
 
   
@@ -29,13 +29,13 @@ model Group3_6h_10h_8h
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.10 "Filler diameter";
+  parameter SI.Length d_p = 0.30 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
-  parameter Real frac_1 = 0.3 "fraction of energy storage capacity in topper";
+  parameter Real frac_1 = 0.1 "fraction of energy storage capacity in topper";
   //Derived
   parameter Real frac_2 = frac_1 "fraction of energy storage capacity in bottomer";
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;

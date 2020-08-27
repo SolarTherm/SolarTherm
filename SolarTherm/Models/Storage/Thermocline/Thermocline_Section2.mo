@@ -115,10 +115,10 @@ model Thermocline_Section2
   parameter Real C_fluid = min(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
   parameter Real C_filler = min(rho_p_max,rho_p_min)*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost;
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank;
-  parameter Real C_insulation = (16.72/U_loss_tank + 0.04269)*A_loss_tank;
+  parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   //parameter Real C_tank = 14.955*((E_max/(2790*1e6*3600.0))^0.8);
   //parameter Real C_tank = A_loss_tank*4595.0; //Assuming tank steel cost scales with surf area
-  parameter Real C_tank = C_shell((1-eta)*min(rho_p_max,rho_p_min)+eta*min(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
+  parameter Real C_tank = C_shell(min(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
 
 protected
 
@@ -262,10 +262,10 @@ equation
     T_f[i] = fluid[i].T;
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
-    /*
+    
     //Model 1 k_eff[i] = eta*fluid[i].k, no mixed conductivity
     k_eff[i] = eta*fluid[i].k;
-    */
+    
     //Model 2 k_eff[i] = additional porosity weighted conductivity during standby only
     /*
     if State == 2 then
@@ -275,7 +275,7 @@ equation
       end if;
     */
     //Model 3 k_eff[i] is always mixed(unified)
-    k_eff[i] = ((1.0 - eta) * k_p[i, N_p] + eta * fluid[i].k) / eta;
+    //k_eff[i] = ((1.0 - eta) * k_p[i, N_p] + eta * fluid[i].k);// / eta;
     
     mu_f[i] = fluid[i].mu;
   end for;

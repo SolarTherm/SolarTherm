@@ -58,6 +58,8 @@ protected
   SI.Energy E_absorbed;
   SI.Energy E_net;
   Boolean on_internal;
+  
+
 public
   Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
         transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
@@ -65,7 +67,9 @@ public
 initial equation
   //h=h_0;
   //on = true;
+
 equation
+
   //medium.h=(h_in+h_out)/2;
   //h_in=inStream(fluid_a.h_outflow);
   //fluid_b.h_outflow=h_out;

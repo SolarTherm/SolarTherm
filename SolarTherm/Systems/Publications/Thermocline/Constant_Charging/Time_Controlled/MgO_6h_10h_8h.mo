@@ -1,13 +1,13 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Time_Controlled;
 
-model PigIron_6h_10h_8h
+model MgO_6h_10h_8h
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
   package Fluid_Package = SolarTherm.Media.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
+  package Filler_Package = SolarTherm.Media.Materials.MgO_Constant;//MgO_Constant;  //Can investigate different filler
   package PCM_Top_Package = SolarTherm.Media.Materials.PCM_710;
   package PCM_Bot_Package = SolarTherm.Media.Materials.PCM_520;
   //Design Parameters
@@ -167,4 +167,4 @@ equation
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-6, Interval = 300));
-end PigIron_6h_10h_8h;
+end MgO_6h_10h_8h;

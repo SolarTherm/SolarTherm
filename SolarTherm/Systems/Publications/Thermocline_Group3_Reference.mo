@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications;
 
-model Thermocline_Reference
+model Thermocline_Group3_Reference
   function opt_file_naming
     input String prefix;
     //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
@@ -64,15 +64,12 @@ model Thermocline_Reference
   parameter SI.TemperatureDifference T_tol_recv = 40.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
   parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
-  parameter SI.Temperature T_recv_max = T_des_low+T_tol_recv "Absolute maximum temperature at bottom of tank where receiver is shut off";
-
-
-  parameter SI.Temperature T_low_u = T_des_high - 0.5*T_tol_PB "Temperature at which PB starts";
+  parameter SI.Temperature T_recv_max = T_des_low + T_tol_recv "Absolute maximum temperature at bottom of tank where receiver is shut off";
+  parameter SI.Temperature T_low_u = T_des_high - 0.5 * T_tol_PB "Temperature at which PB starts";
   parameter SI.Temperature T_low_l = T_des_high - T_tol_PB "Temperature at which PB stops";
-  
   parameter SI.Temperature T_PCM_melt = Filler.T_melt "Melting temperature of PCM, not used";
   parameter SI.Temperature T_up_u = 710.0 + 273.15 "Temperature at which defocusing starts, not used";
-  parameter SI.Temperature T_up_l = 700.0 + 273.15 "Temperature at which defocusing stops, not used";  
+  parameter SI.Temperature T_up_l = 700.0 + 273.15 "Temperature at which defocusing stops, not used";
   //Trays
   parameter Real f_recv = 1.00 "Receiver area multiplier to be optimised";
   parameter Real f_PCM_safety = 1.05 "Safety factor such that PCM does not exceed wall height";
@@ -86,6 +83,8 @@ model Thermocline_Reference
   replaceable package Fluid = SolarTherm.Media.Materials.Sodium "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Media.Materials.PigIron_Constant;
   replaceable package PCM = SolarTherm.Media.Materials.NaCl;
+  package PCM_Top_Package = SolarTherm.Media.Materials.PCM_710;
+  package PCM_Bot_Package = SolarTherm.Media.Materials.PCM_520;
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   // Weather data
@@ -177,7 +176,6 @@ model Thermocline_Reference
   parameter SI.ThermodynamicTemperature T_start = T_low_l "Starting temperature of the simulation, K";
   parameter Integer nodes = 15 "Number of discretization elements of PCM";
   parameter Real growth_ratio = 1.2 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
-
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
   parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
   //Design values
@@ -294,13 +292,13 @@ model Thermocline_Reference
   //Storage
   //Loop Breakers
   //Cold Controller (Receiver)
-  SolarTherm.Models.Control.Thermocline_ReceiverControl controlCold(T_df_on = T_up_u, T_df_off = T_up_l, T_max = T_recv_max,T_target=T_des_high, Q_flow_recv_des = Q_flow_rec_des, m_flow_recv_des = m_flow_recv_des) annotation(
+  SolarTherm.Models.Control.Thermocline_ReceiverControl controlCold(T_df_on = T_up_u, T_df_off = T_up_l, T_max = T_recv_max, T_target = T_des_high, Q_flow_recv_des = Q_flow_rec_des, m_flow_recv_des = m_flow_recv_des) annotation(
     Placement(visible = true, transformation(origin = {-32, -22}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   //Hot Controller (Power Block)
   SolarTherm.Models.Control.SB_PowerBlockControl controlHot(T_on = T_low_u, T_off = T_low_l, m_flow_ref = m_flow_blk_des) annotation(
     Placement(visible = true, transformation(origin = {66, -18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Power Block
-  SolarTherm.Models.PowerBlocks.PowerBlockModel_sCO2NREL powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des,m_flow_ref = m_flow_blk_des, T_in_ref = T_des_high, T_out_ref = T_des_low, Q_flow_ref=Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
+  SolarTherm.Models.PowerBlocks.PowerBlockModel_sCO2NREL powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_des_high, T_out_ref = T_des_low, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
@@ -348,8 +346,11 @@ model Thermocline_Reference
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 50, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.01) annotation(
+
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = 10, N_p_A = 5, N_f_B = 30, N_p_B = 5, N_f_C = 10, N_p_C = 5, frac_1=0.1, frac_2=0.1, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.01) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+
+  
   SolarTherm.Models.Fluid.Valves.Thermocline_Splitter_2 Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 14}, extent = {{-10, 0}, {10, 10}}, rotation = 180)));
   SolarTherm.Models.Fluid.Valves.Thermocline_Splitter Splitter_top(redeclare package Medium = Medium) annotation(
@@ -359,7 +360,7 @@ model Thermocline_Reference
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 algorithm
-  /*when rem(time,86400) > 86399 then //reset the storage utilization
+/*when rem(time,86400) > 86399 then //reset the storage utilization
     if time > 432000 then //after 5 days
       //eta_util_ytd := (E_max_today - E_min_today)/E_max;
       E_max_today := Tank.Tank_A.E_stored;
@@ -527,5 +528,4 @@ protected
 	</ul>
 
 	</html>"));
-
-end Thermocline_Reference;
+end Thermocline_Group3_Reference;

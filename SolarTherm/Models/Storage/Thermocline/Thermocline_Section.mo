@@ -229,10 +229,10 @@ equation
     T_f[i] = fluid[i].T;
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
-    /*
+    
     //Model 1 k_eff[i] = eta*fluid[i].k, no mixed conductivity
     k_eff[i] = eta*fluid[i].k;
-    */
+    
     //Model 2 k_eff[i] = additional porosity weighted conductivity during standby only
     /*
     if State == 2 then
@@ -242,7 +242,7 @@ equation
       end if;
     */
     //Model 3 k_eff[i] is always mixed(unified)
-    k_eff[i] = ((1.0 - eta) * k_p[i, N_p] + eta * fluid[i].k) / eta;
+    //k_eff[i] = ((1.0 - eta) * k_p[i, N_p] + eta * fluid[i].k);// / eta;
     
     mu_f[i] = fluid[i].mu;
   end for;
