@@ -128,8 +128,8 @@ class Tree(object):
 			if raise_missing:
 				raise IndexError
 			else:
-				print(ref[0])
-				print('not in the tree')
+				#print(ref[0])
+				#print('not in the tree')
 				return None
 		if len(ref) == 1:
 			if isinstance(self.children[ref[0]],Tree):
@@ -194,6 +194,9 @@ class Tree(object):
 				0-certain constant
 				1-uncertain constant (for sensitivity analysis)
 				2-variable (for optimisation or parametric study)
+
+		Return:
+		pmlist: list, a list of parameters that are pmtype
 		"""
 		pmlist=[]
 		for n in self.children.keys():
@@ -202,6 +205,28 @@ class Tree(object):
 				pmlist.append(n)
 
 		return pmlist
+
+	def filter_dist(self, dist, inlist):
+		"""
+		Filter a specific distribution
+
+		Argument:
+			dist: str, 
+				'uniform': uniform distribution
+				'norm': normal distribution
+				'pert': pert-beta distribution
+			inlist: a list of string, names of the parameters for checking
+
+		Return:
+			outlist: a list of string, 
+				names of the parameters that have the specified distribution
+		"""
+		outlist=[]
+		for n in inlist:
+			d=self.get(n+'.distribution')
+			if d==dist:
+				outlist.append(n)
+		return outlist
 
 
 class ValueNode(object):
