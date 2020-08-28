@@ -1,6 +1,6 @@
 #! /bin/env python
 
-from solartherm.dakota import gen_dakota_in, gen_interface_bb
+from solartherm.dakota import gen_dakota_in, gen_interface_bb, Uncertainty
 from solartherm import simulation
 from solartherm import params
 import multiprocessing as mp
@@ -65,6 +65,7 @@ if __name__=='__main__':
 		savedir=args.wd
 
 	os.chdir(args.wd)
+	U=Uncertainty()
 	if args.excel!=None:
 		if not os.path.exists(mn):
 			sim = simulation.Simulator(fn=fn, fusemount=False)
@@ -74,29 +75,86 @@ if __name__=='__main__':
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)
-		if args.mode=='uncertainty':
-			tp=1
-		par_n=tree.filter_type(tp)
-		par_b=[] # bounds
-		for n in par_n:
-			b1=tree.get(n+'.boundary1')
-			b2=tree.get(n+'.boundary2')		
-			par_b.append([b1, b2])
+
+		par_n=tree.filter_type(1) # 1 is for uncertainty analysis
+		par_uniform=tree.filter_dist('uniform',par_n)
+		par_normal=tree.filter_dist('normal', par_n)
+		par_pert=tree.filter_dist('pert', par_n)
+
+		#uniform
+		if len(par_uniform)>0:
+			lb=[]
+			ub=[]
+			for n in par_uniform:
+				b1=tree.get(n+'.boundary1')
+				b2=tree.get(n+'.boundary2')
+				lb.append(b1)
+				ub.append(b2)
+			U.uniform(par_uniform, lb, ub)
+		# normal
+		if len(par_normal)>0:
+			mean=[]
+			stdev=[]
+			for n in par_normal:
+				m=tree.get(n+'.nominal')
+				sd=tree.get(n+'.boundary1')
+				mean.append(m)
+				stdev.append(sd)
+			U.normal(par_normal, mean, stdev)
+		# pert
+		if len(par_pert)>0:
+			nominals=[]
+			lb=[]
+			ub=[]
+			for n in par_pert:
+				nominal=tree.get(n+'.nominal')	
+				b1=tree.get(n+'.boundary1')
+				b2=tree.get(n+'.boundary2')	
+				nominals.append(nominal)
+				lb.append(b1)
+				ub.append(b2)
+			U.pert(par_pert, nominals, lb, ub)
+
 	else:
+		# if the parameters are passed from the command line directly
+		# (not from the spreadsheet)
+		# all the parameters are in the same distribution
+		dist_type=args.dist
 		par_n = [] # names
-		par_b = [] # bounds
+		b1 = [] # bounds
+		b2 = []
+		nominals =[]
 		for pp in args.par:
 			k, v = pp.split('=')
 			par_n.append(k)
 			vals = [(vv) for vv in v.split(',')]
-			assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
-			lb = vals[0]
-			ub = vals[1]
-			assert lb <= ub, 'Lower bound greater than upper bound'
-			par_b.append([lb, ub])
+			if dist_type=='uniform':
+				lb=vals[0]
+				ub=vals[1]
+				b1.append(lb)				
+				b2.append(ub)
+			elif dist_type=='normal':
+				mean=vals[0]
+				sd=vals[1]
+				nominals.append(mean)
+				b1.append(sd)
+			elif dist_type=='pert':
+				nominal=float(vals[0])
+				lb=float(vals[1])
+				ub=float(vals[2])
+				b1.append(lb)				
+				b2.append(ub)	
+				nominals.append(nominal)		
+		if dist_type=='uniform':
+			print 'uniform'
+			U.uniform(par_n, b1, b2)
+		elif dist_type=='normal':
+			U.normal(par_n, nominals, b1)
+		elif dist_type=='pert':
+			U.pert(par_n, nominals, b1, b2)
+	variables=U.sample
 
-
-	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, dist_type=args.dist, var_num=len(par_n), var_names=par_n, var_vals=par_b,mofn=fn, savedir=savedir)
+	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, variables=variables, mofn=fn, savedir=savedir)
 	gen_interface_bb(savedir)
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
