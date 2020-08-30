@@ -27,7 +27,7 @@
 
 import os
 
-def gen_dakota_in(mode, sample_type, num_sample, variables, mofn, savedir):
+def gen_dakota_in(mode, method, variables, mofn, savedir):
 	'''
 	Generate dakota input file: sample.in
 
@@ -74,18 +74,10 @@ variables
 		string 1
 		set_values "%s"
 		descriptors "fn"
-
-'''%(savedir,mofn)
-
-	# variables
-	sample+=variables
-
-	# mothod
-	sample+='\nmethod\n'
-	if mode=='uncertainty':
-		sample+='    sampling\n'
-		sample+='        sample_type %s\n'%sample_type		
-		sample+='        samples = %s\n'%num_sample
+%s	
+method
+%s
+'''%(savedir,mofn, variables,method)
 
 
 	if not os.path.exists(savedir):
@@ -96,7 +88,7 @@ variables
 
 class Uncertainty:
 	def __init__(self):
-		self.sample=''
+		self.variables=''
 
 	def uniform(self, var_names, minimum, maximum):
 		'''
@@ -113,14 +105,14 @@ class Uncertainty:
 		lb=''
 		ub=''
 		descriptor=''
-		self.sample+='    uniform_uncertain=%s\n'%var_num
+		self.variables+='    uniform_uncertain=%s\n'%var_num
 		for i in range(var_num):
 			lb+=' %s'%minimum[i]
 			ub+=' %s'%maximum[i]
 			descriptor+=' "%s"'%var_names[i]							
-		self.sample+='        lower_bounds'+lb+'\n'
-		self.sample+='        upper_bounds'+ub+'\n'
-		self.sample+='        descriptors'+descriptor+'\n'
+		self.variables+='        lower_bounds'+lb+'\n'
+		self.variables+='        upper_bounds'+ub+'\n'
+		self.variables+='        descriptors'+descriptor+'\n'
 
 	def normal(self, var_names, nominals, stdevs):
 		'''
@@ -137,14 +129,14 @@ class Uncertainty:
 		mean=''  # mean value
 		stdev='' # standard deviation
 		descriptor=''
-		self.sample+='    normal_uncertain=%s\n'%var_num	
+		self.variables+='    normal_uncertain=%s\n'%var_num	
 		for i in range(var_num):
 			mean+=' %s'%nominals[i]
 			stdev+=' %s'%stdevs[i]
 			descriptor+=' "%s"'%var_names[i]							
-		self.sample+='        means'+mean+'\n'
-		self.sample+='        std_deviations'+stdev+'\n'
-		self.sample+='        descriptors'+descriptor+'\n'
+		self.variables+='        means'+mean+'\n'
+		self.variables+='        std_deviations'+stdev+'\n'
+		self.variables+='        descriptors'+descriptor+'\n'
 
 	def pert(self, var_names, nominals, minimum, maximum, scale=4.):
 		'''
@@ -165,7 +157,7 @@ class Uncertainty:
 		lb=''
 		ub=''
 		descriptor=''
-		self.sample+='    beta_uncertain=%s\n'%var_num
+		self.variables+='    beta_uncertain=%s\n'%var_num
 		for i in range(var_num):
 			# convert pert to beta distribution
 			xmax=maximum[i]
@@ -185,11 +177,11 @@ class Uncertainty:
 			ub+=' %s'%xmax
 			descriptor+=' "%s"'%var_names[i]
 
-		self.sample+='        alphas'+alpha+'\n'
-		self.sample+='        betas'+beta+'\n'							
-		self.sample+='        lower_bounds'+lb+'\n'
-		self.sample+='        upper_bounds'+ub+'\n'
-		self.sample+='        descriptors'+descriptor+'\n'
+		self.variables+='        alphas'+alpha+'\n'
+		self.variables+='        betas'+beta+'\n'							
+		self.variables+='        lower_bounds'+lb+'\n'
+		self.variables+='        upper_bounds'+ub+'\n'
+		self.variables+='        descriptors'+descriptor+'\n'
 
 	def beta(self, a, b, lb, ub, x):
 		'''
@@ -199,7 +191,13 @@ class Uncertainty:
 		B=gamma(a)*gamma(b)/gamma(a+b)
 		f=(x-lb)**(a-1.)*(ub-x)**(b-1.)/B/(ub-lb)**(a+b-1)
 		return f
-		
+
+	def method(self,sample_type, num_sample):
+		m=''
+		m+='    sampling\n'
+		m+='        sample_type %s\n'%sample_type		
+		m+='        samples = %s\n'%num_sample
+		return m
 
 def gen_interface_bb(savedir):
 	'''

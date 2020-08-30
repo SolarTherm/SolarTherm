@@ -152,9 +152,10 @@ if __name__=='__main__':
 			U.normal(par_n, nominals, b1)
 		elif dist_type=='pert':
 			U.pert(par_n, nominals, b1, b2)
-	variables=U.sample
+	variables=U.variables
+	method=U.method(sample_type=args.sample, num_sample=args.ns)
 
-	gen_dakota_in(mode=args.mode, sample_type=args.sample, num_sample=args.ns, variables=variables, mofn=fn, savedir=savedir)
+	gen_dakota_in(mode=args.mode, method=method, variables=variables, mofn=fn, savedir=savedir)
 	gen_interface_bb(savedir)
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
