@@ -32,7 +32,7 @@ model ReceiverTestRig_Surrogate
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(use_input = true) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver particleReceiver(H_drop_design = H_drop_design, redeclare package Medium = Medium, T_out = T_out_design,use_neural_network = true) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver particleReceiver(H_drop_design = H_drop_design, redeclare package Medium = Medium, T_out = T_out_design,use_neural_network = true,T_0=T_in_design) annotation(
     Placement(visible = true, transformation(origin = {-23, 37}, extent = {{-21, -21}, {21, 21}}, rotation = 0)));
 initial equation
   H_drop_design = H_drop;

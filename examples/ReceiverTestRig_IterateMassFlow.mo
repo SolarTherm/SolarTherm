@@ -15,13 +15,13 @@ model ReceiverTestRig_IterateMassFlow
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   // Design Condition
   parameter Real T_out_design = from_degC(800);
-  parameter Real T_in_design = 803.15;
-  parameter Real T_amb_design = 268.15;
+  parameter Real T_in_design =  828.0767105;
+  parameter SI.HeatFlowRate Q_in = 845833137.7;
+  parameter Real T_amb_design = 293.0875157;
+  parameter SI.Length H_drop_design = 24.16579774;
   parameter Real Wspd_des = 5;
   parameter Real Wdir_des = 90;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
-  parameter SI.HeatFlowRate Q_in = 300e6;
-  parameter SI.Length H_drop_design = 25;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
@@ -34,7 +34,7 @@ model ReceiverTestRig_IterateMassFlow
     Placement(visible = true, transformation(origin = {32, 88}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(use_input = true) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_IterateMassFlow particleReceiver1D(N = 20, fixed_geometry = true, test_mode = false, with_uniform_curtain_props = false, with_wall_conduction = true, H_drop_design = H_drop_design, with_detail_h_ambient = false, with_wind_effect = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_IterateMassFlow particleReceiver1D(N = 15, fixed_geometry = true, test_mode = false, with_uniform_curtain_props = false, with_wall_conduction = true, H_drop_design = H_drop_design, with_detail_h_ambient = false, with_wind_effect = false, T_ref = T_in_design, T_out_design = T_out_design) annotation(
     Placement(visible = true, transformation(origin = {-25, 37}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Wspd(y = Wspd_des) annotation(
     Placement(visible = true, transformation(origin = {-78, 92}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
