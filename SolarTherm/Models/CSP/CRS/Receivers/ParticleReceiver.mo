@@ -21,7 +21,7 @@ model ParticleReceiver
 	
 	parameter Boolean use_neural_network = true;
 	parameter Integer inputsize = 4;
-    parameter String saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver";
+    parameter String saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver_v2";
     parameter Real[inputsize] X_max = {850e6, 318.15, 833.15, 45};
     parameter Real[inputsize] X_min = {280e6, 268.15, 803.15, 23};
     parameter Real out_max = 0.964303;

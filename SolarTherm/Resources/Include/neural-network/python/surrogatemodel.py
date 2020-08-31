@@ -18,15 +18,20 @@ from tensorflow.keras.activations import relu,tanh,sigmoid
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, Normalizer
 from sklearn.model_selection import train_test_split
 
+#Dataset name
+fn = "/home/philgun/Documents/PhD/Modelica/databank/rcv-eff/training_data_rcv_eff_20082020/res.csv"
+
+#Save name
+filename = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver_test"
+
 #Import dataset
-fn = "/home/philgun/Documents/PhD/Modelica/databank/rcv-eff/training-data-rcv-efficiency/training-data/res.csv"
 df = pd.read_csv(fn)
 
 print(df.describe())
 
 #Input and output number
 outputdim = 1
-inputdim = 4 #in order: q[W], tamb[K],tin_k
+inputdim = 4 #in order: Q_in[W],Tamb[K],T_in[K],H_drop[m]
 
 #Find the min and max value
 minval = df.min()
@@ -46,6 +51,7 @@ print(maxval)
 #split the raw into input (X) and ouput(y)
 X_raw = df[df.columns[0:inputdim]].to_numpy()
 
+#Convert to 2D array
 y_raw = df[df.columns[-1]].to_numpy()
 y_raw = y_raw.reshape(-1,1)
 
@@ -77,50 +83,63 @@ activation ='relu'
 activation_out = 'relu'
 learning_rate = 0.0001
 opt = optimizers.Adam(learning_rate = learning_rate)
-epochs = 200
+epochs = 2000
 batch_size = 128
-filename = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver"
 
-######################  BUILD MODEL ############################ 
 
-#Building the neural network
-model = Sequential()
+stagnant = True
+while stagnant: #If the model stagnant due to bad weight initialization, build a new model with the same configuration
+    
+    ######################  BUILD MODEL ############################ 
+    #Building the neural network
+    model = Sequential()
 
-#Adding input layer and first hidden layer
-model.add(Dense(network_layout[0],  
-                name = "Input",
-                input_dim=inputdim,
-                kernel_initializer='he_normal',
-                activation=activation))
-
-#Adding the rest of hidden layer
-for numneurons in network_layout[1:]:
-    model.add(Dense(numneurons,
-                    kernel_initializer = 'he_normal',
+    #Adding input layer and first hidden layer
+    model.add(Dense(network_layout[0],  
+                    name = "Input",
+                    input_dim=inputdim,
+                    kernel_initializer=initializers.RandomNormal(),
+                    bias_initializer=initializers.Zeros(),
+                    use_bias=True,
                     activation=activation))
 
-#Adding the output layer
-model.add(Dense(outputdim,
-                name="Output",
-                kernel_initializer="he_normal",
-                activation="relu"))
+    #Adding the rest of hidden layer
+    for numneurons in network_layout[1:]:
+        model.add(Dense(numneurons,
+                        kernel_initializer=initializers.RandomNormal(),
+                        bias_initializer=initializers.Zeros(),
+                        activation=activation))
 
-'''
-fixing the problem of super high MAPE 
-https://stackoverflow.com/questions/49729522/why-is-the-mean-average-percentage-errormape-extremely-high
-'''
-backend.set_epsilon(1)
+    #Adding the output layer
+    model.add(Dense(outputdim,
+                    name="Output",
+                    kernel_initializer=initializers.RandomNormal(),
+                    bias_initializer=initializers.Zeros(),
+                    activation="relu"))
 
-#Compiling the model
-model.compile(optimizer=opt,loss='mse',metrics=['mse','mae','mape'])
-model.summary()
+    '''
+    fixing the problem of super high MAPE 
+    https://stackoverflow.com/questions/49729522/why-is-the-mean-average-percentage-errormape-extremely-high
+    '''
+    backend.set_epsilon(1)
 
-#Training the model
-'''
-More into epoch and batch size
-https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/
-'''
-history = model.fit(x=Xtrain,y=ytrain,validation_data=(Xtest,ytest),batch_size=32,epochs=epochs)
+    #Compiling the model
+    model.compile(optimizer=opt,loss='mse',metrics=['mse','mae','mape'])
+    model.summary()
+
+    #Training the model
+    '''
+    More into epoch and batch size
+    https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/
+    '''
+    history = model.fit(x=Xtrain,y=ytrain,validation_data=(Xtest,ytest),batch_size=batch_size,epochs=epochs)
+    losses = history.history['val_loss'][:]
+    for i in range(len(losses)-1):
+        delta = losses[i+1]-losses[i]
+        print('delta=',delta)
+        if delta < 0:
+            stagnant=False
+
 print("Save model to disk..................")
 model.save(filename) # ===> save model in SavedModel format
 print("Done..................")
@@ -190,7 +209,7 @@ mmy = MinMaxScaler()
 mmx.fit(X_raw)
 mmy.fit(y_raw)
 
-x = [285700000,	268.15,	803.15,23]
+x = [783459291.3,314.275101,828.283384,31.161965]
 x = np.array(x)
 x = np.reshape(x,(-1,len(x)))
 
@@ -208,8 +227,8 @@ y_predict = mmy.inverse_transform(y_predict)
 #Return the predicted value 
 y_predict = float(y_predict[0,-1])
 
-print("y_predict: %.2f "%y_predict)
-print("y_real: %.2f "%y_raw[1,0])
+print("y_predict: %s "%y_predict)
+print("y_real: %s "%y_raw[1,0])
 
 
 

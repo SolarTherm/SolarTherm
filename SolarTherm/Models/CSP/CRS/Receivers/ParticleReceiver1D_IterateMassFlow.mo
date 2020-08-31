@@ -97,33 +97,50 @@ model ParticleReceiver1D_IterateMassFlow
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot(start=100) "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot(start=1000) "Inlet mass flow rate [kg/s]";
   
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
   SI.Length x[N + 2](min = zeros(N + 2), max = fill(100., N + 2)) "Vertical positions of nodes";
   SI.Velocity vp[N + 1](start = fill(1.5 * vp_in, N + 1), min = fill(vp_in, N + 1), max = fill(1000, N + 1)) "Particles velocity [m/s]";
   SI.Length t_c[N + 2] "Receiver depth";
+  
   SI.Temperature T_s[N + 1](
     start = linspace(T_ref, 1073.15, N + 1), 
     nominal = linspace(T_ref, 1073.15, N + 1), 
-    max = fill(2000., N + 1), 
-    min = fill(299., N + 1)) "Curtain Temperature";
+    max = fill(1088., N + 1), 
+    min = fill(263, N + 1)) "Curtain Temperature";
+    
   SI.SpecificEnthalpy h_s[N + 1](
     start = linspace(h_0, Util.h_T(1073.15), N + 1), 
     nominal = linspace(h_0, Util.h_T(1073.15), N + 1), 
-    max = fill(1224994, N + 1), 
-    min = fill(735., N + 1)) "Curtain enthalpy";
+    max = fill(Util.h_T(1090.15), N + 1), 
+    min = fill(Util.h_T(263), N + 1)) "Curtain enthalpy";
+    
   SI.Temperature T_w[N + 2](
-    start = linspace(T_ref, 1073.15, N + 2), 
-    nominal = linspace(T_ref, 1073.15, N + 2), 
-    max = fill(2000., N + 2), 
-    min = fill(299., N + 2)) "Receiver wall temperature";
+    start = linspace(T_ref, 1068.15, N + 2), 
+    nominal = linspace(T_ref, 1068.15, N + 2), 
+    max = fill(1073.15, N + 2), 
+    min = fill(258., N + 2)) "Receiver wall temperature";
 
   //Curtain radiation properties
-  SI.Efficiency eps_c[N](start = linspace(0.999, 0.971, N), max = fill(1., N), min = fill(0., N)) "Curtain emissivity";
-  SI.Efficiency tau_c[N](start = linspace(1e-19, 0.004, N), max = fill(1., N), min = fill(0., N)) "Curtain tramittance";
-  SI.Efficiency abs_c[N](start = linspace(0.999, 0.972, N), max = fill(1., N), min = fill(0., N)) "Curtain absorptance";
+  SI.Efficiency eps_c[N](
+    start = linspace(0.99, 0.94, N), 
+    nominal = linspace(0.99, 0.94, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain emissivity";
+    
+  SI.Efficiency tau_c[N](
+    start = linspace(1e-19, 0.09, N), 
+    nominal = linspace(1e-19, 0.07, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain tramittance";
+    
+  SI.Efficiency abs_c[N](
+    start = linspace(0.99, 0.94, N), 
+    nominal = linspace(0.990, 0.94, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain absorptance";
   
   //Radiation heat fluxes
   SI.HeatFlux q_solar "Uniform solar flux [W/m2]";

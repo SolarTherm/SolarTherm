@@ -317,7 +317,7 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
 		"""Run simulation.
 
 		If running an optimisation then 'optimization' needs to be used as
@@ -326,6 +326,7 @@ class Simulator(object):
 		start = str(parse_var_val(start, 's'))
 		stop = str(parse_var_val(stop, 's'))
 		step = str(parse_var_val(step, 's'))
+		tolerance = str(tolerance)
 
 		if initStep!=None:
 			initStep = str(parse_var_val(initStep, 's'))
@@ -334,21 +335,17 @@ class Simulator(object):
 
 		sim_args = [
 			'-override',
-			'startTime='+start+',stopTime='+stop+',stepSize='+step,
+			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+tolerance,
 			'-s', solver,
+			'-nls', nls, #Nonlinear solver
 			'-initialStepSize', initStep,
 			'-maxStepSize', maxStep,
 			'-maxIntegrationOrder', integOrder,
-			'-lv=%s' % (lv,), # Specifies which logging levels to enable
+			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
-			'-noEventEmit',
 			]
 
-		if nls is not None:
-			sim_args += ['-nls', nls] #Nonlinear solver
-
-		# TODO do the following steps risk removing other arguments?
 		if initStep==None:
 			sim_args = [e for e in sim_args if e not in ('-initialStepSize', initStep)]
 		if maxStep==None:
@@ -361,4 +358,5 @@ class Simulator(object):
 		sp.check_call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
+
 

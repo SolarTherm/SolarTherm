@@ -219,7 +219,6 @@ class SimResultElec(SimResult):
 		years = dur/31536000 # number of years of simulation [year]
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
-
 		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 		srev = rev_v[-1] # spot market revenue [$]
 		lcoe = None # Levelised cost of electricity
@@ -235,6 +234,8 @@ class SimResultElec(SimResult):
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
+		cwd = os.getcwd()
+		print(cwd)
 		#os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
 		i=1 #PG
 		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
