@@ -1,6 +1,6 @@
 #! /bin/env python
 
-from solartherm.dakota import gen_dakota_in, gen_interface_bb, Uncertainty
+from solartherm.dakota import gen_dakota_in, gen_interface_bb, UncertaintyDakotaIn
 from solartherm import simulation
 from solartherm import params
 import multiprocessing as mp
@@ -65,7 +65,7 @@ if __name__=='__main__':
 		savedir=args.wd
 
 	os.chdir(args.wd)
-	U=Uncertainty()
+	U=UncertaintyDakotaIn()
 	if args.excel!=None:
 		if not os.path.exists(mn):
 			sim = simulation.Simulator(fn=fn, fusemount=False)
@@ -153,9 +153,10 @@ if __name__=='__main__':
 		elif dist_type=='pert':
 			U.pert(par_n, nominals, b1, b2)
 	variables=U.variables
+	response=U.response()
 	method=U.method(sample_type=args.sample, num_sample=args.ns)
 
-	gen_dakota_in(mode=args.mode, method=method, variables=variables, mofn=fn, savedir=savedir)
+	gen_dakota_in( response=response, method=method, variables=variables, mofn=fn, savedir=savedir)
 	gen_interface_bb(savedir)
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
