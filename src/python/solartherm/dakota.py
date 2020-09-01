@@ -27,7 +27,7 @@
 
 import os
 
-def gen_dakota_in(mode, method, variables, mofn, savedir):
+def gen_dakota_in(response, method, variables, mofn, savedir):
 	'''
 	Generate dakota input file: sample.in
 
@@ -65,9 +65,7 @@ interface
 	#file_save 
 
 responses
-    response_functions = 1
-    no_gradients
-    no_hessians
+	%s
 
 variables
 	discrete_state_set
@@ -77,7 +75,7 @@ variables
 %s	
 method
 %s
-'''%(savedir,mofn, variables,method)
+'''%(savedir, response, mofn, variables, method)
 
 
 	if not os.path.exists(savedir):
@@ -86,7 +84,7 @@ method
 		f.write(sample)
 
 
-class Uncertainty:
+class UncertaintyDakotaIn:
 	def __init__(self):
 		self.variables=''
 
@@ -199,6 +197,74 @@ class Uncertainty:
 		m+='        samples = %s\n'%num_sample
 		return m
 
+	def response(self):
+		r='response_functions = 1\nno_gradients\nno_hessians\n'
+		return r
+
+		
+
+class OptimisationDakotaIn:
+	def __init__(self):
+		self.method=''
+
+	def moga(self,seed=10983, max_eval=2500, init_type='unique_random', crossover_type='shuffle_random', num_offspring=2, num_parents=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.1, fitness_type='domination_count', percent_change = 0.05, num_generations = 40, final_solutions = 3):
+
+		'''
+		seed, int, index of seed, to generate repeatable results
+		max_eval, int, maximum function evaluations
+		init_type, str, initialisation type, 'unique_random', 'simple_random' or 'flat_file'
+		crossover_type, str, 'shuffle_random', 'multi_point_parameterized_binary' etc
+		num_offspring
+		num_parents
+		final_solutions, int, the first three best solutions
+		'''
+
+		self.method+='''
+    moga
+        seed = %s
+    max_function_evaluations = %s
+    initialization_type %s
+    crossover_type %s
+        num_offspring = %s num_parents = %s
+        crossover_rate = %s
+    mutation_type %s
+        mutation_rate = %s
+    fitness_type %s
+    replacement_type below_limit = 6
+        shrinkage_fraction = 0.9
+    convergence_type metric_tracker
+        percent_change = %s num_generations = %s
+    final_solutions = %s
+    output silent
+'''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
+
+
+	def variables(self, var_names, nominals, maximum, minimum):
+		v=''
+		var_num=len(var_names)
+		init=''
+		lb=''
+		ub=''
+		descriptor=''
+		v+='    continuous_design=%s\n'%var_num
+		for i in range(var_num):
+			init+=' %s'%nominals[i]
+			lb+=' %s'%minimum[i]
+			ub+=' %s'%maximum[i]
+			descriptor+=' "%s"'%var_names[i]
+
+		v+='        initial_point'+init+'\n'						
+		v+='        lower_bounds'+lb+'\n'
+		v+='        upper_bounds'+ub+'\n'
+		v+='        descriptors'+descriptor+'\n'
+		return v
+
+	def response(self, num_obj):
+		r='objective_functions = %s\nno_gradients\nno_hessians\n'%num_obj
+		return r
+
+		
+
 def gen_interface_bb(savedir):
 	'''
 	This function generate the interface_bb.py script 
@@ -252,13 +318,11 @@ epy=perf[0]
 lcoe=perf[1]
 capf=perf[2]
 solartherm_res=[lcoe, capf, epy]
-print solartherm_res	
+print "LCOE, CAPF, EPY", solartherm_res	
 # Return the results to Dakota
 for i, r in enumerate(results.responses()):
     if r.asv.function:
-        print i
         r.function = solartherm_res[i]
-
 results.write()
 '''
 	if not os.path.exists(savedir):
