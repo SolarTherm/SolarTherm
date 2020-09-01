@@ -340,8 +340,6 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 
 	assert deap is not None, 'Library for deap is not installed'
 
-	assert deap is not None, 'Library for deap is not installed'
-
 	lb = [v[0] for v in par_b] # Normalised lower bound
 	ub = [v[1] for v in par_b] # Normalised upper bound
 
@@ -500,6 +498,7 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 		print "Final optimal objective functions: ", (best_fitness)
 
 	return conds, front
+
 	
 
 
