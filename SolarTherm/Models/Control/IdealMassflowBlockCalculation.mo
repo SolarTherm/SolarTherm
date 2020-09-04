@@ -35,7 +35,7 @@ model IdealMassflowBlockCalculation
   
   
   algorithm
-  
+  //Feed fordward is valid for Q_input > 280e6, H_drop_receiver >= 23m and <= 40m
   if feedforward == true then
     if on == true then
       m_flow := max(Q_input/1e6 * 3.051917 + 
