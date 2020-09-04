@@ -36,21 +36,19 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
+	parameter Integer n_heliostat = 6764 "Number of heliostats";
+	parameter SI.Length H_tower = 175.0 "Tower height";
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 2.4957988516 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
+	parameter Real SM = 543.2/111*0.51 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
-	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Efficiency eff_opt = 0.65414652341738 "Field optical efficiency at design point"; //Calculated to obtain a field area of 676552.5m2 (6764*144.375m2)
-	parameter SI.Irradiance dni_des = 980 "DNI at design point";
-	parameter Real C = 809.4956123111882 "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 676552.5m2 (6764*144.375m2)
-	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
-	parameter Real excl_fac = 0.97 "Exclusion factor";
-	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
+	parameter Real he_av_design = 0.99 "Heliostats availability";
 
 	// Receiver
+	parameter SI.Diameter D_receiver = 16.0 "Receiver diameter";
+	parameter SI.Length H_receiver = 24.0 "Receiver height";
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
@@ -162,13 +160,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
 
 	//SF Calculated Parameters
-	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
-	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
-	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
-	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
+	parameter SI.Area A_field = n_heliostat * A_heliostat "Heliostat field reflective area";
+	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver aperture area";
 	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
-	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
@@ -473,6 +467,7 @@ initial equation
 	end if;
 
 equation
+	connect(Wspd_input.y,receiver.Wspd);
 	connect(PressureLosses_CS_loop.y, pumpCold2.Dp_loss) annotation(
 		Line(points = {{0, 62}, {38, 62}, {38, 4}, {60, 4}, {60, 8}, {60, 8}}, color = {0, 0, 127}));
 	
