@@ -18,10 +18,12 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 
+	parameter Real C0 = -5.31430664702905;
 	parameter Real C1 = -5.31430664702905;
 	parameter Real C2 = 1.22007103775149;
 	parameter Real C3 = - 0.0689349243674013;
 	parameter Real C4 = 0.0552713646754176;
+	parameter Real C5 = 0.0552713646754176;
 
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
@@ -38,6 +40,15 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 				extent={{-6,-6},{6,6}},
 				rotation=-90,
 				origin={0,78})));
+
+	Modelica.Blocks.Interfaces.RealInput Wspd annotation (Placement(
+				transformation(
+				extent={{-12,-12},{12,12}},
+				rotation=-90,
+				origin={-20,84}), iconTransformation(
+				extent={{-6,-6},{6,6}},
+				rotation=-90,
+				origin={-20,78})));
 
 	parameter SI.Temperature T_in_0=from_degC(540) "Start value of inlet temperature";
 	parameter SI.Temperature T_out_0=from_degC(740) "Start value of inlet temperature";
@@ -81,7 +92,10 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = (C1*(log10(max(1,heat.Q_flow))) + C2*(log10(max(1,heat.Q_flow)))^2 + C3*(log10(max(1,heat.Q_flow)))^3 + C4*(log10(max(1,Tamb))));
+		eta_rec = (C1*(log10(max(1,heat.Q_flow))) 
+					+ C2*(log10(max(1,heat.Q_flow)))^2 
+					+ C3*(log10(max(1,heat.Q_flow)))^3 
+					+ C4*(log10(max(1,Tamb))));
 	else
 		Q_loss = 0;
 		eta_rec = 0;
