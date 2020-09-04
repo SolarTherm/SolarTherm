@@ -9,7 +9,7 @@ model Reference_2_solstice
 	import FI = SolarTherm.Models.Analysis.Finances;
 	import SolarTherm.Types.Solar_angles;
 	import SolarTherm.Types.Currency;
-
+	import metadata = SolarTherm.Utilities.Metadata_Optics;
 	extends Modelica.Icons.Example;
 
 	// Input Parameters
@@ -34,14 +34,36 @@ model Reference_2_solstice
 	parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
 	parameter Integer year = 1996 "Meteorological year";
 
+	// Solstice related parameters
+	parameter String opt_file(fixed = false);
+	//parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
+	parameter String field_type = "surround" "Other options are : surround";
+	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
+	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
+
+	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+	//parameter SI.Length H_tower = 150 "Tower height";
+	parameter SI.Length R_tower = 0.01 "Tower diameter";
+	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
+	parameter Real fb = 0.4 "factor to grow the field layout";
+	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
+	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+
+	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+	parameter Real metadata_list[8] = metadata(opt_file);
+	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
+
 	// Field
-	parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file";
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 
 	parameter Real SM = 1.8 "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 
-	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
+	parameter Boolean polar = if field_type=="polar" then true else false "True for polar field layout, otherwise surrounded";
+	parameter SI.Area A_heliostat = H_helio*W_helio "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Helisotats availability";
 
 	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
@@ -53,7 +75,6 @@ model Reference_2_solstice
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-    parameter Real H_rcv(fixed=false);
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
@@ -161,11 +182,14 @@ model Reference_2_solstice
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
 	parameter SI.Area A_field = (R_des/eff_opt/he_av_design)/dni_des "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(ceil(A_field/A_heliostat)) "Number of heliostats";
+	//parameter Integer n_heliostat = integer(ceil(A_field/A_heliostat)) "Number of heliostats";
 
 	parameter SI.Area A_receiver = A_field/C "Receiver aperture area";
 	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
 	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
+    parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
+    parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
+
 
 	parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
 
@@ -293,7 +317,6 @@ model Reference_2_solstice
 
 	// Solar field
 	Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
-		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
 		ele_min(displayUnit = "deg") = ele_min,
@@ -307,8 +330,26 @@ model Reference_2_solstice
 		nu_min = nu_min_sf,
 		Q_design = Q_flow_defocus,
 		nu_start = nu_start,
-        H_rcv=H_rcv) annotation(
-																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+		Q_in_rcv = R_des,
+		H_rcv = H_receiver,
+		W_rcv = D_receiver,
+		n_H_rcv = n_H_rcv,
+		n_W_rcv = n_W_rcv,
+		tilt_rcv = tilt_rcv,
+		W_helio = W_helio,
+		H_helio = H_helio,
+		H_tower = H_tower,
+		R_tower = R_tower,
+		R1 = R1,
+		fb = fb,
+		rho_helio = rho_helio,
+		slope_error = slope_error,
+		n_row_oelt = n_row_oelt,
+		n_col_oelt = n_col_oelt,
+		n_rays=n_rays,
+		field_type=field_type,
+		rcv_type=rcv_type)
+		annotation(																																								Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
 	// Receiver
 	Models.CSP.CRS.Receivers.ReceiverSimple receiver(
@@ -421,8 +462,12 @@ model Reference_2_solstice
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit="MW.h") "Generate electricity";
 	FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
 
+initial algorithm
+	opt_file := heliostatsField.optical.tablefile;
+
+
 initial equation
-    H_rcv=25;
+	//opt_file = heliostatsField.optical.tablefile;
 
 	if fixed_field then
 		P_gross = Q_flow_des * eff_cyc;

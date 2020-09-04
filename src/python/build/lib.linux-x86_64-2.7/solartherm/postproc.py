@@ -236,7 +236,7 @@ class SimResultElec(SimResult):
 		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
 		cwd = os.getcwd()
 		print(cwd)
-		#os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
+		os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
 		i=1 #PG
 		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
 		while os.path.exists(filepath): #PG
