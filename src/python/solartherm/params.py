@@ -167,8 +167,13 @@ class Tree(object):
 				#note: some of the variable does not have a 'start' value
 				if start!=None:
 					value=start.attrib['start']
+					if start.attrib.has_key('unit'):
+						unit=start.attrib['unit']
+					else:
+						unit='-'
 					r=self.add_child(name, replace=True)
 					r.add_value('nominal', value, replace=True)
+					r.add_value('unit', unit, replace=True)
 
 
 	def write_xml(self, output_xml):
@@ -311,6 +316,72 @@ def load_values_from_excel(filename,tree):
 						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)						
 
 	return tree
+
+
+def export_values_to_excel(filename, tree, inputxml=None):
+	"""
+	Export the parameters in the Tree to an excel spreadsheet (SolarTherm template)
+		Column A: classification
+		Column B: symbol, should correspond to the names in Modelica
+		Column C: nominal value
+		Column D: unit
+		Column E: name (description)
+		Column F: type (0-certain constant, 1-uncertain constant, 2-variable)
+				  type 1 is for uncertainty analysis
+				  type 2 is for optimisation or parametric study 
+		Column G: distribution of sampling, e.g. normal, uniform, pert-beta
+		Column H: boundary1 (lower boundary or standard deviation)
+		Column I: boundary2 (upper boundary if needed)
+		Column J: description
+		Column K: source or reference
+
+	Arguments:
+		filename (str): the name and directory of the excel spreadsheet
+		tree (class): the params.Tree()
+
+	>>> T = Tree()
+	>>> T.load_xml(inputxml) (optional)
+	>>> export_values_to_excel('Export_params.xlsx',T)
+	or
+	>>> export_values_to_excel('Export_params.xlsx',T, inputxml)
+	"""
+	if inputxml!=None:
+		tree.load_xml(inputxml)
+
+	book=Workbook()
+	sheet=book.active
+	sheet['A2']='Classification'
+	sheet['B2']='Symbol'
+	sheet['C2']='Nominal'
+	sheet['D2']='Unit'
+	sheet['E2']='Name'
+	sheet['F2']='Type'
+	sheet['G2']='Distribution'
+	sheet['H2']='B1(LB or SD)'
+	sheet['I2']='B2 (UB)'
+	sheet['J2']='Description'
+	sheet['K2']='Source'
+		
+	names=tree.children.keys()
+	length=len(names)
+
+	for i in range(length):
+
+		name=names[i]
+		value=tree.get(name+'.nominal')
+		unit=tree.get(name+'.unit')		
+
+		symbol_cell='B%s'%(i+3)
+		value_cell='C%s'%(i+3)		
+		unit_cell='D%s'%(i+3)
+		info_cell='K%s'%(i+3)
+		sheet[symbol_cell]=name
+		sheet[value_cell]=value
+		sheet[unit_cell]=unit
+		sheet[info_cell]='exported from xml file : %s'%inputxml	
+
+	book.save(filename)
+
 
 
 # TODO need to revise the tree structure
