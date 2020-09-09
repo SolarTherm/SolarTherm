@@ -47,6 +47,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 
 	// Receiver
+	parameter Real[6] CEFF = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 	parameter SI.Diameter D_receiver = 16.0 "Receiver diameter";
 	parameter SI.Length H_receiver = 24.0 "Receiver height";
 	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
@@ -299,6 +300,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
 		redeclare package Medium = Medium1,
+		C = CEFF,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		N_pa = N_pa_rec,
