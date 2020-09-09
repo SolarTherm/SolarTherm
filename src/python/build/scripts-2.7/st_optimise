@@ -45,10 +45,10 @@ except ImportError:
 #			(args.start, args.stop, args.step),
 #			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep,tolerance, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
-	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
+	sim.simulate(start=stime[0], stop=stime[1], step=stime[2],tolerance=tolerance, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
 	res = resultclass(mat_fn)
 	constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset
@@ -127,6 +127,8 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
+	parser.add_argument('--tolerance', type=str, default='1e-06',
+			help='simulation tolerance: <number>')
 	parser.add_argument('--initStep', type=str, default=None,
 			help='simulation initial step size used by dassl and ida methods: <number>[,y,d,m,s]')
 	parser.add_argument('--maxStep', type=str, default=None,
@@ -230,7 +232,7 @@ if __name__ == '__main__':
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
-			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
+			args.maxStep,args.tolerance ,args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
 	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"

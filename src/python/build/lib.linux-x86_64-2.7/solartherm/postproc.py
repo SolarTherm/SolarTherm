@@ -238,12 +238,12 @@ class SimResultElec(SimResult):
 		print(cwd)
 		#os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
 		i=1 #PG
-		filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)	#PG	
+		filepath='./result_%s.txt'%(i)	#PG	
 		while os.path.exists(filepath): #PG
 			i=i+1
-			filepath='/home/philgun/solartherm-particle/examples/result_%s.txt'%(i)
+			filepath='./result_%s.txt'%(i)
 		else: #print lcoe to new file
-			txt_name = 'result_%s.txt'%(i)
+			txt_name = './result_%s.txt'%(i)
 			f = open(txt_name,'w')
 			f.write('%s'%lcoe)
 			f.close()
