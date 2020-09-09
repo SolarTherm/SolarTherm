@@ -18,12 +18,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
 
-	parameter Real C0 = -5.31430664702905;
-	parameter Real C1 = -5.31430664702905;
-	parameter Real C2 = 1.22007103775149;
-	parameter Real C3 = - 0.0689349243674013;
-	parameter Real C4 = 0.0552713646754176;
-	parameter Real C5 = 0.0552713646754176;
+	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 
 	SI.HeatFlowRate Q_loss;
 	SI.HeatFlowRate Q_rcv;
@@ -62,7 +57,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 
 
 protected
-	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
+	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width";
 	parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
 	parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
 	parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
@@ -92,10 +87,12 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = (C1*(log10(max(1,heat.Q_flow))) 
-					+ C2*(log10(max(1,heat.Q_flow)))^2 
-					+ C3*(log10(max(1,heat.Q_flow)))^3 
-					+ C4*(log10(max(1,Tamb))));
+		eta_rec = (   C[1]
+					+ C[2]*(log10(max(1,heat.Q_flow))) 
+					+ C[3]*(log10(max(1,heat.Q_flow)))^2 
+					+ C[4]*(log10(max(1,heat.Q_flow)))^3 
+					+ C[5]*(log10(max(1,Tamb))))
+					+ C[6]*Wspd;
 	else
 		Q_loss = 0;
 		eta_rec = 0;
