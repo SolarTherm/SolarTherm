@@ -29,7 +29,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
   // Weather data
-  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab");
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_5_minutes.motab");
   parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
   parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 34.850 "Lati1tude (+ve North)";
@@ -63,7 +63,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 1.5 "Solar multiple";
+  parameter Real SM = 2.5 "Solar multiple";
   parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
@@ -185,8 +185,8 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
   // Dispatch optimiser
-  parameter String DNI_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab";
-  parameter String price_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab";
+  parameter String DNI_file = wea_file;
+  parameter String price_file = pri_file;
   parameter Integer horison = 48;
   parameter Real dt = 1 "delta t of the optimisation";
   parameter Real etaG(fixed = false);
@@ -376,7 +376,7 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set, pinch_recuperator = pinch_recuperator, par_fr = par_fr) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   // Price
-  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.Finances.SpotPriceTable(file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab")) annotation(
+  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.Finances.SpotPriceTable(file = pri_file)) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
@@ -418,6 +418,7 @@ model PhysicalParticleCO21D_1stApproach
   Real DEmax(start = Q_flow_des / 1e6) "Maximum dispatchable heat from the storage in MWth";
   Real SLmax(start = E_max * 2.77778e-10) "Storage capacity in MWh th";
   Real dummyRatio;
+  Boolean wind_curtail;
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -451,6 +452,11 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
+  if heliostatsField.ele > ele_min and data.Wspd > Wspd_max then
+    wind_curtail = true;
+  else
+    wind_curtail = false;
+  end if;
   simpleReceiverControl.idealMassflowBlockCalculation.Tamb = particleReceiver1D.Tamb;
 //Dispatch optimiser variables
   SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
@@ -578,7 +584,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
