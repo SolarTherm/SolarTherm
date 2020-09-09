@@ -1,0 +1,5 @@
+Since st_linprog.c use GLPK which is an external library, it has dependency on it:
+
+In Super computer -> Refer to SuperComputer-tutorial.odt in svn g3p3/modelling/NCI-tutorial/ by Ye Wang and Philipe Gunawan
+   
+
