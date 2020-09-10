@@ -29,7 +29,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
   // Weather data
-  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_5_minutes.motab");
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab");
   parameter Real wdelay[8] = {1800, 1800, 0, 0, 0, 0, 0, 0} "Weather file delays";
   parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 34.850 "Lati1tude (+ve North)";
@@ -252,7 +252,7 @@ model PhysicalParticleCO21D_1stApproach
   //Heliostat tstart
   parameter SI.Time t_start = 3600 "Start-up traking delay";
   //parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 340 / 1e3 else (340 / 1e3)/r_cur "Balance of plant cost per gross rated power"; // Based on downselection criteria criteria
-  parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 290/1040*600/1000 else 290/1040*600/1000 / r_cur "USD/We Balance of plant cost per gross rated power. 290--> Maximum BOP cost per MWe from SAM. 1040 is the maximum power block cost per MWe at SAM. 600 is the specific cost of the power block in USD/kWe according to DOE guidline,  ";
+  parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 290 / 1040 * 600 / 1000 else 290 / 1040 * 600 / 1000 / r_cur "USD/We Balance of plant cost per gross rated power. 290--> Maximum BOP cost per MWe from SAM. 1040 is the maximum power block cost per MWe at SAM. 600 is the specific cost of the power block in USD/kWe according to DOE guidline,  ";
   parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 else 900 / r_cur "sCO2 PB cost per kWe based on the G3P3 Roadmap Report";
   parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 0.003 / (1e6 * 3.6) else 0.003 / (1e6 * 3.6) / r_cur "Variable O&M cost per production per year";
