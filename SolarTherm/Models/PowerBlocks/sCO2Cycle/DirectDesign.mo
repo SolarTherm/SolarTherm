@@ -1044,7 +1044,7 @@ package DirectDesign
         Line(points = {{-36, 27}, {-3, 27}, {-3, -5}}, color = {0, 127, 255}));    
   
       if test_mode == true then
-      m_sup = exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min;
+      m_sup = true;
       else
         when exchanger.HTF_port_a.m_flow >= exchanger.m_HTF_des * nu_min then
           m_sup = true;
