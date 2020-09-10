@@ -25,7 +25,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 619771931.809826) "Input power to receiver at design point";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -36,27 +35,29 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter Integer n_heliostat = 6764 "Number of heliostats";
-	parameter SI.Length H_tower = 175.0 "Tower height";
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 350e6) "Input power to receiver at design point";
+	parameter SI.Length H_tower = 100.0 "Tower height";
+	parameter Integer n_heliostat = 12303 "Number of heliostats";
+	parameter SI.Diameter D_receiver = 15.0 "Receiver diameter";
+	parameter SI.Length H_receiver = 19.0 "Receiver height";
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_100_m.motab");
+	parameter Real rec_fr = 0.151428571 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
+	parameter Real SM = 2.729189189 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
+	parameter Real[6] CEFF = {-89.31295995,26.44544022,-2.52317279,0.07742816,0.0004129,-0.00393959};
+
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-	parameter Real SM = 543.2/111*0.51 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
+	parameter SI.Area A_heliostat = 7.07*7.07 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 
 	// Receiver
-	parameter Real[6] CEFF = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
-	parameter SI.Diameter D_receiver = 16.0 "Receiver diameter";
-	parameter SI.Length H_receiver = 24.0 "Receiver height";
-	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
+	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-	parameter Real rec_fr = 0.123543272 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// HX

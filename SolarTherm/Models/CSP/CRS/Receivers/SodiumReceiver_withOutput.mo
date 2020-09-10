@@ -87,11 +87,11 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec = (   C[1]
+		eta_rec =     C[1]
 					+ C[2]*(log10(max(1,heat.Q_flow))) 
 					+ C[3]*(log10(max(1,heat.Q_flow)))^2 
 					+ C[4]*(log10(max(1,heat.Q_flow)))^3 
-					+ C[5]*(log10(max(1,Tamb))))
+					+ C[5]*Tamb
 					+ C[6]*Wspd;
 	else
 		Q_loss = 0;
