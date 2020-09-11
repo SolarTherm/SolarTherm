@@ -42,7 +42,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
   parameter Real land_mult = 0 "Land area multiplier : will be calculated from Solstice";
-  parameter SI.Area A_helio = 110 "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
+  parameter SI.Area A_helio = 144.375 "Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the locus of minimum heliostat cost Fig 8.";
   parameter Real AR_helio = 1 "H_helio/W_helio";
   parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
   parameter SI.Length H_helio = AR_helio * W_helio "height of heliostat in m";
@@ -64,7 +64,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 2 "Solar multiple";
+  parameter Real SM = 2.5 "Solar multiple";
   parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
@@ -80,7 +80,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
   parameter Real A_land = metadata_list[8];
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
-  parameter SI.Velocity Wspd_max = 3 if use_wind "Wind stow speed DOE suggestionn";
+  parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
   parameter SI.Efficiency packing_factor = 0.6 "New High-Density Packings of Similarly Sized Binary SpheresPatrick I. O’Toole and Toby S. Hudson*  https://pubs.acs.org/doi/pdf/10.1021/jp206115p";
   //Optical simulation parameters
   parameter Integer n_rays = 10000 "number of rays for solstice";
