@@ -96,7 +96,7 @@ class Tree(object):
 		#print("inserting",ref)
 		if isinstance(ref,str):
 			ref = ref.split(".")
-		if ref[0] not in self.children:
+		if ref[0] not in  self.children:
 			if len(ref)==1:
 				#print("adding '%s' with value"%(ref[0],),value)
 				self.add_value(ref[0],value,replace=replace)
@@ -161,7 +161,7 @@ class Tree(object):
 		for par in isChangable:
 			name=par.attrib["name"]
 			name=name.split(".")
-			if len(name)==1: # direct parameters in the main model (system-level)
+			if len(name)==1: # direct parameters in the main model (system-level)	
 				name=name[0]
 				start=self.xml_root.find('*ScalarVariable[@name=\''+name+'\']/*[@start]')
 				#note: some of the variable does not have a 'start' value
@@ -184,10 +184,14 @@ class Tree(object):
 		output_xml: str, directory of the updated (output) xml file
 		"""		
 		names=self.children.keys()
-		for n in names:
+		for n in names:  
 			v=self.get(n+'.nominal')
-			self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)	
-			self.xml_tree.write(output_xml)
+			find=self.xml_root.find('*ScalarVariable[@name=\''+n+'\']')
+			if find!=None:
+				changable=find.attrib['isValueChangeable']
+				if changable=='true':
+					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)	
+		self.xml_tree.write(output_xml)
 
 
 	def filter_type(self, pmtype):
@@ -295,7 +299,7 @@ def load_values_from_excel(filename,tree):
 		unit = None
 	  rcv_H
 	"""
-	wb = load_workbook(filename)
+	wb = load_workbook(filename, data_only=True) # data_only=True, read value only, not he fomular
 
 	for wsname in wb.sheetnames:
 		ws = wb[wsname]
