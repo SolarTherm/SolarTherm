@@ -35,15 +35,15 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 350e6) "Input power to receiver at design point";
-	parameter SI.Length H_tower = 100.0 "Tower height";
-	parameter Integer n_heliostat = 12303 "Number of heliostats";
-	parameter SI.Diameter D_receiver = 15.0 "Receiver diameter";
-	parameter SI.Length H_receiver = 19.0 "Receiver height";
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_100_m.motab");
-	parameter Real rec_fr = 0.151428571 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
-	parameter Real SM = 2.729189189 "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
-	parameter Real[6] CEFF = {-89.31295995,26.44544022,-2.52317279,0.07742816,0.0004129,-0.00393959};
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = CEFF[7]) "Input power to receiver at design point";
+	parameter SI.Length H_tower = CEFF[8] "Tower height";
+	parameter Integer n_heliostat = integer(CEFF[9]) "Number of heliostats";
+	parameter SI.Diameter D_receiver = CEFF[10] "Receiver diameter";
+	parameter SI.Length H_receiver = CEFF[11] "Receiver height";
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_100_m.motab");
+	parameter Real rec_fr = CEFF[12] "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
+	parameter Real SM = CEFF[13] "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
+	parameter Real[13] CEFF = {203.80782459,-81.60009499,10.80334245,-0.47220328,0.00036635,-0.00483532,186864546,100,5511,10,13,0.1433871,2.941837694};
 
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
@@ -301,7 +301,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
 		redeclare package Medium = Medium1,
-		C = CEFF,
+		C = CEFF[1:6],
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		N_pa = N_pa_rec,
