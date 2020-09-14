@@ -75,12 +75,12 @@ equation
 //  h_CS2= Medium2.specificEnthalpy(state_CS2);
   
   if sf_on then
-    if noEvent((h_Na1-h_Na2)<0) then
+    if (h_Na1-h_Na2)<1e-3 then //When the salt is transferring heat to the sodium
       m_flow_rec_internal=m_flow_min_Na_safe;
       m_flow_hs_internal=m_flow_min_CS_safe;
     else
-      m_flow_rec_internal=Q_out_rec/(h_Na1-h_Na2);
-      m_flow_hs_internal=Q_out_rec/(h_CS2-h_CS1);
+      m_flow_rec_internal*(h_Na1-h_Na2)=Q_out_rec;
+      m_flow_hs_internal*(h_CS2-h_CS1)=Q_out_rec;
     end if;    
   else
     m_flow_rec_internal=0;
