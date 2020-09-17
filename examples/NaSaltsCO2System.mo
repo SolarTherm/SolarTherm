@@ -352,7 +352,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		ratio_cond=ratio_cond,
 		ratio_max=ratio_max,
 		L_max_cond=L_max_cond,
-		L_max_input=L_max_input)
+		L_max_input=L_max_input,
+		Q_flow_rec = Q_rec_out)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
@@ -605,6 +606,8 @@ equation
 	connect(pumpCold2.fluid_b, Shell_and_Tube_HX.port_b_in) annotation(
 		Line(points = {{54, 14}, {34, 14}, {34, -7}, {29, -7}}, color = {0, 127, 255}));
 
+	connect(receiver.Q_out, Shell_and_Tube_HX.Q_out_rec) annotation(
+		Line(points = {{-31, 18}, {-9, 18}, {-9, 0}, {12, 0}}, color = {0, 127, 255}));
 	//PowerBlock connections
 	P_elec = powerBlock.W_net;
 	E_elec = powerBlock.E_net;

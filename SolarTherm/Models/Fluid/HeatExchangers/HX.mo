@@ -91,7 +91,12 @@ model HX
   parameter Integer N_sp(fixed = false) "Optimal Tube passes number";
   parameter Integer layout(fixed = false) "Optimal Tube Layout";
   parameter SI.Temperature T_Na2_design(fixed = false) "Optimal outlet sodium temperature";
-  
+  parameter SI.HeatFlowRate Q_flow_rec = 0;
+
+  Modelica.Blocks.Interfaces.RealInput Q_out_rec(start = Q_flow_rec, nominal = Q_flow_rec) annotation(
+    Placement(visible = true, transformation(origin = {2, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90), 
+    iconTransformation(origin = {-2, 46}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
+
   //Variables
   SI.MassFlowRate m_flow_Na(start=m_flow_Na_design, nominal=m_flow_Na_design) "Sodium mass flow rate";
   SI.MassFlowRate m_flow_MS(start=m_flow_MS_design, nominal=m_flow_MS_design) "Molten Salt mass flow rate";
@@ -227,15 +232,54 @@ equation
   k_Na = Medium1.thermalConductivity(state_mean_Na);
 
 //Problem
-  Q = max(m_flow_Na_min_des, m_flow_Na) * (h_Na_in - h_Na_out);
-  Q = max(m_flow_MS_min_des, m_flow_MS) * (h_MS_out - h_MS_in);
   DT1 = T_Na1 - T_MS2;
-  DT2 = T_Na2 - T_MS1;  
-  LMTD = if not HF_on then 0 else if noEvent(DT1 / DT2 <= 0) then 0 else if noEvent(abs(DT1 - DT2)<1e-3) then DT1 else (DT1 - DT2) / MA.log(DT1 / DT2);  
+  DT2 = T_Na2 - T_MS1;
+  if Q_out_rec > 0.001 then
+    if abs(DT1 - DT2) > 0 then
+      port_a_in.m_flow * h_Na_in + port_a_out.m_flow * h_Na_out - Q = 0;
+      port_b_in.m_flow * h_MS_in + port_b_out.m_flow * h_MS_out + Q = 0;
+      LMTD = (DT1 - DT2) / MA.log(max(1e-3, DT1 / DT2));
+      Q = U * A_HX * F * LMTD;
+    else
+      port_a_in.m_flow * h_Na_in + port_a_out.m_flow * h_Na_out - Q = 0;
+      port_b_in.m_flow * h_MS_in + port_b_out.m_flow * h_MS_out + Q = 0;
+      LMTD = 0;
+      Q = U * A_HX * F * DT1;
+    end if;
+  else
+    h_Na_in - h_Na_out = 0;
+    h_MS_in - h_MS_out = 0;
+    LMTD = 0;
+    Q = 0;
+  end if;
+
   F = 1;
-  (U, h_s, h_t)=UF.HTCs(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b);    
-  Q = U * A_HX * F * LMTD;
-  (Dp_tube, Dp_shell, v_Na, v_max_MS)=UF.Dp_losses(d_o=d_o, N_p=N_p, N_sp=N_p, layout=layout, N_t=N_t, L=L, state_mean_Na=state_mean_Na, state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, m_flow_MS=m_flow_MS, l_b=l_b, N=N_baffles);
+
+  (U, h_s, h_t) = UF.HTCs(
+    d_o=d_o, 
+    N_p=N_p, 
+    N_sp=N_p, 
+    layout=layout, 
+    N_t=N_t, 
+    state_mean_Na=state_mean_Na, 
+    state_mean_MS=state_mean_MS, state_wall_MS=state_wall_MS, m_flow_Na=m_flow_Na, 
+    m_flow_MS=m_flow_MS, 
+    l_b=l_b);
+
+  (Dp_tube, Dp_shell, v_Na, v_max_MS) = UF.Dp_losses(
+    d_o=d_o, 
+    N_p=N_p, 
+    N_sp=N_p, 
+    layout=layout, 
+    N_t=N_t, 
+    L=L, 
+    state_mean_Na=state_mean_Na, 
+    state_mean_MS=state_mean_MS, 
+    state_wall_MS=state_wall_MS, 
+    m_flow_Na=m_flow_Na, 
+    m_flow_MS=m_flow_MS, 
+    l_b=l_b, 
+    N=N_baffles);
 
 annotation( Documentation(info = "<html>
 	<p>
