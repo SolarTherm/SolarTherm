@@ -60,6 +60,9 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 		else:
 			return sign * obj_max
 	else: # Multi-objective optimisation
+
+		#TODO refine minimise and optimise
+
 		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
 		if perf_i[0] == 1:
 			obj_min = res.calc_perf()[perf_i[0]]
@@ -142,22 +145,55 @@ if __name__ == '__main__':
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
 			help='number of processes (set to 0 for serial mode)')	
 
+	#TODO --objective, minimise and optimise
 
 	args = parser.parse_args()
+
+	print args.fuel
+	if args.fuel:
+		print 'fuel'
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
+
 
 	# TODO refine the code structure
 	# at the moment, 
 	# DAKOTA and the original optimisation approaches 
 	# are totally separated
+
+
 	if args.method[:6] == 'dakota':
 		if args.method=='dakota_moga':
 			fn=os.path.abspath(args.file)
 			mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
 
-			obj_n = args.objective.split(",") # A list of objective(s) name in string
+			try:
+				obj_names = args.objective.split(",") # A list of objective(s) name in string
+				obj_sign=[] # sign for the optimisation, 1 is to minimise, -1 is to maximise
+				obj_n=[]
+				for n in obj_names:
+					if n[0]=='+':
+						obj_sign.append(-1.)
+						obj_n.append(n[1:])
+					elif n[0]=='-':
+						obj_sign.append(1.)
+						obj_n.append(n[1:])
+					else:
+						obj_sign.append(1.)
+						obj_n.append(n)
+
+				perf_i = [] # perfromance index
+				for oo in obj_n:
+					perf_i.append(resultclass.perf_n.index(oo))
+			except ValueError:
+				raise ValueError('Objective(s) value should be in '
+					+ str(resultclass.perf_n))
+	
 
 			if not os.path.exists(args.wd):
 				os.makedirs(args.wd)	
+
 			if not os.path.isabs(args.wd):
 				savedir=os.path.join(os.getcwd(),args.wd)
 			else:
@@ -209,9 +245,9 @@ if __name__ == '__main__':
 			opt.moga()
 			method=opt.method
 			response=opt.response(num_obj=len(obj_n))
-			variables=opt.variables(var_names=par_n, nominals=nominals, maximum=ub, minimum=lb)
+			variables=opt.variables(var_names=par_n, nominals=nominals, maximum=ub, minimum=lb, mofn=fn, perf_i=perf_i, perf_sign=obj_sign, fuel=args.fuel)
 
-			gen_dakota_in(response=response, method=method, variables=variables, mofn=fn, savedir=savedir)
+			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 			gen_interface_bb(savedir)
 
 			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
@@ -236,15 +272,9 @@ if __name__ == '__main__':
 				print('Compiling simulator')
 				sim.compile_sim(args=([] if args.v else ['-s']))
 
-		if args.fuel:
-			resultclass = postproc.SimResultFuel
-		else:
-			resultclass = postproc.SimResultElec
 
-		op_meth = args.method
-		frwk = args.framework
 
-		if args.framework == "soo_max" and op_meth not in ["ga1", "ga2"]:
+		if args.framework == "soo_max" and args.method not in ["ga1", "ga2"]:
 			sign = -1.0
 		else:
 			sign = 1.0
@@ -294,7 +324,7 @@ if __name__ == '__main__':
 		objfunc = functools.partial(objective_function, sim, mat_fn,
 				(args.start, args.stop, args.step), args.initStep,
 				args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
-				args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
+				args.v, scale, offset, perf_i, par_n, resultclass, args.method, frwk, sign)
 
 		print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
 
@@ -313,10 +343,10 @@ if __name__ == '__main__':
 				st_ga2(objfunc, par_b, par_n, args.framework, args.outfile_f)
 
 			else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
-				res, cand= st_sciopt(objfunc, op_meth, par_b, par_0, args.maxiter, scale, offset, args.framework, args.outfile_f)
+				res, cand= st_sciopt(objfunc, args.method, par_b, par_0, args.maxiter, scale, offset, args.framework, args.outfile_f)
 
 		else:
-			assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"	
+			assert(args.framework == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"	
 			if args.method == 'nsga2':		
 
 				st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker, args.outfile_p, args.outfile_f)
