@@ -27,7 +27,7 @@
 
 import os
 
-def gen_dakota_in(response, method, variables, mofn, savedir):
+def gen_dakota_in(response, method, variables, savedir):
 	'''
 	Generate dakota input file: sample.in
 
@@ -68,14 +68,10 @@ responses
 	%s
 
 variables
-	discrete_state_set
-		string 1
-		set_values "%s"
-		descriptors "fn"
 %s	
 method
 %s
-'''%(savedir, response, mofn, variables, method)
+'''%(savedir, response, variables, method)
 
 
 	if not os.path.exists(savedir):
@@ -85,8 +81,34 @@ method
 
 
 class UncertaintyDakotaIn:
-	def __init__(self):
-		self.variables=''
+	#TODO
+	'''
+	description and architecture
+	'''
+	def __init__(self, mofn, fuel=False, perf_num=1, perf_i=[1]):
+
+		if fuel:
+			system='fuel'
+		else:
+			system='power'
+
+		self.variables='	discrete_state_set\n'
+		self.variables+='        string %s\n'%(3+perf_num*2)
+
+		set_n='  "fn"  "system" "num_perf"'
+		set_v='  "%s"  "%s" "%s"'%(mofn, system, perf_num)
+
+		for i in range(perf_num):
+			set_n+='  "index%s"'%i
+			set_v+='  "%s"'%perf_i[i]
+
+		for i in range(perf_num):
+			set_n+='  "sign%s"'%i
+			set_v+='  "1"'
+
+		self.variables+='        set_values'+set_v+'\n'
+		self.variables+='        descriptors'+set_n+'\n'
+
 
 	def uniform(self, var_names, minimum, maximum):
 		'''
@@ -146,6 +168,7 @@ class UncertaintyDakotaIn:
 			nominals, a list of float, the mean values of all the paramters 
 			mininum, a list of float, the lower bounds of all the parameters 
 			maximum, a list of float, the upper bounds of all the parameters
+			scale: TODO 
 
 		'''
 
@@ -163,13 +186,13 @@ class UncertaintyDakotaIn:
 			x=nominals[i]
 		
 			mean=(xmin+xmax+scale*x)/(scale+2)
-			if mean==x:
+			if abs(mean-x)<1e-10:
 				a=scale/2.+1.
 			else:
 				a=(mean-xmin)*(2.*x-xmin-xmax)/(x-mean)/(xmax-xmin)
 			b=a*(xmax-mean)/(mean-xmin)
 
-			alpha+=' %s'%a
+			alpha+=' %s'%a #TODO %s --> %.xf, check precison
 			beta+=' %s'%b
 			lb+=' %s'%xmin
 			ub+=' %s'%xmax
@@ -204,6 +227,10 @@ class UncertaintyDakotaIn:
 		
 
 class OptimisationDakotaIn:
+	#TODO
+	'''
+	description
+	'''
 	def __init__(self):
 		self.method=''
 
@@ -239,8 +266,32 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
 
-	def variables(self, var_names, nominals, maximum, minimum):
-		v=''
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_sign, fuel=False):
+		if fuel:
+			system='fuel'
+		else:
+			system='power'
+
+
+		perf_num=len(perf_i)
+
+		v='    discrete_state_set\n'
+		v+='        string %s\n'%(3+perf_num*2)
+
+		set_n='  "fn"  "system" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"'%(mofn, system, perf_num)
+
+		for i in range(perf_num):
+			set_n+='  "index%s"'%i
+			set_v+='  "%s"'%perf_i[i]
+
+		for i in range(perf_num):
+			set_n+='  "sign%s"'%i
+			set_v+='  "%s"'%perf_sign[i]
+
+		v+='        set_values'+set_v+'\n'
+		v+='        descriptors'+set_n+'\n'
+
 		var_num=len(var_names)
 		init=''
 		lb=''
@@ -271,7 +322,11 @@ def gen_interface_bb(savedir):
 	which will be excuted by DAKOTA
 
 	* `savedir` (str): directory to save the interface_bb.py file	
+	* `perf_n` (list of str): a list of the names of the resulting performance, e.g. lcoe, capf, epy, srev	
+	* `perf_sign` (list of float): a list of signs for the optimisation, e.g. 1 is to minimise, -1 is to maximise; 
+								   perf_sign=None if it is a study other than optiisation		
 	'''
+	
 
 	bb='''#!/usr/bin/env python
 
@@ -281,6 +336,7 @@ def gen_interface_bb(savedir):
 # load the necessary Python modeuls
 import dakota.interfacing as di
 import os
+import glob
 
 # Parse Dakota parameters file
 params, results = di.read_parameters_file()
@@ -290,13 +346,18 @@ params, results = di.read_parameters_file()
 # index of the case (suffix for output)
 names=params.descriptors
 fn=params.__getitem__("fn") #the modelica file
+system=params.__getitem__("system") # fuel system or power system
+num_perf=int(params.__getitem__("num_perf")) # number of the performance results 
 model=os.path.splitext(os.path.split(fn)[1])[0] # model name
 
 var_n=[] # variable names
 var_v=[] # variable values
-for n in names[:-1]:
+
+print ''
+for n in names[:-(3+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
+	print 'variable   : ', n, '=', params.__getitem__(n)
 # case suffix
 suffix=results.results_file.split(".")[-1]
 
@@ -308,22 +369,37 @@ if not os.path.exists(model):
 	sim.compile_model()
 	sim.compile_sim(args=['-s'])
 
-sim.update_pars(var_n, var_v)
-sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
 
-resultclass = postproc.SimResultElec(sim.res_fn)
+sim.update_pars(var_n, var_v)
+#sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
+sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
+
+if system=='fuel':
+	resultclass = postproc.SimResultFuel(sim.res_fn)
+else:
+	resultclass = postproc.SimResultElec(sim.res_fn)
+
 perf = resultclass.calc_perf()
 
-epy=perf[0]
-lcoe=perf[1]
-capf=perf[2]
-solartherm_res=[lcoe, capf, epy]
-print "LCOE, CAPF, EPY", solartherm_res	
+
+solartherm_res=[]
+for i in range(num_perf):
+	idx=int(params.__getitem__("index%s"%i))
+	sign=float(params.__getitem__("sign%s"%i))
+	solartherm_res.append(sign*perf[idx])
+	print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
+
+print ''
+
 # Return the results to Dakota
 for i, r in enumerate(results.responses()):
     if r.asv.function:
         r.function = solartherm_res[i]
 results.write()
+
+map(os.unlink, glob.glob(sim.res_fn))
+map(os.unlink, glob.glob(model+'_init_*.xml'))
+
 '''
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)
