@@ -275,7 +275,7 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 	paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
 	n_cores = 4 # Number of cores for parallel evaluation of the fitness function
 
-	creator.create("FitnessMulti", base.Fitness, weights=(-1.0, 1.0))
+	creator.create("FitnessMulti", base.Fitness, weights=(-1.0, -1.0))
 	creator.create("Individual", list, fitness=creator.FitnessMulti)
 
 	toolbox = base.Toolbox() # Attribute generator
@@ -388,7 +388,9 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 	cands = np.array(cand)
 	front = np.array(fitnesss)
 
-	return cands, front
+	dm = decisionmaker(cands,fitnesss) # Decision-making class instance	
+
+	return cands, front, dm
 
 	
 
