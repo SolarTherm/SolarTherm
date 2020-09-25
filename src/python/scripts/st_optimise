@@ -159,7 +159,7 @@ if __name__ == '__main__':
 
 	mat_fn = sim.model + '_res.mat'
 
-	print "\n\n\n"
+	print "\n\n\nObjective        method: ", args.method
 
 	obj_collect = args.objective.split(",") # A list of objective(s) name in string
 	obj_sign=[] # sign for the optimisation, 1 is to minimise, -1 is to maximise
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 		if n in resultclass.perf_n:
 			perf_i.append(resultclass.perf_n.index(oo))
 		else:
-			print 'Note: objective(s) value not in '+ str(resultclass.perf_n)
+			print '    Note: objective(s) value not in '+ str(resultclass.perf_n)
 			
 
 	num_obj=len(obj_n)
@@ -252,7 +252,7 @@ if __name__ == '__main__':
 			par_b.append([0, 1])
 			par_0.append((p0 - lb)/(ub - lb))
 
-	print "\nOptimisation parameter(s): ", par_n, "\n"
+	print "Optimisation parameter(s): ", par_n, "\n"
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
@@ -279,7 +279,7 @@ if __name__ == '__main__':
 			else:
 				method=args.method
 				
-			res, cand= st_sciopt(objfunc, method, par_b, par_0, args.maxiter, scale, offset, args.framework, args.outfile_f)
+			res, cand= st_sciopt(objfunc, method, par_b, par_0, args.maxiter, scale, offset)
 
 		if args.outfile_f is not None:
 			f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
@@ -298,11 +298,11 @@ if __name__ == '__main__':
 			decisionmaker= postproc.DecisionMaker # Decision-maker classs instance
 			dm_method = args.dm
 
-			cands, front=st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker)
+			cands, front, dm=st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker)
 
 			# Save the optimal solutions to a text file
-			if outfile_p is not None:
-				f = open(outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
+			if args.outfile_p is not None:
+				f = open(args.outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
 				for nn in par_n:
 					f.write("%s " % nn)
 				for ii in obj_n:
@@ -311,15 +311,14 @@ if __name__ == '__main__':
 				np.savetxt(f, np.c_[cands,front],delimiter=' ')
 				f.close()
 
-			dm = decisionmaker(cand,fitnesss) # Decision-making class instance
 			if dm_method == 'linmap':
 				best_ind, best_fitness = dm.linmap()
 			else:
 				assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
 				best_ind, best_fitness = dm.topsis()
 
-			if outfile_f is not None:
-				f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Final optimal design parameters: " + str(best_ind) + '\n')
 				f.write("Final optimal objective functions: " + str(best_fitness))
 				f.close()
@@ -339,14 +338,17 @@ if __name__ == '__main__':
 			plt.scatter(front[:,0], front[:,1], c="b", marker='*')
 			plt.title('Pareto Front', loc='center')
 			plt.axis("tight")
-			if perf_i[0] == 1:
-				obj_min_u = resultclass.perf_u[perf_i[0]] # objective unit
-				obj_max_u = resultclass.perf_u[perf_i[1]] # objective unit
-			else:
-				obj_min_u = resultclass.perf_u[perf_i[1]] # objective unit
-				obj_max_u = resultclass.perf_u[perf_i[0]] # objective unit
-			plt.xlabel(obj_n[0] + " (" + obj_min_u + ")")
-			plt.ylabel(obj_n[1] + " (" + obj_max_u + ")")
+			obj_unit=[] # objective unit
+
+			for i in range(num_obj):
+				if len(perf_i)>0:
+					obj_unit.append(resultclass.perf_u[perf_i[i]])
+				else:
+					obj_unit.append('')
+
+			plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
+			plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
+
 			plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
 			if args.outfig is not None:
 				fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
@@ -363,8 +365,8 @@ if __name__ == '__main__':
 				# need to put those as inputs to the DAKOTA as well 
 				opt.moga()
 				method=opt.method
-				response=opt.response(num_obj=len(obj_n))
-				variables=opt.variables(var_names=par_n, nominals=nominals, maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_sign=obj_sign, fuel=args.fuel)
+				response=opt.response(num_obj=num_obj)
+				variables=opt.variables(var_names=par_n, nominals=nominals, maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, perf_sign=obj_sign, fuel=args.fuel)
 
 				gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 				gen_interface_bb(savedir)

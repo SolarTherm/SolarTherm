@@ -266,14 +266,17 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
 
-	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_sign, fuel=False):
-		if fuel:
-			system='fuel'
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, fuel=False):
+
+		if len(perf_i)==0:
+			system='none'
 		else:
-			system='power'
+			if fuel:
+				system='fuel'
+			else:
+				system='power'
 
-
-		perf_num=len(perf_i)
+		perf_num=len(perf_sign)
 
 		v='    discrete_state_set\n'
 		v+='        string %s\n'%(3+perf_num*2)
@@ -282,8 +285,13 @@ class OptimisationDakotaIn:
 		set_v='  "%s"  "%s"  "%s"'%(mofn, system, perf_num)
 
 		for i in range(perf_num):
-			set_n+='  "index%s"'%i
-			set_v+='  "%s"'%perf_i[i]
+			if system=='none':
+				set_n+='  "index%s"'%i
+				set_v+='  "%s"'%perf_name[i]
+
+			else:
+				set_n+='  "index%s"'%i
+				set_v+='  "%s"'%perf_i[i]
 
 		for i in range(perf_num):
 			set_n+='  "sign%s"'%i
@@ -374,20 +382,29 @@ sim.update_pars(var_n, var_v)
 #sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
 sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
 
-if system=='fuel':
-	resultclass = postproc.SimResultFuel(sim.res_fn)
+if system!='none':
+	if system=='fuel':
+		resultclass = postproc.SimResultFuel(sim.res_fn)
+	else:
+		resultclass = postproc.SimResultElec(sim.res_fn)
+	perf = resultclass.calc_perf()
 else:
-	resultclass = postproc.SimResultElec(sim.res_fn)
-
-perf = resultclass.calc_perf()
-
+	import DyMat
+	res=DyMat.DyMatFile(sim.res_fn)
 
 solartherm_res=[]
+
 for i in range(num_perf):
-	idx=int(params.__getitem__("index%s"%i))
 	sign=float(params.__getitem__("sign%s"%i))
-	solartherm_res.append(sign*perf[idx])
-	print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
+
+	if system=='none':
+		name=params.__getitem__("index%s"%i)
+		solartherm_res.append(sign*res.data(name)[0])
+		print 'objective %s: '%i, name, sign*res.data(name)[0]
+	else:
+		idx=int(params.__getitem__("index%s"%i))
+		solartherm_res.append(sign*perf[idx])
+		print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
 
 print ''
 
@@ -398,7 +415,7 @@ for i, r in enumerate(results.responses()):
 results.write()
 
 map(os.unlink, glob.glob(sim.res_fn))
-map(os.unlink, glob.glob(model+'_init_*.xml'))
+#map(os.unlink, glob.glob(model+'_init_*.xml'))
 
 '''
 	if not os.path.exists(savedir):
