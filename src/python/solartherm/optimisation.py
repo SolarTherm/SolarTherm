@@ -2,7 +2,7 @@ import time
 import numpy as np
 
 
-def st_pso(objfunc, par_b, maxiter, scale, offset, framework='soo_min', outfile_f=None):
+def st_pso(objfunc, par_b, maxiter, scale, offset):
 	'''
 	pso optimisation
 	'''
@@ -18,30 +18,10 @@ def st_pso(objfunc, par_b, maxiter, scale, offset, framework='soo_min', outfile_
 	res = pso(objfunc, lb, ub, maxiter=maxiter, swarmsize=swarmsize)
 	cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
 
-	t_end = time.time() # NOTE: the clock does not work on the multicored version!
-	t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
-
-	print "\n\nTotal time elapsed: ", t_dur, "seconds."
-
-	if outfile_f is not None:
-		f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Optimal design parameters: " + str(cand) + '\n')
-		if framework == 'soo_min':
-			f.write("Optimal objective function: " + str(res[1]))
-		else:
-			f.write("Optimal objective function: " + str(-1.* res[1]))
-		f.close()
-
-	print "Optimal design parameters: ", (cand)
-	if framework == 'soo_min':
-		print "Optimal objective function: ", (res[1])
-	else:
-		print "Optimal objective function: ", (-1.* res[1])
-
-	return res, cand
+	return res[1], cand
 
 
-def st_cma(objfunc, par_b, par_0, maxiter, scale, offset, framework='soo_min', outfile_f=None):
+def st_cma(objfunc, par_b, par_0, maxiter, scale, offset):
 	try:
 		import cma
 	except ImportError:
@@ -62,30 +42,10 @@ def st_cma(objfunc, par_b, par_0, maxiter, scale, offset, framework='soo_min', o
 			})
 	cand = [scale[i]*v + offset[i] for i, v in enumerate(res[0])]
 
-	t_end = time.time() # NOTE: the clock does not work on the multicored version!
-	t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
-
-	print "\n\n\Total time elapsed: ", t_dur, "seconds."
-
-	if outfile_f is not None:
-		f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Optimal design parameters: " + str(cand) + '\n')
-		if framework == 'soo_min':
-			f.write("Optimal objective function: " + str(res[1]))
-		else:
-			f.write("Optimal objective function: " + str(-1.* res[1]))
-		f.close()
-
-	print "Optimal design parameters: ", (cand)
-	if framework == 'soo_min':
-		print "Optimal objective function: ", (res[1])
-	else:
-		print "Optimal objective function: ", (-1.* res[1])
-
-	return res, cand
+	return res[1], cand
 
 
-def st_ga1(objfunc, par_b, par_n, framework, outfile_f=None):
+def st_ga1(objfunc, par_b, par_n, scale, offset):
 
 	import pylab as pl
 	try:
@@ -117,10 +77,11 @@ def st_ga1(objfunc, par_b, par_n, framework, outfile_f=None):
 
 	ga = GSimpleGA.GSimpleGA(genome) # Genetic algorithm instance
 	ga.selector.set(Selectors.GTournamentSelector) # Set the selector method
-	if framework == 'soo_min':
-		ga.setMinimax(Consts.minimaxType["minimize"])
-	else:
-		ga.setMinimax(Consts.minimaxType["maximize"])
+	ga.setMinimax(Consts.minimaxType["minimize"])
+	#if framework == 'soo_min':
+	#	ga.setMinimax(Consts.minimaxType["minimize"])
+	#else:
+	#	ga.setMinimax(Consts.minimaxType["maximize"])
 	ga.setPopulationSize(pop_size) # Set the population size for each generation
 	ga.setGenerations(ngen) # Set the number of generation
 	ga.setCrossoverRate(cxpb) # Set the crossover rate  
@@ -135,21 +96,13 @@ def st_ga1(objfunc, par_b, par_n, framework, outfile_f=None):
 	cand = [scale[i]*v + offset[i] for i, v in enumerate(res.genomeList)] # Denormalised best individual
 
 
-	if outfile_f is not None:
-		f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Optimal design parameters: " + str(cand) + '\n')
-		f.write("Optimal objective function: " + str(res.score))
-		f.close()
-
-	print "Optimal design parameters: ", (cand)
-	print "Optimal objective function: ", (res.score)
-
-	return cand, res
+	return res.score, cand
 
 
-def st_ga2(objfunc, par_b, par_n, framework,outfile_f):
+def st_ga2(objfunc, par_b, par_n, scale, offset):
 
 	try:
+		import random
 		import deap
 		from deap import algorithms, base, creator, tools
 	except ImportError:
@@ -169,10 +122,13 @@ def st_ga2(objfunc, par_b, par_n, framework,outfile_f):
 	paral_eval = False # To enable parallel evaluation. Only use it when the fitness function is slow!
 	n_cores = 4 # Number of cores for parallel evaluation of the fitness function
 
-	if framework == 'soo_min':
-		creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-	else:
-		creator.create("FitnessMin", base.Fitness, weights=(1.0,))
+	creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+
+	#if framework == 'soo_min':
+	#	creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+	#else:
+	#	creator.create("FitnessMin", base.Fitness, weights=(1.0,))
+
 	creator.create("Individual", list, fitness=creator.FitnessMin)
 
 	toolbox = base.Toolbox() # Attribute generator
@@ -267,30 +223,15 @@ def st_ga2(objfunc, par_b, par_n, framework,outfile_f):
 	res = tools.selBest(pop, 1)[0] # Best individual in normalised form
 	cand = [scale[i]*v + offset[i] for i, v in enumerate(res)] # Denormalised best individual
 
-	t_end = time.time() # NOTE: the clock does not work on the multicored version!
-	t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
-
-	print "\n\nTotal time elapsed: ", t_dur, "seconds."
-	if outfile_f is not None:
-		f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Optimal design parameters: " + str(cand) + '\n')
-		f.write("Optimal objective function: " + str(res.fitness.values[0]))
-		f.close()
-
-	print "Optimal design parameters: ", (cand)
-	print "Optimal objective function: ", (res.fitness.values[0])
+	return res.fitness.values[0], cand
 
 
-def st_sciopt(objfunc, op_meth, par_b, par_0, maxiter, scale, offset, framework, outfile_f):
+def st_sciopt(objfunc, op_meth, par_b, par_0, maxiter, scale, offset):
 
 	try:
 		from scipy import optimize as sciopt
 	except ImportError:
 		sciopt = None
-
-	if framework == 'soo_max':
-		assert sciopt is not None, 'Library for scipy is not installed'
-		op_meth = "L-BFGS-B" # Because the Nelder_Mead method does not take bounds, thereby leading to negative domains
 
 	res = sciopt.minimize(objfunc, par_0, method=op_meth, bounds=par_b,
 			options={
@@ -305,33 +246,14 @@ def st_sciopt(objfunc, op_meth, par_b, par_0, maxiter, scale, offset, framework,
 	print("")
 	cand = [scale[i]*v + offset[i] for i, v in enumerate(res.x)]
 
-	t_end = time.time() # NOTE: the clock does not work on the multicored version!
-	t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+	return res.fun, cand 
 
-	print "\n\nTotal time elapsed: ", t_dur, "seconds."
-
-	if outfile_f is not None:
-		f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Optimal design parameters: " + str(cand) + '\n')
-		if framework == 'soo_min':
-			f.write("Optimal objective function: " + str(res.fun))
-		else:
-			f.write("Optimal objective function: " + str(-1. * res.fun))
-		f.close()
-
-	print "Optimal design parameters: ", (cand)
-	if args.framework == 'soo_min':
-		print "Optimal objective function: ", (res.fun)
-	else:
-		print "Optimal objective function: ", (-1. * res.fun)
-
-	return res, cand 
-
-def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker, outfile_p, outfile_f):
+def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker):
+	
 	import random
 	import scoop
 	from scoop import futures
-
+	t_start=time.time()
 	try:
 		import deap
 		from deap import algorithms, base, creator, tools
@@ -466,38 +388,7 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 	cands = np.array(cand)
 	front = np.array(fitnesss)
 
-	t_end = time.time() # NOTE: the clock does not work on the multicored version!
-	t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
-
-	# Save the optimal solutions to a text file
-	if outfile_p is not None:
-		f = open(outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
-		for nn in par_n:
-			f.write("%s " % nn)
-		for ii in obj_n:
-			f.write("%s " % ii)
-		f.write("\n")
-		np.savetxt(f, np.c_[cands,front],delimiter=' ')
-		f.close()
-
-	dm = decisionmaker(cand,fitnesss) # Decision-making class instance
-	if dm_method == 'linmap':
-		best_ind, best_fitness = dm.linmap()
-	else:
-		assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
-		best_ind, best_fitness = dm.topsis()
-
-	print "\n\nTotal time elapsed: ", t_dur, "seconds."
-	if outfile_f is not None:
-		f = open(outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-		f.write("Final optimal design parameters: " + str(best_ind) + '\n')
-		f.write("Final optimal objective functions: " + str(best_fitness))
-		f.close()
-	else:
-		print "Final optimal design parameters: ", (best_ind)
-		print "Final optimal objective functions: ", (best_fitness)
-
-	return conds, front
+	return cands, front
 
 	
 
