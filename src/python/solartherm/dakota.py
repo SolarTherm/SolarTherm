@@ -266,26 +266,18 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
 
-	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, fuel=False):
-
-		if len(perf_i)==0:
-			system='none'
-		else:
-			if fuel:
-				system='fuel'
-			else:
-				system='power'
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv):
 
 		perf_num=len(perf_sign)
 
 		v='    discrete_state_set\n'
-		v+='        string %s\n'%(3+perf_num*2)
+		v+='        string %s\n'%(12+perf_num*2)
 
-		set_n='  "fn"  "system" "num_perf"'
-		set_v='  "%s"  "%s"  "%s"'%(mofn, system, perf_num)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
-			if system=='none':
+			if system=='TEST':
 				set_n+='  "index%s"'%i
 				set_v+='  "%s"'%perf_name[i]
 
@@ -357,12 +349,25 @@ fn=params.__getitem__("fn") #the modelica file
 system=params.__getitem__("system") # fuel system or power system
 num_perf=int(params.__getitem__("num_perf")) # number of the performance results 
 model=os.path.splitext(os.path.split(fn)[1])[0] # model name
+start=str(params.__getitem__("start")) 
+stop=str(params.__getitem__("stop")) 
+step=str(params.__getitem__("step"))
+initStep=params.__getitem__("initStep")
+maxStep=params.__getitem__("maxStep") 
+integOrder=str(params.__getitem__("integOrder"))
+solver=str(params.__getitem__("solver"))
+nls=str(params.__getitem__("nls"))
+lv=str(params.__getitem__("lv"))
+
+initStep = None if initStep == 'None' else str(initStep)
+maxStep = None if maxStep == 'None' else str(maxStep)
 
 var_n=[] # variable names
 var_v=[] # variable values
 
 print ''
-for n in names[:-(3+2*num_perf)]:
+print names[:-(12+2*num_perf)]
+for n in names[:-(12+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
 	print 'variable   : ', n, '=', params.__getitem__(n)
@@ -380,24 +385,26 @@ if not os.path.exists(model):
 
 sim.update_pars(var_n, var_v)
 #sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
-sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
+#sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
+sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
-if system!='none':
-	if system=='fuel':
+if system=='TEST':
+	import DyMat
+	res=DyMat.DyMatFile(sim.res_fn)
+else:
+	if system=='FUEL':
 		resultclass = postproc.SimResultFuel(sim.res_fn)
 	else:
 		resultclass = postproc.SimResultElec(sim.res_fn)
 	perf = resultclass.calc_perf()
-else:
-	import DyMat
-	res=DyMat.DyMatFile(sim.res_fn)
+
 
 solartherm_res=[]
 
 for i in range(num_perf):
 	sign=float(params.__getitem__("sign%s"%i))
 
-	if system=='none':
+	if system=='TEST':
 		name=params.__getitem__("index%s"%i)
 		solartherm_res.append(sign*res.data(name)[0])
 		print 'objective %s: '%i, name, sign*res.data(name)[0]

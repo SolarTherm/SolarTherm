@@ -5,7 +5,7 @@ import unittest
 
 from solartherm import simulation
 import DyMat
-import os
+import subprocess
 from math import pi
 import re
 import numpy as np
@@ -41,15 +41,23 @@ class TestStOptimise(unittest.TestCase):
 		y=float(params[1])
 
 		return obj, x, y
+
+	def get_schaffer_front(self,x):
+
+		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
+		return y
 		
 
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
 		obj=999
+		x=999
+		y=999
 		i=0
-		while obj>0.1:
-			os.system('st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen --method pso --maxiter 100 %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn))
+		args='st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen --method pso --maxiter 100 --test %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn)
+		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
+			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
 			print 'Attempt ', i+1
 			i+=1
@@ -59,13 +67,17 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 
+
 	def test_cma(self):
 		
 		outfile='TestStOptimise_cma_results.txt'
 		obj=999
+		x=999
+		y=999
 		i=0
-		while obj>0.1:
-			os.system('st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen  --method cma %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn))
+		args='st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen --method cma --test %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn)
+		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
+			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
 			print 'Attempt ', i+1
 			i+=1
@@ -79,9 +91,12 @@ class TestStOptimise(unittest.TestCase):
 		
 		outfile='TestStOptimise_ga1_results.txt'
 		obj=999
+		x=999
+		y=999
 		i=0
-		while obj>0.1:
-			os.system('st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen  --method ga1 %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn))
+		args='st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen --method ga1 --test %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn)
+		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
+			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
 			print 'Attempt ', i+1
 			i+=1
@@ -95,9 +110,12 @@ class TestStOptimise(unittest.TestCase):
 		
 		outfile='TestStOptimise_ga2_results.txt'
 		obj=999
+		x=999
+		y=999
 		i=0
-		while obj>0.1:
-			os.system('st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen  --method ga2 %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn))
+		args='st_optimise --outfile_f %s --start 0 --stop 1 --objective f_rosen --method ga2 --test %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn)
+		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
+			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
 			print 'Attempt ', i+1
 			i+=1
@@ -111,9 +129,12 @@ class TestStOptimise(unittest.TestCase):
 		
 		outfile='TestStOptimise_Nelder-Mead_results.txt'
 		obj=999
+		x=999
+		y=999
 		i=0
-		while obj>0.1:
-			os.system('st_optimise --outfile_f %s --start 0 --stop 1 --maxiter 100 --objective f_rosen %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn))
+		args='st_optimise --outfile_f %s --start 0 --stop 1 --maxiter 100 --objective f_rosen --test %s x1=-2,2,1 y1=-2,2,-1.5'%(outfile, self.fn)
+		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
+			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
 			print 'Attempt ', i+1
 			i+=1
@@ -124,16 +145,13 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(y-1.) < 5e-1)
 
 
-	def get_schaffer_front(self,x):
-
-		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
-		return y
-
 	def test_nsga2(self):
 		
 		outfile='TestStOptimise_nsga2_results.txt'
 		front='TestStOptimise_nsga2_pareto_front.txt'
-		os.system('st_optimise --outfile_f %s --outfile_p %s --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method nsga2 %s x2=-100,100,2'%(outfile, front, self.fn))
+		figfile='TestStOptimise_nsga2_pareto_front.png'
+		args='st_optimise --outfile_f %s --outfile_p %s --outfig %s --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method nsga2 --test %s x2=-100,100,2'%(outfile, front, figfile, self.fn)
+		subprocess.call(args, shell=True)
 
 		with open(front) as f:
 			content= f.read().splitlines()
@@ -162,10 +180,10 @@ class TestStOptimise(unittest.TestCase):
 			f2=f_schaffer2[i]
 			self.assertTrue(abs((f2-self.get_schaffer_front(f1))/f2)< 0.1)
 
-
 	def test_dakota_moga(self):
-		
-		os.system('st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga %s x2=-100,100,2'%(self.fn))
+		figfile='TestStOptimise_moga_pareto_front.png'
+		args='st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
+		subprocess.call(args, shell=True)
 
 		f_out='finaldata1.dat'
 		with open(f_out) as f:

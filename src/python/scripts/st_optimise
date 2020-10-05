@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 t_start = time.time()
 
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, test_mode, par_val):
 
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
@@ -28,7 +28,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 
 	num_obj=len(obj_n) # number of objective functions
 	
-	if len(perf_i)==0: # objective(s) value not in ['epy', 'lcoe', 'capf', 'srev']
+	if test_mode: # objective(s) value not in ['epy', 'lcoe', 'capf', 'srev']
 		res=DyMat.DyMatFile(mat_fn)
 		objs=[]
 		for i in range(num_obj):
@@ -45,7 +45,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
  			# TODO seems it did not specify the sign for nsga2 in the previous version
 			# but seems it was hard coded
 			# obj_min is always in front of obj_max in the return
-			#obj=perfs[perf_i[i]]
+			# obj=perfs[perf_i[i]]
 			objs.append(obj)
 
 		if constr:
@@ -111,6 +111,8 @@ if __name__ == '__main__':
 			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
+	parser.add_argument('--test', action='store_true',
+			help='run the simulation in the test mode, i.e. without post-processing calculations for levelised cost')
 	#parser.add_argument('--framework', type=str, default='soo_min',
 	#		help='soo_min, soo_max or moo, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
 	parser.add_argument('--outfile_f',  type=str, default=None,
@@ -133,7 +135,7 @@ if __name__ == '__main__':
 
 	fn=os.path.abspath(args.file)
 	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
-
+	input_xml=mn+'_init.xml'
 
 	if not os.path.exists(args.wd):
 		os.makedirs(args.wd)	
@@ -143,15 +145,22 @@ if __name__ == '__main__':
 		savedir=args.wd
 	os.chdir(args.wd)
 
-	if args.fuel:
-		resultclass = postproc.SimResultFuel
+	if args.test:
+		system='TEST'
+		resultclass=None
 	else:
-		resultclass = postproc.SimResultElec
-
+		if args.fuel:
+			system='FUEL'
+			resultclass = postproc.SimResultFuel
+		else:
+			system='ELECTRICITY'
+			resultclass = postproc.SimResultElec
+	
+	print "\n\n\nOptimisation        model: ", system
 
 	sim = simulation.Simulator(fn, fusemount=False)
 
-	if not os.path.exists(mn):
+	if not os.path.exists(mn) or not os.path.exists(input_xml):
 		print('Compiling model')
 		sim.compile_model()
 		print('Compiling simulator')
@@ -159,8 +168,8 @@ if __name__ == '__main__':
 
 	mat_fn = sim.model + '_res.mat'
 
-	print "\n\n\nObjective        method: ", args.method
 
+	print "Objective          method: ", args.method
 	obj_collect = args.objective.split(",") # A list of objective(s) name in string
 	obj_sign=[] # sign for the optimisation, 1 is to minimise, -1 is to maximise
 	obj_n=[] # names of the objectives, e.g. lcoe, capf etc
@@ -181,23 +190,22 @@ if __name__ == '__main__':
 
 		print 'Objective        function: ',i+1, goal, obj_n[i]
 		i+=1
-
+	num_obj=len(obj_n)
 
 	perf_i = [] # perfromance index
-	for n in obj_n:
-		if n in resultclass.perf_n:
-			perf_i.append(resultclass.perf_n.index(oo))
-		else:
-			print '    Note: objective(s) value not in '+ str(resultclass.perf_n)
+	if not args.test:
+		try:
+			for n in obj_n:
+				perf_i.append(resultclass.perf_n.index(n))
+		except ValueError:
+			raise ValueError('Objective(s) value should be in '
+					+ str(resultclass.perf_n))		
 			
-
-	num_obj=len(obj_n)
 
 	sim.load_init() # Load in init XML
 
 	if args.excel!=None:
 
-		input_xml=mn+'_init.xml'
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)	
@@ -257,30 +265,168 @@ if __name__ == '__main__':
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
-			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign)
+			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.test)
+
+
+	if args.method == 'pso':
+		res, cand=st_pso(objfunc, par_b, args.maxiter, scale, offset)
+
+	elif args.method == 'cma':
+		res, cand=st_cma(objfunc, par_b, par_0, args.maxiter, scale, offset)
+
+	elif args.method == 'ga1':
+		res, cand=st_ga1(objfunc, par_b, par_n, scale, offset)
+
+	elif args.method == 'ga2':
+		res, cand=st_ga2(objfunc, par_b, par_n, scale, offset)
+
+
+	elif args.method == 'nsga2':	
+		decisionmaker= postproc.DecisionMaker # Decision-maker classs instance
+		dm_method = args.dm
+
+		cands, front, dm=st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker)
+
+		# Save the optimal solutions to a text file
+		if args.outfile_p is not None:
+			f = open(args.outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
+			for nn in par_n:
+				f.write("%s " % nn)
+			for ii in obj_n:
+				f.write("%s " % ii)
+			f.write("\n")
+			np.savetxt(f, np.c_[cands,front],delimiter=' ')
+			f.close()
+
+		if dm_method == 'linmap':
+			best_ind, best_fitness = dm.linmap()
+		else:
+			assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
+			best_ind, best_fitness = dm.topsis()
+
+		if args.outfile_f is not None:
+			f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+			f.write("Final optimal design parameters: " + str(best_ind) + '\n')
+			f.write("Final optimal objective functions: " + str(best_fitness))
+			f.close()
+		else:
+			print "Final optimal design parameters: ", (best_ind)
+			print "Final optimal objective functions: ", (best_fitness)
+
+		t_end = time.time() # NOTE: the clock does not work on the multicored version!
+		t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
+		print "\n\nTotal time elapsed: ", t_dur, "seconds."
+
+
+		# Plot the Pareto Front
+		fig = plt.figure()
+		fig.add_subplot(111)
+
+		plt.scatter(front[:,0], front[:,1], c="b", marker='*')
+		plt.title('Pareto Front (nsga2)', loc='center')
+		plt.axis("tight")
+		obj_unit=[] # objective unit
+
+		for i in range(num_obj):
+			if len(perf_i)>0:
+				obj_unit.append(resultclass.perf_u[perf_i[i]])
+			else:
+				obj_unit.append('')
+
+		plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
+		plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
+
+		plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
+		if args.outfig is not None:
+			fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
+		else:
+			plt.show(block=True)
+
+
+	elif args.method=='dakota_moga':
+
+		opt=OptimisationDakotaIn()
+		# TODO at the moment, all the setting are default
+		# need to implement parameters to change the settings
+		# TODO at the moment, the modelica solver, time steps were not user specified in the DAKOTA program
+		# need to put those as inputs to the DAKOTA as well 
+		opt.moga()
+		method=opt.method
+		response=opt.response(num_obj=num_obj)
+
+		variables=opt.variables(var_names=par_n, nominals=nominals, 
+		maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
+		perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
+		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
+		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv)
+
+		gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
+		gen_interface_bb(savedir)
+
+		subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
+
+		if args.np!=0:
+			if not os.path.exists(mn):
+				sim = simulation.Simulator(fn=fn, fusemount=False)
+				sim.compile_model()
+				sim.compile_sim(args=['-s'])
+			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+		else:
+			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+
+		summary={}
+		for i in range(num_obj):
+			summary[obj_n[i]]=np.array([])
+
+		f_out=savedir+'/finaldata1.dat'
+		with open(f_out) as f:
+			content= f.read().splitlines()
+		f.close()		
+
+		t=len(content)
+		for i in xrange(t):
+			c=content[i]
+			l=c.split("\t")
+			for p in range(num_obj):
+				summary[obj_n[p]]=np.append(summary[obj_n[p]], float(l[1+p]))	
+
+
+		# Plot the Pareto Front
+		fig = plt.figure()
+		fig.add_subplot(111)
+
+		plt.scatter(summary[obj_n[0]], summary[obj_n[1]], c="b", marker='*')
+		plt.title('Pareto Front (moga)', loc='center')
+		plt.axis("tight")
+		obj_unit=[] # objective unit
+
+		for i in range(num_obj):
+			if len(perf_i)>0:
+				obj_unit.append(resultclass.perf_u[perf_i[i]])
+			else:
+				obj_unit.append('')
+
+		plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
+		plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
+
+		plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
+		if args.outfig is not None:
+			fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
+		else:
+			plt.show(block=True)
+
+
+
+
+	else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
+		if goal=='maximise':
+			method='L-BFGS-B'
+		else:
+			method=args.method	
+		res, cand= st_sciopt(objfunc, method, par_b, par_0, args.maxiter, scale, offset)
+
 
 	if num_obj==1:
-
-		if args.method == 'pso':
-			res, cand=st_pso(objfunc, par_b, args.maxiter, scale, offset)
-
-		elif args.method == 'cma':
-			res, cand=st_cma(objfunc, par_b, par_0, args.maxiter, scale, offset)
-
-		elif args.method == 'ga1':
-			res, cand=st_ga1(objfunc, par_b, par_n, scale, offset)
-
-		elif args.method == 'ga2':
-			res, cand=st_ga2(objfunc, par_b, par_n, scale, offset)
-
-		else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
-			if goal=='maximise':
-				method='L-BFGS-B'
-			else:
-				method=args.method
-				
-			res, cand= st_sciopt(objfunc, method, par_b, par_0, args.maxiter, scale, offset)
-
 		if args.outfile_f is not None:
 			f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 			f.write("Optimal design parameters: " + str(cand) + '\n')
@@ -291,96 +437,8 @@ if __name__ == '__main__':
 		print "Optimal objective function: ", obj_sign[0]* res
 
 
-	else:
-
-		if args.method == 'nsga2':	
-
-			decisionmaker= postproc.DecisionMaker # Decision-maker classs instance
-			dm_method = args.dm
-
-			cands, front, dm=st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker)
-
-			# Save the optimal solutions to a text file
-			if args.outfile_p is not None:
-				f = open(args.outfile_p, 'w') # Example: outfile_p = ../examples/result.txt
-				for nn in par_n:
-					f.write("%s " % nn)
-				for ii in obj_n:
-					f.write("%s " % ii)
-				f.write("\n")
-				np.savetxt(f, np.c_[cands,front],delimiter=' ')
-				f.close()
-
-			if dm_method == 'linmap':
-				best_ind, best_fitness = dm.linmap()
-			else:
-				assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
-				best_ind, best_fitness = dm.topsis()
-
-			if args.outfile_f is not None:
-				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-				f.write("Final optimal design parameters: " + str(best_ind) + '\n')
-				f.write("Final optimal objective functions: " + str(best_fitness))
-				f.close()
-			else:
-				print "Final optimal design parameters: ", (best_ind)
-				print "Final optimal objective functions: ", (best_fitness)
-
-			t_end = time.time() # NOTE: the clock does not work on the multicored version!
-			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
-			print "\n\nTotal time elapsed: ", t_dur, "seconds."
 
 
-			# Plot the Pareto Front
-			fig = plt.figure()
-			fig.add_subplot(111)
-
-			plt.scatter(front[:,0], front[:,1], c="b", marker='*')
-			plt.title('Pareto Front', loc='center')
-			plt.axis("tight")
-			obj_unit=[] # objective unit
-
-			for i in range(num_obj):
-				if len(perf_i)>0:
-					obj_unit.append(resultclass.perf_u[perf_i[i]])
-				else:
-					obj_unit.append('')
-
-			plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
-			plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
-
-			plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
-			if args.outfig is not None:
-				fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
-			else:
-				plt.show(block=True)
-
-
-		elif args.method=='dakota_moga':
-	
-				opt=OptimisationDakotaIn()
-				# TODO at the moment, all the setting are default
-				# need to implement parameters to change the settings
-				# TODO at the moment, the modelica solver, time steps were not user specified in the DAKOTA program
-				# need to put those as inputs to the DAKOTA as well 
-				opt.moga()
-				method=opt.method
-				response=opt.response(num_obj=num_obj)
-				variables=opt.variables(var_names=par_n, nominals=nominals, maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, perf_sign=obj_sign, fuel=args.fuel)
-
-				gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
-				gen_interface_bb(savedir)
-
-				subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
-
-				if args.np!=0:
-					if not os.path.exists(mn):
-						sim = simulation.Simulator(fn=fn, fusemount=False)
-						sim.compile_model()
-						sim.compile_sim(args=['-s'])
-					subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
-				else:
-					subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
 
 
