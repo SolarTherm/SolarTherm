@@ -18,6 +18,10 @@ if __name__=='__main__':
 			help='model file name')	
 	parser.add_argument('-v', action='store_true',
 			help='verbose')
+	parser.add_argument('--start', type=str, default='0',
+			help='simulation start time: <number>[,y,d,m,s]')
+	parser.add_argument('--stop', type=str, default='1y',
+			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
 	parser.add_argument('--tolerance', type=str, default='1e-04',
@@ -32,13 +36,12 @@ if __name__=='__main__':
 			help='solver choice for OpenModelica')
 	parser.add_argument('--nls', type=str, default='homotopy',
 			help='non-linear solver choice for OpenModelica e.g. newton, hybrid, kinsol, mixed, and homotopy')
-	parser.add_argument('--np', type=int, default=mp.cpu_count(),
-			help='number of processes (set to 0 for serial mode)')	
 	parser.add_argument('--lv', type=str, default='-LOG_SUCCESS,-stdout',
 			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')	
-
+	parser.add_argument('--np', type=int, default=mp.cpu_count(),
+			help='number of processes (set to 0 for serial mode)')	
 	parser.add_argument('--excel', type=str, default=None,
 			help='the directry of the input excel data sheet')
 	parser.add_argument('--mode', type=str, default='uncertainty',
@@ -59,6 +62,11 @@ if __name__=='__main__':
 	fn=os.path.abspath(args.file)
 	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
 
+	if args.fuel:
+		system='FUEL'
+	else:
+		system='ELECTRICITY'
+
 	if not os.path.exists(args.wd):
 		os.makedirs(args.wd)	
 	if not os.path.isabs(args.wd):
@@ -67,7 +75,11 @@ if __name__=='__main__':
 		savedir=args.wd
 
 	os.chdir(args.wd)
-	U=UncertaintyDakotaIn(mofn=fn, fuel=args.fuel)
+	U=UncertaintyDakotaIn(mofn=fn, start=args.start, stop=args.stop, 
+		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
+		integOrder=args.integOrder, solver=args.solver, nls=args.nls, 
+		lv=args.lv, system=system)
+
 	if args.excel!=None:
 		if not os.path.exists(mn):
 			sim = simulation.Simulator(fn=fn, fusemount=False)

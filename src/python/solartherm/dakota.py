@@ -85,18 +85,16 @@ class UncertaintyDakotaIn:
 	'''
 	description and architecture
 	'''
-	def __init__(self, mofn, fuel=False, perf_num=1, perf_i=[1]):
+	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, perf_num=1, perf_i=[1]):
 
-		if fuel:
-			system='fuel'
-		else:
-			system='power'
+		if perf_num!=len(perf_i):
+			perf_num=len(perf_i)
 
 		self.variables='	discrete_state_set\n'
-		self.variables+='        string %s\n'%(3+perf_num*2)
+		self.variables+='        string %s\n'%(12+perf_num*2)
 
-		set_n='  "fn"  "system" "num_perf"'
-		set_v='  "%s"  "%s" "%s"'%(mofn, system, perf_num)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
 			set_n+='  "index%s"'%i
