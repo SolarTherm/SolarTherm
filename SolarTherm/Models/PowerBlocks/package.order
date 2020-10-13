@@ -10,3 +10,8 @@ Correlation
 Cooling
 PowerBlockModel
 sCO2Cycle
+SurrogatesCO2PB
+sCO2PBCalculator
+sCO2PBCalculator_Using_PinchPHX
+sCO2PBCalculator_Using_JPidea
+SurrogatesCO2PB2

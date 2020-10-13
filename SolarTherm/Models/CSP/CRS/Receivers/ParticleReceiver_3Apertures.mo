@@ -1,5 +1,5 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
-model ParticleReceiver
+model ParticleReceiver_3Apertures
 	extends Interfaces.Models.ReceiverFluid;
 	
 	import Modelica.SIunits.Conversions.*;
@@ -22,11 +22,11 @@ model ParticleReceiver
 	parameter SI.CoefficientOfHeatTransfer alpha=1 if const_alpha "Convective heat transfer coefficient";
 	
 	parameter Boolean use_neural_network = true;
-	parameter Integer inputsize = 4;
+	parameter Integer inputsize = 5;
 	parameter Integer outputsize = 1;
-    parameter String saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_receiver_v2";
-    parameter Real[inputsize] X_max = {850e6, 318.15, 833.15, 45};
-    parameter Real[inputsize] X_min = {280e6, 268.15, 803.15, 23};
+    parameter String saved_model_dir = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/robust_rcv/surrogate_model_3";
+    parameter Real[inputsize] X_max = {5.04906372e+01, 1.47403013e+03, 3.14955603e+02, 1.36460943e+03, 9.99896884e+08};
+    parameter Real[inputsize] X_min = {4.51463536e+00, 1.02218597e+03, 2.53080041e+02, 7.52944510e+02, 2.45868147e+07};
     parameter Real out_max = 0.964303;
     parameter Real out_min = 0.427611;
 	
@@ -45,11 +45,31 @@ model ParticleReceiver
 	SI.SpecificEnthalpy h_out(start=h_0) "Specific enthalpy at outlet";
 
 	Modelica.SIunits.ThermodynamicTemperature T_in=Medium.temperature(state_in) "Temperature at inlet";
-
-	SI.HeatFlowRate Q_loss "Total losses";
-	SI.HeatFlowRate Q_rcv "Heat flow captured by curtain";
-	SI.Efficiency eta_rcv;
-	SI.Efficiency eta_rcv_dummy;
+    
+    /*Initialise variables for each receiver aperture*/
+    SI.HeatFlowRate Q_in_1;
+	SI.HeatFlowRate Q_loss_1 "Total losses";
+	SI.HeatFlowRate Q_rcv_1 "Heat flow captured by curtain";
+	SI.Efficiency eta_rcv_1;
+	SI.Efficiency eta_rcv_dummy_1;
+	Real ratio_1;
+	SI.MassFlowRate mdot_1;
+	
+	SI.HeatFlowRate Q_in_2;
+	SI.HeatFlowRate Q_loss_2 "Total losses";
+	SI.HeatFlowRate Q_rcv_2 "Heat flow captured by curtain";
+	SI.Efficiency eta_rcv_2;
+	SI.Efficiency eta_rcv_dummy_2;
+	Real ratio_2;
+	SI.MassFlowRate mdot_2;
+	
+	SI.HeatFlowRate Q_in_3;
+	SI.HeatFlowRate Q_loss_3 "Total losses";
+	SI.HeatFlowRate Q_rcv_3 "Heat flow captured by curtain";
+	SI.Efficiency eta_rcv_3;
+	SI.Efficiency eta_rcv_dummy_3;
+	Real ratio_3;
+	SI.MassFlowRate mdot_3;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		visible = true,transformation(
@@ -60,10 +80,16 @@ model ParticleReceiver
 		origin={24, 80},extent={{-6,-6},{6,6}},
 		rotation=-90)));
 
-	Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
+	Modelica.Blocks.Interfaces.BooleanInput on_1 annotation (Placement(
 		transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
 		-24,-98},{-12,-86}})));
-	
+    
+    Modelica.Blocks.Interfaces.BooleanInput on_2 annotation(
+    Placement(visible = true, transformation(extent = {{-38, -64}, {2, -24}}, rotation = 0), iconTransformation(extent = {{-24, -68}, {-12, -56}}, rotation = 0)));
+    
+    Modelica.Blocks.Interfaces.BooleanInput on_3 annotation(
+    Placement(visible = true, transformation(extent = {{-38, -34}, {2, 6}}, rotation = 0), iconTransformation(extent = {{-24, -84}, {-12, -72}}, rotation = 0)));
+    	
 	Real const_coeff;
 	Real Qin_coeff;
 	Real Tamb_coeff;
@@ -71,8 +97,18 @@ model ParticleReceiver
 	Real log10Qin_coeff;
 	Real log10Tin_coeff;
 	Real log10Tamb_coeff;
-	Real raw_input[inputsize];
-    STNeuralNetwork session = STNeuralNetwork(saved_model_dir) if use_neural_network == true
+	
+	/*Input for each aperture*/
+	Real raw_input_1[inputsize];
+	Real raw_input_2[inputsize];
+	Real raw_input_3[inputsize];
+	
+	/*Initialise the ANN session for each aperture*/
+    STNeuralNetwork session_1 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
+    "Initialise neural network session if use_neural_network == true";
+    STNeuralNetwork session_2 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
+    "Initialise neural network session if use_neural_network == true";
+    STNeuralNetwork session_3 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
     "Initialise neural network session if use_neural_network == true";
 	
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
@@ -85,6 +121,7 @@ model ParticleReceiver
     Placement(visible = true, transformation(origin = {106, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {30, -16}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Modelica.Blocks.Interfaces.RealInput level annotation(
     Placement(visible = true, transformation(origin = {36, -36}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = {36, -36}, extent = {{20, -20}, {-20, 20}}, rotation = 0)));
+ 
 equation
 	medium.h=(h_in+h_out)/2; // temperature for thermal losses = average of inlet and outlet pcl temperatures
 	h_in=inStream(fluid_a.h_outflow);
@@ -255,39 +292,117 @@ equation
     end when;  
     
     //Energy Balance
-    heat.Q_flow = Q_loss + Q_rcv;
-    if on then
+    Q_in_1 = ratio_1 * heat.Q_flow;
+    Q_in_2 = ratio_2 * heat.Q_flow;
+    Q_in_3 = ratio_3 * heat.Q_flow;
+    
+    Q_in_1 = Q_rcv_1 + Q_loss_1;
+    Q_in_2 = Q_rcv_2 + Q_loss_2;
+    Q_in_3 = Q_rcv_3 + Q_loss_3;
+    
+    if on_1 then
         if use_neural_network == true then
-          eta_rcv_dummy  = predict(
-            session, 
-            raw_input, 
+          eta_rcv_dummy_1  = predict(
+            session_1, 
+            raw_input_1, 
             inputsize,
             X_max,
             X_min,
             out_max,
             out_min
             );
-            
+                      
         else
-          eta_rcv_dummy = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
+          eta_rcv_dummy_1 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
                         T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
                         log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
         end if;
-        eta_rcv = eta_rcv_dummy;
-        Q_loss= (1-eta_rcv) * heat.Q_flow;
+        
+        eta_rcv_1 = eta_rcv_dummy_1;
+                
+        Q_loss_1 = (1-eta_rcv_1) * Q_in_1;
         
         if logic then
-          fluid_a.m_flow = Q_rcv/(h_out-h_in);
+          mdot_1 = Q_rcv_1/(h_out-h_in);
         else
-          fluid_a.m_flow = 0;
-        end if;  
+          mdot_1 = 0;
+        end if;
 	else
-      eta_rcv_dummy = 0;
-      eta_rcv = 0;
-      Q_loss = 0; // when the receiver is 'off', assume no thermal losses
-      fluid_a.m_flow = 0;
+      eta_rcv_dummy_1  = 0;
+      eta_rcv_1 = 0;
+      Q_loss_1 = 0;
+      mdot_1 = 0;
 	end if;
 	
+	if on_2 then
+        if use_neural_network == true then
+          eta_rcv_dummy_2  = predict(
+            session_2, 
+            raw_input_2, 
+            inputsize,
+            X_max,
+            X_min,
+            out_max,
+            out_min
+            );
+        else
+          eta_rcv_dummy_2 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
+                        T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
+                        log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
+        end if;
+        
+        eta_rcv_2 = eta_rcv_dummy_2;
+                
+        Q_loss_2 = (1-eta_rcv_2) * Q_in_2; 
+        
+        if logic then
+          mdot_2 = Q_rcv_2/(h_out-h_in);
+        else
+          mdot_2 = 0;
+        end if;
+        
+	else
+      eta_rcv_dummy_2  = 0;
+      eta_rcv_2 = 0;
+      Q_loss_2 = 0; 
+      mdot_2 = 0;
+	end if;
+    
+    if on_3 then
+        if use_neural_network == true then
+        eta_rcv_dummy_3  = predict(
+            session_3, 
+            raw_input_3, 
+            inputsize,
+            X_max,
+            X_min,
+            out_max,
+            out_min
+            );
+        else
+          eta_rcv_dummy_3 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
+                        T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
+                        log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
+        end if;
+        
+        eta_rcv_3 = eta_rcv_dummy_3;
+                
+        Q_loss_3 = (1-eta_rcv_3) * Q_in_3;
+        
+        if logic then
+          mdot_3 = Q_rcv_3/(h_out-h_in);
+        else
+          mdot_3 = 0;
+        end if;
+        
+	else
+      eta_rcv_dummy_3  = 0;
+      eta_rcv_3 = 0; 
+      Q_loss_3 = 0;
+      mdot_3 = 0;
+	end if;
+	
+	fluid_a.m_flow = mdot_1 + mdot_2 + mdot_3;
 	//M flow signal
 	m_flow_out = fluid_a.m_flow;
 	
@@ -298,4 +413,4 @@ equation
 </ul>
 </html>"),
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
-end ParticleReceiver;
+end ParticleReceiver_3Apertures;

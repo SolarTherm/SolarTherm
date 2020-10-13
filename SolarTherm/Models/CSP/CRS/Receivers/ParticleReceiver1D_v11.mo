@@ -33,6 +33,7 @@ model ParticleReceiver1D_v11
   mdot and T_in are given by the inlet port
   Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
+  parameter Boolean iterate_Q_flow = false;
   // FIXME may need to revisit this
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
@@ -76,7 +77,7 @@ model ParticleReceiver1D_v11
   parameter SI.Length H_drop_design = 25.80006;
   parameter Real prob_center = 6 / 12;
   parameter Real prob_side = 3 / 12;
-  SI.Length H_drop(start = 24.806280) "Receiver drop height [m]";
+  SI.Length H_drop(start = 15) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
@@ -174,15 +175,16 @@ algorithm
 
 
 equation
-
   W_rcv = H_drop * AR;
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
+  
   if fixed_geometry then
     H_drop = H_drop_design;
   else
     T_out = T_out_design;
   end if;
+
 //Boundary conditions
   phi[1] = if mdot < 1 then 0 else phi_max;
   vp[1] = vp_in;
@@ -238,6 +240,7 @@ equation
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
+    
 //Assigning values to the TAB lookup table
   for i in 1:N + 1 loop
 //Temperature (input)

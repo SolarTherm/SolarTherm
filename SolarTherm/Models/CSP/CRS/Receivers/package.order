@@ -20,3 +20,5 @@ ParticleReceiver1D_v11
 ParticleReceiver1DCalculator
 ParticleReceiver1DCalculator_Approach2
 ParticleReceiver1D_IterateMassFlow
+ParticleReceiver1D_Iterate_QFlow
+ParticleReceiver_3Apertures

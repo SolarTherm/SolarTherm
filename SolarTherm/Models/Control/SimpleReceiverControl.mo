@@ -74,7 +74,8 @@ model SimpleReceiverControl
   eta_rec_th_des = eta_rec_th_des, 
   y_start =y_start,
   feedforward=feedforward,
-  H_drop=H_drop) 
+  H_drop=H_drop,
+  T_hot_set = T_ref) 
   annotation(
     Placement(visible = true, transformation(origin = {-4, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   

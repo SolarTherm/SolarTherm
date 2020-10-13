@@ -40,8 +40,8 @@ model ParticleReceiver1D_IterateMassFlow
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
-  parameter Boolean with_uniform_curtain_props = true "If true, ignore effect of phi_c on curtain emi/abs/tau";
-  parameter Boolean with_detail_h_ambient = true;
+  parameter Boolean with_uniform_curtain_props = false "If true, ignore effect of phi_c on curtain emi/abs/tau";
+  parameter Boolean with_detail_h_ambient = false;
   parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   parameter Boolean with_wind_effect = false;
   
@@ -93,11 +93,12 @@ model ParticleReceiver1D_IterateMassFlow
   
   // Receiver geometry
   parameter SI.Length H_drop_design = 25.80006;
+  parameter SI.MassFlowRate mdotguess(fixed=false);
   SI.Length H_drop(start = 30, min=1) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot(start=1000) "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot(start=mdotguess,min=100) "Inlet mass flow rate [kg/s]";
   
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
@@ -108,19 +109,19 @@ model ParticleReceiver1D_IterateMassFlow
   SI.Temperature T_s[N + 1](
     start = linspace(T_ref, 1073.15, N + 1), 
     nominal = linspace(T_ref, 1073.15, N + 1), 
-    max = fill(1088., N + 1), 
+    max = fill(1400., N + 1), 
     min = fill(263, N + 1)) "Curtain Temperature";
     
   SI.SpecificEnthalpy h_s[N + 1](
     start = linspace(h_0, Util.h_T(1073.15), N + 1), 
     nominal = linspace(h_0, Util.h_T(1073.15), N + 1), 
-    max = fill(Util.h_T(1090.15), N + 1), 
+    max = fill(Util.h_T(1400.15), N + 1), 
     min = fill(Util.h_T(263), N + 1)) "Curtain enthalpy";
     
   SI.Temperature T_w[N + 2](
     start = linspace(T_ref, 1068.15, N + 2), 
     nominal = linspace(T_ref, 1068.15, N + 2), 
-    max = fill(1073.15, N + 2), 
+    max = fill(1400.15, N + 2), 
     min = fill(258., N + 2)) "Receiver wall temperature";
 
   //Curtain radiation properties

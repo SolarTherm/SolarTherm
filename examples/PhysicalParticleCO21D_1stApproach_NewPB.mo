@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21D_1stApproach
+model PhysicalParticleCO21D_1stApproach_NewPB
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -64,8 +64,8 @@ model PhysicalParticleCO21D_1stApproach
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 4 "Solar multiple";
-  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+  parameter Real SM = 2.5 "Solar multiple";
+  parameter SI.Power P_net = 150e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = T_hot_set "Particle inlet temperature to particle heat exchanger at design";
@@ -109,8 +109,8 @@ model PhysicalParticleCO21D_1stApproach
   // Storage
   parameter Real t_storage(unit = "h") = 14 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
-  parameter SI.Temperature T_cold_set = 823.15 "Cold tank target temperature";
   parameter SI.Temperature T_hot_set = 1073.15 "Hot tank target temperature";
+  parameter SI.Temperature T_cold_set = 823.15 "Cold tank target temperature";
   parameter SI.Temperature T_cold_start = T_cold_set "Cold tank starting temperature";
   parameter SI.Temperature T_hot_start = T_hot_set "Hot tank starting temperature";
   parameter SI.Temperature T_cold_aux_set = CV.from_degC(500) "Cold tank auxiliary heater set-point temperature";
@@ -130,6 +130,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
   parameter Real PR = 25 / 9.17 "Pressure ratio";
   parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
+  parameter SI.TemperatureDifference pinch_PHX = 15;
   // main Compressor parameters
   parameter SI.Efficiency eta_comp_main = 0.89 "Maximal isentropic efficiency of the compressors";
   // reCompressor parameters
@@ -139,7 +140,7 @@ model PhysicalParticleCO21D_1stApproach
   //HTR Heat recuperator parameters use_detail_pri_field
   parameter Integer N_HTR = 15;
   //LTR Heat recuperator parameters
-  parameter Integer N_LTR_parameter = 2 "PG";
+  parameter Integer N_LTR_parameter = 15 "PG";
   //Cooler parameters
   parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   //Exchanger parameters
@@ -148,7 +149,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Temperature T_out_ref_blk = T_cold_set "Particle outlet temperature from particle heat exchanger at design";
   parameter SI.Temperature T_in_ref_co2 = T_cold_set - pinch_exchanger "CO2 inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
-  parameter Integer N_exch_parameter = 2 "PG";
+  parameter Integer N_exch_parameter = 15 "PG";
   parameter Real par_fix_fr = 0 "Fixed parasitics as fraction of gross rating";
   parameter Boolean blk_enable_losses = true "True if the power heat loss calculation is enabled";
   parameter Boolean external_parasities = true "True if there is external parasitic power losses";
@@ -374,8 +375,32 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set, pinch_recuperator = pinch_recuperator, par_fr = par_fr) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB_Modified_JPidea powerBlock(
+      redeclare package MedRec = Medium, 
+      P_nom = P_net, 
+      T_HTF_in_des = T_in_ref_blk, 
+      T_amb_des = blk_T_amb_des, 
+      T_low = T_low, 
+      pinch_PHX = pinch_PHX, 
+      external_parasities = external_parasities, 
+      nu_min = nu_min_blk, 
+      N_exch = N_exch_parameter "PG", 
+      N_LTR = N_LTR_parameter, 
+      f_fixed_load = f_fixed_load, 
+      PR = PR, 
+      pri_recuperator = pri_recuperator, 
+      pri_turbine = pri_turbine, 
+      pri_compressor = pri_compressor, 
+      pri_cooler = pri_cooler, 
+      pri_generator = pri_generator, 
+      pri_exchanger = pri_exchanger, 
+      eta_motor = eta_motor, 
+      T_HTF_out = T_cold_set, 
+      pinch_recuperator = pinch_recuperator, 
+      par_fr = par_fr
+      ) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
+  
   // Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.Finances.SpotPriceTable(file = pri_file)) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
@@ -420,6 +445,8 @@ model PhysicalParticleCO21D_1stApproach
   Real SLmax(start = E_max * 2.77778e-10) "Storage capacity in MWh th";
   Real dummyRatio;
   Boolean wind_curtail;
+  Real eta_gross;
+  Real eta_Q;
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -454,6 +481,8 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
+  eta_gross = powerBlock.W_gross / powerBlock.exchanger.Q_HX;
+  eta_Q = powerBlock.exchanger.Q_HX / powerBlock.Q_HX_des;
   if heliostatsField.ele > ele_min and data.Wspd > Wspd_max then
     wind_curtail = true;
   else
@@ -586,7 +615,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
@@ -596,4 +625,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21D_1stApproach;
+end PhysicalParticleCO21D_1stApproach_NewPB;
