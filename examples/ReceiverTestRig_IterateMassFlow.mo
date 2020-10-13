@@ -1,6 +1,11 @@
 within examples;
 
 model ReceiverTestRig_IterateMassFlow
+  /*st_simulate --stop 1 --np 0 --tolerance 1e-06 ReceiverTestRig_IterateMassFlow.mo H_drop_design=38.02181715308447 T_out_design=1318.714569288698 T_amb_design=267.000345168053 T_in_design=1180.6007808410518 Q_in=550127686.9209708
+                                                      
+
+                                  39.30487929238938,1426.5166909751956,311.00266227552925,1326.4733930070881,909132450.0548977,0,419586515.7713164,
+                                                              */
   extends SolarTherm.Icons.ToDo;
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
@@ -14,13 +19,15 @@ model ReceiverTestRig_IterateMassFlow
   import Modelica.Blocks;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   // Design Condition
-  parameter Real T_out_design = from_degC(800);
-  parameter Real T_in_design =  828.0767105;
-  parameter SI.HeatFlowRate Q_in = 845833137.7;
-  parameter Real T_amb_design = 293.0875157;
-  parameter SI.Length H_drop_design = 24.16579774;
+  parameter SI.Length H_drop_design = 20.690760;
+  parameter Real T_out_design = 1454.288084;
+  parameter Real T_amb_design = 288.820712;
+  parameter Real T_in_design = 1302.833673;
+  parameter SI.HeatFlowRate Q_in = 1.315170e+08;
+  parameter SI.HeatFlowRate Q_threshold = 1.204220e+08;
   parameter Real Wspd_des = 5;
   parameter Real Wdir_des = 90;
+  parameter Real mdot_guess = Q_in / Q_threshold * 100 * 10;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -40,6 +47,8 @@ model ReceiverTestRig_IterateMassFlow
     Placement(visible = true, transformation(origin = {-78, 92}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Wdir(y = Wdir_des) annotation(
     Placement(visible = true, transformation(origin = {-78, 76}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+initial equation
+  particleReceiver1D.mdotguess = mdot_guess;
 equation
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));

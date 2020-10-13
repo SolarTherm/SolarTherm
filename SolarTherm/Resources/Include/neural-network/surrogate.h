@@ -15,7 +15,7 @@ void NoOpDeallocator(void* data, size_t a, void* b) {}
 
 void *load_session(char*);
 
-double run_surrogate(const Session_Props*, const double [], int ,double, 
+double run_surrogate(const Session_Props*, const double [], int, 
                      const double [], const double [], const double , const double );
 
 void free_surrogate(Session_Props*);

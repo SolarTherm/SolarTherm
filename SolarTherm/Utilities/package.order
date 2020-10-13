@@ -5,4 +5,6 @@ ToleranceTest
 Metadata_Optics
 LinProgFunc
 st_surrogate
-SurrogateModels
+SurrogateModelsMultiOutput
+SurrogateModelsSingleOutput
+Metadata_Optics_3Apertures

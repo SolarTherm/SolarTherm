@@ -3,6 +3,48 @@
 #include "tensorflow/c/c_api.h"
 #include "neural-network/surrogate.h"
 
+int main()
+{    
+    static Session_Props* sess;
+    int inputsize = 5;
+    char* saved_model_dir = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include/neural-network/trained-model/surrogate_PID_v1";
+    int marker = 0;
+    double timesimul = 1;
+    
+    //*********************Scaler ~ to scaledown the input
+    const double X_max[5] = {4.99840230e+01, 9.99735880e+08, 8.73149421e+02, 1.27313074e+03, 3.18143363e+02};
+    const double X_min[5] = {5.00281700e+00, 1.03123836e+06, 7.98173320e+02, 1.02328492e+03, 2.63159811e+02};
+
+    const double Y_max = 4800.818978;
+
+    const double Y_min = -1;
+
+    double time = 200.0;
+
+    while(marker<10)
+    {
+        if(marker < 1)
+        {
+            sess = load_session(saved_model_dir);
+        }
+
+        const double raw_input[5] =  {18.125592, 44645303.510000, 842.574156, 1044.433130, 293.892870};
+
+        double out = run_surrogate(
+            sess,
+            raw_input,
+            inputsize,
+            X_max,
+            X_min,
+            Y_max,
+            Y_min
+        );
+        printf("%f\n",out);
+
+        marker++;
+    }
+}
+
 void *load_session(char* saved_model_dir)
 {
     //*********************Adjust the logging of tensorflow by setting a variable 

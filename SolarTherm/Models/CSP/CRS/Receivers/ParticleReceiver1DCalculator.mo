@@ -13,12 +13,9 @@ model ParticleReceiver1DCalculator
   import Modelica.Math;
   import Modelica.Blocks;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
- 
   // Design Condition
   //2 way in designing the receiver, specifcy the area and calculate the mass flow rate to reach certain outlet temperature
   //Or specify the mass flow rate and calculate the area to reach certain outlet temperature
-  parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]";
-  parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (back of backwall) [W/m^2-K]"; 
   parameter SI.Area A_ap_des = 1000 "aperture area";
   parameter SI.Length H_drop_design = sqrt(A_ap_des);
   parameter SI.MassFlowRate m_in(fixed = false);
@@ -58,31 +55,10 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(
-  N = 30, 
-  fixed_cp = false, 
-  fixed_geometry = false, 
-  test_mode = true, 
-  with_isothermal_backwall = false, 
-  with_uniform_curtain_props = false, 
-  with_wall_conduction = true, 
-  Q_in = Q_in, 
-  h_conv_backwall=h_conv_backwall, 
-  h_conv_curtain=h_conv_curtain,
-  phi_max = phi_max,
-  T_amb = T_amb_design,
-  eps_w = eps_w,
-  th_w = th_w,
-  k_w = k_w,
-  F = F,
-  d_p=d_p,
-  cp_s = cp_s,
-  rho_s = rho_s,
-  eps_s = eps_s,
-  abs_s = abs_s) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = false, test_mode = true, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
 initial equation
-  m_in = Q_in *eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
+  m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
 equation
   Q_in_calculated = particleReceiver1D.A_ap * particleReceiver1D.q_solar;
   connect(source.ports[1], liftSimple.fluid_a) annotation(

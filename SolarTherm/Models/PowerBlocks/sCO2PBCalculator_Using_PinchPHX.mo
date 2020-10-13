@@ -1,6 +1,6 @@
-within examples;
+within SolarTherm.Models.PowerBlocks;
 
-model sCO2PBRig
+model sCO2PBCalculator_Using_PinchPHX
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -15,22 +15,32 @@ model sCO2PBRig
   import metadata = SolarTherm.Utilities.Metadata_Optics;
   import Modelica.SIunits.Conversions.*;
   extends SolarTherm.Media.CO2.PropCO2;
-  
-  // *********************PB Params
-  parameter SI.Power P_net = 100e6;
-  parameter SI.Temperature T_in_ref_blk = 1073.15;
-  parameter SI.Temperature delta = 100 "T_in_ref_blk - T_high";
+  // *********************PB Params - Sim Set-up
+  parameter Boolean test_mode = true;
+  parameter Boolean external_parasities = true;
+  // *********************PB Params - Changeable Design Param
+  parameter SI.Power P_net = 13;
+  parameter SI.Temperature T_in_ref_blk = 1373.05;
+  parameter SI.AbsolutePressure p_high = 24062356.78 "high pressure of the cycle";
+  parameter Real PR = 2.86 "Pressure ratio";
+  parameter Modelica.SIunits.TemperatureDifference delta = 93.87 "T_in_ref_blk - T_high";
+  parameter Modelica.SIunits.TemperatureDifference pinch_PHX = 15.46 "T particle outlet at PHX - T sCO2 inlet at PHX";
+
+  // *********************PB Params - Changeable Operation Param
+  parameter Real load = 0.51;
+  parameter SI.Temperature T_HTF_in = 1373.38;
+  parameter SI.Temperature T_amb_input = 308.24;
+  // *********************PB Params - Other params
   parameter SI.Temperature T_low = from_degC(41) "Cooler outlet temperature at design point";
   parameter SI.Temperature T_high = T_in_ref_blk - delta "Turbine inlet temperature at design point";
   parameter SI.Temperature blk_T_amb_des = from_degC(39);
-  parameter SI.AbsolutePressure p_high = 250 * 10^5 "high pressure of the cycle";
   parameter Real nu_min_blk = 0.5;
   parameter Integer N_exch_parameter = 15;
   parameter Integer N_HTR = 15;
   parameter Integer N_LTR_parameter = 15 "PG";
   parameter Real f_fixed_load = 0.0055;
-  parameter Real PR = 2.85 "Pressure ratio";
-  parameter SI.Temperature T_cold_set = 808.92;
+  parameter SI.Efficiency eta_motor = 0.95 "electrical generator efficiency";
+  // *********************PB Params - Financial
   parameter Real pinch_recuperator = 5;
   parameter Real par_fr = 0.1;
   parameter Real pri_recuperator = 5.2;
@@ -38,21 +48,14 @@ model sCO2PBRig
   parameter Real pri_compressor = 643.15;
   parameter Real pri_cooler = 76.25;
   parameter Real pri_generator = 108900;
-  parameter SI.Efficiency eta_motor = 0.95 "electrical generator efficiency";
   parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
-  parameter Boolean test_mode = true;
-  parameter Boolean external_parasities = true;
-  // ********************* Environment
-  parameter SI.Temperature T_amb_input = blk_T_amb_des;
-  parameter SI.Temperature T_HTF_in = T_high;
-  parameter Real load = 1;
   parameter SI.MassFlowRate m_HTF_des(fixed = false);
   parameter SI.MassFlowRate m_HTF_in = load * m_HTF_des;
-  // *********************
+  // *********************Medium
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
   //Components instanstiation
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = test_mode, T_high = T_high, p_high = p_high) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB_Modified_PG powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_PHX, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter, N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = test_mode, T_high = T_high) annotation(
     Placement(visible = true, transformation(origin = {38, -14.1111}, extent = {{-38, -40.1111}, {38, 40.1111}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary source(nPorts = 1, redeclare package Medium = Medium, T = T_HTF_in, use_T = true, use_p = false, p = 1e5) annotation(
     Placement(visible = true, transformation(origin = {-90, 16}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -73,8 +76,8 @@ model sCO2PBRig
   SI.Energy E_elec;
   Real eta_gross;
   Real eta_Q;
-initial equation
-  m_HTF_des = powerBlock.m_HTF_des;
+initial algorithm
+  m_HTF_des := powerBlock.m_HTF_des;
 equation
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
@@ -96,4 +99,4 @@ equation
     Line(points = {{-86, 44}, {-40, 44}, {-40, 28}, {-38, 28}}, color = {0, 0, 127}));
   annotation(
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002));
-end sCO2PBRig;
+end sCO2PBCalculator_Using_PinchPHX;

@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21D_1stApproach
+model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_SurrogatePB2
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -22,6 +22,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Boolean feedforward = true;
   parameter Boolean dispatch_optimiser = false;
   parameter Boolean new_storage_calc = false;
+  parameter Boolean use_neural_network = true;
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
@@ -64,8 +65,8 @@ model PhysicalParticleCO21D_1stApproach
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 4 "Solar multiple";
-  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+  parameter Real SM = 2.5 "Solar multiple";
+  parameter SI.Power P_net = 190e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = T_hot_set "Particle inlet temperature to particle heat exchanger at design";
@@ -106,6 +107,25 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real abs_s = 0.9 "Particle absorptivity";
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
+  //NN Based Receiver Parameter
+  parameter Integer inputsize_rcv = 5;
+  parameter Real X_max_rcv[inputsize_rcv] = {4.99989430e+01, 9.99980608e+08, 9.73137867e+02, 1.47313323e+03, 3.18147241e+02};
+  parameter Real X_min_rcv[inputsize_rcv] = {5.00086400e+00, 1.05574698e+06, 7.73151235e+02, 1.02316296e+03, 2.63153150e+02};
+  parameter Real y_max_rcv = 0.998605;
+  parameter Real y_min_rcv = 0;
+  parameter String saved_model_dir_rcv = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/PID_trained_model/output_eff_rcv/surrogate_model_0";
+  //NN Based sCO2-PB Parameter
+  // ********************* Surrogate boundaries
+  parameter Integer inputsize_PB = 9;
+  parameter Integer outputsize_PB = 2;
+  parameter Real[inputsize_PB] X_max_PB = {2.00000000e+08, 1.29876000e+03, 2.49331978e+07, 3.99000000e+00, 3.99200000e+01, 2.98150000e+02, 1.05000000e+00, 1.29860000e+03, 3.18060000e+02};
+  parameter Real[inputsize_PB] X_min_PB = {2.00000000e+07, 1.02474000e+03, 2.00278679e+07, 2.75000000e+00, 1.52200000e+01, 1.03960000e+02, 5.00000000e-01, 1.00521000e+03, 2.63200000e+02};
+  parameter Real eta_gross_max = 0.55466685;
+  parameter Real eta_gross_min = 0;
+  parameter Real eta_Q_max = 1.03160735;
+  parameter Real eta_Q_min = 0;
+  parameter String saved_model_dir_eta_gross = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_gross/surrogate_model_5";
+  parameter String saved_model_dir_eta_Q = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_Q/surrogate_model_4";
   // Storage
   parameter Real t_storage(unit = "h") = 14 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
@@ -117,6 +137,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.Temperature T_hot_aux_set = CV.from_degC(700) "Hot tank auxiliary heater set-point temperature";
   parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold partilces thermodynamic state at design";
   parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hot partilces thermodynamic state at design";
+  /*parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank so the simulation wont crash at t=0, since the control logic use t_on - t_start etc. PG";*/
   parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank so the simulation wont crash at t=0, since the control logic use t_on - t_start etc. PG";
   parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
@@ -126,9 +147,9 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real tank_ar = 2 "storage aspect ratio";
   // Power block
   parameter Real f_fixed_load = 0.0055 "Fixed load constantly consumed by PB when it operates";
-  parameter SI.AbsolutePressure p_high = 250 * 10 ^ 5 "high pressure of the cycle";
+  parameter SI.AbsolutePressure p_high = 245 * 10 ^ 5 "high pressure of the cycle";
   parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
-  parameter Real PR = 25 / 9.17 "Pressure ratio";
+  parameter Real PR = 2.78 "Pressure ratio";
   parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
   // main Compressor parameters
   parameter SI.Efficiency eta_comp_main = 0.89 "Maximal isentropic efficiency of the compressors";
@@ -139,16 +160,16 @@ model PhysicalParticleCO21D_1stApproach
   //HTR Heat recuperator parameters use_detail_pri_field
   parameter Integer N_HTR = 15;
   //LTR Heat recuperator parameters
-  parameter Integer N_LTR_parameter = 2 "PG";
+  parameter Integer N_LTR_parameter = 15 "PG";
   //Cooler parameters
   parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   //Exchanger parameters
   parameter Real pinch_recuperator = 15;
-  parameter Real pinch_exchanger = 15;
+  parameter Real pinch_exchanger = 25;
   parameter SI.Temperature T_out_ref_blk = T_cold_set "Particle outlet temperature from particle heat exchanger at design";
   parameter SI.Temperature T_in_ref_co2 = T_cold_set - pinch_exchanger "CO2 inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
-  parameter Integer N_exch_parameter = 2 "PG";
+  parameter Integer N_exch_parameter = 15 "PG";
   parameter Real par_fix_fr = 0 "Fixed parasitics as fraction of gross rating";
   parameter Boolean blk_enable_losses = true "True if the power heat loss calculation is enabled";
   parameter Boolean external_parasities = true "True if there is external parasitic power losses";
@@ -214,7 +235,6 @@ model PhysicalParticleCO21D_1stApproach
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.MassFlowRate m_flow_blk(fixed = false);
-  // = Q_flow_des / (h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
   parameter SI.Power P_name = P_net "Nameplate rating of power block";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
@@ -228,7 +248,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter Real r_cur = 0.71 "The currency rate from AUD to USD valid for 2019. See https://www.rba.gov.au/";
   parameter Real r_contg = 0.1 "Contingency rate";
   parameter Real r_cons = 0.09 "Construction cost rate";
-  parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gary et al 2011";
+  parameter FI.AreaPrice pri_field = if pri_field_wspd_max == true then if currency == Currency.USD then FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 else FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 / r_cur else if currency == Currency.USD then 75 else 75 / r_cur " Emes et al. ,Effect of heliostat design wind speed on the levelised cost ofelectricity from concentrating solar thermal power tower plants,Solar Energy 115 (2015) 441–451 ==> taken from the Fig 8.....75 is taken from Gen3 Roadmap Report";
   parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
   parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";
   parameter FI.Money pri_tower = if currency == Currency.USD then 157.44 else 157.44 / r_cur "Fixed tower cost";
@@ -251,12 +271,10 @@ model PhysicalParticleCO21D_1stApproach
   parameter FI.Money pri_exchanger = 150 "price of the primary exchanger in $/(kW_th). Objective for next-gen CSP with particles  --> value from v.9 EES sandia result c_hx";
   //Heliostat tstart
   parameter SI.Time t_start = 3600 "Start-up traking delay";
-  //parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 340 / 1e3 else (340 / 1e3)/r_cur "Balance of plant cost per gross rated power"; // Based on downselection criteria criteria
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 290 / 1040 * 600 / 1000 else 290 / 1040 * 600 / 1000 / r_cur "USD/We Balance of plant cost per gross rated power. 290--> Maximum BOP cost per MWe from SAM. 1040 is the maximum power block cost per MWe at SAM. 600 is the specific cost of the power block in USD/kWe according to DOE guidline,  ";
   parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 else 900 / r_cur "sCO2 PB cost per kWe based on the G3P3 Roadmap Report";
   parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 0.003 / (1e6 * 3.6) else 0.003 / (1e6 * 3.6) / r_cur "Variable O&M cost per production per year";
-  //Solar Field Sub-System Cost see PARAMETRIC ANALYSIS OF PARTICLE https://pubs.acs.org/doi/pdf/10.1021/jp206115p CSP SYSTEM PERFORMANCE AND COSTTO INTRINSIC PARTICLE PROPERTIES AND OPERATING CONDITIONS (Albrecht et al)
   // Washing cost and parameters
   // Source : Heliostat Cost Reduction Study Gregory J. Kolb, page 138 Table 1
   parameter Real C1 = 98 " % cleanliness of the mirror after 1 cleaning pass for method 1";
@@ -286,7 +304,6 @@ model PhysicalParticleCO21D_1stApproach
   parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
   //Storage Sub-system cost
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
-  //parameter FI.Money C_bins = FI.particleBinCost(T_hot_set) * SA_storage + FI.particleBinCost(T_cold_set) * SA_storage "Cost of cold and hot storage bins";
   parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage "Cost of cold and hot storage bins without insulation, 750 is taken from the email from jeremy stent by Philipe Gunawan";
   parameter FI.Money C_insulation = if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 0 else SA_storage * (131.0426 / U_value_hot_tank + 23.18) + SA_storage * (131.0426 / U_value_cold_tank + 23.18);
   //FIXME: THere are 2 u_values now, implement it in the tuffcrete x microporous analysis
@@ -295,7 +312,7 @@ model PhysicalParticleCO21D_1stApproach
   //parameter SI.Length t_mp = 0.32368 / U_value - 0.146096;
   //0.03293006 / U_value + 0.01518 =====> thickness function of Pumplite60;
   //0.32368 / U_value - 0.146096   =====> thickness function of Microporous;
-  //parameter SI.Length t_tuffcrete47 = 0.01;
+  parameter SI.Length t_tuffcrete47 = 0.01;
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
@@ -307,8 +324,7 @@ model PhysicalParticleCO21D_1stApproach
   parameter FI.Money C_cap(fixed = false) "Capital costs";
   parameter FI.MoneyPerYear C_year = if detail_field_om then P_name * pri_om_name + C_om_field + C_washing else P_name * pri_om_name "Fixed O&M cost per year + OnM field + Cost of washing the field";
   parameter FI.Money C_prod = pri_om_prod "Variable O&M cost per production per year";
-  // System components
-  // *********************
+  // *********************System components
   //Weather data
   SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
     Placement(visible = true, transformation(extent = {{-144, -60}, {-114, -32}}, rotation = 0)));
@@ -344,14 +360,12 @@ model PhysicalParticleCO21D_1stApproach
   // Washing calculator
   SolarTherm.Models.CSP.CRS.HeliostatsField.WashingFrequencyCalculator washingFrequencyCalculator(C_tw = C1, C_dl = C2, R_soil = R_soil, P_w = P_w, omega_n = omega_n, C_target = C_target) annotation(
     Placement(visible = true, transformation(origin = {-130, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  // Receivers
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(H_drop_design = H_rcv, N = 20, fixed_cp = false, test_mode = false, with_detail_h_ambient = false, with_wind_effect = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, phi_max = packing_factor, T_amb = T_amb_des_rcv, eps_w = eps_w, th_w = th_w, k_w = k_w, h_conv_curtain = h_conv_curtain, h_conv_backwall = h_conv_backwall, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s) annotation(
-    Placement(visible = true, transformation(origin = {-35, 33}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
+  //Surrogate Receiver
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver particleReceiver(H_drop_design = H_rcv, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set) annotation(
+    Placement(visible = true, transformation(origin = {-26, 30}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+  // Receiver Design Condition Sizing Calculator - Using expensive model
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(Q_in = Q_in_rcv, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  // Receiver control
-  SolarTherm.Models.Control.SimpleReceiverControl simpleReceiverControl(T_ref = T_hot_set, m_flow_min = m_flow_rec_min, m_flow_max = m_flow_rec_max, y_start = m_flow_rec_start, L_df_on = cold_tnk_defocus_lb, L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, eta_rec_th_des = eta_rec_th_des, feedforward = feedforward, H_drop = H_rcv) annotation(
-    Placement(visible = true, transformation(origin = {22, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value_hot_tank, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
@@ -374,10 +388,13 @@ model PhysicalParticleCO21D_1stApproach
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, T_amb_des = blk_T_amb_des, T_low = T_low, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter "PG", N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, PR = PR, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, T_HTF_out = T_cold_set, pinch_recuperator = pinch_recuperator, par_fr = par_fr) annotation(
+  SolarTherm.Models.PowerBlocks.SurrogatesCO2PB2 powerBlock(P_net = P_net, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = T_hot_set - T_cold_set, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, inputsize = inputsize_PB, outputsize = outputsize_PB, X_max = X_max_PB, X_min = X_min_PB, eta_gross_max = eta_gross_max, eta_gross_min = eta_gross_min, eta_Q_max = eta_Q_max, eta_Q_min = eta_Q_min, saved_model_dir_eta_gross = saved_model_dir_eta_gross, saved_model_dir_eta_Q = saved_model_dir_eta_Q, test_mode = false, eta_motor = eta_motor, f_fixed_load = f_fixed_load) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
+  //Power Block Calculator
+  SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = T_hot_set - T_cold_set, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = external_parasities) annotation(
+    Placement(visible = true, transformation(origin = {192, 110}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   // Price
-  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.Finances.SpotPriceTable(file = pri_file)) annotation(
+  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = pri_file)) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
@@ -419,7 +436,9 @@ model PhysicalParticleCO21D_1stApproach
   Real DEmax(start = Q_flow_des / 1e6) "Maximum dispatchable heat from the storage in MWth";
   Real SLmax(start = E_max * 2.77778e-10) "Storage capacity in MWh th";
   Real dummyRatio;
-  Boolean wind_curtail;
+  Real accumulated_m;
+  Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
+    Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -435,11 +454,11 @@ algorithm
     E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
-  Q_flow_des = powerBlock.Q_HX_des;
-  etaG = powerBlock.eta_net_design;
-  eff_blk = powerBlock.eta_net_design;
+  Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
+  etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
+  eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
   omega_twister = ceil(washingFrequencyCalculator.omega);
-  m_flow_blk = powerBlock.m_HTF_des;
+  m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
   opt_file = heliostatsField.optical.tablefile;
   A_rcv = particleReceiver1DCalculator.particleReceiver1D.H_drop ^ 2;
   rec_fr = 1 - particleReceiver1DCalculator.particleReceiver1D.eta_rec;
@@ -447,23 +466,36 @@ initial equation
   if match_gen3_report_cost then
     C_block = pri_block * P_gross / 1000;
   else
-    C_block = powerBlock.C_PB;
+    C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
   end if;
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop;
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
-  if heliostatsField.ele > ele_min and data.Wspd > Wspd_max then
-    wind_curtail = true;
-  else
-    wind_curtail = false;
-  end if;
-  simpleReceiverControl.idealMassflowBlockCalculation.Tamb = particleReceiver1D.Tamb;
+/*Equations below exist to close the model, s.t. the particle receiver model is agnostic to the input dimension*/
+  particleReceiver.raw_input[1] = H_rcv;
+  particleReceiver.raw_input[2] = particleReceiver.heat.Q_flow;
+  particleReceiver.raw_input[3] = particleReceiver.T_in;
+  particleReceiver.raw_input[4] = T_hot_set;
+  particleReceiver.raw_input[5] = particleReceiver.Tamb;
+/*End section*/
+/*Assigning the input to the surrogate model*/
+  powerBlock.raw_input[1] = P_net;
+  powerBlock.raw_input[2] = T_hot_set;
+  powerBlock.raw_input[3] = p_high;
+  powerBlock.raw_input[4] = PR;
+  powerBlock.raw_input[5] = pinch_exchanger;
+  powerBlock.raw_input[6] = T_hot_set - T_cold_set;
+  powerBlock.raw_input[7] = powerBlock.load;
+  powerBlock.raw_input[8] = tankHot.medium.T;
+  powerBlock.raw_input[9] = data.Tdry;
+/*End section*/
+  der(accumulated_m) = particleReceiver.fluid_a.m_flow;
 //Dispatch optimiser variables
   SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
   DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
-  SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10;
+  SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Maximum storage level in MWhth";
   if dispatch_optimiser == true then
     der(counter) = 1;
   else
@@ -489,11 +521,11 @@ equation
   der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
-  der(E_recv_incident) = particleReceiver1D.heat.Q_flow;
-  der(E_recv_net) = particleReceiver1D.Qdot_rec;
-  if powerBlock.exchanger.m_sup == true then
-    der(E_pb_input) = powerBlock.exchanger.Q_HX;
-    der(E_pb_gross) = -powerBlock.turbine.W_turb;
+  der(E_recv_incident) = particleReceiver.heat.Q_flow;
+  der(E_recv_net) = particleReceiver.Q_rcv;
+  if powerBlock.m_sup == true then
+    der(E_pb_input) = powerBlock.Q_HX;
+    der(E_pb_gross) = -powerBlock.W_gross;
   else
     der(E_pb_input) = 0;
     der(E_pb_gross) = 0;
@@ -501,7 +533,7 @@ equation
   der(E_pb_net) = powerBlock.W_net;
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
-  R_spot = market.profit * 3.6e9;
+  R_spot = market.profit;
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-113, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -547,46 +579,34 @@ equation
     Line(points = {{105, 46}, {105, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(powerBlock.W_net, market.W_net) annotation(
     Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
-  connect(liftRC.m_flow, controlHot.m_flow_in) annotation(
-    Line(points = {{2, -13}, {2, 42}, {46, 42}, {46, 62}, {48, 62}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(liftRC.fluid_b, particleReceiver1D.fluid_a) annotation(
-    Line(points = {{-8, -26}, {-32, -26}, {-32, 18}}, color = {0, 127, 255}));
-  connect(temperature.fluid_a, particleReceiver1D.fluid_b) annotation(
-    Line(points = {{-16, 68}, {-16, 41}, {-29, 41}}, color = {0, 127, 255}));
-  connect(heliostatsField.heat, particleReceiver1D.heat) annotation(
-    Line(points = {{-56, 28}, {-52, 28}, {-52, 38}}, color = {191, 0, 0}));
-  connect(heliostatsField.on, particleReceiver1D.on) annotation(
-    Line(points = {{-72, 2}, {-38, 2}, {-38, 17}}, color = {255, 0, 255}));
-  connect(heliostatsField.Q_incident, simpleReceiverControl.Q_in) annotation(
-    Line(points = {{-54, 20}, {24, 20}, {24, 10}, {24, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(tankCold.L, simpleReceiverControl.L_mea) annotation(
-    Line(points = {{44, -14}, {42, -14}, {42, 0}, {32, 0}, {32, 0}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(tankCold.T_mea, simpleReceiverControl.T_mea) annotation(
-    Line(points = {{42, -18}, {40, -18}, {40, 6}, {34, 6}, {34, 6}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(simpleReceiverControl.defocus, or1.u2) annotation(
-    Line(points = {{22, -12}, {22, -12}, {22, -70}, {-104, -70}, {-104, 4}, {-102, 4}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-  connect(simpleReceiverControl.m_flow, liftRC.m_flow) annotation(
-    Line(points = {{10, 0}, {6, 0}, {6, -12}, {2, -12}, {2, -13}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(heliostatsField.on, simpleReceiverControl.sf_on) annotation(
-    Line(points = {{-72, 2}, {-72, -54}, {38, -54}, {38, -6}, {34, -6}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-  connect(temperature.T, simpleReceiverControl.T_out_receiver) annotation(
-    Line(points = {{-6, 58}, {-6, 58}, {-6, 26}, {22, 26}, {22, 12}, {22, 12}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(always_on.y, heliostatsField.on_hopper) annotation(
     Line(points = {{-116, -4}, {-112, -4}, {-112, 20}, {-88, 20}, {-88, 20}}, color = {255, 0, 255}));
-  connect(particleReceiver1D.eta_rec_out, simpleReceiverControl.eta_rec) annotation(
-    Line(points = {{-30, 30}, {18, 30}, {18, 12}, {18, 12}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(Wind_dir.y, particleReceiver1D.Wdir) annotation(
-    Line(points = {{-117, 51}, {-38, 51}, {-38, 46}, {-40, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(Tamb_input.y, particleReceiver1D.Tamb) annotation(
-    Line(points = {{118, 80}, {-30, 80}, {-30, 46}, {-30, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(Wspd_input.y, particleReceiver1D.Wspd) annotation(
-    Line(points = {{-112, 30}, {-100, 30}, {-100, 54}, {-34, 54}, {-34, 46}, {-34, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(controlHot.rampingout, powerBlock.ramping) annotation(
     Line(points = {{60, 68}, {106, 68}, {106, 34}, {106, 34}}, color = {255, 0, 255}));
+  connect(heliostatsField.heat, particleReceiver.heat) annotation(
+    Line(points = {{-56, 28}, {-42, 28}, {-42, 34}, {-42, 34}}, color = {191, 0, 0}));
+  connect(heliostatsField.on, particleReceiver.on) annotation(
+    Line(points = {{-72, 2}, {-72, 2}, {-72, -14}, {-38, -14}, {-38, 16}, {-28, 16}, {-28, 16}}, color = {255, 0, 255}));
+  connect(liftRC.fluid_b, particleReceiver.fluid_a) annotation(
+    Line(points = {{-8, -26}, {-22, -26}, {-22, 16}, {-22, 16}}, color = {0, 127, 255}));
+  connect(particleReceiver.m_flow_out, controlHot.m_flow_in) annotation(
+    Line(points = {{-22, 28}, {46, 28}, {46, 62}, {48, 62}}, color = {0, 0, 127}));
+  connect(particleReceiver.fluid_b, temperature.fluid_a) annotation(
+    Line(points = {{-20, 38}, {-16, 38}, {-16, 68}, {-16, 68}}, color = {0, 127, 255}));
+  connect(Wind_dir.y, particleReceiver.Wdir) annotation(
+    Line(points = {{-116, 52}, {-30, 52}, {-30, 42}, {-30, 42}}, color = {0, 0, 127}));
+  connect(Wspd_input.y, particleReceiver.Wspd) annotation(
+    Line(points = {{-112, 30}, {-108, 30}, {-108, 52}, {-26, 52}, {-26, 42}, {-26, 42}}, color = {0, 0, 127}));
+  connect(Tamb_input.y, particleReceiver.Tamb) annotation(
+    Line(points = {{118, 80}, {-22, 80}, {-22, 42}, {-22, 42}}, color = {0, 0, 127}));
+  connect(booleanExpression.y, or1.u2) annotation(
+    Line(points = {{-116, -22}, {-106, -22}, {-106, 4}, {-102, 4}, {-102, 4}}, color = {255, 0, 255}));
+  connect(tankCold.L, particleReceiver.level) annotation(
+    Line(points = {{44, -14}, {24, -14}, {24, 24}, {-20, 24}, {-20, 24}}, color = {0, 0, 127}));
   annotation(
-    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {4, 30}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
+    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {12, 24}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 1, StartTime = 0, Tolerance = 1e-06, Interval = 1),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
@@ -596,4 +616,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21D_1stApproach;
+end PhysicalParticleCO21D_1stApproach_SurrogateReceiver_SurrogatePB2;

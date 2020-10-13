@@ -1,6 +1,6 @@
 within SolarTherm.Utilities;
 
-package SurrogateModels
+package SurrogateModelsSingleOutput
   class STNeuralNetwork "Session_Props"
     extends ExternalObject;
   
@@ -27,15 +27,14 @@ package SurrogateModels
     input STNeuralNetwork session;
     input Real raw_input[:];
     input Integer inputsize;
-    input Real t;
     input Real X_max[:];
     input Real X_min[:];
     input Real Y_max;
     input Real Y_min;
     output Real out;
-    external "C" out = run_surrogate(session,raw_input,inputsize,t,X_max,X_min,Y_max,Y_min)
+    external "C" out = run_surrogate(session,raw_input,inputsize,X_max,X_min,Y_max,Y_min)
     annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
               Include="#include \"st_surrogate.c\"",
               Library = "tensorflow");
   end predict;
-end SurrogateModels;
+end SurrogateModelsSingleOutput;
