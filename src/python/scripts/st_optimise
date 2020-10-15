@@ -58,7 +58,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 
 		if constr:
 			obj_min = 9.999e+99 + distance
-			print "A constraint is violated at this design point!"
+			print("A constraint is violated at this design point!")
 
 		if verb:
 			print(par_v)
@@ -73,7 +73,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 
 		if constr:
 			obj_max = -9.999e+99 - distance
-			print "A constraint is violated at this design point!"
+			print("A constraint is violated at this design point!")
 
 		if verb:
 			print(par_v)
@@ -233,7 +233,7 @@ if __name__ == '__main__':
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
-	print "\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n"
+	print("\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n")
 
 	if args.framework in ['soo_min', 'soo_max']:
 		if args.method == 'pso':
@@ -247,7 +247,7 @@ if __name__ == '__main__':
 			t_end = time.time() # NOTE: the clock does not work on the multicored version!
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
-			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+			print("\n\nTotal time elapsed: ", t_dur, "seconds.")
 			if args.outfile_f is not None:
 				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Optimal design parameters: " + str(cand) + '\n')
@@ -258,11 +258,11 @@ if __name__ == '__main__':
 				f.close()
 			else:
 				if args.framework == 'soo_min':
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (res[1])
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (res[1]))
 				else:
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (sign * res[1])
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (sign * res[1]))
 		elif args.method == 'cma':
 			assert cma is not None, 'Library for cma is not installed'
 			sigma0 = 0.2 # "step size", should be around 1/4 of search domain
@@ -282,7 +282,7 @@ if __name__ == '__main__':
 			t_end = time.time() # NOTE: the clock does not work on the multicored version!
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
-			print "\n\n\Total time elapsed: ", t_dur, "seconds."
+			print("\n\n\Total time elapsed: ", t_dur, "seconds.")
 			if args.outfile_f is not None:
 				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Optimal design parameters: " + str(cand) + '\n')
@@ -293,11 +293,11 @@ if __name__ == '__main__':
 				f.close()
 			else:
 				if args.framework == 'soo_min':
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (res[1])
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (res[1]))
 				else:
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (sign * res[1])
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (sign * res[1]))
 		elif args.method == 'ga1':
 			assert pe is not None, 'Library for pyevolve is not installed'
 
@@ -345,8 +345,8 @@ if __name__ == '__main__':
 				f.write("Optimal objective function: " + str(res.score))
 				f.close()
 			else:
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (res.score)
+				print("Optimal design parameters: ", (cand))
+				print("Optimal objective function: ", (res.score))
 		elif args.method == 'ga2':
 			assert deap is not None, 'Library for deap is not installed'
 
@@ -464,15 +464,15 @@ if __name__ == '__main__':
 			t_end = time.time() # NOTE: the clock does not work on the multicored version!
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
-			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+			print("\n\nTotal time elapsed: ", t_dur, "seconds.")
 			if args.outfile_f is not None:
 				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Optimal design parameters: " + str(cand) + '\n')
 				f.write("Optimal objective function: " + str(res.fitness.values[0]))
 				f.close()
 			else:
-				print "Optimal design parameters: ", (cand)
-				print "Optimal objective function: ", (res.fitness.values[0])
+				print("Optimal design parameters: ", (cand))
+				print("Optimal objective function: ", (res.fitness.values[0]))
 		else: # Use one of the scipy optimisation methods. For single-objective maximisation use one of L-BFGS-B, TNC or SLSQP.
 			if args.framework == 'soo_max':
 				assert sciopt is not None, 'Library for scipy is not installed'
@@ -489,7 +489,7 @@ if __name__ == '__main__':
 			t_end = time.time() # NOTE: the clock does not work on the multicored version!
 			t_dur = t_end - t_start # Time elapsed to (succesfully) finish the optimisation
 
-			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+			print("\n\nTotal time elapsed: ", t_dur, "seconds.")
 			if args.outfile_f is not None:
 				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Optimal design parameters: " + str(cand) + '\n')
@@ -500,11 +500,11 @@ if __name__ == '__main__':
 				f.close()
 			else:
 				if args.framework == 'soo_min':
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (res.fun)
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (res.fun))
 				else:
-					print "Optimal design parameters: ", (cand)
-					print "Optimal objective function: ", (sign * res.fun)
+					print("Optimal design parameters: ", (cand))
+					print("Optimal objective function: ", (sign * res.fun))
 	else:
 		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
 		if args.method == 'nsga2':
@@ -592,7 +592,7 @@ if __name__ == '__main__':
 			#print(logbook.stream)
 
 			# Begin the generational process
-			print "Starting optimisation..."
+			print("Starting optimisation...")
 			for gen in range(ngen):
 				print("-- Generation %i --" % gen)
 				# Vary the population
@@ -657,15 +657,15 @@ if __name__ == '__main__':
 				assert(dm_method == 'topsis'), "Decision-making methods must be one of linmap or topsis!"
 				best_ind, best_fitness = dm.topsis()
 
-			print "\n\nTotal time elapsed: ", t_dur, "seconds."
+			print("\n\nTotal time elapsed: ", t_dur, "seconds.")
 			if args.outfile_f is not None:
 				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
 				f.write("Final optimal design parameters: " + str(best_ind) + '\n')
 				f.write("Final optimal objective functions: " + str(best_fitness))
 				f.close()
 			else:
-				print "Final optimal design parameters: ", (best_ind)
-				print "Final optimal objective functions: ", (best_fitness)
+				print("Final optimal design parameters: ", (best_ind))
+				print("Final optimal objective functions: ", (best_fitness))
 
 			# Plot the Pareto Front
 			fig = plt.figure()
@@ -688,4 +688,4 @@ if __name__ == '__main__':
 			else:
 				plt.show(block=True)
 		else:
-			print "nsga2 is the only optimisation method implemented for the multi-objective optimisation framework"
+			print("nsga2 is the only optimisation method implemented for the multi-objective optimisation framework")

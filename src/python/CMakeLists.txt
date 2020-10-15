@@ -21,7 +21,7 @@
 #	install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
 
-find_program(PIP "pip2")
+find_program(PIP "pip")
 
 if (PIP)
 	set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
@@ -30,7 +30,7 @@ if (PIP)
 	configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 if (FORCE_PYTHON_PREFIX)
-	install(CODE "execute_process(COMMAND ${PIP} install --install-option=--prefix=${CMAKE_INSTALL_PREFIX} --upgrade ${CMAKE_CURRENT_BINARY_DIR})")
+	install(CODE "execute_process(COMMAND ${PIP} install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade ${CMAKE_CURRENT_BINARY_DIR})")
 else()
 	install(CODE "execute_process(COMMAND ${PIP} install --upgrade ${CMAKE_CURRENT_BINARY_DIR})")
 endif()
