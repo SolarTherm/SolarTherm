@@ -21,7 +21,7 @@
 #	install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
 
-find_program(PIP "pip")
+find_program(PIP "${Python_VERSION} -m pip")
 
 if (PIP)
 	set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
