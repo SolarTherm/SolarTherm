@@ -25,7 +25,7 @@ endif()
 # Used to correctly set PYTHONPATH in local enviroment setup source file.
 # Should work out how to do this more intelligently.
 
-set(PYTHON_LIBRARY_VERSION ${Python_VERSION})
+#set(PYTHON_LIBRARY_VERSION ${Python_VERSION})
 
 add_subdirectory(src)
 add_subdirectory(tests)

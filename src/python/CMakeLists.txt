@@ -22,7 +22,7 @@
 #endif()
 
 
-find_program(PYTHON "${Python_VERSION}")
+find_program(PYTHON "python")
 #find_program(PIP "pip")
 
 if (PYTHON)
