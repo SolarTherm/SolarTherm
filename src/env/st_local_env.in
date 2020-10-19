@@ -3,7 +3,12 @@
 # Setup environment in shell for local development install
 # Unlike the activate version used with virtualenv, this is not reversible
 
-INSTALL_PREFIX=@CMAKE_INSTALL_PREFIX@
+if [ "$MSYSTEM" ]; then
+  INSTALL_PREFIX=`cygpath "@CMAKE_INSTALL_PREFIX@"`;
+else
+  INSTALL_PREFIX=@CMAKE_INSTALL_PREFIX@; 
+fi
+
 
 st_deactivate () {
 	export OPENMODELICALIBRARY="$_OPENMODELICALIBRARY"
