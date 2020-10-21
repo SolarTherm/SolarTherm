@@ -344,6 +344,18 @@ if __name__ == '__main__':
 
 
 	elif args.method=='dakota_moga':
+		try:
+			subprocess.call(["dakota"])
+		except:
+			print('')
+			print('ERROR:')
+			print('"dakota" is not found!')
+			print('You need to install DAKOTA to run this optimisation algorithm')
+			print('* An instruction is available here: ')
+			print('    https://github.com/shuangw1012/Dakota')
+			print('* More info here: ')
+			print('    https://dakota.sandia.gov \n')
+		
 
 		opt=OptimisationDakotaIn()
 		# TODO at the moment, all the setting are default
