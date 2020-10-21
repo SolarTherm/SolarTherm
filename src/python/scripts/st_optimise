@@ -95,7 +95,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 		if constr:
 			obj_min = 9.999e+99 + distance
 			obj_max = -9.999e+99 - distance
-			print "A constraint is violated at this design point!"
+			print("A constraint is violated at this design point!")
 
 		if verb:
 			print(par_v)
