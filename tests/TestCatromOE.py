@@ -1,14 +1,14 @@
-#! /bin/env python2
+#! /bin/env python
 from __future__ import division
 import unittest
 from solartherm import simulation, postproc
 
 class TestCatromOE(unittest.TestCase):
 	def setUp(self):
-		print "RUNNING SETUP"
+		print("RUNNING SETUP")
 		fn = 'TestCatromOE.mo'
 		sim = simulation.Simulator(fn)
-		print "COMPILING MODEL"
+		print("COMPILING MODEL")
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
 		sim.simulate(start=0, stop='1y', step=300)
