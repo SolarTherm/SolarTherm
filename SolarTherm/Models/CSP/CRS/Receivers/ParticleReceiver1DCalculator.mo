@@ -29,7 +29,7 @@ model ParticleReceiver1DCalculator
   parameter Real CR = 1200;
   parameter SI.HeatFlux dni_des = 950;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
-  parameter SI.HeatFlowRate Q_in = 100e6;
+  parameter SI.HeatFlowRate Q_in = 800e6;
   parameter SI.Length th_w = 0.05 "Backwall thickness of the receiver";
   parameter SI.ThermalConductance k_w = 0.2 "Thermal conductance of the back wall of the receiver";
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
@@ -42,6 +42,8 @@ model ParticleReceiver1DCalculator
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
+  parameter Real std_deviation = 0.1;
+  Real sum;
   SI.HeatFlowRate Q_in_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -55,12 +57,13 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = false, test_mode = true, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D_v11 particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = false, test_mode = true, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design, uniform_flux = false, std_deviation = std_deviation) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
 initial equation
   m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
 equation
-  Q_in_calculated = particleReceiver1D.A_ap * particleReceiver1D.q_solar;
+  Q_in_calculated = particleReceiver1D.A_ap / particleReceiver1D.N * sum(particleReceiver1D.q_solar);
+  sum = sum(particleReceiver1D.ratio);
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
   connect(particleReceiver1D.fluid_a, liftSimple.fluid_b) annotation(
@@ -76,7 +79,7 @@ equation
 protected
   annotation(
     uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")),
-    experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-06, Interval = 1),
+    experiment(StartTime = 0, StopTime = 10, Tolerance = 1e-06, Interval = 0.02),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
     Diagram);
 end ParticleReceiver1DCalculator;

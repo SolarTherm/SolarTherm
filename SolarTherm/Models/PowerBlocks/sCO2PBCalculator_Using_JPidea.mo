@@ -19,17 +19,17 @@ model sCO2PBCalculator_Using_JPidea
   parameter Boolean test_mode = true;
   parameter Boolean external_parasities = true;
   // *********************PB Params - Changeable Design Param
-  parameter SI.Power P_net = 10e6;
-  parameter SI.Temperature T_in_ref_blk = 1072.93;
-  parameter SI.AbsolutePressure p_high = 20285282.09 "high pressure of the cycle";
-  parameter Real PR = 3.52 "Pressure ratio";
-  parameter SI.TemperatureDifference pinch_PHX = 18.35 "T particle outlet at PHX - T sCO2 inlet at PHX";
-  parameter SI.TemperatureDifference dTemp_HTF_PHX = 231.6 "T_in_ref_blk - T_cold_set";
+  parameter SI.Power P_net = 20e6;
+  parameter SI.Temperature T_in_ref_blk = 1243.27;
+  parameter SI.AbsolutePressure p_high = 22707266.48 "high pressure of the cycle";
+  parameter Real PR = 2.98 "Pressure ratio";
+  parameter SI.TemperatureDifference pinch_PHX = 23.67 "T particle outlet at PHX - T sCO2 inlet at PHX";
+  parameter SI.TemperatureDifference dTemp_HTF_PHX = 238.45 "T_in_ref_blk - T_cold_set";
   parameter SI.Temperature T_cold_set = T_in_ref_blk - dTemp_HTF_PHX;
   // *********************PB Params - Changeable Operation Param
-  parameter Real load = 1.02;
-  parameter SI.Temperature T_HTF_in = 1067.97;
-  parameter SI.Temperature T_amb_input = 281.7;
+  parameter Real load = 0.85;
+  parameter SI.Temperature T_HTF_in = 1227.01;
+  parameter SI.Temperature T_amb_input = 288.11;
   // *********************PB Params - Other params
   parameter SI.Temperature T_low = from_degC(41) "Cooler outlet temperature at design point";
   parameter SI.Temperature blk_T_amb_des = from_degC(39);
