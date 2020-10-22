@@ -13,6 +13,7 @@ model ParticleReceiver1D_v11
   import SolarTherm.Media;
   import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   extends SolarTherm.Icons.ReceiverModel;
+  import Modelica.Math.Distributions.*;
   // Ports Declaration
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_b heat annotation(
     Placement(transformation(extent = {{-110, 20}, {-90, 40}}), iconTransformation(extent = {{-110, 20}, {-90, 40}})));
@@ -32,6 +33,7 @@ model ParticleReceiver1D_v11
   If false, T_out = T_out_design, calculate H_drop and t_c_in 
   mdot and T_in are given by the inlet port
   Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
+  parameter Boolean uniform_flux = false;
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
   parameter Boolean iterate_Q_flow = false;
   // FIXME may need to revisit this
@@ -73,11 +75,13 @@ model ParticleReceiver1D_v11
   parameter SI.Angle theta_c = from_deg(0.) "representative angle of rays incident on the particle screen (0=normal)";
   SI.Length t_c_in(start = 0.16539, nominal = 0.1) "Curtain thicknesss at the inlet";
   SI.Temperature T_out_design = from_degC(800);
+  parameter Real peak_thermal_power_coeff = 0.5;
+  parameter Real std_deviation = 0.7;
   // Receiver geometry
   parameter SI.Length H_drop_design = 25.80006;
   parameter Real prob_center = 6 / 12;
   parameter Real prob_side = 3 / 12;
-  SI.Length H_drop(start = 15) "Receiver drop height [m]";
+  SI.Length H_drop(start = 30) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
@@ -95,7 +99,7 @@ model ParticleReceiver1D_v11
   SI.Efficiency tau_c[N](start = linspace(1e-19, 0.004, N), max = fill(1., N), min = fill(0., N)) "Curtain tramittance";
   SI.Efficiency abs_c[N](start = linspace(0.999, 0.972, N), max = fill(1., N), min = fill(0., N)) "Curtain absorptance";
   //Radiation heat fluxes
-  SI.HeatFlux q_solar "Uniform solar flux [W/m2]";
+  SI.HeatFlux q_solar[N] "Uniform solar flux [W/m2]";
   SI.HeatFlux gc_f[N](min = zeros(N)) "Curtain radiation gain at the front";
   SI.HeatFlux jc_f[N](min = zeros(N)) "Curtain radiation loss at the front";
   SI.HeatFlux gc_b[N](min = zeros(N)) "Curtain radiation gain at the back";
@@ -110,6 +114,7 @@ model ParticleReceiver1D_v11
   Real C[N](min = zeros(N));
   Real A2[N](min = zeros(N));
   Real reflectivity_c[N];
+  Real ratio[N];
   SI.HeatFlux q_conv_wall[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_conv_curtain[N] "Heat flux lost through backwall by conduction/convection";
   SI.HeatFlux q_net[N] "Net heat flux gained by curtain";
@@ -236,9 +241,47 @@ equation
   fluid_b.p = fluid_a.p;
   heat.T = Tamb;
   if test_mode == true then
-    q_solar = Q_in/A_ap;
+      if uniform_flux then
+        for i in 1:N loop
+          ratio[i] = 1;
+          q_solar[i] = Q_in/A_ap;
+        end for;        
+      else
+        for i in 1:N loop
+          ratio[i] = Normal.density(u=i*dx,mu=H_drop/2,sigma=std_deviation);
+          q_solar[i] = Q_in * ratio[i] / (dx * W_rcv) * (1/sum(ratio)) "https://keisan.casio.com/exec/system/1180573449";
+          /*q_solar[i] = sqrt(3) * Q_in / (
+            sqrt(3.14) * H_drop/2 * W_rcv * 0.9856941215887902696527
+          ) * exp(
+            - (
+                3 * (-H_drop/2 + i * dx)^2  / (H_drop/2)^2
+              )
+                )"https://keisan.casio.com/exec/system/1180573449";
+        */
+        end for;
+      end if;
+   
   else
-    q_solar = heat.Q_flow / A_ap;
+    if uniform_flux then
+      for i in 1:N loop
+         ratio[i] = 1;
+         q_solar[i] = heat.Q_flow / A_ap;
+      end for;
+    else
+      for i in 1:N loop
+          ratio[i] = Normal.density(u=i*dx,mu=H_drop/2,sigma=std_deviation);
+          q_solar[i] = heat.Q_flow * ratio[i] / (dx * W_rcv) * (1/sum(ratio)) "https://keisan.casio.com/exec/system/1180573449";
+          /*q_solar[i] = sqrt(3) * heat.Q_flow / (
+            sqrt(3.14) * H_drop/2 * W_rcv * 0.9856941215887902696527
+          ) * exp(
+            - (
+                3 * (-H_drop/2 + i * dx)^2  / (H_drop/2)^2
+              )
+                );*/
+           
+          //q_solar[i] = 2 * heat.Q_flow / (3.14 * 1) * Modelica.Math.exp((-2*(i*dx - H_drop/2)^2) / 1) "http://jcarme.sru.ac.ir/article_73_4f76de4ad09805f1d11aba7371305bdb.pdf";
+      end for;
+    end if;
   end if;
     
 //Assigning values to the TAB lookup table
@@ -253,7 +296,7 @@ equation
   if on then
     for i in 1:N loop
         //Curtain-wall radiation heat fluxes (W/m²)
-        gc_f[i] = q_solar;
+        gc_f[i] = q_solar[i];
         jc_f[i] = F * (eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_f[i] + tau_c[i] * gc_b[i]);
         gc_b[i] = j_w[i];
         jc_b[i] = eps_c[i] * CONST.sigma * T_s[i] ^ 4 + reflectivity_c[i] * gc_b[i] + tau_c[i] * gc_f[i];
@@ -304,7 +347,7 @@ else
   end for;
 end if;  
   
-  Qdot_inc = q_solar * A_ap;
+  Qdot_inc = sum(q_solar) * A_ap/N;
   if on == true then
     Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
     eta_rec = max(Qdot_rec / Qdot_inc, 0);
