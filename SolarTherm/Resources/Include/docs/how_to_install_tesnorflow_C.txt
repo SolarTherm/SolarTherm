@@ -1,0 +1,22 @@
+How to install tensorflow C
+
+1. Download the installer  	https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.3.1.tar.gz
+2. sudo tar -C /usr/local -xzf <downloaded file name>
+3. sudo ldconfig
+4. Example program
+
+#include <stdio.h>
+#include <tensorflow/c/c_api.h>
+
+int main() {
+  printf("Hello from TensorFlow C library version %s\n", TF_Version());
+  return 0;
+}
+
+5. compile 
+	gcc hello_tf.c -ltensorflow -o hello_tf
+
+6. ./hello_tf
+
+7. should show: "Hello from TensorFlow C library version %s\n"
+

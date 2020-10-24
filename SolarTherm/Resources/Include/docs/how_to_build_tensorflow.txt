@@ -1,0 +1,14 @@
+how to build tensorflow from the source
+
+1. Install Bazelisk
+	- npm install -g @bazel/bazelisk
+	- if you dont have npm install it by using sudo apt install npm
+
+2. clone the tensorflow repository
+	- git clone https://github.com/tensorflow/tensorflow.git
+	- cd tensorflow
+	- git checkout rx.y (x.y is the version of tensorflow you want to use e.g. 2.1)
+
+3. Follow https://www.tensorflow.org/install/source#download_the_tensorflow_source_code
+
+
