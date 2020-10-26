@@ -1,6 +1,6 @@
 within SolarTherm.Models.PowerBlocks;
 
-model SurrogatesCO2PB2
+model SurrogatesCO2PB_MultiOutput
 
    /*                                               DEFINITION                                                                         */
   //          Cooling power belongs to parasities which makes during the sizing process, cooling power is not included                //
@@ -9,7 +9,7 @@ model SurrogatesCO2PB2
   extends SolarTherm.Media.CO2.PropCO2;
   import SI = Modelica.SIunits;
   import FI = SolarTherm.Models.Analysis.Finances;
-  import SolarTherm.Utilities.SurrogateModelsSingleOutput.*;
+  import SolarTherm.Utilities.SurrogateModelsMultiOutput.*;
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
   replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
   extends Icons.PowerBlock;
@@ -67,23 +67,22 @@ model SurrogatesCO2PB2
     2.63150000e+02
     };
     
-  parameter Real eta_gross_max = 0.55466685;
-  parameter Real eta_gross_min = 0;
+  parameter Real out_max[outputsize] = {
+    1.40015826, 3.26043832
+    };
     
-  parameter Real eta_Q_max = 1.03160735;
-  parameter Real eta_Q_min = -0.00062179;
+  parameter Real out_min[outputsize] = {
+    0, 1.36126842e-20
+    };
     
-  parameter String saved_model_dir_eta_gross = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_gross/surrogate_model_0";
-  parameter String saved_model_dir_eta_Q = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_Q/surrogate_model_0";
+  parameter String saved_model_dir = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/small-data/surrogate_model_0";
   parameter Real eta_motor = 1;
   
   //Initialisation of the session class
-  STNeuralNetwork session_eta_gross = STNeuralNetwork(saved_model_dir_eta_gross);
-  STNeuralNetwork session_eta_Q = STNeuralNetwork(saved_model_dir_eta_Q);
+  STNeuralNetwork session = STNeuralNetwork(saved_model_dir);
   
   //Results
-  Real out1;
-  Real out2;
+  Real out[outputsize];
   Real[inputsize] raw_input;
   Boolean m_sup "Disconnect the production of electricity when the outlet pressure of the turbine is close to the critical pressure";
   Real load "mass flow fraction of the exchanger compared to design condition";
@@ -119,31 +118,22 @@ model SurrogatesCO2PB2
       end when;
   end if;
   
-  out1 = predict(
-      session_eta_gross, 
+  out = predict(
+      session, 
       raw_input, 
       inputsize, 
+      outputsize, 
       X_max, 
       X_min, 
-      eta_gross_max, 
-      eta_gross_min
-    );
-    
-   out2 = predict(
-      session_eta_Q, 
-      raw_input, 
-      inputsize, 
-      X_max, 
-      X_min, 
-      eta_Q_max, 
-      eta_Q_min
+      out_max, 
+      out_min
     );
      
   load = mdot / m_HTF_des;
 
   if m_sup then
-    eta_Q = out2;
-    eta_gross = out1;
+    eta_Q = out[2];
+    eta_gross = out[1] * 1.03;
     Q_HX=-fluid_a.m_flow*(h_out-h_in);
     eta_cycle_net = W_net / Q_HX;
   else
@@ -161,7 +151,8 @@ model SurrogatesCO2PB2
   else
     W_net = W_gross * eta_motor * (1-f_fixed_load) - parasities;
   end if;
-
+  
+  
   der(E_net) = W_net;
 
   annotation(
@@ -169,4 +160,4 @@ model SurrogatesCO2PB2
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
     Diagram);
 
-end SurrogatesCO2PB2;
+end SurrogatesCO2PB_MultiOutput;
