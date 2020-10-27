@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_SurrogatePB2
+model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_SurrogatePB_SingleOutput
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -123,7 +123,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter Real[inputsize_rcv] X_min_rcv = {4.51463536e+00, 1.02218597e+03, 2.53080041e+02, 7.52944510e+02, 2.45868147e+07};
   parameter Real y_max_rcv = 0.99885782;
   parameter Real y_min_rcv = 0.21788641;
-  parameter String saved_model_dir_rcv = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/robust_rcv/surrogate_model_3";
+  parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_0");
   //NN Based sCO2-PB Parameter
   // ********************* Surrogate boundaries
   parameter Integer inputsize_PB = 9;
@@ -134,8 +134,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter Real eta_gross_min = 0.00554803;
   parameter Real eta_Q_max = 1.02810827;
   parameter Real eta_Q_min = 0.04315899;
-  parameter String saved_model_dir_eta_gross = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_gross/surrogate_model_7";
-  parameter String saved_model_dir_eta_Q = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/sCO2_Trained_Model/concept-2/eta_Q/surrogate_model_7";
+  parameter String saved_model_dir_eta_gross = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/sCO2PowerBlock/eta_gross/surrogate_model_5");
+  parameter String saved_model_dir_eta_Q = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/sCO2PowerBlock/eta_Q/surrogate_model_4");
   // Storage
   parameter Real t_storage(unit = "h") = 14 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
@@ -406,7 +406,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   // Power block
-  SolarTherm.Models.PowerBlocks.SurrogatesCO2PB_SingleOutput powerBlock(P_net = P_net, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = T_hot_set - T_cold_set, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, inputsize = inputsize_PB, outputsize = outputsize_PB, X_max = X_max_PB, X_min = X_min_PB, eta_gross_max = eta_gross_max, eta_gross_min = eta_gross_min, eta_Q_max = eta_Q_max, eta_Q_min = eta_Q_min, saved_model_dir_eta_gross = saved_model_dir_eta_gross, saved_model_dir_eta_Q = saved_model_dir_eta_Q, test_mode = false, eta_motor = eta_motor, f_fixed_load = f_fixed_load) annotation(
+  SolarTherm.Models.PowerBlocks.SurrogatesCO2PB_SingleOutput powerBlock(P_net = P_net, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = T_hot_set - T_cold_set, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, inputsize = inputsize_PB, X_max = X_max_PB, X_min = X_min_PB, eta_gross_max = eta_gross_max, eta_gross_min = eta_gross_min, eta_Q_max = eta_Q_max, eta_Q_min = eta_Q_min, saved_model_dir_eta_gross = saved_model_dir_eta_gross, saved_model_dir_eta_Q = saved_model_dir_eta_Q, test_mode = false, eta_motor = eta_motor, f_fixed_load = f_fixed_load) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //Power Block Calculator
   SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = T_hot_set - T_cold_set, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = external_parasities) annotation(
@@ -653,4 +653,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_SurrogatePB2;
+end PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_SurrogatePB_SingleOutput;

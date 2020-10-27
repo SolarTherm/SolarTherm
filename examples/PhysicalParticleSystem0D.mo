@@ -259,7 +259,7 @@ model PhysicalParticleSystem0D
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   //redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Constant(k=0.5) /* FIXME CRASHES!!! issue with imag roots of pcl props */
   // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver receiver(redeclare package Medium = Medium, em = em_curtain, ab = ab_curtain, H_rcv = H_receiver, W_rcv = W_receiver, L_rcv = L_receiver, const_alpha = true, alpha = h_th_rec) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver receiver(redeclare package Medium = Medium, em = em_curtain, ab = ab_curtain, H_drop_design = H_receiver, W_rcv = W_receiver, L_rcv = L_receiver, const_alpha = true, alpha = h_th_rec) annotation(
     Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set) annotation(
