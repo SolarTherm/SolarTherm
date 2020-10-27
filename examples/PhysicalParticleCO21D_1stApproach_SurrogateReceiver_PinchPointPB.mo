@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
+model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_PinchPointPB
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -66,7 +66,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area CR= 1200 with DNI_des";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter Real SM = 2.5 "Solar multiple";
-  parameter SI.Power P_net = 190e6 "Power block net rating at design point";
+  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_ref_blk = T_hot_set "Particle inlet temperature to particle heat exchanger at design";
@@ -113,7 +113,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
   parameter Real X_min_rcv[inputsize_rcv] = {5.00086400e+00, 1.05574698e+06, 7.73151235e+02, 1.02316296e+03, 2.63153150e+02};
   parameter Real y_max_rcv = 0.998605;
   parameter Real y_min_rcv = 0;
-  parameter String saved_model_dir_rcv = "/home/philgun/Documents/codecodecode/codecodecode/ML/script/PID_trained_model/output_eff_rcv/surrogate_model_0";
+  parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_0");
   //NN Based sCO2-PB Parameter
   // ********************* Surrogate boundaries
   parameter Integer inputsize_PB = 9;
@@ -163,11 +163,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
   parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   //Exchanger parameters
   parameter Real pinch_recuperator = 15;
-  parameter Real pinch_exchanger = 25;
+  parameter Real pinch_exchanger = 15;
   parameter SI.Temperature T_out_ref_blk = T_cold_set "Particle outlet temperature from particle heat exchanger at design";
   parameter SI.Temperature T_in_ref_co2 = T_cold_set - pinch_exchanger "CO2 inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
-  parameter Integer N_exch_parameter = 15 "PG";
+  parameter Integer N_exch_parameter = 5 "PG";
   parameter Real par_fix_fr = 0 "Fixed parasitics as fraction of gross rating";
   parameter Boolean blk_enable_losses = true "True if the power heat loss calculation is enabled";
   parameter Boolean external_parasities = true "True if there is external parasitic power losses";
@@ -205,8 +205,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
   parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
   parameter Real Kp = -575 "Gain of proportional component in receiver control";
   // Dispatch optimiser
-  parameter String DNI_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab";
-  parameter String price_file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab";
+  parameter String DNI_file = wea_file;
+  parameter String price_file = pri_file;
   parameter Integer horison = 48;
   parameter Real dt = 1 "delta t of the optimisation";
   parameter Real etaG(fixed = false);
@@ -390,7 +390,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //Power Block Calculator
   // Price
-  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab")) annotation(
+  SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = pri_file)) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
@@ -591,7 +591,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {12, 24}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 1e6, StartTime = 0, Tolerance = 1e-06, Interval = 114.155),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
@@ -601,4 +601,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21D_1stApproach_SurrogateReceiver_NewPB;
+end PhysicalParticleCO21D_1stApproach_SurrogateReceiver_PinchPointPB;
