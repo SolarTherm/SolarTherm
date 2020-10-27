@@ -346,7 +346,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_SurrogatePB_SingleOutp
     Placement(transformation(extent = {{76, 18}, {56, 38}})));
   //parasitic inputs
   Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + liftHX.W_loss + liftRC.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
-    Placement(visible = true, transformation(origin = {105, 59}, extent = {{-12, -8}, {12, 8}}, rotation = -90)));
+    Placement(visible = true, transformation(origin = {90, 112}, extent = {{-37, -17}, {37, 17}}, rotation = -90)));
   // Or block for defocusing
   Modelica.Blocks.Logical.Or or1 annotation(
     Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
@@ -575,7 +575,7 @@ equation
     Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 //PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
-    Line(points = {{105, 46}, {105, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+    Line(points = {{90, 71}, {90, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(powerBlock.W_net, market.W_net) annotation(
     Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
   connect(always_on.y, heliostatsField.on_hopper) annotation(

@@ -1933,7 +1933,7 @@ package DirectDesign
       Modelica.Blocks.Interfaces.BooleanInput ramping annotation(
         Placement(visible = true, transformation(origin = {-68, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {-2.22045e-16, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
       
-      
+     
       // PB parameters
       parameter Boolean test_mode = false "if true then PB is in test rig, influence the way to decalre m_sup";
       parameter Boolean external_parasities = false "= true enable parasities as an input";
