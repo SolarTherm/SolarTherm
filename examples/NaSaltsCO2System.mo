@@ -40,10 +40,10 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer n_heliostat = integer(CEFF[9]) "Number of heliostats";
 	parameter SI.Diameter D_receiver = CEFF[10] "Receiver diameter";
 	parameter SI.Length H_receiver = CEFF[11] "Receiver height";
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_100_m.motab");
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_200_m.motab");
 	parameter Real rec_fr = CEFF[12] "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
 	parameter Real SM = CEFF[13] "Solar multiple"; //Calculated based on a receiver output of 543203279.460279 W, an a power block heat input of (111MWe/0.51)
-	parameter Real[13] CEFF = {203.80782459,-81.60009499,10.80334245,-0.47220328,0.00036635,-0.00483532,186864546,100,5511,10,13,0.1433871,2.941837694};
+	parameter Real[13] CEFF = {-332.98449743,118.17098909,-13.96885001,0.55141421,0.00027917,-0.0053865,183655255.657637,200,4981,9,13,0.128565648409309,2.94133997482595};
 
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
@@ -56,8 +56,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
-	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
-	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
+	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
+	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// HX
@@ -126,7 +126,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 	parameter SI.HeatFlowRate Q_flow_defocus = 274 / 217.647 * Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_min_sf = 0.4 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach

@@ -20,8 +20,8 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 
 	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 
-	SI.HeatFlowRate Q_loss;
-	SI.HeatFlowRate Q_rcv;
+	SI.HeatFlowRate Q_loss "Convective and emmisive losses from the receiver";
+	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF after piping losses";
 
 	SI.Efficiency eff "Calculated receiver efficiency";
 	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
@@ -81,7 +81,7 @@ equation
 	fluid_a.h_outflow=0;
 
 	heat.T=medium.T;
-	fluid_b.m_flow=-fluid_a.m_flow;
+	fluid_b.m_flow + fluid_a.m_flow = 0;
 	fluid_a.p=medium.p;
 	fluid_b.p=medium.p;
 
@@ -98,8 +98,8 @@ equation
 		eta_rec = 0;
 	end if;
 	
-	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
-	Q_rcv = fluid_a.m_flow*(h_out-h_in);
+	0 = ab*heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
+	Q_rcv = fluid_a.m_flow*h_out + fluid_b.m_flow*h_in;
 	eff = Q_rcv/max(1,heat.Q_flow);
 	Q_out = heat.Q_flow*eta_rec;
 
