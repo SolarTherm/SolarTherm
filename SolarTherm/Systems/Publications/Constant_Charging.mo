@@ -6,8 +6,8 @@ model Constant_Charging
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
-  package Fluid_Package = SolarTherm.Media.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.MgO_Constant;  //Can investigate different filler
+  package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
+  package Filler_Package = SolarTherm.Materials.MgO_Constant;  //Can investigate different filler
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";

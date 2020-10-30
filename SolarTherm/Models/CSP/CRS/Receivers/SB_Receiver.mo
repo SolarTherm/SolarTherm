@@ -4,7 +4,7 @@ model SB_Receiver
   import CN = Modelica.Constants;
   extends Interfaces.Models.ReceiverFluid;
   redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph;
-  replaceable package Air = SolarTherm.Media.Materials.Air_Table;
+  replaceable package Air = SolarTherm.Materials.Air_Table;
   parameter String concept = "Billboard" "Type of receiver {Billboard,Cylindrical}";
   parameter String convection = "Siebers" "Convection loss assumption {Constant,Siebers}";
   parameter SI.Length H_tower = 20 "Tower height" annotation(

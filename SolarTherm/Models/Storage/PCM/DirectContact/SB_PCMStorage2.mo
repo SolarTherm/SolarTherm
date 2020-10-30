@@ -7,10 +7,10 @@ model SB_PCMStorage2
   import CN = Modelica.Constants;
   //Package definition
   redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph;
-  replaceable package PCM_Package = SolarTherm.Media.Materials.NaCl;
-  replaceable package HTF_Package = SolarTherm.Media.Materials.Sodium2P;
-  replaceable package Tank_Package = SolarTherm.Media.Materials.Inconel625;
-  replaceable package Tray_Package = SolarTherm.Media.Materials.SS316L;
+  replaceable package PCM_Package = SolarTherm.Materials.NaCl;
+  replaceable package HTF_Package = SolarTherm.Materials.Sodium2P;
+  replaceable package Tank_Package = SolarTherm.Materials.Inconel625;
+  replaceable package Tray_Package = SolarTherm.Materials.SS316L;
   //-----------------------------------------------------------------------------------
   parameter String convection_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Na_Convection.txt") "path of the convection properties data";
   //Free Parameters
@@ -338,11 +338,20 @@ equation
  //der(X_in) = Q_flow_chg * (1.0 - 298.15 / T_HTF);
   //der(X_out) = Q_flow_dis * (1.0 - 298.15 / T_HTF);
   //der(E_stored) = Q_loss + fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow - (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
-  Q_flow_chg = fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow;
-  Q_flow_dis = -1.0 * (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
+  if fluid_ar.m_flow > 1e-6 then
+    Q_flow_chg = fluid_ar.m_flow * inStream(fluid_ar.h_outflow) + fluid_br.m_flow * fluid_br.h_outflow;
+  else
+    Q_flow_chg = 0.0;
+  end if;
+  if fluid_ap.m_flow > 1e-6 then
+    Q_flow_dis = -1.0 * (fluid_ap.m_flow * inStream(fluid_ap.h_outflow) + fluid_bp.m_flow * fluid_bp.h_outflow);
+  else
+    Q_flow_dis = 0.0;
+  end if;
+  
 //fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow = 0.0;
 //der(m_HTF_dynamic) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
-//assert(m_trap >= 1.0e-12, "Invalid Mass", level = AssertionLevel.error);
+  assert(h_HTF > 0.0, "Invalid Enthalpy", level = AssertionLevel.error);
   annotation(
     Icon(graphics = {Text(origin = {2, -1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-131, 69}, extent = {{-27, 11}, {27, -11}}, textString = "from recv"), Text(origin = {-133, -49}, extent = {{-23, 7}, {27, -11}}, textString = "to recv"), Text(origin = {129, 65}, extent = {{-27, 11}, {13, -3}}, textString = "to PB"), Text(origin = {129, -53}, extent = {{-27, 11}, {21, -7}}, textString = "from PB")}, coordinateSystem(initialScale = 0.1)));
 end SB_PCMStorage2;

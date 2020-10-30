@@ -2,6 +2,7 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model ReceiverSimple_3
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
+  Medium.BaseProperties medium_out;
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out( start=h_0);
   //SI.MassFlowRate m_flow;
@@ -56,7 +57,7 @@ equation
   fluid_b.m_flow=-fluid_a.m_flow;
   fluid_a.p=medium.p;
   fluid_b.p=medium.p;
-  if fluid_a.m_flow > 1.0e-6 then
+  if fluid_a.m_flow > 1.0e-3 then
     0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);
   else
     h_in = h_out;
@@ -66,8 +67,10 @@ equation
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
   
   Q_recv_in = ab*heat.Q_flow;
-  net_gain = ab * heat.Q_flow + Q_loss > 1e-6;
-
+  net_gain = ab * heat.Q_flow + Q_loss > 1e-3;
+  
+  medium_out.h = h_out;
+  medium_out.p = medium.p;
   annotation (Documentation(info="<html>
 </html>", revisions="<html>
 <ul>

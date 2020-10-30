@@ -62,7 +62,7 @@ model SB_Polar_75Carnot
   parameter Real f_HTF_inventory = 1.10 "Multiplier to empty volume between PCM and wall level occupied to sodium at 1073K to calculate sodium mass inventory";
   parameter SI.Length z_PCM = 0.05 "Vertical depth of PCM in each tray, m";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.05 "Heat transfer coefficient of tank losses between sodium and ambient temps, W/m2K";
-  parameter Real SM_guess = 1.4 "Solar multiple";
+  parameter Real SM_guess = 2.2 "Solar multiple";
   parameter Real t_storage(unit = "h") = 14.3 "Hours of storage";
   parameter SI.Temperature T_low_u = 1068.0 "Temperature at which PB starts";
   
@@ -75,7 +75,7 @@ model SB_Polar_75Carnot
   
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph "Medium props for molten salt";
-  replaceable package PCM = SolarTherm.Media.Materials.NaCl "Material model for Sodium Chloride PCM";
+  replaceable package PCM = SolarTherm.Materials.NaCl "Material model for Sodium Chloride PCM";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   // Weather data
@@ -162,7 +162,7 @@ model SB_Polar_75Carnot
   //also used for Nusselt number correlation
   parameter SI.ThermodynamicTemperature T_start = T_low_l "Starting temperature of the simulation, K";
   parameter Integer nodes = 20 "Number of discretization elements of PCM";
-  parameter Real growth_ratio = 1.2 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
+  parameter Real growth_ratio = 1.1 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
   //Controls, pumps , etc
   parameter SI.Temperature T_max = 1123.0 "Absolute maximum temperature where receiver is shut off";
   parameter SI.Temperature T_up_u = 1118.0 "Temperature at which defocusing starts";

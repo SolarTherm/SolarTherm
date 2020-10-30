@@ -73,7 +73,7 @@ model SB_Surround_75Carnot
   parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph "Medium props for molten salt";
-  replaceable package PCM = SolarTherm.Media.Materials.NaCl "Material model for Sodium Chloride PCM";
+  replaceable package PCM = SolarTherm.Materials.NaCl "Material model for Sodium Chloride PCM";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   // Weather data
@@ -161,7 +161,7 @@ model SB_Surround_75Carnot
   //also used for Nusselt number correlation
   parameter SI.ThermodynamicTemperature T_start = T_low_l "Starting temperature of the simulation, K";
   parameter Integer nodes = 20 "Number of discretization elements of PCM";
-  parameter Real growth_ratio = 1.2 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
+  parameter Real growth_ratio = 1.1 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
   //Controls, pumps , etc
   parameter SI.Temperature T_max = 1123.0 "Absolute maximum temperature where receiver is shut off";
   parameter SI.Temperature T_up_u = 1118.0 "Temperature at which defocusing starts";

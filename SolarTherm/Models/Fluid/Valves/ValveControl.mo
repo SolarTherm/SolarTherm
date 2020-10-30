@@ -1,6 +1,6 @@
 within SolarTherm.Models.Fluid.Valves;
 model ValveControl "Three-way valve controled by mass flow rate"
-  replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph
+  replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_base
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
       annotation (choicesAllMatching = true);

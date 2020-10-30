@@ -83,9 +83,9 @@ model Thermocline_Reference
   parameter Real t_storage(unit = "h") = 6.0 "Hours of storage";
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
-  replaceable package Fluid = SolarTherm.Media.Materials.Sodium "Material model for Sodium Chloride PCM";
-  replaceable package Filler = SolarTherm.Media.Materials.PigIron_Constant;
-  replaceable package PCM = SolarTherm.Media.Materials.NaCl;
+  replaceable package Fluid = SolarTherm.Materials.Sodium "Material model for Sodium Chloride PCM";
+  replaceable package Filler = SolarTherm.Materials.PigIron_Constant;
+  replaceable package PCM = SolarTherm.Materials.NaCl;
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   // Weather data

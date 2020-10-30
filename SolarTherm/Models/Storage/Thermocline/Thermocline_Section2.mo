@@ -7,9 +7,9 @@ model Thermocline_Section2
   import Tables = Modelica.Blocks.Tables;
 
   //Materials used
-  replaceable package Fluid_Package = SolarTherm.Media.Materials.PartialMaterial "Fluid Package";
-  replaceable package Filler_Package = SolarTherm.Media.Materials.PartialMaterial "Filler Package";
-  replaceable package Tank_Package =  SolarTherm.Media.Materials.SS316L "Tank Package (steel shell)";
+  replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
+  replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
+  replaceable package Tank_Package =  SolarTherm.Materials.SS316L "Tank Package (steel shell)";
   Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
   Fluid_Package.State fluid_top "Model which calculates properties at top of the section";
   Fluid_Package.State fluid_bot "Model which calculates properties at bottom of the section";
@@ -23,8 +23,6 @@ model Thermocline_Section2
   parameter Real ar = 2.0 "Tank Aspect ratio H/D";
   parameter Real eta = 0.22 "Porosity";
   parameter Real d_p = 0.015 "Diameter of filler (particle) (m)";
-  parameter SI.Time t_charge = 4 * 3600 "charging time";
-  parameter SI.Time t_discharge = 4 * 3600 "discharging time";
   parameter SI.Temperature T_min = CV.from_degC(620) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(820) "Design hot Temperature of everything in the tank (K)";
   parameter SI.Length H_tank = (4 * E_max / (CN.pi * (1 / ar) ^ 2 * (rho_f_avg * (h_f_max - h_f_min) * eta + rho_p * (h_p_max - h_p_min) * (1.0 - eta)))) ^ (1 / 3);
@@ -118,21 +116,29 @@ model Thermocline_Section2
   parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   //parameter Real C_tank = 14.955*((E_max/(2790*1e6*3600.0))^0.8);
   //parameter Real C_tank = A_loss_tank*4595.0; //Assuming tank steel cost scales with surf area
-  parameter Real C_tank = C_shell(min(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
+  parameter Real C_tank = C_shell(max(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
 
-protected
+  //Filler Surface Area Correction
+  parameter Real f_surface = 1.0;
+  
+  SI.ThermalConductance U_in[N_f, N_p] "K/W";
+  SI.ThermalConductance U_out[N_f, N_p] "K/W";
+  parameter SI.Mass m_p[N_f, N_p] = fill(Particle_Masses(d_p, N_p, rho_p), N_f) "Masses of each particle element";
+  //parameter SI.Mass m_filler_total = N_spheres_total*sum(m_p[N_f, N_p]);
+  parameter Real N_spheres_total = (N_f*6*(1-eta)*A*dz/(CN.pi*(d_p^3)));
 
 
   //Filler Properties
   SI.SpecificEnthalpy h_p[N_f, N_p](start = h_p_start) "J/kg";
   SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
-  SI.ThermalConductance U_in[N_f, N_p] "K/W";
-  SI.ThermalConductance U_out[N_f, N_p] "K/W";
+
 
   //Initialise Particle surface temperature
   SI.Temperature T_s[N_f](start = T_f_start);
-  parameter SI.Mass m_p[N_f, N_p] = fill(Particle_Masses(d_p, N_p, rho_p), N_f) "Masses of each particle element";
+protected  
   parameter SI.Length r_p[N_f, N_p] = fill(Particle_Radii(d_p, N_p), N_f) "Radii of each particle element centre";
+  
+
 algorithm
 //Operational State logic based on an imposed mass flow rate
 
@@ -319,7 +325,7 @@ equation
 //High Pr eg. molten salt
 //Nu[i] = 2.0 + 0.47*(Re[i]^0.5)*(Pr[i]^(0.36)); //Low Pr eg. sodium
 //Nu[i] = 2.0; //Conservative, conduction only
-    h_v[i] = 6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
+    h_v[i] = (f_surface)*6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p); //Note that filler surface area correction factor is applied elsewhere.
   end for;
 //Particle Equations
   for i in 1:N_f loop
@@ -327,19 +333,19 @@ equation
     U_in[i, 1] = 0.0;
 //nothing in there
     U_out[i, 1] = 
-    4.0*k_p[i, 1]*k_p[i, 2]*CN.pi*r_p[i, 1]*(r_p[i,1]+dr)*(2.0*r_p[i, 1]+dr)/(dr*(k_p[i,2]*dr+k_p[i,1]*r_p[i, 1]+k_p[i, 2]*r_p[i, 1]));
+    (f_surface)*4.0*k_p[i, 1]*k_p[i, 2]*CN.pi*r_p[i, 1]*(r_p[i,1]+dr)*(2.0*r_p[i, 1]+dr)/(dr*(k_p[i,2]*dr+k_p[i,1]*r_p[i, 1]+k_p[i, 2]*r_p[i, 1]));
     m_p[i, 1]*der(h_p[i, 1]) = U_out[i, 1]*(T_p[i, 2]-T_p[i, 1]);
 //End Inner Particle Shell
 //Middle Particle Shells
     for j in 2:N_p - 1 loop
-      U_in[i, j] = 4.0*k_p[i, j - 1]*k_p[i, j]*CN.pi*r_p[i, j]*(2.0*r_p[i, j]-dr)*(dr-r_p[i, j])/(dr*(k_p[i,j-1]*dr-k_p[i,j-1]*r_p[i,j]-k_p[i,j]*r_p[i,j]));
-      U_out[i,j] = 4.0*k_p[i, j]*k_p[i,j+1]*CN.pi*r_p[i,j]*(r_p[i,j]+dr)*(2.0*r_p[i,j]+dr)/(dr*(k_p[i,j+1]*dr+k_p[i,j]*r_p[i,j]+k_p[i,j+1]*r_p[i, j]));
+      U_in[i, j] = (f_surface)*4.0*k_p[i, j - 1]*k_p[i, j]*CN.pi*r_p[i, j]*(2.0*r_p[i, j]-dr)*(dr-r_p[i, j])/(dr*(k_p[i,j-1]*dr-k_p[i,j-1]*r_p[i,j]-k_p[i,j]*r_p[i,j]));
+      U_out[i,j] = (f_surface)*4.0*k_p[i, j]*k_p[i,j+1]*CN.pi*r_p[i,j]*(r_p[i,j]+dr)*(2.0*r_p[i,j]+dr)/(dr*(k_p[i,j+1]*dr+k_p[i,j]*r_p[i,j]+k_p[i,j+1]*r_p[i, j]));
       m_p[i, j]*der(h_p[i,j]) = U_out[i,j]*(T_p[i,j+1]-T_p[i,j]) - U_in[i,j]*(T_p[i,j]-T_p[i,j-1]);
     end for;
 //End Middle Particle Shells
 //Outer Particle Shell
-    U_in[i,N_p] = 4.0*k_p[i,N_p-1]*k_p[i,N_p]*CN.pi*r_p[i,N_p]*(2.0*r_p[i,N_p]-dr)*(dr-r_p[i,N_p])/(dr*(k_p[i,N_p-1]*dr-k_p[i,N_p-1]*r_p[i,N_p]-k_p[i,N_p]*r_p[i,N_p]));
-    U_out[i,N_p] = 8.0*CN.pi*k_p[i,N_p]*r_p[i,N_p]*(r_p[i,N_p]+0.5*dr)/dr;
+    U_in[i,N_p] = (f_surface)*4.0*k_p[i,N_p-1]*k_p[i,N_p]*CN.pi*r_p[i,N_p]*(2.0*r_p[i,N_p]-dr)*(dr-r_p[i,N_p])/(dr*(k_p[i,N_p-1]*dr-k_p[i,N_p-1]*r_p[i,N_p]-k_p[i,N_p]*r_p[i,N_p]));
+    U_out[i,N_p] = (f_surface)*8.0*CN.pi*k_p[i,N_p]*r_p[i,N_p]*(r_p[i,N_p]+0.5*dr)/dr;
     m_p[i,N_p]*der(h_p[i,N_p]) = U_out[i, N_p]*(T_s[i]-T_p[i, N_p]) - U_in[i, N_p]*(T_p[i, N_p]-T_p[i,N_p-1]);
   end for;
 //Particle Surface equations energy balance

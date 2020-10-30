@@ -9,7 +9,7 @@ model Thermocline_ReceiverControl
   parameter Real T_target=740.0+273.15 "Target temperature of receiver outlet";
   parameter Real h_target = HTF.specificEnthalpy(HTF.setState_pTX(101323.0, T_target));
   
-  Real h_input=HTF.specificEnthalpy(HTF.setState_pTX(101323.0,T_stor));
+  //Real h_input=HTF.specificEnthalpy(HTF.setState_pTX(101323.0,T_stor));
   
   parameter Real Q_flow_recv_des = 5.0e6 "Net design heat output from receiver";
   parameter Real m_flow_recv_des = 1.0e2 "Receiver design mass flow rate";
@@ -54,20 +54,34 @@ algorithm
     critical_shutdown := true;
   end when;
   
-  when T_stor < T_max-10.0 then
+  when T_stor < T_max-5.0 then
     critical_shutdown := false;
   end when;
   
 equation
+/*
   if net_gain == true and critical_shutdown == false then
   //m_flow_recv = max(1e-10,(Q_recv_in+Q_loss)/(h_target-h_input)); //exact
-    if m_PB_outlet > 2e-6 then
-  m_flow_recv = max(((Q_recv_in+Q_loss) + m_PB_outlet*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet),1e-6);
+    if m_PB_outlet > 1e-6 then
+  m_flow_recv = max(((Q_recv_in+Q_loss) + m_PB_outlet*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet),1e-4);
     else
-      m_flow_recv = max(1e-6,(Q_recv_in+Q_loss)/(h_target-h_tank_outlet));
+      m_flow_recv = max(1e-4,(Q_recv_in+Q_loss)/(h_target-h_tank_outlet));
     end if;
   else
-  m_flow_recv = 1e-6;
+  m_flow_recv = 1e-4;
   end if;
-
+*/
+  //Defocus Strategy
+  if net_gain == true and critical_shutdown == false and defocus == false then
+  //m_flow_recv = max(1e-10,(Q_recv_in+Q_loss)/(h_target-h_input)); //exact
+    if m_PB_outlet > 1e-6 then
+  m_flow_recv = max(((Q_recv_in+Q_loss) + m_PB_outlet*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet),1e-4);
+    else
+      m_flow_recv = max(1e-4,(Q_recv_in+Q_loss)/(h_target-h_tank_outlet));
+    end if;
+  elseif net_gain == true and critical_shutdown == false and defocus == true then
+    m_flow_recv = m_PB_outlet;
+  else 
+  m_flow_recv = 1e-4;
+  end if;
 end Thermocline_ReceiverControl;

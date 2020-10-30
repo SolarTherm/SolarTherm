@@ -80,11 +80,11 @@ model Thermocline_Group3_Reference
   parameter Real t_storage(unit = "h") = 6.0 "Hours of storage";
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
-  replaceable package Fluid = SolarTherm.Media.Materials.Sodium "Material model for Sodium Chloride PCM";
-  replaceable package Filler = SolarTherm.Media.Materials.PigIron_Constant;
-  replaceable package PCM = SolarTherm.Media.Materials.NaCl;
-  package PCM_Top_Package = SolarTherm.Media.Materials.PCM_710;
-  package PCM_Bot_Package = SolarTherm.Media.Materials.PCM_520;
+  replaceable package Fluid = SolarTherm.Materials.Sodium "Material model for Sodium Chloride PCM";
+  replaceable package Filler = SolarTherm.Materials.PigIron_Constant;
+  replaceable package PCM = SolarTherm.Materials.NaCl;
+  package PCM_Top_Package = SolarTherm.Materials.PCM_710;
+  package PCM_Bot_Package = SolarTherm.Materials.PCM_520;
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   // Weather data
@@ -347,7 +347,7 @@ model Thermocline_Group3_Reference
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
 
-  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = 10, N_p_A = 5, N_f_B = 30, N_p_B = 5, N_f_C = 10, N_p_C = 5, frac_1=0.1, frac_2=0.1, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.01) annotation(
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = 10, N_p_A = 5, N_f_B = 30, N_p_B = 5, N_f_C = 10, N_p_C = 5, frac_1=0.1, frac_2=0.1, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.01,Correlation=3) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
 
   

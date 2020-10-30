@@ -6,13 +6,13 @@ model Thermocline_Hoffmann_Discharge
   import CV = Modelica.SIunits.Conversions;
   import Tables = Modelica.Blocks.Tables;
 
-  package Sodium = SolarTherm.Media.Materials.Sodium;
-  package MS = SolarTherm.Media.Materials.SolarSalt;
-  package CaO = SolarTherm.Media.Materials.CaO;
-  package Quartzite = SolarTherm.Media.Materials.Quartzite;
+  package Sodium = SolarTherm.Materials.Sodium;
+  package MS = SolarTherm.Materials.SolarSalt;
+  package CaO = SolarTherm.Materials.CaO;
+  package Quartzite = SolarTherm.Materials.Quartzite;
 
-  parameter Integer N_f = 50;
-  parameter Integer N_p = 20;
+  parameter Integer N_f = 40;
+  parameter Integer N_p = 5;
   parameter SI.Length H_tank = 6.1;
   parameter SI.Diameter D_tank = 3.0;
   parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(H_tank,N_f);
@@ -22,7 +22,7 @@ model Thermocline_Hoffmann_Discharge
   parameter SI.Temperature h_p_start[N_f,N_p] = SolarTherm.Validation.Datasets.Hoffmann_Discharge_Dataset.Initial_Enthalpy_p(z_f,N_p);
 
   //Thermocline Tank A (Bottom PCM)
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Section Tank_A (redeclare package Fluid = MS, redeclare package Filler = Quartzite, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=395.9+273.15,T_min=289.0+273.15,d_p=15.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1) "The bottom tank";
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Section2 Tank_A (redeclare package Fluid_Package = MS, redeclare package Filler_Package = Quartzite, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=395.9+273.15,T_min=289.0+273.15,d_p=15.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,U_loss_tank = 0.0) "The bottom tank";
   
   //All tank sections have HTF type in common!
   MS Fluid "Fluid package";
@@ -58,7 +58,7 @@ equation
   m_flow = Tank_A.m_flow;
   h_bot = Tank_A.h_bot;
   h_top = Tank_A.h_top;
-
+  Tank_A.T_amb = 298.15;
   m_flow = 5.46;
   T_bot = 289.0+273.15;
   
@@ -68,6 +68,6 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
   
-annotation(experiment(StopTime = 9000, StartTime = 0, Tolerance = 1e-6, Interval = 180.0));
+annotation(experiment(StopTime = 9000, StartTime = 0, Tolerance = 1e-3, Interval = 180.0));
 
 end Thermocline_Hoffmann_Discharge;

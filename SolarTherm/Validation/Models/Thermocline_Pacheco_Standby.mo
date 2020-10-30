@@ -6,13 +6,16 @@ model Thermocline_Pacheco_Standby "Validating the OpenModelica model against Pac
   import CV = Modelica.SIunits.Conversions;
   import Tables = Modelica.Blocks.Tables;
 
-  package MS = SolarTherm.Media.Materials.SolarSalt_Constant;
-  package Quartzite = SolarTherm.Media.Materials.Quartzite_Sand;
+  package MS = SolarTherm.Materials.SolarSalt_Constant;
+  package Quartzite = SolarTherm.Materials.Quartzite_Sand;
 
-  parameter Integer N_f = 50;
-  parameter Integer N_p = 10;
+  parameter Integer N_f = 80;
+  parameter Integer N_p = 5;
   parameter SI.Length H_tank = 6.1;
   parameter SI.Diameter D_tank = 3.0;
+  parameter Real U_top = 0.416;
+  parameter Real U_wall = 1.0;
+  parameter Real U_bot = 1.5;
   parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(H_tank,N_f);
   parameter SI.Temperature T_f_start[N_f] = SolarTherm.Validation.Datasets.Pacheco_Standby_Dataset.Initial_Temperature_f(z_f);
   parameter SI.Temperature h_f_start[N_f] = SolarTherm.Validation.Datasets.Pacheco_Standby_Dataset.Initial_Enthalpy_f(z_f);
@@ -20,7 +23,7 @@ model Thermocline_Pacheco_Standby "Validating the OpenModelica model against Pac
   parameter SI.Temperature h_p_start[N_f,N_p] = SolarTherm.Validation.Datasets.Pacheco_Standby_Dataset.Initial_Enthalpy_p(z_f,N_p);
 
   //Thermocline Tank A (Bottom PCM)
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Section Tank_A (redeclare package Fluid = MS, redeclare package Filler = Quartzite, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=396.0+273.15,T_min=290.0+273.15,d_p=15.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,U_top=0.416,U_wall=0.488,U_bot=1.5) "The bottom tank";
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Section2 Tank_A (redeclare package Fluid_Package = MS, redeclare package Filler_Package = Quartzite, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=396.0+273.15,T_min=290.0+273.15,d_p=15.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,U_top=U_top,U_wall=U_wall,U_bot=U_bot,U_loss_tank=0.0) "The bottom tank";
   
   //All tank sections have HTF type in common!
   MS Fluid "Fluid package";
@@ -55,6 +58,7 @@ equation
   m_flow = Tank_A.m_flow;
   h_bot = Tank_A.h_bot;
   h_top = Tank_A.h_top;
+  Tank_A.T_amb = 298.15;
 
   m_flow = 0.0;
   T_bot = 290.0;
@@ -65,5 +69,5 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
   
-annotation(experiment(StopTime = 180000, StartTime = 0, Tolerance = 1e-6, Interval = 1800.0));
+annotation(experiment(StopTime = 180000, StartTime = 0, Tolerance = 1e-3, Interval = 1800.0));
 end Thermocline_Pacheco_Standby;

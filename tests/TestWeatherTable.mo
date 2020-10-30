@@ -7,5 +7,5 @@ block TestWeatherTable
 		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
 	WeatherTable cseg(table=tab,
 		smoothness=Modelica.Blocks.Types.Smoothness.ConstantSegments);
-	annotation(experiment(StartTime=0.0, StopTime=3.0, Interval=0.01, Tolerance=1e-06));
+	annotation(experiment(StartTime=0.0, StopTime=3.0, Interval=0.01, Tolerance=1e-07));
 end TestWeatherTable;

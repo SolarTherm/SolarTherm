@@ -317,7 +317,7 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
 		"""Run simulation.
 
 		If running an optimisation then 'optimization' needs to be used as
@@ -326,6 +326,7 @@ class Simulator(object):
 		start = str(parse_var_val(start, 's'))
 		stop = str(parse_var_val(stop, 's'))
 		step = str(parse_var_val(step, 's'))
+		tolerance = str(tolerance)
 
 		if initStep!=None:
 			initStep = str(parse_var_val(initStep, 's'))
@@ -334,8 +335,7 @@ class Simulator(object):
 
 		sim_args = [
 			'-override',
-			#'startTime='+start+',stopTime='+stop+',stepSize='+step,
-			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+'1.0e-3',
+			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+tolerance,
 			'-s', solver,
 			'-nls', nls, #Nonlinear solver
 			'-initialStepSize', initStep,
@@ -344,7 +344,6 @@ class Simulator(object):
 			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
-			'-noEventEmit',
 			]
 
 		if initStep==None:

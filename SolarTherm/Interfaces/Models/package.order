@@ -10,6 +10,9 @@ HeatExchangerFluid
 Temperature
 PowerBlock
 Pipe
-StorageFluid4P
+HeatExchangerInterface
+Compressor
+Turbine
 Lift
+StorageFluid4P
 StorageFluid_Thermocline

@@ -27,7 +27,7 @@ function Relative_Tank_Axes "Input tank height, and number of fluid CVs, output 
   input SI.Length H_tank;
   input Integer N_f;
   output SI.Length ZdH[N_f];
-protected
+  protected
   SI.Length dz "Height step";
 algorithm
   dz := H_tank / N_f;
@@ -62,5 +62,7 @@ algorithm
     r[i] := (i - 0.5) * dr;
   end for;
 end Particle_Radii;
+
+
 
 end Thermocline;

@@ -6,10 +6,10 @@ model Group3_6h_10h_8h
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
-  package Fluid_Package = SolarTherm.Media.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
-  package PCM_Top_Package = SolarTherm.Media.Materials.PCM_710;
-  package PCM_Bot_Package = SolarTherm.Media.Materials.PCM_520;
+  package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
+  package Filler_Package = SolarTherm.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
+  package PCM_Top_Package = SolarTherm.Materials.PCM_710;
+  package PCM_Bot_Package = SolarTherm.Materials.PCM_520;
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -38,7 +38,7 @@ model Group3_6h_10h_8h
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
-  parameter Real frac_1 = 0.40 "fraction of energy storage capacity in topper";
+  parameter Real frac_1 = 0.10 "fraction of energy storage capacity in topper";
   //Derived
   parameter Real frac_2 = frac_1 "fraction of energy storage capacity in bottomer";
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
@@ -58,7 +58,7 @@ model Group3_6h_10h_8h
   //COntrol
 
   
-  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank,Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
     
     

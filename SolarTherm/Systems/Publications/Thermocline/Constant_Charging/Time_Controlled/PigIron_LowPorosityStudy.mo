@@ -6,10 +6,10 @@ model PigIron_LowPorosityStudy
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
-  package Fluid_Package = SolarTherm.Media.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
-  package PCM_Top_Package = SolarTherm.Media.Materials.PCM_710;
-  package PCM_Bot_Package = SolarTherm.Media.Materials.PCM_520;
+  package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
+  package Filler_Package = SolarTherm.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
+  package PCM_Top_Package = SolarTherm.Materials.PCM_710;
+  package PCM_Bot_Package = SolarTherm.Materials.PCM_520;
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -46,7 +46,7 @@ model PigIron_LowPorosityStudy
   //COntrol
   SI.MassFlowRate m_Recv_signal(start = 1e-6);
   SI.MassFlowRate m_PB_signal(start = 1e-6);
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank, Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));

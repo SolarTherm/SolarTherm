@@ -30,5 +30,7 @@ AnalysisPackage
 Price
 Pipe
 HeliostatFieldModel2
-LiftModel
+Compressor
+HeatExchangerIcon
+Turbine
 ThermoclineModel

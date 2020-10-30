@@ -53,6 +53,8 @@ model HeliostatsField
   SI.Angle zen;
   SI.Angle zen2;
   SI.Angle azi;
+  SI.Energy E_dni;
+  SI.Energy E_field;
 
   SI.Power W_loss;
   Real damping;
@@ -121,6 +123,8 @@ equation
     solar.hra,
     lat);
 
+  der(E_field) = Q_net;
+  der(E_dni) = he_av*n_h*A_h*solar.dni;
   damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;
   W_loss1=if ele>1e-2 then n_h*he_av*damping*W_track else 0;
   when ele>1e-2 then

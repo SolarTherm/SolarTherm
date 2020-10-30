@@ -2,7 +2,7 @@ within SolarTherm.Models.Control;
 model IdealMassflowBlockCalculation
 
 import SI = Modelica.SIunits;
-import Util = SolarTherm.Media.SolidParticles.CarboHSP_utilities; 
+import Util = SolarTherm.Media.ChlorideSalt.ChlorideSalt_utilities; 
 parameter Real y_start = 500;
 
    Modelica.Blocks.Interfaces.RealInput Q_input

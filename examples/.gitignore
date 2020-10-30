@@ -12,10 +12,11 @@ Reference_1_fluid
 Reference_1_fluid*.[ch]
 Reference_2
 Reference_2*.[ch]
+Reference_2_solstice
 SaltSCO2System
 SaltSCO2System*.[ch]
-NaSaltSCO2System
-NaSaltSCO2System*.[ch]
+NaSaltsCO2System
+NaSaltsCO2System*.[ch]
 ASTRI100
 ASTRI100*.[ch]
 EnergySystem
@@ -42,3 +43,4 @@ SolarTherm_*.libs
 *.dat
 Modelica_Utilities_*
 resources
+results*

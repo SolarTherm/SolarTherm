@@ -9,10 +9,10 @@ model Thermocline_Group_3
   import CV = Modelica.SIunits.Conversions;
   
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
-  replaceable package Fluid_Package = SolarTherm.Media.Materials.PartialMaterial;
-  replaceable package Filler_Package_A = SolarTherm.Media.Materials.PartialMaterial; //Bottomer eg. PCM_520
-  replaceable package Filler_Package_B = SolarTherm.Media.Materials.PartialMaterial; //Main Tank eg. PigIron
-  replaceable package Filler_Package_C = SolarTherm.Media.Materials.PartialMaterial; //Topper eg. PCM_710
+  replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
+  replaceable package Filler_Package_A = SolarTherm.Materials.PartialMaterial; //Bottomer eg. PCM_520
+  replaceable package Filler_Package_B = SolarTherm.Materials.PartialMaterial; //Main Tank eg. PigIron
+  replaceable package Filler_Package_C = SolarTherm.Materials.PartialMaterial; //Topper eg. PCM_710
   
   parameter Integer Correlation = 1 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
   

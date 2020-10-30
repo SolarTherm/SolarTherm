@@ -6,8 +6,8 @@ model SingleTank_6h_10h_8h
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
-  package Fluid_Package = SolarTherm.Media.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
+  package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
+  package Filler_Package = SolarTherm.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -54,7 +54,7 @@ model SingleTank_6h_10h_8h
   //COntrol
 
   
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f= N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f= N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank,Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
     
     
@@ -104,6 +104,7 @@ model SingleTank_6h_10h_8h
   
   Real T_top_degC;
   Real T_bot_degC;
+  Real T_outlet_degC;
   
 algorithm
   when rem(time, t_cycle) > 1e-6 then
@@ -136,6 +137,13 @@ algorithm
 equation
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
+  if thermocline_Tank.Tank_A.m_flow > 1e-3 then //dicharging
+    T_outlet_degC = T_top_degC;
+  elseif thermocline_Tank.Tank_A.m_flow < -1e-3 then //charging
+    T_outlet_degC = T_bot_degC;
+  else
+    T_outlet_degC = 298.15; //reference value
+  end if;
 /*
 //controls
   if rem(time, t_cycle) < t_charge and thermocline_Tank.T_bot_measured < T_Recv_max then

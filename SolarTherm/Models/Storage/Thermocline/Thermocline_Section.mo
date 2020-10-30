@@ -7,8 +7,8 @@ model Thermocline_Section
   import Tables = Modelica.Blocks.Tables;
 
   //Materials used
-  replaceable package Fluid = SolarTherm.Media.Materials.Sodium constrainedby SolarTherm.Media.Materials.PartialMaterial "Fluid Package";
-  replaceable package Filler = SolarTherm.Media.Materials.CaO constrainedby SolarTherm.Media.Materials.PartialMaterial "Filler Package";
+  replaceable package Fluid = SolarTherm.Materials.Sodium constrainedby SolarTherm.Media.Materials.PartialMaterial "Fluid Package";
+  replaceable package Filler = SolarTherm.Materials.CaO constrainedby SolarTherm.Media.Materials.PartialMaterial "Filler Package";
   Fluid.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
   Fluid.State fluid_top "Model which calculates properties at top of the section";
   Fluid.State fluid_bot "Model which calculates properties at bottom of the section";

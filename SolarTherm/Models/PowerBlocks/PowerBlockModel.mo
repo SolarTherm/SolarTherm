@@ -8,15 +8,12 @@ model PowerBlockModel
                                                                                      annotation (Dialog(group="Design"));
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
   parameter SI.HeatFlowRate Q_flow_ref=294.118e6 "Design thermal power" annotation (Dialog(group="Design"));
-  //parameter SI.HeatFlowRate Q_flow_ref=m_flow_ref*(h_in_ref-h_out_ref);
 
-
-  parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
   SI.Temperature T_in=Medium.temperature(state_in);
   SI.Temperature T_out=Medium.temperature(state_out);
-  
-
+  Real eff_pb "Power Block Efficiency";
 
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
@@ -28,8 +25,6 @@ model PowerBlockModel
       annotation (Dialog(group="Parasities energy losses"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
   parameter Real W_base=0.0055*294.188e6 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
-
-  Modelica.Blocks.Interfaces.RealOutput h_out_signal=h_out "outlet specific enthalpy" annotation (Placement(visible = true, transformation(origin = {-80, -72}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = { -61, -59}, extent = {{5, -5}, {-5, 5}}, rotation = 0))) ;
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -72,7 +67,7 @@ protected
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
   parameter SI.MassFlowRate m_flow_ref= Q_flow_ref/(h_in_ref-h_out_ref);
-  //parameter SI.MassFlowRate m_flow_ref=1000.0;
+
   Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
   Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
   parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);
@@ -100,33 +95,26 @@ equation
 
   logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
-  //h_out=fluid_b.h_outflow;
-  fluid_b.h_outflow=max(0.0,h_out);
-  fluid_a.h_outflow = 0;
+  h_out=fluid_b.h_outflow;
+  h_out=fluid_a.h_outflow;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
 
   load=max(nu_eps,fluid_a.m_flow/m_flow_ref); //load=1 if it is no able partial load
 
   if logic then
-    k_q=max(0.1,cycle.k_q);
-    k_w=max(0.1,cycle.k_w);
+    k_q=cycle.k_q;
+    k_w=cycle.k_w;
     Q_flow=-fluid_a.m_flow*(h_out-h_in);
-    
-    Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
-    W_gross/(cool.nu_w*W_des*load)=k_w;
   else
     k_q=0;
     k_w=0;
     h_out=h_out_ref;
-    //h_out=h_in;
-    
-    Q_flow=0.0;
-    W_gross=0.0;
   end if;
 
-  //Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
-  //W_gross/(cool.nu_w*W_des*load)=k_w;
+  Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
+  W_gross/(cool.nu_w*W_des*load)=k_w;
+  eff_pb=W_gross/max(1,Q_flow);
 
   der(E_gross)=W_gross;
   der(E_net)=W_net;

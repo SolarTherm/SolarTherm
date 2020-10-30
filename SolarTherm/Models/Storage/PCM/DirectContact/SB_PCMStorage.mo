@@ -7,10 +7,10 @@ model SB_PCMStorage
   import CN = Modelica.Constants;
   //Package definition
   redeclare replaceable package Medium = SolarTherm.Media.Sodium.Sodium_dTX;
-  replaceable package PCM_Package = SolarTherm.Media.Materials.NaCl;
-  replaceable package HTF_Package = SolarTherm.Media.Materials.Sodium2P;
-  replaceable package Tank_Package = SolarTherm.Media.Materials.Inconel625;
-  replaceable package Tray_Package = SolarTherm.Media.Materials.SS316L;
+  replaceable package PCM_Package = SolarTherm.Materials.NaCl;
+  replaceable package HTF_Package = SolarTherm.Materials.Sodium2P;
+  replaceable package Tank_Package = SolarTherm.Materials.Inconel625;
+  replaceable package Tray_Package = SolarTherm.Materials.SS316L;
   //-----------------------------------------------------------------------------------
   parameter String convection_file = "Convection.txt" "path of the convection properties data";
   //Free Parameters

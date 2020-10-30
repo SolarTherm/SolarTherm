@@ -56,7 +56,7 @@ model Group3_6h_10h_8h
   SI.MassFlowRate m_Recv_signal(start = 1e-6);
   SI.MassFlowRate m_PB_signal(start = 1e-6);
   
-  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank, Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
     
     

@@ -1,6 +1,5 @@
 within SolarTherm.Models.PowerBlocks.Correlation;
-
-model sCO2NREL
+model sCO2NREL "A sCO2 cycle regression model based on the table provided by Chad Agustine"
 	extends Cycle;
 	import Modelica.SIunits.Conversions.*;
 	input SI.Temperature T_amb;

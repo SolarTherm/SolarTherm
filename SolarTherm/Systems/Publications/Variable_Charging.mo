@@ -7,9 +7,9 @@ model Variable_Charging
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   //Do not change
-  package Fluid_Package = SolarTherm.Media.Materials.Sodium;
+  package Fluid_Package = SolarTherm.Materials.Sodium;
   //Do not change
-  package Filler_Package = SolarTherm.Media.Materials.MgO_Constant;
+  package Filler_Package = SolarTherm.Materials.MgO_Constant;
   //MgO_Constant;  //Can investigate different filler
   //Design Parameters
   //Fixed

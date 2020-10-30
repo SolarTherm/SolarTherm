@@ -10,6 +10,7 @@ Correlation
 Cooling
 PowerBlockModel
 sCO2Cycle
+sCO2CycleNREL
+PowerBlockModel_sCO2NREL
 SB_PowerBlockModel
 SB_StirlingPowerBlockModel
-PowerBlockModel_sCO2NREL
