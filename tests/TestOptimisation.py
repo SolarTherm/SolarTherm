@@ -18,9 +18,10 @@ class TestExternalC(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_optimum(self):
+
 		self.assertAlmostEqual(self.res.interpolate('x1', 0), 1.0, 5)
 		self.assertAlmostEqual(self.res.interpolate('x2', 0), 0.0, 5)
-		self.assertAlmostEqual(self.res.interpolate('u', 1), 5.0, 5)
+		self.assertAlmostEqual(self.res.interpolate('u', 1), 5.0, 1)
 		#from solartherm import plotting
 		#plotting.plot_res(self.res, ['u'])
 
