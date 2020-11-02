@@ -19,7 +19,7 @@ model SingleTank_6h_10h_8h
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
 
-  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   parameter Integer N_p = 5 "Number of filler CVs  in main tank";
 
 
@@ -28,7 +28,7 @@ model SingleTank_6h_10h_8h
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.20 "Filler diameter";
+  parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
@@ -224,6 +224,6 @@ equation
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 300));
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
 
 end SingleTank_6h_10h_8h;
