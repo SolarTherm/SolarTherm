@@ -6,6 +6,7 @@ import unittest
 from solartherm import simulation
 from solartherm import postproc
 import os
+import glob
 import DyMat
 import xml.etree.ElementTree as ET
 import xml
@@ -67,6 +68,7 @@ class TestXMLparameter(unittest.TestCase):
 
 		self.assertEqual(sm[0], self.sm)
 		self.assertEqual(st[0], self.t_storage)
+		map(os.unlink, glob.glob(u'Reference_2*'))
 
 
 if __name__ == '__main__':
