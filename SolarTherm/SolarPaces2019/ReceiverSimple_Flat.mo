@@ -43,7 +43,7 @@ model ReceiverSimple_Flat
   SI.CoefficientOfHeatTransfer h_cn "Natural heat transfer coefficient calculated at each timestep";
   SI.CoefficientOfHeatTransfer h_cf "Forced heat transfer coefficient calculated at each timestep";
   parameter String convection = "Siebers" "Convection loss assumption {Constant,Siebers}";
-  replaceable package Air = SolarTherm.Media.Materials.Air_Table;
+  replaceable package Air = SolarTherm.Materials.Air_Table;
   Medium.BaseProperties HTF_in "Inlet properties of HTF";
   Modelica.Blocks.Interfaces.RealInput Wspd annotation(
     Placement(visible = true,transformation( origin = {-40, 84},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {-22, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
