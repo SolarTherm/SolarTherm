@@ -58,11 +58,7 @@ model Thermocline_Section2
   SI.ThermalConductivity k_eff[N_f] "W/mK"; //Mixed thermal conductivity used for heat conduction between fluid control volumes!
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
-  //Convection Properties
-  Real Re[N_f] "Reynolds";
-  Real Pr[N_f] "Prandtl";
-  Real Nu[N_f] "Nusselt";
-  Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
+
   //Initialise Fluid
   parameter SI.Length z_f[N_f] = Z_position(H_tank, N_f) .+ z_offset;
   SI.Temperature T_f[N_f];//(start = T_f_start);
@@ -120,24 +116,24 @@ model Thermocline_Section2
 
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0;
-  
-  SI.ThermalConductance U_in[N_f, N_p] "K/W";
-  SI.ThermalConductance U_out[N_f, N_p] "K/W";
   parameter SI.Mass m_p[N_f, N_p] = fill(Particle_Masses(d_p, N_p, rho_p), N_f) "Masses of each particle element";
   //parameter SI.Mass m_filler_total = N_spheres_total*sum(m_p[N_f, N_p]);
   parameter Real N_spheres_total = (N_f*6*(1-eta)*A*dz/(CN.pi*(d_p^3)));
-
-
-  //Filler Properties
-  SI.SpecificEnthalpy h_p[N_f, N_p](start = h_p_start) "J/kg";
-  SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
-
-
+  parameter SI.Length r_p[N_f, N_p] = fill(Particle_Radii(d_p, N_p), N_f) "Radii of each particle element centre";
   //Initialise Particle surface temperature
   SI.Temperature T_s[N_f](start = T_f_start);
 protected  
-  parameter SI.Length r_p[N_f, N_p] = fill(Particle_Radii(d_p, N_p), N_f) "Radii of each particle element centre";
-  
+
+  //Convection Properties
+  Real Re[N_f] "Reynolds";
+  Real Pr[N_f] "Prandtl";
+  Real Nu[N_f] "Nusselt";
+  Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
+  SI.ThermalConductance U_in[N_f, N_p] "K/W";
+  SI.ThermalConductance U_out[N_f, N_p] "K/W";
+  //Filler Properties
+  SI.SpecificEnthalpy h_p[N_f, N_p](start = h_p_start) "J/kg";
+  SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
 
 algorithm
 //Operational State logic based on an imposed mass flow rate

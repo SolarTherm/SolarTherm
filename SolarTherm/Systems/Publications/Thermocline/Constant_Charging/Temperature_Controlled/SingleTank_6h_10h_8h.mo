@@ -7,7 +7,7 @@ model SingleTank_6h_10h_8h
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
   package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Materials.PigIron_Constant;//MgO_Constant;  //Can investigate different filler
+  package Filler_Package = SolarTherm.Materials.CaO_Constant;//MgO_Constant;  //Can investigate different filler
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -19,8 +19,8 @@ model SingleTank_6h_10h_8h
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
 
-  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
-  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter Integer N_f = 150 "Number of fluid CVs in main tank";
+  parameter Integer N_p = 10 "Number of filler CVs  in main tank";
 
 
   
@@ -28,9 +28,9 @@ model SingleTank_6h_10h_8h
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.10 "Filler diameter";
+  parameter SI.Length d_p = 0.30 "Filler diameter";
   //Optimise
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";

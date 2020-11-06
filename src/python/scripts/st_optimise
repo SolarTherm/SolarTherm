@@ -340,7 +340,8 @@ if __name__ == '__main__':
 		if args.outfig is not None:
 			fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
 		else:
-			plt.show(block=True)
+			#plt.show(block=True)
+			print('No figure is going to pop-up')
 
 
 	elif args.method=='dakota_moga':
@@ -425,7 +426,8 @@ if __name__ == '__main__':
 		if args.outfig is not None:
 			fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
 		else:
-			plt.show(block=True)
+			#plt.show(block=True)
+			print('No figure is going to pop-up')
 
 
 
