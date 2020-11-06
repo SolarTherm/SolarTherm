@@ -15,8 +15,6 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Input Parameters
 	// *********************
-	parameter Real power_fr = 2 "Fraction of 100 MWe case: 2 (50 MWe), 4 (25 MWe), 10 (10 MWe), etc.";
-	parameter Real tower_fr = 1.25 "Fraction of initial tower value: 1 (100%), 1.25 (125%), 1.5 (150%), etc.";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
 
@@ -37,25 +35,41 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
 	parameter Integer year = 2008 "Meteorological year";
 
-	// Field
-	parameter String opt_file = "/home/arfontalvo/solartherm/SolarTherm/Data/Optics/dominic/"+ String(integer(tower_fr*100)) + "TH" + String(ceil(P_gross/1e6*0.9)) + "SM" + String(SM*10) + ".motab";
+	// Solstice related parameters
+	parameter String opt_file(fixed = false);
+	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/sm"+String(SM)+"_ti"+String(towi)+"_R"+String(R1)+"_fb"+String(fb));
+	parameter String field_type = "surround" "Other options are : surround";
+	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
+	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
+
+	parameter Real towi = 1.0 "Tower index for tower modification";
+	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+	parameter SI.Length R_tower = 0.01 "Tower diameter";
+	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
+	parameter Real fb = 0.4 "factor to grow the field layout";
+	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
+	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+	parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+
+	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
 	parameter Real metadata_list[8] = metadata(opt_file);
-	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
-	parameter SI.Height H_tower = metadata_list[6] "Number of heliostats";
-	parameter SI.Height D_receiver = metadata_list[5] "Number of heliostats";
-	parameter SI.Height H_receiver = metadata_list[4] "Number of heliostats";
-	parameter Solar_angles angles = Solar_angles.ele_azi "Angles used in the lookup table file";
+	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
+
+	// Field
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real SM = 2.9 "Solar multiple";
 	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
 	parameter SI.Area land_non_solar = 182108.7 "Non-solar field land area"; //45 acre. Based on NREL Gen3 SAM model v14.02.2020
-	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
-//	parameter SI.Area A_heliostat = 75.1689 "Heliostat module reflective area";
+
+	parameter Boolean polar = if field_type=="polar" then true else false "True for polar field layout, otherwise surrounded";
+	parameter SI.Area A_heliostat = H_helio*W_helio "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 	parameter SI.Efficiency eff_opt = (2.7*111e6/0.51)/(1 - rec_fr)/(he_av_design*A_heliostat*dni_des*8134) "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 	parameter Real C = 534.0 "Concentration ratio";
-	parameter Real gnd_cvge = A_field / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
+	parameter Real gnd_cvge = 8134*144.375 / ((175/0.154)^2/twr_ht_const*CN.pi*excl_fac) "Ground coverage";
 	parameter Real excl_fac = 0.97 "Exclusion factor";
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
@@ -97,7 +111,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
 	parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true) = 111e6/power_fr "Power block gross rating at design point";
+	parameter SI.Power P_gross = P_name/(1 - par_fr) "Power block gross rating at design point";
 	parameter SI.Efficiency eff_blk = 0.51 "Power block efficiency at design point";
 	parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
@@ -117,17 +131,15 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
+	parameter SI.HeatFlowRate Q_flow_defocus = (330/294.18)*Q_flow_des "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real max_rec_op_fr = 1.2 "Maximum receiver operation fraction";
-	parameter Real nu_start = 0.25 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
-	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 1/(1 - rec_fr)/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
-//	parameter Real nu_start = 0.6*330/294.18/SM "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
-//	parameter Real nu_min_sf = 0.3*330/294.18/SM "Minimum turn-down energy fraction to stop the receiver";
-//	parameter Real nu_defocus = 330/294.18/SM "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter Real nu_start = 0.6*330/294.18 "Minimum energy start-up fraction to start the receiver"; //Based on NREL SAM model from 14.02.2020
+	parameter Real nu_min_sf = 0.3*330/294.18 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_defocus = 0.5 "Energy fraction of the receiver design output at defocus state";// This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real hot_tnk_empty_lb = 16 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
-	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
+	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound (L_df_off) Level to stop defocus";
+	parameter Real hot_tnk_full_ub = 93 "Hot tank full trigger upper bound (L_df_on) Level of start defocus";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -146,11 +158,12 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
 	parameter SI.Area A_field = (R_des/eff_opt/he_av_design)/dni_des "Heliostat field reflective area";
-//	parameter Integer n_heliostat = integer(ceil(A_field/A_heliostat)) "Number of heliostats";
 
 	parameter SI.Area A_receiver = A_field/C "Receiver aperture area";
-//	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
-//	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
+	parameter SI.Diameter D_receiver = sqrt(A_receiver/(CN.pi*ar_rec)) "Receiver diameter";
+	parameter SI.Length H_receiver = D_receiver*ar_rec "Receiver height";
+	parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
+	parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
 
 	parameter SI.Area A_land = land_mult*A_field + land_non_solar "Land area";
 
@@ -168,24 +181,26 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.MassFlowRate m_flow_rec_start = 0.81394780966 * m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
 
-	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
-	parameter SI.Power P_name = P_net "Nameplate rating of power block";
+	parameter SI.Power P_net = P_name "Power block net rating at design point";
+	parameter SI.Power P_name(fixed = if fixed_field then false else true) = 50e6 "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
-//	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Diameter D_storage = (V_max/n_tanks_parallel/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
-//	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
+	parameter SI.Length H_tower = towi*0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
 	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
+
 	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
 	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
+
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
+
 	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";
 	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
 	parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";
@@ -276,10 +291,12 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 		redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
 																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
+
 	// Solar field
-//	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
-	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAM heliostatsField(
-		n_h = n_heliostat,
+//	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAMSolstice heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
+		psave = psave,
+		wea_file = wea_file,
 		lon = data.lon,
 		lat = data.lat,
 		ele_min(displayUnit = "deg") = ele_min,
@@ -291,25 +308,43 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 		A_h = A_heliostat,
 		nu_defocus = nu_defocus,
 		nu_min = nu_min_sf,
-		nu_start = nu_start,
 		Q_design = Q_rec_out,
-		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
-																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+		nu_start = nu_start,
+		Q_in_rcv = R_des,
+		H_rcv = H_receiver,
+		W_rcv = D_receiver,
+		n_H_rcv = n_H_rcv,
+		n_W_rcv = n_W_rcv,
+		tilt_rcv = tilt_rcv,
+		W_helio = W_helio,
+		H_helio = H_helio,
+		H_tower = H_tower,
+		R_tower = R_tower,
+		R1 = R1,
+		fb = fb,
+		rho_helio = rho_helio,
+		slope_error = slope_error,
+		n_row_oelt = n_row_oelt,
+		n_col_oelt = n_col_oelt,
+		n_rays=n_rays,
+		field_type=field_type,
+		rcv_type=rcv_type)
+		annotation(																																								Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.ChlorideSaltReceiver receiver(
-		redeclare package Medium = Medium,
 		em = em_rec,
+		redeclare package Medium = Medium,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		H_tower = H_tower,
 		R_des = R_des,
+		m_flow_rec_des = m_flow_fac,
+		const_alpha = true,
 		N_pa = N_pa_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
-		ab = ab_rec,
-		m_flow_rec_des = m_flow_fac,
-		const_alpha = true) annotation(
+		ab = ab_rec) annotation(
 								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
@@ -409,7 +444,13 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit="MW.h") "Generate electricity";
 	FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
 
+initial algorithm
+	opt_file := heliostatsField.optical.tablefile;
+
+
 initial equation
+	//opt_file = heliostatsField.optical.tablefile;
+
 	if fixed_field then
 		P_gross = Q_flow_des * eff_cyc;
 	else
@@ -472,6 +513,7 @@ initial equation
 																Line(points = {{9.16, -3}, {4, -3}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlCold.defocus, or1.u2) annotation(
 														Line(points = {{17, -10.98}, {17, -32}, {-106, -32}, {-106, 4.8}, {-102.8, 4.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+
 	// controlHot connections
 	connect(tankHot.L, controlHot.L_mea) annotation(
 														Line(points = {{36.2, 68.4}, {40, 68.4}, {40, 68.5}, {47.52, 68.5}}, color = {0, 0, 127}));
@@ -526,7 +568,8 @@ initial equation
 	__Dymola_experimentSetupOutput,
 	Documentation(revisions = "<html>
 	<ul>
-	<li> A. Shirazi and A. Fontalvo Lascano (June 2019) :<br>Released first version. </li>
+	<li> A. Fontalvo Lascano (March 2020) :<br>Released first version. </li>
 	</ul>
+
 	</html>"));
 end SmallSaltSCO2System;

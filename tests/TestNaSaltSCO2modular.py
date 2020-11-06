@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 # -*- coding: utf-8 -*-
 
 from __future__ import division
@@ -35,18 +35,18 @@ class TestScheduler(unittest.TestCase):
 #		self.assertAlmostEqual(getval('H_tower'), 47.0, 2) # Tower height
 #		self.assertAlmostEqual(getval('n_heliostat'), 2822.0, 2) # Number of heliostas
 #		self.assertAlmostEqual(getval('n_modules'), 58.0, 2) # Number of modules
-		print "-----------------------------------------------------------------------"
-		print 'Energy per year:                          %6.2f MWh'%(self.perf[0])
-		print 'Capacity factor:                          %6.2f %%'%(self.perf[2])
-		print 'LCOE:                                     $%6.2f/MWh'%(self.perf[1])
-		print "-----------------------------------------------------------------------"
-		print 'Receiver thermal input at design point:   %6.2f MW'%(getval('R_des')/1e6)
-		print 'Receiver thermal output at design point:  %6.2f MW'%(getval('Q_rec_out')/1e6)
-		print 'Power block gross rating at design point: %6.2f MW'%(getval('P_gross')/1e6)
-		print 'Solar multiple:                           %4.2f   '%(getval('SM'))
-		print 'Tower height (per module):                %4.1f  m'%(getval('H_tower'))
-		print 'Number of heliostats (per module):        %i'%(getval('n_heliostat'))
-		print 'Number of modules:                        %i'%(getval('n_modules'))
+		print("-----------------------------------------------------------------------")
+		print('Energy per year:                          %6.2f MWh'%(self.perf[0]))
+		print('Capacity factor:                          %6.2f %%'%(self.perf[2]))
+		print('LCOE:                                     $%6.2f/MWh'%(self.perf[1]))
+		print("-----------------------------------------------------------------------")
+		print('Receiver thermal input at design point:   %6.2f MW'%(getval('R_des')/1e6))
+		print('Receiver thermal output at design point:  %6.2f MW'%(getval('Q_rec_out')/1e6))
+		print('Power block gross rating at design point: %6.2f MW'%(getval('P_gross')/1e6))
+		print('Solar multiple:                           %4.2f   '%(getval('SM')))
+		print('Tower height (per module):                %4.1f  m'%(getval('H_tower')))
+		print('Number of heliostats (per module):        %i'%(getval('n_heliostat')))
+		print('Number of modules:                        %i'%(getval('n_modules')))
 
 if __name__ == '__main__':
 	unittest.main()

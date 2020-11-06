@@ -3,7 +3,12 @@
 # Setup environment in shell for local development install
 # Unlike the activate version used with virtualenv, this is not reversible
 
-INSTALL_PREFIX=@CMAKE_INSTALL_PREFIX@
+if [ "$MSYSTEM" ]; then
+  INSTALL_PREFIX=`cygpath "@CMAKE_INSTALL_PREFIX@"`;
+else
+  INSTALL_PREFIX=@CMAKE_INSTALL_PREFIX@; 
+fi
+
 
 st_deactivate () {
 	export OPENMODELICALIBRARY="$_OPENMODELICALIBRARY"
@@ -40,12 +45,14 @@ st_deactivate () {
 	fi
 }
 
+PYTHON_LIBRARY_VERSION=`python -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
+
 export _OPENMODELICALIBRARY="$OPENMODELICALIBRARY"
 export OPENMODELICALIBRARY="$HOME/.openmodelica/libraries:$INSTALL_PREFIX/lib/omlibrary:/usr/lib/omlibrary:/usr/local/lib/omlibrary"
 export _PATH="$PATH"
 export PATH="$INSTALL_PREFIX/bin:$PATH"
 export _PYTHONPATH="$PYTHONPATH"
-export PYTHONPATH="$INSTALL_PREFIX/lib/@PYTHON_LIBRARY_VERSION@/site-packages:$PYTHONPATH"
+export PYTHONPATH="$PYTHONPATH:$INSTALL_PREFIX/lib/python$PYTHON_LIBRARY_VERSION/site-packages"
 export _LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH"
 export _LIBRARY_PATH="$LIBRARY_PATH"
