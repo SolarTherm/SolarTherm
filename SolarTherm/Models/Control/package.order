@@ -6,13 +6,6 @@ PID_AW_reset3
 ReceiverControl
 PowerBlockControl
 StartUpLogic5
-HX_Control
 Switch2
-IdealMassflowBlockCalculation
-FakeControl
-HX_Control_new
-m_flow_calculations
+HXControl
 m_flow_calculations_simple
-HX_Control_new_alg
-m_flow_calculations_simple_alg
-m_flow_calculations_simple_2

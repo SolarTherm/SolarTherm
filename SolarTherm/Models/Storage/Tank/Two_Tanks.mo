@@ -37,6 +37,11 @@ model Two_Tanks
 				extent={{96,44},{116,64}}), iconTransformation(
 				extent={{92,34},{112,54}})));
 
+	Modelica.Blocks.Interfaces.RealOutput T_output_CS annotation (Placement(
+				visible = true,transformation(
+				extent = {{96, -30}, {116, -10}}, rotation = 0), iconTransformation(
+				extent = {{92, -44}, {112, -24}}, rotation = 0)));
+
 	Modelica.Blocks.Interfaces.RealInput p_top if use_p_top annotation (Placement(
 				transformation(
 				extent={{-16,-16},{16,16}},
@@ -88,6 +93,7 @@ equation
 	fluid_b.h_outflow=medium.h;
 	der(m)=fluid_a.m_flow/n_parallel_tanks+fluid_b.m_flow/n_parallel_tanks;
 	m*der(medium.h)+der(m)*medium.h=Q_losses+W_net+fluid_a.m_flow/n_parallel_tanks*inStream(fluid_a.h_outflow)+fluid_b.m_flow/n_parallel_tanks*medium.h;
+	T_output_CS=medium.T;
 
 	V=m/medium.d;
 	L_internal=100*V/V_t;
