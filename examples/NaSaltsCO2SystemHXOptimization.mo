@@ -1,5 +1,5 @@
 within examples;
-model NaSaltsCO2System "High temperature Sodium-sCO2 system"
+model NaSaltsCO2SystemHXOptimization "High temperature Sodium-sCO2 system"
 	import SolarTherm.{Models,Media};
 	import Modelica.SIunits.Conversions.from_degC;
 	import SI = Modelica.SIunits;
@@ -25,6 +25,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Please specify a value for P_gross or a value for R_des
 	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = 598.360e6) "Input power to receiver at design point";
+	parameter SI.Power P_gross_fixed = 111e6;
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
@@ -35,42 +37,42 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = CEFF[7]) "Input power to receiver at design point";
-	parameter SI.Length H_tower = CEFF[8] "Tower height";
-	parameter Integer n_heliostat = integer(CEFF[9]) "Number of heliostats";
-	parameter SI.Diameter D_receiver = CEFF[10] "Receiver diameter";
-	parameter SI.Length H_receiver = CEFF[11] "Receiver height";
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_200_m.motab");
-	parameter Real rec_fr = CEFF[12] "Receiver loss fraction of radiance at design point";
-	parameter Real SM = CEFF[13] "Solar multiple";
-	parameter Real[13] CEFF = {-332.98449743,118.17098909,-13.96885001,0.55141421,0.00027917,-0.0053865,183655255.657637,200,4981,9,13,0.128565648409309,2.94133997482595};
-
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
+	parameter Real SM = Q_rec_out / (P_gross_fixed / eff_blk) "Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 7.07*7.07 "Heliostat module reflective area";
-	parameter Real he_av_design = 0.99 "Heliostats availability";
+	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
+	parameter Real he_av_design = 0.99 "Helisotats availability";
+	parameter SI.Area A_field_fixed = 976552.5; //Field area of 976552.5 m2 (6764*144.375m2)
+	parameter SI.Efficiency eff_opt = R_des / A_field_fixed / he_av_design / dni_des   "Field optical efficiency at design point"; //Calculated to obtain a field area of 976552.5 m2 (6764*144.375m2) /*0.65414652341738*/
+	parameter SI.Irradiance dni_des = 980 "DNI at design point";
+	parameter Real C = A_field/(CN.pi*D_rec_input*H_rec_input) "Concentration ratio"; //Calculated based on a receiver aperture area of 1206.37m2 (H=24m, D=16m) and a field area of 976552.5m2 (6764*144.375m2)
+	parameter Real gnd_cvge = 0.3102053948901199 "Ground coverage"; //Calculated to obtain a tower height of 175m
+	parameter Real excl_fac = 0.97 "Exclusion factor";
+	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
+	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
-	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
-	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
-	parameter SI.Efficiency eta_rec_od = CEFF[1]
-										+ CEFF[2]*(log10(Q_curtail_guess)) 
-										+ CEFF[3]*(log10(Q_curtail_guess))^2 
-										+ CEFF[4]*(log10(Q_curtail_guess))^3 
-										+ CEFF[5]*rec_T_amb_des
-										+ CEFF[6]*Wspd_des "Receiver effciency at off-design condition";
-	parameter SI.Temperature rec_T_amb_des = Modelica.SIunits.Conversions.from_degC(22.8) "Ambient temperature at design point";
-	parameter SI.Velocity Wspd_des = 2.6 "Wind speed at design point";
+	parameter SI.Diameter D_rec_input = 14 "Receiver diameter";
+	parameter SI.Length H_rec_input = 21 "Receiver height";
+	parameter Real ar_rec = H_rec_input / D_rec_input "Height to diameter aspect ratio of receiver aperture";
+	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
+	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
+	parameter SI.Efficiency rec_eff_design = 0.895797098180195 "Receiver at the design point";
+	parameter Real C0 = -564.899348853894;
+	parameter Real C1 = 194.652635314243;
+	parameter Real C2 = -22.352096267571;
+	parameter Real C3 = 0.856531526853793;
+	parameter Real C4 = 0.0415818826425797;
+	parameter Real rec_fr = 1 - rec_eff_design "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.876456728
+	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 
 	// HX
-	parameter SI.HeatFlowRate Q_hx_design = Q_rec_design * hx_to_rec_factor "HX design power";
-	parameter SI.Temperature T_cold_set_Na = CV.from_degC(520) "Cold HX target temperature";
-	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
+	parameter SI.Temperature T_cold_set_Na = CV.from_degC(508) "Cold HX target temperature";
+	parameter SI.Temperature T_hot_set_Na = CV.from_degC(728) "Hot Receiver target temperature";
 	parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
 	parameter Medium1.ThermodynamicState state_hot_set_Na = Medium1.setState_pTX(Medium1.p_default, T_hot_set_Na) "Hot Sodium thermodynamic state at design";
 	parameter SI.Temperature T_cold_set_CS = CV.from_degC(500) "Cold tank target temperature";
@@ -79,7 +81,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
-	parameter Real hx_to_rec_factor = 1;
 	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10)
@@ -87,12 +88,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
 	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-	parameter Boolean optimize_HX_design = true;
+	parameter Boolean optimize_HX_design = true; 
 	parameter SI.Length d_o_input = 0.00953 "User defined outer tube diameter";
 	parameter Integer N_p_input = 1 "User defined tube passes number";
 	parameter Integer layout_input = 2 "User defined tube layout";
 	parameter Boolean N_t_input_on = true "Activate fixed number of tubes";
-	parameter Integer N_t_input = 23559 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
+	parameter Integer N_t_input = 1 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
@@ -108,7 +109,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-	parameter SI.SpecificEnergy k_loss_cold_sodium = 0.21e3 "Sodium pump parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold1 = 0.21e3 "Cold tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
@@ -136,15 +137,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-	parameter Real factor_defocus = 1.01;
-	parameter SI.HeatFlowRate Q_flow_defocus = (R_des - Q_rec_design + Q_flow_des) * factor_defocus /* 274 / 217.647 * Q_flow_des */"Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
-	parameter SI.HeatFlowRate Q_rec_max = min(m_flow_max_Na * (h_hot_set_Na - h_cold_set_Na),m_flow_max_CS * (h_hot_set_CS - h_cold_set_CS));
-	parameter SI.HeatFlowRate Q_curtail_guess = Q_rec_max/(1 - rec_fr);
-	parameter SI.HeatFlowRate Q_curtail = Q_rec_max/eta_rec_od;
+	parameter Real factor_defocus=1.01;
+	parameter SI.HeatFlowRate Q_flow_defocus = (R_des-Q_rec_out+Q_flow_des)*factor_defocus "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.4 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
-	parameter Real hot_tnk_empty_lb = 180 / 11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 180/11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 94 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 100 "Hot tank full trigger upper bound";
@@ -162,28 +160,30 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Density rho_hot_set = Medium2.density(state_hot_set_CS) "Hot salt density at design";
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
 	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
-	parameter SI.MassFlowRate m_flow_fac = Q_hx_design / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
-	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;/*1.388*/	
-	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
+	parameter SI.MassFlowRate m_flow_fac = SM * Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
+	parameter SI.MassFlowRate m_flow_max_CS = 2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
-	parameter SI.HeatFlowRate Q_rec_design = Q_flow_des * SM "Heat from receiver at design";
+	parameter SI.HeatFlowRate Q_rec_out = R_des * rec_eff_design "Heat to HX at design";
 	parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
-	parameter SI.MassFlowRate m_flow_rec = Q_hx_design / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
-	parameter Real Na_velocity_factor=Shell_and_Tube_HX.v_Na_lim_max/Shell_and_Tube_HX.v_Na_design; /*1.54*/	
-	parameter SI.MassFlowRate m_flow_max_Na = Na_velocity_factor * m_flow_rec "Maximum mass flow rate to receiver";
+	parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
+	parameter SI.MassFlowRate m_flow_max_Na = 2 * m_flow_rec "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+	parameter SI.Area A_receiver = A_field / C "Receiver aperture area";
+	parameter SI.Diameter D_receiver = sqrt(A_receiver / (CN.pi * ar_rec)) "Receiver diameter";
+	parameter SI.Length H_receiver = D_receiver * ar_rec "Receiver height";
+	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
+	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used
 
 	//SF Calculated Parameters
-	parameter SI.Area A_field = n_heliostat * A_heliostat "Heliostat field reflective area";
-	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver aperture area";
+	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des "Heliostat field reflective area";
+	parameter Integer n_heliostat = integer(ceil(A_field / A_heliostat)) "Number of heliostats";
 	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
-	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to power block at design point";
@@ -271,7 +271,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	
 	//Parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpSodium.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss) 
+		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold1.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss) 
 		annotation(Placement(visible = true, transformation(origin = {149, 64}, extent = {{-13, -10}, {13, 10}}, rotation = -90)));
 
 	//Sodium loop Pressure Losses
@@ -312,7 +312,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		nu_defocus = nu_defocus,
 		nu_min = nu_min_sf,
 		Q_design = Q_flow_defocus,
-		Q_curtail = Q_curtail,
 		nu_start = nu_start,
 		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file))
 		annotation(Placement(visible = true, transformation(extent = {{-98, 2}, {-66, 36}}, rotation = 0)));
@@ -320,7 +319,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
 		redeclare package Medium = Medium1,
-		C = CEFF[1:6],
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		N_pa = N_pa_rec,
@@ -328,6 +326,11 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		D_tb = D_tb_rec,
 		ab = ab_rec,
 		em = em_rec,
+		C0 = C0,
+		C1 = C1,
+		C2 = C2,
+		C3 = C3,
+		C4 = C4,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
@@ -338,9 +341,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(origin = {-27, -19}, extent = {{-5, -5}, {5, 5}}, rotation = 90)));
 
 	// Pump cold1
-	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpSodium(
+	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold1(
 		redeclare package Medium = Medium1,
-		k_loss = k_loss_cold_sodium)
+		k_loss = k_loss_cold1)
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));	
 
 	//HX Control
@@ -355,7 +358,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		m_flow_max_CS = m_flow_max_CS,
 		m_flow_start_Na = m_flow_start_Na,
 		m_flow_start_CS = m_flow_start_CS,
-		Q_flow_rec = Q_hx_design)
+		Q_flow_rec = Q_rec_out)
 		annotation(Placement(visible = true, transformation(origin = {40, -56}, extent = {{10, -10}, {-10, 10}}, rotation = -90)));
 
 	//HX
@@ -363,7 +366,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		replaceable package Medium1 = Medium1,
 		replaceable package Medium2 = Medium2,
 		T_Na2_input=T_Na2_input,
-		Q_d_des = Q_hx_design,
+		Q_d_des = Q_rec_out,
 		optimize_and_run=optimize_HX_design,
 		material_sc = material_sc,
 		d_o_input=d_o_input,
@@ -373,7 +376,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		ratio_max=ratio_max,
 		L_max_cond=L_max_cond,
 		L_max_input=L_max_input,
-//		Q_flow_rec = Q_rec_out,
 		N_t_input_on = N_t_input_on,
 		N_t_input = N_t_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
@@ -425,11 +427,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		redeclare package Medium = Medium2, 
 		k_loss = k_loss_cold) 
 		annotation(Placement(visible = true, transformation(extent = {{66, 8}, {54, 20}}, rotation = 0)));
-	
-	// Temperature sensor 2
-	SolarTherm.Models.Fluid.Sensors.Temperature temperature2(
-		redeclare package Medium = Medium2)
-		annotation(Placement(visible = true, transformation(origin = {73, -1}, extent = {{5, 5}, {-5, -5}}, rotation = -90)));
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
@@ -467,7 +464,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	//Other Variables:
-
 	SI.Power P_elec "Output power of power block";
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
 	FI.Money_USD R_spot(start = 0, fixed = true) "Spot market revenue";
@@ -493,13 +489,21 @@ initial equation
 	end if;
 
 equation
-	connect(Wspd_input.y,receiver.Wspd);
+	connect(temperature1.T, hX_Control.T_input_rec) annotation(
+		Line(points = {{-32, -18}, {-34, -18}, {-34, -76}, {48, -76}, {48, -68}, {50, -68}}, color = {0, 0, 127}));
+
+	connect(temperature1.fluid_b, receiver.fluid_a) annotation(
+		Line(points = {{-26, -14}, {-28, -14}, {-28, 6}, {-32, 6}, {-32, 6}}, color = {0, 127, 255}));
+
+  	connect(pumpCold1.fluid_b, temperature1.fluid_a) annotation(
+    		Line(points = {{-22, -36}, {-26, -36}, {-26, -24}, {-26, -24}, {-26, -24}}, color = {0, 127, 255}));
+
 	connect(PressureLosses_CS_loop.y, pumpCold2.Dp_loss) annotation(
 		Line(points = {{0, 62}, {38, 62}, {38, 4}, {60, 4}, {60, 8}, {60, 8}}, color = {0, 0, 127}));
 	
-	connect(PressureLosses_Na_loop.y, pumpSodium.Dp_loss) annotation(
+	connect(PressureLosses_Na_loop.y, pumpCold1.Dp_loss) annotation(
 		Line(points = {{-110, -40}, {-70, -40}, {-70, -48}, {-16, -48}, {-16, -42}, {-16, -42}}, color = {0, 0, 127}));
-	
+
 	connect(Tamb_input.y, powerBlock.T_amb) annotation(
 		Line(points = {{157, 100}, {116, 100}, {116, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
@@ -515,23 +519,11 @@ equation
 	connect(tankCold.fluid_a, powerBlock.fluid_b) annotation(
 		Line(points = {{98, -27}, {104, -27}, {104, 14}, {110, 14}}, color = {0, 127, 255}));
 
-	connect(temperature2.T, hX_Control.T_output_cs) annotation(
-		Line(points = {{68, 0}, {58, 0}, {58, -72}, {44, -72}, {44, -66}, {44, -66}}, color = {0, 0, 127}));
+	connect(tankCold.T_output_CS, hX_Control.T_output_cs) annotation(
+		Line(points = {{78, -36}, {58, -36}, {58, -72}, {44, -72}, {44, -66}, {44, -66}}, color = {0, 0, 127}));
 
-	connect(temperature2.fluid_a, tankCold.fluid_b) annotation(
-		Line(points = {{74, -6}, {74, -6}, {74, -40}, {78, -40}, {78, -38}}, color = {0, 127, 255}));
-
-	connect(pumpCold2.fluid_a, temperature2.fluid_b) annotation(
-		Line(points = {{66, 14}, {72, 14}, {72, 4}, {74, 4}}, color = {0, 127, 255}));
-
-	connect(temperature1.T, hX_Control.T_input_rec) annotation(
-		Line(points = {{-32, -18}, {-34, -18}, {-34, -80}, {50, -80}, {50, -68}, {50, -68}}, color = {0, 0, 127}));
-
-	connect(receiver.fluid_a, temperature1.fluid_b) annotation(
-		Line(points = {{-32, 6}, {-28, 6}, {-28, -14}, {-27, -14}}, color = {0, 127, 255}));
-
-	connect(temperature1.fluid_a, pumpSodium.fluid_b) annotation(
-		Line(points = {{-27, -24}, {-27, -36}, {-22, -36}}, color = {0, 127, 255}));
+	connect(tankCold.fluid_b, pumpCold2.fluid_a) annotation(
+		Line(points = {{78, -38}, {72, -38}, {72, 14}, {66, 14}, {66, 14}, {66, 14}}, color = {0, 127, 255}));
 
 	connect(Shell_and_Tube_HX.port_b_out, tankHot.fluid_a) annotation(
 		Line(points = {{14, 6}, {6, 6}, {6, 68}, {48, 68}, {48, 70}}, color = {0, 127, 255}));
@@ -551,10 +543,10 @@ equation
 	connect(receiver.Tamb, tankHot.T_amb) annotation(
 		Line(points = {{-36, 36}, {-36, 80}, {54, 80}, {54, 74}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
-	connect(pumpSodium.fluid_a, SodiumBufferTank.fluid_b) annotation(
+	connect(pumpCold1.fluid_a, SodiumBufferTank.fluid_b) annotation(
 		Line(points = {{-10, -36}, {-1, -36}, {-1, -36.5}, {4, -36.5}}, color = {0, 127, 255}));
 
-	connect(hX_Control.m_flow_rec, pumpSodium.m_flow) annotation(
+	connect(hX_Control.m_flow_rec, pumpCold1.m_flow) annotation(
 		Line(points = {{35, -44}, {34, -44}, {34, -22}, {-16, -22}, {-16, -31}}, color = {0, 0, 127}));
 
 	connect(hX_Control.m_flow_hs, controlHot.m_flow_in) annotation(
@@ -578,7 +570,7 @@ equation
 	connect(Pres_input.y, SodiumBufferTank.p_top) annotation(
 		Line(points = {{119, -12}, {42, -12}, {42, -26}, {7, -26}, {7, -28}}, color = {0, 0, 127}));
 
-	//controlHot connections
+
 	connect(controlHot.defocus, or1.u1) annotation(
 		Line(points = {{104, 81}, {104, 86}, {-126, 86}, {-126, 6}, {-117, 6}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
@@ -628,8 +620,6 @@ equation
 	connect(pumpCold2.fluid_b, Shell_and_Tube_HX.port_b_in) annotation(
 		Line(points = {{54, 14}, {34, 14}, {34, -7}, {29, -7}}, color = {0, 127, 255}));
 
-	connect(receiver.Q_out, Shell_and_Tube_HX.Q_out_rec) annotation(
-		Line(points = {{-31, 18}, {-9, 18}, {-9, 0}, {12, 0}}, color = {0, 127, 255}));
 	//PowerBlock connections
 	P_elec = powerBlock.W_net;
 	E_elec = powerBlock.E_net;
@@ -653,4 +643,4 @@ equation
 	</ul>
 	</html>"),
 		__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end NaSaltsCO2System;
+end NaSaltsCO2SystemHXOptimization;

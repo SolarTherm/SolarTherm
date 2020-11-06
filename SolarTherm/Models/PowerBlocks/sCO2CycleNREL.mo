@@ -70,12 +70,12 @@ model sCO2CycleNREL
 	//End Zeb ramping
 
 	 Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
-				transformation(extent={{-12,-12},{12,12}},
-				rotation=-90,
-				origin={1.77636e-015,80}),									iconTransformation(
-				extent={{-6,-6},{6,6}},
-				rotation=-90,
-				origin={20,60})));
+				visible = true,transformation(
+				origin={1.77636e-15,80},extent={{-12,-12},{12,12}},
+				rotation=-90),									iconTransformation(
+				
+				origin={20,60},extent={{-6,-6},{6,6}},
+				rotation=-90)));
 
 protected
 	Modelica.Blocks.Interfaces.RealInput parasities_internal;

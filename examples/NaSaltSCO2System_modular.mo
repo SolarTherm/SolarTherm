@@ -54,13 +54,16 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 33.4e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
+	parameter SI.Diameter D_rec_input = 16 "Receiver diameter";
+	parameter SI.Length H_rec_input = 24 "Receiver height";
+	parameter Real ar_rec = H_rec_input / D_rec_input "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance"; //Based on high performance coating
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity"; //Based on high performance coating
-	parameter Real rec_fr = 0.0816177433970268 "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.918382266900492
+	parameter SI.Efficiency rec_eff_design = 0.918382266900492 "Receiver at the design point";
+	parameter Real rec_fr = 1-rec_eff_design "Receiver loss fraction of radiance at design point"; //Calculated based on a receiver efficiency of 0.918382266900492
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter SI.Thickness t_insulation = 0.06 "Thickness insulation of the piping network";
-	
+
 	// HX
 	parameter SI.Temperature T_cold_set_Na = CV.from_degC(520) "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
@@ -78,17 +81,19 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10)    
 	//If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-	parameter Boolean optimize_HX_design=true; 
-	parameter SI.Length d_o_input = 0.00635 "User defined outer tube diameter";
+	parameter Boolean optimize_HX_design = true; 
+	parameter SI.Length d_o_input = 0.00953 "User defined outer tube diameter";
 	parameter Integer N_p_input = 1 "User defined tube passes number";
 	parameter Integer layout_input = 2 "User defined tube layout";
+	parameter Boolean N_t_input_on = true "Activate fixed number of tubes";
+	parameter Integer N_t_input = 1 "User defined number of tubes"; //If the input value is smaller then the minimum or higher then then maximum acceptable, it will be replaced!
 
 	// Storage
 	parameter Real t_storage(fixed = true, unit = "h") = 12.0 "Hours of storage"; // NREL updated the base case storage to 12 hours
 	parameter SI.Temperature T_cold_start_CS = CV.from_degC(500) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start_CS = CV.from_degC(720) "Hot tank starting temperature";
-	parameter SI.Temperature T_cold_aux_set = CV.from_degC(490) "Cold tank auxiliary heater set-point temperature";
-	parameter SI.Temperature T_hot_aux_set = CV.from_degC(710) "Hot tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_cold_aux_set = CV.from_degC(450) "Cold tank auxiliary heater set-point temperature";
+	parameter SI.Temperature T_hot_aux_set = CV.from_degC(575) "Hot tank auxiliary heater set-point temperature";
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
@@ -97,6 +102,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold1 = 0.21e3/*4.35807e3*/ "Cold tank parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
@@ -151,7 +157,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
 	//Receiver Calculated parameters
 	parameter SI.HeatFlowRate Q_rec_out = Q_flow_des * SM "Heat to HX at design";
@@ -160,16 +166,16 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_rec = Q_rec_out / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_max_Na = 2 * m_flow_rec "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
+	parameter SI.Area A_receiver = 1571 "Receiver aperture area"; // TODO: Use the panels are of the cavity receiver
+	parameter SI.Diameter D_receiver = 1 "Receiver diameter";
+	parameter SI.Length H_receiver = 1 "Receiver height";
+	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
+	parameter SI.Diameter D_tower = 1 "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//SF Calculated Parameters
 	parameter SI.Area A_field = R_des / eff_opt / he_av_design / dni_des/ n_modules "Heliostat field reflective area";
 	parameter Integer n_heliostat = integer(floor(A_field / A_heliostat)) "Number of heliostats";
-	parameter SI.Area A_receiver = 1571 "Receiver aperture area"; // TODO: Use the panels are of the cavity receiver
-	parameter SI.Diameter D_receiver = 1 "Receiver diameter";
-	parameter SI.Length H_receiver = 1 "Receiver height";
 	parameter SI.Area A_land = land_mult * A_field * n_modules + 197434.207385281 "Land area"; //TODO: Verify equation
-	parameter SI.Length H_tower = 0.154 * sqrt(twr_ht_const * (A_field / (gnd_cvge * excl_fac)) / CN.pi) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
-	parameter SI.Diameter D_tower = 1 "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to power block at design point";
@@ -325,7 +331,7 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 	// Pump cold1
 	SolarTherm.Models.Fluid.Pumps.Pump_PressureLosses pumpCold1(
 		redeclare package Medium = Medium1,
-		k_loss = k_loss_cold)
+		k_loss = k_loss_cold1)
 		annotation(Placement(visible = true, transformation(extent = {{-10, -42}, {-22, -30}}, rotation = 0)));
 	
 	//HX Control
@@ -356,7 +362,9 @@ model NaSaltSCO2System_modular "High temperature modular Sodium-sCO2 system"
 		ratio_cond=ratio_cond,
 		ratio_max=ratio_max,
 		L_max_cond=L_max_cond,
-		L_max_input=L_max_input)
+		L_max_input=L_max_input,
+		N_t_input_on = N_t_input_on,
+		N_t_input = N_t_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
 
 	SolarTherm.Models.Storage.Tank.BufferTank SodiumBufferTank(
