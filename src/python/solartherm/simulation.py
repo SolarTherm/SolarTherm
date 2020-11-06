@@ -98,7 +98,7 @@ def move_overwrite(src,dst):
 	if os.path.exists(dst):
 		assert os.access(dst,os.W_OK) and not os.path.isdir(dst)
 		os.unlink(dst)
-	#print "Moving '%s' to '%s'"%(src,dst)
+	#print("Moving '%s' to '%s'"%(src,dst))
 	shutil.move(src,dst)
 
 def parse_var_val(vstr, unit):
@@ -210,8 +210,8 @@ class Simulator(object):
 			self.mountdir = tempfile.mkdtemp(prefix="solartherm-mount-")
 			self.tempdir = tempfile.mkdtemp(prefix="solartherm-temp-")
 			self.init_cwd = os.getcwd()
-			print "Temporary directory '%s'" % self.tempdir
-			print "Mount directory '%s'" % self.mountdir
+			print("Temporary directory '%s'" % self.tempdir)
+			print("Mount directory '%s'" % self.mountdir)
 			self.makefile_fn = os.path.join(self.mountdir,self.makefile_fn)
 			self.init_in_fn = os.path.join(self.mountdir,self.init_in_fn)
 			sp.check_call([UNIONFS,'-o','cow','%s=RW:%s=RO'%(sh_quote(self.tempdir),sh_quote(self.init_cwd)), self.mountdir])
@@ -224,29 +224,29 @@ class Simulator(object):
 		if self.fusemount:
 			if not self.reuse:		
 				assert getattr(self,'entered_fuse')
-				#print "REMOVING FUSE MOUNTPOINT"
+				#print("REMOVING FUSE MOUNTPOINT")
 				try:
 					sp.check_call([FUSERMOUNT,'-uz',self.mountdir])
-				except sp.CalledProcessError,e:
-					print "UNABLE TO UNMOUNT: %s", str(e)
-					print "cwd = ",os.getcwd()
-					print "init_cwd =",self.init_cwd
+				except sp.CalledProcessError as e:
+					print("UNABLE TO UNMOUNT: %s", str(e))
+					print("cwd = ",os.getcwd())
+					print("init_cwd =",self.init_cwd)
 					import psutil
 					proc = psutil.Process()
-					print proc.open_files()
+					print(proc.open_files())
 				self.cleanup_fuse()
 			self.entered_fuse = False
 
 	def cleanup_fuse(self):
 		assert(self.fusemount)
 		if self.reuse:
-			print "Copying results files to original directory"
-			print "result file: ",self.res_fn
+			print("Copying results files to original directory")
+			print("result file: ",self.res_fn)
 			shutil.move(os.path.join(self.tempdir,self.res_fn),self.init_cwd)
-			print "init_out file: ",self.init_out_fn
+			print("init_out file: ",self.init_out_fn)
 			shutil.move(os.path.join(self.tempdir,self.init_out_fn),self.init_cwd)
 		else:			
-			#print "Cleaning up tempdir '%s'" % self.tempdir
+			#print("Cleaning up tempdir '%s'" % self.tempdir)
 			move_overwrite(os.path.join(self.tempdir,self.res_fn),self.init_cwd)
 			move_overwrite(os.path.join(self.tempdir,self.init_out_fn),self.init_cwd)
 			assert(self.tempdir[0:4]=="/tmp") # just being cautious!
