@@ -185,7 +185,7 @@ class NNModelSequential(object):
         self.fn_res = self.prefix_res+'/surrogate_model_%s'%(count)
         
         print(self.fn_res)
-        print("Save model to disk : %s ......................."%(self.fn_res))
+        print("Save model to disk..................")
         self.model.save(self.fn_res) # ===> save model in SavedModel format
         print("Done..................")
         return self.model

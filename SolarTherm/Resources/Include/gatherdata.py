@@ -91,12 +91,19 @@ def gather_data(inputs):
 
 	simulation_engine(LHS,fnval,modelicavarname,mofile,P_net,T_in_ref_blk,p_high,PR,pinch_PHX,dTemp_HTF_PHX,sim)
 
-	processing_data(fntrain,resdir)
+	inputpreprocessing = {}
+	inputpreprocessing["fntrain"] = fntrain
+	inputpreprocessing["resdir"] = resdir
+ 
+	processing_data(inputpreprocessing)
 
 	#return back to CWD
 	os.chdir(cwd)
 
-def processing_data(fntrain,resdir):	
+def processing_data(inputpreprocessing):
+	fntrain = inputpreprocessing["fntrain"]
+	resdir  = inputpreprocessing["resdir"]
+		
 	#Prep training data - Prep for NN training
 	df = pd.read_csv(fntrain)
 	rows = df.shape[0]

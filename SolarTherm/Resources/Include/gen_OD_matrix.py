@@ -1,5 +1,6 @@
 from pyDOE import *
 import numpy as np
+import os
 
 def generate_matrix(inputs):
     UB_1 = inputs["UB_1"]
@@ -26,12 +27,14 @@ def generate_matrix(inputs):
             LHS[i,j] = real_val
 
     trainingdir = inputs["trainingdir"]
-    
+    if not os.path.exists(trainingdir):
+        os.makedirs(trainingdir)
     np.savetxt("%s/OD_matrix.csv"%(trainingdir),LHS,delimiter=",")
     
     f = open("%s/OD_matrix.csv"%(trainingdir),"a")
     f.write("%s,%s,%s\n"%(inputs["T_HTF_des"],inputs["load_des"],inputs["T_amb_des"]))
     f.close()
+
 
 if __name__ == "__main__":
     inputs = {}

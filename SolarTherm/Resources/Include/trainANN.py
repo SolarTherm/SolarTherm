@@ -17,7 +17,7 @@ from tensorflow.keras.activations import relu,tanh
 from sklearn.preprocessing import MinMaxScaler,StandardScaler
 from sklearn.model_selection import train_test_split
 
-import libANN as lib
+import libANN as ANNlib
 import pandas as pd
 
 import time
@@ -79,7 +79,7 @@ def trainANN(fn_data,prefix_res,count):
         os.makedirs(prefix_res)
 
     #Load Data
-    model = lib.NNModelSequential()
+    model = ANNlib.NNModelSequential()
     model.preprocessingInput(
         fn_data=fn_data,
         input_dim=input_dim,
