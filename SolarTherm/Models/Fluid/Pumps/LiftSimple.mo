@@ -12,7 +12,7 @@ model LiftSimple "A simple particle lift model"
 	parameter SI.Pressure dp_fixed = 0 "Fixed dp when no input";
 
 	parameter SI.Height dh = 0 "Vertical displacement";
-	parameter Real CF = 0.5 "Counterweight factor ";
+	parameter Real CF = 0.5 "Counterweight factor +";
 	parameter SI.Efficiency eff = 0.85 "Elevator total efficiency";
 
 	Modelica.Blocks.Interfaces.RealInput m_flow if cont_m_flow and use_input annotation(

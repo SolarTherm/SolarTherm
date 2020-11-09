@@ -19,28 +19,34 @@ model sCO2PBCalculator_Using_JPidea
   parameter Boolean test_mode = true;
   parameter Boolean external_parasities = true;
   // *********************PB Params - Changeable Design Param
-  parameter SI.Power P_net = 20e6;
+  parameter SI.Power P_net = 100e6;
   parameter SI.Temperature T_in_ref_blk = 1243.27;
-  parameter SI.AbsolutePressure p_high = 22707266.48 "high pressure of the cycle";
-  parameter Real PR = 2.98 "Pressure ratio";
+  parameter SI.AbsolutePressure p_high = 25e6 "high pressure of the cycle";
+  parameter Real PR = 2.76 "Pressure ratio";
   parameter SI.TemperatureDifference pinch_PHX = 23.67 "T particle outlet at PHX - T sCO2 inlet at PHX";
   parameter SI.TemperatureDifference dTemp_HTF_PHX = 238.45 "T_in_ref_blk - T_cold_set";
   parameter SI.Temperature T_cold_set = T_in_ref_blk - dTemp_HTF_PHX;
+  parameter SI.Efficiency eta_turb = 0.93;
+  parameter SI.Efficiency eta_comp = 0.89;
+  parameter SI.Efficiency eta_recomp = 0.89;
+  parameter Boolean fix_TIT = true;
+  parameter SI.ThermodynamicTemperature TIT = 500 + 273.15;
   // *********************PB Params - Changeable Operation Param
-  parameter Real load = 0.85;
-  parameter SI.Temperature T_HTF_in = 1227.01;
+  parameter Real load = 1;
+  parameter SI.Temperature T_HTF_in = 1073.15;
   parameter SI.Temperature T_amb_input = 288.11;
+  //288.11
   // *********************PB Params - Other params
-  parameter SI.Temperature T_low = from_degC(41) "Cooler outlet temperature at design point";
-  parameter SI.Temperature blk_T_amb_des = from_degC(39);
+  parameter SI.Temperature T_low = from_degC(36) "Cooler outlet temperature at design point: Default value is 41 deg C";
+  parameter SI.Temperature blk_T_amb_des = T_low - 2 "default value is 39 deg C";
   parameter Real nu_min_blk = 0.5;
-  parameter Integer N_exch_parameter = 15;
-  parameter Integer N_HTR = 15;
-  parameter Integer N_LTR_parameter = 15 "PG";
+  parameter Integer N_exch_parameter = 30;
+  parameter Integer N_HTR = 30;
+  parameter Integer N_LTR_parameter = 30 "PG";
   parameter Real f_fixed_load = 0.0055;
   parameter SI.Efficiency eta_motor = 0.95 "electrical generator efficiency";
   // *********************PB Params - Financial
-  parameter Real pinch_recuperator = 15;
+  parameter Real pinch_recuperator = 5;
   parameter Real par_fr = 0.1;
   parameter Real pri_recuperator = 5.2;
   parameter Real pri_turbine = 9923.7;
@@ -54,7 +60,7 @@ model sCO2PBCalculator_Using_JPidea
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
   //Components instanstiation
-  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB_Modified_JPidea powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_PHX, T_amb_des = blk_T_amb_des, T_low = T_low, T_HTF_out = T_cold_set, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter, N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = test_mode) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2Cycle.DirectDesign.recompPB_Modified_JPidea powerBlock(redeclare package MedRec = Medium, P_nom = P_net, T_HTF_in_des = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_PHX, T_amb_des = blk_T_amb_des, T_low = T_low, T_HTF_out = T_cold_set, external_parasities = external_parasities, nu_min = nu_min_blk, N_exch = N_exch_parameter, N_LTR = N_LTR_parameter, f_fixed_load = f_fixed_load, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = eta_motor, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = test_mode, eta_comp_main = eta_comp, eta_comp_re = eta_recomp, eta_turb = eta_turb, TIT = TIT, fix_TIT = fix_TIT) annotation(
     Placement(visible = true, transformation(origin = {38, -14.1111}, extent = {{-38, -40.1111}, {38, 40.1111}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary source(nPorts = 1, redeclare package Medium = Medium, T = T_HTF_in, use_T = true, use_p = false, p = 1e5) annotation(
     Placement(visible = true, transformation(origin = {-90, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -67,7 +73,7 @@ model sCO2PBCalculator_Using_JPidea
   Modelica.Blocks.Sources.RealExpression parasities_input(y = 0) annotation(
     Placement(visible = true, transformation(origin = {-58, 98}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(use_input = true) annotation(
-    Placement(visible = true, transformation(origin = {-35, 13}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-37, 13}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_dot(y = m_HTF_in) annotation(
     Placement(visible = true, transformation(origin = {-98, 44}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // ********************* Variables
@@ -87,11 +93,11 @@ equation
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{-46, 98}, {46, 98}, {46, 10}, {46, 10}}, color = {0, 0, 127}));
   connect(source.ports[1], liftSimple.fluid_a) annotation(
-    Line(points = {{-80, 10}, {-61, 10}, {-61, 16}, {-42, 16}}, color = {0, 127, 255}));
+    Line(points = {{-80, 10}, {-61, 10}, {-61, 15}, {-44, 15}}, color = {0, 127, 255}));
   connect(liftSimple.fluid_b, powerBlock.fluid_a) annotation(
-    Line(points = {{-28, 16}, {2, 16}, {2, 0}, {22, 0}, {22, 0}}, color = {0, 127, 255}));
+    Line(points = {{-29, 15}, {2, 15}, {2, 0}, {22, 0}}, color = {0, 127, 255}));
   connect(m_dot.y, liftSimple.m_flow) annotation(
-    Line(points = {{-86, 44}, {-40, 44}, {-40, 28}, {-38, 28}}, color = {0, 0, 127}));
+    Line(points = {{-86, 44}, {-40, 44}, {-40, 28}, {-41, 28}}, color = {0, 0, 127}));
   annotation(
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-06, Interval = 0.002));
 end sCO2PBCalculator_Using_JPidea;
