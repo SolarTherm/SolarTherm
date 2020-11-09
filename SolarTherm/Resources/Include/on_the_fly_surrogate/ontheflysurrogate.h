@@ -9,6 +9,7 @@
 #include <gsl/gsl_blas.h>
 #include <python2.7/Python.h>
 #include "tensorflow/c/c_api.h"
+#include "SAM/sscapi.h"
 
 #define limitSize 1000000
 
@@ -28,7 +29,7 @@ typedef struct
 
 }PB_validation_data_point;
 
-typedef struct Kriging_properties
+typedef struct Kriging_struct
 {
     int rows;
     int inputsize;
@@ -53,17 +54,7 @@ typedef struct Kriging_properties
     double deviation_T_amb_min;
     double deviation_eta_gross_min;
     double deviation_eta_Q_min;
-
-    gsl_matrix* DISTANCE;
-
-    gsl_matrix* VARIOGRAM_PB;
-    gsl_matrix* COVARIANCE_PB;
-    gsl_matrix* INVERSE_LSM_PB;
-
-    gsl_matrix* VARIOGRAM_HX;
-    gsl_matrix* COVARIANCE_HX;
-    gsl_matrix* INVERSE_LSM_HX;
-}Kriging_properties;
+}Kriging_struct;
 
 typedef struct  /*Struct to store neccesary session properties*/
 {
@@ -86,56 +77,75 @@ typedef struct  /*Struct to store neccesary session properties*/
     int inputsize;
     int outputsize;
 
-}ANN_properties;
+}Session_Props;
 
-//void NoOpDeallocator(void* data, size_t a, void* b); //==> THIS IS COMMENTED SINCE ANOTHER C PROGRAM (st_surrogate.c) ALREADY HAS THIS FUNCTION;
+void NoOpDeallocator(void* data, size_t a, void* b);
 
-void *load_ANN_properties(char*, double* , double* , double* , double* , int, int, double, double, double );
+void *load_session(char*, double* , double* , double* , double* , int, int, double, double, double );
 
-double predict_ANN(const ANN_properties*, const double [], int);
+double predict_ANN(const Session_Props*, const double [], int);
 
-void* constructKriging(double , double , double , double , double , double , double , double , double , double , char*, char*, int , int, double );
+void* constructKriging(double , double , double , double , double , double , double , double , double , double , char*, char*
+, int , int, double, int, int , double , double ,double , double , double ,double, char*  );
 
-void* constructANN(double , double ,double ,double , double ,double ,double ,double , double , double , int , char*, char*, int ,int, double );
+void* constructANN(double , double ,double ,double , double ,double ,double ,double , double , double , int , char*, char*,
+int ,int, double, int, int , double , double ,double , double , double ,double, char* );
 
-void destructANN(ANN_properties* );
+void destructANN(Session_Props* );
 
-void destructKriging(Kriging_properties* );
+void destructKriging(Kriging_struct* );
 
-void checkConfig(double , double , double , double , double , double, int* ,char*);
+void checkConfig(double , double , double , double , double , double, int* ,char*, int,
+double ,double ,double ,double ,double ,double, double );
 
-double predict_Kriging(Kriging_properties* , double [] , char* , char*);
+double predict_Kriging(Kriging_struct* , double [] , char* , char* );
 
-void getWeight(Kriging_properties* , gsl_matrix* , char* );
+void getWeight(gsl_matrix*, gsl_matrix* , gsl_matrix* , int );
 
-void completeCoVarianceMatrix(Kriging_properties* , char* );
+void getCoVarianceMatrix(gsl_matrix* , gsl_matrix* , double , double , int );
 
-void eucledianDistance_2(Kriging_properties*, int , int , gsl_matrix*);
+void eucledianDistance_2(Kriging_struct*, int , int , gsl_matrix*);
 
-void completeEucledianDistance(Kriging_properties* , double*);
+void eucledianDistance(Kriging_struct* , double* , int , int , gsl_matrix*);
 
-void completeVariogramMatrix(Kriging_properties* , char*, char*);
+void getVariogramMatrix(gsl_matrix* , gsl_matrix* , double , double , double , int , char*);
 
 double** create2Darray(int , int);
 
-void getTrainingDataPoints(int , double**, Kriging_properties* );
+void getTrainingDataPoints(int , double**, Kriging_struct* );
 
 int getNumOfData(char* );
 
 void generateTrainingData(double , double , double , double , double , double , int , int, char* ,int, char*);
 
 void* load_KrigingVariables(char* , int , int , double , double , double , double , double , double ,double , 
-double ,double , double ,double , double  ,double ,double ,double ,double , double ,double , double, char* );
+double ,double , double ,double , double  ,double ,double ,double ,double , double ,double , double );
 
-Kriging_properties* buildKriging(double , double ,double , double , double , double ,double , double , double , double , char*, char*, int ,char*, char*, int, int ,int, double);
+Kriging_struct* buildKriging(double , double ,double , double , 
+double , double ,double , double , 
+double , double , char* , char* , int , 
+char* , char* , int , int , int , double , int ,
+int , double , double , double , 
+double , double , double, char*  );
 
-ANN_properties* buildANN(double , double ,double , double , double , double ,double , double , double , char* , char*, int ,char*, char* ,char* ,int ,int, int, int, int, double );
+Session_Props* buildANN(double , double ,double , double , 
+double , double ,double , double , 
+double , char* , char* , int , 
+char* , char* , char* , int , int , int ,
+int , int , double , int ,
+int , double , double , double , 
+double , double , double, char* );
 
 int trainingANN(char* , char* , int );
 
 char* build_trainingdir_path(char* , char* , char* , int );
 
 char* concat_training_dir(char* , char* );
+
+void dataProcessing(char* , char*, char* );
+
+void initNRELPB(double ,double , double , double ,double ,
+double ,double ,double ,double ,double ,char* ,char* ,double* );
 
 
 

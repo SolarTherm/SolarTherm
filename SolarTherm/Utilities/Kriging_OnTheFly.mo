@@ -20,14 +20,27 @@ package Kriging_OnTheFly
       input Integer inputsize "Input size to the Kriging Model. Usually it is 3: load, T_HTF_in, T_amb";
       input Integer outputsize "Output size of the Kriging Model. Usually it is 2: eta_gross and eta_Q at during operation";
       input Real tolerance_kriging "Tolerance -> stop criterion of the Kriging Model validation";
+      input Integer PB_model "User choice PB model: 0 is for CEA model, 1 is for NREL model";
+      input Integer htf_choice "put 50 for user defined HTF properties";
+      input Real dT_PHX_hot_approach "Temperature difference between incoming HTF and outlet sCO2 at design point at the heat exchanger";
+      input Real dT_PHX_cold_approach "Temperature difference between outgoing HTF and incoming sCO2 at design point";
+      input Real eta_isen_mc "Main compressor isentropic efficiency at design point";
+      input Real eta_isen_rc "Recompressor isentropic efficiency at design point";
+      input Real eta_isen_t "Turbine isentropic efficiency at design point";
+      input Real dT_mc_approach "Tempereature difference between ambient and cooler output at design point";
+      input String HTF_name "user defined HTF name. The properties csv must be stored in modelica://SolarTherm/Data/<HTF_name>/props_for_NREL_PB.csv";
       output Kriging_properties Kriging_variables "Object that contains Kriging matrix, kriging parameter such as Sill, Nugget, Rang, Scalers: Max and Min data, and all base values";
       external "C" Kriging_variables = constructKriging(
                           P_net,T_in_ref_blk,p_high,PR,pinch_PHX,dTemp_HTF_PHX,load_base,T_amb_base, 
-                          eta_gross_base,eta_Q_base,base_path, SolarTherm_path, inputsize, outputsize,tolerance_kriging
+                          eta_gross_base,eta_Q_base,base_path, SolarTherm_path,inputsize, outputsize,tolerance_kriging,PB_model,
+                          htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach,eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
+                          HTF_name
                           ); 
                 annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
     end constructor;
   
     function destructor
@@ -35,7 +48,9 @@ package Kriging_OnTheFly
      external "C" destructKriging(Kriging_variables)
       annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
     end destructor;
   end Kriging_properties;
 
@@ -50,9 +65,11 @@ package Kriging_OnTheFly
                        raw_inputs,
                        which_eta,
                        variogram_model
-                       )
+                       );
     annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
   end OTF_Kriging_interpolate;
 end Kriging_OnTheFly;

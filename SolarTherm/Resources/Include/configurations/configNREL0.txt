@@ -1,0 +1,2 @@
+P_net,T_in_ref_blk,p_high,dT_PHX_hot_approach,dT_PHX_cold_approach,eta_isen_mc,eta_isen_rc,eta_isen_t,dT_mc_approach,T_amb_base
+20000000.000000,1000.270000,22707266.480000,20.000000,20.000000,0.850000,0.850000,0.900000,6.000000,312.150000

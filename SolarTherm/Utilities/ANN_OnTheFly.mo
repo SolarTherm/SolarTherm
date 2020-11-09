@@ -21,14 +21,27 @@ package ANN_OnTheFly
       input Integer inputsize "Input size to the ANN Model. Usually it is 3: load, T_HTF_in, T_amb";
       input Integer outputsize "Output size of the ANN Model. Usually it is 2: eta_gross and eta_Q at during operation";
       input Real tolerance_ANN "Tolerance -> stop criterion of the ANN validation";
+      input Integer PB_model "User choice PB model: 0 is for CEA model, 1 is for NREL model";
+      input Integer htf_choice "put 50 for user defined HTF properties";
+      input Real dT_PHX_hot_approach "Temperature difference between incoming HTF and outlet sCO2 at design point at the heat exchanger";
+      input Real dT_PHX_cold_approach "Temperature difference between outgoing HTF and incoming sCO2 at design point";
+      input Real eta_isen_mc "Main compressor isentropic efficiency at design point";
+      input Real eta_isen_rc "Recompressor isentropic efficiency at design point";
+      input Real eta_isen_t "Turbine isentropic efficiency at design point";
+      input Real dT_mc_approach "Tempereature difference between ambient and cooler output at design point";
+      input String HTF_name "user defined HTF name. The properties csv must be stored in modelica://SolarTherm/Data/<HTF_name>/props_for_NREL_PB.csv";
       output ANN_properties session "Object that contains ANN session properties, scalers, weight etc.";
       external "C" session = constructANN(
                           P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base, 
-                          eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, inputsize, outputsize, tolerance_ANN
+                          eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, inputsize, outputsize, tolerance_ANN,
+                          PB_model, htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc,       
+                          eta_isen_t, dT_mc_approach, HTF_name
                           ); 
                 annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
     end constructor;
   
     function destructor
@@ -36,7 +49,9 @@ package ANN_OnTheFly
      external "C" destructANN(session)
       annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
     end destructor;
   end ANN_properties;
 
@@ -49,9 +64,11 @@ package ANN_OnTheFly
                        session,
                        raw_inputs,
                        which_ANN_model
-                       )
+                       );
     annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="file:///home/philgun/SAM/2020.2.29/linux_64"
+                );
   end OTF_ANN_predict;
 end ANN_OnTheFly;
