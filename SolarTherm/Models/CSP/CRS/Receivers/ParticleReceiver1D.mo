@@ -25,18 +25,17 @@ model ParticleReceiver1D
     Placement(transformation(extent = {{24, 38}, {44, 58}}), iconTransformation(extent = {{24, 38}, {44, 58}})));
   Modelica.Blocks.Interfaces.RealInput Tamb annotation(
     Placement(visible = true,transformation( origin = {40, 86},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {26, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
-  Modelica.Blocks.Interfaces.BooleanInput on annotation(
+  Modelica.Blocks.Interfaces.BooleaDryAirInput on annotation(
     Placement(transformation(extent = {{-38, -94}, {2, -54}}), iconTransformation(extent = {{-24, -98}, {-12, -86}})));
   
   // Medium
   replaceable package Medium = Media.SolidParticles.CarboHSP_ph;
+  replaceable package MedAir = Modelica.Media.Air;
   
   // Model configuration
   parameter Boolean test_mode = true "If true, q_solar = 1200 * 788.8. If False q_solar = Q_in / (W_rcv*H_drop)";
-  parameter Boolean fixed_geometry = false "If true, specified H_drop, t_c_in and calculate T_out. 
-  //  If false, T_out = T_out_design, calculate H_drop and t_c_in 
-  //  mdot and T_in are given by the inlet port
-  //  Always use true for annual simulation, use false only when you want to run the particle 1d receiver in test rig";
+  parameter Boolean fixed_geometry = false "If true, specified H_drop, t_c_in and calculate T_out.  If false, T_out = T_out_design";
+  parameter Boolean iterate_mdot = false "if true, make sure gemoetry is fixed, thus mdot is calculated s.t. T_out = T_out_design";
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
@@ -58,7 +57,7 @@ model ParticleReceiver1D
   parameter SI.Efficiency eps_s = 0.9 "Particle emissivity";
   parameter SI.Efficiency abs_s = 0.9"Particle absorptivity";
   parameter SI.Efficiency tau_s = 5.75335e-8 "Particle transmitivity";
-  parameter SI.Density rho_s = 3300. "Particle density [kg/m3]";
+  parameter SI.Density rho_s = 3550. "Particle density [kg/m3]";
   parameter Real phi_max = 0.6 "Maximum achievable particle volume fraction";
   
   // Environment
@@ -69,7 +68,6 @@ model ParticleReceiver1D
   parameter SI.HeatFlux dni_des = 200;
   parameter SI.Efficiency F = 0.54 "view factor from rev-12 EES code sandia ==> value is taken from CFD analysis done by Brantley
  Mills";
-  parameter SI.Density rho_air = 1 "density of ambient air";
   parameter SI.HeatFlowRate Q_in = 100;
   
   //Wall properties
@@ -93,11 +91,11 @@ model ParticleReceiver1D
   
   // Receiver geometry
   parameter SI.Length H_drop_design = 25.80006;
-  SI.Length H_drop(start = 30, min=1) "Receiver drop height [m]";
+  SI.Length H_drop(start = 25, min=10, max=50, nominal=25) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot(start=1000,min=100,max=1e4,nominal=1000) "Inlet mass flow rate [kg/s]";
   
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
@@ -130,15 +128,17 @@ model ParticleReceiver1D
   Real Re "Reynolds number";
   Real Pr "Prandtl number";
   Real miu "Dynamic viscocity of air";
-  Real F_wind_nom(min=0);
-  Real F_wind_denom(min=0);
   Real F_wind(min=1);
   Real W_dir_mod;
+  SI.Density rho_air "density of ambient air";
   SI.SpecificHeatCapacity Cp_air "Cp air ==> evaluated at film temperature";
   SI.ThermalConductance k_air "thermal conductance of air ==> evaluated at film temperature";
   SI.CoefficientOfHeatTransfer h_ambient "coefficient of heat transfer convection to ambient air from the curtain";
+  SI.Temperature T_avg;
+  SI.Temperature T_avg_Nu;
+  MedAir.ReferenceAir.Air_pT.ThermodynamicState state_air;
   
-  // Heat variables
+  // Heat variables 
   SI.HeatFlowRate Qloss_conv_wall_discrete[N];
   SI.HeatFlowRate Qloss_conv_curtain_discrete[N];
   SI.HeatFlowRate Qloss_jcf_discrete[N];
@@ -177,17 +177,28 @@ model ParticleReceiver1D
   SI.SpecificEnthalpy h_out(start = Util.h_T(T_ref));
 
 equation
+  
+  W_rcv = H_drop * AR;
+  A_ap = H_drop * W_rcv;
+  dx = H_drop / N;
+  
   if test_mode == true then
     q_solar = Q_in/A_ap;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
   
-  W_rcv = H_drop * AR;
-  A_ap = H_drop * W_rcv;
-  dx = H_drop / N;
+  if fixed_geometry then
+    H_drop = H_drop_design;
+  else
+    T_out = T_out_design;
+  end if;
   
-  H_drop = H_drop_design;
+  if iterate_mdot == true then 
+    T_out = T_out_design;
+  else
+    mdot = fluid_a.m_flow;
+  end if;
 
 //Boundary conditions
   phi[1] = phi_max;
@@ -204,35 +215,35 @@ equation
     x[i] = dx * (1. / 2 + i - 2);
   end for;
   x[N + 2] = H_drop;
-  t_c_in = fluid_a.m_flow / (phi_max * vp_in * W_rcv * rho_s);
+  //t_c_in = mdot / (phi_max * vp_in * W_rcv * rho_s);
+  t_c_in = (60 * mdot / (62 * W_rcv * phi_max * rho_s * sqrt(9.81))) ^ (1/1.5) + 1.4 * d_p;
   if mdot > 1e-6 then 
-            for i in 1:N + 2 loop
-          // Curtain thickness
-              t_c[i] = t_c_in + 0.0087 * x[i];
-          // Oles and Jackson (Sol. En. 2015), Eq 18.
-            end for;
-            for i in 2:N + 1 loop
-          // Curtain momentum balance (gravity causing decreased curtain opacity)
-              vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
-          // Mass balance
-              phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
-            end for;
+      for i in 1:N + 2 loop
+    // Curtain thickness
+        t_c[i] = t_c_in + 0.0087 * x[i];
+    // Oles and Jackson (Sol. En. 2015), Eq 18.
+      end for;
+      for i in 2:N + 1 loop
+    // Curtain momentum balance (gravity causing decreased curtain opacity)
+        vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
+    // Mass balance
+        phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
+      end for;
   else
-            for i in 1:N + 2 loop
-          // Curtain thickness
-              t_c[i] = 0;
-          // Oles and Jackson (Sol. En. 2015), Eq 18.
-            end for;
-            for i in 2:N + 1 loop
-          // Curtain momentum balance (gravity causing decreased curtain opacity)
-              vp[i] = 0;
-          // Mass balance
-              phi[i] = 0;
-            end for; 
+      for i in 1:N + 2 loop
+    // Curtain thickness
+        t_c[i] = 0;
+    // Oles and Jackson (Sol. En. 2015), Eq 18.
+      end for;
+      for i in 2:N + 1 loop
+    // Curtain momentum balance (gravity causing decreased curtain opacity)
+        vp[i] = 0;
+    // Mass balance
+        phi[i] = 0;
+      end for; 
   end if;  
   
   //Properties in the connectors
-  mdot = fluid_a.m_flow;
   fluid_a.m_flow + fluid_b.m_flow = 0;
   fluid_a.h_outflow = 0;
   fluid_b.h_outflow = h_out;
@@ -248,21 +259,31 @@ equation
   end for;
   
   //Advection variables calculation
-  k_air = (32.1e-3-25.9e-3)/(100-20)*((T_in+T_out_design)/2-273.15) + 25.9e-3 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman , Martin Rhodes, Powder Technology 191 (2009) 247–253";
-  miu = (21.9e-6-18.16e-6)/(100-20)*((T_in+T_out_design)/2-273.15) + 18.16e-6 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
-  Cp_air = 1000;
-  Re = vp[end] * H_drop * rho_air / miu;
-  Pr = miu * Cp_air / k_air;
+  T_avg = (T_in+T_out_design)/2;
+  T_avg_Nu = (T_in+T_amb)/2;
+  state_air = MedAir.ReferenceAir.Air_pT.setState_pTX(1e5,T_avg_Nu);
+  k_air = MedAir.ReferenceAir.Air_pT.thermalConductivity(state_air);
+  //k_air = (32.1e-3-25.9e-3)/(100-20)*(T_avg_Nu-273.15) + 25.9e-3 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+  miu = MedAir.ReferenceAir.Air_pT.dynamicViscosity(state_air);
+  //miu = (21.9e-6-18.16e-6)/(100-20)*(T_avg_Nu-273.15) + 18.16e-6 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+  Cp_air = MedAir.ReferenceAir.Air_pT.specificHeatCapacityCp(state_air);
+  //Cp_air = 1000;
+  rho_air = MedAir.ReferenceAir.Air_pT.density(state_air);
+  Re = sqrt(2 * 9.81 * H_drop) * H_drop * rho_air / miu;
+  Pr = MedAir.ReferenceAir.Air_pT.prandtlNumber(state_air);
+  //Pr = miu * Cp_air / k_air;
   Nu = -758.9 + 0.05737 * Re^(6/7) "Correlation from Brantley Mills CFD ";
   //"Ranz-Marshall correlation Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
-  h_ambient = Nu * k_air / H_drop;
+  if with_detail_h_ambient then
+    h_ambient = Nu * k_air / H_drop;
+  else
+    h_ambient = h_conv_curtain;
+  end if;
   
-  W_dir_mod = Modelica.Math.exp(-1*((abs(Wdir-180)-115)/25)^2);
-  F_wind_nom = (C0 + C1 * heat.Q_flow/1e6 + C2 * mdot + C3 * (heat.Q_flow/1e6)^2 + C4 * (W_dir_mod * Wspd));
-  F_wind_denom = (C0 + C1 * heat.Q_flow/1e6 + C2 * mdot + C3 * (heat.Q_flow/1e6)^2 + C4 * (W_dir_mod * 0));
+  W_dir_mod = Modelica.Math.exp(-1*((abs(Wdir-180)-105)/30)^2);
   
   if with_wind_effect then
-    F_wind = F_wind_nom / F_wind_denom;
+    F_wind = 1+0.13929*Wspd*W_dir_mod;
   else
     F_wind = 1;
   end if;
@@ -287,7 +308,7 @@ equation
     end if;
     
     //Curtain energy balance
-    q_conv_curtain[i] = if with_detail_h_ambient then F_wind * h_ambient * (T_s[i + 1] - Tamb) else F_wind * h_conv_curtain * (T_s[i + 1] - Tamb);
+    q_conv_curtain[i] = F_wind * h_ambient * (T_s[i + 1] - Tamb);
     q_net[i] = gc_f[i] - jc_f[i] + gc_b[i] - jc_b[i] - q_conv_curtain[i] "should I include view factor here multiply by jc_f?";
     q_net[i] * dx * W_rcv = mdot * (h_s[i + 1] - h_s[i]);
     

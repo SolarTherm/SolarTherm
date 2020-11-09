@@ -436,6 +436,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_SurrogatePB_SingleOutp
   Real SLmax(start = E_max * 2.77778e-10) "Storage capacity in MWh th";
   Real dummyRatio;
   Real accumulated_m;
+  
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
@@ -533,6 +534,7 @@ equation
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
   R_spot = market.profit;
+
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-113, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));

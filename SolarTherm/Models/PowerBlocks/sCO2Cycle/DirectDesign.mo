@@ -394,7 +394,11 @@ package DirectDesign
   	parameter Modelica.SIunits.MassFlowRate m_des(fixed = false);
   	parameter Modelica.SIunits.HeatFlowRate Q_cooler_des(fixed = false, start = 1e6);
   	parameter Medium.ThermodynamicState[N_cool] state_des(each p.fixed = false, each h.fixed = false) "Thermodynamic State at the i-th position";
-  	parameter Modelica.SIunits.SpecificEnthalpy[N_cool] h_CO2_des(each fixed = false, start = {600000 - i / N_cool * 150000 for i in 1:N_cool});
+  	parameter Modelica.SIunits.SpecificEnthalpy[N_cool] h_CO2_des(
+          each fixed = false, 
+          start = linspace(4e5,3e5,N_cool),
+          nominal = linspace(4e5,3e5,N_cool)//start = {600000 - i / N_cool * 150000 for i in 1:N_cool}
+  	);
   	parameter Real[N_cool] deltaT_des(each fixed = false, each start = 25) "difference with the ambiant air at the inlet and outlet";
   	parameter Modelica.SIunits.HeatFlowRate Q_dis_des(fixed = false, start = 1e5) "Heat flow rate dispatched per sub-HX in the cooler";
   	parameter Modelica.SIunits.Temperature[N_cool] T_CO2_des(each fixed = false, each start = from_degC(75));
@@ -413,13 +417,13 @@ package DirectDesign
   	
   
   initial equation
+      T_CO2_des[N_cool] = T_low;
   	for i in 1:N_cool loop
   		state_des[i] = Medium.setState_pTX(p_in_des, T_CO2_des[i]);
   		h_CO2_des[i] = Medium.specificEnthalpy(state_des[i]);
   		deltaT_des[i] = T_CO2_des[i] - T_amb_des;
   	end for;
   
-  	T_CO2_des[N_cool] = T_low;
   	h_CO2_des[1] = h_in_des;
   	h_CO2_des[N_cool] = h_out_des;
   	p_out_des = p_in_des;
@@ -1938,6 +1942,7 @@ package DirectDesign
       parameter Boolean test_mode = false "if true then PB is in test rig, influence the way to decalre m_sup";
       parameter Boolean external_parasities = false "= true enable parasities as an input";
       parameter Real nu_min = 0.5 "Minimum turbine operation";
+      parameter Boolean fix_TIT = false;
       Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation(
         Placement(visible = true, transformation(origin = {82, 80}, extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation(origin = {20, 60}, extent = {{-6, -6}, {6, 6}}, rotation = -90)));
       Modelica.Blocks.Interfaces.RealInput T_amb annotation(
@@ -1965,7 +1970,7 @@ package DirectDesign
       parameter SI.Power P_gross_des(fixed=false);
       
       // main Compressor parameters
-      parameter SI.Efficiency eta_comp_main = 0.8 "Maximal isentropic efficiency of the compressors";
+      parameter SI.Efficiency eta_comp_main = 0.82 "Maximal isentropic efficiency of the compressors";
       // reCompressor parameters
       parameter SI.Efficiency eta_comp_re = 0.82 "Maximal isentropic efficiency of the compressors";
       //Turbine parameters
@@ -1983,6 +1988,7 @@ package DirectDesign
       //Exchanger parameters
       parameter SI.ThermodynamicTemperature T_HTF_in_des = 800 + 273.15;
       parameter Integer N_exch = 5;
+      parameter SI.ThermodynamicTemperature TIT = 500 + 273.15;
       
       
       //Financial analysis
@@ -2095,12 +2101,16 @@ package DirectDesign
       exchanger.h_in_HTF_des = SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_HTF_in_des);
       exchanger.p_in_HTF_des = state_HTF_in_des.p;
       exchanger.m_HTF_des = m_HTF_des;
+      if fix_TIT == true then
+        exchanger.T_CO2_des[N_exch] = TIT;
+      else
+        min(exchanger.deltaT_des) = pinch_PHX;
+      end if;
       P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * (1 - f_fixed_load) * eta_motor * (1-par_fr);
       P_gross_des = (-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des;
       Q_HX_des = exchanger.m_CO2_des * (exchanger.h_out_CO2_des-exchanger.h_in_CO2_des);
       eta_cycle_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) / (Q_HX_des);
       exchanger.T_HTF_des[1] = T_HTF_out;
-      min(exchanger.deltaT_des) = pinch_PHX;
       eta_net_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * 
                        (1-f_fixed_load)* eta_motor * (1-par_fr) / Q_HX_des;
     
