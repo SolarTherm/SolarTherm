@@ -26,7 +26,9 @@
 
 
 import os
-
+#Dirty hack
+from solartherm import chpar
+#End Dirty hack
 def gen_dakota_in(response, method, variables, savedir):
 	'''
 	Generate dakota input file: sample.in
@@ -335,6 +337,9 @@ def gen_interface_bb(savedir):
 import dakota.interfacing as di
 import os
 import glob
+#Dirty hack
+from solartherm import chpar
+#End Dirty hack
 
 # Parse Dakota parameters file
 params, results = di.read_parameters_file()
@@ -380,8 +385,18 @@ if not os.path.exists(model):
 	sim.compile_model()
 	sim.compile_sim(args=['-s'])
 
+#Dirty hack
+PX = chpar.ProcesXML(model + '_init_'+suffix+'.xml')
+PX.write_par(var_n,var_v,one=(len(var_n)<2))
+#print("fn",fn)
+#print("suffix",suffix)
+#print("model",model)
 
-sim.update_pars(var_n, var_v)
+#End Dirty hack
+
+#sim.update_pars(var_n, var_v)
+
+
 #sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
 #sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
 sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)

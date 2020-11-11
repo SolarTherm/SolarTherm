@@ -17,20 +17,12 @@ import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
-#Dirty hack
-from solartherm import chpar
-#End Dirty hack
-
 t_start = time.time()
 
 
 def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, test_mode, par_val):
 
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
-	#Dirty Hack
-	SP = chpar.SetPar(sim.model + '_info.json',sim.model + '.mo')
-	SP.set_par(par_n,par_v)
-	#End Dirty Hack
 	sim.update_pars(par_n, par_v)
 
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
