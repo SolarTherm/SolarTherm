@@ -1,0 +1,23 @@
+within SolarTherm.Models.Storage.Thermocline;
+
+function Z_position_G3 "Input Tank height and number of fluid CVs, outputs array of z positions"
+  input SI.Length z_fA[:];
+  input SI.Length z_fB[:];
+  input SI.Length z_fC[:];
+  input SI.Length H_tankA;
+  input SI.Length H_tankB;
+  input SI.Length H_tankC;
+  output SI.Length z_f[:];
+  // = [size(z_fA,1)+size(z_fB,1)+size(z_fC,1)];
+algorithm
+  z_f := zeros(size(z_fA,1)+size(z_fB,1)+size(z_fC,1));
+  for i in 1:size(z_fA,1) loop
+    z_f[i] := z_fA[i];
+  end for;
+  for i in 1:size(z_fB,1) loop
+    z_f[i+size(z_fA,1)] := (H_tankA + z_fB[i]);
+  end for;
+  for i in 1:size(z_fC,1) loop
+    z_f[i+size(z_fA,1)+size(z_fB,1)] := (H_tankA + H_tankB + z_fC[i]);
+  end for;
+end Z_position_G3;

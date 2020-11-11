@@ -20,7 +20,7 @@ model PigIron_6h_10h_8h
   //Tanks
 
   parameter Integer N_f = 100 "Number of fluid CVs in main tank";
-  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter Integer N_p = 10 "Number of filler CVs  in main tank";
 
 
   

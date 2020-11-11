@@ -27,10 +27,10 @@ algorithm
   end when;
 
 equation
-  if Level > 0.50 then
+  //if Level > 0.50 then
     m_flow_PB = max(PB_load*(m_flow_ref),1e-4);
-  else
-    m_flow_PB = 1e-4;
-  end if;
+  //else
+    //m_flow_PB = 1e-4;
+  //end if;
 
 end Thermocline_PowerBlockControl;

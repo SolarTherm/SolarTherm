@@ -17,7 +17,7 @@ model PigIron_6h_10h_8h
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   parameter Integer N_f = 100 "Number of fluid CVs";
-  parameter Integer N_p = 5 "Number of filler CVs";
+  parameter Integer N_p = 10 "Number of filler CVs";
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";

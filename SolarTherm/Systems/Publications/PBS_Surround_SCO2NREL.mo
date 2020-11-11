@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications;
 
-model Thermocline_Parallel_A2_Reference
+model PBS_Surround_SCO2NREL
   function opt_file_naming
     input String prefix;
     //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
@@ -65,11 +65,9 @@ model Thermocline_Parallel_A2_Reference
   parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
   parameter SI.Temperature T_recv_max = T_des_low + T_tol_recv "Absolute maximum temperature at bottom of tank where receiver is shut off";
-  parameter SI.Temperature T_low_u = T_des_high - 40;// 0.5 * T_tol_PB "Temperature at which PB starts";
+  parameter SI.Temperature T_low_u = T_des_high - 0.5 * T_tol_PB "Temperature at which PB starts";
   parameter SI.Temperature T_low_l = T_des_high - T_tol_PB "Temperature at which PB stops";
   parameter SI.Temperature T_PCM_melt = Filler.T_melt "Melting temperature of PCM, not used";
-  parameter SI.Temperature T_up_u = 530 + 273.15 "Temperature at which defocusing starts, not used";
-  parameter SI.Temperature T_up_l = 520.0 + 273.15 "Temperature at which defocusing stops, not used";
   //Trays
   parameter Real f_recv = 1.00 "Receiver area multiplier to be optimised";
   parameter Real f_PCM_safety = 1.05 "Safety factor such that PCM does not exceed wall height";
@@ -77,7 +75,7 @@ model Thermocline_Parallel_A2_Reference
   parameter SI.Length z_PCM = 0.05 "Vertical depth of PCM in each tray, m";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.05 "Heat transfer coefficient of tank losses between sodium and ambient temps, W/m2K";
   //parameter Real SM_guess = 1.8 "Solar multiple";
-  parameter Real t_storage(unit = "h") = 12.0 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 6.0 "Hours of storage";
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium "Material model for Sodium Chloride PCM";
@@ -102,7 +100,7 @@ model Thermocline_Parallel_A2_Reference
   parameter String field_type = "surround";
   parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/100MWe/5000c%/893K/1000kWpm2/";
   parameter String phi_pct_string = "124";
-  parameter Real SM_guess = 3.0;
+  parameter Real SM_guess = 1.8;
   parameter Real HT_pct_guess = 100;
   parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
   //where to find the optics file
@@ -175,7 +173,7 @@ model Thermocline_Parallel_A2_Reference
   parameter SI.Length z_tray = z_PCM * f_PCM_expansion * f_PCM_safety "Tray wall height, m";
   parameter SI.Length d_tray = 1.0 "Diameter of the tray base, m";
   //also used for Nusselt number correlation
-  parameter SI.ThermodynamicTemperature T_start = T_des_low "Starting temperature of the simulation, K";
+  parameter SI.ThermodynamicTemperature T_start = T_low_l "Starting temperature of the simulation, K";
   parameter Integer nodes = 15 "Number of discretization elements of PCM";
   parameter Real growth_ratio = 1.2 "Geometric growth ratio of initial mesh thickness, refined mesh at top and bottom surfaces";
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
@@ -281,7 +279,7 @@ model Thermocline_Parallel_A2_Reference
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar heliostat field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, Q_defocus = Q_flow_defocus, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table_Full(angles = angles, file = opt_file)) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table_Full(angles = angles, file = opt_file)) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Hot Pump (power block)
   // Cold pump (receiver)
@@ -297,7 +295,7 @@ model Thermocline_Parallel_A2_Reference
   SolarTherm.Models.Control.Thermocline_ReceiverControl controlCold(T_df_on = T_up_u, T_df_off = T_up_l, T_max = T_recv_max, T_target = T_des_high, Q_flow_recv_des = Q_flow_rec_des, m_flow_recv_des = m_flow_recv_des) annotation(
     Placement(visible = true, transformation(origin = {-32, -22}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   //Hot Controller (Power Block)
-  SolarTherm.Models.Control.Thermocline_PowerBlockControl controlHot(T_on = T_low_u, T_off = T_low_l, m_flow_ref = m_flow_blk_des) annotation(
+  SolarTherm.Models.Control.SB_PowerBlockControl controlHot(T_on = T_low_u, T_off = T_low_l, m_flow_ref = m_flow_blk_des) annotation(
     Placement(visible = true, transformation(origin = {66, -18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Power Block
   SolarTherm.Models.PowerBlocks.PowerBlockModel_sCO2NREL powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_des_high, T_out_ref = T_des_low, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
@@ -348,7 +346,7 @@ model Thermocline_Parallel_A2_Reference
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Parallel_A2 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = PCM_Bot_Package, redeclare package Filler_Package_B = Filler, N_f_A = 20, N_p_A = 5, N_f_B = 20, N_p_B = 5, frac_1 = 1.0 / 2.0, T_max = T_des_high, T_min = T_des_low, d_p = 0.148, ar = 2.0, eta = 0.24, U_loss_tank = 0.00, Correlation=3) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Parallel_A3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = PCM_Bot_Package, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = 20, N_p_A = 5, N_f_B = 20, N_p_B = 5, N_f_C = 20, N_p_C = 5, frac_1 = 1.0 / 3.0, frac_2 = 1.0 / 3.0, T_max = T_des_high, T_min = T_des_low, d_p = 0.148, ar = 2.0, eta = 0.24, U_loss_tank = 0.00, Correlation = 3) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.Thermocline_Splitter_2 Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 14}, extent = {{-10, 0}, {10, 10}}, rotation = 180)));
@@ -515,8 +513,6 @@ equation
     Line(points = {{78, -18}, {82, -18}, {82, -38}, {-16, -38}, {-16, -30}, {-21, -30}}, color = {0, 0, 127}));
   connect(Tank.h_bot_outlet, controlCold.h_tank_outlet) annotation(
     Line(points = {{22, 26}, {12, 26}, {12, -20}, {-20, -20}, {-20, -28}, {-22, -28}}, color = {0, 0, 127}));
-  connect(Tank.Level, controlHot.Level) annotation(
-    Line(points = {{34, 40}, {50, 40}, {50, -12}, {56, -12}, {56, -12}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-16, 6}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-2, -10}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, -6}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {-56, -84}, extent = {{0, 58}, {48, 38}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {42, -84}, extent = {{0, 58}, {48, 38}}, textString = "PB Control", fontSize = 6, fontName = "CMU Serif")}),
@@ -529,4 +525,4 @@ protected
 	</ul>
 
 	</html>"));
-end Thermocline_Parallel_A2_Reference;
+end PBS_Surround_SCO2NREL;

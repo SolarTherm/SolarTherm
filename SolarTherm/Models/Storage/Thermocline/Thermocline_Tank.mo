@@ -60,7 +60,13 @@ extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   parameter Real C_total = Tank_A.C_section;
   parameter Real C_tank = Tank_A.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation;
+  //Theoretical Tank Level
+  Real Level;
+  parameter Real ZDH[N_f] = Tank_A.ZDH;
+  Real T_f_degC[N_f](start=fill(T_min,N_f));
 equation
+  Level = Tank_A.Level;
+  T_f_degC = (Tank_A.T_f).-273.15;
   /*
   Tank_A.m_flow = -1.0*fluid_a.m_flow;
   fluid_a.m_flow = -1.0*fluid_b.m_flow;

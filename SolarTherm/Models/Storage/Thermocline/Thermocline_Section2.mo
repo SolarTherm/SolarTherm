@@ -67,6 +67,7 @@ model Thermocline_Section2
   //(start = Initial_Temperature(N_f,z_f)) "Temperature of particle surface";
   //Plotting
   parameter Real ZDH[N_f] = Relative_Tank_Axes(H_tank, N_f) "Non-dimensional tank vertical axis";
+  //parameter Real ZDH[N_f] = (z_f.+z_offset)./(H_tank + z_offset);
   //Operational Controls
   Integer State(start = 2) "operational state 2=standby, 3=discharge, 1=charge";
 

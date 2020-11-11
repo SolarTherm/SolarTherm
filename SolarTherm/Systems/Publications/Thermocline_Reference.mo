@@ -348,7 +348,7 @@ model Thermocline_Reference
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 50, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.01) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Tank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 30, T_max = T_des_high, T_min = T_des_low,d_p=0.148, ar = 4.0, eta = 0.24, U_loss_tank = 0.1) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.Thermocline_Splitter_2 Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 14}, extent = {{-10, 0}, {10, 10}}, rotation = 180)));

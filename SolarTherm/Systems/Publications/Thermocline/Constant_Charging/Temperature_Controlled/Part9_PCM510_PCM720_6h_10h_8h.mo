@@ -1,15 +1,15 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
-model Group3_6h_10h_8h
+model Part9_PCM510_PCM720_6h_10h_8h
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT; //Do not change
   package Fluid_Package = SolarTherm.Materials.Sodium; //Do not change
-  package Filler_Package = SolarTherm.Materials.CaO_Constant;//MgO_Constant;  //Can investigate different filler
-  package PCM_Top_Package = SolarTherm.Materials.PCM_710;
-  package PCM_Bot_Package = SolarTherm.Materials.PCM_520;
+  package Filler_Package_A = SolarTherm.Materials.PCM_520;//MgO_Constant;  //Can investigate different filler
+  package Filler_Package_B = SolarTherm.Materials.PCM_710;
+
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -20,27 +20,24 @@ model Group3_6h_10h_8h
   parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f_A = max(10,integer(frac_1*100));//5 "Number of fluid CVs in topper";
+  parameter Integer N_f_A = integer(frac_1*100);//5 "Number of fluid CVs in topper";
   parameter Integer N_p_A = 10 "Number of filler CVs  in topper";
-  parameter Integer N_f_B = max(10,integer((1.0-frac_1-frac_2)*100));//90 "Number of fluid CVs in main tank";
+  parameter Integer N_f_B = 100 - N_f_A;//90 "Number of fluid CVs in main tank";
   parameter Integer N_p_B = 10 "Number of filler CVs  in main tank";
-  parameter Integer N_f_C = max(10,integer(frac_2*100));//5 "Number of fluid CVs in bottomer";
-  parameter Integer N_p_C = 10 "Number of filler CVs  in bottomer";
 
   
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = (24.0 * 3600.0) - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.20 "Filler diameter";
+  parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
-  parameter Real ar = 2.0 "Tank aspect ratio";
-  parameter Real frac_1 = 0.02 "fraction of energy storage capacity in topper";
+  parameter Real ar = 5.0 "Tank aspect ratio";
+  parameter Real frac_1 = 0.50 "fraction of energy storage capacity in topper";
   //Derived
-  parameter Real frac_2 = frac_1 "fraction of energy storage capacity in bottomer";
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
@@ -58,7 +55,7 @@ model Group3_6h_10h_8h
   //COntrol
 
   
-  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = PCM_Bot_Package,  redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = PCM_Top_Package, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, N_f_C = N_f_C, N_p_C = N_p_C, frac_1=frac_1, frac_2=frac_2, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank,Correlation=Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_2 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package_A,  redeclare package Filler_Package_B = Filler_Package_B, N_f_A = N_f_A, N_p_A = N_p_A, N_f_B = N_f_B, N_p_B = N_p_B, frac_1=frac_1, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p,U_loss_tank=U_loss_tank,Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
     
     
@@ -176,8 +173,8 @@ equation
       der(E_charged)=0.0;
       der(E_discharged) = 0.0;
     end if;
-    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
-    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
+    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total;
+    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump;
   else
     der(numer) = 0.0;
     der(E_charged)=0.0;
@@ -230,4 +227,4 @@ equation
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
 
-end Group3_6h_10h_8h;
+end Part9_PCM510_PCM720_6h_10h_8h;
