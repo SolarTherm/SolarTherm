@@ -145,10 +145,6 @@ if __name__ == '__main__':
 		os.makedirs(args.wd)	
 
 
-	print('\n\n',savedir)
-	print(os.getcwd())
-	print('\n\n')
-
 	os.chdir(args.wd)
 
 	if args.test:
@@ -368,7 +364,7 @@ if __name__ == '__main__':
 			plt.show(block=True)
 
 
-	elif args.method=='dakota_moga':
+	elif args.method[:6]=='dakota':
 		try:
 			subprocess.call(["dakota", "--version"])
 		except:
@@ -385,9 +381,12 @@ if __name__ == '__main__':
 		opt=OptimisationDakotaIn()
 		# TODO at the moment, all the setting are default
 		# need to implement parameters to change the settings
-		# TODO at the moment, the modelica solver, time steps were not user specified in the DAKOTA program
-		# need to put those as inputs to the DAKOTA as well 
-		opt.moga()
+		
+		if args.method=='dakota_moga':
+			opt.moga()
+		elif args.method=='dakota_soga':
+			opt.soga()
+
 		method=opt.method
 		response=opt.response(num_obj=num_obj)
 
@@ -411,47 +410,48 @@ if __name__ == '__main__':
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
-		summary={}
-		for i in range(num_obj):
-			summary[obj_n[i]]=np.array([])
+		if args.method=='dakota_moga':
+			summary={}
+			for i in range(num_obj):
+				summary[obj_n[i]]=np.array([])
 
-		f_out=savedir+'/finaldata1.dat'
-		with open(f_out) as f:
-			content= f.read().splitlines()
-		f.close()		
+			f_out=savedir+'/finaldata1.dat'
+			with open(f_out) as f:
+				content= f.read().splitlines()
+			f.close()		
 
-		t=len(content)
-		for i in xrange(t):
-			c=content[i]
-			l=c.split("\t")
-			for p in range(num_obj):
-				summary[obj_n[p]]=np.append(summary[obj_n[p]], float(l[1+p]))	
+			t=len(content)
+			for i in xrange(t):
+				c=content[i]
+				l=c.split("\t")
+				for p in range(num_obj):
+					summary[obj_n[p]]=np.append(summary[obj_n[p]], float(l[1+p]))	
 
 
-		# Plot the Pareto Front
-		fig = plt.figure()
-		fig.add_subplot(111)
+			# Plot the Pareto Front
+			fig = plt.figure()
+			fig.add_subplot(111)
 
-		plt.scatter(summary[obj_n[0]], summary[obj_n[1]], c="b", marker='*')
-		plt.title('Pareto Front (moga)', loc='center')
-		plt.axis("tight")
-		obj_unit=[] # objective unit
+			plt.scatter(summary[obj_n[0]], summary[obj_n[1]], c="b", marker='*')
+			plt.title('Pareto Front (moga)', loc='center')
+			plt.axis("tight")
+			obj_unit=[] # objective unit
 
-		for i in range(num_obj):
-			if len(perf_i)>0:
-				obj_unit.append(resultclass.perf_u[perf_i[i]])
+			for i in range(num_obj):
+				if len(perf_i)>0:
+					obj_unit.append(resultclass.perf_u[perf_i[i]])
+				else:
+					obj_unit.append('')
+
+			plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
+			plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
+
+			plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
+
+			if args.outfig is not None:
+				fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
 			else:
-				obj_unit.append('')
-
-		plt.xlabel(obj_n[0] + " (" + obj_unit[0] + ")")
-		plt.ylabel(obj_n[1] + " (" + obj_unit[1] + ")")
-
-		plt.grid(True,color='0.5', linestyle='--', linewidth=0.5)
-
-		if args.outfig is not None:
-			fig.savefig(args.outfig, dpi=600) # Example: outfig = ../examples/ParetoFront.png
-		else:
-			plt.show(block=True)
+				plt.show(block=True)
 
 
 
@@ -465,14 +465,36 @@ if __name__ == '__main__':
 
 	if num_obj==1:
 
-		print("Optimal design parameters: ", cand)
-		print("Optimal objective function: ", obj_sign[0]* res)
+		if args.method[:6]=='dakota':
+			#TODO output the result of soga dakota
 
-		if args.outfile_f is not None:
-			f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
-			f.write("Optimal design parameters: " + str(cand) + '\n')
-			f.write("Optimal objective function: " + str(obj_sign[0]* res))
-			f.close()
+			f_out=savedir+'/finaldata1.dat'
+			print('\n\nThe results are available in: \n%s'%f_out)
+
+			with open(f_out) as f:
+				content= f.read().splitlines()
+			f.close()		
+
+			c=content[0]
+			l=c.split("\t")
+
+			for i in range(len(par_n)):
+				print('Parameter %s: %s'%(par_n[i],l[i] ))
+
+			print('Optimum %s: %s\n\n'%(obj_n[0], l[-1]))
+
+			
+
+
+		else:
+			print("Optimal design parameters: ", cand)
+			print("Optimal objective function: ", obj_sign[0]* res)
+
+			if args.outfile_f is not None:
+				f = open(args.outfile_f, 'w') # Example: outfile_f = ../examples/result.txt
+				f.write("Optimal design parameters: " + str(cand) + '\n')
+				f.write("Optimal objective function: " + str(obj_sign[0]* res))
+				f.close()
 
 
 	t_end=time.time()

@@ -56,7 +56,7 @@ class TestStOptimise(unittest.TestCase):
 		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 		return y
 		
-	
+	'''	
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
@@ -193,6 +193,9 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 
+
+
+
 	def test_nsga2(self):
 		
 		outfile='TestStOptimise_nsga2_results.txt'
@@ -259,9 +262,29 @@ class TestStOptimise(unittest.TestCase):
 			f2=f_schaffer2[i]
 			self.assertTrue(abs((f2-self.get_schaffer_front(f1))/f2)< 0.1)
 
+	'''
 
+	def test_dakota_soga(self):
 
+		args='st_optimise --start 0 --stop 1 --maxiter 100 --objective f_rosen --method dakota_soga --wd=test_soga --test %s x1=-2,2,1 y1=-2,2,-1.5'%(self.fn)
 
+		subprocess.call(args, shell=True)
+
+		f_out='./test_soga/finaldata1.dat'
+		with open(f_out) as f:
+			content= f.read().splitlines()
+		f.close()		
+		c=content[0]
+		l=c.split("\t")
+
+		x1=float(l[0])
+		y1=float(l[1])
+		obj=float(l[-1])
+		self.assertTrue(abs(obj)  < 1e-1)
+		self.assertTrue(abs(x-1.) < 5e-1)
+		self.assertTrue(abs(y-1.) < 5e-1)
+
+		
 
 
 if __name__ == '__main__':
