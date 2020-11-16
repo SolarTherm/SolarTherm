@@ -277,8 +277,8 @@ class TestStOptimise(unittest.TestCase):
 		c=content[0]
 		l=c.split("\t")
 
-		x1=float(l[0])
-		y1=float(l[1])
+		x=float(l[0])
+		y=float(l[1])
 		obj=float(l[-1])
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
