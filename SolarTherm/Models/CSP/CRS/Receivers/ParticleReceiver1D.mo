@@ -128,7 +128,6 @@ model ParticleReceiver1D
   // Advection losses variables
   Real Nu "Nusselt number evaluate";
   Real Re "Reynolds number";
-  Real Pr "Prandtl number";
   Real miu "Dynamic viscocity of air";
   Real F_wind(min=1);
   Real W_dir_mod;
@@ -193,17 +192,17 @@ equation
   if fixed_geometry==true then
     H_drop = H_drop_design;
   else
-    T_out = T_out_design;
+    T_out = T_out_design "H_drop is solved iteratively";
   end if;
   
   if iterate_mdot == true then 
-    T_out = T_out_design;
+    T_out = T_out_design "mdot is solved iteratively";
   else
     mdot = fluid_a.m_flow;
   end if;
   
   if iterate_Q_flow == true then
-    T_out = T_out_design;
+    T_out = T_out_design "Q_flow is solved iteratively";
   else  
     q_solar = heat.Q_flow / A_ap;
   end if;
@@ -275,7 +274,6 @@ equation
   miu = MedAir.DryAirNasa.dynamicViscosity(state_air);
   Cp_air = MedAir.DryAirNasa.specificHeatCapacityCp(state_air);
   rho_air = MedAir.DryAirNasa.density(state_air);
-  Pr = MedAir.DryAirNasa.prandtlNumber(state_air);
   Re = sqrt(2 * Modelica.Constants.g_n * H_drop) * rho_air * H_drop / miu;
   Nu = -758.9 + 0.05737 * Re^(0.8571) "Correlation from Brantley Mills CFD ";
   if with_detail_h_ambient then
