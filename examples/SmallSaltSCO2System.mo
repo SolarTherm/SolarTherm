@@ -37,7 +37,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Solstice related parameters
 	parameter String opt_file(fixed = false);
-	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/sm"+String(SM)+"_ti"+String(towi)+"_R"+String(R1)+"_fb"+String(fb));
+	parameter String psave = "./optics";
 	parameter String field_type = "surround" "Other options are : surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
@@ -86,7 +86,8 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Storage
 	parameter Integer n_tanks_parallel = 1 "Number of parallel tank pairs";
-	parameter Real t_storage(fixed=true, unit = "h") = 4.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Power P_name(fixed = if fixed_field then false else true) = 25e6 "Nameplate rating of power block";
+	parameter Real t_storage(fixed=true, unit = "h") = 12.0 "Hours of storage"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_cold_set = CV.from_degC(500) "Cold tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_hot_set = CV.from_degC(720) "Hot tank target temperature"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Temperature T_cold_start = CV.from_degC(500) "Cold tank starting temperature"; //Based on NREL Gen3 SAM model v14.02.2020
@@ -182,7 +183,6 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
 
 	parameter SI.Power P_net = P_name "Power block net rating at design point";
-	parameter SI.Power P_name(fixed = if fixed_field then false else true) = 50e6 "Nameplate rating of power block";
 
 	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020

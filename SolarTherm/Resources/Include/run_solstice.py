@@ -1,7 +1,7 @@
 import os
 import time
 import numpy as np
-
+import shutil
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
@@ -47,9 +47,15 @@ def run_simul(inputs={}):
     casedir=pm.casedir
     pm.saveparam(casedir)
     tablefile=casedir+'/OELT_Solstice.motab'
-    if os.path.exists(tablefile):    
+
+    # Armando: erasing previous OELT
+    if os.path.exists(tablefile):
+        shutil.rmtree(casedir)
+        print('Deleting previous OELT')
+
+    if os.path.exists(tablefile):
 		print('')
-		print('Load exsiting OELT')
+		print('Load existing OELT')
 
     else:
 
@@ -80,6 +86,10 @@ def run_simul(inputs={}):
             print('')
             print('total time %.2f'%((end-start)/60.), 'min')
             np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
+            os.system('rm -rf %s/sunpos_*'%(casedir))
+            os.system('rm -rf %s/des_point*'%(casedir))
+            os.system('rm -rf %s/*.csv'%(casedir))
+            os.system('rm -rf %s/*.yaml'%(casedir))
 
     return tablefile
 
