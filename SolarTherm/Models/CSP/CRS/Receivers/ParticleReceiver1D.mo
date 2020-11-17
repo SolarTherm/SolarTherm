@@ -45,6 +45,8 @@ model ParticleReceiver1D
   parameter Boolean with_detail_h_ambient = false;
   parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   parameter Boolean with_wind_effect = false;
+  parameter Boolean with_pre_determined_eta = false;
+  parameter SI.Efficiency eta_rec_determined = 0.95;
   
   //Discretisation
   parameter Integer N = 2 "Number of vertical elements";
@@ -114,7 +116,7 @@ model ParticleReceiver1D
   SI.Efficiency abs_c[N](start = linspace(0.999, 0.972, N), max = fill(1., N), min = fill(0., N)) "Curtain absorptance";
   
   //Radiation heat fluxes
-  SI.HeatFlux q_solar "Uniform solar flux [W/m2]";
+  SI.HeatFlux q_solar(min=0, start=3e5,max=2e6) "Uniform solar flux [W/m2]";
   SI.HeatFlux gc_f[N](min = zeros(N)) "Curtain radiation gain at the front";
   SI.HeatFlux jc_f[N](min = zeros(N)) "Curtain radiation loss at the front";
   SI.HeatFlux gc_b[N](min = zeros(N)) "Curtain radiation gain at the back";
@@ -205,8 +207,26 @@ equation
     T_out = T_out_design "Q_flow is solved iteratively";
   else  
     q_solar = heat.Q_flow / A_ap;
-  end if;
+  end if;   
   
+  // Overall Performance
+  if with_pre_determined_eta == true then
+    if on == true then
+      Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
+      eta_rec = eta_rec_determined;
+    else
+      Qdot_rec = 0;
+      eta_rec = 0;
+    end if;
+  else
+    if on == true then
+      Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
+      eta_rec = max(Qdot_rec / Qdot_inc, 0);
+    else
+      Qdot_rec = 0;
+      eta_rec = 0;
+    end if;
+  end if;
 
 //Boundary conditions
   phi[1] = phi_max;
@@ -332,14 +352,7 @@ equation
     end if;
   end for;
   
-  // Overall Performance
-  if on == true then
-    Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
-    eta_rec = max(Qdot_rec / Qdot_inc, 0);
-  else
-    Qdot_rec = 0;
-    eta_rec = 0;
-  end if;
+  
   eta_rec_out = eta_rec;
   
   for i in 1:N loop  
