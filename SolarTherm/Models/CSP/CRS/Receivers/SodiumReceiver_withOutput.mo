@@ -2,21 +2,33 @@ within SolarTherm.Models.CSP.CRS.Receivers;
 model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	extends Interfaces.Models.ReceiverFluid;
 	import Modelica.Math.log10;
+	import Modelica.Constants.*;
 	Medium.BaseProperties medium;
 	SI.SpecificEnthalpy h_in(start=h_in_0,nominal=h_in_0);
 	SI.SpecificEnthalpy h_out(start=h_out_0,nominal=h_out_0);
 	SI.Temperature T_in=Medium.temperature(state_in);
 	SI.Temperature T_out=Medium.temperature(state_out);
 
+	parameter SI.Length H_tower = 175 "Tower height" annotation(Dialog(group="Technical data"));
 	parameter SI.Length H_rcv=1 "Receiver height" annotation(Dialog(group="Technical data"));
 	parameter SI.Diameter D_rcv=1 "Receiver diameter" annotation(Dialog(group="Technical data"));
-	parameter Integer N_pa = 1 "Number of panels" annotation(Dialog(group="Technical data"));
-	parameter Integer N_fl = 1 "Number of parallel flow-paths" annotation(Dialog(group="Technical data"));
-	parameter SI.Diameter D_tb=1 "Tube outer diameter" annotation(Dialog(group="Technical data"));
-	parameter SI.Thickness t_tb=1 "Tube wall thickness" annotation(Dialog(group="Technical data"));
-	parameter SI.Efficiency ab=1 "Coating absortance" annotation(Dialog(group="Technical data"));
-	parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
+	parameter Integer N_pa = 12 "Number of panels" annotation(Dialog(group="Technical data"));
+	parameter Integer N_fl = 8 "Number of parallel flow-paths" annotation(Dialog(group="Technical data"));
+	parameter SI.Diameter D_tb = 0.0603 "Tube outer diameter" annotation(Dialog(group="Technical data"));
+	parameter SI.Thickness t_tb = 0.0012 "Tube wall thickness" annotation(Dialog(group="Technical data"));
+	parameter SI.Efficiency ab = 0.98 "Coating absortance" annotation(Dialog(group="Technical data"));
+	parameter SI.Efficiency em = 0.91 "Coating Emitance" annotation(Dialog(group="Technical data"));
 	parameter SI.CoefficientOfHeatTransfer alpha=1 "Convective heat transfer coefficient";
+
+	parameter Real F_mult=2.6 "Piping length multiplier " annotation(Dialog(group="Piping"));
+
+	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient" annotation(Dialog(group="Piping"));
+	
+	parameter SI.Thickness e = 0.002e-3 "Pipe internal roughness";
+	parameter SI.MassFlowRate m_flow_rec = 1 "Receiver mass flow rate at design";
+	parameter Real L_e_45 = 16.0 "Equivalent lenght for an 45 degree elbow";
+	parameter Real L_e_90 = 30.0 "Equivalent lenght for an 90 degree elbow";
+	parameter SI.PressureDifference dP_net = dP_tube*N_pa/N_fl + (H_tower - H_rcv/2)*d_out_0*g_n;
 
 	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 
@@ -25,7 +37,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 
 	SI.Efficiency eff "Calculated receiver efficiency";
 	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
-	SI.Energy E_rec;
+	SI.Energy E_rec(start=0) "Acummulated receiver energy";
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 				transformation(
@@ -69,6 +81,13 @@ protected
 
 	parameter SI.SpecificEnthalpy h_in_0=Medium.specificEnthalpy(state_in_0);
 	parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
+	parameter SI.SpecificEnthalpy d_out_0=Medium.density(state_out_0);
+	parameter Modelica.SIunits.Velocity v_des = (m_flow_rec/N_fl/N_tb_pa)/(d_out_0*0.25*pi*(D_tb-2*t_tb)^2);
+	parameter Real Re_des = 4*(m_flow_rec/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb));
+	parameter Real f_des = (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re_des))^(-2);
+	parameter SI.PressureDifference dP_tube = 0.5*f_des*H_rcv/(D_tb - 2*t_tb)*d_out_0*v_des^2 
+											+ 2/2*f_des*L_e_45*d_out_0*v_des^2 
+											+ 4/2*f_des*L_e_90*d_out_0*v_des^2;
 
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
