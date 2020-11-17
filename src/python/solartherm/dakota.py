@@ -263,6 +263,46 @@ class OptimisationDakotaIn:
     output silent
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
+	def soga(self,seed=10983, max_eval=2500, init_type='unique_random', pop_size=30, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 30):
+
+		'''
+		seed, int, index of seed, to generate repeatable results
+		max_eval, int, maximum function evaluations
+		init_type, str, initialisation type, 'unique_random', 'simple_random' or 'flat_file'
+		pop_size, int, population size
+		crossover_type, str, 'shuffle_random', 'multi_point_parameterized_binary' etc
+		crossover_multip, int, multi_point_parameterized_binary
+		num_offspring, int
+		num_parents, int
+		final_solutions, int, the first three best solutions
+		'''
+		if crossover_type=='shuffle_random':
+			crossover='''crossover_type shuffle_random
+        num_offspring = %s num_parents = %s
+        crossover_rate = %s'''%(num_offspring, num_parents,crossover_rate)				
+		else:
+			# multi_point_parameterized_binary
+			crossover='''crossover_type
+        multi_point_parameterized_binary= %s
+        crossover_rate = %s'''%(crossover_multip,crossover_rate)		
+
+	
+		self.method+='''
+    soga
+        seed = %s
+    max_function_evaluations = %s
+    initialization_type %s
+	population_size=%s
+    %s
+    mutation_type %s
+        mutation_rate = %s
+    fitness_type %s
+    replacement_type elitist
+    convergence_type average_fitness_tracker
+        percent_change = %s num_generations = %s
+    output silent
+'''%(seed, max_eval, init_type, pop_size, crossover, mutation_type , mutation_rate, fitness_type, percent_change, num_generations)
+
 
 	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv):
 
