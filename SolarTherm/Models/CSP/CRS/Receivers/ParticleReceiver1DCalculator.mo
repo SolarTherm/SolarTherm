@@ -72,7 +72,11 @@ model ParticleReceiver1DCalculator
   Modelica.Blocks.Sources.RealExpression realExpression2(y = Wspd_dir) annotation(
     Placement(visible = true, transformation(origin = {-56, 68}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 initial equation
-  m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
+  if iterate_Q_flow then
+    m_in = m_design;
+  else
+    m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
+  end if;
 equation
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));
