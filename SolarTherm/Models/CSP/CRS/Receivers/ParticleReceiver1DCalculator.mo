@@ -46,7 +46,6 @@ model ParticleReceiver1DCalculator
   parameter Real Wspd_design = 0;
   parameter Real Wspd_dir = 0;
   parameter SI.MassFlowRate m_design = 1500;
-  
   //********************* Simulation Set up
   parameter Boolean with_detail_h_ambient = true "using size dependent advection heat transfer coefficient";
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
@@ -54,7 +53,6 @@ model ParticleReceiver1DCalculator
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
   parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
   parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
-  
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
     Placement(visible = true, transformation(origin = {60, -14}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary sink(redeclare package Medium = Medium, T = 300.0, d = 3300, nPorts = 1, p = 1e5, use_T = true) annotation(
@@ -67,18 +65,14 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 96}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, fixed_geometry = fixed_geometry, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = test_mode, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design=H_drop_design, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design, with_wind_effect = with_wind_effect, iterate_mdot = with_iterate_mdot, with_detail_h_ambient = with_detail_h_ambient, iterate_Q_flow = iterate_Q_flow) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = test_mode, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression realExpression1(y = Wspd_design) annotation(
     Placement(visible = true, transformation(origin = {-56, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression realExpression2(y = Wspd_dir) annotation(
     Placement(visible = true, transformation(origin = {-56, 68}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 initial equation
-  if iterate_Q_flow == true then
-    m_in = m_design;
-  else
-    m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
-  end if;    
+  m_in = Q_in * eta_rec_assumption / (Util.h_T(T_out_design) - Util.h_T(T_in_design));
 equation
   connect(source.ports[1], liftSimple.fluid_a) annotation(
     Line(points = {{50, -14}, {27, -14}}, color = {0, 127, 255}));

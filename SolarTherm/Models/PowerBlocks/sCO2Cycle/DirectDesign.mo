@@ -2234,10 +2234,9 @@ package DirectDesign
         eta_cycle = if m_sup then 
             ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
         W_fixed_load = if m_sup then
-            max((
-                  P_nom/(1-par_fr) * (f_fixed_load),
-                  0
-                )) else 0;
+            max(
+              P_nom/(1-par_fr) * (f_fixed_load),0)
+            else 0;
       end if;
       
       eta_Q = exchanger.Q_HX / Q_HX_des;
