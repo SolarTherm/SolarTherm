@@ -63,7 +63,7 @@ def trainANN(fn_data,prefix_res,count):
     if count==0:
         network_layout = [50,50,50,50,50,50]
     elif count==1:
-        network_layout = [60,60,60,60,60,60]
+        network_layout = [50,50,50]
 
     #Hyper Parameter
     lr = 0.001
@@ -102,7 +102,7 @@ def trainANN(fn_data,prefix_res,count):
         activation=activation,
         initializer=initializer,
         ES=False,
-        verbose=0,
+        verbose=1,
         with_validation=False
     )
 

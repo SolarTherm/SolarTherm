@@ -26,4 +26,6 @@ equation
   end when;
 
 
+annotation(
+    experiment(StartTime = 0, StopTime = 1e6, Tolerance = 1e-6, Interval = 3600));
 end test_linprog;
