@@ -2106,7 +2106,7 @@ package DirectDesign
       else
         min(exchanger.deltaT_des) = pinch_PHX;
       end if;
-      P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * (1 - f_fixed_load) * eta_motor * (1-par_fr);
+      P_nom = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) * (1-par_fr);
       P_gross_des = (-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des;
       Q_HX_des = exchanger.m_CO2_des * (exchanger.h_out_CO2_des-exchanger.h_in_CO2_des);
       eta_cycle_design = ((-turbine.W_turb_des) - mainCompressor.W_comp_des - reCompressor.W_comp_des) / (Q_HX_des);
@@ -2228,19 +2228,21 @@ package DirectDesign
       else 
         W_gross = if m_sup then 
             max(((-turbine.W_turb) - mainCompressor.W_comp - 
-            reCompressor.W_comp) - cooler.P_cooling ,0) else 0;
+            reCompressor.W_comp) - cooler.P_cooling ,0) else 0 "Cycle power - cooling power";
         W_cycle = if m_sup then
             (-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp else 0;
         eta_cycle = if m_sup then 
             ((-turbine.W_turb) - mainCompressor.W_comp - reCompressor.W_comp) / exchanger.Q_HX else 0;
         W_fixed_load = if m_sup then
-            max(((-turbine.W_turb) - mainCompressor.W_comp - 
-            reCompressor.W_comp) * (f_fixed_load) ,0) else 0;
+            max((
+                  P_nom/(1-par_fr) * (f_fixed_load),
+                  0
+                )) else 0;
       end if;
       
       eta_Q = exchanger.Q_HX / Q_HX_des;
       eta_gross = W_gross / exchanger.Q_HX;
-      W_net = W_gross * eta_motor * (1-f_fixed_load) - parasities;
+      W_net = W_gross - W_fixed_load - parasities;
       eta_cycle_net=W_net/exchanger.Q_HX;
       der(E_net) = W_net;
       

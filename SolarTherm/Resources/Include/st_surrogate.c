@@ -3,7 +3,12 @@
 #include "tensorflow/c/c_api.h"
 #include "neural-network/surrogate.h"
 
-void *load_session(char* saved_model_dir)
+void NoOpDeallocatorStaticANN(void* data, size_t a, void* b)
+{
+	/*Nothing here*/
+}
+
+void *load_session_static_ANN(char* saved_model_dir)
 {
     //*********************Adjust the logging of tensorflow by setting a variable 
     //*********************in the environment called TF_CPP_MIN_LOG_LEVEL
@@ -12,7 +17,7 @@ void *load_session(char* saved_model_dir)
     ret = putenv(var);
 
     //*********************Allocate dynamic memory from the heap for Session_Props data struct 
-    Session_Props *sess = malloc(sizeof(Session_Props));
+    Session_Props_Static_ANN *sess = malloc(sizeof(Session_Props_Static_ANN));
 
     //*********************Instantiate Session Properties
     TF_Graph* Graph = TF_NewGraph();
@@ -54,7 +59,7 @@ void *load_session(char* saved_model_dir)
     return sess;
 }
 
-double run_surrogate(const Session_Props *sess, const double raw_input[], int inputsize, const double X_max[], const double X_min[], const double Y_max, const double Y_min)
+double run_surrogate(const Session_Props_Static_ANN *sess, const double raw_input[], int inputsize, const double X_max[], const double X_min[], const double Y_max, const double Y_min)
 {
     
     //*********************Read input struct
@@ -109,7 +114,7 @@ double run_surrogate(const Session_Props *sess, const double raw_input[], int in
 	//Allocate memory for data inside the Input Tensor
     int memdata = numData * sizeof(float); // memory allocation ~ numData * data_type. if we have 2by2 input, then we have 4 numdata
 
-    TF_Tensor* int_tensor = TF_NewTensor(TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocator, 0);
+    TF_Tensor* int_tensor = TF_NewTensor(TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocatorStaticANN, 0);
 
     if (int_tensor == NULL)
     {
@@ -146,7 +151,7 @@ double run_surrogate(const Session_Props *sess, const double raw_input[], int in
     return res; 
 }
 
-void free_surrogate(Session_Props *sess)
+void free_surrogate(Session_Props_Static_ANN *sess)
 {
     free(sess);
 }

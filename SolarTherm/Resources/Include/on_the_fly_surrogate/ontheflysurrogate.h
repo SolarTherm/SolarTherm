@@ -54,6 +54,20 @@ typedef struct Kriging_struct
     double deviation_T_amb_min;
     double deviation_eta_gross_min;
     double deviation_eta_Q_min;
+
+    /*This section is for all the pre-calculated Matrix*/
+    gsl_matrix* DISTANCE;
+
+    gsl_matrix* VARIOGRAM_HX;
+    gsl_matrix* COVARIANCE_HX;
+    gsl_matrix* INVERSE_HX;
+
+    gsl_matrix* VARIOGRAM_PB;
+    gsl_matrix* COVARIANCE_PB;
+    gsl_matrix* INVERSE_PB;
+
+    int count;
+
 }Kriging_struct;
 
 typedef struct  /*Struct to store neccesary session properties*/
@@ -77,13 +91,15 @@ typedef struct  /*Struct to store neccesary session properties*/
     int inputsize;
     int outputsize;
 
+    int count;
+
 }Session_Props;
 
 void NoOpDeallocator(void* data, size_t a, void* b);
 
 void *load_session(char*, double* , double* , double* , double* , int, int, double, double, double );
 
-double predict_ANN(const Session_Props*, const double [], int);
+double predict_ANN(Session_Props*, const double [], int);
 
 void* constructKriging(double , double , double , double , double , double , double , double , double , double , char*, char*
 , int , int, double, int, int , double , double ,double , double , double ,double, char*  );
@@ -98,17 +114,13 @@ void destructKriging(Kriging_struct* );
 void checkConfig(double , double , double , double , double , double, int* ,char*, int,
 double ,double ,double ,double ,double ,double, double );
 
-double predict_Kriging(Kriging_struct* , double [] , char* , char* );
+double predict_Kriging(Kriging_struct* , const double [] , char* , char* );
 
 void getWeight(gsl_matrix*, gsl_matrix* , gsl_matrix* , int );
 
-void getCoVarianceMatrix(gsl_matrix* , gsl_matrix* , double , double , int );
-
 void eucledianDistance_2(Kriging_struct*, int , int , gsl_matrix*);
 
-void eucledianDistance(Kriging_struct* , double* , int , int , gsl_matrix*);
-
-void getVariogramMatrix(gsl_matrix* , gsl_matrix* , double , double , double , int , char*);
+void completeCovarianceMatrix(Kriging_struct* , char* , char* );
 
 double** create2Darray(int , int);
 
@@ -119,7 +131,7 @@ int getNumOfData(char* );
 void generateTrainingData(double , double , double , double , double , double , int , int, char* ,int, char*);
 
 void* load_KrigingVariables(char* , int , int , double , double , double , double , double , double ,double , 
-double ,double , double ,double , double  ,double ,double ,double ,double , double ,double , double );
+double ,double , double ,double , double  ,double ,double ,double ,double , double ,double , double, char*);
 
 Kriging_struct* buildKriging(double , double ,double , double , 
 double , double ,double , double , 
@@ -136,7 +148,7 @@ int , int , double , int ,
 int , double , double , double , 
 double , double , double, char* );
 
-int trainingANN(char* , char* , int );
+int trainingANN(char* , char* , int, char* );
 
 char* build_trainingdir_path(char* , char* , char* , int );
 
@@ -144,8 +156,9 @@ char* concat_training_dir(char* , char* );
 
 void dataProcessing(char* , char*, char* );
 
-void initNRELPB(double ,double , double , double ,double ,
-double ,double ,double ,double ,double ,char* ,char* ,double* );
+void initNRELPB(double ,double , double , double ,
+double ,double ,double ,double ,double , char* , int , 
+char* , double , double* );
 
 
 

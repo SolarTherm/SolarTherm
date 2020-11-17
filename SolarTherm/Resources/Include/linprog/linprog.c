@@ -2,18 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-void getPriceMotabData(char* filepath, double* price, double* time, int length)
+void getPriceMotabData(const char* filepath, double* price, double* time, int length)
 {
     struct price_data pri[length];
     char line[limitSize];
     size_t i = 0;
 
     FILE* pri_file;
-    pri_file = fopen(filepath,"r");    
+    pri_file = fopen(filepath,"r");  
+    fprintf(stderr,"price file: %s\n",filepath);  
     if (pri_file == NULL)
     {   
-        printf("Price file doesn't exist in the directory. Please check the file name\n");
-        return;
+        fprintf(stderr,"Price file doesn't exist in the directory. Please check the file name\n");
+        exit(EXIT_FAILURE);
     }
 	else
 	{
@@ -29,7 +30,7 @@ void getPriceMotabData(char* filepath, double* price, double* time, int length)
     
     while(!feof(pri_file))
     {
-      sscanf(line,"%f,%f",
+      sscanf(line,"%lf,%lf",
       &pri[i].time,
       &pri[i].price) ;
       i++;
@@ -44,18 +45,19 @@ void getPriceMotabData(char* filepath, double* price, double* time, int length)
     }
 }
 
-void getDNIMotabData(char* filepath, double* DNI, double* time, int length)
+void getDNIMotabData(const char* filepath, double* DNI, double* time, int length)
 {
     struct weather_data wea[length];
     char line[limitSize];
     size_t i = 0;
 
     FILE* DNI_file;
-    DNI_file = fopen(filepath,"r");    
+    DNI_file = fopen(filepath,"r");  
+    fprintf(stderr,"weather file: %s\n",filepath);   
     if (DNI_file == NULL)
     {   
-        printf("Weather file doesn't exist in the directory. Please check the file name\n");
-        return;
+        fprintf(stderr,"Weather file doesn't exist in the directory. Please check the file name\n");
+        exit(EXIT_FAILURE);
     }
 	else
 	{
@@ -71,7 +73,7 @@ void getDNIMotabData(char* filepath, double* DNI, double* time, int length)
     
     while(!feof(DNI_file))
     {
-      sscanf(line,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
+      sscanf(line,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
       &wea[i].time,
       &wea[i].GHI,
       &wea[i].DNI,

@@ -8,8 +8,8 @@
 #include "on_the_fly_surrogate/ontheflysurrogate.h"
 #include "on_the_fly_surrogate/ontheflysurrogate.c"
 
-
 #define limitSize 1000000
+
 
 void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double PR, 
     double pinch_PHX, double dTemp_HTF_PHX, double load_base,  double T_amb_base, 
@@ -20,7 +20,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
     char* HTF_name)
 {
 
-    printf("User surrogate choice: Kriging..........................................\n");
+    fprintf(stderr,"User surrogate choice: Kriging..........................................\n");
     
     Kriging_struct* Kriging_variables;
 
@@ -87,7 +87,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
         }
         else
         {
-            printf("Training data exists. Start constructing Kriging..............\n");
+            fprintf(stderr,"Training data exists. Start constructing Kriging..............\n");
                         
             char* name_prediction_validation_dump = "/validation_prediction.csv";
             char* name_R_squared = "/R_Squared.txt";
@@ -112,7 +112,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
             FILE* fnkrigparam = fopen(filepath_kriging_param_eta_PB,"r");
             if(fnkrigparam==NULL)
             {
-                printf("File path Kriging Param for PB doesn't exist! Check your path %s\n",filepath_kriging_param_eta_PB);
+                fprintf(stderr,"File path Kriging Param for PB doesn't exist! Check your path %s\n",filepath_kriging_param_eta_PB);
             }
             double* krig_param_PB = malloc(sizeof(double*)*3);
             fgets(line,limitSize,fnkrigparam);
@@ -121,7 +121,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
             double sill_PB = krig_param_PB[0];
             double Nugget_PB = krig_param_PB[1];
-            double Spherical_PB = 1-sill_PB;
+            double Spherical_PB = 1-Nugget_PB;
             double Range_PB = krig_param_PB[2];
 
             //***********************HX
@@ -137,7 +137,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
             double sill_HX = krig_param_HX[0];
             double Nugget_HX = krig_param_HX[1];
-            double Spherical_HX = 1-sill_HX;
+            double Spherical_HX = 1-Nugget_HX;
             double Range_HX = krig_param_HX[2];
 
             //*************************** input and outputsize
@@ -148,7 +148,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
             FILE *fnmax = fopen(filepathmax,"r"); //instantiate pointer to the filepathmax
             if(fnmax==NULL)
             {
-                printf("File path max data doesn't exist! Check your path %s\n",filepathmax);
+                fprintf(stderr,"File path max data doesn't exist! Check your path %s\n",filepathmax);
             }
 
             double* UB = malloc(sizeof(double*)*5);
@@ -168,7 +168,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
             if(fnmin==NULL)
             {
-                printf("File path min data doesn't exist! Check your path %s\n",filepathmin);
+                fprintf(stderr,"File path min data doesn't exist! Check your path %s\n",filepathmin);
             }
 
             double* LB = malloc(sizeof(double*)*5);
@@ -200,9 +200,10 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
                 Nugget_HX, sill_PB, sill_HX, Range_PB, Range_HX,
                 load_base, T_in_ref_blk, T_amb_base,  deviation_load_max,deviation_T_in_max, deviation_T_amb_max ,
                 deviation_eta_gross_max, deviation_eta_Q_max, deviation_load_min, deviation_T_in_min,  
-                deviation_T_amb_min, deviation_eta_gross_min,  deviation_eta_Q_min
+                deviation_T_amb_min, deviation_eta_gross_min,  deviation_eta_Q_min, "spherical"
             );
-            printf("Done constructing Kriging..............\n");
+
+            fprintf(stderr,"Done constructing Kriging..............\n");
 
             free(filepathpredictionvalidation);
             free(filepathRsquared);
@@ -216,6 +217,8 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
     }
     
     free(index_and_status);
+
+    Kriging_variables->count = 0;
     return Kriging_variables;
 }
 
@@ -228,7 +231,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
     char* HTF_name)
 {
     
-    printf("User surrogate choice: ANN..........................................\n");
+    fprintf(stderr,"User surrogate choice: ANN..........................................\n");
     char line[limitSize];
     Session_Props* sess;
    
@@ -263,7 +266,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
     if(status_config == 1) /*Generate new config txt since no config found in the database*/
     {
 
-        printf("Configuration doesn't exist, generating the training data and surrogate model!\n");
+        fprintf(stderr,"Configuration doesn't exist, generating the training data and surrogate model!\n");
         int gen_data = 1;
 
         /*Building path to ANN PB and ANN HX*/
@@ -274,8 +277,8 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
         char* ANN_PB_path = concat_training_dir(trainingdir,ANN_PB_model_name);
         char* ANN_HX_path = concat_training_dir(trainingdir,ANN_HX_model_name);
 
-        printf("%s\n",ANN_PB_path);
-        printf("%s\n",ANN_HX_path);
+        fprintf(stderr,"%s\n",ANN_PB_path);
+        fprintf(stderr,"%s\n",ANN_HX_path);
 
         /*Construct ANN including validation*/
         if(which_ANN_model==0) //***************** Load ANN PB model
@@ -288,7 +291,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                     HTF_name
                     );
             
-            printf("Training and Validation of ANN eta PB: Done!\n");   
+            fprintf(stderr,"Training and Validation of ANN eta PB: Done!\n");   
         }
         else if(which_ANN_model==1) //***************** Load ANN HX model
         {
@@ -300,7 +303,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                     HTF_name
                     );
             
-            printf("Training and Validation of ANN eta HX: Done!\n");
+            fprintf(stderr,"Training and Validation of ANN eta HX: Done!\n");
             
         }
         else
@@ -332,10 +335,10 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
         
         if(check_path == NULL) //********* if filepath training doesn't exist
         {
-            printf("Training data doesn't exist even though configuration exists.......Start gathering data.............\n");
+            fprintf(stderr,"Training data doesn't exist even though configuration exists.......Start gathering data.............\n");
             clock_t begin = clock();
 
-            int initialnumdata = 300;
+            int initialnumdata = 150;
 
             if(PB_model==0)
             {
@@ -349,7 +352,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                     initialnumdata, P_net, T_in_ref_blk, p_high,
                     T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
                     eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
-                    HTF_name, trainingdir, SolarTherm_path, base_path, status_config, match_index,1
+                    HTF_name, htf_choice, trainingdir,SolarTherm_path, base_path, status_config, match_index,1
                 );
             }
             else
@@ -366,7 +369,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
         
         else
         {
-            printf("Training data exists. Start constructing ANN..............\n");
+            fprintf(stderr,"Training data exists. Start constructing ANN..............\n");
         }
 
         //************* Need not to generate another data points otherwise specified in build ANN func, (tolerance not stasified)
@@ -378,7 +381,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
         {
             if ((check_dir = opendir(ANN_PB_path)) == NULL)
             {   
-                printf("No ANN model for PB exists: Building the ANN!\n");
+                fprintf(stderr,"No ANN model for PB exists: Building the ANN!\n");
 
                 sess = buildANN(P_net, T_in_ref_blk, p_high, PR, pinch_PHX, 
                     dTemp_HTF_PHX, load_base, T_amb_base, eta_gross_base, 
@@ -387,14 +390,14 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                     htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach,eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
                     HTF_name
                 );
-                printf("Training and Validation of ANN eta PB: Done!\n");
+                fprintf(stderr,"Training and Validation of ANN eta PB: Done!\n");
             }
             
             else 
             {
-                printf("ANN model for PB exists\n");
+                fprintf(stderr,"ANN model for PB exists\n");
                 closedir(check_dir);
-                printf("loading ANN PB model = %s\n",ANN_PB_path);
+                fprintf(stderr,"loading ANN PB model = %s\n",ANN_PB_path);
 
                 char* name_min = "/min.txt";
                 char* name_max = "/max.txt";
@@ -408,7 +411,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                 FILE *fnmax = fopen(filepathmax,"r"); //instantiate pointer to the filepathmax
                 if(fnmax==NULL)
                 {
-                    printf("File path max data doesn't exist! Check your path %s\n",filepathmax);
+                    fprintf(stderr,"File path max data doesn't exist! Check your path %s\n",filepathmax);
                 }
 
                 double* UB = malloc(sizeof(double*)*(inputsize+outputsize));
@@ -427,7 +430,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 
                 if(fnmin==NULL)
                 {
-                    printf("File path min data doesn't exist! Check your path %s\n",filepathmin);
+                    fprintf(stderr,"File path min data doesn't exist! Check your path %s\n",filepathmin);
                 }
 
                 double* LB = malloc(sizeof(double*)*(inputsize+outputsize));
@@ -474,7 +477,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
         {
             if ((check_dir = opendir(ANN_HX_path)) == NULL)
             {   
-                printf("No ANN model for HX exists: Building the ANN!\n");
+                fprintf(stderr,"No ANN model for HX exists: Building the ANN!\n");
                 
                 sess = buildANN(P_net, T_in_ref_blk, p_high, PR, pinch_PHX, 
                     dTemp_HTF_PHX, load_base, T_amb_base, eta_Q_base, 
@@ -483,13 +486,13 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                     htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach,eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
                     HTF_name
                     );
-                printf("Training and Validation of ANN eta HX: Done!\n");
+                fprintf(stderr,"Training and Validation of ANN eta HX: Done!\n");
             }
             else 
             {
-                printf("ANN model for HX exists\n");
+                fprintf(stderr,"ANN model for HX exists\n");
                 closedir(check_dir);
-                printf("loading ANN HX model = %s\n",ANN_HX_path);
+                fprintf(stderr,"loading ANN HX model = %s\n",ANN_HX_path);
 
                 char* name_min = "/min.txt";
                 char* name_max = "/max.txt";
@@ -503,7 +506,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
                 FILE *fnmax = fopen(filepathmax,"r"); //instantiate pointer to the filepathmax
                 if(fnmax==NULL)
                 {
-                    printf("File path max data doesn't exist! Check your path %s\n",filepathmax);
+                    fprintf(stderr,"File path max data doesn't exist! Check your path %s\n",filepathmax);
                 }
 
                 double* UB = malloc(sizeof(double*)*(inputsize+outputsize));
@@ -522,7 +525,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 
                 if(fnmin==NULL)
                 {
-                    printf("File path min data doesn't exist! Check your path %s\n",filepathmin);
+                    fprintf(stderr,"File path min data doesn't exist! Check your path %s\n",filepathmin);
                 }
 
                 double* LB = malloc(sizeof(double*)*(inputsize+outputsize));
@@ -579,37 +582,12 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 
     free(index_and_status);
 
+    sess->count=0;
+
     return sess;
 }    
 
-void destructANN(Session_Props* sess) //******* destructor for ANN session
-{
-
-    TF_DeleteSession(sess->Session,sess->Status);
-    TF_DeleteGraph(sess->Graph);
-    TF_DeleteStatus(sess->Status);
-    TF_DeleteSessionOptions(sess->SessionOpts);
-    TF_DeleteBuffer(sess->RunOpts);
-
-    free(sess->X_max);
-    free(sess->X_min);
-    free(sess->y_max);
-    free(sess->y_min);
-
-    free(sess);
-}
-
-void destructKriging(Kriging_struct* Kriging_variables) //******** destructor for Kriging
-{
-    for(size_t i=0; i<Kriging_variables->rows;i++)
-    {
-        free(Kriging_variables->trainingData[i]);
-    }
-
-    free(Kriging_variables);
-}
-
-double predict_Kriging(Kriging_struct* Kriging_variables, double raw_inputs[], char* which_eta, char* variogram_model)
+double predict_Kriging(Kriging_struct* Kriging_variables, const double raw_inputs[], char* which_eta, char* variogram_model)
 {   
     double deviation_load = Kriging_variables->load_base - raw_inputs[0];
     double deviation_T_in = Kriging_variables->T_in_ref_blk - raw_inputs[1];
@@ -635,14 +613,14 @@ double predict_Kriging(Kriging_struct* Kriging_variables, double raw_inputs[], c
     if (strcmp(which_eta,"eta_gross")==0)
     {
         Nugget = Kriging_variables->Nugget_PB;
-        Spherical = 1 - (Kriging_variables->sill_PB);
+        Spherical = 1 - (Kriging_variables->Nugget_PB);
         Range = Kriging_variables->Range_PB;
         index_var = 3;
     }
     else if (strcmp(which_eta,"eta_Q")==0)
     {
         Nugget = Kriging_variables->Nugget_HX;
-        Spherical = 1 - (Kriging_variables->sill_HX);
+        Spherical = 1 - (Kriging_variables->Nugget_HX);
         Range = Kriging_variables->Range_HX;
         index_var = 4;
     }
@@ -668,45 +646,56 @@ double predict_Kriging(Kriging_struct* Kriging_variables, double raw_inputs[], c
         RESIDUAL_VAL[i] =  Kriging_variables->trainingData[i][index_var] - avg_eff;
     }
 
-    /*Instantiate matrix to contains distance*/
-    gsl_matrix* DISTANCE = gsl_matrix_alloc(rows,rows+1);
+    /*Complete the DISTANCE matrix contained in the Kriging_variables struck, given the raw inputs*/
+    completeDistanceMatrix(Kriging_variables, inputs, inputsize);
 
-    /*Calculate the distance between unknown value to the known values*/
-    eucledianDistance(Kriging_variables, inputs, rows, inputsize, DISTANCE);
-    
-    /*Calculates the distance between known values to each other*/
-    eucledianDistance_2(Kriging_variables,  rows,  inputsize,  DISTANCE);
-
-    /*Build variogram matrix*/
-    gsl_matrix* VARIOGRAM = gsl_matrix_alloc(rows,rows+1);
-    getVariogramMatrix(VARIOGRAM, DISTANCE, Nugget, Spherical, Range, rows, variogram_model);
+    /*Complete variogram matrix contained in the Kriging_variables struck*/
+    completeVariogramMatrix(Kriging_variables, variogram_model, which_eta);
 
     /*Build Covariance Matrix*/
-    gsl_matrix* COVARIANCE = gsl_matrix_alloc(rows,rows+1);
-    getCoVarianceMatrix(VARIOGRAM, COVARIANCE, Nugget, Spherical, rows);
-
-    /*Left Side Matrix --> Populate*/
-    gsl_matrix* LSM = gsl_matrix_alloc(rows,rows); 
-    gsl_matrix* INVERSE_LSM = gsl_matrix_alloc(rows,rows);
-
-    for(size_t i=0;i<rows;i++)
-    {
-        for(size_t j=0;j<rows;j++)
-        {
-            gsl_matrix_set(LSM,i,j, gsl_matrix_get(COVARIANCE,i,j));
-        }
-    }
-
-    /*Inverse the LSM*/
-    gsl_permutation* perm = gsl_permutation_alloc(rows);
-    int s;
-    clock_t begin = clock();
-    gsl_linalg_LU_decomp (LSM, perm, &s);    
-    gsl_linalg_LU_invert (LSM, perm, INVERSE_LSM);
+    completeCovarianceMatrix(Kriging_variables, variogram_model, which_eta);
 
     /*Find the weights*/
     gsl_matrix* WEIGHT = gsl_matrix_alloc(rows,1);
-    getWeight(INVERSE_LSM, COVARIANCE, WEIGHT, rows);
+    gsl_matrix* RHS = gsl_matrix_alloc(rows,1);
+
+    /*Take only the most right of the covariance matrix*/
+    for(size_t i=0;i<rows;i++) 
+    {
+        if(strcmp(which_eta,"eta_gross")==0)
+        {
+            gsl_matrix_set(
+                RHS,i,0,
+                gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,rows)
+                );
+        }
+        else if(strcmp(which_eta,"eta_Q")==0)
+        {
+            gsl_matrix_set(
+                RHS,i,0,
+                gsl_matrix_get(Kriging_variables->COVARIANCE_HX,i,rows)
+                );  
+        }
+        else
+        {
+            fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q. Your value is %s\n",which_eta);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if(strcmp(which_eta,"eta_gross")==0)
+    {
+        gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,Kriging_variables->INVERSE_PB,RHS,0.0,WEIGHT);
+    }
+    else if(strcmp(which_eta,"eta_Q")==0)
+    {
+        gsl_blas_dgemm(CblasNoTrans,CblasNoTrans,1.0,Kriging_variables->INVERSE_HX,RHS,0.0,WEIGHT);
+    }
+    else
+    {
+        fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+        exit(EXIT_FAILURE);
+    }
 
     /*Find the sum of weight*/
     double sum_weight = 0;
@@ -732,12 +721,25 @@ double predict_Kriging(Kriging_struct* Kriging_variables, double raw_inputs[], c
     double vars = 0;
     for(size_t i = 0; i<rows;i++)
     {
-        vars = vars + (gsl_matrix_get(COVARIANCE,i,rows)*gsl_matrix_get(WEIGHT,i,0));
+        if(strcmp(which_eta,"eta_gross")==0)
+        {
+            vars = vars + (gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,rows)*gsl_matrix_get(WEIGHT,i,0));
+        }
+        else if(strcmp(which_eta,"eta_Q")==0)
+        {
+            vars = vars + (gsl_matrix_get(Kriging_variables->COVARIANCE_HX,i,rows)*gsl_matrix_get(WEIGHT,i,0));
+        }
+        else
+        {
+            fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+            exit(EXIT_FAILURE);
+        }
+        
     }
 
-    vars = Nugget+Spherical - vars;
     estimate = estimate + avg_eff; //**************** scaled
     double real_deviation_estimate;
+    
     if (strcmp(which_eta,"eta_gross")==0)
     {
         real_deviation_estimate = estimate * (Kriging_variables->deviation_eta_gross_max-Kriging_variables->deviation_eta_gross_min) + Kriging_variables->deviation_eta_gross_min;
@@ -745,29 +747,24 @@ double predict_Kriging(Kriging_struct* Kriging_variables, double raw_inputs[], c
     else if(strcmp(which_eta,"eta_Q")==0)
     {
         real_deviation_estimate = estimate * (Kriging_variables->deviation_eta_Q_max-Kriging_variables->deviation_eta_Q_min) + Kriging_variables->deviation_eta_Q_min;
+    
     }
     
-    clock_t end = clock();
-    double time_spent = (double)(end-begin) / CLOCKS_PER_SEC;
-    //printf("%lf s\n",time_spent);
 
     /*Free resources*/
     free(RESIDUAL_VAL);
     free(inputs);
 
     /*Free GSL object*/
-    gsl_permutation_free(perm);
-    gsl_matrix_free(LSM);
-    gsl_matrix_free(INVERSE_LSM);
-    gsl_matrix_free(DISTANCE);
-    gsl_matrix_free(VARIOGRAM);
-    gsl_matrix_free(COVARIANCE);
+    gsl_matrix_free(RHS);
     gsl_matrix_free(WEIGHT);
+
+    Kriging_variables->count = Kriging_variables->count+1;
 
     return real_deviation_estimate;
 }
 
-double predict_ANN(const Session_Props *sess, const double raw_input[], int which_ANN_model)
+double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model)
 {
 
     double* inputs = malloc(sizeof(double*)*(sess->inputsize));
@@ -791,7 +788,7 @@ double predict_ANN(const Session_Props *sess, const double raw_input[], int whic
 
     if(t0.oper == NULL)
     {
-        printf("ERROR: Failed TF_GraphOperationByName serving_default_Input_input\n");
+        fprintf(stderr,"ERROR: Failed TF_GraphOperationByName serving_default_Input_input\n");
     }
 
     Input[0] = t0;
@@ -804,7 +801,7 @@ double predict_ANN(const Session_Props *sess, const double raw_input[], int whic
 
     if(t2.oper == NULL)
     {
-        printf("ERROR: Failed TF_GraphOperationByName StatefulPartitionedCall\n");
+        fprintf(stderr,"ERROR: Failed TF_GraphOperationByName StatefulPartitionedCall\n");
     }
     
     Output[0] = t2;
@@ -833,7 +830,7 @@ double predict_ANN(const Session_Props *sess, const double raw_input[], int whic
 
     if (TensorIn == NULL)
     {
-	    printf("ERROR: Failed TF_NewTensor\n");
+	    fprintf(stderr,"ERROR: Failed TF_NewTensor\n");
     }
 
     InputValues[0] = TensorIn;
@@ -869,12 +866,14 @@ double predict_ANN(const Session_Props *sess, const double raw_input[], int whic
     free(data);
     free(buff);
 
+    sess->count = sess->count + 1;
+
     return res; 
 }
 
-void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_hot_approach,double dT_PHX_cold_approach,
-double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach,double T_amb_base, char* HTF_name, 
-char* SolarTherm_path, double* res)
+void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach,
+double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach,double T_amb_base, char* HTF_name, int HTF_choice, 
+char* SolarTherm_path, double T_HTF_cold_des, double* res)
 {
 
     /*************************************************************
@@ -892,31 +891,53 @@ char* SolarTherm_path, double* res)
     *            res[9] = Q_dot_PHX_des;             [W]         *                       
     *            res[10] = eta_gross_base;           [-]         *    
     *            res[11] = eta_Q_base;               [-]         *
+    *            res[12] = dT_PHX_hot_approach;      [-]         *
     **************************************************************
     *************************************************************/
 
-   fprintf(stderr,"%lf\n",P_net);
+    fprintf(stderr,"======================Initialising NREL Power Block  based on //doi.org/10.1016/j.solener.2019.01.078====================\n");
 
-    ssc_data_t simulation_result = runNRELPB(
+    double delta = 100;
+    ssc_data_t simulation_result;
+    double guess_val = 5;
+    while(delta>0.5)
+    {
+        simulation_result = runNRELPB(
         10,
         P_net,
         T_in_ref_blk,
         p_high,
         T_amb_base,
-        dT_PHX_hot_approach,
-        dT_PHX_cold_approach,
+        guess_val,  /**********************************************dT_PHX_hot_approach ==> iterated value*/
+        dT_PHX_cold_approach,                  
         eta_isen_mc,
         eta_isen_rc,
         eta_isen_t,
         dT_mc_approach,
         HTF_name,
+        HTF_choice,
         ".",
         SolarTherm_path,
         ".",
         0,
         0,
-        0
-    );
+        0);
+
+        double T_HTF_cold_calculated;
+        ssc_data_get_number(simulation_result,"T_htf_cold_des",&T_HTF_cold_calculated);
+        fprintf(stderr,"HTF outlet temperature at design point: %lf C\n",T_HTF_cold_calculated);
+
+        delta = fabs(T_HTF_cold_des - (T_HTF_cold_calculated+273.15));
+        fprintf(stderr,"dT_PHX_hot_approach iteration: %lf C\n",guess_val);
+        
+        if(delta>0.5)
+        {
+            guess_val = guess_val + (delta-0.5);
+        }
+    }
+    
+    double dT_PHX_hot_approach = guess_val;
+    fprintf(stderr,"dT_PHX_hot_approach at design point: %lf C\n",dT_PHX_hot_approach);
 
     double HTR_UA;
     ssc_data_get_number(simulation_result, "HTR_UA_calculated", &HTR_UA);
@@ -976,14 +997,57 @@ char* SolarTherm_path, double* res)
     res[7] = m_dot_CO2_des;
     res[8] = m_dot_HTF_des;
     res[9] = Q_dot_PHX_des * 1e6;                       /*Heat exchanger thermal power rate [W]*/
+
     res[10] = eta_gross_base;
     res[11] = 1;                                        /*ratio of Q_PHX / Q_PHX at design point will always be 1
                                                           since there's no deviation from the on design 
                                                           in the operating condition*/
+    res[12] = dT_PHX_hot_approach;                      /*Approach temperature*/
     
     ssc_data_free(simulation_result);
+    fprintf(stderr,"====================== Done initialising NREL PB ====================\n");
 
     return;
 }
 
+void destructANN(Session_Props* sess) //******* destructor for ANN session
+{
+    fprintf(stderr,"ANN is called %d times to predict 1 eta during the simulation\n",sess->count);
 
+    TF_DeleteSession(sess->Session,sess->Status);
+    TF_DeleteGraph(sess->Graph);
+    TF_DeleteStatus(sess->Status);
+    TF_DeleteSessionOptions(sess->SessionOpts);
+    TF_DeleteBuffer(sess->RunOpts);
+
+    free(sess->X_max);
+    free(sess->X_min);
+    free(sess->y_max);
+    free(sess->y_min);
+
+    free(sess);
+}
+
+void destructKriging(Kriging_struct* Kriging_variables) //******** destructor for Kriging
+{
+
+    fprintf(stderr,"Kriging is called %d times to predict 1 eta during the simulation\n",Kriging_variables->count/2);
+
+    for(size_t i=0; i<Kriging_variables->rows;i++)
+    {
+        free(Kriging_variables->trainingData[i]);
+    }
+
+    gsl_matrix_free(Kriging_variables->DISTANCE);
+
+    gsl_matrix_free(Kriging_variables->VARIOGRAM_HX);
+    gsl_matrix_free(Kriging_variables->COVARIANCE_HX);
+    gsl_matrix_free(Kriging_variables-> INVERSE_HX);
+
+    gsl_matrix_free(Kriging_variables->VARIOGRAM_PB);
+    gsl_matrix_free(Kriging_variables->COVARIANCE_PB);
+    gsl_matrix_free(Kriging_variables->INVERSE_PB);
+
+
+    free(Kriging_variables);
+}

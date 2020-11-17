@@ -5,20 +5,20 @@
 typedef struct  /*Struct to store neccesary session properties*/
 {
     TF_Session* Session;
-    TF_Graph* Graph;
-    TF_Status* Status;
+    TF_Graph* Graph;												
+    TF_Status* Status;																
     TF_SessionOptions* SessionOpts;
     TF_Buffer* RunOpts;
-}Session_Props;
+}Session_Props_Static_ANN; 
 
-void NoOpDeallocator(void* data, size_t a, void* b) {}
+void NoOpDeallocatorStaticANN(void* data, size_t a, void* b);
 
-void *load_session(char*);
+void *load_session_static_ANN(char*);
 
-double run_surrogate(const Session_Props*, const double [], int, 
+double run_surrogate(const Session_Props_Static_ANN*, const double [], int, 
                      const double [], const double [], const double , const double );
 
-void free_surrogate(Session_Props*);
+void free_surrogate(Session_Props_Static_ANN*);
 
 
 

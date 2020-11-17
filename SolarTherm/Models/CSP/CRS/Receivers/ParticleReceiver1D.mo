@@ -25,17 +25,19 @@ model ParticleReceiver1D
     Placement(transformation(extent = {{24, 38}, {44, 58}}), iconTransformation(extent = {{24, 38}, {44, 58}})));
   Modelica.Blocks.Interfaces.RealInput Tamb annotation(
     Placement(visible = true,transformation( origin = {40, 86},extent = {{-12, -12}, {12, 12}}, rotation = -90), iconTransformation( origin = {26, 78},extent = {{-6, -6}, {6, 6}}, rotation = -90)));
-  Modelica.Blocks.Interfaces.BooleaDryAirInput on annotation(
+  Modelica.Blocks.Interfaces.BooleanInput on annotation(
     Placement(transformation(extent = {{-38, -94}, {2, -54}}), iconTransformation(extent = {{-24, -98}, {-12, -86}})));
   
   // Medium
   replaceable package Medium = Media.SolidParticles.CarboHSP_ph;
   replaceable package MedAir = Modelica.Media.Air;
+  replaceable package MedAirIdeal = Modelica.Media.IdealGases;
   
   // Model configuration
   parameter Boolean test_mode = true "If true, q_solar = 1200 * 788.8. If False q_solar = Q_in / (W_rcv*H_drop)";
   parameter Boolean fixed_geometry = false "If true, specified H_drop, t_c_in and calculate T_out.  If false, T_out = T_out_design";
   parameter Boolean iterate_mdot = false "if true, make sure gemoetry is fixed, thus mdot is calculated s.t. T_out = T_out_design";
+  parameter Boolean iterate_Q_flow = false "if true, fixed the geometry, mdot, and iterate Q_flow such that T_out = T_out_design";
   parameter Boolean with_wall_conduction = true "Whether to model vertical conduction in backwall";
   parameter Boolean fixed_cp = false "If false, use the Medium model. If true, use simplified cp=const approx";
   parameter Boolean with_isothermal_backwall = false "If true, fix the backwall temperature to uniform value (controlled cooling)";
@@ -136,7 +138,7 @@ model ParticleReceiver1D
   SI.CoefficientOfHeatTransfer h_ambient "coefficient of heat transfer convection to ambient air from the curtain";
   SI.Temperature T_avg;
   SI.Temperature T_avg_Nu;
-  MedAir.ReferenceAir.Air_pT.ThermodynamicState state_air;
+  MedAir.DryAirNasa.ThermodynamicState state_air;
   
   // Heat variables 
   SI.HeatFlowRate Qloss_conv_wall_discrete[N];
@@ -181,13 +183,13 @@ equation
   W_rcv = H_drop * AR;
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
-  
+  /*
   if test_mode == true then
     q_solar = Q_in/A_ap;
   else
     q_solar = heat.Q_flow / A_ap;
   end if;
-  
+  */
   if fixed_geometry then
     H_drop = H_drop_design;
   else
@@ -199,6 +201,13 @@ equation
   else
     mdot = fluid_a.m_flow;
   end if;
+  
+  if iterate_Q_flow == true then
+    T_out = T_out_design;
+  else  
+    q_solar = heat.Q_flow / A_ap;
+  end if;
+  
 
 //Boundary conditions
   phi[1] = phi_max;
@@ -261,19 +270,14 @@ equation
   //Advection variables calculation
   T_avg = (T_in+T_out_design)/2;
   T_avg_Nu = (T_in+T_amb)/2;
-  state_air = MedAir.ReferenceAir.Air_pT.setState_pTX(1e5,T_avg_Nu);
-  k_air = MedAir.ReferenceAir.Air_pT.thermalConductivity(state_air);
-  //k_air = (32.1e-3-25.9e-3)/(100-20)*(T_avg_Nu-273.15) + 25.9e-3 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman , Martin Rhodes, Powder Technology 191 (2009) 247–253";
-  miu = MedAir.ReferenceAir.Air_pT.dynamicViscosity(state_air);
-  //miu = (21.9e-6-18.16e-6)/(100-20)*(T_avg_Nu-273.15) + 18.16e-6 "Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
-  Cp_air = MedAir.ReferenceAir.Air_pT.specificHeatCapacityCp(state_air);
-  //Cp_air = 1000;
-  rho_air = MedAir.ReferenceAir.Air_pT.density(state_air);
-  Re = sqrt(2 * 9.81 * H_drop) * H_drop * rho_air / miu;
-  Pr = MedAir.ReferenceAir.Air_pT.prandtlNumber(state_air);
-  //Pr = miu * Cp_air / k_air;
-  Nu = -758.9 + 0.05737 * Re^(6/7) "Correlation from Brantley Mills CFD ";
-  //"Ranz-Marshall correlation Heat transfer in a particle curtain falling through a horizontally-flowing gas stream, Chrestella Wardjiman ⁎ , Martin Rhodes, Powder Technology 191 (2009) 247–253";
+  state_air = MedAir.DryAirNasa.setState_pTX(1e5,T_avg_Nu);
+  k_air = MedAir.DryAirNasa.thermalConductivity(state_air);
+  miu = MedAir.DryAirNasa.dynamicViscosity(state_air);
+  Cp_air = MedAir.DryAirNasa.specificHeatCapacityCp(state_air);
+  rho_air = MedAir.DryAirNasa.density(state_air);
+  Pr = MedAir.DryAirNasa.prandtlNumber(state_air);
+  Re = sqrt(2 * Modelica.Constants.g_n * H_drop) * rho_air * H_drop / miu;
+  Nu = -758.9 + 0.05737 * Re^(0.8571) "Correlation from Brantley Mills CFD ";
   if with_detail_h_ambient then
     h_ambient = Nu * k_air / H_drop;
   else

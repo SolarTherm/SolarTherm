@@ -5,7 +5,6 @@ import DyMat
 import xml.etree.ElementTree as ET
 import re
 import numpy as np
-import os #PG
 
 class SimResult(object):
 	def __init__(self, fn, init_fn=None):
@@ -196,10 +195,12 @@ class SimResult(object):
 		return constr, distance
 
 class SimResultElec(SimResult):
-	def calc_perf(self):
+	def calc_perf(self, peaker=False):
 		"""Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
+
+		peaker: bool, True: to calculate performance of a peaker plant
 		"""
 		var_names = self.get_names()
 		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
@@ -208,7 +209,7 @@ class SimResultElec(SimResult):
 		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
 		cap_v = self.mat.data('C_cap') # Capital costs [$]
 		om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
-		om_p_v = self.mat.data('pri_om_prod') # O&M costs per production per year [$/J/year]
+		om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
 		disc_v = self.mat.data('r_disc') # Discount rate [-]
 		life_v = self.mat.data('t_life') # Plant lifetime [year]
 		cons_v = self.mat.data('t_cons') # Construction time [year]
@@ -219,13 +220,21 @@ class SimResultElec(SimResult):
 		years = dur/31536000 # number of years of simulation [year]
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
 		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 		srev = rev_v[-1] # spot market revenue [$]
 		lcoe = None # Levelised cost of electricity
 		capf = None # Capacity factor
 		if close_to_year: 
-			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy , disc_v[0],
-					int(life_v[0]), int(cons_v[0]), epy)
+			if peaker:
+				tod_v=self.mat.data('TOD_W')
+				tod_factor=tod_v[-1]/eng_v[-1]
+				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
+
+			else:
+				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+						int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
@@ -233,20 +242,7 @@ class SimResultElec(SimResult):
 		if close_to_year: 
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
-		print("LCOE: %s [USD/MWhe]"%lcoe) #PG
-		cwd = os.getcwd()
-		print(cwd)
-		#os.system('rm -rf /home/philgun/solartherm-particle/examples/OELT_Solstice.motab')
-		i=1 #PG
-		filepath='./result_%s.txt'%(i)	#PG	
-		while os.path.exists(filepath): #PG
-			i=i+1
-			filepath='./result_%s.txt'%(i)
-		else: #print lcoe to new file
-			txt_name = './result_%s.txt'%(i)
-			f = open(txt_name,'w')
-			f.write('%s'%lcoe)
-			f.close()
+
 		return [epy, lcoe, capf, srev,]
 
 	def cost_breakdown(self):
@@ -507,4 +503,3 @@ class CSVResult(object):
 
 	def get_unit(self, name):
 		return self.units[name]
-

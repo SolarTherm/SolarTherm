@@ -9,28 +9,28 @@
 
 typedef struct weather_data
 {
-    float time;
-    float GHI; 
-    float DNI;
-    float DHI;
-    float Tdry;
-    float Tdew;
-    float relHum;
-    float press;
-    float wdir;
-    float wspd;
-    float albedo;
+    double time;
+    double GHI; 
+    double DNI;
+    double DHI;
+    double Tdry;
+    double Tdew;
+    double relHum;
+    double press;
+    double wdir;
+    double wspd;
+    double albedo;
 
 }weather_data;
 
 typedef struct price_data
 {
-    float time;
-    float price;
+    double time;
+    double price;
 }price_data;
 
-void getPriceMotabData(char* filepath, double* price, double* time, int length);
-void getDNIMotabData(char* filepath, double* DNI, double* time, int length);
+void getPriceMotabData(const char* , double* , double* , int );
+void getDNIMotabData(const char* , double* , double* , int );
 void printSpace();
 
 #endif

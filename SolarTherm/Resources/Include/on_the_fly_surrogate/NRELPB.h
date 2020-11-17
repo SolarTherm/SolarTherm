@@ -12,10 +12,10 @@ typedef struct sim_struct
 ssc_data_t runNRELPB(int ,double , double , double ,
     double , double , double , 
     double , double , double , double ,
-    char* , char* , char* , char* , int , int , 
+    char* , int, char* , char* , char* , int , int , 
     int );
 
-void generateOffDesignFile(double , double , double , char* , char*, int , int);
+void generateOffDesignFile(double , double , double , char* , char*, int , int, char*);
 
 void genPropsArray(char* , sim_struct* );
 

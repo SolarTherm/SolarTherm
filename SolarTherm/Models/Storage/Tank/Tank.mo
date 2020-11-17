@@ -79,7 +79,7 @@ model Tank
   Modelica.Blocks.Interfaces.RealOutput T_mea annotation(
     Placement(transformation(extent = {{94, -18}, {130, 18}})));
 
-protected
+//protected
   parameter SI.Volume V_t=(H*pi*D^2)/4;
   Modelica.Blocks.Interfaces.RealOutput L_internal;
   Modelica.Blocks.Interfaces.RealInput p_top_internal;
