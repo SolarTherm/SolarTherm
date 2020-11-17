@@ -190,7 +190,7 @@ equation
     q_solar = heat.Q_flow / A_ap;
   end if;
   */
-  if fixed_geometry then
+  if fixed_geometry==true then
     H_drop = H_drop_design;
   else
     T_out = T_out_design;
