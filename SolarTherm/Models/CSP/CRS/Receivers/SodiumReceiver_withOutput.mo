@@ -28,12 +28,22 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.MassFlowRate m_flow_rec = 1 "Receiver mass flow rate at design";
 	parameter Real L_e_45 = 16.0 "Equivalent lenght for an 45 degree elbow";
 	parameter Real L_e_90 = 30.0 "Equivalent lenght for an 90 degree elbow";
-	parameter SI.PressureDifference dP_net = dP_tube*N_pa/N_fl + (H_tower - H_rcv/2)*d_out_0*g_n;
+	parameter SI.PressureDifference dP_net = dP_tube*N_pa/N_fl + (H_tower - H_rcv/2)*d_out_0*g_n "Pressure drop per flow path";
 
 	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
+	parameter Real[4] CL = {945.7112573259491,0.02720568,-0.00172737,0.07126733} "Coefficients to calculate T_ext_linear";
+	parameter Real[4] C4L = {953.7130902079241,0.02170311,-0.00196636,0.08407119} "Coefficients to calculate T_ext_4_linear";
+	parameter Real[5] CH = {7.61828573e-04,-3.54208032e-02,5.93470995e-01,-9.37379885e-01,9.26793247} "Coefficients to calculate h_ext";
 
 	SI.HeatFlowRate Q_loss "Convective and emmisive losses from the receiver";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF after piping losses";
+	SI.HeatFlowRate Q_ref  "Receiver losses due to reflection";
+	SI.HeatFlowRate Q_rad  "Receiver losses due to re-radiation";
+	SI.HeatFlowRate Q_conv "Receiver losses due to forced convection";
+
+	SI.Temperature T_ext_linear "Space average temperature for convective loss";
+	SI.Temperature T_ext_4_linear "Fourth degree space average temperature for radiative loss";
+	SI.CoefficientOfHeatTransfer h_conv "External convective coefficient";
 
 	SI.Efficiency eff "Calculated receiver efficiency";
 	SI.Efficiency eta_rec "Receiver efficiency as calculated from correlation";
@@ -82,12 +92,14 @@ protected
 	parameter SI.SpecificEnthalpy h_in_0=Medium.specificEnthalpy(state_in_0);
 	parameter SI.SpecificEnthalpy h_out_0=Medium.specificEnthalpy(state_out_0);
 	parameter SI.SpecificEnthalpy d_out_0=Medium.density(state_out_0);
-	parameter Modelica.SIunits.Velocity v_des = (m_flow_rec/N_fl/N_tb_pa)/(d_out_0*0.25*pi*(D_tb-2*t_tb)^2);
-	parameter Real Re_des = 4*(m_flow_rec/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb));
-	parameter Real f_des = (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re_des))^(-2);
+
+	parameter Modelica.SIunits.Velocity v_des = (m_flow_rec/N_fl/N_tb_pa)/(d_out_0*0.25*pi*(D_tb-2*t_tb)^2) "HTF velocity at design point";
+	parameter Real Re_des = 4*(m_flow_rec/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb)) "Reynolds number at design point";
+	parameter Real f_des = (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re_des))^(-2) "Darcy friction factor at design point";
+
 	parameter SI.PressureDifference dP_tube = 0.5*f_des*H_rcv/(D_tb - 2*t_tb)*d_out_0*v_des^2 
 											+ 2/2*f_des*L_e_45*d_out_0*v_des^2 
-											+ 4/2*f_des*L_e_90*d_out_0*v_des^2;
+											+ 4/2*f_des*L_e_90*d_out_0*v_des^2 "Pressure drop for a single panel in a flow path";
 
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
@@ -112,12 +124,24 @@ equation
 					+ C[4]*(log10(max(1,heat.Q_flow)))^3 
 					+ C[5]*Tamb
 					+ C[6]*Wspd;
+//		Q_loss = -Q_ref -Q_rad -Q_conv;
+		Q_ref = (1-ab)*(max(1,heat.Q_flow));
+		T_ext_linear = CL[1] + CL[2]*(max(1,heat.Q_flow))/1e6 + CL[3]*(max(1,Tamb)) + CL[4]*(max(1,Wspd));
+		T_ext_4_linear = C4L[1] + C4L[2]*(max(1,heat.Q_flow))/1e6 + C4L[3]*(max(1,Tamb)) + C4L[4]*(max(1,Wspd));
+		Q_rad = em*sigma*H_rcv*D_rcv*pi*(T_ext_4_linear^4 - (max(1,Tamb))^4);
+		h_conv = CH[5] + CH[4]*Wspd + CH[3]*Wspd^2 + CH[2]*Wspd^3 + CH[1]*Wspd^4;
+		Q_conv = h_conv*H_rcv*D_rcv*pi*(T_ext_linear-(max(1,Tamb)));
 	else
 		Q_loss = 0;
 		eta_rec = 0;
+		Q_ref = 0;
+		T_ext_linear = 0;
+		T_ext_4_linear = 0;
+		Q_rad = 0;
+		h_conv = 0;
+		Q_conv = 0;
 	end if;
-	
-	0 = ab*heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
+	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
 	Q_rcv = fluid_a.m_flow*h_out + fluid_b.m_flow*h_in;
 	eff = Q_rcv/max(1,heat.Q_flow);
 	Q_out = heat.Q_flow*eta_rec;
