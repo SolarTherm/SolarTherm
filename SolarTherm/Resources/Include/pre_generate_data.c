@@ -9,7 +9,7 @@
 
 int main()
 {
-    double P_net[] = {100e6,50e6,10e6,250e6,500e6};
+    double P_net[] = {103.5e6};
     double T_in_ref_blk = 1073.15;
     double T_cold_set = 550 + 273.15;
     double dT_PHX_cold_approach = 15;

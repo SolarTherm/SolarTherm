@@ -9,6 +9,7 @@
 
 int main()
 {
+	ssc_test();
     double P_net = 10e6;
     double T_in_ref_blk = 1073.15;
     double T_cold_set = 550 + 273.15;

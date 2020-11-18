@@ -118,8 +118,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   //NN Based Receiver Parameter
   parameter Integer inputsize_rcv = 5;
-  parameter Real[inputsize_rcv] X_max_rcv = {5.04906372e+01, 1.47403013e+03, 3.14955603e+02, 1.36460943e+03, 9.99896884e+08};
-  parameter Real[inputsize_rcv] X_min_rcv = {4.51463536e+00, 1.02218597e+03, 2.53080041e+02, 7.52944510e+02, 2.45868147e+07};
+  parameter Real[inputsize_rcv] X_max_rcv = {5.04906372e+01, 9.99896884e+08, 1.36460943e+03, 1.47403013e+03, 3.14955603e+02};
+  parameter Real[inputsize_rcv] X_min_rcv = {4.51463536e+00, 2.45868147e+07, 7.52944510e+02, 1.02218597e+03, 2.53080041e+02};
   parameter Real y_max_rcv = 0.99885782;
   parameter Real y_min_rcv = 0.21788641;
   parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_0");
@@ -603,22 +603,22 @@ initial equation
 equation
 /*Equations below exist to close the model, s.t. the particle receiver model is agnostic to the input dimension*/
   particleReceiver.raw_input_1[1] = H_rcv_1;
-  particleReceiver.raw_input_1[2] = T_hot_set;
-  particleReceiver.raw_input_1[3] = particleReceiver.Tamb;
-  particleReceiver.raw_input_1[4] = particleReceiver.T_in;
-  particleReceiver.raw_input_1[5] = particleReceiver.Q_in_1;
+  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_1;
+  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
+  particleReceiver.raw_input_1[4] = T_hot_set;
+  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
   particleReceiver.ratio_1 = heliostatsField.ratio_1 "Equation to close the model";
-  particleReceiver.raw_input_2[1] = H_rcv_2;
-  particleReceiver.raw_input_2[2] = T_hot_set;
-  particleReceiver.raw_input_2[3] = particleReceiver.Tamb;
-  particleReceiver.raw_input_2[4] = particleReceiver.T_in;
-  particleReceiver.raw_input_2[5] = particleReceiver.Q_in_2;
+  particleReceiver.raw_input_1[1] = H_rcv_2;
+  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_2;
+  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
+  particleReceiver.raw_input_1[4] = T_hot_set;
+  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
   particleReceiver.ratio_2 = heliostatsField.ratio_2 "Equation to close the model";
-  particleReceiver.raw_input_3[1] = H_rcv_3;
-  particleReceiver.raw_input_3[2] = T_hot_set;
-  particleReceiver.raw_input_3[3] = particleReceiver.Tamb;
-  particleReceiver.raw_input_3[4] = particleReceiver.T_in;
-  particleReceiver.raw_input_3[5] = particleReceiver.Q_in_3;
+  particleReceiver.raw_input_1[1] = H_rcv_3;
+  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_3;
+  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
+  particleReceiver.raw_input_1[4] = T_hot_set;
+  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
   particleReceiver.ratio_3 = heliostatsField.ratio_3 "Equation to close the model";
 /*End section*/
 /*Assigning the input to the surrogate model*/

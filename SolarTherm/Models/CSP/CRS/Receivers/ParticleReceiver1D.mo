@@ -99,7 +99,7 @@ model ParticleReceiver1D
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
   SI.Length dx "Vertical step size [m]";
-  SI.MassFlowRate mdot(start=1000,min=100,max=1e4,nominal=1000) "Inlet mass flow rate [kg/s]";
+  SI.MassFlowRate mdot(start=5000,min=100,max=3e4,nominal=5000) "Inlet mass flow rate [kg/s]";
   
   // Distributed variables for the particle curtain
   Real phi[N + 1](start = fill(0.5, N + 1), min = fill(0., N + 1), max = fill(1, N + 1)) "Curtain packing factor (volume fraction)";
@@ -244,7 +244,7 @@ equation
   end for;
   x[N + 2] = H_drop;
   //t_c_in = mdot / (phi_max * vp_in * W_rcv * rho_s);
-  t_c_in = (60 * mdot / (62 * W_rcv * phi_max * rho_s * sqrt(9.81))) ^ (1/1.5) + 1.4 * d_p;
+  t_c_in = (60 * mdot / (62 * W_rcv * phi_max * rho_s * sqrt(Modelica.Constants.g_n))) ^ (1/1.5) + 1.4 * d_p;
   if mdot > 1e-6 then 
       for i in 1:N + 2 loop
     // Curtain thickness
@@ -289,7 +289,7 @@ equation
   //Advection variables calculation
   T_avg = (T_in+T_out_design)/2;
   T_avg_Nu = (T_in+T_amb)/2;
-  state_air = MedAir.DryAirNasa.setState_pTX(1e5,T_avg_Nu);
+  state_air = MedAir.DryAirNasa.setState_pTX(101325,T_avg_Nu);
   k_air = MedAir.DryAirNasa.thermalConductivity(state_air);
   miu = MedAir.DryAirNasa.dynamicViscosity(state_air);
   Cp_air = MedAir.DryAirNasa.specificHeatCapacityCp(state_air);
