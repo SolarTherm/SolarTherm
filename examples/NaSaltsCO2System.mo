@@ -9,6 +9,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	import FI = SolarTherm.Models.Analysis.Finances;
 	import SolarTherm.Types.Solar_angles;
 	import SolarTherm.Types.Currency;
+	import metadata = SolarTherm.Utilities.Metadata_Optics;
 	extends Modelica.Icons.Example;
 
 	//Media
@@ -35,20 +36,22 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = CEFF[7]) "Input power to receiver at design point";
-	parameter SI.Length H_tower = CEFF[8] "Tower height";
-	parameter Integer n_heliostat = integer(CEFF[9]) "Number of heliostats";
-	parameter SI.Diameter D_receiver = CEFF[10] "Receiver diameter";
-	parameter SI.Length H_receiver = CEFF[11] "Receiver height";
+	parameter SI.Irradiance dni_des = 930 "DNI at design point";
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_200_m.motab");
-	parameter Real rec_fr = CEFF[12] "Receiver loss fraction of radiance at design point";
-	parameter Real SM = CEFF[13] "Solar multiple";
-	parameter Real[13] CEFF = {-332.98449743,118.17098909,-13.96885001,0.55141421,0.00027917,-0.0053865,183655255.657637,200,4981,9,13,0.128565648409309,2.94133997482595};
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = dni_des*A_heliostat*n_heliostat*eff_opt) "Input power to receiver at design point";
+	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
+	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
+	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
+	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
+	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
+	parameter SI.Length H_tower = metadata_list[6] "Tower height";
+	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
+	parameter Real SM = CEFF[7] "Solar multiple";
+	parameter Real[7] CEFF = {-332.98449743,118.17098909,-13.96885001,0.55141421,0.00027917,-0.0053865,2.94133997482595};
 
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 7.07*7.07 "Heliostat module reflective area";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 	parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat";
 	parameter SI.Power W_tracking = n_heliostat*W_track*he_av_design "Tracking power consumed at design point";
@@ -60,6 +63,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
+	parameter Real metadata_list[22] = metadata(opt_file);
+	parameter Real[4] CL = {metadata_list[8],metadata_list[9],metadata_list[10],metadata_list[11]};
+	parameter Real[4] C4L = {metadata_list[12],metadata_list[13],metadata_list[14],metadata_list[15]};
+	parameter Real[5] CH = {metadata_list[16],metadata_list[17],metadata_list[18],metadata_list[19],metadata_list[20]};
+	parameter SI.Efficiency eff_abs = metadata_list[21];
+	parameter SI.Efficiency eff_emi = metadata_list[22];
 	parameter SI.Efficiency eta_rec_od = CEFF[1]
 										+ CEFF[2]*(log10(Q_curtail_guess)) 
 										+ CEFF[3]*(log10(Q_curtail_guess))^2 
@@ -321,6 +330,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
 		redeclare package Medium = Medium1,
 		C = CEFF[1:6],
+		CL = CL,
+		C4L = C4L,
+		CH = CH,
 		m_flow_rec = m_flow_rec,
 		F_mult = F_mult,
 		C_pip = C_pip,
