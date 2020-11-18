@@ -22,15 +22,15 @@ model ParticleReceiver1DCalculator
   parameter Real eff_block_design = 0.502;
   parameter SI.Efficiency eta_opt_des = 0.5;
   parameter Real SolarMultiple = 2.5;
-  parameter SI.Length H_drop_design = 40.4972509575;
-  parameter SI.HeatFlowRate Q_in = 3533279075.24332;
-  parameter Real T_in_design = 866.8441565013;
-  parameter Real T_out_design = 1223.3765861736;
-  parameter Real T_amb_design = 301.5489058461;
-  parameter Real Wspd_design = 23.3902288685;
-  parameter Real Wspd_dir = 149.5968122122;
+  parameter SI.Length H_drop_design = 34.4672586382948;
+  parameter SI.HeatFlowRate Q_in = 912595524.936207;
+  parameter Real T_in_design = 835.331826965507;
+  parameter Real T_out_design = 1253.86273746575;
+  parameter Real T_amb_design = 275.492645541622;
+  parameter Real Wspd_design = 27.4743514657816;
+  parameter Real Wspd_dir = 60.6062985212656;
   parameter Real eta_rec_determined = 0.4247535903;
-  parameter SI.MassFlowRate m_design = 756.6830417153;
+  parameter SI.MassFlowRate m_design = 206.821541380436;
   parameter Real CR = 1200;
   parameter SI.HeatFlux dni_des = 950;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
@@ -47,16 +47,14 @@ model ParticleReceiver1DCalculator
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
   parameter Real std_deviation = 0.1;
-  
   //********************* Simulation Set up
   parameter Boolean with_detail_h_ambient = true "using size dependent advection heat transfer coefficient";
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
   parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
-  parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
-  parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
+  parameter Boolean iterate_Q_flow = true "true T_out=T_out_design else heat.Q_flow / A_ap";
+  parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
-  
   //********************** Variables
   SI.HeatFlowRate Q_in_rcv_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
