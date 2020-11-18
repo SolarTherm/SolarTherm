@@ -160,5 +160,10 @@ void initNRELPB(double ,double , double , double ,
 double ,double ,double ,double ,double , char* , int , 
 char* , double , double* );
 
+void checkConfigReceiver(double , double , double, char* , int*);
+
+void* constructOnTheFlyReceiver(double , double , double , char* );
+
+void simReceiver(double , double , double , char* , char* , char*);
 
 
