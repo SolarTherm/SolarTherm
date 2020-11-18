@@ -118,19 +118,13 @@ equation
 
 	if on then
 		Q_loss = -heat.Q_flow*(1-eta_rec);
-		eta_rec =     C[1]
-					+ C[2]*(log10(max(1,heat.Q_flow))) 
-					+ C[3]*(log10(max(1,heat.Q_flow)))^2 
-					+ C[4]*(log10(max(1,heat.Q_flow)))^3 
-					+ C[5]*Tamb
-					+ C[6]*Wspd;
-//		Q_loss = -Q_ref -Q_rad -Q_conv;
 		Q_ref = (1-ab)*(max(1,heat.Q_flow));
 		T_ext_linear = CL[1] + CL[2]*(max(1,heat.Q_flow))/1e6 + CL[3]*(max(1,Tamb)) + CL[4]*(max(1,Wspd));
 		T_ext_4_linear = C4L[1] + C4L[2]*(max(1,heat.Q_flow))/1e6 + C4L[3]*(max(1,Tamb)) + C4L[4]*(max(1,Wspd));
 		Q_rad = em*sigma*H_rcv*D_rcv*pi*(T_ext_4_linear^4 - (max(1,Tamb))^4);
 		h_conv = CH[5] + CH[4]*Wspd + CH[3]*Wspd^2 + CH[2]*Wspd^3 + CH[1]*Wspd^4;
 		Q_conv = h_conv*H_rcv*D_rcv*pi*(T_ext_linear-(max(1,Tamb)));
+		eta_rec = max(1e-3, (heat.Q_flow - Q_ref - Q_rad - Q_conv)/(max(1,heat.Q_flow)));
 	else
 		Q_loss = 0;
 		eta_rec = 0;

@@ -36,19 +36,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter SI.Irradiance dni_des = 930 "DNI at design point";
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_175_MWth_200_m.motab");
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = dni_des*A_heliostat*n_heliostat*eff_opt) "Input power to receiver at design point";
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget_metadata.motab");
+	parameter Real metadata_list[23] = metadata(opt_file);
+	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
-	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
-	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
 	parameter SI.Length H_tower = metadata_list[6] "Tower height";
-	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
-	parameter Real SM = CEFF[7] "Solar multiple";
-	parameter Real[7] CEFF = {-332.98449743,118.17098909,-13.96885001,0.55141421,0.00027917,-0.0053865,2.94133997482595};
-
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
@@ -57,29 +51,34 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Power W_tracking = n_heliostat*W_track*he_av_design "Tracking power consumed at design point";
 
 	// Receiver
+	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = dni_des*A_heliostat*n_heliostat*eff_opt) "Input power to receiver at design point";
+	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
+	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
 	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
-	parameter Real metadata_list[22] = metadata(opt_file);
 	parameter Real[4] CL = {metadata_list[8],metadata_list[9],metadata_list[10],metadata_list[11]};
 	parameter Real[4] C4L = {metadata_list[12],metadata_list[13],metadata_list[14],metadata_list[15]};
 	parameter Real[5] CH = {metadata_list[16],metadata_list[17],metadata_list[18],metadata_list[19],metadata_list[20]};
-	parameter SI.Efficiency eff_abs = metadata_list[21];
-	parameter SI.Efficiency eff_emi = metadata_list[22];
-	parameter SI.Efficiency eta_rec_od = CEFF[1]
-										+ CEFF[2]*(log10(Q_curtail_guess)) 
-										+ CEFF[3]*(log10(Q_curtail_guess))^2 
-										+ CEFF[4]*(log10(Q_curtail_guess))^3 
-										+ CEFF[5]*rec_T_amb_des
-										+ CEFF[6]*Wspd_des "Receiver effciency at off-design condition";
+	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
+	parameter SI.Efficiency eff_ab = metadata_list[21] "Receiver effective coating absorptance";
+	parameter SI.Efficiency eff_em = metadata_list[22] "Receiver effective coating emissivity";
+	parameter SI.HeatFlowRate Q_ref = (1-eff_ab)*Q_curtail_guess;
+	parameter SI.Temperature T_ext_linear = CL[1] + CL[2]*Q_curtail_guess/1e6 + CL[3]*rec_T_amb_des + CL[4]*Wspd_des;
+	parameter SI.Temperature T_ext_4_linear = C4L[1] + C4L[2]*Q_curtail_guess/1e6 + C4L[3]*rec_T_amb_des + C4L[4]*Wspd_des;
+	parameter SI.HeatFlowRate Q_rad = eff_em*CN.sigma*H_receiver*D_receiver*CN.pi*(T_ext_4_linear^4 - rec_T_amb_des^4);
+	parameter SI.CoefficientOfHeatTransfer h_conv = CH[5] + CH[4]*Wspd_des + CH[3]*Wspd_des^2 + CH[2]*Wspd_des^3 + CH[1]*Wspd_des^4;
+	parameter SI.HeatFlowRate Q_conv = h_conv*H_receiver*D_receiver*CN.pi*(T_ext_linear - rec_T_amb_des);
+	parameter SI.Efficiency eta_rec_od = (Q_curtail_guess - Q_ref - Q_conv - Q_rad)/Q_curtail_guess "Receiver effciency at off-design condition";
 	parameter SI.Temperature rec_T_amb_des = Modelica.SIunits.Conversions.from_degC(22.8) "Ambient temperature at design point";
 	parameter SI.Velocity Wspd_des = 2.6 "Wind speed at design point";
 	parameter Real F_mult=2.6 "Piping length multiplier";
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient";
 	parameter SI.Efficiency eta_pump = 0.85 "Design point efficiency of the tower/receiver pump";
+	parameter Real SM = metadata_list[23] "Solar multiple";
 
 	// HX
 	parameter SI.HeatFlowRate Q_hx_design = Q_rec_design * hx_to_rec_factor "HX design power";
@@ -329,7 +328,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver_withOutput receiver(
 		redeclare package Medium = Medium1,
-		C = CEFF[1:6],
 		CL = CL,
 		C4L = C4L,
 		CH = CH,
@@ -341,8 +339,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		N_pa = N_pa_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
-		ab = ab_rec,
-		em = em_rec,
+		ab = eff_ab,
+		em = eff_em,
 		T_in_0 = T_cold_set_Na,
 		T_out_0 = T_hot_set_Na)
 		annotation(Placement(visible = true, transformation(extent = {{-54, 4}, {-18, 40}}, rotation = 0)));
