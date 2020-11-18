@@ -1051,3 +1051,23 @@ void destructKriging(Kriging_struct* Kriging_variables) //******** destructor fo
 
     free(Kriging_variables);
 }
+
+/*
+void* constructOnTheFlyReceiver(double H_drop, double T_HTF_in_des, double T_HTF_out_des, char* base_path)
+{
+    char line[limitSize];
+   
+    int* index_and_status = malloc(sizeof(int*)*2); 
+
+    checkConfigReceiver(H_drop,T_HTF_in_des,T_HTF_out_des,base_path, index_and_status);
+
+    int match_index = index_and_status[0];
+    int status_config = index_and_status[1];
+
+    if(match_index==-1000) 
+    {
+
+    }
+
+
+}*/

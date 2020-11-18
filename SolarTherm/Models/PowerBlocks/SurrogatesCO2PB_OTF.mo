@@ -139,17 +139,17 @@ model SurrogatesCO2PB_OTF
   h_out = fluid_b.h_outflow;
     
   when mdot >= m_HTF_des * nu_min then
-      if which_surrogate==1 then
-        deviation_eta_gross = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 
-        deviation_eta_Q = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_Q", "spherical");
-      else
-        deviation_eta_gross = OTF_ANN_predict(session_PB, raw_input, 0);
-        deviation_eta_Q = OTF_ANN_predict(session_HX, raw_input, 1);
-      end if; 
-      eta_gross = eta_gross_base - deviation_eta_gross;
-      eta_Q = eta_Q_base - deviation_eta_Q;
-      h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
-      eta_cycle_net = W_net / Q_HX;
+    if which_surrogate==1 then
+      deviation_eta_gross = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 
+      deviation_eta_Q = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_Q", "spherical");
+    else
+      deviation_eta_gross = OTF_ANN_predict(session_PB, raw_input, 0);
+      deviation_eta_Q = OTF_ANN_predict(session_HX, raw_input, 1);
+    end if; 
+    eta_gross = eta_gross_base - deviation_eta_gross;
+    eta_Q = eta_Q_base - deviation_eta_Q;
+    h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
+    eta_cycle_net = W_net / Q_HX;
   elsewhen mdot< 0.999 * m_HTF_des*nu_min then
     deviation_eta_gross = 0;
     deviation_eta_Q = 0;
@@ -157,7 +157,6 @@ model SurrogatesCO2PB_OTF
     eta_Q=0;
     h_out=h_out_ref;
     eta_cycle_net=0;
-
   end when;
        
   load = mdot / m_HTF_des;
