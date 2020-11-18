@@ -64,7 +64,7 @@ model m_flow_calculations_simple
 equation
 
   if sf_on then
-    if (h_Na1-h_Na2)<1e-3 then //When the salt is transferring heat to the sodium
+    if noEvent((h_Na1-h_Na2)<1e-3) then //When the salt is transferring heat to the sodium
       m_flow_rec_internal=m_flow_min_Na_safe;
       m_flow_hs_internal=m_flow_min_CS_safe;
     else

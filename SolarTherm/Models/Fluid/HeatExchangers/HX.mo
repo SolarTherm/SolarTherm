@@ -224,23 +224,18 @@ equation
 //Problem
   DT1 = T_Na1 - T_MS2;
   DT2 = T_Na2 - T_MS1;
-  if Q_out_rec > 0.001 then
-    if abs(DT1 - DT2) > 0 then
-      port_a_in.m_flow * h_Na_in + port_a_out.m_flow * port_a_out.h_outflow - Q = 0;
-      port_b_in.m_flow * inStream(port_b_in.h_outflow) + port_b_out.m_flow * port_b_out.h_outflow + Q = 0;
+  max(1e-3, port_a_in.m_flow) * (h_Na_in - port_a_out.h_outflow) - Q = 0;
+  max(1e-3, port_b_in.m_flow) * (inStream(port_b_in.h_outflow) - port_b_out.h_outflow) + Q = 0;
+  Q = U * A_HX * F * LMTD;
+
+  if HF_on then
+    if noEvent(abs(DT1 - DT2) > 1e-3) then
       LMTD = (DT1 - DT2) / MA.log(max(1e-3, DT1 / DT2));
-      Q = U * A_HX * F * LMTD;
     else
-      port_a_in.m_flow * h_Na_in + port_a_out.m_flow * port_a_out.h_outflow - Q = 0;
-      port_b_in.m_flow * inStream(port_b_in.h_outflow) + port_b_out.m_flow * port_b_out.h_outflow + Q = 0;
-      LMTD = 0;
-      Q = U * A_HX * F * DT1;
+      LMTD = DT1;
     end if;
   else
-    h_Na_in - port_a_out.h_outflow = 0;
-    inStream(port_b_in.h_outflow) - port_b_out.h_outflow = 0;
-    LMTD = 0;
-    Q = 0;
+    LMTD = 1e-3;
   end if;
 
   F = 1;
