@@ -116,6 +116,7 @@ model SurrogatesCO2PB_OTF
   Real[inputsize] raw_input;
   //Boolean m_sup "Disconnect the production of electricity when the mass flow rate of the HTF to the HX is not enough";
   Real load "mass flow fraction of the exchanger compared to design condition";
+  Integer state "1 means PB on, 0 means PB off"; 
   
   SI.Efficiency eta_gross;
   SI.Efficiency eta_Q;
@@ -127,7 +128,17 @@ model SurrogatesCO2PB_OTF
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
   SI.MassFlowRate mdot;
-
+  
+  initial equation
+  state = 0;
+  
+  algorithm
+  when mdot >= m_HTF_des * nu_min and state==0 then
+    state := 1;
+  elsewhen mdot< 0.999 * m_HTF_des*nu_min and state==1 then
+    state := 0;
+  end when;
+  
   equation
   fluid_a.p = fluid_b.p;
   fluid_a.m_flow + fluid_b.m_flow = 0;
@@ -138,7 +149,8 @@ model SurrogatesCO2PB_OTF
   h_in = inStream(fluid_a.h_outflow);
   h_out = fluid_b.h_outflow;
     
-  when mdot >= m_HTF_des * nu_min then
+  //when mdot >= m_HTF_des * nu_min then
+  if state == 1 then
     if which_surrogate==1 then
       deviation_eta_gross = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 
       deviation_eta_Q = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_Q", "spherical");
@@ -150,14 +162,14 @@ model SurrogatesCO2PB_OTF
     eta_Q = eta_Q_base - deviation_eta_Q;
     h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
     eta_cycle_net = W_net / Q_HX;
-  elsewhen mdot< 0.999 * m_HTF_des*nu_min then
+  else// mdot< 0.999 * m_HTF_des*nu_min then
     deviation_eta_gross = 0;
     deviation_eta_Q = 0;
     eta_gross=0;
     eta_Q=0;
     h_out=h_out_ref;
     eta_cycle_net=0;
-  end when;
+  end if;
        
   load = mdot / m_HTF_des;
 
