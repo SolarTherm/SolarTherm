@@ -29,6 +29,7 @@ model ParticleReceiver
     parameter Real[inputsize] X_min = {280e6, 268.15, 803.15, 23};
     parameter Real out_max = 0.964303;
     parameter Real out_min = 0.427611;
+    parameter Real m_flow_rec_max = 2000 "Maximum allowable particle mass flow rate [kg/s]";
 	
 	parameter SI.Temperature T_0=from_degC(550) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);

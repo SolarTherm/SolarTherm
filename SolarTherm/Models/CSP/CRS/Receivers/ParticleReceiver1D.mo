@@ -210,22 +210,12 @@ equation
   end if;   
   
   // Overall Performance
-  if with_pre_determined_eta == true then
-    if on == true then
-      Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
-      eta_rec = eta_rec_determined;
-    else
-      Qdot_rec = 0;
-      eta_rec = 0;
-    end if;
+  if on == true then
+    Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
+    eta_rec = max(Qdot_rec / Qdot_inc, 0);
   else
-    if on == true then
-      Qdot_rec = max(mdot * (h_s[N + 1] - h_s[1]), 0);
-      eta_rec = max(Qdot_rec / Qdot_inc, 0);
-    else
-      Qdot_rec = 0;
-      eta_rec = 0;
-    end if;
+    Qdot_rec = 0;
+    eta_rec = 0;
   end if;
 
 //Boundary conditions
