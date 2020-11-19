@@ -45,7 +45,7 @@ except ImportError:
 #			(args.start, args.stop, args.step),
 #			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, peaker, par_val):
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
@@ -54,7 +54,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 	constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset
 
 	if frwk == "soo_min": # Single-objective optimisation to minimise an objective
-		obj_min = res.calc_perf()[perf_i[0]] # The objective to be minimised (i.e. lcoe or lcof)
+		obj_min = res.calc_perf(peaker)[perf_i[0]] # The objective to be minimised (i.e. lcoe or lcof)
 
 		if constr:
 			obj_min = 9.999e+99 + distance
@@ -69,7 +69,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 		else:
 			return obj_min
 	elif frwk == "soo_max": # Single-objective optimisation to maximise an objective
-		obj_max = res.calc_perf()[perf_i[0]] # The objective to be maximised (i.e. epy, capf or srev)
+		obj_max = res.calc_perf(peaker)[perf_i[0]] # The objective to be maximised (i.e. epy, capf or srev)
 
 		if constr:
 			obj_max = -9.999e+99 - distance
@@ -86,11 +86,11 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 	else: # Multi-objective optimisation
 		assert(frwk == "moo"), "The framework specified for optimisation must be one of soo_min, soo_max, or moo!"
 		if perf_i[0] == 1:
-			obj_min = res.calc_perf()[perf_i[0]]
-			obj_max = res.calc_perf()[perf_i[1]]
+			obj_min = res.calc_perf(peaker)[perf_i[0]]
+			obj_max = res.calc_perf(peaker)[perf_i[1]]
 		else:
-			obj_min = res.calc_perf()[perf_i[1]]
-			obj_max = res.calc_perf()[perf_i[0]]
+			obj_min = res.calc_perf(peaker)[perf_i[1]]
+			obj_max = res.calc_perf(peaker)[perf_i[0]]
 
 		if constr:
 			obj_min = 9.999e+99 + distance
@@ -121,6 +121,8 @@ if __name__ == '__main__':
 			help='no simulation compilation')
 	parser.add_argument('--noc', action='store_true',
 			help='no compilation at all (--nomc and --nosc)')
+	parser.add_argument('--peaker', action='store_true',
+			help='peaker configuration')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', type=str, default='1y',
@@ -231,7 +233,7 @@ if __name__ == '__main__':
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
-			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign)
+			args.v, scale, offset, perf_i, par_n, resultclass, op_meth, frwk, sign, args.peaker)
 
 	print("\n\n\nOptimisation parameter(s): ", par_n, "\n\n\n")
 
