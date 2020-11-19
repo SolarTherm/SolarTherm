@@ -9,9 +9,9 @@
 
 int main()
 {
-    double P_net[] = {103.5e6};
-    double T_in_ref_blk = 1073.15;
-    double T_cold_set = 550 + 273.15;
+    double P_net[] = {33.3e6,50e6};
+    double T_in_ref_blk = 720 + 273.15;
+    double T_cold_set = 500 + 273.15;
     double dT_PHX_cold_approach = 15;
     double p_high = 25e6;
     double eta_comp_main = 0.89;
@@ -53,7 +53,7 @@ int main()
             eta_isen_t, 
             dT_mc_approach, 
             blk_T_amb_des, 
-            "CarboHSP", 
+            "ChlorideSalt", 
             50, 
             SolarTherm_path, 
             T_cold_set,
