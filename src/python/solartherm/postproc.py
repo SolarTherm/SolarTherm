@@ -227,11 +227,11 @@ class SimResultElec(SimResult):
 		capf = None # Capacity factor
 		if close_to_year: 
 			if peaker:
-				tod_v=self.mat.data('TOD_W')
-				tod_factor=tod_v[-1]/eng_v[-1]
+				tod_w=self.mat.data('TOD_W')
+				tod_factor=tod_w[-1]/eng_v[-1]
 				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
-				capf = fin.capacity_factor(name_v[0], tod_v)
+				capf = fin.capacity_factor(name_v[0], tod_w[-1])
 
 			else:
 				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
