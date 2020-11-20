@@ -782,6 +782,43 @@ void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, cha
     
 }
 
+int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path)
+{   
+    int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
+    char* index = malloc(sizeof(char*)*l);    
+    sprintf(index,"%d",count); //convert integer into string 
+
+    l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
+    char* base_cmd = malloc(sizeof(char*)*l);
+    strcpy(base_cmd,"python ");
+    strcat(base_cmd,SolarTherm_path);
+    strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
+
+    l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
+    char* cmd = malloc(sizeof(char*)*(l));
+    
+    strcpy(cmd,base_cmd);
+    strcat(cmd,fn_data);
+    strcat(cmd," ");
+    strcat(cmd,prefixres);
+    strcat(cmd," ");
+    strcat(cmd,index);
+
+    fprintf(stderr,"%s\n",cmd);
+    
+    int status_training = system(cmd);
+
+    if (status_training==0)
+    {
+        fprintf(stderr,"Training ANN has been finished without any error\n");
+        return 0;
+    }
+    else 
+    {
+        fprintf(stderr,"Training error with status %d\n",status_training);
+        return -1;
+    }
+}
 
 void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta)
 {
@@ -1565,6 +1602,7 @@ double deviation_eta_gross_min, double deviation_eta_Q_min, char* variogram_mode
     
     return Kriging_variables;
 }
+
 char* build_trainingdir_path(char* base_path, char* traindir_base, char* config_base, int match_index)
 {
     int l = snprintf(NULL,0,"%d",match_index); 
@@ -2415,7 +2453,6 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path)
     }
 }
 
-
 void checkConfigReceiver(double H_drop, double T_HTF_in_des, double T_HTF_out_des, char* base_path, int* index_and_status)
 {
     char line[limitSize];
@@ -2424,7 +2461,7 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des, double T_HTF_out_de
 
     /*Check if the design param is already existing*/
     char* configdir = "/configurations/";
-    char* configbase = "configReceiver";
+    char* configbase = "configParticleReceiver";
 
     char* file_extension = ".txt";
     int file_index = 0;
@@ -2466,9 +2503,9 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des, double T_HTF_out_de
                 &T_HTF_in_des_existing,
                 &T_HTF_out_des_existing
             );
-            double deviation_H_drop = H_drop_existing - H_drop;
-            double deviation_T_HTF_in_des = T_HTF_in_des_existing - T_HTF_in_des;
-            double deviation_T_HTF_out_des = T_HTF_out_des_existing - T_HTF_out_des;
+            double deviation_H_drop = fabs(H_drop_existing - H_drop);
+            double deviation_T_HTF_in_des = fabs(T_HTF_in_des_existing - T_HTF_in_des);
+            double deviation_T_HTF_out_des = fabs(T_HTF_out_des_existing - T_HTF_out_des);
             deviation_of_configurations = deviation_H_drop + deviation_T_HTF_in_des + deviation_T_HTF_out_des;            
         }
         
@@ -2522,7 +2559,9 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des, double T_HTF_out_de
     return;
 }
 
-void simReceiver(double H_drop_design, double T_HTF_in_design, double T_HTF_out_des, char* trainingdir, char* SolarTherm_path, char* base_path)
+void simReceiver(int numdata, double H_drop_design, 
+double T_HTF_in_design, double T_HTF_out_des, char* trainingdir, char* SolarTherm_path, char* base_path, 
+int status_config)
 {
     PyObject *pName, *pModule, *pFunc;
     PyObject *pArgs, *inputs;
@@ -2560,12 +2599,15 @@ void simReceiver(double H_drop_design, double T_HTF_in_design, double T_HTF_out_
             inputs = PyDict_New();
 
             /*Populate the python dictionary*/
+            PyDict_SetItemString(inputs, "numdata", PyInt_FromLong(numdata));
             PyDict_SetItemString(inputs, "SolarTherm_path", PyString_FromString((char *)SolarTherm_path));
+            PyDict_SetItemString(inputs, "trainingdir", PyString_FromString((char *)trainingdir));
 
             PyDict_SetItemString(inputs, "H_drop", PyFloat_FromDouble(H_drop_design));
-            PyDict_SetItemString(inputs, "T_HTF_in_design", PyFloat_FromDouble(T_HTF_in_design));
+            PyDict_SetItemString(inputs, "T_HTF_in_des", PyFloat_FromDouble(T_HTF_in_design));
             PyDict_SetItemString(inputs, "T_HTF_out_des", PyFloat_FromDouble(T_HTF_out_des));
-            PyDict_SetItemString(inputs, "trainingdir", PyString_FromString((char *)trainingdir));
+            PyDict_SetItemString(inputs, "status_config", PyInt_FromLong(status_config));
+
             
             PyTuple_SetItem(pArgs, 0, inputs);
 
