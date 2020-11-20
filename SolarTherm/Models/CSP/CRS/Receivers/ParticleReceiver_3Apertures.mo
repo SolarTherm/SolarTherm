@@ -29,6 +29,7 @@ model ParticleReceiver_3Apertures
     parameter Real[inputsize] X_min = {4.51463536e+00, 1.02218597e+03, 2.53080041e+02, 7.52944510e+02, 2.45868147e+07};
     parameter Real out_max = 0.964303;
     parameter Real out_min = 0.427611;
+    parameter SI.MassFlowRate m_flow_rec_max = 2000;
 	
 	parameter SI.Temperature T_0=from_degC(550) "Start value of temperature";
 	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
