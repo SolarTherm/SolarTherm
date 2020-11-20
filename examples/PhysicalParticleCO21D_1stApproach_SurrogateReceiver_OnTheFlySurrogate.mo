@@ -117,15 +117,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_7");
   //****************************** OnTheFlySurrogate Parameters
   /************************************************************************************************************************* /
-                                          /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
-                                          /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
-                                          /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
-                                          /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
-                                          /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
-                                          /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
-                                          /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
-                                          /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
-                            ***************************************************************************************************************************/
+                                                  /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
+                                                  /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
+                                                  /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
+                                                  /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
+                                                  /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
+                                                  /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
+                                                  /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
+                                                  /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
+                                    ***************************************************************************************************************************/
   //******************************** Simulation configurations
   parameter String base_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Base path that points to which folder the C program located";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm") "Base path that points to which folder SolarTherm libs are located";
@@ -155,7 +155,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //******************************** NREL SAM PB Parameters - some parameters are defined in the CEA's section
   parameter Integer htf_choice = 50 "--------------------> 50 is user defined fluid properties";
   parameter SI.TemperatureDifference dT_PHX_hot_approach(fixed = false) "--------------------> [C/K] Temp. difference between hot HTF and TIT. 
-                                                                                                                         Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
+                                                                                                                                 Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
   parameter SI.TemperatureDifference dT_PHX_cold_approach = 15 "---> [C/K] Temp. difference between cold HTF and cold CO2 PHX inlet";
   parameter SI.Efficiency eta_comp_main = 0.89 "----------------> main compressor isentropic efficiency";
   parameter SI.Efficiency eta_comp_re = 0.89 "----------------> re-compressor isentropic efficiency";
@@ -165,7 +165,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter String HTF_name = "CarboHSP";
   parameter Real NREL_PB_configurations[13](each fixed = false) if which_PB_model == 1 "array to store design point sizing result";
   //****************************** Storage
-  parameter Real t_storage(unit = "h") = 18 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 14 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set = 550 + 273.15 "Cold tank target temperature ==  HTF outlet temperature from PB at design point";
   parameter SI.Temperature T_hot_set = 1073.15 "Hot tank target temperature == HTF inlet temperature to the PB at design point";
@@ -389,7 +389,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver particleReceiver(H_drop_design = H_rcv, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set, m_flow_rec_max = m_flow_rec_max) annotation(
     Placement(visible = true, transformation(origin = {-26, 30}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   // Receiver Design Condition Sizing Calculator - Using expensive model
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(Q_in = Q_in_rcv, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, Wspd_design = 0, Wspd_dir = 0, CR = CR, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = false, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator(Q_in = Q_in_rcv, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, Wspd_design = 0, Wspd_dir = 0, CR = CR, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Defocus calculator
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, Wspd_design = 0, Wspd_dir = 0, CR = CR, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk, H_drop_design = H_rcv, with_pre_determined_eta = false) annotation(
@@ -698,7 +698,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {12, 24}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {20, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e7, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>
