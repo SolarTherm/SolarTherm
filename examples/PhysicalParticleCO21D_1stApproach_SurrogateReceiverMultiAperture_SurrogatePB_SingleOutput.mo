@@ -85,8 +85,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter SI.HeatFlowRate Q_in_rcv_1 = Q_in_rcv_total * fraction_Q_1;
   parameter SI.HeatFlowRate Q_in_rcv_2 = Q_in_rcv_total * fraction_Q_2;
   parameter SI.HeatFlowRate Q_in_rcv_3 = Q_in_rcv_total * fraction_Q_3;
-  parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area";
-  parameter Real A_land = metadata_list[8];
+  parameter SI.Area A_field = A_helio * (n_helios_1 + n_helios_2 + n_helios_3) "Heliostat field reflective area";
+  parameter Real A_land = metadata_list[3];
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
   parameter SI.HeatFlowRate Q_flow_defocus_calculated1(fixed = false);
   parameter SI.HeatFlowRate Q_flow_defocus_calculated2(fixed = false);
@@ -116,24 +116,24 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter Real abs_s = 0.9 "Particle absorptivity";
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
-  //NN Based Receiver Parameter
-  parameter Integer inputsize_rcv = 5;
-  parameter Real[inputsize_rcv] X_max_rcv = {5.04906372e+01, 9.99896884e+08, 1.36460943e+03, 1.47403013e+03, 3.14955603e+02};
-  parameter Real[inputsize_rcv] X_min_rcv = {4.51463536e+00, 2.45868147e+07, 7.52944510e+02, 1.02218597e+03, 2.53080041e+02};
-  parameter Real y_max_rcv = 0.99885782;
-  parameter Real y_min_rcv = 0.21788641;
-  parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_0");
+  //****************************** NN Based Receiver Parameter
+  parameter Integer inputsize_rcv = 7;
+  parameter Real[inputsize_rcv] X_max_rcv = {4.49992754e+01, 4.60614216e+09, 9.73141498e+02, 1.47312835e+03, 3.23148941e+02, 3.99993851e+01, 3.59998406e+02};
+  parameter Real[inputsize_rcv] X_min_rcv = {5.00113178e+00, 1.59570610e+07, 7.73150760e+02, 1.02315541e+03, 2.53150059e+02, 1.61563590e-03, 1.17909395e-02};
+  parameter Real y_max_rcv = 0.99893263;
+  parameter Real y_min_rcv = 0.01285256;
+  parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_7");
   //****************************** OnTheFlySurrogate Parameters
   /************************************************************************************************************************* /
-                                /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
-                                /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
-                                /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
-                                /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
-                                /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
-                                /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
-                                /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
-                               /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
-                  ***************************************************************************************************************************/
+                                    /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
+                                    /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
+                                    /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
+                                    /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
+                                    /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
+                                    /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
+                                    /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
+                                   /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
+                      ***************************************************************************************************************************/
   //******************************** Simulation configurations
   parameter String base_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Base path that points to which folder the C program located";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm") "Base path that points to which folder SolarTherm libs are located";
@@ -164,7 +164,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   //******************************** NREL SAM PB Parameters - some parameters are defined in the CEA's section
   parameter Integer htf_choice = 50 "--------------------> 50 is user defined fluid properties";
   parameter SI.TemperatureDifference dT_PHX_hot_approach(fixed = false) "--------------------> [C/K] Temp. difference between hot HTF and TIT. 
-                                                                                               Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
+                                                                                                   Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
   parameter SI.TemperatureDifference dT_PHX_cold_approach = 15 "---> [C/K] Temp. difference between cold HTF and cold CO2 PHX inlet";
   parameter SI.Efficiency eta_comp_main = 0.89 "----------------> main compressor isentropic efficiency";
   parameter SI.Efficiency eta_comp_re = 0.89 "----------------> re-compressor isentropic efficiency";
@@ -405,21 +405,21 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   SolarTherm.Models.CSP.CRS.HeliostatsField.WashingFrequencyCalculator washingFrequencyCalculator(C_tw = C1, C_dl = C2, R_soil = R_soil, P_w = P_w, omega_n = omega_n, C_target = C_target) annotation(
     Placement(visible = true, transformation(origin = {-130, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Surrogate Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver_3Apertures particleReceiver(H_drop_design = H_rcv_1, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver_3Apertures particleReceiver(H_drop_design = H_rcv_1, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set, m_flow_rec_max = m_flow_rec_max) annotation(
     Placement(visible = true, transformation(origin = {-26, 30}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   // Receiver Design Condition Sizing Calculator - Using expensive model
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator1(Q_in = Q_in_rcv_1, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator1(Q_in = Q_in_rcv_1, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator2(Q_in = Q_in_rcv_2, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator2(Q_in = Q_in_rcv_2, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {120, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator3(Q_in = Q_in_rcv_3, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator3(Q_in = Q_in_rcv_3, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {90, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Defocus calculator - minimum heat flow to each receiver such that mass flow blok design is achieving design temp
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator1(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_1, H_drop_design = H_rcv_1, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator1(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_1, H_drop_design = H_rcv_1, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {-132, -110}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator2(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_2, H_drop_design = H_rcv_2, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator2(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_2, H_drop_design = H_rcv_2, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {-108, -110}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator3(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR,  Wspd_design=0, Wspd_dir=0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_3, H_drop_design = H_rcv_3, with_pre_determined_eta = false) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator3(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_3, H_drop_design = H_rcv_3, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {-84, -112}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value_hot_tank, packing_factor = packing_factor) annotation(
@@ -607,18 +607,24 @@ equation
   particleReceiver.raw_input_1[3] = particleReceiver.T_in;
   particleReceiver.raw_input_1[4] = T_hot_set;
   particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
+  particleReceiver.raw_input_1[6] = particleReceiver.Wspd;
+  particleReceiver.raw_input_1[7] = particleReceiver.Wdir;
   particleReceiver.ratio_1 = heliostatsField.ratio_1 "Equation to close the model";
-  particleReceiver.raw_input_1[1] = H_rcv_2;
-  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_2;
-  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
-  particleReceiver.raw_input_1[4] = T_hot_set;
-  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
+  particleReceiver.raw_input_2[1] = H_rcv_2;
+  particleReceiver.raw_input_2[2] = particleReceiver.Q_in_2;
+  particleReceiver.raw_input_2[3] = particleReceiver.T_in;
+  particleReceiver.raw_input_2[4] = T_hot_set;
+  particleReceiver.raw_input_2[5] = particleReceiver.Tamb;
+  particleReceiver.raw_input_2[6] = particleReceiver.Wspd;
+  particleReceiver.raw_input_2[7] = particleReceiver.Wdir;
   particleReceiver.ratio_2 = heliostatsField.ratio_2 "Equation to close the model";
-  particleReceiver.raw_input_1[1] = H_rcv_3;
-  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_3;
-  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
-  particleReceiver.raw_input_1[4] = T_hot_set;
-  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
+  particleReceiver.raw_input_3[1] = H_rcv_3;
+  particleReceiver.raw_input_3[2] = particleReceiver.Q_in_3;
+  particleReceiver.raw_input_3[3] = particleReceiver.T_in;
+  particleReceiver.raw_input_3[4] = T_hot_set;
+  particleReceiver.raw_input_3[5] = particleReceiver.Tamb;
+  particleReceiver.raw_input_3[6] = particleReceiver.Wspd;
+  particleReceiver.raw_input_3[7] = particleReceiver.Wdir;
   particleReceiver.ratio_3 = heliostatsField.ratio_3 "Equation to close the model";
 /*End section*/
 /*Assigning the input to the surrogate model*/
