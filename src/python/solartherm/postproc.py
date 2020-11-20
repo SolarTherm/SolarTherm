@@ -231,11 +231,12 @@ class SimResultElec(SimResult):
 				tod_factor=tod_v[-1]/eng_v[-1]
 				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
+				capf = fin.capacity_factor(name_v[0], tod_v[-1])
 
 			else:
 				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 						int(life_v[0]), int(cons_v[0]), epy)
-			capf = fin.capacity_factor(name_v[0], epy)
+				capf = fin.capacity_factor(name_v[0], epy)
 
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year

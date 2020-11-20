@@ -95,6 +95,8 @@ typedef struct  /*Struct to store neccesary session properties*/
 
 }Session_Props;
 
+
+
 void NoOpDeallocator(void* data, size_t a, void* b);
 
 void *load_session(char*, double* , double* , double* , double* , int, int, double, double, double );
@@ -162,8 +164,10 @@ char* , double , double* );
 
 void checkConfigReceiver(double , double , double, char* , int*);
 
-void* constructOnTheFlyReceiver(double , double , double , char* );
+void* constructOnTheFlyReceiver(double , double , double , char* , char*);
 
-void simReceiver(double , double , double , char* , char* , char*);
+void simReceiver(int, double , double , double , char* , char* , char*, int);
+
+int trainingANNReceiver(char* , char* , int , char* );
 
 
