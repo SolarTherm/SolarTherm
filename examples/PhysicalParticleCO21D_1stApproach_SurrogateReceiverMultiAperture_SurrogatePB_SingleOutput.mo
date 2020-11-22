@@ -174,7 +174,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter String HTF_name = "CarboHSP";
   parameter Real NREL_PB_configurations[13](each fixed = false) if which_PB_model == 1 "array to store design point sizing result";
   //****************************** Storage
-  parameter Real t_storage(unit = "h") = 14 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 0.5 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set = 550 + 273.15 "Cold tank target temperature ==  HTF outlet temperature from PB at design point";
   parameter SI.Temperature T_hot_set = 1073.15 "Hot tank target temperature == HTF inlet temperature to the PB at design point";
