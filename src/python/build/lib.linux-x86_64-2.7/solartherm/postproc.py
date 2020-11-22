@@ -244,6 +244,24 @@ class SimResultElec(SimResult):
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 
+		#dump param
+		SM = self.mat.data('SM')[0]
+		H_tower = self.mat.data("H_tower")[0]
+		t_storage = self.mat.data("t_storage")[0]
+		fb = self.mat.data("fb")[0]
+		R1 = self.mat.data("R1")[0]
+
+		fn = "/home/philgun/Documents/PhD/report/dispatch-optimisation-report/new-run-for-epri/withglpk/result.csv"
+		import os
+		if not os.path.exists(fn):
+			f = open(fn,'w')
+			f.write("SM,H_tower,t_storage,fb,R1,lcoe_peaker,capf_peaker,t_bar,TOD_W\n")
+			f.close()
+			
+		f = open(fn,"a")
+		f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s\n"%(SM,H_tower,t_storage,fb,R1,lcoe,capf,tod_factor,tod_v[-1]))
+		f.close()
+
 		return [epy, lcoe, capf, srev,]
 
 	def cost_breakdown(self):

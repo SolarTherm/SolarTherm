@@ -153,6 +153,12 @@ double run_surrogate(const Session_Props_Static_ANN *sess, const double raw_inpu
 
 void free_surrogate(Session_Props_Static_ANN *sess)
 {
+
+	TF_DeleteSession(sess->Session,sess->Status);
+    TF_DeleteGraph(sess->Graph);
+    TF_DeleteStatus(sess->Status);
+    TF_DeleteSessionOptions(sess->SessionOpts);
+    TF_DeleteBuffer(sess->RunOpts);
     free(sess);
 }
     
