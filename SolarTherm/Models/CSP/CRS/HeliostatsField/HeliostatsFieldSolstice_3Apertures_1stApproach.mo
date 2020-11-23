@@ -168,16 +168,16 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
     "Needed to connect to conditional connector";
     
   /*Control system for each aperture*/
-  parameter SI.HeatFlowRate Q_start_1 = nu_start * Q_design_1 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_min_1=nu_min*Q_design_1 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_start_1 = nu_start * Q_in_rcv_1 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_min_1=nu_min*Q_in_rcv_1 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus_1=nu_defocus*Q_design_1 "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 
-  parameter SI.HeatFlowRate Q_start_2 = nu_start * Q_design_2 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_min_2=nu_min*Q_design_2 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_start_2 = nu_start * Q_in_rcv_2 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_min_2=nu_min*Q_in_rcv_2 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus_2=nu_defocus*Q_design_2 "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   
-  parameter SI.HeatFlowRate Q_start_3 = nu_start * Q_design_3 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_min_3 = nu_min*Q_design_3 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_start_3 = nu_start * Q_in_rcv_3 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_min_3 = nu_min*Q_in_rcv_3 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus_3 = nu_defocus*Q_design_3 "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   
 initial equation

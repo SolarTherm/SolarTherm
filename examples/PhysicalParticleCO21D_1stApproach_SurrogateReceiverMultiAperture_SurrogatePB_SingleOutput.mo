@@ -214,8 +214,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_Surrogate
   parameter SI.Angle ele_min = 0.0872665 "Heliostat stow deploy angle = 5 degree";
   parameter Boolean use_wind = true "True if using wind stopping strategy in the solar field";
   parameter SI.HeatFlowRate Q_flow_defocus = if feedforward == true then 280e6 else Q_flow_des / (1 - rec_fr) "Solar field thermal power at defocused state";
-  parameter Real nu_start = if feedforward == true then 1.01 else 0.6 "Minimum energy start-up fraction to start the receiver";
-  parameter Real nu_min_sf = if feedforward == true then 1 else 0.3 "Minimum turn-down energy fraction to stop the receiver";
+  parameter Real nu_start = 0.3 "Minimum energy start-up fraction to start the receiver";
+  parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound";
   // Level (below which)s to stop disptach
