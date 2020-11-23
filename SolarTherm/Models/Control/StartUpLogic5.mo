@@ -42,7 +42,7 @@ initial equation
 equation
 //
   
-  on_charge= m_flow_in>0;
+   on_charge= m_flow_in>0;
 
    when level>level_on then
      on_discharge = true;
@@ -77,7 +77,7 @@ equation
     else
       if on_discharge then
         m_flow= if dispatch_optimiser == true then optimalMassFlow else m_flow_max;
-      else
+      else /*if on_charge*/
         m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max);
       end if;
     end if;
