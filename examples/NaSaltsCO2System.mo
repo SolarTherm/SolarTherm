@@ -24,9 +24,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
-	// Please specify a value for P_gross or a value for R_des
-	parameter SI.Power P_gross(fixed = if fixed_field then false else true, start = 111e6) "Power block gross rating at design point";
-
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
@@ -37,10 +34,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget_metadata.motab");
+	parameter String opt_file_wspd2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget_metadata_wspd.motab");
 	parameter Real metadata_list[23] = metadata(opt_file);
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
+	parameter SI.Length H_heliostat = A_heliostat^0.5 "Heliostat height";
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
 	parameter SI.Length H_tower = metadata_list[6] "Tower height";
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
@@ -51,7 +50,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Power W_tracking = n_heliostat*W_track*he_av_design "Tracking power consumed at design point";
 
 	// Receiver
-	parameter SI.RadiantPower R_des(fixed = if fixed_field then true else false,start = dni_des*A_heliostat*n_heliostat*eff_opt) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des = dni_des*A_heliostat*n_heliostat*eff_opt "Input power to receiver at design point";
 	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
 	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
 	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
@@ -81,7 +80,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real SM = metadata_list[23] "Solar multiple";
 
 	// HX
-	parameter SI.HeatFlowRate Q_hx_design = Q_rec_design * hx_to_rec_factor "HX design power";
+	parameter SI.HeatFlowRate Q_hx_design = Q_rec_out_des * hx_to_rec_factor "HX design power";
 	parameter SI.Temperature T_cold_set_Na = CV.from_degC(520) "Cold HX target temperature";
 	parameter SI.Temperature T_hot_set_Na = CV.from_degC(740) "Hot Receiver target temperature";
 	parameter Medium1.ThermodynamicState state_cold_set_Na = Medium1.setState_pTX(Medium1.p_default, T_cold_set_Na) "Cold Sodium thermodynamic state at design";
@@ -126,21 +125,51 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
 
 	// Power block
-	replaceable model Cycle = Models.PowerBlocks.Correlation.sCO2 "sCO2 cycle regression model";
-	parameter SI.Temperature T_comp_in = 318.15 "Compressor inlet temperature at design";
-	replaceable model Cooling = Models.PowerBlocks.Cooling.DryCooling "PB cooling model";
+	//*** Surrogate Power Block Parameters
+	parameter String base_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Base path that points to which folder the C program located";
+	parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm") "Base path that points to which folder SolarTherm libs are located";
+	parameter Integer inputsize_PB = 3;
+	parameter Integer outputsize_PB = 2;
+	parameter Real tolerance_kriging = 6e-3 "Mean Absolute Error";
+	parameter Real tolerance_ANN = 6e-3 "Mean Absolute Error";
+	parameter Integer which_surrogate = 1 "1 for Kriging, 2 for ANN";
+	parameter Real eta_gross_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
+	parameter Real eta_Q_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
+	parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
+	parameter SI.MassFlowRate m_flow_blk(fixed = false) "Mass flow rate to power block at design point, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
+	//*** NREL SAM PB Parameters
+	parameter SI.Temperature T_low = from_degC(41) "Inlet temperature of the compressor";
+	parameter Integer N_HTR = 15 "Discretisation of high temperature recuperator";
+	parameter Integer N_LTR_parameter = 15 "Discretisation of low temperature recuperator";
+	parameter SI.Temperature T_high = from_degC(700) "inlet temperature of the turbine";
+	parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
+	parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
+	parameter Real par_fr_des (fixed = false) "Verification of parasitics fraction of power block rating at design point";
+	parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+	parameter SI.Power P_gross = P_net / (1 - par_fr);
+	parameter SI.Pressure p_high = 25e6 "high pressure of the cycle in Pa";
+	parameter SI.Temperature blk_T_amb_des = from_degC(35) "Ambient temperature at design for power block";
+	parameter Integer htf_choice = 50 "Choice for fluid properties in SAM SIMULATION CORE (SSC)";
+	parameter SI.TemperatureDifference dT_PHX_hot_approach(fixed = false) "Temp. difference between hot HTF and TIT";
+	parameter SI.TemperatureDifference dT_PHX_cold_approach = 15 "Temp. difference between cold HTF and cold CO2 PHX inlet";
+	parameter SI.Efficiency eta_comp_main = 0.89 "Main compressor isentropic efficiency";
+	parameter SI.Efficiency eta_comp_re = 0.89 "Re-compressor isentropic efficiency";
+	parameter SI.Efficiency eta_turb = if P_gross > 3e7 then 0.93 else 0.85 "Turbine isentropic efficiency";
+	parameter SI.TemperatureDifference dT_mc_approach = 6.0 "Temp. difference between main compressor CO2 inlet and ambient";
+	parameter Integer which_PB_model = 1 "Choice of the Expensive PB model: 0 is for CEA power block, 1 is for NREL-SAM power block";
+	parameter String HTF_name = "ChlorideSalt";
+	parameter Real NREL_PB_configurations[13](each fixed = false) if which_PB_model == 1 "array to store design point sizing result";
 	parameter SI.Efficiency eff_blk = 0.51 "Power block efficiency at design point";
-	parameter Real par_fr(fixed=false) /*= 0.099099099*/ "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
 	parameter Boolean blk_enable_losses = true "true if the power heat loss calculation is enabled";
 	parameter Boolean external_parasities = true "true if there is external parasitic power losses";
 	parameter Real nu_min_blk = 0.5 "minimum allowed part-load mass flow fraction to power block";
 	parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
 	parameter SI.Power W_cooling_des = 0.02*P_gross "Fraction of gross power consumed by cooling system";
-	//parameter SI.Power W_par_des(fixed = false) "Parasitic losses at design";
+	parameter SI.Power W_pump_pb(fixed = false) "PB pump parasitic losses at design";
+	parameter SI.Power W_pump_rec(fixed = false) "Receiver pump parasitic losses at design";
+	parameter SI.Power W_pump_tk(fixed = false) "Cold tank pump parasitic losses at design";
 	parameter SI.AbsolutePressure p_blk = 10e6 "Power block operating pressure";
-	parameter SI.Temperature blk_T_amb_des = 316.15 "Ambient temperature at design for power block";
-	parameter SI.Temperature par_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
 	parameter SI.Temperature T_in_ref_blk = from_degC(720) "HTF inlet temperature to power block at design";
 	parameter SI.Temperature T_out_ref_blk = from_degC(500) "HTF outlet temperature to power block at design";
@@ -151,7 +180,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
 	parameter Real factor_defocus = 1.01;
-	parameter SI.HeatFlowRate Q_flow_defocus = (R_des - Q_rec_design + Q_flow_des) * factor_defocus /* 274 / 217.647 * Q_flow_des */"Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
+	parameter SI.HeatFlowRate Q_flow_defocus = (R_des - Q_rec_out_des + Q_flow_des) * factor_defocus "Solar field thermal power at defocused state"; // This only works if const_dispatch=true. TODO for variable disptach Q_flow_defocus should be turned into an input variable to match the field production rate to the dispatch rate to the power block.
 	parameter SI.HeatFlowRate Q_rec_max = min(m_flow_max_Na * (h_hot_set_Na - h_cold_set_Na),m_flow_max_CS * (h_hot_set_CS - h_cold_set_CS));
 	parameter SI.HeatFlowRate Q_curtail_guess = Q_rec_max/(1 - rec_fr);
 	parameter SI.HeatFlowRate Q_curtail = Q_rec_max/eta_rec_od;
@@ -168,7 +197,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
 
 	//Storage Calculated parameters
-	parameter SI.HeatFlowRate Q_flow_des = if fixed_field then (if match_sam then R_des / ((1 + rec_fr) * SM) else (R_des * (1 - rec_fr) - F_mult*C_pip*H_tower) / SM ) else P_gross / eff_blk "Heat to power block at design";
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 	parameter SI.SpecificEnthalpy h_cold_set_CS = Medium2.specificEnthalpy(state_cold_set_CS) "Cold salt specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_CS = Medium2.specificEnthalpy(state_hot_set_CS) "Hot salt specific enthalpy at design";
@@ -188,7 +216,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 
 	//Receiver Calculated parameters
-	parameter SI.HeatFlowRate Q_rec_design = Q_flow_des * SM "Heat from receiver at design";
+	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM "Heat from receiver at design";
 	parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
 	parameter SI.MassFlowRate m_flow_rec = Q_hx_design / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
@@ -203,8 +231,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
-	parameter SI.MassFlowRate m_flow_blk = Q_flow_des / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to power block at design point";
-	parameter SI.Power P_net = (1 - par_fr) * P_gross "Power block net rating at design point";
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	// Cost data in USD (default) or AUD
@@ -212,38 +238,80 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
 	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
 	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
-	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
-	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.AreaPrice pri_site = if currency == Currency.USD then 10 else 10 / r_cur "Site improvements cost per area";	//Site improvements cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 40 / (1e3 * 3600) else 40 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.PowerPrice pri_block = if currency == Currency.USD then 900 / 1e3 else 900 / r_cur "Power block cost per gross rated power";	//Power block cost should be $600/kWe + Primary HX based on Downselection Criteria, page 8, paragraph 7. NREL uses $900/kWe for now to account for PHX.
-	parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0*350 / 1e3 else 0*350 / 1e3 / r_cur "Balance of plant cost per gross rated power";	// Balance of plant set to 350 based on SAM 2018 default costing data
-	parameter FI.AreaPrice pri_land = if currency == Currency.USD then 10000 / 4046.86 else 10000 / 4046.86 / r_cur "Land cost per area";	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
-	parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40 / 1e3 else 40 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3 / (1e6 * 3600) else 3 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_receiver_ref = 105073717.298199 "Receiver reference Cost";	//Receiver reference cost updated to match estimated total cost of $87.34M for a receiver aperture area of 1206.37m2 (H=24m, H=16m)
-	parameter SI.Area A_receiver_ref = 1571 "Receiver reference area"; //Receiver reference area set to 1751m2 based on SAM default
+	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";	//Site improvements cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.EnergyPrice pri_storage = 40 "Storage cost per energy capacity ($/MWh)";	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
+	parameter FI.PowerPrice pri_block = 900 "Power block cost per gross rated power ($/kWe)";	//Power block cost should be $600/kWe + Primary HX based on Downselection Criteria, page 8, paragraph 7. NREL uses $900/kWe for now to account for PHX.
+	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";	// Balance of plant set to 350 based on SAM 2018 default costing data
+	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
+	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
+	parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "Variable O&M cost per production per year";	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
 
-	// Calculated costs
-	parameter FI.Money_USD C_piping = 23614200 "Piping cost including insulation"; //Updated based on Felix last spreadsheet
-	parameter FI.Money_USD C_pumps = 0 "Cold Salt pumps"; //Updated based on Felix last spreadsheet
+	// Receiver cost
+	parameter FI.Money_USD C_rec_fix = 4.135e6 "Receiver fixed Cost";
+	parameter FI.Money_USD C_rec_ref = 47.409e6 "Receiver reference Cost";
+	parameter SI.Diameter D_receiver_ref = 20 "Receiver reference diameter";
+	parameter SI.Height H_receiver_ref = 25 "Receiver reference height";
+	parameter Real rec_exp = 0.6 "Receiver reference height";
+	// Tower cost
+	parameter FI.Money_USD C_tow_fix = 1.876683e6 "Fixed tower cost";
+	parameter Real tow_exp = 0.0113 "Tower cost scaling exponent";
+	// Riser and downcomer cost
+	parameter FI.Money_USD C_rd_ref = 18.066484e6 "Riser and downcomer reference cost";
+	parameter SI.Length L_rd = F_mult*H_tower "Riser and downcomer length";
+	parameter SI.Length L_rd_ref = 455 "Riser and downcomer reference length";
+	parameter SI.Diameter D_rd = 1 "Riser and downcomer diameter";
+	parameter SI.Diameter D_rd_ref = 1 "Riser and downcomer reference diameter";
+	parameter Real rd_l_exp = 0.6 "Riser and downcomer cost scaling exponent for length";
+	parameter Real rd_d_exp = 0.6 "Riser and downcomer cost scaling exponent for diameter";
+	// Sodium loop cost
+	parameter FI.Money_USD C_pip_na_ref =  15.96839293e6 "Sodium piping reference cost";
+	parameter FI.Money_USD C_ic_na_ref = 0.417e6 "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na_ref = 2.538e6 "Sodium valves reference cost";
+	parameter FI.Money_USD C_tank_na_ref = 1.8e6 "Sump tank reference cost";
+	parameter FI.Money_USD C_vessel_na_ref = 0.3e6 "Inlet vessel reference cost";
+	parameter FI.Money_USD C_skid_na_ref = 0.4e6 "Purification skid reference cost";
+	parameter FI.Money_USD C_pump_na_ref = 3e6 "Sodium pumps reference cost";
+	parameter Real pip_na_exp = 0.6 "Sodium piping scaling exponent";
+	parameter Real ic_na_exp = 0.6 "Valves and I&C scaling exponent";
+	parameter Real valve_na_exp = 0.6 "Sodium valves scaling exponent";
+	parameter Real tank_na_exp = 0.6 "Sump tank scaling exponent";
+	parameter Real vessel_na_exp = 0.6 "Inlet vessel scaling exponent";
+	parameter Real skid_na_exp = 0.6 "Purification skid scaling exponent";
+	parameter Real pump_na_exp = 0.6 "Sodium pumps scaling exponent";
+	parameter SI.HeatFlowRate Q_rec_out_des_ref = Q_rec_out_des "Receiver thermal output reference size";
+	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^pip_na_exp "Sodium piping cost";
+	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^ic_na_exp "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^valve_na_exp "Sodium valves cost";
+	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^tank_na_exp "Sump tank cost";
+	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^vessel_na_exp "Inlet vessel cost";
+	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^skid_na_exp "Purification skid cost";
+	parameter FI.Money_USD C_argon_na = 100000 "Argon system cost";
+	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^pump_na_exp "Sodium pump cost";
+	// Purchase equipment costs
+	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
+	parameter FI.Money_USD C_tower = C_tow_fix * exp(tow_exp*(H_tower - 0.5*H_receiver - 0.5*H_heliostat)) "Tower cost";
+	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
+	parameter FI.Money_USD C_rd = C_rd_ref * (L_rd / L_rd_ref)^rd_l_exp*(D_rd^2/D_rd_ref^2)^rd_d_exp "Riser and downcomer cost";
+	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
+	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
+	parameter FI.Money_USD C_block = pri_block * P_gross / 1e3 "Power block cost";
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
-	parameter FI.Money_USD C_tower(fixed = false) "Tower cost";
-	parameter FI.Money_USD C_receiver = if currency == Currency.USD then C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 else C_receiver_ref * (A_receiver / A_receiver_ref) ^ 0.7 / r_cur "Receiver cost";
-	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
-	parameter FI.Money_USD C_storage = pri_storage * E_max "Storage cost";
-	parameter FI.Money_USD C_block = pri_block * P_gross "Power block cost";
-	parameter FI.Money_USD C_bop = pri_bop * P_gross "Balance of plant cost";
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_hx + C_storage + C_block + C_bop + C_piping + C_pumps) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
+	// Direct capital costs (subtotal)
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_receiver + C_loop_na + C_tower + C_rd + C_hx + C_storage + C_block + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
 	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
+	// Total direct capital cost
 	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
 	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_land = pri_land * A_land "Land cost";
+	parameter FI.Money_USD C_land = pri_land * A_land / 4046.86 "Land cost";
+	// Total capital investment
 	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
-	parameter FI.MoneyPerYear C_year = pri_om_name * P_name "Fixed O&M cost per year";
-	parameter Real C_prod(unit = "$/J/year") = pri_om_prod "Variable O&M cost per production per year";
+	// Operation and maintenance cost
+	parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 "Fixed O&M cost per year";
+	parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "Variable O&M cost per production per year";
 
 	// ***************************************************************************
 	// System components
@@ -306,7 +374,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{-92, 58}, {-72, 78}}, rotation = 0)));
 
 	// Solar field
-	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatFieldWindSpeed heliostatsField(
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
@@ -322,7 +390,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		Q_design = Q_flow_defocus,
 		Q_curtail = Q_curtail,
 		nu_start = nu_start,
-		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file))
+		angles = angles,
+		opt_file1 = opt_file,
+		opt_file2 = opt_file_wspd2)
 		annotation(Placement(visible = true, transformation(extent = {{-98, 2}, {-66, 36}}, rotation = 0)));
 
 	// Receiver
@@ -454,19 +524,39 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(extent = {{98, 80}, {110, 66}}, rotation = 0)));
 
 	// Power block
-	SolarTherm.Models.PowerBlocks.sCO2CycleNREL powerBlock(/*SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(*/
-		redeclare package Medium = Medium2,
-		W_des = P_gross,
-		enable_losses = blk_enable_losses,
-		nu_min = nu_min_blk,
-		external_parasities = external_parasities,
-		W_base = W_base_blk,
-		p_bo = p_blk,
-		T_des = blk_T_amb_des,
-		nu_net = nu_net_blk,
-		T_in_ref = T_in_ref_blk,
-		T_out_ref = T_out_ref_blk,
-		Q_flow_ref = Q_flow_des)
+	SolarTherm.Models.PowerBlocks.SurrogatesCO2PB_OTF powerBlock(
+		redeclare package MedRec = Medium2,
+		P_gross = P_gross, 
+		T_in_ref_blk = T_in_ref_blk, 
+		p_high = p_high, 
+		PR = -1, 
+		pinch_PHX = -1, 
+		dTemp_HTF_PHX = -1, 
+		T_amb_base = blk_T_amb_des, 
+		htf_choice = 50, 
+		dT_PHX_hot_approach = 70.817253,//dT_PHX_hot_approach, 
+		dT_PHX_cold_approach = 15.000000,//dT_PHX_cold_approach, 
+		eta_isen_mc = eta_comp_main, 
+		eta_isen_rc = eta_comp_re, 
+		eta_isen_t = eta_turb, 
+		dT_mc_approach = dT_mc_approach, 
+		which_PB_model = 1, load_base = 1, 
+		eta_gross_base = eta_gross_base, 
+		eta_Q_base = eta_Q_base, 
+		Q_HX_des = Q_flow_des, 
+		m_HTF_des = m_flow_blk, 
+		base_path = base_path, 
+		SolarTherm_path = SolarTherm_path, 
+		inputsize = inputsize_PB, 
+		outputsize = outputsize_PB, 
+		tolerance_kriging = tolerance_kriging, 
+		tolerance_ANN = tolerance_ANN, 
+		which_surrogate = which_surrogate, 
+		test_mode = false, 
+		eta_motor = 1, 
+		f_fixed_load = par_fix_fr, 
+		external_parasities = external_parasities, 
+		HTF_name=HTF_name) 
 	annotation(Placement(visible = true, transformation(extent = {{102, 4}, {138, 42}}, rotation = 0)));
 
 	// Price
@@ -484,34 +574,44 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
 	FI.Money_USD R_spot(start = 0, fixed = true) "Spot market revenue";
 
+	Modelica.Blocks.Sources.BooleanExpression PB_ramping annotation(
+		Placement(visible = true, transformation(origin = {128, 58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
 initial equation
 
-	if fixed_field then
-		P_gross = Q_flow_des * eff_blk;
-	else
-		R_des = if match_sam then SM * Q_flow_des * (1 + rec_fr) else SM * Q_flow_des / (1 - rec_fr);
-	end if;
+	//***NREL PB Design Point Initialisation
+	NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(
+		P_gross,
+		T_in_ref_blk,
+		p_high,
+		dT_PHX_cold_approach,
+		eta_comp_main,
+		eta_comp_re,
+		eta_turb,
+		dT_mc_approach,
+		blk_T_amb_des,
+		HTF_name,
+		50,
+		SolarTherm_path,
+		T_cold_set_CS);
+
+	Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
+	eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
+	eta_Q_base = NREL_PB_configurations[12];
+	m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
 	
-	//W_par_des 
-	par_fr = (1/P_gross)*(W_base_blk + W_cooling_des + W_tracking 
-				+ k_loss_cold*m_flow_fac + m_flow_fac*(Shell_and_Tube_HX.Dp_shell_design/((rho_hot_set + rho_cold_set) / 2)/eta_pump)
-				+ k_loss_cold_sodium*m_flow_rec + m_flow_rec*((Shell_and_Tube_HX.Dp_tube_design + receiver.dP_net)/((rho_hot_set_Na + rho_cold_set_Na) / 2)/eta_pump)
-				+ k_loss_hot*m_flow_blk);
+	W_pump_pb = k_loss_hot*m_flow_blk;
+	W_pump_rec = k_loss_cold_sodium*m_flow_rec + m_flow_rec*((Shell_and_Tube_HX.Dp_tube_design + receiver.dP_net)/((rho_hot_set_Na + rho_cold_set_Na) / 2)/eta_pump);
+	W_pump_tk = k_loss_cold*m_flow_fac + m_flow_fac*(Shell_and_Tube_HX.Dp_shell_design/((rho_hot_set + rho_cold_set) / 2)/eta_pump);
 
-	if H_tower > 120 then // then use concrete tower
-
-		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
-		//"Tower cost fixed" updated to match estimated total cost of $55M from analysis of tower costs based on Abengoa report
-
-	else // use Latticework steel tower
-
-		C_tower = if currency == Currency.USD then  80816 * exp(0.00879 * H_tower) else 80816 * exp(0.00879 * H_tower) / r_cur "Tower cost";
-		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
-
-	end if;
+	par_fr_des = (1/P_gross)*(W_base_blk + W_cooling_des + W_tracking + W_pump_pb + W_pump_rec + W_pump_tk);
 
 equation
-	connect(Wspd_input.y,receiver.Wspd);
+	//***Equation for Surrogate Power Block
+	powerBlock.raw_input[1] = powerBlock.load;
+	powerBlock.raw_input[2] = tankHot.medium.T;
+	powerBlock.raw_input[3] = data.Tdry;
+	connect(Wspd_input.y, receiver.Wspd);
 	connect(PressureLosses_CS_loop.y, pumpCold2.Dp_loss) annotation(
 		Line(points = {{0, 62}, {38, 62}, {38, 4}, {60, 4}, {60, 8}, {60, 8}}, color = {0, 0, 127}));
 	
@@ -606,8 +706,7 @@ equation
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 		Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
 
-	connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(
-		Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
+	//connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
 
 	//Connections from data
 	connect(Wspd_input.y, heliostatsField.Wspd) annotation(
@@ -653,6 +752,8 @@ equation
 	E_elec = powerBlock.E_net;
 	R_spot = market.profit;
 
+	connect(PB_ramping.y, powerBlock.ramping) annotation(
+		Line(points = {{140, 58}, {120, 58}, {120, 34}, {120, 34}}, color = {255, 0, 255}));
 	annotation(
 		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 10, fontName = "CMU Serif"), Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 10, fontName = "CMU Serif"), Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 10, fontName = "CMU Serif"), Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 10, fontName = "CMU Serif"), Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 10, fontName = "CMU Serif"), Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),

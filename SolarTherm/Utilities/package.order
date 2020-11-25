@@ -5,3 +5,10 @@ ToleranceTest
 ReadHelNum
 Metadata_Optics
 CoolProp
+ANN_OnTheFly
+designNRELPB
+Kriging_OnTheFly
+LinProgFunc
+st_surrogate
+SurrogateModelsMultiOutput
+SurrogateModelsSingleOutput
