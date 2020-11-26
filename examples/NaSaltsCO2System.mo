@@ -41,7 +41,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
 	parameter SI.Length H_heliostat = A_heliostat^0.5 "Heliostat height";
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
-	parameter SI.Length H_tower = metadata_list[6] "Tower height";
+	parameter SI.Length H_tower = metadata_list[6] "Tower height (ground to base of receiver)";
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
@@ -254,17 +254,20 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Diameter D_receiver_ref = 20 "Receiver reference diameter";
 	parameter SI.Height H_receiver_ref = 25 "Receiver reference height";
 	parameter Real rec_exp = 0.6 "Receiver reference height";
-	// Tower cost
-	parameter FI.Money_USD C_tow_fix = 1.876683e6 "Fixed tower cost";
-	parameter Real tow_exp = 0.0113 "Tower cost scaling exponent";
 	// Riser and downcomer cost
-	parameter FI.Money_USD C_rd_ref = 18.066484e6 "Riser and downcomer reference cost";
-	parameter SI.Length L_rd = F_mult*H_tower "Riser and downcomer length";
-	parameter SI.Length L_rd_ref = 455 "Riser and downcomer reference length";
-	parameter SI.Diameter D_rd = 1 "Riser and downcomer diameter";
-	parameter SI.Diameter D_rd_ref = 1 "Riser and downcomer reference diameter";
-	parameter Real rd_l_exp = 0.6 "Riser and downcomer cost scaling exponent for length";
-	parameter Real rd_d_exp = 0.6 "Riser and downcomer cost scaling exponent for diameter";
+	parameter SI.Diameter D_r = 0.626 "Riser outer diameter";
+	parameter SI.Diameter D_d = 0.647 "Downcomer outer diameter";
+	parameter SI.Length L_horiz = 30 "Additional horizontal length of riser and downcomer to the HEX";
+	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
+	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
+	parameter Real lm_r = 1.36 "Length multiplier for expansion loops on riser";
+	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
+	parameter SI.Diameter D_r_ref = 0.711	"Riser reference diameter";
+	parameter SI.Diameter D_d_ref = 0.711	"Downcomer reference diameter";
+	parameter Real C_r_ref(unit = "$/m") = 9090 "Riser reference cost";
+	parameter Real C_d_ref(unit = "$/m") = 22973 "Riser reference cost";
+	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser "Riser cost";
+	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer "Downcomer cost";
 	// Sodium loop cost
 	parameter FI.Money_USD C_pip_na_ref =  15.96839293e6 "Sodium piping reference cost";
 	parameter FI.Money_USD C_ic_na_ref = 0.417e6 "Valves and I&C reference cost";
@@ -291,9 +294,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^pump_na_exp "Sodium pump cost";
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
-	parameter FI.Money_USD C_tower = C_tow_fix * exp(tow_exp*(H_tower - 0.5*H_receiver - 0.5*H_heliostat)) "Tower cost";
+	parameter FI.Money_USD C_tower = 16339938 "Tower cost";
+	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
-	parameter FI.Money_USD C_rd = C_rd_ref * (L_rd / L_rd_ref)^rd_l_exp*(D_rd^2/D_rd_ref^2)^rd_d_exp "Riser and downcomer cost";
 	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
 	parameter FI.Money_USD C_block = pri_block * P_gross / 1e3 "Power block cost";
