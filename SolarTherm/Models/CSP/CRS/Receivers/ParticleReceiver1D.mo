@@ -111,9 +111,20 @@ model ParticleReceiver1D
   SI.Temperature T_w[N + 2](start = linspace(T_ref, 1351, N + 2), max = fill(2000., N + 2), min = fill(299., N + 2)) "Receiver wall temperature";
 
   //Curtain radiation properties
-  SI.Efficiency eps_c[N](start = linspace(0.999, 0.971, N), max = fill(1., N), min = fill(0., N)) "Curtain emissivity";
-  SI.Efficiency tau_c[N](start = linspace(1e-19, 0.004, N), max = fill(1., N), min = fill(0., N)) "Curtain tramittance";
-  SI.Efficiency abs_c[N](start = linspace(0.999, 0.972, N), max = fill(1., N), min = fill(0., N)) "Curtain absorptance";
+  SI.Efficiency eps_c[N](
+    start = linspace(0.999, 0.971, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain emissivity";
+  
+  SI.Efficiency tau_c[N](
+    start = linspace(1e-19, 0.004, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain tramittance";
+    
+  SI.Efficiency abs_c[N](
+    start = linspace(0.999, 0.972, N), 
+    max = fill(1., N), 
+    min = fill(0., N)) "Curtain absorptance";
   
   //Radiation heat fluxes
   SI.HeatFlux q_solar(min=0, start=3e5,max=2e6) "Uniform solar flux [W/m2]";
@@ -181,16 +192,10 @@ model ParticleReceiver1D
 
 equation
   
-  W_rcv = H_drop * AR;
+  W_rcv = H_drop / AR;
   A_ap = H_drop * W_rcv;
   dx = H_drop / N;
-  /*
-  if test_mode == true then
-    q_solar = Q_in/A_ap;
-  else
-    q_solar = heat.Q_flow / A_ap;
-  end if;
-  */
+
   if fixed_geometry==true then
     H_drop = H_drop_design;
   else

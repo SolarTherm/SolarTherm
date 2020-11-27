@@ -149,7 +149,6 @@ model SurrogatesCO2PB_OTF
   h_in = inStream(fluid_a.h_outflow);
   h_out = fluid_b.h_outflow;
     
-  //when mdot >= m_HTF_des * nu_min then
   if state == 1 then
     if which_surrogate==1 then
       deviation_eta_gross = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 

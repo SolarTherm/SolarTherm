@@ -37,6 +37,7 @@ model ParticleReceiver
 	parameter SI.Temperature T_out = from_degC(800) "Temperature at outlet";
 	parameter Real level_off_ub = 10;
 	parameter Real level_off_lb=5;
+    parameter Real ar_rec = 1;
 	
 	Boolean logic(start=true);
 

@@ -31,6 +31,7 @@ model ParticleReceiver1DCalculator
   parameter Real Wspd_dir = 60.6062985212656;
   parameter Real eta_rec_determined = 0.4247535903;
   parameter SI.MassFlowRate m_design = 206.821541380436;
+  parameter Real ar_rec = 1;
   parameter Real CR = 1200;
   parameter SI.HeatFlux dni_des = 950;
   parameter SI.Efficiency eta_rec_assumption = 0.88;
@@ -69,7 +70,7 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 96}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = test_mode, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, AR=ar_rec, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression realExpression1(y = Wspd_design) annotation(
     Placement(visible = true, transformation(origin = {-56, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
