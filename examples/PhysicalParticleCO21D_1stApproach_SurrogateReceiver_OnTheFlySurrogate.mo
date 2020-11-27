@@ -27,7 +27,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean dispatch_optimiser = false;
   parameter Boolean new_storage_calc = false "Using tuffcrete and microporous";
   parameter Boolean use_neural_network = true;
-  parameter Boolean dome_storage = true "Use dome storage calculation provided byu Jeremy Sment from Sandia";
+  parameter Boolean dome_storage = true "Use dome storage calculation provided by Jeremy Sment from Sandia";
   parameter Boolean match_gen3_report_cost = false "PB, receiver+tower cost sub system are evaluated using gen3_cost";
   parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
@@ -210,7 +210,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
   parameter SI.Power W_heater_hot = 0 "Hot tank heater capacity";
   parameter SI.Power W_heater_cold = 0 "Cold tank heater capacity";
-  parameter Real tank_ar = 2 "storage aspect ratio";
+  parameter Real tank_ar = 1.17 "storage aspect ratio";
   parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
@@ -350,7 +350,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real c_excav = 130.795893 "Specififc excavation cost[USD/m^3]";
   parameter Real cap_conveyor = 1800 "Capacity of transorting particle of a single conveyor [ton/h]";
   parameter Real c_conveyor = 4.5e6 "Specific cost of conveyor [USD/unit]";
-  parameter Real[9] c = {c_HRC, c_portland, c_RF, c_filler_floor, c_particle, c_HX_vol_pair, c_excav, cap_conveyor, c_conveyor};
+  parameter Real[9] c_storage = {c_HRC, c_portland, c_RF, c_filler_floor, c_particle, c_HX_vol_pair, c_excav, cap_conveyor, c_conveyor};
   parameter Real D_outlet = if E_max * (2.777778e-10) < 600 then 
                                0.21
                             else
@@ -420,21 +420,61 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //Receiver Sub-system Cost
   
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
-  parameter FI.Money C_tower = if match_gen3_report_cost then 0 elseif match_sam_cost then pri_tower_fix * Modelica.Math.exp(pri_tower_scalar_exp * (H_tower + 0.5 * H_helio - H_rcv / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
-  parameter FI.Money C_fpr = if match_gen3_report_cost then 0 else pri_receiver * A_rcv "Falling particle receiver cost";
-  parameter FI.Money C_lift_rec = if match_gen3_report_cost then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
-  parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
+  parameter FI.Money C_tower = 
+                if match_gen3_report_cost then 
+                      0 
+                elseif match_sam_cost then 
+                      pri_tower_fix * Modelica.Math.exp(pri_tower_scalar_exp * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
+                else pri_tower * H_tower ^ idx_pri_tower 
+  "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
+  
+  parameter FI.Money C_fpr = if match_gen3_report_cost then 
+                                        0 
+                             else 
+                                        pri_receiver * A_rcv 
+  "Falling particle receiver cost";
+  
+  parameter FI.Money C_lift_rec = if match_gen3_report_cost then 
+                                        0 
+                                  else 
+                                        pri_lift * dh_liftRC * m_flow_fac 
+  "Receiver lift cost";
+  
+  parameter FI.Money C_receiver = if match_gen3_report_cost then 
+                                        Q_flow_des * 0.150 
+                                  else C_fpr + C_tower + C_lift_rec 
+  "Total receiver cost";
   
   //******************************* Cost of storage sub-system (bins + cold tank lift + particles + PHX lift + insulation)
-  /*Storage Sub-System cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7*/
   parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
-  parameter FI.Money C_bins = if new_storage_calc then 750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage else if which_PB_model == 0 then pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage;
-  parameter FI.Money C_insulation = if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 0 else SA_storage * (131.0426 / U_value_hot_tank + 23.18) + SA_storage * (131.0426 / U_value_cold_tank + 23.18);
+  
+  parameter FI.Money C_bins = if new_storage_calc then 
+                750 * CN.pi * (D_storage + t_mp + t_tuffcrete47) * H_storage 
+          else 
+                /*Storage bin cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7*/
+                pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + 
+                      pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage;
+                      
+  parameter FI.Money C_bins_dome = 
+                SolarTherm.Utilities.G3P3StorageCostFunction(
+                    H_storage,
+                    D_storage,
+                    D_outlet,
+                    t_storage,
+                    m_max,
+                    c_storage);                     
+                      
+  parameter FI.Money C_insulation = if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 
+                                        0 
+                                    else 
+                                        SA_storage * (131.0426 / U_value_hot_tank + 23.18) + 
+                                                    SA_storage * (131.0426 / U_value_cold_tank + 23.18)
+  "Insulation cost";
+                                                    
   parameter SI.Length t_mp = 0.32368 / (U_value_hot_tank + U_value_cold_tank) - 0.146096;
   parameter SI.Length t_tuffcrete47 = 0.01;
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_lift_hx = pri_lift * dh_liftHX * m_flow_blk "Heat exchanger lift cost";
-  parameter FI.Money C_storage = C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost";
   /******************************************************************************************************
   FIXME: There are 2 u_values now, implement it in the tuffcrete x microporous analysis
   (131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
@@ -442,8 +482,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   0.03293006 / U_value + 0.01518 =====> thickness function of Pumplite60;
   0.32368 / U_value - 0.146096   =====> thickness function of Microporous;
   ******************************************************************************************************/
-  
-  /*Storage Sub-System cost calculation based on Jeremy Sment Email 21 November 2020*/
+   
+  parameter FI.Money C_storage =
+            if dome_storage == false then 
+                C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 
+            else
+                C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 
+  "Total storage cost. Dome storage bin cost calculation already considers insulation s.t. C_insulation -> 0";
   
   
   //******************************* Cost of BOP
