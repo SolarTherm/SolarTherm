@@ -50,7 +50,7 @@ def run_simul(inputs={}):
     if os.path.exists(tablefile):    
         print('')
         print('Load exsiting OELT')
-        
+        '''
         crs=CRS(latitude=pm.lat, casedir=casedir)
 
         crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
@@ -78,7 +78,7 @@ def run_simul(inputs={}):
             print('')
             print('total time %.2f'%((end-start)/60.), 'min')
             np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
-        
+        '''
     else:
 
         crs=CRS(latitude=pm.lat, casedir=casedir)
