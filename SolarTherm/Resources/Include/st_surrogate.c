@@ -78,16 +78,14 @@ double run_surrogate(const Session_Props_Static_ANN *sess, const double raw_inpu
     if(t0.oper == NULL & t00.oper != NULL)
     {
         Input[0] = t00;
-        fprintf(stderr,"SUCCESS LOADING TENSORFLOW WITH SIGNATURE INPUT NAME: serving_default_dense_input\n");
     }
     else if(t00.oper == NULL & t0.oper != NULL)
     {
         Input[0] = t0;
-        fprintf(stderr,"SUCCESS LOADING TENSORFLOW WITH SIGNATURE INPUT NAME: serving_default_Input_input\n");
     }
     else
     {
-        fprintf(stderr,"FAILED TO IDENTIFY INPUT TENSOR SIGNATURE NAME\n");
+        fprintf(stderr,"FAILED TO IDENTIFY INPUT TENSOR SIGNATURE NAME\nHAVE TRIED: serving_default_dense_input and serving_default_Input_input");
         exit(EXIT_FAILURE);
     }
 
