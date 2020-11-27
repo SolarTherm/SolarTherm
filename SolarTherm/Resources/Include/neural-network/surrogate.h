@@ -34,4 +34,6 @@ void free_surrogate(Session_Props_Static_ANN*);
 
     > HOW TO GET INPUT TENSOR NAME AND INPUT-OUPUT TENSOR DIMENSION? USE SAVED_MODEL_CLI more on: 
     https://medium.com/@yuu.ishikawa/how-to-show-signatures-of-tensorflow-saved-model-5ac56cf1960f
+
+	/home/philgun/.local/lib/python2.7/site-packages/bin/saved_model_cli show --dir surrogate_receiver --all
    */

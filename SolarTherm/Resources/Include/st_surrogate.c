@@ -73,13 +73,23 @@ double run_surrogate(const Session_Props_Static_ANN *sess, const double raw_inpu
     int NumInputs = 1; // number of input tensor
     TF_Output* Input = malloc(sizeof(TF_Output*)*NumInputs); //allocate memory for input tensor (dType TF_Output)
     TF_Output t0 = {TF_GraphOperationByName(Graph,"serving_default_Input_input"),0}; //take the input tensor from loaded model
+    TF_Output t00 = {TF_GraphOperationByName(Graph,"serving_default_dense_input"),0}; //take the input tensor from loaded model
 
-    if(t0.oper == NULL)
+    if(t0.oper == NULL & t00.oper != NULL)
     {
-        printf("ERROR: Failed TF_GraphOperationByName serving_default_Input_input\n");
+        Input[0] = t00;
+        fprintf(stderr,"SUCCESS LOADING TENSORFLOW WITH SIGNATURE INPUT NAME: serving_default_dense_input\n");
     }
-
-    Input[0] = t0;
+    else if(t00.oper == NULL & t0.oper != NULL)
+    {
+        Input[0] = t0;
+        fprintf(stderr,"SUCCESS LOADING TENSORFLOW WITH SIGNATURE INPUT NAME: serving_default_Input_input\n");
+    }
+    else
+    {
+        fprintf(stderr,"FAILED TO IDENTIFY INPUT TENSOR SIGNATURE NAME\n");
+        exit(EXIT_FAILURE);
+    }
 
     //*********************Output Holder Initialisation
     int NumOutputs = 1;

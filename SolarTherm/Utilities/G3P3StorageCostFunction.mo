@@ -1,6 +1,6 @@
 within SolarTherm.Utilities;
 
-/*The cost function is specific for G3P3 project. Can be found in the email conversation 21 Nov 2020*/
+/*The cost function is specific for G3P3 project external storage. Can be found in the email conversation 21 Nov 2020*/
 /*Participants in conversation: 
     > Clifford Ho, Jeremy Sment (Sandia)
     > John Pye, Philipe Gunawan Gan, Ye Wang (ANU)
