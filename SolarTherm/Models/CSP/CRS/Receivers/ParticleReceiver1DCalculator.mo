@@ -28,7 +28,7 @@ model ParticleReceiver1DCalculator
   parameter Real T_out_design = 1073.15;
   parameter Real T_amb_design = 283.15;
   parameter Real Wspd_design = 0;
-  parameter Real Wspd_dir = 4;
+  parameter Real Wspd_dir = 180;
   parameter Real eta_rec_determined = 0.4247535903;
   parameter SI.MassFlowRate m_design = 206.821541380436;
   parameter Real ar_rec = 1;
