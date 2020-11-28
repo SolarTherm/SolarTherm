@@ -19,7 +19,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   extends Modelica.Icons.Example;
   
   //****************************** Simulation Set-up
-  parameter Boolean pri_field_wspd_max = false "using wspd_max dependent heliostat cost";
+  parameter Boolean pri_field_wspd_max = false "[H&T] true = using wspd_max dependent heliostat cost based on Emes 2017 https://is.gd/xSgpMV ";
   parameter Boolean detail_field_om = false "[H&T] true = use detail washing and field O&M cost";
   parameter Boolean const_dispatch = true "[CTRL] Constant dispatch of energy";
   parameter Boolean feedforward = true "[CTRL] if true then defocus heat is calculated using expensive PB model. False = defocus heat is a function of Q_in_rcv";
@@ -55,7 +55,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   file path changes to .home/philgun..... which makes C program threw back segfault";
   
   parameter String price_file = pri_file;
-  parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
+  parameter nSI.Angle_deg lon = -116.800 "[SYS] Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 34.850 "[SYS] Lati1tude (+ve North)";
   parameter nSI.Time_hour t_zone = -8 "[SYS] Local time zone (UCT=0)";
   parameter Integer year = 1996 "[SYS] Meteorological year";
@@ -65,17 +65,17 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
-  parameter String field_type = "polar" "Other options are : surround";
+  parameter String field_type = "polar" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
   parameter Real AR_helio = 1 "[H&T] ratio between H_helio/W_helio";
   parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
   parameter SI.Length H_helio = AR_helio * W_helio "height of heliostat in m";
-  parameter SI.Angle slope_error = 1.53e-3 "slope error of the heliostat in rad";
-  parameter SI.Length H_tower = 200 "[H&t] Tower height";
+  parameter SI.Angle slope_error = 1.53e-3 "[H&T] slope error of the heliostat in rad";
+  parameter SI.Length H_tower = 200 "[H&T] Tower height";
   parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
-  parameter Boolean single_field = true "True for single field, false for multi tower";
+  parameter Boolean single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean concrete_tower = true "[H&T] True for concrete, false for thrust tower";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
@@ -92,7 +92,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter String rcv_type = "particle" "[RCV] other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area is calculated during the initialisation";
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 2.5 "Solar multiple";
+  parameter Real SM = 2.5 "[SYS] Solar multiple";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
@@ -115,7 +115,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "[RCV] Constant convective heat transfer coefficient (curtain) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "[RCV] Constant Convective heat transfer coefficient (backwall) [W/m^2-K]";
   parameter SI.Length d_p = 0.00035 "[RCV] Particle diameter [m]";
-  parameter SI.SpecificHeatCapacity cp_s = 1200 "particle specific heat capacity [J/kgK]";
+  parameter SI.SpecificHeatCapacity cp_s = 1200 "[RCV] particle specific heat capacity [J/kgK]";
   parameter SI.Density rho_s = 3300 "[RCV] Particle intrinsic density [kg/m3]";
   parameter Real eps_s = 0.9 "[RCV] Particle emmisivity - based on EES code by Sandia";
   parameter Real abs_s = 0.9 "[RCV] Particle absorptivity - based on EES code by Sandia";
@@ -399,7 +399,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real pri_PHX_BOP_s = 9153 "[PB] Primary Heat Exchanger Particle Cost [USD-s/kg] - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter Real pri_PHX_manufacture = 3711 "[PB] Primary Heat Exchanger Manufacture Cost (USD/m2) - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter Real pri_PHX_material = 5320 "[PB] Primary Heat Exchanger Material Cost (USD/m2) - G3P3 conversation email by Cliff 11 Nov 2020";
-  parameter SI.Efficiency eta_motor = 1 "electrical generator efficiency";
   parameter FI.Money pri_exchanger = 150 "[PB] price of the primary exchanger in (USD/(kW_th). Value from v.9 EES sandia result c_hx";
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 
                                           290 / 1040 * 600 / 1000 
@@ -835,7 +834,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
           tolerance_ANN = tolerance_ANN, 
           which_surrogate = which_surrogate, 
           test_mode = false, 
-          eta_motor = eta_motor, 
+          eta_motor = 1, 
           f_fixed_load = f_fixed_load, 
           external_parasities = external_parasities) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
@@ -864,7 +863,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
           pri_cooler = pri_cooler, 
           pri_generator = pri_generator, 
           pri_exchanger = pri_exchanger, 
-          eta_motor = eta_motor, 
+          eta_motor = 1, 
           pinch_recuperator = pinch_recuperator, 
           par_fr = par_fr, 
           test_mode = true, 
