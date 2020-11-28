@@ -20,8 +20,8 @@ int main()
     double CIT = 41 + 273.15;
     double blk_T_amb_des = CIT - dT_mc_approach;
     double eta_isen_t;
-    char* SolarTherm_path = "/home/philgun/solartherm-particle/SolarTherm";
-    char* base_path = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include";
+    char* SolarTherm_path = "~/.local/lib/omlibrary/SolarTherm";
+    char* base_path = "~/.local/lib/omlibrary/SolarTherm/Resources/Include";
 
     double dT_PHX_hot_approach; //product of iteration
 
