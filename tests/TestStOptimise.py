@@ -56,7 +56,7 @@ class TestStOptimise(unittest.TestCase):
 		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 		return y
 		
-	'''	
+
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
@@ -176,7 +176,7 @@ class TestStOptimise(unittest.TestCase):
 
 	def test_SLSQP(self):
 		
-		outfile='TestStOptimise_Nelder-Mead_results.txt'
+		outfile='TestStOptimise_SLSQP_results.txt'
 		obj=999
 		x=999
 		y=999
@@ -262,7 +262,7 @@ class TestStOptimise(unittest.TestCase):
 			f2=f_schaffer2[i]
 			self.assertTrue(abs((f2-self.get_schaffer_front(f1))/f2)< 0.1)
 
-	'''
+
 
 	def test_dakota_soga(self):
 
@@ -284,7 +284,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 
-		
+		#map(os.unlink, glob.glob(u'TestStOptimise_*'))		
 
 
 if __name__ == '__main__':
