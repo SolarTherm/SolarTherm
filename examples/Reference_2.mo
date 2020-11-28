@@ -38,12 +38,12 @@ model Reference_2
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/example_optics.motab");
 	parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file";
 
-	parameter Real SM = 1.8 "Solar multiple";
+	parameter Real SM = 1.8 "[SYS] Solar multiple";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
 
-	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
-	parameter SI.Area A_heliostat = 144.375 "Heliostat module reflective area";
-	parameter Real he_av_design = 0.99 "Helisotats availability";
+	parameter Boolean polar = false "[H&T] True for polar field layout, otherwise surrounded";
+	parameter SI.Area A_heliostat = 144.375 "[H&T] Heliostat module reflective area";
+	parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
 
 	parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
 	parameter SI.Irradiance dni_des = 950 "DNI at design point";
@@ -54,7 +54,7 @@ model Reference_2
 	parameter Real twr_ht_const = if polar then 2.25 else 1.25 "Constant for tower height calculation";
 
 	// Receiver
-	parameter Integer N_pa_rec = 20 "Number of panels in receiver";
+	parameter Integer N_pa_rec = 20 "[RCV] Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 
