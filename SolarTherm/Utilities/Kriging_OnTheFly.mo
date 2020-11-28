@@ -39,7 +39,7 @@ package Kriging_OnTheFly
                 annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
                 Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
-                LibraryDirectory="file:///home/philgun/SAM/2020.11.12/linux_64"
+                LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );
     end constructor;
   
@@ -49,7 +49,7 @@ package Kriging_OnTheFly
       annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
                 Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
-                LibraryDirectory="file:///home/philgun/SAM/2020.11.12/linux_64"
+                LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );
     end destructor;
   end Kriging_properties;
@@ -69,7 +69,7 @@ package Kriging_OnTheFly
     annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
                 Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
-                LibraryDirectory="file:///home/philgun/SAM/2020.11.12/linux_64"
+                LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );
   end OTF_Kriging_interpolate;
 end Kriging_OnTheFly;
