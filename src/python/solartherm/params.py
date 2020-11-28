@@ -278,7 +278,7 @@ class Tree(object):
 			description=description.replace('[PB]','')
 
 		elif '[CTRL]' in description:
-			c='Contral system'
+			c='Control system'
 			description=description.replace('[CTRL]','')
 
 		elif '[FN]' in description:
