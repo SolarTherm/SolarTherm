@@ -9,9 +9,10 @@
 
 int main()
 {
-    double P_net[] = {33.3e6,50e6};
-    double T_in_ref_blk = 720 + 273.15;
-    double T_cold_set = 500 + 273.15;
+    //double P_net[] = {100e6,50e6,10e6,250e6,500e6,115e6*0.9};
+	double P_net[] = {10e6,20e6,30e6,40e6,50e6,60e6,70e6,80e6,90e6,100e6,110e6,120e6,130e6,140e6,150e6};
+    double T_in_ref_blk = 800 + 273.15;
+    double T_cold_set = 550 + 273.15;
     double dT_PHX_cold_approach = 15;
     double p_high = 25e6;
     double eta_comp_main = 0.89;
@@ -20,8 +21,8 @@ int main()
     double CIT = 41 + 273.15;
     double blk_T_amb_des = CIT - dT_mc_approach;
     double eta_isen_t;
-    char* SolarTherm_path = "~/.local/lib/omlibrary/SolarTherm";
-    char* base_path = "~/.local/lib/omlibrary/SolarTherm/Resources/Include";
+    char* SolarTherm_path = "/home/philgun/solartherm-particle/SolarTherm";
+    char* base_path = "/home/philgun/solartherm-particle/SolarTherm/Resources/Include";
 
     double dT_PHX_hot_approach; //product of iteration
 
@@ -53,13 +54,13 @@ int main()
             eta_isen_t, 
             dT_mc_approach, 
             blk_T_amb_des, 
-            "ChlorideSalt", 
+            "CarboHSP", 
             50, 
             SolarTherm_path, 
             T_cold_set,
             NREL_PB_configurations
             );
-        
+      	/*  
         double eta_gross_base = NREL_PB_configurations[10];
         double eta_Q_base = NREL_PB_configurations[11];
         dT_PHX_hot_approach = NREL_PB_configurations[12];
@@ -81,7 +82,7 @@ int main()
             SolarTherm_path,
             3,
             2,
-            10,                                     /*Don't care about tolerance now*/
+            10,                                     
             1,
             50,
             dT_PHX_hot_approach,
@@ -94,6 +95,63 @@ int main()
         );
 
         destructKriging(Kriging_variables);
+
+		Session_Props* sess0 = constructANN(
+			P_gross, 
+			T_in_ref_blk, 
+			p_high,  
+			1, 
+    		1, 
+			1, 
+			1, 
+			blk_T_amb_des, 
+    		eta_gross_base, 
+			eta_Q_base, 
+			0, 
+			base_path, 
+			SolarTherm_path, 
+    		3, 
+			2, 
+			10, 
+			1,
+    		50, 
+			dT_PHX_hot_approach,  
+			dT_PHX_cold_approach,
+    		eta_comp_main, 
+			eta_comp_re, 
+			eta_isen_t,
+			dT_mc_approach,
+    		"CarboHSP");
+			
+		Session_Props* sess1 = constructANN(
+			P_gross, 
+			T_in_ref_blk, 
+			p_high,  
+			1, 
+			1, 
+			1, 
+			1, 
+			blk_T_amb_des, 
+			eta_gross_base, 
+			eta_Q_base, 
+			1, 
+			base_path, 
+			SolarTherm_path, 
+			3, 
+			2, 
+			10, 
+			1,
+			50, 
+			dT_PHX_hot_approach,  
+			dT_PHX_cold_approach,
+			eta_comp_main, 
+			eta_comp_re, 
+			eta_isen_t,
+			dT_mc_approach,
+			"CarboHSP");
+
+			destructANN(sess0);
+			destructANN(sess1);*/
 
     }
 

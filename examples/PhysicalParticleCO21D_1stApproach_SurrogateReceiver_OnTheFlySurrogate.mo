@@ -123,27 +123,26 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real eps_w = 0.8 "[RCV] Receiver wall emmisivity - based on EES code by Sandia";
   
   //****************************** NN Based Receiver Parameter
-  parameter Integer inputsize_rcv = 8;
-  parameter SI.Length H_drop_max_rcv = 44.9992754 "[RCV] maximum drop height where the receiver surrogate model is still valid [m]";
-  parameter Real ar_rec_max_rcv = 2.99991621022386 "[RCV] maximum receiver aspect ratioto the receiver surrogate model [-]";
-  parameter SI.Temperature T_out_max_rcv = 1473.1158306838167 "[RCV] maximum particle outlet temperature [K]";
-  parameter SI.HeatFlowRate Q_in_max_rcv = 6058755749.536206 "[RCV] maximum incident heat to the receiver [W]";
-  parameter SI.Temperature T_in_max_rcv = 973.1412540663491 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
-  parameter SI.Temperature T_amb_max_rcv = 323.1436960778181 "[RCV] maximum ambient temperature to the surrogate model [K]";
-  parameter SI.Velocity Wspd_max_rcv = 39.997616581934274 "[RCV] maximum wind speed to the surrogate model [m/s]";
-  parameter Real Wdir_max_rcv = 359.97132644466706 "[RCV] maximum wind direction [degree]";
+  parameter Integer inputsize_rcv = 7;
   
-  parameter SI.Length H_drop_min_rcv = 5.002848445826566 "[RCV] minimum drop height where the receiver surrogate model is still valid [m]";
-  parameter Real ar_rec_min_rcv = 0.2501723416328159 "[RCV] minimum receiver aspect ratioto the receiver surrogate model [-]";
-  parameter SI.Temperature T_out_min_rcv = 1023.2114466581805 "[RCV] minimum particle outlet temperature [K]";
-  parameter SI.HeatFlowRate Q_in_min_rcv = 19736725.563627746 "[RCV] minimum incident heat to the receiver [W]";
-  parameter SI.Temperature T_in_min_rcv = 773.1556998783635 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
-  parameter SI.Temperature T_amb_min_rcv = 253.1506683766939 "[RCV] minimum ambient temperature to the surrogate model [K]";
-  parameter SI.Velocity Wspd_min_rcv = 0.0018442829541107258 "[RCV] minimum wind speed to the surrogate model [m/s]";
-  parameter Real Wdir_min_rcv = 0.007016896474139584 "[RCV] minimum wind direction [degree]";
+  parameter SI.Length H_drop_max_rcv = 45 "[RCV] maximum drop height where the receiver surrogate model is still valid [m]";
+  parameter Real ar_rec_max_rcv = 3 "[RCV] maximum receiver aspect ratioto the receiver surrogate model [-]";
+  parameter SI.Temperature T_out_max_rcv = 1073.15 "[RCV] maximum particle outlet temperature [K]";
+  parameter SI.HeatFlowRate Q_in_max_rcv = 9041492610.03646 "[RCV] maximum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_max_rcv = 972.9825827048 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_max_rcv = 313.1089448632 "[RCV] maximum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_max_rcv = 6.2660812586 "[RCV] maximum wind factor to the surrogate model [-]";
   
-  parameter SI.Efficiency eta_thermal_max_rcv = 0.999521732823558;
-  parameter SI.Efficiency eta_thermal_min_rcv = 0.007016896474139584;
+  parameter SI.Length H_drop_min_rcv = 15 "[RCV] minimum drop height where the receiver surrogate model is still valid [m]";
+  parameter Real ar_rec_min_rcv = 0.25 "[RCV] minimum receiver aspect ratioto the receiver surrogate model [-]";
+  parameter SI.Temperature T_out_min_rcv = 1073.15 "[RCV] minimum particle outlet temperature [K]";
+  parameter SI.HeatFlowRate Q_in_min_rcv = 24201848.6838298 "[RCV] minimum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_min_rcv = 773.2819470034 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_min_rcv = 253.1991227209 "[RCV] minimum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_min_rcv = 1.0000006398 "[RCV] minimum wind factor to the surrogate model [-]";
+  
+  parameter SI.Efficiency eta_thermal_max_rcv = 0.9944160723 "[RCV] maximum thermal efficiency of the receiver of surrogate model";
+  parameter SI.Efficiency eta_thermal_min_rcv = 0.0055724285 "[RCV] minimum thermal efficiency of the receiver of surrogate model";
   
   
   parameter Real[inputsize_rcv] X_max_rcv = {
@@ -153,8 +152,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       Q_in_max_rcv, 
       T_in_max_rcv,
       T_amb_max_rcv, 
-      Wspd_max_rcv,       
-      Wdir_max_rcv};
+      F_wind_max_rcv};
       
   parameter Real[inputsize_rcv] X_min_rcv = {
       H_drop_min_rcv, 
@@ -163,14 +161,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       Q_in_min_rcv, 
       T_in_min_rcv,
       T_amb_min_rcv, 
-      Wspd_min_rcv,
-      Wdir_min_rcv};   
+      F_wind_min_rcv};   
       
   parameter Real y_max_rcv = eta_thermal_max_rcv;
   parameter Real y_min_rcv = eta_thermal_min_rcv;
   
   parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource(
-            "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_receiver"
+            "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_receiver_constant_T_out_800"
   ) "[RCV] path to which the static particle receiver surrogate model is stored";
             
   //****************************** OnTheFlySurrogate Power Block Parameters
@@ -193,7 +190,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Integer outputsize_PB = 2 "[PB] the output dimension of the surrogate model PB";
   parameter Real tolerance_kriging = 6e-3 "[PB] Error tolerance of the on-the-fly surrogate model Kriging (Mean Absolute Error)";
   parameter Real tolerance_ANN = 6e-3 "[PB] Error tolerance of the on-the-fly surrogate model ANN (Mean Absolute Error)";
-  parameter Integer which_surrogate = 1 "1 for Kriging, 2 for ANN";
+  parameter Integer which_surrogate = 2 "1 for Kriging, 2 for ANN";
   parameter Real eta_gross_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
   parameter Real eta_Q_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
   
@@ -393,7 +390,14 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real pri_recuperator = 5.2 "[PB] Specific cost of turbine (USD-K^0.8933/W^0.8933) based on Albrecht 2019 https://is.gd/3VN0O7";
   parameter Real pri_turbine = 9923.7 "[PB] Specific cost of turbine (USD/kW^0.5886) based on Albrecht 2019 https://is.gd/3VN0O7";
   parameter Real pri_compressor = 643.15 "[PB] Specific cost of compressor (USD/kW^0.9142) based on Albrecht 2019 https://is.gd/3VN0O7";
-  parameter Real pri_cooler = 76.25 "[PB] Main cooler specific cost (USD-K^0.8919/W^0.8919) based on Albrecht 2019 https://is.gd/3VN0O7";
+  
+  parameter Real pri_cooler = 2.3 
+  "[PB] Main cooler specific cost:
+           >  Based on Albrecht 2019 https://is.gd/3VN0O7 the specific cost is 76.25 (USD-K^0.8919/W^0.8919)
+           >  Based on NREL sCO2 PB model used in SAM --> 2.3 USD-K/W
+  If we use UA_cooler from SAM Simulation Core sCO2 model and use Albrecht cost function, the cooler cost can reach up to 100 M.USD.
+  I believe we can just use NREL sCO2 PB model cooler cost function --> 2.3 x UA_cooler [W/K]";
+  
   parameter Real pri_generator = 108900 "[PB] Generator cost (USD/MWe^0.5463) based on Weiland 2019 https://is.gd/uTaFkD";
   parameter Real pri_PHX_BOP_CO2 = 4753 "[PB] Primary Heat Exchanger sCO2 Line Cost (USD-s/kg) - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter Real pri_PHX_BOP_s = 9153 "[PB] Primary Heat Exchanger Particle Cost [USD-s/kg] - G3P3 conversation email by Cliff 11 Nov 2020";
@@ -739,7 +743,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
           enable_losses = tnk_enable_losses, 
           use_L = true, 
           W_max = 0, 
-          T_set = -1, 
+          T_set = 0, 
           U_value = U_value_hot_tank, 
           packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
@@ -755,7 +759,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
           enable_losses = tnk_enable_losses, 
           use_L = true, 
           W_max = 0, 
-          T_set = -1, 
+          T_set = 0, 
           U_value = U_value_cold_tank, 
           packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
@@ -1004,7 +1008,7 @@ initial equation
       C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
       C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
       C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-      C_cooler = pri_cooler * NREL_PB_configurations[6] ^ 0.8919;
+      C_cooler = pri_cooler * NREL_PB_configurations[6];
       C_exchanger = (pri_PHX_material + pri_PHX_manufacture) * A_HX + pri_PHX_BOP_s * m_flow_blk + pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
       C_generator = pri_generator * (P_gross / 10 ^ 6) ^ 0.5463;
   elseif which_PB_model == 0 then
@@ -1053,14 +1057,16 @@ initial equation
 
 equation
   //************************************ Equations below exist to close the model
-  particleReceiver.raw_input[1] = H_rcv;
-  particleReceiver.raw_input[2] = ar_rec;
-  particleReceiver.raw_input[3] = T_hot_set;
-  particleReceiver.raw_input[4] = particleReceiver.heat.Q_flow;
-  particleReceiver.raw_input[5] = particleReceiver.T_in;
-  particleReceiver.raw_input[6] = particleReceiver.Tamb;
-  particleReceiver.raw_input[7] = particleReceiver.Wspd;
-  particleReceiver.raw_input[8] = particleReceiver.Wdir;
+  particleReceiver.raw_input[1] = H_rcv "Particle receiver drop height - input to the static receiver surrogate model";
+  particleReceiver.raw_input[2] = ar_rec "Particle receiver aspect ratio (H/W) - input to the static receiver surrogate model";
+  particleReceiver.raw_input[3] = T_hot_set "Particle receiver outlet target temperature (K) - input to the static receiver surrogate model";
+  particleReceiver.raw_input[4] = particleReceiver.heat.Q_flow "Particle receiver incident heat (W) - input to the static receiver surrogate model";
+  particleReceiver.raw_input[5] = particleReceiver.T_in "Particle receiver inlet temp. (K) - input to the static receiver surrogate model";
+  particleReceiver.raw_input[6] = particleReceiver.Tamb "Particle receiver ambient temp. (K) - input to the static receiver surrogate model";
+  particleReceiver.raw_input[7] = 1 +
+                                    0.13929*particleReceiver.Wspd 
+                                    * Modelica.Math.exp(-1*((abs(particleReceiver.Wdir-180)-105)/30)^2)
+  "Particle receiver wind factor (product of wind speed and wind direction) - input to the static receiver surrogate model";
 
   //************************************ Assigning the input to the surrogate model*/
   powerBlock.raw_input[1] = powerBlock.load;
