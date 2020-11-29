@@ -116,7 +116,15 @@ double run_surrogate(const Session_Props_Static_ANN *sess, const double raw_inpu
     float* data = malloc(sizeof(float*)*numData); //==> where the input from modelica is gonna be inserted
     for(size_t i=0; i<inputsize; i++)
     {
-        data[i] = (raw_input[i] - X_min[i]) / (X_max[i]-X_min[i]);
+        if(X_max[i]==X_min[i])
+        {
+            data[i] = 0;
+        }
+        else
+        {
+            data[i] = (raw_input[i] - X_min[i]) / (X_max[i]-X_min[i]);
+        }
+        
     }
 	
 	//Allocate memory for data inside the Input Tensor

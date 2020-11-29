@@ -943,6 +943,10 @@ char* SolarTherm_path, double T_HTF_cold_des, double* res)
     ssc_data_get_number(simulation_result, "HTR_UA_calculated", &HTR_UA);
     fprintf(stderr,"HTR_UA at design point = %lf [MW/K]\n",HTR_UA);
 
+	double C_cooler;
+    ssc_data_get_number(simulation_result, "cooler_tot_cost", &C_cooler);
+    fprintf(stderr,"Cooler cost = %lf [M.USD]\n",C_cooler);
+	
     double LTR_UA;
     ssc_data_get_number(simulation_result,"LTR_UA_calculated",&LTR_UA);
     fprintf(stderr,"LTR_UA at design point = %lf [MW/K]\n",LTR_UA);
@@ -960,7 +964,7 @@ char* SolarTherm_path, double T_HTF_cold_des, double* res)
     fprintf(stderr,"Re-compressor power at design point = %lf [MW]\n",W_recomp_des);
 
     double Cooler_UA;
-    ssc_data_get_number(simulation_result,"LP_cooler_UA",&Cooler_UA);
+    ssc_data_get_number(simulation_result,"cooler_tot_UA",&Cooler_UA);
     fprintf(stderr,"Cooler UA value design point = %lf [MW/K]\n",Cooler_UA);
 
     double PHX_UA;
@@ -985,6 +989,7 @@ char* SolarTherm_path, double T_HTF_cold_des, double* res)
 
     double eta_gross_base = (P_net-(W_dot_cooler_des*1e6))/(Q_dot_PHX_des*1e6);
     fprintf(stderr,"PB cycle thermal efficiency (cooler fan has been included) = %lf \n",eta_gross_base);
+
 
     /*Assigning values*/
     res[0] = HTR_UA * 1e6;                              /*Converting from MW/K to W/K*/
