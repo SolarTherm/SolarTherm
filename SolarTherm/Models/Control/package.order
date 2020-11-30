@@ -9,4 +9,4 @@ SimpleReceiverControl
 IdealMassflowBlockCalculation
 PID_AW_reset3_voriginal
 Interpolation3D
-test_linprog
+TestLinprog
