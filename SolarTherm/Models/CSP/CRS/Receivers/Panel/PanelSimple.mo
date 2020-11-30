@@ -8,7 +8,7 @@ model PanelSimple
 	import Modelica.Constants.*;
 	import Modelica.Math.*;
 
-	replaceable package Medium = SolarTherm.Media.Sodium.Sodium_utilities;
+	replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_utilities; //SolarTherm.Media.Sodium.Sodium_utilities;
 
 	Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = MediumpT)
 		annotation (Placement(visible = true,transformation(extent = {{-86, -8}, {-66, 12}}, rotation = 0), iconTransformation(extent = {{-86, -12}, {-66, 8}}, rotation = 0)));
@@ -16,26 +16,26 @@ model PanelSimple
 	Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = MediumpT)
 		annotation (Placement(visible = true,transformation(extent = {{64, -8}, {84, 12}}, rotation = 0), iconTransformation(extent = {{66, -12}, {86, 8}}, rotation = 0)));
 
-	replaceable package MediumpT = SolarTherm.Media.Sodium.Sodium_pT constrainedby Modelica.Media.Interfaces.PartialMedium "Medium in the component"
+	replaceable package MediumpT = SolarTherm.Media.MoltenSalt.MoltenSalt_ph constrainedby Modelica.Media.Interfaces.PartialMedium "Medium in the component"
 		annotation (choicesAllMatching = true,Dialog(group="Working fluid"));
 
 	parameter Modelica.SIunits.ThermalConductivity kt = 20 "Tube metal thermal conductivity";
 	parameter SI.LinearExpansionCoefficient lambdat = 18.5e-6 "Coefficient of linear thermal expansion receiver tube material";
 	parameter SI.Stress E = 165e9 "Young's Modulus receiver tube material";
 	parameter SI.Efficiency poisson = 0.3 "Poisson ratio of receiver tube material";
-	parameter SI.Radius a = 15.049/1e3 "Inner tube radius";
-	parameter SI.Radius b = 16.7/1e3 "Outer tube radius";
-	parameter SI.Diameter D_tb=2*b "Tube outer diameter";
-	parameter SI.Height H_rcv = 16.0;//5.86
+	parameter SI.Radius a = 21e-3 "Inner tube radius";
+	parameter SI.Radius b = 22.5e-3 "Outer tube radius";
+	parameter SI.Diameter D_tb= 45e-3 "Tube outer diameter";
+	parameter SI.Height H_rcv = 10.5 "Receiver height"; //Gemasolar solar power tower https://doi.org/10.1016/j.solener.2015.12.055
 	parameter SI.Area A_ele = w_pa*H_rcv/Nel;
-	parameter SI.Length w_pa=24*pi/16 "Panel width"; //w_pa=D_rcv*sin(pi/N_pa) //4.71*pi/20
+	parameter SI.Length w_pa = 1.395 "Panel width"; //Gemasolar solar power tower https://doi.org/10.1016/j.solener.2015.12.055
 
 	//Number of panels
-	parameter Integer Npa_fl=2;//Number of panels	 per flowpath
-	parameter Integer Nel=25;//Number of vertical elements per tube
-	parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes per panel";
-	parameter SI.DensityOfHeatFlowRate q=850e3;//Incoming solar flux
-	parameter SI.Temperature T_in = from_degC(290);//Inlet fluid temperature
+	parameter Integer Npa_fl = 9 "Number of panels per flowpath"; //Gemasolar solar power tower https://doi.org/10.1016/j.solener.2015.12.055
+	parameter Integer Nel=25 "Number of vertical elements per tube";
+	parameter Real N_tb_pa = 31 "Number of tubes per panel"; //div(w_pa,D_tb)
+	parameter SI.DensityOfHeatFlowRate q=850e3 "Incoming solar flux";
+	parameter SI.Temperature T_in = from_degC(290) "Inlet fluid temperature";
 	parameter SI.Efficiency ab=0.94 "Coating absortance";
 	parameter SI.Efficiency em=0.86 "Coating Emitance";
 	parameter SI.Temperature Tamb = from_degC(25) "Ambient temperature";
@@ -72,13 +72,13 @@ model PanelSimple
 	SI.Stress sigma_eq[Nel*Npa_fl];
 
 	String line;
-	String filepath = "/home/arfontalvo/Desktop/isp2/Table_1D_d1200/tables/Table_1D_d1200_ele6_azi22.csv";
+	String filepath = "/home/arfontalvo/Documents/paper1/uniform.csv";
 	String file_flux = Modelica.Utilities.Files.loadResource(filepath);
 
 algorithm
 	for i in 1:(Npa_fl*Nel) loop
 		line := readLine(file_flux,i+N_start);
-		Q_rcv[i] := scanReal(line)*1000;
+		Q_rcv[i] := scanReal(line)*1000000; //Converting to MW/m2 to W/m2
 	end for;
 equation	
 
