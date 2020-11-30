@@ -83,8 +83,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean concrete_tower = true "[H&T] True for concrete, false for thrust tower";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
-  parameter Real n_row_oelt = 3 "[H&T] number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 5 "[H&T] number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
   parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
