@@ -261,7 +261,13 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     }
 
     printSpace();
-	
+    printf("Price [USD/MWh] :\n");
+    for(size_t i=1;i<horison+1;i++)
+    {
+        printf("[%.2f]", price[time_index+i-1]);      
+    }
+
+    printSpace();
     double optimalDispatch = x[0];
 
 	printf("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f\n\n",optimalDispatch);
