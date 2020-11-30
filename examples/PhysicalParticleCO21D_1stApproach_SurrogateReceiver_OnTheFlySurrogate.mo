@@ -67,7 +67,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //****************************** Field simulation parameters
   parameter String opt_file(fixed = false);
   parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
-  parameter Real metadata_list[8] = metadata(opt_file);
+  parameter Real metadata_list[9] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
   parameter String field_type = "polar" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
@@ -83,9 +83,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean concrete_tower = true "[H&T] True for concrete, false for thrust tower";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
-  parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
-  parameter SI.Efficiency rho_helio = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
+  parameter Real n_row_oelt = 3 "[H&T] number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 5 "[H&T] number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
+  parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_soil = 0.95 "[H&T] Heliostat soiling factor. 0.95 is the default value in SolarPILOT";
   
@@ -103,7 +104,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
   parameter SI.Temperature T_amb_des_rcv = from_degC(10) "[RCV] Design point ambient temp of the receiver (K)";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area (m^2)";
-  parameter Real A_land = metadata_list[8] "Land area consumed by the plant - calculated value by Solstice (m^2)";
+  parameter Real A_land = metadata_list[9] "Land area consumed by the plant - calculated value by Solstice (m^2)";
   parameter SI.Velocity Wspd_max = 15.65 if use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
@@ -446,7 +447,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   parameter Real C1_washing = 98 "[H&T] cleanliness of the mirror after 1 cleaning pass for method 1 (%)";
   parameter Real C2_washing = 96.5 "[H&T] cleanliness of the mirror after 1 cleaning pass for method 2 (%)";
-  parameter Real C_target = rho_helio * 100 "annual reflectivity target";
+  parameter Real C_target = helio_rho * 100 "annual reflectivity target";
   parameter Real R_soil = 0.49 "[H&T] reflectivity loss from the design reflectivity due to soiling";
   parameter Real P_w = 12 "[H&T] Month(s) in a year that the cleaning will be conducted";
   parameter Real omega_n = 1.5 "[H&T] Natural washing frequency (rain, snow, etc)";
@@ -623,10 +624,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         R_tower = R_tower, 
         R1 = R1, 
         fb = fb, 
-        rho_helio = rho_helio, 
+        helio_rho = helio_rho, 
+		helio_soil =helio_soil,
+		helio_sf_ratio=helio_sf_ratio,
         slope_error = slope_error, 
         n_row_oelt = n_row_oelt, 
-        n_col_oelt = n_col_oelt, 
+        n_col_oelt = n_col_oelt,
+		n_procs=n_procs, 
         psave = casefolder, 
         wea_file = wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
