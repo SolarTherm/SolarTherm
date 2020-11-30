@@ -1049,7 +1049,9 @@ equation
   particleReceiver.raw_input[4] = particleReceiver.heat.Q_flow "Particle receiver incident heat (W) - input to the static receiver surrogate model";
   particleReceiver.raw_input[5] = particleReceiver.T_in "Particle receiver inlet temp. (K) - input to the static receiver surrogate model";
   particleReceiver.raw_input[6] = particleReceiver.Tamb "Particle receiver ambient temp. (K) - input to the static receiver surrogate model";
-  particleReceiver.raw_input[7] = 1 + 0.13929 * particleReceiver.Wspd * Modelica.Math.exp(-1 * ((abs(particleReceiver.Wdir - 180) - 105) / 30) ^ 2) 
+  particleReceiver.raw_input[7] = 1 + 
+              0.13929 * particleReceiver.Wspd * 
+                      Modelica.Math.exp(-1*((abs(Modelica.SIunits.Conversions.to_deg(particleReceiver.Wdir)-180)-105)/30)^2) 
   "Particle receiver wind factor (product of wind speed and wind direction) - input to the static receiver surrogate model";
 
   //************************************ Assigning the input to the surrogate model*/
