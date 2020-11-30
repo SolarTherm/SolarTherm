@@ -16,3 +16,4 @@ nu_plug
 conductivity_particle_ZBS
 G3P3StorageCostFunction
 G3P3StorageCostFunction_Integrated
+WspdScaler
