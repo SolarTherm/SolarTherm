@@ -17,3 +17,7 @@ conductivity_particle_ZBS
 G3P3StorageCostFunction
 G3P3StorageCostFunction_Integrated
 WspdScaler
+G3P3DomeStorageRValueCalculation
+TestDomeStorageRCalc
+TestCostFunctionDomeStorageG3P3
+G3P3DomeStorageRValueCalculation_IntegratedStorage
