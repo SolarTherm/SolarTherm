@@ -40,7 +40,5 @@ class TestLinprog(unittest.TestCase):
 		os.remove("TestLinprog")
 
 
-
-
 if __name__ == '__main__':
 	unittest.main()
