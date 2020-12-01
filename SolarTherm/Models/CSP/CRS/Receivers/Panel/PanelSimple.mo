@@ -37,8 +37,8 @@ model PanelSimple
 	parameter SI.DensityOfHeatFlowRate q=850e3 "Incoming solar flux";
 	parameter SI.Temperature T_in = from_degC(290) "Inlet fluid temperature";
 	parameter SI.Efficiency ab=0.94 "Coating absortance";
-	parameter SI.Efficiency em=0.86 "Coating Emitance";
-	parameter SI.Temperature Tamb = from_degC(25) "Ambient temperature";
+	parameter SI.Efficiency em=0.86 "Coating emissivity";
+	parameter SI.Temperature Tamb = 298.15 "Ambient temperature";
 	parameter SI.CoefficientOfHeatTransfer h_ext = 10 "Coefficient of external heat transfer due to external convection";
 	parameter Integer N_start = 0 "Starting position";
 	
@@ -68,6 +68,7 @@ model PanelSimple
 	Real Pr[Nel*Npa_fl];
 	Real Nu[Nel*Npa_fl];
 	SI.CoefficientOfHeatTransfer h_int[Nel*Npa_fl];
+	SI.CoefficientOfHeatTransfer alpha_ext[Nel*Npa_fl];
 	SI.Temperature Ts[Nel*Npa_fl];
 	SI.Stress sigma_eq[Nel*Npa_fl];
 
@@ -104,8 +105,9 @@ equation
 	Re[1] = max(1,vf[1] * rho[1] * 2*a / muf[1]);
 	Pr[1] = max(0,muf[1] * Cp[1] / lambda[1]);
 	Nu[1] = 0.023*Re[1]^(0.8)*Pr[1]^(0.4);
+	alpha_ext[1] = h_ext + Modelica.Constants.sigma*em*(Ts[1]^2+Tamb^2)*(Ts[1]+Tamb);
 	Bi1[1] = h_int[1]*a/kt;
-	Bi2[1] = h_ext*b/kt;
+	Bi2[1] = alpha_ext[1]*b/kt;
 	Ta[1] = (Tamb - Tf[1])*kt/(ab*Q_rcv[1]*b);
 	Q_htf[1] = 2*ab*Q_rcv[1]*b*(1 + pi*Bi2[1]*Ta[1])*Bi1[1]*(H_rcv/Nel)/(Bi1[1] + Bi2[1]*(1 - Bi1[1]*log(a/b)))*N_tb_pa;
 	m_dot*hf[1] = m_dot*h_in + Q_htf[1];
@@ -127,8 +129,9 @@ equation
 		Re[i] = max(1,vf[i] * rho[i] * 2*a / muf[i]);
 		Pr[i] = max(0,muf[i] * Cp[i] / lambda[i]);
 		Nu[i] = 0.023*Re[i]^(0.8)*Pr[i]^(0.4);
+		alpha_ext[i] = h_ext + Modelica.Constants.sigma*em*(Ts[i]^2+Tamb^2)*(Ts[i]+Tamb);
 		Bi1[i] = h_int[i]*a/kt;
-		Bi2[i] = h_ext*b/kt;
+		Bi2[i] = alpha_ext[i]*b/kt;
 		Ta[i] = (Tamb - Tf[i])*kt/(ab*Q_rcv[i]*b);
 		Q_htf[i] = 2*ab*Q_rcv[i]*b*(1 + pi*Bi2[i]*Ta[i])*Bi1[i]*(H_rcv/Nel)/(Bi1[i] + Bi2[i]*(1 - Bi1[i]*log(a/b)))*N_tb_pa;
 		m_dot*hf[i] = m_dot*hf[i-1] + Q_htf[i];
