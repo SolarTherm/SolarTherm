@@ -247,14 +247,39 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Temperature T_hot_set = 1073.15 "[ST] Hot tank target temperature == HTF inlet temperature to the PB at design point (K)";
   parameter SI.Temperature T_cold_start = T_cold_set "Cold tank starting temperature";
   parameter SI.Temperature T_hot_start = T_hot_set "Hot tank starting temperature";
+  
+  /*Thermophysical of the particle*/
   parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold partilces thermodynamic state at design";
   parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hot partilces thermodynamic state at design";
-  parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank 
-      so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
+  parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 
+  "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank 
+   so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
+   
+  parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
+  parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
+  parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy [J]";
+  parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks [kg]";
+  parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor 
+  "Volume needed to host particles in the tank with certain packing factor value";
+  
   parameter Real tank_ar = 1.17 "[ST] storage aspect ratio";
-  parameter SI.Length H_storage = ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank height";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
-  parameter SI.Area SA_storage = CN.pi * D_storage * H_storage "Storage tank surface area";
+  parameter Real X_dome = (1/(4*tank_ar^2))-(1/(8*tank_ar^3))+(1/(12*tank_ar^3));
+  
+  parameter SI.Length H_storage = if dome_storage then 
+                                      ceil((V_max/(CN.pi*X_dome))^ (1/3))
+                                  else  
+                                      ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) 
+  "Storage tank total height [m]";
+                                      
+  parameter SI.Area SA_storage = if dome_storage then 
+                                      //************************ Surface area of th ehemisphere and the cylinder
+                                      CN.pi * (D_storage) * (H_storage - 0.5 * D_storage) + 2 * CN.pi * (D_storage/2)^2 
+                                 else
+                                      //************************ Assuming cylindrical storage
+                                      CN.pi * D_storage * H_storage "Storage tank surface area";
+  parameter SI.Length Th_refractory_hot_tank = 0.6 "[ST] Thickness of the refractory of the hot tank [m] - Dome Storage only";
+  parameter SI.Length Th_refractory_cold_tank = 0.6 "[ST] Thickness of the refractory of the cold tank [m] - Dome Storage only";
   
   //****************************** Power Block Technical Parameters - CEA Power Block
   /*Heat Exchanger Parameters*/
@@ -308,7 +333,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   //******************************* Other Parameters
   parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design--> result of PB initialisation (W)";
-  parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
   parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "[RCV] Receiver length (depth) (m)";
@@ -316,10 +340,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot particles specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_co2_in_set = MedPB.specificEnthalpy(state_co2_in_set) "Cold CO2 specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_co2_out_set = MedPB.specificEnthalpy(state_co2_out_set) "Hot CO2 specific enthalpy at design";
-  parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
-  parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
-  parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks";
-  parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
@@ -519,9 +539,39 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                                                 
   //******************************* Storage bin cost calculation based on Jeremy Sment of Sandia study (g3p3 project)
   parameter FI.Money C_bins_dome = if external_storage then 
-                                        SolarTherm.Utilities.G3P3StorageCostFunction(H_storage, D_storage, D_outlet, t_storage, m_max, c_storage) 
+                                        SolarTherm.Utilities.G3P3StorageCostFunction(
+                                              Th_refractory_hot_tank,
+                                              H_storage, 
+                                              D_storage, 
+                                              D_outlet, 
+                                              t_storage, 
+                                              m_max, 
+                                              c_storage) + 
+                                        SolarTherm.Utilities.G3P3StorageCostFunction(
+                                              Th_refractory_cold_tank,
+                                              H_storage, 
+                                              D_storage, 
+                                              D_outlet, 
+                                              t_storage, 
+                                              m_max, 
+                                              c_storage)
+                                        
                                    else 
-                                        SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(H_tower, R_tower * 2, m_max, D_outlet, c_storage) 
+                                        SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(
+                                              Th_refractory_cold_tank,
+                                              H_tower, 
+                                              R_tower * 2, 
+                                              m_max, 
+                                              D_outlet, 
+                                              c_storage) +
+                                        SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(
+                                              Th_refractory_hot_tank,
+                                              H_tower, 
+                                              R_tower * 2, 
+                                              m_max, 
+                                              D_outlet, 
+                                              c_storage) +
+                                        0.0471 * H_tower^3.673+932100
   "Storage bin for dome storage --> based on the type of storage";
   
   parameter FI.Money C_insulation = if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 
@@ -729,6 +779,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         redeclare package Medium = Medium, 
         D = D_storage, 
         H = H_storage, 
+        dome_storage = dome_storage,
+        Th_refractory = Th_refractory_hot_tank,
+        H_tower = H_tower,
+        D_tower = 2 * R_tower,
+        m_tot = m_max,
+        D_outlet = D_outlet,
+        t_storage = t_storage,
         T_start = T_hot_start, 
         L_start = (1 - split_cold) * 100, 
         use_p_top = tnk_use_p_top, 
@@ -745,6 +802,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         redeclare package Medium = Medium, 
         D = D_storage, 
         H = H_storage, 
+        dome_storage = dome_storage,
+        Th_refractory = Th_refractory_cold_tank,
+        H_tower = H_tower,
+        D_tower = 2 * R_tower,
+        m_tot = m_max,
+        D_outlet = D_outlet,
         T_start = T_cold_start, 
         L_start = split_cold * 100, 
         use_p_top = tnk_use_p_top, 
