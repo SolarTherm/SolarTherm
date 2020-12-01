@@ -48,7 +48,7 @@ class ProcesXML:
         val=self.root.find('*ScalarVariable[@name=\''+par_name+'\']/*[@start]').attrib['start']
         return val
 
-    def write_par(self, par_n, par_v, one=True):
+    def write_par(self, par_n, par_v, one=True, savenew=None):
         
         if one:
             self.root.find('*ScalarVariable[@name=\''+par_n+'\']/*[@start]').attrib['start']=par_v
@@ -58,8 +58,11 @@ class ProcesXML:
                 print i, n, par_v[i]
                 self.root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start']=par_v[i]
 
-        self.init_et.write(self.xmlfile)            
-
+	if savenew==None:
+	
+        	self.init_et.write(self.xmlfile)            
+	else:
+		self.init_et.write(savenew)
 
 class SetPar:
 
@@ -77,7 +80,11 @@ class SetPar:
         self.mofile=mofile
 
 
-    def set_par(self, par_n, par_v):
+    def set_par(self, par_n, par_v, suffix=None, savenew=None):
+	print('\n\n',self.src[0],self.src[-1],self.src[-1][:-1],'\n\n')
+	self.src[0]=self.src[0]+'_%s'%suffix
+	self.src[-1]=self.src[-1][:-1]+'_%s;'%suffix
+
         for i, n in enumerate(par_n):
             par_v[i]=float(par_v[i])
             if par_v[i]>100:
@@ -110,7 +117,11 @@ class SetPar:
             print self.src[int(ln)-1]
         newfile='\n'.join(self.src)
 
-        outF = open(self.mofile, "w")
+
+	if savenew==None:
+        	outF = open(self.mofile, "w")
+	else:
+        	outF = open(savenew, "w")
         outF.writelines(newfile)
         outF.close()
 

@@ -44,10 +44,16 @@ model Thermocline_Group_3
   Modelica.Blocks.Interfaces.RealOutput T_bot_measured "Temperature at the bottom of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {45, -55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
-  
+  Modelica.Blocks.Interfaces.RealOutput T_90_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f_A+N_f_B+N_f_C,0.90) + 273.15 "Temperature at the 90% height of the tank as an output signal (K)"
+                                          annotation (Placement(visible = true,transformation(
+          extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {45, 41}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput T_10_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f_A+N_f_B+N_f_C,0.10) + 273.15"Temperature at the 10% height of the tank as an output signal (K)"
+                                          annotation (Placement(visible = true,transformation(
+          extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {45, -39}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+            
   Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
-          extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+          origin = {-40, -74},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
         visible = true,transformation(
         

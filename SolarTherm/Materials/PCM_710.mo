@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package PCM_710 "51%K2CO3 + 49%Na2CO3"
-  extends SolarTherm.Materials.PartialMaterial(MM = 122.419e-3, T_melt = 983.15, cost = 0.24);
+  extends SolarTherm.Materials.PartialMaterial(MM = 120.289e-3, T_melt = 983.15, cost = 0.24);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 26.9815386e-3 "Molar mass (kg/mol)";

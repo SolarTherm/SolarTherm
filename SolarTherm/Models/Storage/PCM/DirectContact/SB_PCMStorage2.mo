@@ -157,6 +157,11 @@ model SB_PCMStorage2
       SI.Length z_PCM_avg;*/
   SI.SpecificEnthalpy h_HTF;
   SI.Density d_HTF(start = m_HTF / (V_tank - V_tray - z_PCM * A_PCM));
+  
+  parameter SI.SpecificHeatCapacity cp_tank = (Tank_Package.h_Tf(T_max, 0.0) - Tank_Package.h_Tf(T_min, 0.0)) / (T_max - T_min);
+  parameter SI.HeatCapacity HCap_tank = m_tank * cp_tank;
+  parameter SI.SpecificHeatCapacity cp_tray = (Tray_Package.h_Tf(T_max, 0.0) - Tray_Package.h_Tf(T_min, 0.0)) / (T_max - T_min);
+  parameter SI.HeatCapacity HCap_tray = m_tray * cp_tray;
 protected
   //PCM properties
   SI.Density rho[n];
@@ -167,10 +172,7 @@ protected
   //Tank and Tray properties
   //SI.SpecificEnthalpy h_tray (start = Tray_Package.h_Tf(T_start,0.0));
   //SI.SpecificEnthalpy h_tank (start = Tank_Package.h_Tf(T_start,0.0));
-  parameter SI.SpecificHeatCapacity cp_tank = (Tank_Package.h_Tf(T_max, 0.0) - Tank_Package.h_Tf(T_min, 0.0)) / (T_max - T_min);
-  parameter SI.HeatCapacity HCap_tank = m_tank * cp_tank;
-  parameter SI.SpecificHeatCapacity cp_tray = (Tray_Package.h_Tf(T_max, 0.0) - Tray_Package.h_Tf(T_min, 0.0)) / (T_max - T_min);
-  parameter SI.HeatCapacity HCap_tray = m_tray * cp_tray;
+  
   //Heat lost to surroundings
   Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
         transformation(
@@ -193,19 +195,19 @@ initial equation
   HTF_State.T = T_start;
   //HTF_State.d = m_HTF/(V_tank - V_tray - sum(dz) * A_PCM);
   //T_HTF = T_start;
-  //x_HTF = (((V_tank - V_tray - z_PCM * A_PCM)/m_HTF) - (1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start))) / 
-  //((1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_v_T(T_start))-(1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start)));
-  //h_HTF = (1-x_HTF)*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_T(T_start) + x_HTF*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_v_T(T_start);
-  //HTF_State.T = T_start;
-  //HTF_State.d = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
-  //HTF_ap.T = T_start;
-  //HTF_ap.x = 0.001;
-  //HTF_bp.T = T_start;
-  //HTF_bp.x = 0.999;
-  //HTF_ar.T = T_start;
-  //HTF_ar.x = 0.2;
-  //HTF_br.T = T_start;
-  //HTF_br.x = 0.999;
+//x_HTF = (((V_tank - V_tray - z_PCM * A_PCM)/m_HTF) - (1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start))) /
+//((1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_v_T(T_start))-(1/SolarTherm.Media.Sodium.SodiumBoiler_utilities.rho_T(T_start)));
+//h_HTF = (1-x_HTF)*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_T(T_start) + x_HTF*SolarTherm.Media.Sodium.SodiumBoiler_utilities.h_v_T(T_start);
+//HTF_State.T = T_start;
+//HTF_State.d = m_HTF / (V_tank - V_tray - sum(dz) * A_PCM);
+//HTF_ap.T = T_start;
+//HTF_ap.x = 0.001;
+//HTF_bp.T = T_start;
+//HTF_bp.x = 0.999;
+//HTF_ar.T = T_start;
+//HTF_ar.x = 0.2;
+//HTF_br.T = T_start;
+//HTF_br.x = 0.999;
 equation
   T_storage = T_HTF;
 //HTF Properties
@@ -353,5 +355,5 @@ equation
 //der(m_HTF_dynamic) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
   assert(h_HTF > 0.0, "Invalid Enthalpy", level = AssertionLevel.error);
   annotation(
-    Icon(graphics = {Text(origin = {2, -1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-131, 69}, extent = {{-27, 11}, {27, -11}}, textString = "from recv"), Text(origin = {-133, -49}, extent = {{-23, 7}, {27, -11}}, textString = "to recv"), Text(origin = {129, 65}, extent = {{-27, 11}, {13, -3}}, textString = "to PB"), Text(origin = {129, -53}, extent = {{-27, 11}, {21, -7}}, textString = "from PB")}, coordinateSystem(initialScale = 0.1)));
+    Icon(graphics = {Text(origin = {2, -1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-125, 69}, extent = {{-53, 21}, {53, -21}}, textString = "RO", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-129.68, -47}, extent = {{-42.32, 7}, {49.68, -11}}, textString = "RI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {139.3, 65}, extent = {{-51.3, 11}, {24.7, -3}}, textString = "PI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {130.38, -51.89}, extent = {{-48.38, 15.89}, {37.62, -10.11}}, textString = "PO", fontSize = 14, fontName = "Liberation Serif")}, coordinateSystem(initialScale = 0.1)));
 end SB_PCMStorage2;

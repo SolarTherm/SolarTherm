@@ -8,7 +8,7 @@ package Sodium
   //constant Real cost = 3.0 "USD/kg";
   
   redeclare model State
-    parameter SI.SpecificEnthalpy h_start=1000000;
+    parameter SI.SpecificEnthalpy h_start=700000;
     SI.Density rho;
     SI.SpecificEnthalpy h (start=h_start);
     SI.Temperature T;

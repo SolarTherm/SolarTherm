@@ -20,7 +20,7 @@ model SB_Surround_75Carnot
   algorithm
     SM := max(14, min(38, 1 * round(SM_guess * 10)));
 //Actually SM*10"
-    HT_pct := max(70, min(130, 5 * round(HT_pct_guess * 0.2)));
+    HT_pct := max(50, min(130, 5 * round(HT_pct_guess * 0.2)));
     f_recv := max(70, min(200, 5 * round(f_recv_guess * 20.0)));
     SM_string := String(SM);
     HT_pct_string := String(HT_pct);
@@ -89,7 +89,7 @@ model SB_Surround_75Carnot
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   //declination-hourangle
   //parameter String SM_string = String(1 * SolarTherm.Utilities.Round(SM_guess * 10))+ "dSM/" "Solar Multiple rounded to the nearest 0.1, multiplied by 10 and converted to string";
-  parameter Real HT_pct_guess = 91;
+  parameter Real HT_pct_guess = 51.32;
   //parameter String phi_pct_string = (if field_type == "polar" then "100%phi_" else "100%phi_");
   //parameter String HT_pct_string = String(5 * SolarTherm.Utilities.Round(HT_pct_guess * 0.2)) + "%HT";
   parameter Real land_mult = 5.0 "Land area multiplier";

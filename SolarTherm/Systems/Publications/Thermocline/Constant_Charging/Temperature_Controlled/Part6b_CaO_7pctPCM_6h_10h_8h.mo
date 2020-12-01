@@ -20,11 +20,11 @@ model Part6b_CaO_7pctPCM_6h_10h_8h
   parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f_A = integer(frac_1*100);//5 "Number of fluid CVs in topper";
+  parameter Integer N_f_A = max(10,integer(frac_1*100));//5 "Number of fluid CVs in topper";
   parameter Integer N_p_A = 10 "Number of filler CVs  in topper";
-  parameter Integer N_f_B = 100 - N_f_A - N_f_C;//90 "Number of fluid CVs in main tank";
+  parameter Integer N_f_B = max(10,integer((1.0-frac_1-frac_2)*100));//90 "Number of fluid CVs in main tank";
   parameter Integer N_p_B = 10 "Number of filler CVs  in main tank";
-  parameter Integer N_f_C = integer(frac_2*100);//5 "Number of fluid CVs in bottomer";
+  parameter Integer N_f_C = max(10,integer(frac_2*100));//5 "Number of fluid CVs in bottomer";
   parameter Integer N_p_C = 10 "Number of filler CVs  in bottomer";
 
   
@@ -38,7 +38,7 @@ model Part6b_CaO_7pctPCM_6h_10h_8h
   parameter SI.Power P_name = 100.0e6 * (t_charge/t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
-  parameter Real frac_1 = 0.20 "fraction of energy storage capacity in topper";
+  parameter Real frac_1 = 0.07 "fraction of energy storage capacity in topper";
   //Derived
   parameter Real frac_2 = frac_1 "fraction of energy storage capacity in bottomer";
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;

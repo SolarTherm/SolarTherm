@@ -29,7 +29,7 @@ model PowerBlockModel_sCO2NREL
   parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
   parameter Real W_base=0.0055*294.188e6 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
 
-  Modelica.Blocks.Interfaces.RealOutput h_out_signal=h_out "outlet specific enthalpy" annotation (Placement(visible = true, transformation(origin = {-80, -72}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = { -61, -59}, extent = {{5, -5}, {-5, 5}}, rotation = 0))) ;
+  Modelica.Blocks.Interfaces.RealOutput h_out_signal=fluid_b.h_outflow "outlet specific enthalpy" annotation (Placement(visible = true, transformation(origin = {-80, -72}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = { -61, -59}, extent = {{5, -5}, {-5, 5}}, rotation = 0))) ;
 
   Modelica.Blocks.Interfaces.RealInput T_amb if enable_losses annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -98,11 +98,13 @@ equation
     parasities_internal=0;
   end if;
 
-  logic=load>nu_min;
+  //logic=load>nu_min;
+  logic=load>nu_min and fluid_a.m_flow > 1e-2;
   h_in=inStream(fluid_a.h_outflow);
   //h_out=fluid_b.h_outflow;
-  fluid_b.h_outflow=max(0.0,h_out);
-  fluid_a.h_outflow = 0;
+  //fluid_b.h_outflow=max(h_in_ref,h_out);
+  fluid_b.h_outflow=h_out_ref;
+  fluid_a.h_outflow = h_in_ref;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
 
@@ -112,7 +114,7 @@ equation
     k_q=max(0.1,cycle.k_q);
     k_w=max(0.1,cycle.k_w);
     Q_flow=-fluid_a.m_flow*(h_out-h_in);
-    
+    //h_out = min(h_in - Q_flow/fluid_a.m_flow,h_out_ref);
     Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
     W_gross/(cool.nu_w*W_des*load)=k_w;
   else

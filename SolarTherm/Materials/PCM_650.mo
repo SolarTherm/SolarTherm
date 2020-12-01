@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package PCM_650 "33.4%LiF + 49.9%NaF + 17.1%MgF2"
-  extends SolarTherm.Materials.PartialMaterial(MM = 36.365e-3, T_melt = 923.15, cost = 2.38677);
+  extends SolarTherm.Materials.PartialMaterial(MM = 36.357e-3, T_melt = 923.15, cost = 2.387);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   //constant SI.MolarMass MM = 26.9815386e-3 "Molar mass (kg/mol)";

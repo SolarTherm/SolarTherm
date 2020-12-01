@@ -380,25 +380,22 @@ suffix=results.results_file.split(".")[-1]
 # run solartherm
 from solartherm import postproc
 from solartherm import simulation
-sim = simulation.Simulator(fn=fn, suffix=suffix, fusemount=False)
-if not os.path.exists(model):
-	sim.compile_model()
-	sim.compile_sim(args=['-s'])
+#if not os.path.exists(model):
+#	sim.compile_model()
+#	sim.compile_sim(args=['-s'])
 
 #Dirty hack
-PX = chpar.ProcesXML(model + '_init_'+suffix+'.xml')
-PX.write_par(var_n,var_v,one=(len(var_n)<2))
-#print("fn",fn)
-#print("suffix",suffix)
-#print("model",model)
+jsonfile=model+'_info.json'
+mofile=fn
+savenew=model + '_'+suffix+'.mo'
+PX = chpar.SetPar(jsonfile, mofile)
+PX.set_par(var_n,var_v,suffix,savenew)
 
-#End Dirty hack
+sim = simulation.Simulator(fn=savenew, fusemount=False)
+sim.compile_model()
+sim.compile_sim(args=['-s'])
 
-#sim.update_pars(var_n, var_v)
 
-
-#sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
-#sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
 sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
 if system=='TEST':
