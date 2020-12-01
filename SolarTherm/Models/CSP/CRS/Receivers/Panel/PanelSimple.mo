@@ -70,6 +70,7 @@ model PanelSimple
 	SI.CoefficientOfHeatTransfer h_int[Nel*Npa_fl];
 	SI.CoefficientOfHeatTransfer alpha_ext[Nel*Npa_fl];
 	SI.Temperature Ts[Nel*Npa_fl];
+	SI.Temperature Ti[Nel*Npa_fl];
 	SI.Stress sigma_eq[Nel*Npa_fl];
 
 	String line;
@@ -113,6 +114,7 @@ equation
 	m_dot*hf[1] = m_dot*h_in + Q_htf[1];
 	Tf[1] = Medium.T_h(hf[1]);
 	Ts[1] = Tsurface(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,Ta[1]);
+	Ti[1] = Tinner(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,Ta[1]);
 	sigma_eq[1] = Stress(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,lambdat,E,poisson,Q_htf[1]/N_tb_pa,H_rcv/Nel);
 	
 	f[1] = (-1.8*log10((e/(2*a)/3.7)^1.11 + 6.9/Re[1]))^(-2);
@@ -137,6 +139,7 @@ equation
 		m_dot*hf[i] = m_dot*hf[i-1] + Q_htf[i];
 		Tf[i] = Medium.T_h(hf[i]);
 		Ts[i] = Tsurface(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,Ta[i]);
+		Ti[i] = Tinner(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,Ta[i]);
 		sigma_eq[i] = Stress(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,lambdat,E,poisson,Q_htf[i]/N_tb_pa,H_rcv/Nel);
 		f[i] = (-1.8*log10((e/(2*a)/3.7)^1.11 + 6.9/Re[i]))^(-2);
 		dP_tube[i] = Npa_fl*0.5*f[i]*(H_rcv/Nel)/(2*a)*rho[i]*vf[i]^2;// + 2/2*f[i]*L_e_45*rho[i]*vf[i]^2 + 4/2*f[i]*L_e_90*rho[i]*vf[i]^2;
