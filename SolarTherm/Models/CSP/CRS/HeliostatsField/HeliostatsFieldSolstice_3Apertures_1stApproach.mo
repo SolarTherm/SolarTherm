@@ -8,7 +8,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
   
   
-  parameter Real metadata_list[18] = metadata(opt_file);
+  parameter Real metadata_list[23] = metadata(opt_file);
 
   parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   
@@ -21,12 +21,12 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_in_rcv_2 = 1e6;
   parameter SI.Length H_rcv_2=10 "Receiver aperture height";
   parameter SI.Length W_rcv_2=10 "Receiver aperture width";
-  parameter Real n_h_2 = metadata_list[11] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
+  parameter Real n_h_2 = metadata_list[15] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
   
   parameter SI.HeatFlowRate Q_in_rcv_3 = 1e6;
   parameter SI.Length H_rcv_3=10 "Receiver aperture height";
   parameter SI.Length W_rcv_3=10 "Receiver aperture width";
-  parameter Real n_h_3 = metadata_list[12] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
+  parameter Real n_h_3 = metadata_list[20] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
   /*end parameter for each aperture*/
   
   /*Solstice simulation parameters*/
