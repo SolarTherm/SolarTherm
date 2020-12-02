@@ -637,7 +637,14 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     Placement(visible = true, transformation(origin = {-51, 51}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
   
   //********************* Parasitic inputs
-  Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + liftHX.W_loss + liftRC.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
+  Modelica.Blocks.Sources.RealExpression parasities_input(
+            y = if external_storage then 
+                        heliostatsField.W_loss + liftHX.W_loss + 
+                                    liftRC.W_loss + tankHot.W_loss + tankCold.W_loss
+                else
+                        heliostatsField.W_loss + 0 + 
+                                    liftRC.W_loss + tankHot.W_loss + tankCold.W_loss
+            ) annotation(
     Placement(visible = true, transformation(origin = {143, 57}, extent = {{-12, -6}, {12, 6}}, rotation = -90)));
   
   //*********************  Or block for defocusing
@@ -645,7 +652,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
   
   //********************* Sun Model
-  SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
+  SolarTherm.Models.Sources.SolarModel.Sun sun(
+        lon = data.lon, 
+        lat = data.lat, 
+        t_zone = data.t_zone, 
+        year = data.year, 
+        redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   
   //********************* Solar field
