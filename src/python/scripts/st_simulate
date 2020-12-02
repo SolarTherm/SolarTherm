@@ -190,7 +190,7 @@ if __name__ == '__main__':
 				perf = worker_enc(i, val)
 				simulation_callback(perfs,i,logger,perf)
 
-		print "Simulation time: %fs"%(time()-t)
+		print("Simulation time: %fs"%(time()-t))
 
 	if args.plot is not None:
 		from solartherm import plotting
