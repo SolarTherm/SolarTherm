@@ -23,3 +23,4 @@ ParticleReceiver1D_IterateMassFlow
 ParticleReceiver1D_Iterate_QFlow
 ParticleReceiver_3Apertures
 CascadeParticleReceiver1DCalculator
+ParticleReceiver_3AperturesCascade

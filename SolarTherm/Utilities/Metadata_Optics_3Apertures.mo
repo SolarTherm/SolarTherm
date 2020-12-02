@@ -4,7 +4,7 @@ function Metadata_Optics_3Apertures
     import Modelica.Utilities.Streams;
     import Modelica.Utilities.Strings;
     input String file;
-    output Real[18] meta;
+    output Real[23] meta;
   protected
     String line;
     Integer i;
@@ -35,5 +35,10 @@ function Metadata_Optics_3Apertures
     
     (meta[17], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     (meta[18], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    (meta[19], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    (meta[20], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    (meta[21], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    (meta[22], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
+    (meta[23], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     
 end Metadata_Optics_3Apertures;

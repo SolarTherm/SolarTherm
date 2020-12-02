@@ -50,21 +50,21 @@ extends OpticalEfficiency_3Apertures;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_1(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_1",
+    tableName="optical_efficiency_aperture_0",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{14, 12}, {34, 32}}, rotation = 0)));
     
   Modelica.Blocks.Tables.CombiTable2D nu_table_2(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_2",
+    tableName="optical_efficiency_aperture_1",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{12, 68}, {32, 88}}, rotation = 0)));
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_3(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_3",
+    tableName="optical_efficiency_aperture_2",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{14, -36}, {34, -16}}, rotation = 0)));

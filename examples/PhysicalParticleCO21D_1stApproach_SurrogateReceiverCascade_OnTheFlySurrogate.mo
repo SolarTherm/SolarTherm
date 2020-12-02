@@ -1,6 +1,6 @@
 within examples;
 
-model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlySurrogate
+model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurrogate
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -24,7 +24,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Boolean new_storage_calc = false;
   parameter Boolean use_neural_network = true;
   
-  
   // *********************
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
@@ -41,7 +40,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   // Field, heliostat and tower
   parameter String opt_file(fixed = false);
   parameter String casefolder = ".";
-  parameter Real metadata_list[18] = metadata(opt_file);
+  parameter Real metadata_list[23] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "polar" "Other options are : surround";
   parameter Real land_mult = 0 "Land area multiplier : will be calculated from Solstice";
@@ -63,33 +62,44 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Boolean match_gen3_report_cost = false "PB, receiver+tower cost sub system are evaluated using gen3_cost";
   parameter SI.ThermalInsulance U_value_hot_tank = 0.25 "Desired U_value for the tanks";
   parameter SI.ThermalInsulance U_value_cold_tank = 0.25 "Desired U value for the tanks";
-  //Design Condition
+  
+  //******************* Design Parameters of The CSP Plant
   parameter String rcv_type = "particle" "other options are : flat, cylindrical, stl";
-  parameter SI.Area A_rcv_1(fixed = false) "Receiver 1 aperture area";
-  parameter SI.Area A_rcv_2(fixed = false) "Receiver 2 aperture area";
-  parameter SI.Area A_rcv_3(fixed = false) "Receiver 3 aperture area";
-  parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+  parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter Real SM = 2.5 "Solar multiple";
+  parameter SI.HeatFlowRate Q_in_rcv_total = P_gross / eff_blk / eta_rcv_assumption * SM;
+  parameter SI.Area A_rcv_lv1 = 300 "Top receiver aperture area";
+  parameter SI.Area A_rcv_lv2 = 300 "Middle receiver aperture area";
+  parameter SI.Area A_rcv_lv3 = 300 "Bottom receiver aperture area";
+  parameter Real ar_rec_lv1 = 1 "Aspect ratio for the 1st receiver";
+  parameter Real ar_rec_lv2 = 1 "Aspect ratio for the 2nd receiver";
+  parameter Real ar_rec_lv3 = 1 "Aspect ratio for the 3rd receiver";
+  parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
   parameter SI.Irradiance dni_des = 950 "DNI at design poinop Equinox";
   parameter SI.Efficiency eta_rcv_assumption = 0.88;
   parameter Real CR = 1200 "Concentration ratio";
-  parameter Real n_helios_1 = metadata_list[10] "Number of heliostats";
-  parameter Real n_helios_2 = metadata_list[11] "Number of heliostats";
-  parameter Real n_helios_3 = metadata_list[12] "Number of heliostats";
   parameter SI.Temperature T_amb_des_rcv = from_degC(10) "Design point ambient temp";
-  parameter Real alpha_rcv = 1;
-  parameter SI.HeatFlowRate Q_in_rcv_total = P_gross / eff_blk / eta_rcv_assumption * SM;
-  parameter Real fraction_Q_1 = 0.5 "Heat allocation for aperture 1";
-  parameter Real fraction_Q_2 = (1 - fraction_Q_1) / 2 "Heat allocation for aperture 2";
-  parameter Real fraction_Q_3 = (1 - fraction_Q_1) / 2 "Heat allocation for aperture 3";
-  parameter SI.HeatFlowRate Q_in_rcv_1 = Q_in_rcv_total * fraction_Q_1;
-  parameter SI.HeatFlowRate Q_in_rcv_2 = Q_in_rcv_total * fraction_Q_2;
-  parameter SI.HeatFlowRate Q_in_rcv_3 = Q_in_rcv_total * fraction_Q_3;
+  parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
+  
+  //******************* Reading the optical motab file
+  parameter Real n_helios_1 = metadata_list[10] "Number of heliostats";
+  parameter Real n_helios_2 = metadata_list[15] "Number of heliostats";
+  parameter Real n_helios_3 = metadata_list[20] "Number of heliostats";
   parameter SI.Area A_field = A_helio * (n_helios_1 + n_helios_2 + n_helios_3) "Heliostat field reflective area";
   parameter Real A_land = metadata_list[3];
-  parameter SI.Velocity Wspd_max = 15.65 if use_wind "Wind stow speed DOE suggestionn";
+  parameter Real alpha_rcv = 1;
+  parameter SI.HeatFlowRate Q_in_rcv_lv1 = metadata_list[9];
+  parameter SI.HeatFlowRate Q_in_rcv_lv2 = metadata_list[14];
+  parameter SI.HeatFlowRate Q_in_rcv_lv3 = metadata_list[19];
+  parameter SI.Length Z_rcv_lv_1 = metadata_list[13];
+  parameter SI.Length Z_rcv_lv_2 = metadata_list[18];
+  parameter SI.Length Z_rcv_lv_3 = metadata_list[23];
+  parameter Real fraction_Q_1 = Q_in_rcv_lv1 / Q_in_rcv_total "Heat allocation for aperture 1";
+  parameter Real fraction_Q_2 = Q_in_rcv_lv2 / Q_in_rcv_total "Heat allocation for aperture 2";
+  parameter Real fraction_Q_3 = Q_in_rcv_lv3 / Q_in_rcv_total "Heat allocation for aperture 3";
   parameter SI.HeatFlowRate Q_flow_defocus_calculated1(fixed = false);
   parameter SI.HeatFlowRate Q_flow_defocus_calculated2(fixed = false);
   parameter SI.HeatFlowRate Q_flow_defocus_calculated3(fixed = false);
@@ -118,13 +128,85 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Real abs_s = 0.9 "Particle absorptivity";
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
+  
   //****************************** NN Based Receiver Parameter
-  parameter Integer inputsize_rcv = 7;
-  parameter Real[inputsize_rcv] X_max_rcv = {4.49992754e+01, 4.60614216e+09, 9.73141498e+02, 1.47312835e+03, 3.23148941e+02, 3.99993851e+01, 3.59998406e+02};
-  parameter Real[inputsize_rcv] X_min_rcv = {5.00113178e+00, 1.59570610e+07, 7.73150760e+02, 1.02315541e+03, 2.53150059e+02, 1.61563590e-03, 1.17909395e-02};
+  parameter Integer inputsize_rcv = 13;
+  
+  parameter SI.Area A_ap_lv1_max = 596.1468216938;
+  parameter SI.Area A_ap_lv2_max = 597.1294104855999;
+  parameter SI.Area A_ap_lv3_max = 596.1483250231;
+  
+  parameter Real ar_rec_lv1_max = 2.649179561;
+  parameter Real ar_rec_lv2_max = 2.9074526455000003;
+  parameter Real ar_rec_lv3_max = 2.7704816027;
+  
+  parameter SI.HeatFlowRate Q_in_rcv_lv1_max = 599950032.084144;
+  parameter SI.HeatFlowRate Q_in_rcv_lv2_max = 599946137.752136;
+  parameter SI.HeatFlowRate Q_in_rcv_lv3_max = 599557455.8767481;
+  
+  parameter SI.Temperature T_amb_max_rcv = 323.1293457347;
+  parameter SI.Temperature T_in_max_rcv = 973.1350462299;
+  parameter SI.Temperature T_out_max_rcv = 2812.3367217403998;
+  parameter Real F_wind_max_rcv = 4.8919307372;
+  
+  parameter SI.Area A_ap_lv1_min = 200.6048838129;
+  parameter SI.Area A_ap_lv2_min = 200.66625353220002;
+  parameter SI.Area A_ap_lv3_min =202.829754768;
+  
+  parameter Real ar_rec_lv1_min =0.45372523439999995;
+  parameter Real ar_rec_lv2_min =0.44405648950000004;
+  parameter Real ar_rec_lv3_min =0.6528287836;
+  
+  parameter SI.HeatFlowRate Q_in_rcv_lv1_min =100331245.40351701;
+  parameter SI.HeatFlowRate Q_in_rcv_lv2_min =100417983.330101;
+  parameter SI.HeatFlowRate Q_in_rcv_lv3_min =100020977.94985;
+  
+  parameter SI.Temperature T_amb_min_rcv =253.1670653414;
+  parameter SI.Temperature T_in_min_rcv =773.3075388557;
+  parameter SI.Temperature T_out_min_rcv =836.3384646916;
+  parameter Real F_wind_min_rcv =1.0000008589;
+    
+  parameter SI.Efficiency eta_rcv_max = 0.9573148743000001;
+  parameter SI.Efficiency eta_rcv_min =0.000983993;
+  
+  parameter Real[inputsize_rcv] X_max_rcv = {
+                                    A_ap_lv1_max, 
+                                    A_ap_lv2_max, 
+                                    A_ap_lv3_max, 
+                                    ar_rec_lv1_max, 
+                                    ar_rec_lv2_max, 
+                                    ar_rec_lv3_max, 
+                                    Q_in_rcv_lv1_max,
+                                    Q_in_rcv_lv2_max,
+                                    Q_in_rcv_lv3_max,
+                                    T_amb_max_rcv,
+                                    T_in_max_rcv,
+                                    T_out_max_rcv,
+                                    F_wind_max_rcv
+                                };
+                    
+  parameter Real[inputsize_rcv] X_min_rcv = {
+                                    A_ap_lv1_min, 
+                                    A_ap_lv2_min, 
+                                    A_ap_lv3_min, 
+                                    ar_rec_lv1_min, 
+                                    ar_rec_lv2_min, 
+                                    ar_rec_lv3_min, 
+                                    Q_in_rcv_lv1_min,
+                                    Q_in_rcv_lv2_min,
+                                    Q_in_rcv_lv3_min,
+                                    T_amb_min_rcv,
+                                    T_in_min_rcv,
+                                    T_out_min_rcv,
+                                    F_wind_min_rcv
+                                };
   parameter Real y_max_rcv = 0.99893263;
   parameter Real y_min_rcv = 0.01285256;
-  parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_model_7");
+  parameter String saved_model_dir_rcv = 
+        Modelica.Utilities.Files.loadResource(
+              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/CascadeReceiver/surrogate_receiver"
+              );
+                                          
   //****************************** OnTheFlySurrogate Parameters
   /************************************************************************************************************************* /
   /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
@@ -134,20 +216,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
   /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
   /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
-  /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                 /   
+  /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
   ***************************************************************************************************************************/
-  
   //******************************** Simulation configurations
-  parameter String base_path = Modelica.Utilities.Files.loadResource(
-                                      "modelica://SolarTherm/Resources/Include"
-                              ) 
-  "Base path that points to which folder the C program located";
-  
-  parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource(
-                                      "modelica://SolarTherm"
-                              ) 
-  "Base path that points to which folder SolarTherm libs are located";
-  
+  parameter String base_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Base path that points to which folder the C program located";
+  parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm") "Base path that points to which folder SolarTherm libs are located";
   parameter Integer inputsize_PB = 3;
   parameter Integer outputsize_PB = 2;
   parameter Real tolerance_kriging = 6e-3 "Mean Absolute Error";
@@ -155,7 +228,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Integer which_surrogate = 1 "1 for Kriging, 2 for ANN";
   parameter Real eta_gross_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
   parameter Real eta_Q_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
-  
   //******************************** General PB Parameters
   parameter SI.ThermodynamicTemperature T_low = 41 + 273.15 "Inlet temperature of the compressor";
   parameter Integer N_HTR = 15 "Discretisation of high temperature recuperator";
@@ -164,21 +236,17 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter SI.ThermodynamicTemperature T_high = 700 + 273.15 "inlet temperature of the turbine";
   parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
   parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
-  
   //******************************** CEA PB Parameters
-  parameter SI.Power P_net = 100e6 "Power block net rating at design point";
-  parameter SI.Power P_gross = P_net / (1 - par_fr) "Power block gross rating at design point";
   parameter SI.Temperature T_in_ref_blk = T_hot_set "Particle inlet temperature to particle heat exchanger at design";
   parameter SI.AbsolutePressure p_high = 25e6 "high pressure of the cycle in Pa";
   parameter Real PR = 2.78 "Pressure ratio";
   parameter SI.TemperatureDifference pinch_exchanger = 25;
   parameter SI.TemperatureDifference dTemp_HTF_PHX = T_hot_set - T_cold_set;
   parameter SI.Temperature blk_T_amb_des = T_low - dT_mc_approach "Ambient temperature at design for power block";
-  
   //******************************** NREL SAM PB Parameters - some parameters are defined in the CEA's section
   parameter Integer htf_choice = 50 "--------------------> 50 is user defined fluid properties";
   parameter SI.TemperatureDifference dT_PHX_hot_approach(fixed = false) "--------------------> [C/K] Temp. difference between hot HTF and TIT. 
-                                                                                                   Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
+                                                                                                           Product of iteration s.t. the T_HTF_cold_design == T_cold_set";
   parameter SI.TemperatureDifference dT_PHX_cold_approach = 15 "---> [C/K] Temp. difference between cold HTF and cold CO2 PHX inlet";
   parameter SI.Efficiency eta_comp_main = 0.89 "----------------> main compressor isentropic efficiency";
   parameter SI.Efficiency eta_comp_re = 0.89 "----------------> re-compressor isentropic efficiency";
@@ -187,7 +255,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Integer which_PB_model = 1 "-----------------------> 0 is for CEA power block, 1 is for NREL-SAM power block";
   parameter String HTF_name = "CarboHSP";
   parameter Real NREL_PB_configurations[13](each fixed = false) if which_PB_model == 1 "array to store design point sizing result";
-  
   //****************************** Storage
   parameter Real t_storage(unit = "h") = 13 "Hours of storage";
   parameter Real NS_particle = 0.05 "Fraction of additional non-storage particles";
@@ -262,12 +329,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter SI.CoefficientOfHeatTransfer h_conv_CO2 = 2000 "According to Luis Code";
   parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter SI.Length H_rcv_1 = sqrt(A_rcv_1 * ar_rec) "Receiver aperture height";
-  parameter SI.Length H_rcv_2 = sqrt(A_rcv_2 * ar_rec) "Receiver aperture height";
-  parameter SI.Length H_rcv_3 = sqrt(A_rcv_3 * ar_rec) "Receiver aperture height";
-  parameter SI.Length W_rcv_1 = A_rcv_1 / H_rcv_1 "Receiver aperture width";
-  parameter SI.Length W_rcv_2 = A_rcv_2 / H_rcv_2 "Receiver aperture width";
-  parameter SI.Length W_rcv_3 = A_rcv_3 / H_rcv_3 "Receiver aperture width";
+  parameter SI.Length H_rcv_1 = sqrt(A_rcv_lv1 * ar_rec_lv1) "Receiver aperture height";
+  parameter SI.Length H_rcv_2 = sqrt(A_rcv_lv2 * ar_rec_lv2) "Receiver aperture height";
+  parameter SI.Length H_rcv_3 = sqrt(A_rcv_lv3 * ar_rec_lv3) "Receiver aperture height";
+  parameter SI.Length W_rcv_1 = A_rcv_lv1 / H_rcv_1 "Receiver aperture width";
+  parameter SI.Length W_rcv_2 = A_rcv_lv2 / H_rcv_2 "Receiver aperture width";
+  parameter SI.Length W_rcv_3 = A_rcv_lv3 / H_rcv_3 "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "Receiver length(depth)";
   parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold particles specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot particles specific enthalpy at design";
@@ -358,7 +425,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
   //Receiver Sub-system Cost
   parameter FI.Money C_tower = if match_gen3_report_cost then 0 elseif match_sam_cost then pri_tower_fix * Modelica.Math.exp(pri_tower_scalar_exp * (H_tower + 0.5 * H_helio - (H_rcv_1 + H_rcv_2 + H_rcv_3) / 2)) else pri_tower * H_tower ^ idx_pri_tower "Tower cost. SAM cost function is based on DELSOL3 report 1986 but the constants value has been updated according to SAM 2018.11.11";
-  parameter FI.Money C_fpr = if match_gen3_report_cost then 0 else pri_receiver * (A_rcv_1 + A_rcv_2 + A_rcv_3) "Falling particle receiver cost";
+  parameter FI.Money C_fpr = if match_gen3_report_cost then 0 else pri_receiver * (A_rcv_lv1 + A_rcv_lv2 + A_rcv_lv3) "Falling particle receiver cost";
   parameter FI.Money C_lift_rec = if match_gen3_report_cost then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
   parameter FI.Money C_receiver = if match_gen3_report_cost then Q_flow_des * 0.150 else C_fpr + C_tower + C_lift_rec "Total receiver cost";
   //Storage Sub-system cost
@@ -414,28 +481,52 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice_3Apertures_1stApproach heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, t_start = t_start, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design_1 = Q_flow_defocus_calculated1, Q_design_2 = Q_flow_defocus_calculated2, Q_design_3 = Q_flow_defocus_calculated3, nu_start = nu_start, Q_in_rcv_1 = Q_in_rcv_1, Q_in_rcv_2 = Q_in_rcv_2, Q_in_rcv_3 = Q_in_rcv_3, H_rcv_1 = H_rcv_1, H_rcv_2 = H_rcv_2, H_rcv_3 = H_rcv_3, W_rcv_1 = W_rcv_1, W_rcv_2 = W_rcv_2, W_rcv_3 = W_rcv_3, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice_3Apertures_1stApproach heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, t_start = t_start, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_helio, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design_1 = Q_flow_defocus_calculated1, Q_design_2 = Q_flow_defocus_calculated2, Q_design_3 = Q_flow_defocus_calculated3, nu_start = nu_start, Q_in_rcv_1 = Q_in_rcv_lv1, Q_in_rcv_2 = Q_in_rcv_lv2, Q_in_rcv_3 = Q_in_rcv_lv3, H_rcv_1 = H_rcv_1, H_rcv_2 = H_rcv_2, H_rcv_3 = H_rcv_3, W_rcv_1 = W_rcv_1, W_rcv_2 = W_rcv_2, W_rcv_3 = W_rcv_3, tilt_rcv = tilt_rcv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, psave = casefolder, wea_file = wea_file) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   // Washing calculator
   SolarTherm.Models.CSP.CRS.HeliostatsField.WashingFrequencyCalculator washingFrequencyCalculator(C_tw = C1, C_dl = C2, R_soil = R_soil, P_w = P_w, omega_n = omega_n, C_target = C_target) annotation(
     Placement(visible = true, transformation(origin = {-130, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Surrogate Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver_3Apertures particleReceiver(H_drop_design = H_rcv_1, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set, m_flow_rec_max = m_flow_rec_max) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver_3AperturesCascade particleReceiver(H_drop_design = H_rcv_1, use_neural_network = use_neural_network, redeclare package Medium = Medium, X_max = X_max_rcv, X_min = X_min_rcv, inputsize = inputsize_rcv, out_max = y_max_rcv, out_min = y_min_rcv, saved_model_dir = saved_model_dir_rcv, T_0 = T_cold_set, T_out = T_hot_set, m_flow_rec_max = m_flow_rec_max) annotation(
     Placement(visible = true, transformation(origin = {-26, 30}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  // Receiver Design Condition Sizing Calculator - Using expensive model
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator1(Q_in = Q_in_rcv_1, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator2(Q_in = Q_in_rcv_2, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {120, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator particleReceiver1DCalculator3(Q_in = Q_in_rcv_3, T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, test_mode = false, fixed_geometry = false, iterate_Q_flow = false, with_iterate_mdot = false, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {90, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  //Defocus calculator - minimum heat flow to each receiver such that mass flow blok design is achieving design temp
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator1(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_1, H_drop_design = H_rcv_1, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {-132, -110}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator2(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_2, H_drop_design = H_rcv_2, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {-108, -110}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator3(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, CR = CR, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk * fraction_Q_3, H_drop_design = H_rcv_3, with_pre_determined_eta = false) annotation(
-    Placement(visible = true, transformation(origin = {-84, -112}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  //********************* Receiver Design Condition Sizing Calculator - Using expensive model
+  SolarTherm.Models.CSP.CRS.Receivers.CascadeParticleReceiver1DCalculator cascadeReceiverCalculator(
+      A_ap_lv1 = A_rcv_lv1, 
+      A_ap_lv2 = A_rcv_lv2, 
+      A_ap_lv3=A_rcv_lv3, 
+      ar_rec_lv1=ar_rec_lv1, 
+      ar_rec_lv2=ar_rec_lv2, 
+      ar_rec_lv3=ar_rec_lv3, 
+      T_out_target = T_in_ref_blk, 
+      T_in = T_in_rec, 
+      T_amb_design = T_amb_des_rcv, 
+      Wspd = 0, 
+      Wdir = 0, 
+      h_conv_backwall = h_conv_backwall, 
+      h_conv_curtain = h_conv_curtain, 
+      phi_max = packing_factor, 
+      eps_w = eps_w, 
+      th_w = th_w, 
+      k_w = k_w, 
+      F = F, 
+      d_p = d_p, 
+      cp_s = cp_s, 
+      rho_s = rho_s, 
+      eps_s = eps_s, 
+      abs_s = abs_s, 
+      with_detail_h_ambient = true, 
+      with_wind_effect = true, 
+      fixed_geometry = true, 
+      iterate_Q_flow = false, 
+      with_iterate_mdot = false,
+      m_in = m_flow_blk, 
+      with_pre_determined_eta = false,
+      with_iterate_mdot_outer_loop = true) annotation(
+    Placement(visible = true, transformation(origin = {195, -25}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
+  
+  //********************* Defocus calculator - minimum heat flow to each receiver such that mass flow blok design is achieving design temp
+  SolarTherm.Models.CSP.CRS.Receivers.CascadeParticleReceiver1DCalculator defocuscalculator1(A_ap_lv1 = A_rcv_lv1, A_ap_lv2 = A_rcv_lv2, A_ap_lv3=A_rcv_lv3, ar_rec_lv1=ar_rec_lv1, ar_rec_lv2=ar_rec_lv2, ar_rec_lv3=ar_rec_lv3, T_out_target = T_in_ref_blk, T_in = T_in_rec, T_amb_design = T_amb_des_rcv, Wspd = 0, Wdir = 0, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, with_pre_determined_eta = false, with_iterate_mdot_outer_loop = false) annotation(
+    Placement(visible = true, transformation(origin = {194, 46}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   // Hot tank
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, alpha = alpha, use_p_top = tnk_use_p_top, enable_losses = tnk_enable_losses, use_L = true, W_max = W_heater_hot, T_set = T_hot_aux_set, U_value = U_value_hot_tank, packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
@@ -510,6 +601,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   Real TOD_W(start = 0);
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  
 algorithm
   if time > 31449600 then
     eta_curtail_off := E_helio_incident / E_resource;
@@ -527,120 +619,135 @@ algorithm
 initial equation
   omega_twister = ceil(washingFrequencyCalculator.omega);
   opt_file = heliostatsField.optical.tablefile;
-  A_rcv_1 = particleReceiver1DCalculator1.particleReceiver1D.H_drop ^ 2;
-  A_rcv_2 = particleReceiver1DCalculator2.particleReceiver1D.H_drop ^ 2;
-  A_rcv_3 = particleReceiver1DCalculator3.particleReceiver1D.H_drop ^ 2;
-  rec_fr = 1 - (particleReceiver1DCalculator1.particleReceiver1D.eta_rec + particleReceiver1DCalculator2.particleReceiver1D.eta_rec + particleReceiver1DCalculator3.particleReceiver1D.eta_rec) / 3;
-  m_flow_fac = particleReceiver1DCalculator1.particleReceiver1D.mdot + particleReceiver1DCalculator2.particleReceiver1D.mdot + particleReceiver1DCalculator3.particleReceiver1D.mdot;
-  Q_flow_defocus_calculated1 = defocuscalculator1.particleReceiver1D.q_solar * A_rcv_1;
-  Q_flow_defocus_calculated2 = defocuscalculator2.particleReceiver1D.q_solar * A_rcv_2;
-  Q_flow_defocus_calculated3 = defocuscalculator3.particleReceiver1D.q_solar * A_rcv_3;
+  rec_fr = 1 - cascadeReceiverCalculator.eta_rcv;
+  m_flow_fac = cascadeReceiverCalculator.mdot;
+  
+  Q_flow_defocus_calculated1 = defocuscalculator1.Q_rcv_lv1_calculated;
+  Q_flow_defocus_calculated2 = defocuscalculator1.Q_rcv_lv2_calculated;
+  Q_flow_defocus_calculated3 = defocuscalculator1.Q_rcv_lv1_calculated;
+  
   if which_PB_model == 0 then
-    eta_gross_base = sCO2PBDesignPointCalculator.eta_gross;
-    eta_Q_base = sCO2PBDesignPointCalculator.eta_Q;
-    Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
-    etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
-    UA_HX = sCO2PBDesignPointCalculator.powerBlock.exchanger.UA;
+      eta_gross_base = sCO2PBDesignPointCalculator.eta_gross;
+      eta_Q_base = sCO2PBDesignPointCalculator.eta_Q;
+      Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
+      etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
+      eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
+      m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
+      UA_HX = sCO2PBDesignPointCalculator.powerBlock.exchanger.UA;
   elseif which_PB_model == 1 then
-    NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(P_gross, T_in_ref_blk, p_high, dT_PHX_cold_approach, eta_comp_main, eta_comp_re, eta_turb, dT_mc_approach, blk_T_amb_des, HTF_name, htf_choice, SolarTherm_path, T_cold_set);
-    Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
-    eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
-    eta_Q_base = NREL_PB_configurations[12] "";
-    etaG = eta_gross_base * (1 - f_fixed_load) "after cooling power, motor eff and fixed load parasities";
-    eff_blk = etaG;
-    m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
-    dT_PHX_hot_approach = NREL_PB_configurations[13];
-    UA_HX = NREL_PB_configurations[7];
+      NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(
+                P_gross, 
+                T_in_ref_blk, 
+                p_high, 
+                dT_PHX_cold_approach, 
+                eta_comp_main, 
+                eta_comp_re, 
+                eta_turb, 
+                dT_mc_approach, 
+                blk_T_amb_des, 
+                HTF_name, 
+                htf_choice, 
+                SolarTherm_path, 
+                T_cold_set);
+            
+      Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
+      eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
+      eta_Q_base = NREL_PB_configurations[12] "";
+      etaG = eta_gross_base * (1 - f_fixed_load) "after cooling power, motor eff and fixed load parasities";
+      eff_blk = etaG;
+      m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
+      dT_PHX_hot_approach = NREL_PB_configurations[13];
+      UA_HX = NREL_PB_configurations[7];
   else
-    eta_gross_base = -1;
-    eta_Q_base = -1;
-    Q_flow_des = -1;
-    etaG = -1;
-    eff_blk = -1;
-    m_flow_blk = -1;
-    dT_PHX_hot_approach = -1;
-    UA_HX = -1;
+      eta_gross_base = -1;
+      eta_Q_base = -1;
+      Q_flow_des = -1;
+      etaG = -1;
+      eff_blk = -1;
+      m_flow_blk = -1;
+      dT_PHX_hot_approach = -1;
+      UA_HX = -1;
   end if;
-//************************************ Heat Exchanger Area Calculation
+  //************************************ Heat Exchanger Area Calculation
   U_HX = 1 / (1 / h_conv_CO2 + 1 / SolarTherm.Utilities.h_particle(SolarTherm.Media.SolidParticles.CarboHSP_utilities.lamda_T(0.5 * (T_cold_set + T_hot_set)), 0.008, 1, 1));
   A_HX = UA_HX / U_HX;
-//************************************ Power Block Cost Calculation
+  
+  //************************************ Power Block Cost Calculation
   if which_PB_model == 1 then
-    C_HTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
-    C_LTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
-    C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
-    C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-    C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-    C_cooler = pri_cooler * NREL_PB_configurations[6] ^ 0.8919;
-    C_exchanger = (pri_PHX_material + pri_PHX_manufacture) * A_HX + pri_PHX_BOP_s * m_flow_blk + pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
-    C_generator = pri_generator * (P_net / 10 ^ 6) ^ 0.5463;
+      C_HTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
+      C_LTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
+      C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
+      C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
+      C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
+    C_cooler = pri_cooler * NREL_PB_configurations[6];
+      C_exchanger = 
+              (pri_PHX_material + pri_PHX_manufacture) * A_HX + 
+                      pri_PHX_BOP_s * m_flow_blk + 
+                            pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
+      C_generator = pri_generator * (P_net / 10 ^ 6) ^ 0.5463;
   elseif which_PB_model == 0 then
-    C_HTR = sCO2PBDesignPointCalculator.powerBlock.C_HTR;
-    C_LTR = sCO2PBDesignPointCalculator.powerBlock.C_LTR;
-    C_turbine = sCO2PBDesignPointCalculator.powerBlock.C_turbine;
-    C_mainCompressor = sCO2PBDesignPointCalculator.powerBlock.C_mainCompressor;
-    C_reCompressor = sCO2PBDesignPointCalculator.powerBlock.C_reCompressor;
-    C_cooler = sCO2PBDesignPointCalculator.powerBlock.C_cooler;
-    C_exchanger = sCO2PBDesignPointCalculator.powerBlock.C_exchanger;
-    C_generator = sCO2PBDesignPointCalculator.powerBlock.C_generator;
+      C_HTR = sCO2PBDesignPointCalculator.powerBlock.C_HTR;
+      C_LTR = sCO2PBDesignPointCalculator.powerBlock.C_LTR;
+      C_turbine = sCO2PBDesignPointCalculator.powerBlock.C_turbine;
+      C_mainCompressor = sCO2PBDesignPointCalculator.powerBlock.C_mainCompressor;
+      C_reCompressor = sCO2PBDesignPointCalculator.powerBlock.C_reCompressor;
+      C_cooler = sCO2PBDesignPointCalculator.powerBlock.C_cooler;
+      C_exchanger = sCO2PBDesignPointCalculator.powerBlock.C_exchanger;
+      C_generator = sCO2PBDesignPointCalculator.powerBlock.C_generator;
   else
-    C_HTR = -1;
-    C_LTR = -1;
-    C_turbine = -1;
-    C_mainCompressor = -1;
-    C_reCompressor = -1;
-    C_cooler = -1;
-    C_exchanger = -1;
-    C_generator = -1;
+      C_HTR = -1;
+      C_LTR = -1;
+      C_turbine = -1;
+      C_mainCompressor = -1;
+      C_reCompressor = -1;
+      C_cooler = -1;
+      C_exchanger = -1;
+      C_generator = -1;
   end if;
   if which_PB_model == 0 then
-    if match_gen3_report_cost then
-      C_block = pri_block * P_gross / 1000;
-    else
-      C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
-    end if;
+      if match_gen3_report_cost then
+          C_block = pri_block * P_gross / 1000;
+      else
+          C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
+      end if;
   elseif which_PB_model == 1 then
-    if match_gen3_report_cost then
-      C_block = pri_block * P_gross / 1000;
-    else
-      C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
-    end if;
+      if match_gen3_report_cost then
+          C_block = pri_block * P_gross / 1000;
+      else
+          C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
+      end if;
   else
-    C_block = -1;
-  end if;
-//************************************ Capital Cost Calculation
+      C_block = -1;
+  end if; 
+  
+  //************************************ Capital Cost Calculation
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop;
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
+
 equation
-/*Equations below exist to close the model, s.t. the particle receiver model is agnostic to the input dimension*/
-  particleReceiver.raw_input_1[1] = H_rcv_1;
-  particleReceiver.raw_input_1[2] = particleReceiver.Q_in_1;
-  particleReceiver.raw_input_1[3] = particleReceiver.T_in;
-  particleReceiver.raw_input_1[4] = T_hot_set;
-  particleReceiver.raw_input_1[5] = particleReceiver.Tamb;
-  particleReceiver.raw_input_1[6] = particleReceiver.Wspd;
-  particleReceiver.raw_input_1[7] = particleReceiver.Wdir;
+  /*Equations below exist to close the model, s.t. the particle receiver model is agnostic to the input dimension*/
+  particleReceiver.raw_input_1[1] = A_rcv_lv1;
+  particleReceiver.raw_input_1[2] = A_rcv_lv2;
+  particleReceiver.raw_input_1[3] = A_rcv_lv3;
+  particleReceiver.raw_input_1[4] = ar_rec_lv1;
+  particleReceiver.raw_input_1[5] = ar_rec_lv2;
+  particleReceiver.raw_input_1[6] = ar_rec_lv3;
+  particleReceiver.raw_input_1[7] = particleReceiver.Q_in_1;
+  particleReceiver.raw_input_1[8] = particleReceiver.Q_in_2;
+  particleReceiver.raw_input_1[9] = particleReceiver.Q_in_3;
+  particleReceiver.raw_input_1[10] = particleReceiver.Tamb;
+  particleReceiver.raw_input_1[11] = particleReceiver.T_in;
+  particleReceiver.raw_input_1[12] = T_hot_set;
+  particleReceiver.raw_input_1[13] = 1 + 
+                                         0.13929 * 
+                                              (particleReceiver.Wspd * (Modelica.Math.log(H_tower/1e-3))/(Modelica.Math.log(2/1e-3))) 
+                                                  * Modelica.Math.exp(-1*((abs(Modelica.SIunits.Conversions.to_deg(data.Wdir)-180)-105)/30)^2);
   particleReceiver.ratio_1 = heliostatsField.ratio_1 "Equation to close the model";
-  particleReceiver.raw_input_2[1] = H_rcv_2;
-  particleReceiver.raw_input_2[2] = particleReceiver.Q_in_2;
-  particleReceiver.raw_input_2[3] = particleReceiver.T_in;
-  particleReceiver.raw_input_2[4] = T_hot_set;
-  particleReceiver.raw_input_2[5] = particleReceiver.Tamb;
-  particleReceiver.raw_input_2[6] = particleReceiver.Wspd;
-  particleReceiver.raw_input_2[7] = particleReceiver.Wdir;
   particleReceiver.ratio_2 = heliostatsField.ratio_2 "Equation to close the model";
-  particleReceiver.raw_input_3[1] = H_rcv_3;
-  particleReceiver.raw_input_3[2] = particleReceiver.Q_in_3;
-  particleReceiver.raw_input_3[3] = particleReceiver.T_in;
-  particleReceiver.raw_input_3[4] = T_hot_set;
-  particleReceiver.raw_input_3[5] = particleReceiver.Tamb;
-  particleReceiver.raw_input_3[6] = particleReceiver.Wspd;
-  particleReceiver.raw_input_3[7] = particleReceiver.Wdir;
   particleReceiver.ratio_3 = heliostatsField.ratio_3 "Equation to close the model";
+  
 /*End section*/
 /*Assigning the input to the surrogate model*/
   powerBlock.raw_input[1] = powerBlock.load;
@@ -777,4 +884,4 @@ equation
 
 	</html>"),
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
-end PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlySurrogate;
+end PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurrogate;

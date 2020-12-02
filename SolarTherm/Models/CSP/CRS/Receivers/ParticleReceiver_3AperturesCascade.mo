@@ -1,5 +1,5 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
-model ParticleReceiver_3Apertures
+model ParticleReceiver_3AperturesCascade
 	extends Interfaces.Models.ReceiverFluid;
 	
 	import Modelica.SIunits.Conversions.*;
@@ -60,28 +60,20 @@ model ParticleReceiver_3Apertures
     
     /*Initialise variables for each receiver aperture*/
     SI.HeatFlowRate Q_in_1;
-	SI.HeatFlowRate Q_loss_1 "Total losses";
-	SI.HeatFlowRate Q_rcv_1 "Heat flow captured by curtain";
-	SI.Efficiency eta_rcv_1;
-	SI.Efficiency eta_rcv_dummy_1;
-	Real ratio_1;
-	SI.MassFlowRate mdot_1;
+    SI.HeatFlowRate Q_in_2;
+    SI.HeatFlowRate Q_in_3;
+    
+    Real ratio_1;
+    Real ratio_2;
+    Real ratio_3;
+        
+	SI.HeatFlowRate Q_loss "Total losses";
+	SI.HeatFlowRate Q_rcv "Heat flow captured by curtain";
+	SI.Efficiency eta_rcv;
+	SI.Efficiency eta_rcv_dummy;
 	
-	SI.HeatFlowRate Q_in_2;
-	SI.HeatFlowRate Q_loss_2 "Total losses";
-	SI.HeatFlowRate Q_rcv_2 "Heat flow captured by curtain";
-	SI.Efficiency eta_rcv_2;
-	SI.Efficiency eta_rcv_dummy_2;
-	Real ratio_2;
-	SI.MassFlowRate mdot_2;
-	
-	SI.HeatFlowRate Q_in_3;
-	SI.HeatFlowRate Q_loss_3 "Total losses";
-	SI.HeatFlowRate Q_rcv_3 "Heat flow captured by curtain";
-	SI.Efficiency eta_rcv_3;
-	SI.Efficiency eta_rcv_dummy_3;
-	Real ratio_3;
-	SI.MassFlowRate mdot_3;
+	SI.MassFlowRate mdot;
+
 	
 	SI.Velocity Wspd_lv1;
 	SI.Velocity Wspd_lv2;
@@ -116,15 +108,9 @@ model ParticleReceiver_3Apertures
 	
 	/*Input for each aperture*/
 	Real raw_input_1[inputsize];
-	Real raw_input_2[inputsize];
-	Real raw_input_3[inputsize];
 	
 	/*Initialise the ANN session for each aperture*/
     STNeuralNetwork session_1 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
-    "Initialise neural network session if use_neural_network == true";
-    STNeuralNetwork session_2 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
-    "Initialise neural network session if use_neural_network == true";
-    STNeuralNetwork session_3 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
     "Initialise neural network session if use_neural_network == true";
 	
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
@@ -316,13 +302,11 @@ equation
     Q_in_2 = ratio_2 * heat.Q_flow;
     Q_in_3 = ratio_3 * heat.Q_flow;
     
-    Q_in_1 = Q_rcv_1 + Q_loss_1;
-    Q_in_2 = Q_rcv_2 + Q_loss_2;
-    Q_in_3 = Q_rcv_3 + Q_loss_3;
+    heat.Q_flow = Q_rcv + Q_loss;
     
     if on_1 then
         if use_neural_network == true then
-          eta_rcv_dummy_1  = predict(
+          eta_rcv_dummy  = predict(
             session_1, 
             raw_input_1, 
             inputsize,
@@ -333,96 +317,30 @@ equation
             );
                       
         else
-          eta_rcv_dummy_1 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
+          eta_rcv_dummy = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
                         T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
                         log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
         end if;
         
-        eta_rcv_1 = eta_rcv_dummy_1;
+        eta_rcv = eta_rcv_dummy;
                 
-        Q_loss_1 = (1-eta_rcv_1) * Q_in_1;
+        Q_loss = (1-eta_rcv) * heat.Q_flow;
         
         if logic then
-          mdot_1 = Q_rcv_1/(h_out-h_in);
+          mdot = Q_rcv/(h_out-h_in);
         else
-          mdot_1 = 0;
+          mdot = 0;
         end if;
 	else
-      eta_rcv_dummy_1  = 0;
-      eta_rcv_1 = 0;
-      Q_loss_1 = 0;
-      mdot_1 = 0;
+      eta_rcv_dummy  = 0;
+      eta_rcv = 0;
+      Q_loss = 0;
+      mdot = 0;
 	end if;
 	
-	if on_2 then
-        if use_neural_network == true then
-          eta_rcv_dummy_2  = predict(
-            session_2, 
-            raw_input_2, 
-            inputsize,
-            X_max,
-            X_min,
-            out_max,
-            out_min
-            );
-        else
-          eta_rcv_dummy_2 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
-                        T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
-                        log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
-        end if;
-        
-        eta_rcv_2 = eta_rcv_dummy_2;
-                
-        Q_loss_2 = (1-eta_rcv_2) * Q_in_2; 
-        
-        if logic then
-          mdot_2 = Q_rcv_2/(h_out-h_in);
-        else
-          mdot_2 = 0;
-        end if;
-        
-	else
-      eta_rcv_dummy_2  = 0;
-      eta_rcv_2 = 0;
-      Q_loss_2 = 0; 
-      mdot_2 = 0;
-	end if;
-    
-    if on_3 then
-        if use_neural_network == true then
-        eta_rcv_dummy_3  = predict(
-            session_3, 
-            raw_input_3, 
-            inputsize,
-            X_max,
-            X_min,
-            out_max,
-            out_min
-            );
-        else
-          eta_rcv_dummy_3 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
-                        T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 
-                        log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
-        end if;
-        
-        eta_rcv_3 = eta_rcv_dummy_3;
-                
-        Q_loss_3 = (1-eta_rcv_3) * Q_in_3;
-        
-        if logic then
-          mdot_3 = Q_rcv_3/(h_out-h_in);
-        else
-          mdot_3 = 0;
-        end if;
-        
-	else
-      eta_rcv_dummy_3  = 0;
-      eta_rcv_3 = 0; 
-      Q_loss_3 = 0;
-      mdot_3 = 0;
-	end if;
 	
-	fluid_a.m_flow = mdot_1 + mdot_2 + mdot_3;
+	
+	fluid_a.m_flow = mdot;
 	//M flow signal
 	m_flow_out = fluid_a.m_flow;
 	
@@ -433,4 +351,4 @@ equation
 </ul>
 </html>"),
     experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
-end ParticleReceiver_3Apertures;
+end ParticleReceiver_3AperturesCascade;
