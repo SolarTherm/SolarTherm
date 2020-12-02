@@ -19,25 +19,28 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   extends Modelica.Icons.Example;
   
   //****************************** Simulation Set-up
-  parameter Boolean pri_field_wspd_max = false "[H&T] true = using wspd_max dependent heliostat cost based on Emes 2017 https://is.gd/xSgpMV ";
-  parameter Boolean detail_field_om = false "[H&T] true = use detail washing and field O&M cost";
-  parameter Boolean const_dispatch = true "[CTRL] Constant dispatch of energy";
-  parameter Boolean feedforward = true "[CTRL] if true then defocus heat is calculated using expensive PB model. False = defocus heat is a function of Q_in_rcv";
-  parameter Boolean dispatch_optimiser = false;
-  parameter Boolean new_storage_calc = false "[ST] if true = use tuffcrete and microporous insulation (Zebedee Kee's idea)";
-  parameter Boolean use_neural_network = true;
-  parameter Boolean dome_storage = true "[ST] If true then use dome storage calculation provided by Jeremy Sment from Sandia";
-  parameter Boolean simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
-  parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
-  parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter Boolean external_storage = true "[ST] true if storage bins are not integrated with tower";
-  parameter Boolean SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
+  parameter Boolean set_pri_field_wspd = false "[H&T] true = using wspd_max dependent heliostat cost based on Emes 2017 https://is.gd/xSgpMV ";
+  parameter Boolean set_detail_field_om = false "[H&T] true = use detail washing and field O&M cost";
+  parameter Boolean set_const_dispatch = true "[CTRL] Constant dispatch of energy";
+  parameter Boolean set_feedforward = true "[CTRL] if true then defocus heat is calculated using expensive PB model. False = defocus heat is a function of Q_in_rcv";
+  parameter Boolean set_dispatch_optimiser = false;
+  parameter Boolean set_new_storage_calc = false "[ST] if true = use tuffcrete and microporous insulation (Zebedee Kee's idea)";
+  parameter Boolean set_use_neural_network = true;
+  parameter Boolean set_dome_storage = true "[ST] If true then use dome storage calculation provided by Jeremy Sment from Sandia";
+  parameter Boolean set_simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
+  parameter Boolean set_tnk_use_p_top = true "true if tank pressure is to connect to weather file";
+  parameter Boolean set_tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
+  parameter Boolean set_external_storage = true "[ST] true if storage bins are not integrated with tower";
+  parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
+  parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
+  parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
+  parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity or Time-of-day factor file";
-  parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
+  parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not set_const_dispatch "Discharging schedule from a file";
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[SYS] Weather file";
   parameter String DNI_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[CTRL] Weather file for dispatch optimisation - there was a bug in Modelica s.t. when I parse wea_file to dispatch optimisation, the 
     file path changes to .home/philgun..... which makes C program threw back segfault";
@@ -64,8 +67,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Length R_tower = W_rcv / 2 "Tower radius";
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
-  parameter Boolean single_field = true "[H&T] True for single field, false for multi tower";
-  parameter Boolean concrete_tower = true "[H&T] True for concrete, false for thrust tower";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
   parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
@@ -90,7 +91,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Temperature T_amb_des_rcv = from_degC(10) "[RCV] Design point ambient temp of the receiver (K)";
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area (m^2)";
   parameter Real A_land = metadata_list[9] "Land area consumed by the plant - calculated value by Solstice (m^2)";
-  parameter SI.Velocity Wspd_max = 15.65 if use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
+  parameter SI.Velocity Wspd_max = 15.65 if set_use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
   //****************************** Design condition of the Particle Receiver
@@ -245,12 +246,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real X_dome = 1 / (4 * tank_ar ^ 2) - 1 / (8 * tank_ar ^ 3) + 1 / (12 * tank_ar ^ 3);
   
   parameter SI.Length H_storage = 
-        if dome_storage then 
+        if set_dome_storage then 
                 ceil((V_max / (CN.pi * X_dome)) ^ (1 / 3)) 
         else 
                 ceil((4 * V_max * tank_ar ^ 2 / CN.pi) ^ (1 / 3)) "Storage tank total height [m]";
   parameter SI.Area SA_storage = 
-        if dome_storage then 
+        if set_dome_storage then 
         //************************ Surface area of the hemisphere and the cylinder
                 CN.pi * D_storage * (H_storage - 0.5 * D_storage) + 2 * CN.pi * (D_storage / 2) ^ 2 
         else 
@@ -269,7 +270,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Temperature T_in_ref_co2 = T_cold_set - pinch_exchanger "CO2 inlet temperature to particle heat exchanger at design";
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
   parameter Integer N_exch_parameter = 15 "Heat exchanger discretisation - CEA PB Parameters";
-  parameter Boolean external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Real nu_min_blk = 0.5 "[PB] Minimum allowed part-load mass flow fraction to power block";
   parameter Medium.ThermodynamicState state_co2_in_set = MedPB.setState_pTX(p_high, T_in_ref_co2) "Cold CO2 thermodynamic state at design";
   parameter Medium.ThermodynamicState state_co2_out_set = MedPB.setState_pTX(p_high, T_out_ref_co2) "Hot CO2 thermodynamic state at design";
@@ -287,10 +287,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //****************************** Power Plant Control
   parameter SI.Time t_start = 3600 "[CTRL] Start-up traking delay";
   parameter SI.Angle ele_min = 0.0872665 "[CTRL] Heliostat stow deploy angle = 5 degree";
-  parameter Boolean use_wind = true "True if using wind stopping strategy in the solar field";
   parameter SI.HeatFlowRate Q_flow_defocus_calculated(fixed = false);
   //parameter SI.HeatFlowRate Q_flow_defocus = if feedforward == true then 280e6 else Q_flow_des / (1 - rec_fr) "Solar field thermal power at defocused state";
-  parameter SI.HeatFlowRate Q_flow_defocus = if feedforward == true then
+  parameter SI.HeatFlowRate Q_flow_defocus = if set_feedforward == true then
                                                  Q_flow_defocus_calculated 
                                              else 
                                                   Q_flow_des / (1 - rec_fr) 
@@ -345,7 +344,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   //******************************* Specific cost for field, particle receiver, tower and lift
   parameter FI.AreaPrice pri_field = 
-        if pri_field_wspd_max == true then 
+        if set_pri_field_wspd == true then 
         //********** Field price depends on the wind speed and mirror size Emes 2017 https://is.gd/xSgpMV
             FI.heliostat_specific_cost_w_spd(Wspd_max = Wspd_max, A_helio = A_helio) * 0.3716 
         else 
@@ -451,9 +450,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   parameter FI.Money C_tower = 
-      if external_storage then 
+      if set_external_storage then 
       //******************************* External storage
-          if SAM_tower_cost then 
+          if set_SAM_tower_cost then 
               //******************************* Evaluating tower cost using SAM correlation - Can be found in SAM application*/
               pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
           else 
@@ -461,7 +460,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
               0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 65204 * H_tower - 731236 
       else 
     //******************************* Integrated storage
-          if SAM_tower_cost then 
+          if set_SAM_tower_cost then 
               //******************************* SAM Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
               7.743 * H_tower ^ 2.867 + 15410000 
           else 
@@ -478,7 +477,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   //******************************* Storage bin cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7
   parameter FI.Money C_bins = 
-      if new_storage_calc then 
+      if set_new_storage_calc then 
           750 * CN.pi * (D_storage - 1 - 1) * H_storage 
       else 
           pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage 
@@ -486,7 +485,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                 
   //******************************* Storage bin cost calculation based on Jeremy Sment of Sandia study (g3p3 project)
   parameter FI.Money C_bins_dome = 
-      if external_storage then 
+      if set_external_storage then 
           SolarTherm.Utilities.G3P3StorageCostFunction(
                 Th_refractory_hot_tank, 
                 H_storage, 
@@ -542,7 +541,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
             parameter SI.Length t_tuffcrete47 = 0.01;
     ******************************************************************************************************/
   parameter FI.Money C_storage = 
-      if dome_storage then 
+      if set_dome_storage then 
           C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 
       else 
           C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 
@@ -552,7 +551,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
   //******************************* Cost of O&M (fixed + varied)
   parameter FI.MoneyPerYear C_year = 
-      if detail_field_om then 
+      if set_detail_field_om then 
           P_name * pri_om_name + C_om_field + C_washing 
       else 
           P_name * pri_om_name 
@@ -596,7 +595,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //********************* Parasitic inputs
   Modelica.Blocks.Sources.RealExpression parasities_input(
       y = 
-          if external_storage then 
+          if set_external_storage then 
                 heliostatsField.W_loss + liftHX.W_loss + liftRC.W_loss + tankHot.W_loss + tankCold.W_loss 
           else 
                 heliostatsField.W_loss + 0 + liftRC.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
@@ -620,7 +619,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       lon = lon, 
       lat = lat, 
       ele_min(displayUnit = "deg") = ele_min, 
-      use_wind = use_wind, 
+      use_wind = set_use_wind, 
       t_start = t_start, 
       Wspd_max = Wspd_max, 
       he_av = he_av_design, 
@@ -665,7 +664,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //********************* Surrogate Receiver
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver particleReceiver(
       H_drop_design = H_rcv, 
-      use_neural_network = use_neural_network, 
+      use_neural_network = set_use_neural_network, 
       redeclare package Medium = Medium, 
       X_max = X_max_rcv, 
       X_min = X_min_rcv, 
@@ -746,7 +745,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
-      dome_storage = dome_storage, 
+      dome_storage = set_dome_storage, 
       Th_refractory = Th_refractory_hot_tank, 
       H_tower = H_tower, 
       D_tower = 2 * R_tower, 
@@ -755,8 +754,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       t_storage = t_storage, 
       T_start = T_hot_start, 
       L_start = (1 - split_cold) * 100, 
-      use_p_top = tnk_use_p_top, 
-      enable_losses = tnk_enable_losses, 
+      use_p_top = set_tnk_use_p_top, 
+      enable_losses = set_tnk_enable_losses, 
       use_L = true, 
       W_max = 0, 
       T_set = 0, 
@@ -769,7 +768,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
-      dome_storage = dome_storage, 
+      dome_storage = set_dome_storage, 
       Th_refractory = Th_refractory_cold_tank, 
       H_tower = H_tower, 
       D_tower = 2 * R_tower, 
@@ -777,8 +776,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       D_outlet = D_outlet, 
       T_start = T_cold_start, 
       L_start = split_cold * 100, 
-      use_p_top = tnk_use_p_top, 
-      enable_losses = tnk_enable_losses, 
+      use_p_top = set_tnk_use_p_top, 
+      enable_losses = set_tnk_enable_losses, 
       use_L = true, 
       W_max = 0, 
       T_set = 0, 
@@ -803,7 +802,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     Placement(visible = true, transformation(origin = {-6, 68}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   
   //********************* PowerBlockControl
-  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = dispatch_optimiser) annotation(
+  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   
   //********************* Power block
@@ -838,7 +837,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       test_mode = false, 
       eta_motor = 1, 
       f_fixed_load = f_fixed_load, 
-      external_parasities = external_parasities) annotation(
+      external_parasities = set_external_parasities) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   
   //*********************Power Block Calculator
@@ -869,13 +868,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       pinch_recuperator = pinch_recuperator, 
       par_fr = par_fr, 
       test_mode = true, 
-      external_parasities = external_parasities) annotation(
+      external_parasities = set_external_parasities) annotation(
     Placement(visible = true, transformation(origin = {192, 110}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   
   //********************* Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = pri_file)) annotation(
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
-  SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
+  SolarTherm.Models.Sources.Schedule.Scheduler sch if not set_const_dispatch;
   
   //********************* Variables
   SI.Power P_elec "Net output power of power block";
@@ -1015,13 +1014,13 @@ initial equation
   
 //********************* Power Block Cost Calculation
   if which_PB_model == 0 then
-    if simple_PB_cost then
+    if set_simple_PB_cost then
       C_block = pri_block * P_gross / 1000 + C_exchanger;
     else
       C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
     end if;
   elseif which_PB_model == 1 then
-    if simple_PB_cost then
+    if set_simple_PB_cost then
       C_block = pri_block * P_gross / 1000 + C_exchanger;
     else
       C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
@@ -1056,29 +1055,51 @@ equation
   SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
   DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
   SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Maximum storage level in MWhth";
-  if dispatch_optimiser == true then
+  if set_dispatch_optimiser == true then
     der(counter) = 1;
   else
     der(counter) = 0;
   end if;
+  
   when counter > 0 then
     time_simul = floor(time) "Rounding down the time";
-    if dispatch_optimiser then
-      optimalDispatch = SolarTherm.Utilities.LinProgFunc(DNI_file, price_file, horizon, dt, time_simul, etaC * (1 - rec_fr), etaG, t_storage, DEmax, SLmax, SLinit, SLminrel, A_field);
+    if set_dispatch_optimiser then
+      optimalDispatch = SolarTherm.Utilities.LinProgFunc(
+          DNI_file, 
+          price_file, 
+          horizon, 
+          dt, 
+          time_simul, 
+          etaC * (1 - rec_fr), 
+          etaG, 
+          t_storage, 
+          DEmax, 
+          SLmax, 
+          SLinit, 
+          SLminrel, 
+          A_field);
     else
       optimalDispatch = DEmax;
     end if;
     reinit(counter, const_t);
   end when;
 
-//************* Equation here is to close the power block controller models  since the component is lack of 1 equation to close optimalMassFlow variable
-  controlHot.logic.optimalMassFlow = if dispatch_optimiser == true then min(optimalDispatch / DEmax * m_flow_blk, m_flow_blk) else 0;
+  //************* Equation here is to close the power block controller models  since the component is lack of 1 equation to close optimalMassFlow variable
+  controlHot.logic.optimalMassFlow = if set_dispatch_optimiser == true then min(optimalDispatch / DEmax * m_flow_blk, m_flow_blk) else 0;
   dummyRatio = optimalDispatch / DEmax;
+  
   der(E_resource) = max(sun.dni * n_helios * A_helio, 0.0);
   der(E_losses_optical) = (1 - heliostatsField.nu) * max(heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
   der(E_losses_availability) = (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
   der(E_losses_curtailment) = if heliostatsField.on_hf == true then 0 else (1 - he_av_design) * max(heliostatsField.nu * heliostatsField.solar.dni * heliostatsField.n_h * heliostatsField.A_h, 0.0);
-  der(E_losses_defocus) = if heliostatsField.on_internal then if heliostatsField.defocus_internal then abs(heliostatsField.Q_net - heliostatsField.Q_raw) else 0 else 0;
+  der(E_losses_defocus) = 
+        if heliostatsField.on_internal then 
+            if heliostatsField.defocus_internal then 
+                  abs(heliostatsField.Q_net - heliostatsField.Q_raw) 
+            else 0 
+        else 
+            0;
+            
   der(E_resource_after_optical_eff) = max(sun.dni * n_helios * A_helio, 0.0) * heliostatsField.nu;
   der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
@@ -1088,6 +1109,7 @@ equation
   der(E_pb_input) = powerBlock.Q_HX;
   der(E_pb_gross) = -powerBlock.W_gross;
   der(E_pb_net) = powerBlock.W_net;
+  
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;
   R_spot = market.profit;
