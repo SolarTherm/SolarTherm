@@ -256,7 +256,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real rec_exp = 0.6 "Receiver reference height";
 	// Riser and downcomer cost
 	parameter SI.Diameter D_r = 0.626 "Riser outer diameter";
+	parameter SI.Thickness t_r = 12.7e-3 "Riser wall thickness";
 	parameter SI.Diameter D_d = 0.647 "Downcomer outer diameter";
+	parameter SI.Thickness t_d = 12.7e-3 "Downcomer wall thickness";
 	parameter SI.Length L_horiz = 30 "Additional horizontal length of riser and downcomer to the HEX";
 	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
 	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
@@ -264,6 +266,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
 	parameter SI.Diameter D_r_ref = 0.711	"Riser reference diameter";
 	parameter SI.Diameter D_d_ref = 0.711	"Downcomer reference diameter";
+	parameter Real C_r_m(unit = "$/kg") = 80 "Riser material cost";
+	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost";
 	parameter Real C_r_ref(unit = "$/m") = 9090 "Riser reference cost";
 	parameter Real C_d_ref(unit = "$/m") = 22973 "Riser reference cost";
 	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser "Riser cost";
