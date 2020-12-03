@@ -29,10 +29,10 @@ extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {45, -55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
           
-  Modelica.Blocks.Interfaces.RealOutput T_90_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.90) + 273.15 "Temperature at the 90% height of the tank as an output signal (K)"
+  Modelica.Blocks.Interfaces.RealOutput T_95_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.95) + 273.15 "Temperature at the 95% height of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {45, 41}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
-  Modelica.Blocks.Interfaces.RealOutput T_10_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.10) + 273.15"Temperature at the 10% height of the tank as an output signal (K)"
+  Modelica.Blocks.Interfaces.RealOutput T_05_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.05) + 273.15"Temperature at the 5% height of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {45, -39}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   
@@ -94,19 +94,19 @@ equation
   fluid_top.T = Tank_A.T_top;
   fluid_bot.T = Tank_A.T_bot;
   
-  h_bot_outlet = max(Tank_A.h_f[1],fluid_bot.h);
+  h_bot_outlet = Tank_A.h_f[1];
   //h_bot_outlet = fluid_bot.h;
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
-  if fluid_a.m_flow > 1e-2 then// charging
+  if fluid_a.m_flow > 1e-3 then// charging
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_top = inStream(fluid_a.h_outflow);
-    fluid_a.h_outflow = fluid_top.h;
-    fluid_b.h_outflow = fluid_bot.h;
-  elseif fluid_a.m_flow < -1e-2 then //discharing
+    fluid_a.h_outflow = Tank_A.h_f[N_f];
+    fluid_b.h_outflow = Tank_A.h_f[1];
+  elseif fluid_a.m_flow < -1e-3 then //discharing
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_bot = inStream(fluid_b.h_outflow);
-    fluid_a.h_outflow = fluid_top.h;
-    fluid_b.h_outflow = fluid_bot.h;
+    fluid_a.h_outflow = Tank_A.h_f[N_f];
+    fluid_b.h_outflow = Tank_A.h_f[1];
   else //force standby
     Tank_A.m_flow = 0.0;
     //fluid_a.h_outflow = inStream(fluid_b.h_outflow);
@@ -114,8 +114,8 @@ equation
     fluid_a.h_outflow = fluid_top.h;
     fluid_b.h_outflow = fluid_bot.h;
     //Tank_A.h_top = Tank_A.h_bot;//inStream(fluid_a.h_outflow);
-    //Tank_A.h_top = Tank_A.h_f[N_f];
-    Tank_A.h_bot = Tank_A.h_f[1];
+    Tank_A.h_top = Tank_A.h_f[N_f];
+    //Tank_A.h_bot = Tank_A.h_f[1];
   end if;
   //End try
   fluid_a.p = p_amb;

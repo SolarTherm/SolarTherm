@@ -344,6 +344,7 @@ class Simulator(object):
 			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
+			'-mei', '20', # Specifies the maximum number of event iterations that can be handled (default 20)
 			'-noEventEmit',
 			]
 

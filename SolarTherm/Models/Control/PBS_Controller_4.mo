@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-model PBS_Controller_3
+model PBS_Controller_4
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Sodium.Sodium_pT;
   parameter SI.Temperature T_recv_max = 550.0 + 273.15 "Maximum tolerated receiver input temperature";
@@ -14,14 +14,15 @@ model PBS_Controller_3
   Integer Control_State(start=6) "1-6 Determines which pumps are flowing and whether defocus is on";
   Boolean Chg(start=true) "Can the storage be charged?";
   Boolean Disch(start=false) "Can the storage be discharged?";
+  Boolean PB(start=true) "Can the PB be turned on?";
 
   //Timer to prevent PB from being turned on too many times
   //parameter SI.Time t_wait=1.0*3600 "Time you have to wait after shutdown before it can be turned on again";
   //SI.Time t_shutdown(start=0) "Time since it last shut down";
   //End timer
   parameter SI.HeatFlowRate Q_rcv_min = 0.10*Q_des_blk "Minimum receiver heat-rate to start mass flow to receiver";
-  parameter SI.MassFlowRate m_0 = 1e-4 "Minimum mass flow rate through any pipe";
-  parameter SI.MassFlowRate m_min = 1e-4 "minimum mass flow rate to start";
+  parameter SI.MassFlowRate m_0 = 1e-7 "Minimum mass flow rate through any pipe";
+  parameter SI.MassFlowRate m_min = 1e-7 "minimum mass flow rate to start";
   
   Modelica.Blocks.Interfaces.RealInput T_top_tank "Temperature of the top of HTF in storage"
     annotation (Placement(visible = true, transformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0), iconTransformation(extent = {{-126, -8}, {-86, 32}}, rotation = 0)));
@@ -47,6 +48,8 @@ model PBS_Controller_3
     annotation (Placement(visible = true, transformation(extent = {{-128, -100}, {-88, -60}}, rotation = 0), iconTransformation(origin = {-40, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 
   SI.MassFlowRate m_guess(start=0.0) "Guess required flow rate of recv";
+  parameter SI.Time t_wait = 2.0*3600 "Waiting time between turning off PB and being able to turn on";
+  SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
 
 algorithm
   //Changing Storage State
@@ -62,6 +65,13 @@ algorithm
     Chg := true;
   end when;
 
+  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
+    PB := false; //start the cooldown
+    t_threshold := time + t_wait;
+  end when;
+  when time > t_threshold then
+    PB := true;
+  end when;
 equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
   m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
@@ -71,7 +81,11 @@ equation
     if m_guess < m_flow_PB_des then
       Control_State = 6;
     else
-      Control_State = 3;
+      if PB then
+        Control_State = 3;
+      else
+        Control_State = 6;
+      end if;
     end if;
   elseif Chg == true and Disch == false then //6 or 1 or 5
     if m_guess < m_min then
@@ -79,23 +93,43 @@ equation
     elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
       Control_State = 1;
     else
-      Control_State = 5;
+      if PB then
+        Control_State = 5;
+      else
+        Control_State = 1;
+      end if;
     end if;
   elseif Chg == false and Disch == true then //2 or 4 or 3
-    if m_guess < m_min then
-      Control_State = 2;
-    elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
-      Control_State = 4;
+    if PB then
+      if m_guess < m_min then
+        Control_State = 2;
+      elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
+        Control_State = 4;
+      else
+        Control_State = 3;
+      end if;
     else
-      Control_State = 3;
+      Control_State = 6;
     end if;
   else //2,4,5
     if m_guess < m_min then
-      Control_State = 2;
+      if PB then
+        Control_State = 2;
+      else
+        Control_State = 6;
+      end if;
     elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
-      Control_State = 4;
+      if PB then
+        Control_State = 4;
+      else
+        Control_State = 1;
+      end if;
     else
-      Control_State = 5;
+      if PB then
+        Control_State = 5;
+      else
+        Control_State = 1;
+      end if;
     end if;
   end if;
     
@@ -137,4 +171,4 @@ equation
 
   end if;
 
-end PBS_Controller_3;
+end PBS_Controller_4;

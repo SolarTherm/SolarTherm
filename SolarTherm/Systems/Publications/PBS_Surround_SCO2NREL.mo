@@ -227,13 +227,13 @@ model PBS_Surround_SCO2NREL
     Placement(visible = true, transformation(extent = {{-140, -38}, {-110, -10}}, rotation = 0)));
   //DNI_input
   Modelica.Blocks.Sources.RealExpression DNI_input(y = data.DNI) annotation(
-    Placement(visible = true, transformation(extent = {{-140, 60}, {-120, 80}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{-138, 60}, {-118, 80}}, rotation = 0)));
   //Tamb_input
   Modelica.Blocks.Sources.RealExpression Tamb_input(y = data.Tdry) annotation(
     Placement(transformation(extent = {{140, 70}, {120, 90}})));
   //WindSpeed_input
   Modelica.Blocks.Sources.RealExpression Wspd_input(y = data.Wspd) annotation(
-    Placement(visible = true, transformation(extent = {{-140, 38}, {-114, 58}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{-138, 38}, {-112, 58}}, rotation = 0)));
   //pressure_input
   Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
     Placement(visible = true, transformation(extent = {{138, 86}, {118, 106}}, rotation = 0)));
@@ -269,50 +269,50 @@ model PBS_Surround_SCO2NREL
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-            //Analytics
-            //Accumulated energy
-            SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-            SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-            SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-            SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-            SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-            SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-            SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-            SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-            SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-            Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-            Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-            Real eta_shading;
-            Real eta_cosine;
-            Real eta_reflection;
-            Real eta_blocking;
-            Real eta_attenuation;
-            Real eta_intercept;
-            //Annual efficiencies
-            Real eta_curtail_off "Curtailment: Heliostat off";
-            Real eta_he_av "Heliostat Availability";
-            Real eta_optical "Field optical efficiency including spillage";
-            Real eta_curtail_defocus "Curtailment: Full Storage";
-            Real eta_recv_abs "Receiver Absorptivity";
-            Real eta_recv_thermal "Receiver thermal efficiency";
-            Real eta_storage "Storage thermal efficiency";
-            Real eta_pb_gross "Power block gross efficiency";
-            Real eta_pb_net "Power block net efficiency";
-            Real eta_solartoelec "Solar to electric";
-          */
+              //Analytics
+              //Accumulated energy
+              SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+              SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+              SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+              SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+              SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+              SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+              SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+              SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+              SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+              Real eta_shading;
+              Real eta_cosine;
+              Real eta_reflection;
+              Real eta_blocking;
+              Real eta_attenuation;
+              Real eta_intercept;
+              //Annual efficiencies
+              Real eta_curtail_off "Curtailment: Heliostat off";
+              Real eta_he_av "Heliostat Availability";
+              Real eta_optical "Field optical efficiency including spillage";
+              Real eta_curtail_defocus "Curtailment: Full Storage";
+              Real eta_recv_abs "Receiver Absorptivity";
+              Real eta_recv_thermal "Receiver thermal efficiency";
+              Real eta_storage "Storage thermal efficiency";
+              Real eta_pb_gross "Power block gross efficiency";
+              Real eta_pb_net "Power block net efficiency";
+              Real eta_solartoelec "Solar to electric";
+            */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
   /*SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 10, N_f_B = 30, N_f_C = 10, N_p_A = 5, N_p_B = 5, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta, frac_1 = 0.1, frac_2 = 0.1) annotation(
-          Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-        */
+            Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+          */
   SolarTherm.Models.Storage.Thermocline.Thermocline_Tank3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 50, N_p = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_bot(redeclare package Medium = Medium, T_min = T_min) annotation(
@@ -420,9 +420,9 @@ equation
   */
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
-    Line(points = {{-119, 70}, {-83, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{-117, 70}, {-83, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-    Line(points = {{-113, 48}, {-100.35, 48}, {-100.35, 30}, {-88, 30}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{-111, 48}, {-100.35, 48}, {-100.35, 30}, {-88, 30}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 // Fluid connections
 // controlCold connections
 // controlHot connections

@@ -54,6 +54,9 @@ model PBS_Receiver
   parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
   parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
   parameter SI.Temperature T_max=from_degC(700) "Target outlet temperature";
+  
+  SI.Temperature T_in=Medium.temperature(Medium.setState_phX(1e5,h_in));
+  SI.Temperature T_out=Medium.temperature(Medium.setState_phX(1e5,h_out));
 equation
   
   h_in=inStream(fluid_a.h_outflow);
@@ -78,7 +81,7 @@ equation
   medium.h=(h_in+h_out)/2;
   
   Q_rcv_raw = ab*heat.Q_flow-A*sigma*em*((medium.T)^4-Tamb^4); //Theoretical net receiver output before curtailment
-  if fluid_a.m_flow > 1e-3 then
+  if fluid_a.m_flow > 1e-6 then
     Q_loss = -1.0*A*sigma*em*(medium.T^4-Tamb^4);
     Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_defocus) else Q_rcv_raw);
     //Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_des_blk) else Q_rcv_raw);

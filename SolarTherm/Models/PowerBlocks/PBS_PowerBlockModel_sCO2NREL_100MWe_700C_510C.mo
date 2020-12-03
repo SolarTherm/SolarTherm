@@ -97,7 +97,7 @@ equation
     parasities_internal=0;
   end if;
 
-  logic=load>nu_min and fluid_a.m_flow > 1e-3;
+  logic=load>nu_min and fluid_a.m_flow > 1e-6;
   h_in=inStream(fluid_a.h_outflow);
 
   fluid_b.h_outflow=h_out_ref;

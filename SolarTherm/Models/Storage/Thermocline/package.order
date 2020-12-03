@@ -13,5 +13,5 @@ Cylinder_Masses
 Cylinder_Radii
 Thermocline_Tank_Cylinders
 Interpolate_Temperature
-Thermocline_Section3
-Thermocline_Tank3
+Thermocline_Spheres_Section
+Thermocline_Spheres_SingleTank

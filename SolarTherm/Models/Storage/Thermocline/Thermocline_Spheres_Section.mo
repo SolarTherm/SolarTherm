@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
-//This one has variable T_amb
-model Thermocline_Section2
+
+model Thermocline_Spheres_Section
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -144,18 +144,18 @@ initial equation
     fluid[i].h = h_f_start[i];
   end for;
 equation
-  if m_flow <= (-1.0e-6) then
+  if m_flow < 0.0 then//(-1.0e-6) then
   //if m_flow < 0.0 then
 //mass is flowing downwards so charging
     State = 1;
 //Charging
-  elseif m_flow >= 1.0e-6 then
+  else//if m_flow > 0.0 then// 1.0e-6 then
   //elseif m_flow > 0.0 then
 //mass is flowing upwards so discharging
     State = 3;
 //Discharging
-  else
-    State = 2;
+  //else
+    //State = 2;
 //Standby
   end if;
   u_flow = m_flow / (eta * rho_f_avg * A);
@@ -227,8 +227,11 @@ equation
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
     - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
     
+    //if m_flow > 0 then
+      //h_bot
     h_top = h_f[N_f];
     //h_bot = h_f[1];
+    //h_top = h_bot;
 //End Top Standby Fluid Node
   else
 //Discharge
@@ -368,7 +371,9 @@ equation
   W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
   
   annotation (Documentation(revisions ="<html>
-		<p>By Zebedee Kee on 14/01/2018</p>
+		<p>By Zebedee Kee on 03/12/2020</p>
+		</html>",info="<html>
+		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
 
-end Thermocline_Section2;
+end Thermocline_Spheres_Section;

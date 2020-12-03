@@ -242,16 +242,24 @@ class SimResultElec(SimResult):
 		srev = rev_v[-1] # spot market revenue [$]
 		lcoe = 10000.0 # Levelised cost of electricity
 		capf = 0.0 # Capacity factor
-		if close_to_year and (epy > 0.0): 
+		if close_to_year and (epy > 0.0):#If it doesnt fail, calculate normally, otherwise retain lcoe = 10000.0 and capf = 0.0
 			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
 
+		#add in constrained optimization penalty for how much it stopped before 1 year
+		print("Simulated Years = "+str(years)+" yr")
+		if years < 0.99:#Then apply a penalty
+			distance = 1000 + 1000 * (1.0 - years);
+			lcoe = lcoe + distance
+			print("LCOE penalty = +"+str(distance)+" USD/MWhe")
+		#Now proceed to do unit conversion
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year and (epy > 0.0): 
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
+
 		print("EPY = "+str(epy)+" MWh/yr")
 		print("LCOE = "+str(lcoe)+" USD/MWhe")
 		print("CapF = "+str(capf)+" %")

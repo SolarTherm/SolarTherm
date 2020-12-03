@@ -73,7 +73,7 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
-	parser.add_argument('--tolerance', type=str, default='1e-04',
+	parser.add_argument('--tolerance', type=str, default='1e-03',
 			help='simulation tolerance: <number>')
 	parser.add_argument('--initStep', type=str, default=None,
 			help='simulation initial step size used by dassl and ida methods: <number>[,y,d,m,s]')
