@@ -74,9 +74,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   //****************************** Field simulation parameters
   parameter String opt_file(fixed = false);
-  parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
+  parameter String casefolder = "./test-integration-ma" "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
-  parameter String field_type = "polar" "[H&T] Other options are : surround";
+  parameter String field_type = "multi-aperture" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
   parameter Real AR_helio = 1 "[H&T] ratio between H_helio/W_helio";
   parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
@@ -97,7 +97,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   //****************************** Design condition of the plant
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
-  parameter String rcv_type = "particle" "[RCV] other options are : flat, cylindrical, stl";
+  parameter String rcv_type = "multi-aperture" "[RCV] other options are : flat, cylindrical, stl";
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
   parameter Real SM = 2.5 "[SYS] Solar multiple";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";

@@ -15,19 +15,28 @@ extends OpticalEfficiency_3Apertures;
   parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
   parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results"; 
-  parameter String field_type = "polar" "Other options are : surround";
-  parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
+  parameter String field_type = "multi-aperture" "Other options are : surround";
+  parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-  parameter Integer argc =19 "Number of variables to be passed to the C function";
+  parameter Integer argc =27 "Number of variables to be passed to the C function";
 
   //parameter Boolean single_field = true "True for single field, false for multi tower";
   //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
   parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
   parameter Real n_helios=1000 "Number of heliostats";
   parameter SI.HeatFlowRate Q_in_rcv = 1e6;
-  parameter SI.Length H_rcv=10 "Receiver aperture height";
-  parameter SI.Length W_rcv=10 "Receiver aperture width";
+  parameter Real num_aperture = 3 "number of apertures";
+
+  parameter SI.Length H_rcv_1=10 "Receiver aperture height at level 1";
+  parameter SI.Length W_rcv_1=10 "Receiver aperture width at level 1";
+
+  parameter SI.Length H_rcv_2=10 "Receiver aperture height at level 2";
+  parameter SI.Length W_rcv_2=10 "Receiver aperture width at level 2";
+
+  parameter SI.Length H_rcv_3=10 "Receiver aperture height at level 3";
+  parameter SI.Length W_rcv_3=10 "Receiver aperture width at level 3";
+
   parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
   parameter Real n_W_rcv=10 "num of grid in the horizontal/circumferetial direction (for flux map)";
   parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
@@ -44,7 +53,7 @@ extends OpticalEfficiency_3Apertures;
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
-    parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
+  parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
 
   parameter String tablefile(fixed=false);
 
@@ -53,21 +62,21 @@ extends OpticalEfficiency_3Apertures;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_1(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_0",
+    tableName="optical_efficiency_level_1",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{14, 12}, {34, 32}}, rotation = 0)));
     
   Modelica.Blocks.Tables.CombiTable2D nu_table_2(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_1",
+    tableName="optical_efficiency_level_2",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{12, 68}, {32, 88}}, rotation = 0)));
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_3(
     tableOnFile=true,
-    tableName="optical_efficiency_aperture_2",
+    tableName="optical_efficiency_level_3",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{14, -36}, {34, -16}}, rotation = 0)));
@@ -79,7 +88,7 @@ extends OpticalEfficiency_3Apertures;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));    
 
 initial algorithm
-  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
+  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
