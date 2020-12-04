@@ -48,8 +48,8 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results";  
-  parameter String field_type = "polar" "Other options are : surround";
-  parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
+  parameter String field_type = "multi-aperture" "Other options are : surround";
+  parameter String rcv_type = "multi-aperture" "other options are : flat, cylindrical, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
   parameter Boolean use_on = false "= true to display when solar field is connected"
     annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -59,7 +59,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
     annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   /*end of Solstice simulation parameters*/
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv_1+H_rcv_2+H_rcv_3, W_rcv=W_rcv_1, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_rho=helio_rho, helio_soil=helio_soil, helio_sf_ratio=helio_sf_ratio, slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_procs=n_procs, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv_1=H_rcv_1, H_rcv_2=H_rcv_2, H_rcv_3=H_rcv_3, W_rcv_1=W_rcv_1, W_rcv_2=W_rcv_2, W_rcv_3=W_rcv_3, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_rho=helio_rho, helio_soil=helio_soil, helio_sf_ratio=helio_sf_ratio, slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_procs=n_procs, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
   
   /*Variables for each aperture*/
   SI.HeatFlowRate Q_raw_1;
