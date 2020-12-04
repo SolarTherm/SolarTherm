@@ -15,6 +15,7 @@ function Metadata_Optics_3Apertures
 
     i := 10;
     j := 10;
+    
     (meta[1], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     (meta[2], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     (meta[3], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
