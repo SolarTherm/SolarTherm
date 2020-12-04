@@ -37,11 +37,14 @@ extends OpticalEfficiency_3Apertures;
   parameter SI.Length R_tower = 0.01 "Tower diameter";
   parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
   parameter Real fb=0.7 "factor to grow the field layout";
-  parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+  parameter SI.Efficiency helio_rho = 0.95 "reflectivity of heliostat max =1";
+  parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
+  parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+    parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
 
   parameter String tablefile(fixed=false);
 
@@ -76,8 +79,7 @@ extends OpticalEfficiency_3Apertures;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));    
 
 initial algorithm
-  tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
-
+  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);
@@ -97,8 +99,7 @@ equation
   nu_2=max(0,nu_table_2.y);
   nu_3=max(0,nu_table_3.y);
   
- connect(angle2_input.y, nu_table_1.u2)
-    annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
+ connect(angle2_input.y, nu_table_1.u2) annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
  connect(angle1_input.y, nu_table_1.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
  connect(angle1_input.y, nu_table_2.u1) annotation(

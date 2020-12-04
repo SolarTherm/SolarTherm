@@ -12,18 +12,20 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
 
   parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   
+  parameter SI.HeatFlowRate Q_in_rcv = 800e6;
+  
   /*Parameter for each aperture*/
-  parameter SI.HeatFlowRate Q_in_rcv_1 = 1e6;
+  parameter SI.HeatFlowRate Q_in_rcv_1(fixed=false);
   parameter SI.Length H_rcv_1=10 "Receiver aperture height";
   parameter SI.Length W_rcv_1=10 "Receiver aperture width";
   parameter Real n_h_1 = metadata_list[10] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
   
-  parameter SI.HeatFlowRate Q_in_rcv_2 = 1e6;
+  parameter SI.HeatFlowRate Q_in_rcv_2(fixed=false);
   parameter SI.Length H_rcv_2=10 "Receiver aperture height";
   parameter SI.Length W_rcv_2=10 "Receiver aperture width";
   parameter Real n_h_2 = metadata_list[15] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
   
-  parameter SI.HeatFlowRate Q_in_rcv_3 = 1e6;
+  parameter SI.HeatFlowRate Q_in_rcv_3(fixed=false);
   parameter SI.Length H_rcv_3=10 "Receiver aperture height";
   parameter SI.Length W_rcv_3=10 "Receiver aperture width";
   parameter Real n_h_3 = metadata_list[20] "Number of heliostats paerture 1" annotation(Dialog(group="Technical data"));
@@ -37,10 +39,14 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.Length R_tower = 0.01 "Tower diameter";
   parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
   parameter Real fb=0.7 "factor to grow the field layout";
+  parameter SI.Efficiency helio_rho = 0.95 "reflectivity of heliostat max =1";
+  parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
+  parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/SolsticePy/result/demo") "the directory for saving the results";  
   parameter String field_type = "polar" "Other options are : surround";
   parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
@@ -53,29 +59,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
     annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   /*end of Solstice simulation parameters*/
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(
-      hra=solar.hra, dec=solar.dec, 
-      lat=lat, 
-      method=method, 
-      Q_in_rcv=Q_in_rcv_1, 
-      H_rcv=H_rcv_1, 
-      W_rcv=W_rcv_1, 
-      tilt_rcv=tilt_rcv, 
-      W_helio=W_helio, 
-      H_helio=H_helio, 
-      H_tower=H_tower, 
-      R_tower=R_tower, 
-      R1=R1, 
-      fb=fb, 
-      rho_helio=rho_helio,
-      slope_error=slope_error, 
-      n_row_oelt=n_row_oelt, 
-      n_col_oelt=n_col_oelt, 
-      field_type=field_type, 
-      rcv_type=rcv_type, 
-      psave=psave, 
-      wea_file=wea_file
-      );
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv_1+H_rcv_2+H_rcv_3, W_rcv=W_rcv_1, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_rho=helio_rho, helio_soil=helio_soil, helio_sf_ratio=helio_sf_ratio, slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_procs=n_procs, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
   
   /*Variables for each aperture*/
   SI.HeatFlowRate Q_raw_1;
@@ -185,6 +169,11 @@ initial equation
    on_internal_2=Q_raw_2>Q_start_2;
    on_internal_3=Q_raw_3>Q_start_3;
    opt_file=optical.tablefile;
+   
+   Q_in_rcv_1 = metadata_list[9];
+   Q_in_rcv_2 = metadata_list[14];
+   Q_in_rcv_3 = metadata_list[19];
+   
 equation
   if use_on then
     connect(on_1,on_internal_1);
@@ -213,9 +202,9 @@ equation
   nu_2 = optical.nu_2;
   nu_3 = optical.nu_3;
   
-  Q_raw_1= if on_hf_1 then max(he_av*n_h_1*A_h*solar.dni*optical.nu_1,0) else 0;
-  Q_raw_2= if on_hf_2 then max(he_av*n_h_2*A_h*solar.dni*optical.nu_2,0) else 0;
-  Q_raw_3= if on_hf_3 then max(he_av*n_h_3*A_h*solar.dni*optical.nu_3,0) else 0;
+  Q_raw_1= if on_hf_1 then max(he_av*n_h_1*A_h*solar.dni*nu_1,0) else 0;
+  Q_raw_2= if on_hf_2 then max(he_av*n_h_2*A_h*solar.dni*nu_2,0) else 0;
+  Q_raw_3= if on_hf_3 then max(he_av*n_h_3*A_h*solar.dni*nu_3,0) else 0;
 
   when Q_raw_1>Q_start_1 then
     on_internal_1=true;

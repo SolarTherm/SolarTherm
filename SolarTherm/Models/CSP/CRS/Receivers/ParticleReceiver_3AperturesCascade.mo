@@ -45,10 +45,6 @@ model ParticleReceiver_3AperturesCascade
 	
 	parameter Real z0 = 1e-3 "Surface roughness of desert According to https://is.gd/m7EaZT";
 	
-	parameter Real Wspd_scaler_lv1 = (ln(Z_rcv_lv1/z0))/(ln(2/z0));
-	parameter Real Wspd_scaler_lv2 = (ln(Z_rcv_lv2/z0))/(ln(2/z0));
-	parameter Real Wspd_scaler_lv3 = (ln(Z_rcv_lv3/z0))/(ln(2/z0));
-	
 	Boolean logic(start=true);
 
 	Medium.BaseProperties medium;
@@ -73,12 +69,7 @@ model ParticleReceiver_3AperturesCascade
 	SI.Efficiency eta_rcv_dummy;
 	
 	SI.MassFlowRate mdot;
-
 	
-	SI.Velocity Wspd_lv1;
-	SI.Velocity Wspd_lv2;
-	SI.Velocity Wspd_lv3;
-
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		visible = true,transformation(
 		
@@ -107,10 +98,10 @@ model ParticleReceiver_3AperturesCascade
 	Real log10Tamb_coeff;
 	
 	/*Input for each aperture*/
-	Real raw_input_1[inputsize];
+	Real raw_input[inputsize];
 	
 	/*Initialise the ANN session for each aperture*/
-    STNeuralNetwork session_1 = STNeuralNetwork(saved_model_dir) if use_neural_network == true
+    STNeuralNetwork session = STNeuralNetwork(saved_model_dir) if use_neural_network == true
     "Initialise neural network session if use_neural_network == true";
 	
 	Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,h_in);
@@ -124,11 +115,7 @@ model ParticleReceiver_3AperturesCascade
     Modelica.Blocks.Interfaces.RealInput level annotation(
     Placement(visible = true, transformation(origin = {36, -36}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = {36, -36}, extent = {{20, -20}, {-20, 20}}, rotation = 0)));
  
-equation
-	Wspd_lv1 = Wspd_scaler_lv1 * Wspd;
-	Wspd_lv2 = Wspd_scaler_lv2 * Wspd;
-	Wspd_lv3 = Wspd_scaler_lv3 * Wspd;
-	
+equation	
 	medium.h=(h_in+h_out)/2; // temperature for thermal losses = average of inlet and outlet pcl temperatures
 	h_in=inStream(fluid_a.h_outflow);
 	fluid_b.h_outflow=max(h_0,h_out);
@@ -290,6 +277,7 @@ equation
     raw_input[3] = T_in;
     raw_input[4] = H_drop_design;
     */
+
     
     when level > level_off_ub then
       logic = true;
@@ -304,11 +292,11 @@ equation
     
     heat.Q_flow = Q_rcv + Q_loss;
     
-    if on_1 then
+    if on_1 or on_2 or on_3 then
         if use_neural_network == true then
           eta_rcv_dummy  = predict(
-            session_1, 
-            raw_input_1, 
+            session, 
+            raw_input, 
             inputsize,
             X_max,
             X_min,
@@ -332,6 +320,7 @@ equation
           mdot = 0;
         end if;
 	else
+
       eta_rcv_dummy  = 0;
       eta_rcv = 0;
       Q_loss = 0;
