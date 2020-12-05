@@ -44,6 +44,10 @@ if __name__=='__main__':
 			help='number of processes (set to 0 for serial mode)')	
 	parser.add_argument('--excel', type=str, default=None,
 			help='the directry of the input excel data sheet')
+	parser.add_argument('--peaker', action='store_true',
+			help='peaker configuration')
+	parser.add_argument('--runsolstice', action='store_true',
+			help='run solstice mcrt')
 	parser.add_argument('--mode', type=str, default='uncertainty',
 			help='type of study: uncertainty, parametric or optimisation')
 	parser.add_argument('--sample', type=str, default='lhs',
@@ -56,6 +60,8 @@ if __name__=='__main__':
 			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
 	parser.add_argument('--wd', type=str, default='.',
 			help='the working directory')
+	parser.add_argument('--restart', type=str, default=None,
+			help='restart by continuing the last simulation (available now only via dakota), given the directory of the simulations')
 
 	args = parser.parse_args()
 
@@ -77,8 +83,9 @@ if __name__=='__main__':
 	os.chdir(args.wd)
 	U=UncertaintyDakotaIn(mofn=fn, start=args.start, stop=args.stop, 
 		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-		integOrder=args.integOrder, solver=args.solver, nls=args.nls, 
-		lv=args.lv, system=system)
+		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, 
+		system=system, runsolstice=args.runsolstice)
+
 
 	if args.excel!=None:
 		if not os.path.exists(mn):
@@ -89,6 +96,8 @@ if __name__=='__main__':
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)
+		tree.write_xml(input_xml)
+
 
 		par_n=tree.filter_type(1) # 1 is for uncertainty analysis
 		par_uniform=tree.filter_dist('uniform',par_n)
@@ -175,15 +184,27 @@ if __name__=='__main__':
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
-	if args.np!=0:
-		if not os.path.exists(mn):
-			sim = simulation.Simulator(fn=fn, fusemount=False)
-			sim.compile_model()
-			sim.compile_sim(args=['-s'])
-		subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
-	else:
-		subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+	if args.restart!=None:
+		os.chdir(args.restart)
+		if args.np!=0:
+			if not os.path.exists(mn):
+				sim = simulation.Simulator(fn=fn, fusemount=False)
+				sim.compile_model()
+				sim.compile_sim(args=['-s'])
+			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+		else:
+			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
+
+	else:
+		if args.np!=0:
+			if not os.path.exists(mn):
+				sim = simulation.Simulator(fn=fn, fusemount=False)
+				sim.compile_model()
+				sim.compile_sim(args=['-s'])
+			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+		else:
+			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 	
 
 	
