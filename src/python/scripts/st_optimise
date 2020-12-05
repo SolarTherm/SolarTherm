@@ -130,6 +130,8 @@ if __name__ == '__main__':
 			help='the working directory')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
 			help='number of processes (set to 0 for serial mode)')	
+	parser.add_argument('--restart', type=str, default=None,
+			help='restart an optimisation by continuing the last simulation (available now only via dakota), given the directory of the optimisation')
 
 	t_start = time.time()
 
@@ -284,7 +286,12 @@ if __name__ == '__main__':
 			par_b.append([0, 1])
 			par_0.append((p0 - lb)/(ub - lb))
 
-	print("Optimisation parameter(s): ", par_n, "\n")
+	if args.restart!=None:
+		print("Restart the previous DAKOTA optimisation in the working direcotry:")
+		print("   ", args.restart, '\n')
+	else:
+		print("Optimisation parameter(s): ", par_n, "\n")
+
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
@@ -381,38 +388,51 @@ if __name__ == '__main__':
 			print('* More info here: ')
 			print('    https://dakota.sandia.gov \n')
 		
+		if args.restart!=None:
+			os.chdir(args.restart)
+			if args.np!=0:
+				if not os.path.exists(mn):
+					sim = simulation.Simulator(fn=fn, fusemount=False)
+					sim.compile_model()
+					sim.compile_sim(args=['-s'])
+				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+			else:
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
-		opt=OptimisationDakotaIn()
-		# TODO at the moment, all the setting are default
-		# need to implement parameters to change the settings
-		
-		if args.method=='dakota_moga':
-			opt.moga()
-		elif args.method=='dakota_soga':
-			opt.soga()
 
-		method=opt.method
-		response=opt.response(num_obj=num_obj)
-
-		variables=opt.variables(var_names=par_n, nominals=nominals, 
-		maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
-		perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
-		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker)
-
-		gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
-		gen_interface_bb(savedir)
-
-		subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
-
-		if args.np!=0:
-			if not os.path.exists(mn):
-				sim = simulation.Simulator(fn=fn, fusemount=False)
-				sim.compile_model()
-				sim.compile_sim(args=['-s'])
-			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 		else:
-			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+
+			opt=OptimisationDakotaIn()
+			# TODO at the moment, all the setting are default
+			# need to implement parameters to change the settings
+		
+			if args.method=='dakota_moga':
+				opt.moga()
+			elif args.method=='dakota_soga':
+				opt.soga()
+
+			method=opt.method
+			response=opt.response(num_obj=num_obj)
+
+			variables=opt.variables(var_names=par_n, nominals=nominals, 
+			maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
+			perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
+			step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
+			integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker)
+
+			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
+			gen_interface_bb(savedir)
+
+			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
+
+			if args.np!=0:
+				if not os.path.exists(mn):
+					sim = simulation.Simulator(fn=fn, fusemount=False)
+					sim.compile_model()
+					sim.compile_sim(args=['-s'])
+				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+			else:
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
 		if args.method=='dakota_moga':
 			summary={}

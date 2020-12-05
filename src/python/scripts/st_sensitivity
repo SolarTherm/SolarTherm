@@ -60,6 +60,8 @@ if __name__=='__main__':
 			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
 	parser.add_argument('--wd', type=str, default='.',
 			help='the working directory')
+	parser.add_argument('--restart', type=str, default=None,
+			help='restart by continuing the last simulation (available now only via dakota), given the directory of the simulations')
 
 	args = parser.parse_args()
 
@@ -180,15 +182,27 @@ if __name__=='__main__':
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
-	if args.np!=0:
-		if not os.path.exists(mn):
-			sim = simulation.Simulator(fn=fn, fusemount=False)
-			sim.compile_model()
-			sim.compile_sim(args=['-s'])
-		subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
-	else:
-		subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+	if args.restart!=None:
+		os.chdir(args.restart)
+		if args.np!=0:
+			if not os.path.exists(mn):
+				sim = simulation.Simulator(fn=fn, fusemount=False)
+				sim.compile_model()
+				sim.compile_sim(args=['-s'])
+			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+		else:
+			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
+
+	else:
+		if args.np!=0:
+			if not os.path.exists(mn):
+				sim = simulation.Simulator(fn=fn, fusemount=False)
+				sim.compile_model()
+				sim.compile_sim(args=['-s'])
+			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+		else:
+			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 	
 
 	
