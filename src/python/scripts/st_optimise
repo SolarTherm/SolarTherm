@@ -82,6 +82,8 @@ if __name__ == '__main__':
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--peaker', action='store_true',
 			help='peaker configuration')
+	parser.add_argument('--runsolstice', action='store_true',
+			help='run solstice mcrt')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', type=str, default='1y',
@@ -396,7 +398,7 @@ if __name__ == '__main__':
 		maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
 		perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
 		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv)
+		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker)
 
 		gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 		gen_interface_bb(savedir)
