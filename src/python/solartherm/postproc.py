@@ -226,7 +226,6 @@ class SimResultElec(SimResult):
 		lcoe = None # Levelised cost of electricity
 		capf = None # Capacity factor
 		if close_to_year: 
-
 			if peaker:
 				tod_v=self.mat.data('TOD_W')
 				tod_factor=tod_v[-1]/eng_v[-1]

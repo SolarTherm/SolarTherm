@@ -403,7 +403,6 @@ maxStep = None if maxStep == 'None' else str(maxStep)
 var_n=[] # variable names
 var_v=[] # variable values
 
-
 print('')
 print(names[:-(12+2*num_perf)])
 for n in names[:-(12+2*num_perf)]:
@@ -414,7 +413,7 @@ for n in names[:-(12+2*num_perf)]:
 # case suffix
 suffix=results.results_file.split(".")[-1]
 
-optic_folder='optics_case_%s'%suffix
+optic_folder='optic_case_%s'%suffix
 
 var_n.append('casefolder')
 var_v.append(optic_folder)
@@ -454,15 +453,6 @@ for i in range(num_perf):
 	if system=='TEST':
 		name=params.__getitem__("index%s"%i)
 		solartherm_res.append(sign*res.data(name)[0])
-<<<<<<< HEAD
-		print 'objective %s: '%i, name, sign*res.data(name)[0]
-	else:
-		idx=int(params.__getitem__("index%s"%i))
-		solartherm_res.append(sign*perf[idx])
-		print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
-
-print ''
-=======
 		print('objective %s: '%i, name, sign*res.data(name)[0])
 	else:
 		idx=int(params.__getitem__("index%s"%i))
@@ -470,7 +460,6 @@ print ''
 		print('objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx])
 
 print('')
->>>>>>> ParticleSystem1D
 
 # Return the results to Dakota
 for i, r in enumerate(results.responses()):

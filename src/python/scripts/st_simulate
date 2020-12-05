@@ -13,7 +13,6 @@ from time import time
 # TODO: Pull together relevant results
 
 def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, peaker, i, par_v):
-
 	"""This small function is called from the mp.Pool for parallel simulations"""
 	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
 	sim.load_init()
@@ -179,7 +178,6 @@ if __name__ == '__main__':
 		worker_enc = partial(simulation_worker, args.file, args.start,
 				args.stop, args.step, args.tolerance, args.initStep, args.maxStep, args.integOrder,
 				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs, args.peaker)
-
 		if args.np:
 			pool = mp.Pool(processes=args.np)
 			# use apply_async in loop (not map_async) so callback runs 1x per sim.
