@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 
 def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, peaker, test_mode, par_val):
 
-
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
 	sim.simulate(start=stime[0], stop=stime[1], step=stime[2], initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
@@ -35,9 +34,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 			objs.append(sign*res.data(name)[0])
 	else:
 		res = resultclass(mat_fn)
-
 		perfs=res.calc_perf(peaker)
-
 		constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset	
 		objs=[]
 		for i in range(num_obj):
@@ -209,13 +206,13 @@ if __name__ == '__main__':
 					+ str(resultclass.perf_n))		
 			
 
-	sim.load_init() # Load in init XML
 
 	if args.excel!=None:
 
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)	
+		tree.write_xml(input_xml)
 
 		par_n=tree.filter_type(2) # names, 2 to get names for optimisation
 		par_0=[] # start
@@ -291,7 +288,6 @@ if __name__ == '__main__':
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.peaker, args.test)
-
 
 
 	if args.method == 'pso':
