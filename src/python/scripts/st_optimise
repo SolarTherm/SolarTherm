@@ -17,7 +17,8 @@ import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, test_mode, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, peaker, test_mode, par_val):
+
 
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
@@ -34,7 +35,9 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 			objs.append(sign*res.data(name)[0])
 	else:
 		res = resultclass(mat_fn)
-		perfs=res.calc_perf()
+
+		perfs=res.calc_perf(peaker)
+
 		constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset	
 		objs=[]
 		for i in range(num_obj):
@@ -80,6 +83,8 @@ if __name__ == '__main__':
 			help='no simulation compilation')
 	parser.add_argument('--noc', action='store_true',
 			help='no compilation at all (--nomc and --nosc)')
+	parser.add_argument('--peaker', action='store_true',
+			help='peaker configuration')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', type=str, default='1y',
@@ -285,7 +290,8 @@ if __name__ == '__main__':
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
-			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.test)
+			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.peaker, args.test)
+
 
 
 	if args.method == 'pso':

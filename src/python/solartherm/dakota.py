@@ -263,7 +263,7 @@ class OptimisationDakotaIn:
     output silent
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
-	def soga(self,seed=10983, max_eval=2500, init_type='unique_random', pop_size=30, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 30):
+	def soga(self,seed=10983, max_eval=800, init_type='unique_random', pop_size=20, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 10):
 
 		'''
 		seed, int, index of seed, to generate repeatable results
@@ -403,14 +403,23 @@ maxStep = None if maxStep == 'None' else str(maxStep)
 var_n=[] # variable names
 var_v=[] # variable values
 
-print ''
-print names[:-(12+2*num_perf)]
+
+print('')
+print(names[:-(12+2*num_perf)])
 for n in names[:-(12+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
-	print 'variable   : ', n, '=', params.__getitem__(n)
+	print('variable   : ', n, '=', params.__getitem__(n))
+
 # case suffix
 suffix=results.results_file.split(".")[-1]
+
+optic_folder='optics_case_%s'%suffix
+
+var_n.append('casefolder')
+var_v.append(optic_folder)
+print('casefolder = '+ optic_folder)
+
 
 # run solartherm
 from solartherm import postproc
@@ -445,6 +454,7 @@ for i in range(num_perf):
 	if system=='TEST':
 		name=params.__getitem__("index%s"%i)
 		solartherm_res.append(sign*res.data(name)[0])
+<<<<<<< HEAD
 		print 'objective %s: '%i, name, sign*res.data(name)[0]
 	else:
 		idx=int(params.__getitem__("index%s"%i))
@@ -452,6 +462,15 @@ for i in range(num_perf):
 		print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
 
 print ''
+=======
+		print('objective %s: '%i, name, sign*res.data(name)[0])
+	else:
+		idx=int(params.__getitem__("index%s"%i))
+		solartherm_res.append(sign*perf[idx])
+		print('objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx])
+
+print('')
+>>>>>>> ParticleSystem1D
 
 # Return the results to Dakota
 for i, r in enumerate(results.responses()):
