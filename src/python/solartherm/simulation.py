@@ -300,7 +300,6 @@ class Simulator(object):
 		derives its value from a non-final changed parameter.
 		"""
 		root = self.init_et.getroot()
-
 		for i, n in enumerate(par_n):
 			root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = par_v[i]
 
