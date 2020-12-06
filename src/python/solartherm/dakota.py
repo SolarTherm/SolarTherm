@@ -85,16 +85,17 @@ class UncertaintyDakotaIn:
 	'''
 	description and architecture
 	'''
-	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, perf_num=1, perf_i=[1]):
+	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, runsolstice=False, peaker=False, perf_num=1, perf_i=[1]):
+
 
 		if perf_num!=len(perf_i):
 			perf_num=len(perf_i)
 
 		self.variables='	discrete_state_set\n'
-		self.variables+='        string %s\n'%(12+perf_num*2)
+		self.variables+='        string %s\n'%(14+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
 
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
 			set_n+='  "index%s"'%i
@@ -304,15 +305,15 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, pop_size, crossover, mutation_type , mutation_rate, fitness_type, percent_change, num_generations)
 
 
-	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv):
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice=False, peaker=False):
 
 		perf_num=len(perf_sign)
 
 		v='    discrete_state_set\n'
-		v+='        string %s\n'%(12+perf_num*2)
+		v+='        string %s\n'%(14+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
 
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
 			if system=='TEST':
@@ -397,6 +398,10 @@ solver=str(params.__getitem__("solver"))
 nls=str(params.__getitem__("nls"))
 lv=str(params.__getitem__("lv"))
 
+runsolstice=params.__getitem__("runsolstice")
+peaker=params.__getitem__("peaker")
+
+
 initStep = None if initStep == 'None' else str(initStep)
 maxStep = None if maxStep == 'None' else str(maxStep)
 
@@ -404,8 +409,9 @@ var_n=[] # variable names
 var_v=[] # variable values
 
 print('')
-print(names[:-(12+2*num_perf)])
-for n in names[:-(12+2*num_perf)]:
+
+print(names[:-(14+2*num_perf)])
+for n in names[:-(14+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
 	print('variable   : ', n, '=', params.__getitem__(n))
@@ -413,11 +419,12 @@ for n in names[:-(12+2*num_perf)]:
 # case suffix
 suffix=results.results_file.split(".")[-1]
 
-optic_folder='optics_case_%s'%suffix
 
-var_n.append('casefolder')
-var_v.append(optic_folder)
-print('casefolder = '+ optic_folder)
+if runsolstice=='True':
+	optic_folder='optic_case_%s'%suffix
+	var_n.append('casefolder')
+	var_v.append(optic_folder)
+	print('casefolder = '+ optic_folder)
 
 
 # run solartherm
@@ -442,7 +449,11 @@ else:
 		resultclass = postproc.SimResultFuel(sim.res_fn)
 	else:
 		resultclass = postproc.SimResultElec(sim.res_fn)
-	perf = resultclass.calc_perf()
+
+	if peaker=='True':
+		perf = resultclass.calc_perf(peaker=True)
+	else:
+		perf = resultclass.calc_perf()
 
 
 solartherm_res=[]
