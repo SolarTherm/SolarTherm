@@ -19,14 +19,15 @@ extends OpticalEfficiency_3Apertures;
   parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-  parameter Integer argc =27 "Number of variables to be passed to the C function";
+  parameter Integer argc =28 "Number of variables to be passed to the C function";
 
   //parameter Boolean single_field = true "True for single field, false for multi tower";
   //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
   parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
   parameter Real n_helios=1000 "Number of heliostats";
   parameter SI.HeatFlowRate Q_in_rcv = 1e6;
-  parameter Real num_aperture = 3 "number of apertures";
+  parameter Integer num_aperture = 3 "number of apertures";
+  parameter Real angular_range = 180 "Angular range of the multi-aperture configuration";
 
   parameter SI.Length H_rcv_1=10 "Receiver aperture height at level 1";
   parameter SI.Length W_rcv_1=10 "Receiver aperture width at level 1";
@@ -88,7 +89,7 @@ extends OpticalEfficiency_3Apertures;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));    
 
 initial algorithm
-  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
+  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, angular_range, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);

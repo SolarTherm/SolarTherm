@@ -87,6 +87,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
+  parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
+  parameter Integer num_aperture = 3 "[H&T] number of apertures";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
   parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
@@ -699,6 +701,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       W_rcv_2 = W_rcv_lv2, 
       W_rcv_3 = W_rcv_lv3, 
       tilt_rcv = tilt_rcv, 
+	  angular_range=angular_range,
+	  num_aperture=num_aperture,
       W_helio = W_helio, 
       H_helio = H_helio, 
       H_tower = H_tower, 
