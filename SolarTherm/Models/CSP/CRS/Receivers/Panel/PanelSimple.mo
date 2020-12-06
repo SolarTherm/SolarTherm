@@ -41,7 +41,7 @@ model PanelSimple
 	parameter SI.Temperature Tamb = 298.15 "Ambient temperature";
 	parameter SI.CoefficientOfHeatTransfer h_ext = 10 "Coefficient of external heat transfer due to external convection";
 	parameter Integer N_start = 0 "Starting position";
-	
+	parameter Real factor = 1;
 	parameter SI.Thickness e = 0.002e-3 "Pipe internal roughness";
 	Real f[Nel*Npa_fl] "Darcy friction factor";
 	parameter Real L_e_45 = 16.0 "Equivalent lenght for an 45 degree elbow";
@@ -72,6 +72,7 @@ model PanelSimple
 	SI.Temperature Ts[Nel*Npa_fl];
 	SI.Temperature Ti[Nel*Npa_fl];
 	SI.Stress sigma_eq[Nel*Npa_fl];
+	SI.ThermalConductivity ktf[Nel*Npa_fl];
 
 	String line;
 	String filepath = "/home/arfontalvo/Documents/paper1/uniform.csv";
@@ -106,16 +107,17 @@ equation
 	Re[1] = max(1,vf[1] * rho[1] * 2*a / muf[1]);
 	Pr[1] = max(0,muf[1] * Cp[1] / lambda[1]);
 	Nu[1] = 0.023*Re[1]^(0.8)*Pr[1]^(0.4);
-	alpha_ext[1] = h_ext + Modelica.Constants.sigma*em*(Ts[1]^2+Tamb^2)*(Ts[1]+Tamb);
-	Bi1[1] = h_int[1]*a/kt;
-	Bi2[1] = alpha_ext[1]*b/kt;
-	Ta[1] = (Tamb - Tf[1])*kt/(ab*Q_rcv[1]*b);
+	alpha_ext[1] = h_ext + factor*Modelica.Constants.sigma*em*(Ts[1]^2+Tamb^2)*(Ts[1]+Tamb);
+	ktf[1] = 0.0163914878*Ts[1] + 6.8703621459;
+	Bi1[1] = h_int[1]*a/ktf[1];
+	Bi2[1] = alpha_ext[1]*b/ktf[1];
+	Ta[1] = (Tamb - Tf[1])*ktf[1]/(ab*Q_rcv[1]*b);
 	Q_htf[1] = 2*ab*Q_rcv[1]*b*(1 + pi*Bi2[1]*Ta[1])*Bi1[1]*(H_rcv/Nel)/(Bi1[1] + Bi2[1]*(1 - Bi1[1]*log(a/b)))*N_tb_pa;
 	m_dot*hf[1] = m_dot*h_in + Q_htf[1];
 	Tf[1] = Medium.T_h(hf[1]);
-	Ts[1] = Tsurface(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,Ta[1]);
-	Ti[1] = Tinner(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,Ta[1]);
-	sigma_eq[1] = Stress(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,kt,lambdat,E,poisson,Q_htf[1]/N_tb_pa,H_rcv/Nel);
+	Ts[1] = Tsurface(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,ktf[1],Ta[1]);
+	Ti[1] = Tinner(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,ktf[1],Ta[1]);
+	sigma_eq[1] = Stress(Tf[1],Q_rcv[1],Bi1[1],Bi2[1],ab,a,b,ktf[1],lambdat,E,poisson,Q_htf[1]/N_tb_pa,H_rcv/Nel);
 	
 	f[1] = (-1.8*log10((e/(2*a)/3.7)^1.11 + 6.9/Re[1]))^(-2);
 	dP_tube[1] = Npa_fl*0.5*f[1]*(H_rcv/Nel)/(2*a)*rho[1]*vf[1]^2; //+ 2/2*f[1]*L_e_45*rho[1]*vf[1]^2 + 4/2*f[1]*L_e_90*rho[1]*vf[1]^2;
@@ -131,16 +133,17 @@ equation
 		Re[i] = max(1,vf[i] * rho[i] * 2*a / muf[i]);
 		Pr[i] = max(0,muf[i] * Cp[i] / lambda[i]);
 		Nu[i] = 0.023*Re[i]^(0.8)*Pr[i]^(0.4);
-		alpha_ext[i] = h_ext + Modelica.Constants.sigma*em*(Ts[i]^2+Tamb^2)*(Ts[i]+Tamb);
-		Bi1[i] = h_int[i]*a/kt;
-		Bi2[i] = alpha_ext[i]*b/kt;
-		Ta[i] = (Tamb - Tf[i])*kt/(ab*Q_rcv[i]*b);
+		alpha_ext[i] = h_ext + factor*Modelica.Constants.sigma*em*(Ts[i]^2+Tamb^2)*(Ts[i]+Tamb);
+		ktf[i] = 0.0163914878*Ts[i] + 6.8703621459;
+		Bi1[i] = h_int[i]*a/ktf[i];
+		Bi2[i] = alpha_ext[i]*b/ktf[i];
+		Ta[i] = (Tamb - Tf[i])*ktf[i]/(ab*Q_rcv[i]*b);
 		Q_htf[i] = 2*ab*Q_rcv[i]*b*(1 + pi*Bi2[i]*Ta[i])*Bi1[i]*(H_rcv/Nel)/(Bi1[i] + Bi2[i]*(1 - Bi1[i]*log(a/b)))*N_tb_pa;
 		m_dot*hf[i] = m_dot*hf[i-1] + Q_htf[i];
 		Tf[i] = Medium.T_h(hf[i]);
-		Ts[i] = Tsurface(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,Ta[i]);
-		Ti[i] = Tinner(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,Ta[i]);
-		sigma_eq[i] = Stress(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,kt,lambdat,E,poisson,Q_htf[i]/N_tb_pa,H_rcv/Nel);
+		Ts[i] = Tsurface(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,ktf[i],Ta[i]);
+		Ti[i] = Tinner(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,ktf[i],Ta[i]);
+		sigma_eq[i] = Stress(Tf[i],Q_rcv[i],Bi1[i],Bi2[i],ab,a,b,ktf[i],lambdat,E,poisson,Q_htf[i]/N_tb_pa,H_rcv/Nel);
 		f[i] = (-1.8*log10((e/(2*a)/3.7)^1.11 + 6.9/Re[i]))^(-2);
 		dP_tube[i] = Npa_fl*0.5*f[i]*(H_rcv/Nel)/(2*a)*rho[i]*vf[i]^2;// + 2/2*f[i]*L_e_45*rho[i]*vf[i]^2 + 4/2*f[i]*L_e_90*rho[i]*vf[i]^2;
 	end for;
