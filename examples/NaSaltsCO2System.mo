@@ -92,7 +92,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
-	parameter FI.MassPrice material_sc = 84 "Material HX Specific Cost";
+	parameter FI.MassPrice material_sc = 80 "Material HX Specific Cost"; // UNS 06230
 	parameter Real hx_to_rec_factor = 1;	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10) Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
@@ -249,53 +249,79 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "Variable O&M cost per production per year";	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
 
 	// Receiver cost
-	parameter FI.Money_USD C_rec_fix = 4.135e6 "Receiver fixed Cost";
-	parameter FI.Money_USD C_rec_ref = 47.409e6 "Receiver reference Cost";
+	parameter FI.Money_USD C_rec_fix = 4135e3 "Receiver fixed Cost";
+	parameter FI.Money_USD C_rec_ref = 47409e3 "Receiver reference Cost";
 	parameter SI.Diameter D_receiver_ref = 20 "Receiver reference diameter";
 	parameter SI.Height H_receiver_ref = 25 "Receiver reference height";
 	parameter Real rec_exp = 0.6 "Receiver reference height";
+
 	// Riser and downcomer cost
-	parameter SI.Diameter D_r = 0.626 "Riser outer diameter";
-	parameter SI.Thickness t_r = 12.7e-3 "Riser wall thickness";
-	parameter SI.Diameter D_d = 0.647 "Downcomer outer diameter";
-	parameter SI.Thickness t_d = 12.7e-3 "Downcomer wall thickness";
 	parameter SI.Length L_horiz = 30 "Additional horizontal length of riser and downcomer to the HEX";
-	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
-	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
 	parameter Real lm_r = 1.36 "Length multiplier for expansion loops on riser";
 	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
-	parameter SI.Diameter D_r_ref = 0.711	"Riser reference diameter";
-	parameter SI.Diameter D_d_ref = 0.711	"Downcomer reference diameter";
-	parameter Real C_r_m(unit = "$/kg") = 80 "Riser material cost";
-	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost";
-	parameter Real C_r_ref(unit = "$/m") = 9090 "Riser reference cost";
-	parameter Real C_d_ref(unit = "$/m") = 22973 "Riser reference cost";
-	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser "Riser cost";
-	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer "Downcomer cost";
+	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
+	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
+
+	parameter SI.Diameter D_r = 0.66 "Riser outer diameter";
+	parameter SI.Diameter D_d = 0.66 "Downcomer outer diameter";
+
+	parameter SI.Thickness t_r = 0.007925 "Riser wall thickness";
+	parameter SI.Thickness t_d = 0.007925 "Downcomer wall thickness";
+
+	parameter SI.Density rho_r = 8.03 "Riser material density (g/cm3)"; //UNS S34709
+	parameter SI.Density rho_d = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
+
+	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "Riser piping mass per meter";
+	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "Downcomer piping mass per meter";
+
+	parameter SI.Diameter D_r_ref = 0.711 "Riser reference diameter";
+	parameter SI.Diameter D_d_ref = 0.711 "Downcomer reference diameter";
+
+	parameter Real C_r_m(unit = "$/kg") = 8 "Riser material cost per kg";
+	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost per kg";
+
+	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "Riser material cost per m";
+	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "Downcomer material cost per m";
+
+	parameter Real C_r_ref(unit = "$/m") = 5713 "Riser reference cost without material";
+	parameter Real C_d_ref(unit = "$/m") = 8681 "Riser reference cost without material";
+
+	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_length*L_riser "Riser cost";
+	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_length*L_downcomer "Downcomer cost";
+
 	// Sodium loop cost
-	parameter FI.Money_USD C_pip_na_ref =  15.96839293e6 "Sodium piping reference cost";
-	parameter FI.Money_USD C_ic_na_ref = 0.417e6 "Valves and I&C reference cost";
+	parameter FI.Money_USD C_pip_na_ref =  2e6 "Sodium piping reference cost";
+	parameter FI.Money_USD C_ic_na_ref = 417e3 "Valves and I&C reference cost";
 	parameter FI.Money_USD C_valve_na_ref = 2.538e6 "Sodium valves reference cost";
-	parameter FI.Money_USD C_tank_na_ref = 1.8e6 "Sump tank reference cost";
-	parameter FI.Money_USD C_vessel_na_ref = 0.3e6 "Inlet vessel reference cost";
-	parameter FI.Money_USD C_skid_na_ref = 0.4e6 "Purification skid reference cost";
-	parameter FI.Money_USD C_pump_na_ref = 3e6 "Sodium pumps reference cost";
-	parameter Real pip_na_exp = 0.6 "Sodium piping scaling exponent";
-	parameter Real ic_na_exp = 0.6 "Valves and I&C scaling exponent";
-	parameter Real valve_na_exp = 0.6 "Sodium valves scaling exponent";
-	parameter Real tank_na_exp = 0.6 "Sump tank scaling exponent";
-	parameter Real vessel_na_exp = 0.6 "Inlet vessel scaling exponent";
-	parameter Real skid_na_exp = 0.6 "Purification skid scaling exponent";
-	parameter Real pump_na_exp = 0.6 "Sodium pumps scaling exponent";
-	parameter SI.HeatFlowRate Q_rec_out_des_ref = Q_rec_out_des "Receiver thermal output reference size";
-	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^pip_na_exp "Sodium piping cost";
-	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^ic_na_exp "Valves and I&C reference cost";
-	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^valve_na_exp "Sodium valves cost";
-	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^tank_na_exp "Sump tank cost";
-	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^vessel_na_exp "Inlet vessel cost";
-	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^skid_na_exp "Purification skid cost";
-	parameter FI.Money_USD C_argon_na = 100000 "Argon system cost";
-	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_out_des_ref)^pump_na_exp "Sodium pump cost";
+	parameter FI.Money_USD C_tank_na_ref = 1887762 "Sump tank reference cost";
+	parameter FI.Money_USD C_vessel_na_ref = 329116 "Inlet vessel reference cost";
+	parameter FI.Money_USD C_skid_na_ref = 450e3 "Purification skid reference cost";
+	parameter FI.Money_USD C_pump_na_ref = 4.4e6 "Sodium pumps reference cost";
+	parameter FI.Money_USD C_argon_na_ref = 124e3 "Argon system reference cost";
+
+	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
+	parameter Real ic_na_exp = 0.5 "Valves and I&C scaling exponent";
+	parameter Real valve_na_exp = 0.7 "Sodium valves scaling exponent";
+	parameter Real tank_na_exp = 0.7 "Sump tank scaling exponent";
+	parameter Real vessel_na_exp = 0.7 "Inlet vessel scaling exponent";
+	parameter Real skid_na_exp = 0.7 "Purification skid scaling exponent";
+	parameter Real pump_na_exp = 0.7 "Sodium pumps scaling exponent";
+	parameter Real argon_na_exp = 0.5 "Argon system scaling exponent";
+
+	parameter SI.HeatFlowRate Q_rec_ASTRI_ref = 543e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "Receiver thermal output reference size";
+
+	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^pip_na_exp "Sodium piping cost";
+	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^ic_na_exp "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^valve_na_exp "Sodium valves cost";
+	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^tank_na_exp "Sump tank cost";
+	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^vessel_na_exp "Inlet vessel cost";
+	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^skid_na_exp "Purification skid cost";
+	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
+	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
+
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
 	parameter FI.Money_USD C_tower = 16339938 "Tower cost";
@@ -307,21 +333,24 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
+
 	// Direct capital costs (subtotal)
 	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_receiver + C_loop_na + C_tower + C_rd + C_hx + C_storage + C_block + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
 	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
+
 	// Total direct capital cost
 	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
 	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
 	parameter FI.Money_USD C_land = pri_land * A_land / 4046.86 "Land cost";
+
 	// Total capital investment
 	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
+
 	// Operation and maintenance cost
 	parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 "Fixed O&M cost per year";
 	parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "Variable O&M cost per production per year";
 
-	// ***************************************************************************
-	// System components
+	// ************************************* System components **************************************
 
 	//Weather data
 	SolarTherm.Models.Sources.DataTable.DataTable data(
