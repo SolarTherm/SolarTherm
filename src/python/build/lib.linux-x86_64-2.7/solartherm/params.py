@@ -205,7 +205,7 @@ class Tree(object):
 					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
 					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
 					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
-	
+
 		self.xml_tree.write(output_xml)
 
 

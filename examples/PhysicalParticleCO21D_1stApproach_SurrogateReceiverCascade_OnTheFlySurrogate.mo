@@ -115,21 +115,30 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Area A_ap_lv1 = 300 "[RCV] Top receiver aperture area [m2]";
   parameter SI.Area A_ap_lv2 = 300 "[RCV] Mid receiver aperture area [m2]";
   parameter SI.Area A_ap_lv3 = 300 "[RCV] Bottom receiver aperture area [m2]";
-  parameter SI.Area A_rcv_total = A_ap_lv1 + A_ap_lv2 + A_ap_lv3;
+
+  parameter SI.Area A_ap_lv1_parsed(fixed=false) "Top receiver aperture area [m2]";
+  parameter SI.Area A_ap_lv2_parsed(fixed=false) "Middle receiver aperture area [m2]";
+  parameter SI.Area A_ap_lv3_parsed(fixed=false) "Bottom receiver aperture area [m2]";
+  parameter SI.Area A_rcv_total = A_ap_lv1_parsed + A_ap_lv2_parsed + A_ap_lv3_parsed;
   
   parameter Real ar_rec_lv1 = 1 "[RCV] Height to diameter aspect ratio of the top receiver aperture";
   parameter Real ar_rec_lv2 = 1 "[RCV] Height to diameter aspect ratio of the mid receiver aperture";
   parameter Real ar_rec_lv3 = 1 "[RCV] Height to diameter aspect ratio of the bottom receiver aperture";
+
+  parameter Real ar_rec_lv1_parsed(fixed=false) "Height to diameter aspect ratio of the top receiver aperture";
+  parameter Real ar_rec_lv2_parsed(fixed=false) "Height to diameter aspect ratio of the mid receiver aperture";
+  parameter Real ar_rec_lv3_parsed(fixed=false) "Height to diameter aspect ratio of the bottom receiver aperture";
+
   parameter Real rec_fr(fixed = false) "Receiver loss fraction at design point";
   
-  parameter SI.Length H_rcv_lv1 = sqrt(A_ap_lv1 * ar_rec_lv1) "Receiver aperture height";
-  parameter SI.Length W_rcv_lv1 = A_ap_lv1 / H_rcv_lv1 "Receiver aperture width";
+  parameter SI.Length H_rcv_lv1 = sqrt(A_ap_lv1_parsed * ar_rec_lv1_parsed) "Receiver aperture height";
+  parameter SI.Length W_rcv_lv1 = A_ap_lv1_parsed / H_rcv_lv1 "Receiver aperture width";
   
-  parameter SI.Length H_rcv_lv2 = sqrt(A_ap_lv2 * ar_rec_lv2) "Receiver aperture height";
-  parameter SI.Length W_rcv_lv2 = A_ap_lv2 / H_rcv_lv2 "Receiver aperture width";
+  parameter SI.Length H_rcv_lv2 = sqrt(A_ap_lv2_parsed * ar_rec_lv2_parsed) "Receiver aperture height";
+  parameter SI.Length W_rcv_lv2 = A_ap_lv2_parsed / H_rcv_lv2 "Receiver aperture width";
   
-  parameter SI.Length H_rcv_lv3 = sqrt(A_ap_lv3 * ar_rec_lv3) "Receiver aperture height";
-  parameter SI.Length W_rcv_lv3 = A_ap_lv3 / H_rcv_lv3 "Receiver aperture width";
+  parameter SI.Length H_rcv_lv3 = sqrt(A_ap_lv3_parsed * ar_rec_lv3_parsed) "Receiver aperture height";
+  parameter SI.Length W_rcv_lv3 = A_ap_lv3_parsed / H_rcv_lv3 "Receiver aperture width";
   
   parameter SI.Length H_rcv_total = H_rcv_lv1 + H_rcv_lv2 + H_rcv_lv3;
   
@@ -748,12 +757,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   //********************* Receiver Design Condition Sizing Calculator - Using expensive model to find mass flow rate at design point
   SolarTherm.Models.CSP.CRS.Receivers.CascadeParticleReceiver1DCalculator particleReceiver1DCalculator(
-      A_ap_lv1 = A_ap_lv1,
-      A_ap_lv2 = A_ap_lv2,
-      A_ap_lv3 = A_ap_lv3,
-      ar_rec_lv1 = ar_rec_lv1,
-      ar_rec_lv2 = ar_rec_lv2,
-      ar_rec_lv3 = ar_rec_lv3, 
+      A_ap_lv1 = A_ap_lv1_parsed,
+      A_ap_lv2 = A_ap_lv2_parsed,
+      A_ap_lv3 = A_ap_lv3_parsed,
+      ar_rec_lv1 = ar_rec_lv1_parsed,
+      ar_rec_lv2 = ar_rec_lv2_parsed,
+      ar_rec_lv3 = ar_rec_lv3_parsed, 
       Q_in_lv1 = Q_in_lv1,
       Q_in_lv2 = Q_in_lv2,
       Q_in_lv3 = Q_in_lv3,
@@ -786,12 +795,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   //********************* Defocus calculator
   SolarTherm.Models.CSP.CRS.Receivers.CascadeParticleReceiver1DCalculator defocuscalculator(
-      A_ap_lv1 = A_ap_lv1,
-      A_ap_lv2 = A_ap_lv2,
-      A_ap_lv3 = A_ap_lv3,
-      ar_rec_lv1 = ar_rec_lv1,
-      ar_rec_lv2 = ar_rec_lv2,
-      ar_rec_lv3 = ar_rec_lv3, 
+      A_ap_lv1 = A_ap_lv1_parsed,
+      A_ap_lv2 = A_ap_lv2_parsed,
+      A_ap_lv3 = A_ap_lv3_parsed,
+      ar_rec_lv1 = ar_rec_lv1_parsed,
+      ar_rec_lv2 = ar_rec_lv2_parsed,
+      ar_rec_lv3 = ar_rec_lv3_parsed, 
       m_in = m_flow_blk, 
       T_out_target = T_in_ref_blk, 
       T_in = T_in_rec, 
@@ -1018,6 +1027,12 @@ algorithm
 */
 
 initial equation
+   A_ap_lv1 = A_ap_lv1_parsed;
+   A_ap_lv2 = A_ap_lv2_parsed;
+   A_ap_lv3 = A_ap_lv3_parsed;
+   ar_rec_lv1 = ar_rec_lv1_parsed;
+   ar_rec_lv2 = ar_rec_lv2_parsed;
+   ar_rec_lv3 = ar_rec_lv3_parsed;
    Q_in_lv1 = heliostatsField.Q_in_rcv_1;
    Q_in_lv2 = heliostatsField.Q_in_rcv_2;
    Q_in_lv3 = heliostatsField.Q_in_rcv_3;
