@@ -20,6 +20,8 @@ extends OpticalEfficiency;
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 	parameter Integer argc =22 "Number of variables to be passed to the C function";
+	
+	parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
@@ -50,15 +52,26 @@ extends OpticalEfficiency;
 
     SI.Angle angle1;
     SI.Angle angle2;
+    SI.Efficiency nu_windy;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table(
     tableOnFile=true,
     tableName="optics",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
-    annotation (Placement(transformation(extent={{12,12},{32,32}})));
+  annotation (Placement(transformation(extent={{12,12},{32,32}})));
+  
+  Modelica.Blocks.Tables.CombiTable2D nu_table_windy(
+    tableOnFile=true,
+    tableName= if set_swaying_optical_eff then "optics_windy" else "optics",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=tablefile)
+  annotation (Placement(visible = true, transformation(extent = {{16, -38}, {36, -18}}, rotation = 0)));
+    
+    
   Modelica.Blocks.Sources.RealExpression angle2_input(y=to_deg(angle2))
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
+    
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
@@ -79,11 +92,16 @@ equation
     angle1=SolarTherm.Models.Sources.SolarFunctions.solarZenith(dec,hra,lat);
     angle2=SolarTherm.Models.Sources.SolarFunctions.solarAzimuth(dec,hra,lat);
   end if;
+  
   nu=max(0,nu_table.y);
-  connect(angle2_input.y, nu_table.u2)
-    annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
+  nu_windy=max(0,nu_table_windy.y);
+
   connect(angle1_input.y, nu_table.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-
-
+  connect(angle1_input.y, nu_table_windy.u1) annotation(
+    Line(points = {{-8, 32}, {2, 32}, {2, -22}, {14, -22}, {14, -22}}, color = {0, 0, 127}));
+  connect(angle2_input.y, nu_table_windy.u2) annotation(
+    Line(points = {{-8, 16}, {-8, 16}, {-8, -34}, {14, -34}, {14, -34}}, color = {0, 0, 127}));
+  connect(angle2_input.y, nu_table.u2) annotation(
+    Line(points = {{-8, 16}, {10, 16}, {10, 16}, {10, 16}}, color = {0, 0, 127}));
 end SolsticeOELT;

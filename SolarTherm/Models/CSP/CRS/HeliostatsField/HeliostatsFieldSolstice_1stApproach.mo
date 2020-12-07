@@ -7,6 +7,8 @@ model HeliostatsFieldSolstice_1stApproach
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
     parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
+    parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
+    parameter SI.Velocity Wspd_windy = 5 "Threshold above which is a windy condition [m/s]";
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
@@ -49,12 +51,41 @@ model HeliostatsFieldSolstice_1stApproach
     parameter String opt_file(fixed=false);
     parameter Real metadata_list[9] = metadata(opt_file);
 
-    SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_rho=helio_rho, helio_soil=helio_soil, helio_sf_ratio=helio_sf_ratio, slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_procs=n_procs, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+    SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(
+        hra=solar.hra, 
+        dec=solar.dec, 
+        lat=lat, 
+        method=method, 
+        Q_in_rcv=Q_in_rcv, 
+        H_rcv=H_rcv, 
+        W_rcv=W_rcv, 
+        tilt_rcv=tilt_rcv, 
+        W_helio=W_helio, 
+        H_helio=H_helio, 
+        H_tower=H_tower, 
+        R_tower=R_tower, 
+        R1=R1, 
+        fb=fb, 
+        helio_rho=helio_rho, 
+        helio_soil=helio_soil, 
+        helio_sf_ratio=helio_sf_ratio, 
+        slope_error=slope_error, 
+        n_row_oelt=n_row_oelt, 
+        n_col_oelt=n_col_oelt, 
+        n_procs=n_procs, 
+        field_type=field_type, 
+        rcv_type=rcv_type, 
+        psave=psave, 
+        wea_file=wea_file,
+        set_swaying_optical_eff = set_swaying_optical_eff);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
   
   SI.Efficiency nu;
+  SI.Efficiency nu_windy;
+  SI.Efficiency nu_calm;
+  SI.Angle slope_error_runtime;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
         transformation(extent={{-20,-20},{20,20}},
@@ -119,7 +150,29 @@ equation
   on_hf=(ele>ele_min) and
                      (Wspd_internal<Wspd_max) and (on_hopper==true);
   
-  nu = optical.nu;
+  nu_calm = optical.nu;
+  nu_windy = optical.nu_windy;
+  
+  if set_swaying_optical_eff == true then
+    if Wspd_internal < Wspd_windy then
+        //********************* Assuming linear relationship between effective slope error vs. wind speed
+        /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
+        slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_windy) * max(Wspd_internal,0);
+    else
+        slope_error_runtime = 2e-3;
+    end if;
+    
+    if slope_error_runtime < 2e-3 then
+        //********************* Assuming linear relationship between effective slope error vs. optical efficiency
+        nu = nu_windy + (nu_calm - nu_windy) / (2e-3 - slope_error) * (slope_error_runtime - slope_error);
+    else
+        nu = nu_windy;
+    end if;
+    
+  else
+    slope_error_runtime = -1;
+    nu = nu_calm;
+  end if;
   
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
 
