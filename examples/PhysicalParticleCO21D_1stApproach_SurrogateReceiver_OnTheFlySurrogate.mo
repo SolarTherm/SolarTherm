@@ -1,5 +1,8 @@
 within examples;
 
+//*********************** As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
+//*********************** based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48
+
 model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
@@ -35,6 +38,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
+  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -92,6 +96,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area (m^2)";
   parameter Real A_land = metadata_list[9] "Land area consumed by the plant - calculated value by Solstice (m^2)";
   parameter SI.Velocity Wspd_max = 15.65 if set_use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
+  parameter SI.Velocity Wspd_windy = 5 "[CTRL] Wind speed above which is windy condition - ANU assumption (m/s)";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
   //****************************** Design condition of the Particle Receiver
@@ -353,8 +358,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //******************************* Field price is based on Gen3 Roadmap Report
   parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area [USD/m2 of heliostat]";
   parameter FI.AreaPrice pri_land = 10000 / 4046.86 "Land cost per area [USD/m2]";
-  parameter Real pri_tower_fix_SAM = 3e6 "[H&T] Fix tower cost according to SAM cost function";
-  parameter Real pri_tower_scalar_exp_SAM = 0.0113 "[H&T] Scaler for tower cost according to SAM";
+  parameter Real pri_tower_fix_SAM = 3e6 "[H&T] Fix tower cost according to SAM cost function v2020.2.29";
+  parameter Real pri_tower_scalar_exp_SAM = 0.0113 "[H&T] Scaler for tower cost according to SAM v2020.2.29";
   parameter Real pri_lift = 58.37 "Lift cost per rated mass flow per height Kevin Albrect, 2019 https://is.gd/3VN0O7";
   parameter FI.AreaPrice pri_receiver = 37400 "Falling particle receiver cost per design aperture area Kevin Albrect, 2019 https://is.gd/3VN0O7";
   
@@ -384,7 +389,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                         pri_excav, 
                         cap_conveyor, 
                         pri_conveyor, 
-                        pri_roof};
+                        pri_roof} "Specific cost of the storage system in an array";
                         
   parameter Real D_outlet = if E_max * 2.777778e-10 < 600 then 0.21 else 0.5 "If stg capacity >= 600 MWh then D_outlet is 0.5 else 0.21 m";
   
@@ -449,25 +454,85 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
   
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
-  parameter FI.Money C_tower = 
-      if set_external_storage then 
-      //******************************* External storage
-          if set_SAM_tower_cost then 
-              //******************************* Evaluating tower cost using SAM correlation - Can be found in SAM application*/
-              pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
-          else 
-              //******************************* Evaluating tower cost using SBP correlation --> Reported by J.Sment email 21 November 2020
-              0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 65204 * H_tower - 731236 
-      else 
-    //******************************* Integrated storage
-          if set_SAM_tower_cost then 
-              //******************************* SAM Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-              7.743 * H_tower ^ 2.867 + 15410000 
-          else 
-              //******************************* SBP Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-              243.7 * H_tower ^ 2.001 + 2641000 
-  "Tower cost -> Depends on the type of storage";
+  //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
+  parameter Real USD_to_Euro_exchange_rate = 1.21 "[USD/Euro]";
   
+  /*Old Tower Cost Function*/
+  //parameter FI.Money C_tower = 
+  //    if set_external_storage then 
+      //******************************* External storage
+  //        if set_SAM_tower_cost then 
+              //******************************* Evaluating tower cost using SAM correlation - Can be found in SAM application*/
+  //            pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
+  //        else 
+              //******************************* Evaluating tower cost using SBP correlation --> Reported by J.Sment email 21 November 2020
+  //            0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 65204 * H_tower - 731236 
+  //    else 
+    //******************************* Integrated storage
+  //        if set_SAM_tower_cost then 
+              //******************************* SAM Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
+  //            7.743 * H_tower ^ 2.867 + 15410000 
+  //        else 
+              //******************************* SBP Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
+  //            243.7 * H_tower ^ 2.001 + 2641000 
+  //"Tower cost -> Depends on the type of storage";
+  
+  /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
+  parameter FI.Money C_tower = 
+      if set_SAM_tower_cost then 
+        //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
+        //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
+        /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
+            (
+                2293496.5853409-
+                45954.7293032756 * H_tower + 
+                0.1048843661 * m_max + 
+                256.311306896 * H_tower^2 +       //=================> Tim Harvey structure only cost 
+                0.0015436937 * H_tower * m_max - 
+                0.0000000021 * m_max^2
+            ) - 
+            
+            1.992 * H_tower^2.747 + 523100 +  //==================> SBP Material Cost
+            
+            pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) - //==========> SAM Cost v2020.2.29
+            
+            28000 * USD_to_Euro_exchange_rate * H_tower +  //================> Piping cost
+            
+            1573 * H_tower //==================> Ducting Cost
+      else
+        //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
+        //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
+        /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ SBP Tower Cost without Piping [Euro] + Ducting cost [USD]*/
+            (
+                2293496.5853409-
+                45954.7293032756 * H_tower + 
+                0.1048843661 * m_max + 
+                256.311306896 * H_tower^2 +       //=================> Tim Harvey structure only cost
+                0.0015436937 * H_tower * m_max - 
+                0.0000000021 * m_max^2
+            ) - 
+            
+            1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
+            
+            (0.7452 * H_tower^3 - 148.25 * H_tower^2 + 37204*H_tower - 731236) * USD_to_Euro_exchange_rate +  //======> SBP no pipe cost 
+            
+            1573 * H_tower //======> Ducting Cost
+  
+  "Cost of tower based on J.Sment (Sandia) email to G3P3 Team at Sat 05/12/2020 05:48
+      > Tim Harvey structure only cost model is a function of tower height [H_tower] and maximum particle mass in one storage tank [m_max]
+            - Regression model for Tim Harvey cost : 
+              ----> online tool https://stats.blue/Stats_Suite/multiple_linear_regression_calculator.html:
+              C_harvey = 2293496.5853409-45954.7293032756*H_tower+
+                                0.1048843661*m_max+256.311306896*H_tower^2+0.0015436937*m_max*H_tower-0.0000000021*m_max^2 
+                                 
+      > The Upper Boundary cost is the one with SAM cost function:
+          C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SAM Tower Cost [USD] - Piping Cost [Euro] * USD_to_Euro + Ducting cost [USD]
+          
+      > The Lower Boundary cost:
+          C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SBP Tower Cost (no pipe) [USD] - Ducting cost [USD]
+      
+      As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function";
+                                            
   parameter FI.Money C_fpr = pri_receiver * A_rcv "Falling particle receiver cost";
   parameter FI.Money C_lift_rec = pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
   parameter FI.Money C_receiver = C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
@@ -648,7 +713,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       n_col_oelt = n_col_oelt, 
       n_procs = n_procs, 
       psave = casefolder, 
-      wea_file = wea_file) annotation(
+      wea_file = wea_file,
+      set_swaying_optical_eff = set_swaying_optical_eff,
+      Wspd_windy = Wspd_windy) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   
   //********************* Washing calculator

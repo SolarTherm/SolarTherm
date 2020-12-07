@@ -14,6 +14,9 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   
   parameter SI.HeatFlowRate Q_in_rcv = 800e6;
   
+  parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
+  parameter SI.Velocity Wspd_windy = 5 "Threshold above which is a windy condition [m/s]";
+  
   /*Parameter for each aperture*/
   parameter SI.HeatFlowRate Q_in_rcv_1(fixed=false);
   parameter SI.Length H_rcv_1=10 "Receiver aperture height";
@@ -62,21 +65,61 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
     annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   /*end of Solstice simulation parameters*/
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv_1=H_rcv_1, H_rcv_2=H_rcv_2, H_rcv_3=H_rcv_3, W_rcv_1=W_rcv_1, W_rcv_2=W_rcv_2, W_rcv_3=W_rcv_3, tilt_rcv=tilt_rcv, num_aperture=num_aperture, angular_range=angular_range, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_rho=helio_rho, helio_soil=helio_soil, helio_sf_ratio=helio_sf_ratio, slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_procs=n_procs, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_3Apertures optical(
+      hra=solar.hra, 
+      dec=solar.dec, 
+      lat=lat, 
+      method=method, 
+      Q_in_rcv=Q_in_rcv, 
+      H_rcv_1=H_rcv_1, 
+      H_rcv_2=H_rcv_2, 
+      H_rcv_3=H_rcv_3, 
+      W_rcv_1=W_rcv_1, 
+      W_rcv_2=W_rcv_2, 
+      W_rcv_3=W_rcv_3, 
+      tilt_rcv=tilt_rcv, 
+      num_aperture=num_aperture, 
+      angular_range=angular_range, 
+      W_helio=W_helio, 
+      H_helio=H_helio, 
+      H_tower=H_tower, 
+      R_tower=R_tower, 
+      R1=R1, 
+      fb=fb, 
+      helio_rho=helio_rho, 
+      helio_soil=helio_soil, 
+      helio_sf_ratio=helio_sf_ratio, 
+      slope_error=slope_error, 
+      n_row_oelt=n_row_oelt, 
+      n_col_oelt=n_col_oelt, 
+      n_procs=n_procs, 
+      field_type=field_type, 
+      rcv_type=rcv_type, 
+      psave=psave, 
+      wea_file=wea_file,
+      set_swaying_optical_eff = set_swaying_optical_eff);
   
   /*Variables for each aperture*/
   SI.HeatFlowRate Q_raw_1;
   SI.HeatFlowRate Q_net_1;
   SI.Efficiency nu_1;
+  SI.Efficiency nu_1_calm;
+  SI.Efficiency nu_1_windy;
   
   SI.HeatFlowRate Q_raw_2;
   SI.HeatFlowRate Q_net_2;
   SI.Efficiency nu_2;
+  SI.Efficiency nu_2_calm;
+  SI.Efficiency nu_2_windy;
   
   SI.HeatFlowRate Q_raw_3;
   SI.HeatFlowRate Q_net_3;
   SI.Efficiency nu_3;
+  SI.Efficiency nu_3_calm;
+  SI.Efficiency nu_3_windy;
   /*End of variables for each aperture*/ 
+  
+  SI.Angle slope_error_runtime;
 
   Modelica.Blocks.Interfaces.BooleanOutput on_1 if use_on annotation (Placement(
         visible = true,transformation(
@@ -201,9 +244,40 @@ equation
   on_hf_3=(ele>ele_min) and
                      (Wspd_internal<Wspd_max) and (on_hopper==true);
   
-  nu_1 = optical.nu_1;
-  nu_2 = optical.nu_2;
-  nu_3 = optical.nu_3;
+  nu_1_calm = optical.nu_1;
+  nu_2_calm = optical.nu_2;
+  nu_3_calm = optical.nu_3;
+  
+  nu_1_windy = optical.nu_1_windy;
+  nu_2_windy = optical.nu_2_windy;
+  nu_3_windy = optical.nu_3_windy;
+  
+  if set_swaying_optical_eff == true then
+    if Wspd_internal < Wspd_windy then
+        //********************* Assuming linear relationship between effective slope error vs. wind speed
+        /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
+        slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_windy) * max(Wspd_internal,0);
+    else
+        slope_error_runtime = 2e-3;
+    end if;
+    
+    if slope_error_runtime < 2e-3 then
+        //********************* Assuming linear relationship between effective slope error vs. optical efficiency
+        nu_1 = nu_1_windy + (nu_1_calm - nu_1_windy) / (2e-3 - slope_error) * (slope_error_runtime - slope_error);
+        nu_2 = nu_2_windy + (nu_2_calm - nu_2_windy) / (2e-3 - slope_error) * (slope_error_runtime - slope_error);
+        nu_3 = nu_3_windy + (nu_3_calm - nu_3_windy) / (2e-3 - slope_error) * (slope_error_runtime - slope_error);
+    else
+        nu_1 = nu_1_windy;
+        nu_2 = nu_2_windy;
+        nu_3 = nu_3_windy;
+    end if;
+    
+  else
+    slope_error_runtime = -1;
+    nu_1 = nu_1_calm;
+    nu_2 = nu_2_calm;
+    nu_3 = nu_3_calm;
+  end if;
   
   Q_raw_1= if on_hf_1 then max(he_av*n_h_1*A_h*solar.dni*nu_1,0) else 0;
   Q_raw_2= if on_hf_2 then max(he_av*n_h_2*A_h*solar.dni*nu_2,0) else 0;
