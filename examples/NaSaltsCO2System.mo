@@ -99,8 +99,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10) Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10) If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
-	parameter Boolean optimize_HX_design = true;
-	parameter SI.Length d_o_input = 0.00953 "User defined outer tube diameter";
+	parameter Boolean optimize_HX_design = false;
+	parameter SI.Length d_o_input = 0.01905 "User defined outer tube diameter";
 	parameter Integer N_p_input = 1 "User defined tube passes number";
 	parameter Integer layout_input = 2 "User defined tube layout";
 	parameter Boolean N_t_input_on = true "Activate fixed number of tubes";
@@ -257,7 +257,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	// Riser and downcomer cost
 	parameter SI.Length L_horiz = 30 "Additional horizontal length of riser and downcomer to the HEX";
-	parameter Real lm_r = 1.36 "Length multiplier for expansion loops on riser";
+	parameter Real lm_r = 1.43 "Length multiplier for expansion loops on riser";
 	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
 	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
 	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
@@ -274,8 +274,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "Riser piping mass per meter";
 	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "Downcomer piping mass per meter";
 
-	parameter SI.Diameter D_r_ref = 0.711 "Riser reference diameter";
-	parameter SI.Diameter D_d_ref = 0.711 "Downcomer reference diameter";
+	parameter SI.Diameter D_r_ref = 0.7112 "Riser reference diameter";
+	parameter SI.Diameter D_d_ref = 0.7112 "Downcomer reference diameter";
 
 	parameter Real C_r_m(unit = "$/kg") = 8 "Riser material cost per kg";
 	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost per kg";
@@ -335,8 +335,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
 	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
 	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
-	parameter Real pri_block(unit="$/kWe") = pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block unit price";
-	parameter Real pri_hex_salt_co2(unit="$/kWe") = pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "Salt-CO2 primary heat exchanger unit price";
 
 	// Sodium-Salt heat exchanger cost
 	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
@@ -351,8 +349,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
 	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
-	parameter FI.Money_USD C_block = pri_block * P_gross / 1e3 "Power block cost";
-	parameter FI.Money_USD C_hex_salt_co2 = pri_hex_salt_co2 * P_gross / 1e3 "Power block cost";
+	parameter FI.Money_USD C_block = (1e-3)*P_gross_ref*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
+	parameter FI.Money_USD C_hex_salt_co2 = (1e-3)*P_gross_ref*pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "Salt-CO2 HEX cost";
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
