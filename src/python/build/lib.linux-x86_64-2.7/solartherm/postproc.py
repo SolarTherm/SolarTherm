@@ -265,6 +265,7 @@ class SimResultElec(SimResult):
 		'''
 		return [epy, lcoe, capf, srev,]
 
+
 	def cost_breakdown(self):
 		"""Calculate costs breakdown for the solar power plant"""
 		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
