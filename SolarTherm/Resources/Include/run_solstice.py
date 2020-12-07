@@ -50,7 +50,7 @@ def run_simul(inputs={}):
         pm.Z_rcv=[]
 
         for i in range(pm.num_aperture):
-			lv=int(mac.get_lv_index(i))
+            lv=int(mac.get_lv_index(i))
             zi=mac.get_elev_height(lv)
             pm.Z_rcv.append(zi)
 	
