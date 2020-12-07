@@ -17,6 +17,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
 
 	// Input Parameters
+	parameter Integer n_modules = 2 "Number of parallel CSP systems";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
@@ -33,8 +34,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";	
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget_metadata.motab");
-	parameter String opt_file_wspd2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget_metadata_wspd.motab");
+	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_150_m.motab");
+	parameter String opt_file_wspd2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_150_m.motab");
 	parameter Real metadata_list[23] = metadata(opt_file);
 	parameter SI.Irradiance dni_des = 980 "DNI at design point";
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
@@ -145,7 +146,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
 	parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fr_des (fixed = false) "Verification of parasitics fraction of power block rating at design point";
-	parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+	parameter SI.Power P_net = 50e6 "Power block net rating at design point";
 	parameter SI.Power P_gross = P_net / (1 - par_fr);
 	parameter SI.Pressure p_high = 25e6 "high pressure of the cycle in Pa";
 	parameter SI.Temperature blk_T_amb_des = from_degC(35) "Ambient temperature at design for power block";
@@ -227,7 +228,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	//SF Calculated Parameters
 	parameter SI.Area A_field = n_heliostat * A_heliostat "Heliostat field reflective area";
 	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver aperture area";
-	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_land = n_modules*land_mult * A_field + 197434.207385281 "Land area";
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
@@ -241,8 +242,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
 	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";	//Site improvements cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.EnergyPrice pri_storage = 40 "Storage cost per energy capacity ($/MWh)";	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.PowerPrice pri_block = 900 "Power block cost per gross rated power ($/kWe)";	//Power block cost should be $600/kWe + Primary HX based on Downselection Criteria, page 8, paragraph 7. NREL uses $900/kWe for now to account for PHX.
+	parameter FI.EnergyPrice pri_storage = 38.4 "Storage cost per energy capacity ($/MWh)";	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
 	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";	// Balance of plant set to 350 based on SAM 2018 default costing data
 	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
 	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
@@ -322,20 +322,43 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
 	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
 
+	//Cold and hot salt pump cost
+	parameter FI.Money_USD C_salt_pump_cold_ref =  2.2e6 "Cold salt pump reference cost";
+	parameter FI.Money_USD C_salt_pump_hot_ref =  2.2e6 "Hot salt pump reference cost";
+	parameter Real pump_salt_exp = 0.7 "Cold and hot salt pump cost scaling exponent";
+	parameter FI.Money_USD C_salt_pump_cold = C_salt_pump_cold_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Cold salt pump cost";
+	parameter FI.Money_USD C_salt_pump_hot = C_salt_pump_hot_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Hot salt pump cost";
+
+	// Power block cost
+	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
+	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
+	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
+	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
+	parameter Real pri_block(unit="$/kWe") = pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block unit price";
+	parameter Real pri_hex_salt_co2(unit="$/kWe") = pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "Salt-CO2 primary heat exchanger unit price";
+
+	// Sodium-Salt heat exchanger cost
+	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
+	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
+	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^power_block_exp "Sodium-salt hex unit price";
+
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
 	parameter FI.Money_USD C_tower = 16339938 "Tower cost";
 	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
-	parameter FI.Money_USD C_hx = Shell_and_Tube_HX.C_BEC_HX "Heat Exchanger cost";
+	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
+	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
 	parameter FI.Money_USD C_block = pri_block * P_gross / 1e3 "Power block cost";
+	parameter FI.Money_USD C_hex_salt_co2 = pri_hex_salt_co2 * P_gross / 1e3 "Power block cost";
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
 
 	// Direct capital costs (subtotal)
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_receiver + C_loop_na + C_tower + C_rd + C_hx + C_storage + C_block + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
 	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
 
 	// Total direct capital cost
@@ -784,16 +807,16 @@ equation
 	connect(receiver.Q_out, Shell_and_Tube_HX.Q_out_rec) annotation(
 		Line(points = {{-31, 18}, {-9, 18}, {-9, 0}, {12, 0}}, color = {0, 127, 255}));
 	//PowerBlock connections
-	P_elec = powerBlock.W_net;
-	E_elec = powerBlock.E_net;
-	R_spot = market.profit;
+	P_elec = powerBlock.W_net*n_modules;
+	E_elec = powerBlock.E_net*n_modules;
+	R_spot = market.profit*n_modules;
 
 	connect(PB_ramping.y, powerBlock.ramping) annotation(
 		Line(points = {{140, 58}, {120, 58}, {120, 34}, {120, 34}}, color = {255, 0, 255}));
 	annotation(
 		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 10, fontName = "CMU Serif"), Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 10, fontName = "CMU Serif"), Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 10, fontName = "CMU Serif"), Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 10, fontName = "CMU Serif"), Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 10, fontName = "CMU Serif"), Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-		experiment(StopTime = 86400, //3.1536e+7, 
+		experiment(StopTime = 3.1536e+7, 
 		StartTime = 0, 
 		Tolerance = 0.0001, 
 		Interval = 300),
