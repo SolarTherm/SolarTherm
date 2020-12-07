@@ -286,8 +286,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real C_r_ref(unit = "$/m") = 5713 "Riser reference cost without material";
 	parameter Real C_d_ref(unit = "$/m") = 8681 "Riser reference cost without material";
 
-	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_length*L_riser "Riser cost";
-	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_length*L_downcomer "Downcomer cost";
+	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
+	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
 
 	// Sodium loop cost
 	parameter FI.Money_USD C_pip_na_ref =  2e6 "Sodium piping reference cost";
