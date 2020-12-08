@@ -24,7 +24,8 @@ model HeliostatsFieldSolstice_1stApproach
     parameter SI.Efficiency helio_rho = 0.95 "reflectivity of heliostat max =1";
     parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
     parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
-    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+    parameter SI.Angle slope_error = 1.53e-3 "slope error of heliostats, in radiance";
+    parameter SI.Angle slope_error_windy = 2e-3 "a larger optical error of heliostats under windy conditions, in radiance";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
@@ -69,7 +70,8 @@ model HeliostatsFieldSolstice_1stApproach
         helio_rho=helio_rho, 
         helio_soil=helio_soil, 
         helio_sf_ratio=helio_sf_ratio, 
-        slope_error=slope_error, 
+        slope_error=slope_error,
+        slope_error_windy=slope_error_windy, 
         n_row_oelt=n_row_oelt, 
         n_col_oelt=n_col_oelt, 
         n_procs=n_procs, 
