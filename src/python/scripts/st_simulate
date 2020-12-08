@@ -174,15 +174,16 @@ if __name__ == '__main__':
 	else:
 		resultclass = postproc.SimResultElec
 
-	#sim.load_init()
-
 
 	if args.excel!=None:
 		tree=params.Tree()
 		tree.load_xml(input_xml)
+		#TODO check the units of the loaded parameters
+		# convert the units if nessary using simulation.parse_var_val
 		params.load_values_from_excel(args.excel, tree)	
 		tree.write_xml(input_xml)
 
+	sim.load_init()
 
 	dims = [] # dimensions
 	par_n = [] # names
