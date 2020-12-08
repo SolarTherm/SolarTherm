@@ -78,14 +78,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   //****************************** Field simulation parameters
   parameter String opt_file(fixed = false);
-  parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
+  parameter String casefolder = "./test-windy" "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
   parameter String field_type = "multi-aperture" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
   parameter Real AR_helio = 1 "[H&T] ratio between H_helio/W_helio";
   parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
   parameter SI.Length H_helio = AR_helio * W_helio "height of heliostat in m";
-  parameter SI.Angle slope_error = 1.53e-3 "[H&T] slope error of the heliostat in rad";
+  parameter SI.Angle slope_error = 1.53e-3 "[H&T] slope error of heliostats, in radiance";
+  parameter SI.Angle slope_error_windy = 2e-3 "[H&T] a larger optical error of heliostats under windy conditions, in radiance";
   parameter SI.Length H_tower = 200 "[H&T] Tower height";
   parameter SI.Length R_tower = (W_rcv_lv1+W_rcv_lv2+W_rcv_lv3) / 3 / 2 "Tower radius";
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
@@ -94,8 +95,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
   parameter Integer num_aperture = 3 "[H&T] number of apertures";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
-  parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 3 "[H&T] number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 6 "[H&T] number of columns of the lookup table (simulated hours per day)";
   parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
@@ -786,6 +787,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       helio_soil = helio_soil, 
       helio_sf_ratio = helio_sf_ratio, 
       slope_error = slope_error, 
+      slope_error_windy = slope_error_windy, 
       n_row_oelt = n_row_oelt, 
       n_col_oelt = n_col_oelt, 
       n_procs = n_procs, 
