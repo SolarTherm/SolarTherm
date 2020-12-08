@@ -113,7 +113,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Efficiency eta_rcv_assumption = 0.88 "[RCV] Receiver net thermal efficiency guess value to size the receiver";
   parameter SI.Temperature T_amb_des_rcv = from_degC(10) "[RCV] Design point ambient temp of the receiver (K)";
   parameter SI.Velocity Wspd_max = 15.65 if set_use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
-    parameter SI.Velocity Wspd_windy = 5 "[CTRL] Threshold above which is a windy condition [m/s]";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
   //****************************** Design condition of the Particle Receiver
@@ -791,7 +790,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       n_procs = n_procs, 
       psave = casefolder, 
       wea_file = wea_file,
-      Wspd_windy = Wspd_windy,
       set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   

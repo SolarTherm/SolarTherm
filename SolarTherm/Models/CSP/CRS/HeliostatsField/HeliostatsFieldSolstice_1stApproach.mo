@@ -8,7 +8,6 @@ model HeliostatsFieldSolstice_1stApproach
     parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
     parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
-    parameter SI.Velocity Wspd_windy = 5 "Threshold above which is a windy condition [m/s]";
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
@@ -156,13 +155,9 @@ equation
   nu_windy = optical.nu_windy;
   
   if set_swaying_optical_eff == true then
-    if Wspd_internal < Wspd_windy then
-        //********************* Assuming linear relationship between effective slope error vs. wind speed
-        /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
-        slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_windy) * max(Wspd_internal,0);
-    else
-        slope_error_runtime = 2e-3;
-    end if;
+    //********************* Assuming linear relationship between effective slope error vs. wind speed
+    /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
+    slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_max) * max(Wspd_internal,0);
     
     if slope_error_runtime < 2e-3 then
         //********************* Assuming linear relationship between effective slope error vs. optical efficiency

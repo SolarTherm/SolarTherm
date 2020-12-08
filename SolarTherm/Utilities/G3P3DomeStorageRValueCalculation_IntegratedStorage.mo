@@ -26,7 +26,7 @@ Real rho_particle = 2153 "kg/m^3";
 Real tan_30 = sqrt(3)/3;
 Real tan_313 = 0.6080095302; 
 
-Real D_bin = D_tower_out - 1.2;
+Real D_bin = D_tower_out - 2 * Th_refractory;
 Real H_bin = 
 ((m_tot/rho_particle)-(tan_30*(D_bin-D_outlet)/2*pi/3*(D_bin^2/4+D_outlet^2/4+D_bin*D_outlet/2))-(pi/3*D_bin^2/4*tan_313*D_bin/2))/(pi*D_bin^2/4)+tan_313*D_bin/2+tan_30*(D_bin-D_outlet)/2;
 

@@ -97,7 +97,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Area A_field = metadata_list[1] * metadata_list[2] "Heliostat field reflective area (m^2)";
   parameter Real A_land = metadata_list[9] "Land area consumed by the plant - calculated value by Solstice (m^2)";
   parameter SI.Velocity Wspd_max = 15.65 if set_use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
-  parameter SI.Velocity Wspd_windy = 5 "[CTRL] Wind speed above which is windy condition - ANU assumption (m/s)";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
   //****************************** Design condition of the Particle Receiver
@@ -716,8 +715,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       n_procs = n_procs, 
       psave = casefolder, 
       wea_file = wea_file,
-      set_swaying_optical_eff = set_swaying_optical_eff,
-      Wspd_windy = Wspd_windy) annotation(
+      set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   
   //********************* Washing calculator
