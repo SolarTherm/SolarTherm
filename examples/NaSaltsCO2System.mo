@@ -289,6 +289,42 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
 	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
 
+	// Salt piping and valves
+	parameter SI.Length L_salt_cold = 20 "Length of cold salt piping (exc. expansion loops)";
+	parameter SI.Length L_salt_hot = 20 "Length of hot salt piping (exc. expansion loops)";
+
+	parameter SI.Diameter D_sc = 0.508 "Cold salt piping diameter";
+	parameter SI.Diameter D_sh = 0.508 "Hot salt piping diameter";
+
+	parameter SI.Thickness t_sc = 0.00635 "Cold salt piping wall thickness";
+	parameter SI.Thickness t_sh = 0.00635 "Hot salt piping wall thickness";
+
+	parameter SI.Density rho_sc = 8.03 "Riser material density (g/cm3)"; //UNS S34709
+	parameter SI.Density rho_sh = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
+
+	parameter Real mass_pm_sc(unit="kg/m") = (D_sc^2-(D_sc-2*t_sc)^2)*CN.pi/4*rho_sc*1000 "Cold salt piping mass per meter";
+	parameter Real mass_pm_sh(unit="kg/m") = (D_sh^2-(D_sh-2*t_sh)^2)*CN.pi/4*rho_sh*1000 "Hot salt piping mass per meter";
+
+	parameter Real lm_sc = 1.43 "Length multiplier for expansion loops on cold salt piping";
+	parameter Real lm_sh = 1.45 "Length multiplier for expansion loops on hot salt piping";
+
+	parameter SI.Diameter D_sc_ref = 0.7112 "Cold salt piping reference diameter";
+	parameter SI.Diameter D_sh_ref = 0.7112 "Hot salt piping reference diameter";
+
+	parameter Real C_sc_m(unit="$/kg") = 8 "Cold salt piping material cost";
+	parameter Real C_sh_m(unit="$/kg") = 80 "Hot salt piping material cost";
+
+	parameter Real C_sc_mat_pm(unit = "$/m") = C_sc_m*mass_pm_sc "Cold salt piping material cost per m";
+	parameter Real C_sh_mat_pm(unit = "$/m") = C_sh_m*mass_pm_sh "Hot salt piping material cost per m";
+
+	parameter Real C_sc_ref(unit="$/m") = 5713 "Cold salt reference cost (excluding pipe material)";
+	parameter Real C_sh_ref(unit="$/m") = 8681 "Hot saltreference cost (excluding pipe material";
+
+	parameter FI.Money_USD C_piping_cold_salt = C_sc_ref*(D_sc/D_sc_ref)*L_salt_cold + C_sc_mat_pm*L_salt_cold "Cold salt piping cost";
+	parameter FI.Money_USD C_piping_hot_salt = C_sh_ref*(D_sh/D_sh_ref)*L_salt_hot + C_sh_mat_pm*L_salt_hot "Hot salt piping cost";
+
+	parameter FI.Money_USD C_salt_valves = 2000000 "Cost of salt valves";
+
 	// Sodium loop cost
 	parameter FI.Money_USD C_pip_na_ref =  2e6 "Sodium piping reference cost";
 	parameter FI.Money_USD C_ic_na_ref = 417e3 "Valves and I&C reference cost";
@@ -347,6 +383,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
 	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
+	parameter FI.Money_USD C_salt_piping_valves = C_salt_valves + C_piping_cold_salt + C_piping_hot_salt "Salt piping and valves cost";
 	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
 	parameter FI.Money_USD C_block = (1e-3)*P_gross_ref*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
@@ -356,7 +393,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
 
 	// Direct capital costs (subtotal)
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
 	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
 
 	// Total direct capital cost
