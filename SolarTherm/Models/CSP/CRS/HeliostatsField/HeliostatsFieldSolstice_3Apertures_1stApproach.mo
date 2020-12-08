@@ -15,7 +15,6 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_in_rcv = 800e6;
   
   parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
-  parameter SI.Velocity Wspd_windy = 5 "Threshold above which is a windy condition [m/s]";
   
   /*Parameter for each aperture*/
   parameter SI.HeatFlowRate Q_in_rcv_1(fixed=false);
@@ -49,7 +48,8 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-  parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+  parameter SI.Angle slope_error = 1.53e-3 "slope error of heliostats, in radiance";
+  parameter SI.Angle slope_error_windy = 2e-3 "a larger optical error of heliostats under windy conditions, in radiance";
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
@@ -90,6 +90,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       helio_soil=helio_soil, 
       helio_sf_ratio=helio_sf_ratio, 
       slope_error=slope_error, 
+      slope_error_windy=slope_error_windy, 
       n_row_oelt=n_row_oelt, 
       n_col_oelt=n_col_oelt, 
       n_procs=n_procs, 
@@ -253,13 +254,9 @@ equation
   nu_3_windy = optical.nu_3_windy;
   
   if set_swaying_optical_eff == true then
-    if Wspd_internal < Wspd_windy then
-        //********************* Assuming linear relationship between effective slope error vs. wind speed
-        /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
-        slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_windy) * max(Wspd_internal,0);
-    else
-        slope_error_runtime = 2e-3;
-    end if;
+    //********************* Assuming linear relationship between effective slope error vs. wind speed
+    /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
+    slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_windy) * max(Wspd_internal,0);
     
     if slope_error_runtime < 2e-3 then
         //********************* Assuming linear relationship between effective slope error vs. optical efficiency
