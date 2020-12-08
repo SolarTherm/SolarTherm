@@ -16,7 +16,7 @@ extends OpticalEfficiency_3Apertures;
   parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-  parameter Integer argc =28 "Number of variables to be passed to the C function";
+  parameter Integer argc =30 "Number of variables to be passed to the C function";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
 
   //parameter Boolean single_field = true "True for single field, false for multi tower";
@@ -48,13 +48,15 @@ extends OpticalEfficiency_3Apertures;
   parameter SI.Efficiency helio_rho = 0.95 "reflectivity of heliostat max =1";
   parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
-  parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+  parameter SI.Angle slope_error = 1.53e-3 "slope error of heliostats, in radiance";
+  parameter SI.Angle slope_error_windy = 2e-3 "a larger optical error of heliostats under windy conditions, in radiance";
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
   parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
 
   parameter String tablefile(fixed=false);
+  parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
 
   SI.Angle angle1;
   SI.Angle angle2;
@@ -112,7 +114,11 @@ extends OpticalEfficiency_3Apertures;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));    
 
 initial algorithm
-  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, angular_range, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
+  if set_swaying_optical_eff then windy_optics:=1;
+  else windy_optics:=0;
+  end if;
+
+  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_rho","helio_soil", "helio_sf_ratio", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, angular_range, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_rho, helio_sf_ratio, helio_soil, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);

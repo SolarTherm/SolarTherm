@@ -52,6 +52,8 @@ def run_simul(inputs={}):
 			lv=int(mac.get_lv_index(i))
 			zi=mac.get_elev_height(lv)
 			pm.Z_rcv.append(zi)
+	else:
+		mac=None
 
 	start=time.time()
 	casedir=pm.casedir
@@ -63,7 +65,7 @@ def run_simul(inputs={}):
 		print('Load exsiting OELT')
 
 	else:
-		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=0, verbose=True)
+		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=0, verbose=False)
 		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, num_aperture=pm.num_aperture, gamma=pm.gamma)
 		
 		if pm.method==1:
@@ -97,8 +99,8 @@ def run_simul(inputs={}):
 				os.makedirs(crs.casedir)
 			crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
-			oelt2, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
-			append_oelts(table=oelt2, num_tables=pm.num_aperture, identifier='windy', motabfile=tablefile)		
+			oelt_windy, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
+			append_oelts(table=oelt_windy, identifier='windy', motabfile=tablefile, mac=mac)		
 
 	end=time.time()
 	print('')
@@ -111,7 +113,7 @@ def run_simul(inputs={}):
 
 if __name__=='__main__':
 	# tests
-	case="test-single-aperture"
+	case="test-multi-aperture"
 
 	if case=='test-single-aperture':
 		num_aperture=1
@@ -144,7 +146,7 @@ if __name__=='__main__':
 		n_col_oelt=6
 		R1=80.
 		fb=0.6
-		windy_optics=0
+		windy_optics=1
 		W_rcv_1=17.3205080757
 		H_rcv_1=17.3205080757
 		W_rcv_2=17.3205080757
