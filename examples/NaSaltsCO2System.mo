@@ -293,11 +293,11 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Length L_salt_cold = 20 "Length of cold salt piping (exc. expansion loops)";
 	parameter SI.Length L_salt_hot = 20 "Length of hot salt piping (exc. expansion loops)";
 
-	parameter SI.Diameter D_sc = 0.508 "Cold salt piping diameter";
-	parameter SI.Diameter D_sh = 0.508 "Hot salt piping diameter";
+	parameter SI.Diameter D_sc = 0.61 "Cold salt piping diameter";
+	parameter SI.Diameter D_sh = 0.66 "Hot salt piping diameter";
 
 	parameter SI.Thickness t_sc = 0.00635 "Cold salt piping wall thickness";
-	parameter SI.Thickness t_sh = 0.00635 "Hot salt piping wall thickness";
+	parameter SI.Thickness t_sh = 0.007925 "Hot salt piping wall thickness";
 
 	parameter SI.Density rho_sc = 8.03 "Riser material density (g/cm3)"; //UNS S34709
 	parameter SI.Density rho_sh = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
