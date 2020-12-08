@@ -37,14 +37,14 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Solstice related parameters
 	parameter String opt_file(fixed = false);
-	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo_sm"+String(SM));
+	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/sm"+String(SM)+"_ti"+String(towi)+"_R"+String(R1)+"_fb"+String(fb));
 	parameter String field_type = "surround" "Other options are : surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
 
+	parameter Real towi = 1.0 "Tower index for tower modification";
 	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
 	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
-	//parameter SI.Length H_tower = 150 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
 	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
 	parameter Real fb = 0.4 "factor to grow the field layout";
@@ -188,7 +188,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 	parameter SI.Length H_storage = 11 "Storage tank height"; //Based on NREL Gen3 SAM model v14.02.2020
 	parameter SI.Diameter D_storage = (V_max/n_tanks_parallel/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 42.5m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
 
-	parameter SI.Length H_tower = 0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
+	parameter SI.Length H_tower = towi*0.154*(sqrt(twr_ht_const*(A_field/(gnd_cvge*excl_fac))/CN.pi)) "Tower height"; // A_field/(gnd_cvge*excl_fac) is the field gross area
 	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	// Cost data in USD (default) or AUD

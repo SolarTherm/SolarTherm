@@ -227,6 +227,7 @@ class SimResultElec(SimResult):
 			lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 					int(life_v[0]), int(cons_v[0]), epy)
 			capf = fin.capacity_factor(name_v[0], epy)
+			#print 'lcoe', lcoe, ':', cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0], int(life_v[0]), int(cons_v[0]), epy            
 
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
@@ -234,7 +235,9 @@ class SimResultElec(SimResult):
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 
-		return [epy, lcoe, capf, srev,]
+		#return [epy, lcoe, capf, srev, cap_v[0],om_y_v[0] + om_p_v[0]*epy, disc_v[0], int(life_v[0]),  int(cons_v[0]) ]
+		return [epy, lcoe, capf, srev]
+
 
 	def cost_breakdown(self):
 		"""Calculate costs breakdown for the solar power plant"""
