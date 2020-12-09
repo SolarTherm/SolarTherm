@@ -1111,7 +1111,7 @@ initial equation
    if set_external_storage then
       R_tower = max(25/2,(W_rcv_lv1/2 + W_rcv_lv3/2 + W_rcv_lv2/2)/3);
    else
-      R_tower = max(25,towerInnerDiameterCalculator.D_inner_tower/2);
+      R_tower = max(25/2,towerInnerDiameterCalculator.D_inner_tower/2);
    end if;
    
    A_ap_lv1 = A_ap_lv1_parsed;
