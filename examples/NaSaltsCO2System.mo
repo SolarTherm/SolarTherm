@@ -405,7 +405,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
 
 	// Operation and maintenance cost
-	parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 "Fixed O&M cost per year";
+	parameter FI.MoneyPerYear C_year = pri_om_name * n_modules * P_name / 1e3 "Fixed O&M cost per year";
 	parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "Variable O&M cost per production per year";
 
 	// ************************************* System components **************************************
