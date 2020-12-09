@@ -38,7 +38,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -57,11 +57,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Integer year = 1967 "[SYS] Meteorological year TMY2 Dagget 1967 Location ID 23161";
   
   //****************************** Reading Metadata result
-  parameter Real metadata_list[23] = metadata(opt_file);
+  parameter Real metadata_list[24] = metadata(opt_file);
   
-  parameter Real n_helios_1 = metadata_list[10];
-  parameter Real n_helios_2 = metadata_list[15];
-  parameter Real n_helios_3 = metadata_list[20];
+  parameter Real n_helios_1 = metadata_list[11];
+  parameter Real n_helios_2 = metadata_list[16];
+  parameter Real n_helios_3 = metadata_list[21];
   
   parameter Real n_helios_total = metadata_list[6] "Number of heliostats";
   parameter SI.Area A_field = n_helios_total * metadata_list[5] "Heliostat field reflective area (m^2)";
@@ -72,13 +72,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.HeatFlowRate Q_in_lv2(fixed=false) "Heat flow rate to the mid receiver at design point [W]";
   parameter SI.HeatFlowRate Q_in_lv3(fixed=false) "Heat flow rate to the bottom receiver at design point [W]";
   
-  parameter SI.Length Z_rcv_lv1 = metadata_list[13] "Height of the top receiver from the ground [m]";
-  parameter SI.Length Z_rcv_lv2 = metadata_list[18] "Height of the mid receiver from the ground [m]";
-  parameter SI.Length Z_rcv_lv3 = metadata_list[23] "Height of the bottom receiver from the ground [m]";
+  parameter SI.Length Z_rcv_lv1 = metadata_list[14] "Height of the top receiver from the ground [m]";
+  parameter SI.Length Z_rcv_lv2 = metadata_list[19] "Height of the mid receiver from the ground [m]";
+  parameter SI.Length Z_rcv_lv3 = metadata_list[24] "Height of the bottom receiver from the ground [m]";
   
   //****************************** Field simulation parameters
   parameter String opt_file(fixed = false);
-  parameter String casefolder = "./test-windy" "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
+  parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
   parameter String field_type = "multi-aperture" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
@@ -94,9 +94,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
   parameter Integer num_aperture = 3 "[H&T] number of apertures";
+  parameter SI.Length R_rcv_distance(fixed=false) "The raidal distrance of each aperture from the centre of the tower [m]";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
-  parameter Real n_row_oelt = 3 "[H&T] number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 6 "[H&T] number of columns of the lookup table (simulated hours per day)";
+  parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
   parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
@@ -146,7 +147,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Length W_rcv_lv3 = A_ap_lv3_parsed / H_rcv_lv3 "Receiver aperture width";
   
   parameter SI.Length H_rcv_total = H_rcv_lv1 + H_rcv_lv2 + H_rcv_lv3;
-  
+  parameter SI.Length W_rcv(fixed=false) "the maximum width among the three receiver apertures";
   parameter SI.Length L_rcv = 1 "[RCV] Receiver length (depth) (m)";
   
   inner parameter SI.Efficiency eta_rec_th_des = 1 - rec_fr "Receiver thermal efficiency (Q_pcl / Q_sol)";
@@ -1108,10 +1109,20 @@ algorithm
 */
 
 initial equation
-   if set_external_storage then
-      R_tower = max(25/2,(W_rcv_lv1/2 + W_rcv_lv3/2 + W_rcv_lv2/2)/3);
+   W_rcv=max(W_rcv_lv1, W_rcv_lv3);
+   if tan(angular_range/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
    else
-      R_tower = max(25/2,towerInnerDiameterCalculator.D_inner_tower/2);
+		R_rcv_distance=W_rcv*1.2/2/tan(angular_range/(num_aperture-1));
+   end if;
+
+   if set_external_storage then
+      R_tower = max(25/2,R_rcv_distance);
+   else
+	  if R_rcv_distance>25/2 then
+	      R_tower = max(R_rcv_distance,towerInnerDiameterCalculator.D_inner_tower/2);
+	  else
+	      R_tower = max(25/2 ,towerInnerDiameterCalculator.D_inner_tower/2);
+      end if;
    end if;
    
    A_ap_lv1 = A_ap_lv1_parsed;

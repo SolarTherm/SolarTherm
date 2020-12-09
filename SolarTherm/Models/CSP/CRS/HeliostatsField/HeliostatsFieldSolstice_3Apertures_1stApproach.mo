@@ -8,7 +8,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
   
   
-  parameter Real metadata_list[23] = metadata(opt_file);
+  parameter Real metadata_list[24] = metadata(opt_file);
 
   parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   
@@ -20,17 +20,17 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_in_rcv_1(fixed=false);
   parameter SI.Length H_rcv_1=10 "Receiver aperture height";
   parameter SI.Length W_rcv_1=10 "Receiver aperture width";
-  parameter Real n_h_1 = metadata_list[10] "Number of heliostats aperture lv1" annotation(Dialog(group="Technical data"));
+  parameter Real n_h_1 = metadata_list[11] "Number of heliostats aperture lv1" annotation(Dialog(group="Technical data"));
   
   parameter SI.HeatFlowRate Q_in_rcv_2(fixed=false);
   parameter SI.Length H_rcv_2=10 "Receiver aperture height";
   parameter SI.Length W_rcv_2=10 "Receiver aperture width";
-  parameter Real n_h_2 = metadata_list[15] "Number of heliostats aperture lv2" annotation(Dialog(group="Technical data"));
+  parameter Real n_h_2 = metadata_list[16] "Number of heliostats aperture lv2" annotation(Dialog(group="Technical data"));
   
   parameter SI.HeatFlowRate Q_in_rcv_3(fixed=false);
   parameter SI.Length H_rcv_3=10 "Receiver aperture height";
   parameter SI.Length W_rcv_3=10 "Receiver aperture width";
-  parameter Real n_h_3 = metadata_list[20] "Number of heliostats aperture lv3" annotation(Dialog(group="Technical data"));
+  parameter Real n_h_3 = metadata_list[21] "Number of heliostats aperture lv3" annotation(Dialog(group="Technical data"));
   /*end parameter for each aperture*/
 
   parameter Real angular_range = 180 "Angular range of the multi-aperture configuration";
@@ -217,9 +217,9 @@ initial equation
    on_internal_3=Q_raw_3>Q_start_3;
    opt_file=optical.tablefile;
    
-   Q_in_rcv_1 = metadata_list[9];
-   Q_in_rcv_2 = metadata_list[14];
-   Q_in_rcv_3 = metadata_list[19];
+   Q_in_rcv_1 = metadata_list[10];
+   Q_in_rcv_2 = metadata_list[15];
+   Q_in_rcv_3 = metadata_list[20];
    
 equation
   if use_on then
