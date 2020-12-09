@@ -902,6 +902,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
+
       dome_storage = set_dome_storage, 
       Th_refractory = Th_refractory_hot_tank, 
       H_tower = H_tower, 
@@ -951,9 +952,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      P_gross = P_net/(1-par_fr),
-	  D_outlet = D_outlet
-	  );
+      D_outlet = D_outlet
+  );
   
   //********************* Receiver lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftRC(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRC, CF = 0, eff = eff_lift) annotation(
