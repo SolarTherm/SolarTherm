@@ -483,22 +483,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
         //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
-<<<<<<< HEAD
             (
                 18883.0137745081* H_tower+
                 5072300.012597866 * R_tower*2
                 -7.8766772597*H_tower*H_tower+
                 6544.5682400142*H_tower*R_tower*2
                 -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-=======
-            ( 
-				18883.0137745081 * H_tower + 
-				5072300.012597866 * R_tower*2 - 
-				7.8766772597 * H_tower^2 + 
-				6544.5682400142 * H_tower * R_tower*2 - 
-				121032.5438027561 * (R_tower*2)^2 - 61971547.03836635
-			
->>>>>>> 71524c22f7bd01710007a2918a1279d441e7d9f0
             ) - 
             
             1.992 * H_tower^2.747 + 523100 +  //==================> SBP Material Cost
@@ -513,21 +503,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ SBP Tower Cost without Piping [Euro] + Ducting cost [USD]*/
             (
-<<<<<<< HEAD
                 18883.0137745081* H_tower+
                 5072300.012597866 * R_tower*2
                 -7.8766772597*H_tower*H_tower+
                 6544.5682400142*H_tower*R_tower*2
                 -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-	
-=======
-                 
-				18883.0137745081 * H_tower + 
-				5072300.012597866 * R_tower*2 - 
-				7.8766772597 * H_tower^2 + 
-				6544.5682400142 * H_tower * R_tower*2 - 
-				121032.5438027561 * (R_tower*2)^2 - 61971547.03836635
->>>>>>> 71524c22f7bd01710007a2918a1279d441e7d9f0
+
             ) - 
             
             1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
