@@ -33,12 +33,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
   parameter Boolean set_tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean set_tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter Boolean set_external_storage = true "[ST] true if storage bins are not integrated with tower";
+  parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -88,7 +88,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Angle slope_error = 1.53e-3 "[H&T] slope error of heliostats, in radiance";
   parameter SI.Angle slope_error_windy = 2e-3 "[H&T] a larger optical error of heliostats under windy conditions, in radiance";
   parameter SI.Length H_tower = 200 "[H&T] Tower height";
-  parameter SI.Length R_tower = (W_rcv_lv1+W_rcv_lv2+W_rcv_lv3) / 3 / 2 "Tower radius";
+  parameter SI.Length R_tower(fixed=false) "Tower inner radius (from the center of the tower until before structural concrete [m]";
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
@@ -106,7 +106,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
   parameter String rcv_type = "multi-aperture" "[RCV] other options are : flat, cylindrical, stl";
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 2.5 "[SYS] Solar multiple";
+  parameter Real SM = 1 "[SYS] Solar multiple";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
@@ -607,7 +607,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter FI.Money C_receiver = C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
   
   //******************************* Cost of storage sub-system (bins + cold tank lift + particles + PHX lift + insulation)
-  parameter FI.Money C_lift_cold = pri_lift * dh_LiftCold * m_flow_blk "Cold storage tank lift cost";
+  parameter FI.Money C_lift_cold = if set_external_storage then 
+                                            pri_lift * dh_LiftCold * m_flow_blk 
+                                   else
+                                            0
+  "Cold storage tank lift cost";
   
   //******************************* Storage bin cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7
   parameter FI.Money C_bins = 
@@ -939,6 +943,17 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       packing_factor = packing_factor) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
   
+  //********************* Tower Inner Diameter Calculator - for integrated storage concept only
+  SolarTherm.Utilities.TowerInnerDiameterCalculator_IntegratedG3P3Storage towerInnerDiameterCalculator(
+      rho_particle = (rho_cold_set + rho_hot_set)/2,
+      H_tower = H_tower,
+      m_max = m_max,
+      Th_refractory =  if Th_refractory_cold_tank == Th_refractory_hot_tank then 
+                            Th_refractory_cold_tank
+                       else
+                            max(Th_refractory_cold_tank,Th_refractory_hot_tank),
+      P_gross = P_gross);
+  
   //********************* Receiver lift
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftRC(redeclare package Medium = Medium, cont_m_flow = true, use_input = true, dh = dh_liftRC, CF = 0, eff = eff_lift) annotation(
     Placement(visible = true, transformation(origin = {-1, -27}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
@@ -1093,6 +1108,12 @@ algorithm
 */
 
 initial equation
+   if set_external_storage then
+      R_tower = max(25/2,(W_rcv_lv1/2 + W_rcv_lv3/2 + W_rcv_lv2/2)/3);
+   else
+      R_tower = max(25,towerInnerDiameterCalculator.D_inner_tower/2);
+   end if;
+   
    A_ap_lv1 = A_ap_lv1_parsed;
    A_ap_lv2 = A_ap_lv2_parsed;
    A_ap_lv3 = A_ap_lv3_parsed;

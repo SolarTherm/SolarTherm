@@ -40,7 +40,7 @@ Real r_bin = D_bin / 2 "Bin inner surface radius m";
 Real r_HD_refractory = r_bin + HD_refractory_thickness "Outer radius of the HD_refractory_thickness from the center of the bin [m]";
 Real r_LD_refractory = r_HD_refractory + LD_refractory_thickness "Outer radius of the LD_refractory_thickness from the center of the bin shall there is no HD_refractory_thickness installed [m]";
 Real r_HRC = r_LD_refractory + Th_dome * 0.67 "Outer radius of the high resistance concrete (HRC) [m]"; 
-Real r_construction = r_HRC + Th_dome*(1-0.67) "Outer radius of the bin [m]";
+Real r_construction = r_HRC + Th_dome*(1-0.67) "Outer radius of the tower [m]";
 
 /*Hemisphere R calculation*/
 Real A_hemi = 2 * pi * r_construction^2 "Hemisphere surface area";

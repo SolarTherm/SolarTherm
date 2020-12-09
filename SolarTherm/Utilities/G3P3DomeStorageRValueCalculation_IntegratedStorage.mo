@@ -36,6 +36,7 @@ Real Th_HRC =
       + 1.1518447137747705e-004 * A_internal_bin
       -1.4095189864825422e-008 * A_internal_bin^2
       + 1.1372113852466968e-012 * A_internal_bin^3;
+      
 Real tower_wall_hot_bin = if r_bin <= 8.4 then
                                  0.4064 * r_bin - 2.34696
                           else
@@ -49,7 +50,7 @@ Real Th_LD = 5/6 * Th_refractory "Thickness of the low insulated refractory";
 Real r_HD = r_bin + Th_HD;
 Real r_LD = r_HD + Th_LD;
 Real r_HRC = r_LD + Th_HRC;
-Real r_concrete = D_tower_out / 2;
+Real r_concrete = max(0,1.83 - Th_HRC - tower_wall_hot_bin) "J. Sment from Sandia: Practical structural thickness is 6 feet (after insulation)";
 Real r_tower_wall = r_concrete + tower_wall_hot_bin;
 
 /*Cylindrical*/

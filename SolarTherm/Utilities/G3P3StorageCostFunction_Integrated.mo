@@ -1,7 +1,7 @@
 within SolarTherm.Utilities;
 
 function G3P3StorageCostFunction_Integrated
-input Real Th_refractory,H_tower, D_tower_out, m_tot, D_outlet;
+input Real Th_refractory,H_tower, D_tower_inner, m_tot, D_outlet;
 input Real c[:];
 
 output Real C_total_bin;
@@ -24,7 +24,7 @@ Real tan_30 = sqrt(3)/3;
 Real tan_313 = 0.6080095302; 
 Real pi = 3.1415926536;
 
-Real D_bin = D_tower_out - 1.2;
+Real D_bin = D_tower_inner - 1.2;
 Real H_bin = 
 ((m_tot/rho_particle)-(tan_30*(D_bin-D_outlet)/2*pi/3*(D_bin^2/4+D_outlet^2/4+D_bin*D_outlet/2))-(pi/3*D_bin^2/4*tan_313*D_bin/2))/(pi*D_bin^2/4)+tan_313*D_bin/2+tan_30*(D_bin-D_outlet)/2;
 Real A_internal_bin = pi*D_bin^2/4+2*pi*D_bin/2*H_bin;
