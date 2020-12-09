@@ -22,3 +22,4 @@ TestDomeStorageRCalc
 TestCostFunctionDomeStorageG3P3
 G3P3DomeStorageRValueCalculation_IntegratedStorage
 TestMetaDataFunction
+TowerInnerDiameterCalculator_IntegratedG3P3Storage
