@@ -136,6 +136,7 @@ if __name__=='__main__':
 
 	elif case=='test-multi-aperture':
 		num_aperture=3
+		angular_range=180
 		rcv_type='multi-aperture'    
 		field_type='multi-aperture' 
 		Q_in_rcv=64227613.194 #W
@@ -157,7 +158,7 @@ if __name__=='__main__':
 		n_H_rcv=17.3205080757
 		n_rays=10e6
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics }
+		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics, "angular_range":angular_range }
 
 	run_simul(inputs)
 
