@@ -229,30 +229,29 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Area A_field = n_heliostat * A_heliostat "Heliostat field reflective area";
 	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver aperture area";
 	parameter SI.Area A_land = n_modules*land_mult * A_field + 197434.207385281 "Land area";
-	parameter SI.Diameter D_tower = D_receiver "Tower diameter"; // That's a fair estimate. An accurate H-to-D correlation may be used.
 
 	//Power Block Control and Calculated parameters
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	// Cost data in USD (default) or AUD
-	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
-	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
+	parameter Real r_disc = 0.044 "Real discount rate";
+	parameter Real r_i = 0.025 "Inflation rate";
+	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
+	parameter Integer t_cons(unit = "year") = 0 "Years of construction";
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
-	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";	//Field cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";	//Site improvements cost per area set to the target value based on DOE 2020 SunShot target, Table 5-1 (https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.EnergyPrice pri_storage = 38.4 "Storage cost per energy capacity ($/MWh)";	//Storage cost per energy capacity $40/kWht estimate from Devon. The based on DOE 2020 SunShot target is $15/kWht (Table 5-1, https://www.energy.gov/sites/prod/files/2014/01/f7/47927_chapter5.pdf)
-	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";	// Balance of plant set to 350 based on SAM 2018 default costing data
-	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";	//Land cost set to $10k/acre based on Downselect Criteria, Table 2
-	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";	//Fixed O&M Costs set to the target value based on Downselect Criteria, Table 2
-	parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "Variable O&M cost per production per year";	//Variable O&M Costs set to the target value based on Downselect Criteria, Table 2
+	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
+	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";
+	parameter FI.EnergyPrice pri_storage = 39.47 "Storage cost per energy capacity ($/MWh)";
+	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";
+	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";
+	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";
+	parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "Variable O&M cost per production per year";
 
 	// Receiver cost
-	parameter FI.Money_USD C_rec_fix = 4135e3 "Receiver fixed Cost";
-	parameter FI.Money_USD C_rec_ref = 47409e3 "Receiver reference Cost";
+	parameter FI.Money_USD C_rec_fix = 4780420 "Receiver fixed Cost";
+	parameter FI.Money_USD C_rec_ref = 36245902 "Receiver reference Cost";
 	parameter SI.Diameter D_receiver_ref = 20 "Receiver reference diameter";
-	parameter SI.Height H_receiver_ref = 25 "Receiver reference height";
+	parameter SI.Height H_receiver_ref = 18.4 "Receiver reference height";
 	parameter Real rec_exp = 0.6 "Receiver reference height";
 
 	// Riser and downcomer cost
@@ -288,6 +287,58 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
 	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
+
+	// Sodium loop cost
+	parameter FI.Money_USD C_pip_na_ref =  2000000 "Sodium piping reference cost";
+	parameter FI.Money_USD C_ic_na_ref = 417000 "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na_ref = 2538000 "Sodium valves reference cost";
+	parameter FI.Money_USD C_tank_na_ref = 1887762 "Sump tank reference cost";
+	parameter FI.Money_USD C_vessel_na_ref = 329116 "Inlet vessel reference cost";
+	parameter FI.Money_USD C_skid_na_ref = 450000 "Purification skid reference cost";
+	parameter FI.Money_USD C_pump_na_ref = 4400000 "Sodium pumps reference cost";
+	parameter FI.Money_USD C_argon_na_ref = 124000 "Argon system reference cost";
+
+	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
+	parameter Real ic_na_exp = 0.5 "Valves and I&C scaling exponent";
+	parameter Real valve_na_exp = 0.7 "Sodium valves scaling exponent";
+	parameter Real tank_na_exp = 0.7 "Sump tank scaling exponent";
+	parameter Real vessel_na_exp = 0.7 "Inlet vessel scaling exponent";
+	parameter Real skid_na_exp = 0.7 "Purification skid scaling exponent";
+	parameter Real pump_na_exp = 0.7 "Sodium pumps scaling exponent";
+	parameter Real argon_na_exp = 0.5 "Argon system scaling exponent";
+
+	parameter SI.HeatFlowRate Q_rec_ASTRI_ref = 543e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "Receiver thermal output reference size";
+
+	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^pip_na_exp "Sodium piping cost";
+	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^ic_na_exp "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^valve_na_exp "Sodium valves cost";
+	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^tank_na_exp "Sump tank cost";
+	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^vessel_na_exp "Inlet vessel cost";
+	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^skid_na_exp "Purification skid cost";
+	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
+	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
+
+	//Cold and hot salt pump cost
+	parameter FI.Money_USD C_salt_pump_cold_ref =  3200000 "Cold salt pump reference cost";
+	parameter FI.Money_USD C_salt_pump_hot_ref =  3200000 "Hot salt pump reference cost";
+	parameter Real pump_salt_exp = 0.7 "Cold and hot salt pump cost scaling exponent";
+	parameter FI.Money_USD C_salt_pump_cold = C_salt_pump_cold_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Cold salt pump cost";
+	parameter FI.Money_USD C_salt_pump_hot = C_salt_pump_hot_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Hot salt pump cost";
+
+	// Power block cost
+	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
+	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
+	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
+	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
+
+	// Sodium-Salt heat exchanger cost
+	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
+	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
+	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^power_block_exp "Sodium-salt hex unit price";
 
 	// Salt piping and valves
 	parameter SI.Length L_salt_cold = 20 "Length of cold salt piping (exc. expansion loops)";
@@ -325,65 +376,13 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 
 	parameter FI.Money_USD C_salt_valves = 2000000 "Cost of salt valves";
 
-	// Sodium loop cost
-	parameter FI.Money_USD C_pip_na_ref =  2e6 "Sodium piping reference cost";
-	parameter FI.Money_USD C_ic_na_ref = 417e3 "Valves and I&C reference cost";
-	parameter FI.Money_USD C_valve_na_ref = 2.538e6 "Sodium valves reference cost";
-	parameter FI.Money_USD C_tank_na_ref = 1887762 "Sump tank reference cost";
-	parameter FI.Money_USD C_vessel_na_ref = 329116 "Inlet vessel reference cost";
-	parameter FI.Money_USD C_skid_na_ref = 450e3 "Purification skid reference cost";
-	parameter FI.Money_USD C_pump_na_ref = 4.4e6 "Sodium pumps reference cost";
-	parameter FI.Money_USD C_argon_na_ref = 124e3 "Argon system reference cost";
-
-	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
-	parameter Real ic_na_exp = 0.5 "Valves and I&C scaling exponent";
-	parameter Real valve_na_exp = 0.7 "Sodium valves scaling exponent";
-	parameter Real tank_na_exp = 0.7 "Sump tank scaling exponent";
-	parameter Real vessel_na_exp = 0.7 "Inlet vessel scaling exponent";
-	parameter Real skid_na_exp = 0.7 "Purification skid scaling exponent";
-	parameter Real pump_na_exp = 0.7 "Sodium pumps scaling exponent";
-	parameter Real argon_na_exp = 0.5 "Argon system scaling exponent";
-
-	parameter SI.HeatFlowRate Q_rec_ASTRI_ref = 543e6 "Receiver thermal output reference size";
-	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "Receiver thermal output reference size";
-	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "Receiver thermal output reference size";
-	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "Receiver thermal output reference size";
-
-	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^pip_na_exp "Sodium piping cost";
-	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^ic_na_exp "Valves and I&C reference cost";
-	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^valve_na_exp "Sodium valves cost";
-	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^tank_na_exp "Sump tank cost";
-	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^vessel_na_exp "Inlet vessel cost";
-	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^skid_na_exp "Purification skid cost";
-	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
-	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
-
-	//Cold and hot salt pump cost
-	parameter FI.Money_USD C_salt_pump_cold_ref =  2.2e6 "Cold salt pump reference cost";
-	parameter FI.Money_USD C_salt_pump_hot_ref =  2.2e6 "Hot salt pump reference cost";
-	parameter Real pump_salt_exp = 0.7 "Cold and hot salt pump cost scaling exponent";
-	parameter FI.Money_USD C_salt_pump_cold = C_salt_pump_cold_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Cold salt pump cost";
-	parameter FI.Money_USD C_salt_pump_hot = C_salt_pump_hot_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Hot salt pump cost";
-
-	// Power block cost
-	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
-	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
-	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
-	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
-	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
-
-	// Sodium-Salt heat exchanger cost
-	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
-	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
-	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^power_block_exp "Sodium-salt hex unit price";
-
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
 	parameter FI.Money_USD C_tower = 16339938 "Tower cost";
 	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
 	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
-	parameter FI.Money_USD C_salt_piping_valves = C_salt_valves + C_piping_cold_salt + C_piping_hot_salt "Salt piping and valves cost";
+	parameter FI.Money_USD C_salt_piping = C_piping_cold_salt + C_piping_hot_salt "Salt piping and valves cost";
 	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
 	parameter FI.Money_USD C_block = (1e-3)*P_gross_ref*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
@@ -393,8 +392,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
 
 	// Direct capital costs (subtotal)
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
-	parameter FI.Money_USD C_contingency = 0.1 * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
+	parameter Real f_contingency = 0.1 "Contingency factor";
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping + C_salt_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_contingency = f_contingency * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
 
 	// Total direct capital cost
 	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
