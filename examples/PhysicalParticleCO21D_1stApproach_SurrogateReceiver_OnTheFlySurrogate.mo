@@ -869,7 +869,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      P_gross = P_gross
+      P_gross = P_gross,
+      D_outlet = D_outlet
   );
   
   //********************* Receiver lift
