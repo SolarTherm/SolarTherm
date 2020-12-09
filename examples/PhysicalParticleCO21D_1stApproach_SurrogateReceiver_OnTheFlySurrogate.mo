@@ -36,7 +36,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
-  parameter Boolean set_external_parasities = false "[PB] True = net power calculation in the PB model will consider parasitic losses";
+  parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   
@@ -1008,17 +1008,17 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
 
 algorithm
   if time > 31449600 then
-    eta_curtail_off := E_helio_incident / E_resource;
-    eta_optical := E_resource_after_optical_eff / E_resource;
-    eta_he_av := he_av_design;
-    eta_curtail_defocus := E_helio_net / E_helio_raw;
-    eta_recv_abs := E_recv_incident / E_helio_net;
-    eta_recv_thermal := E_recv_net / E_recv_incident;
-    eta_storage := E_pb_input / E_recv_net;
-    eta_pb_gross := E_pb_gross / E_pb_input;
-    eta_pb_net := E_pb_net / E_pb_input;
-    eta_solartoelec := E_pb_net / E_resource;
-    E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
+      eta_curtail_off := E_helio_incident / E_resource;
+      eta_optical := E_resource_after_optical_eff / E_resource;
+      eta_he_av := he_av_design;
+      eta_curtail_defocus := E_helio_net / E_helio_raw;
+      eta_recv_abs := E_recv_incident / E_helio_net;
+      eta_recv_thermal := E_recv_net / E_recv_incident;
+      eta_storage := E_pb_input / E_recv_net;
+      eta_pb_gross := E_pb_gross / E_pb_input;
+      eta_pb_net := E_pb_net / E_pb_input;
+      eta_solartoelec := E_pb_net / E_resource;
+      E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 
 initial equation
@@ -1035,100 +1035,116 @@ initial equation
   m_flow_fac = particleReceiver1DCalculator.particleReceiver1D.mdot;
   Q_flow_defocus_calculated = defocuscalculator.particleReceiver1D.q_solar * A_rcv;
   
-//********************* Retrieve the PB design points result from the PB model intialisation
+  //********************* Retrieve the PB design points result from the PB model intialisation
   if which_PB_model == 0 then
-//********************* CEA - Power Block
-    eta_gross_base = sCO2PBDesignPointCalculator.eta_gross;
-    eta_Q_base = sCO2PBDesignPointCalculator.eta_Q;
-    Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
-    etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
-    UA_HX = sCO2PBDesignPointCalculator.powerBlock.exchanger.UA;
+      //********************* CEA - Power Block
+      eta_gross_base = sCO2PBDesignPointCalculator.eta_gross;
+      eta_Q_base = sCO2PBDesignPointCalculator.eta_Q;
+      Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
+      etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
+      eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
+      m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
+      UA_HX = sCO2PBDesignPointCalculator.powerBlock.exchanger.UA;
   elseif which_PB_model == 1 then
-//********************* NREL Power Block - Initialisation
-    NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(P_gross, T_in_ref_blk, p_high, dT_PHX_cold_approach, eta_comp_main, eta_comp_re, eta_turb, dT_mc_approach, blk_T_amb_des, HTF_name, htf_choice, SolarTherm_path, T_cold_set);
-//********************* NREL Power Block - Retrieve initialisation result
-    Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
-    eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
-    eta_Q_base = NREL_PB_configurations[12] "";
-    etaG = eta_gross_base "after cooling power, motor eff and fixed load parasities";
-    eff_blk = etaG;
-    m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
-    dT_PHX_hot_approach = NREL_PB_configurations[13];
-    UA_HX = NREL_PB_configurations[7];
+    //********************* NREL Power Block - Initialisation
+      NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(
+                                      P_gross, 
+                                      T_in_ref_blk, 
+                                      p_high, 
+                                      dT_PHX_cold_approach, 
+                                      eta_comp_main, 
+                                      eta_comp_re, 
+                                      eta_turb, 
+                                      dT_mc_approach, 
+                                      blk_T_amb_des, 
+                                      HTF_name, 
+                                      htf_choice, 
+                                      SolarTherm_path, 
+                                      T_cold_set
+                              );
+                                      
+    //********************* NREL Power Block - Retrieve initialisation result
+      Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
+      eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
+      eta_Q_base = NREL_PB_configurations[12] "";
+      etaG = eta_gross_base "after cooling power, motor eff and fixed load parasities";
+      eff_blk = etaG;
+      m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
+      dT_PHX_hot_approach = NREL_PB_configurations[13];
+      UA_HX = NREL_PB_configurations[7];
   else
-//********************* Wrong which_PB_model choice
-    eta_gross_base = -1;
-    eta_Q_base = -1;
-    Q_flow_des = -1;
-    etaG = -1;
-    eff_blk = -1;
-    m_flow_blk = -1;
-    dT_PHX_hot_approach = -1;
-    UA_HX = -1;
+      //********************* Wrong which_PB_model choice
+      eta_gross_base = -1;
+      eta_Q_base = -1;
+      Q_flow_des = -1;
+      etaG = -1;
+      eff_blk = -1;
+      m_flow_blk = -1;
+      dT_PHX_hot_approach = -1;
+      UA_HX = -1;
   end if;
   
-//************************************ Heat Exchanger Area Calculation
+  //************************************ Heat Exchanger Area Calculation
   U_HX = 1 / (1 / h_conv_CO2 + 1 / SolarTherm.Utilities.h_particle(SolarTherm.Media.SolidParticles.CarboHSP_utilities.lamda_T(0.5 * (T_cold_set + T_hot_set)), 0.008, 1, 1));
   A_HX = UA_HX / U_HX "Heat exchanger total area";
-//************************************ Power Block Component Cost Calculation
+  
+  //************************************ Power Block Component Cost Calculation
   if which_PB_model == 1 then
-//************************************ Based on NREL Power Block - Cost function is based on Kevin Albrect, 2019 https://is.gd/3VN0O7
-    C_HTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
-    C_LTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
-    C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
-    C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-    C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-    C_cooler = pri_cooler * NREL_PB_configurations[6];
-    C_exchanger = (pri_PHX_material + pri_PHX_manufacture) * A_HX + pri_PHX_BOP_s * m_flow_blk + pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
-    C_generator = pri_generator * (P_gross / 10 ^ 6) ^ 0.5463;
+      //************************************ Based on NREL Power Block - Cost function is based on Kevin Albrect, 2019 https://is.gd/3VN0O7
+      C_HTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
+      C_LTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
+      C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
+      C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
+      C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
+      C_cooler = pri_cooler * NREL_PB_configurations[6];
+      C_exchanger = (pri_PHX_material + pri_PHX_manufacture) * A_HX + pri_PHX_BOP_s * m_flow_blk + pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
+      C_generator = pri_generator * (P_gross / 10 ^ 6) ^ 0.5463;
   elseif which_PB_model == 0 then
-//************************************ Based on NREL Power Blockbased on CEA Power Block*/
-    C_HTR = sCO2PBDesignPointCalculator.powerBlock.C_HTR;
-    C_LTR = sCO2PBDesignPointCalculator.powerBlock.C_LTR;
-    C_turbine = sCO2PBDesignPointCalculator.powerBlock.C_turbine;
-    C_mainCompressor = sCO2PBDesignPointCalculator.powerBlock.C_mainCompressor;
-    C_reCompressor = sCO2PBDesignPointCalculator.powerBlock.C_reCompressor;
-    C_cooler = sCO2PBDesignPointCalculator.powerBlock.C_cooler;
-    C_exchanger = sCO2PBDesignPointCalculator.powerBlock.C_exchanger;
-    C_generator = sCO2PBDesignPointCalculator.powerBlock.C_generator;
+      //************************************ Based on NREL Power Blockbased on CEA Power Block*/
+      C_HTR = sCO2PBDesignPointCalculator.powerBlock.C_HTR;
+      C_LTR = sCO2PBDesignPointCalculator.powerBlock.C_LTR;
+      C_turbine = sCO2PBDesignPointCalculator.powerBlock.C_turbine;
+      C_mainCompressor = sCO2PBDesignPointCalculator.powerBlock.C_mainCompressor;
+      C_reCompressor = sCO2PBDesignPointCalculator.powerBlock.C_reCompressor;
+      C_cooler = sCO2PBDesignPointCalculator.powerBlock.C_cooler;
+      C_exchanger = sCO2PBDesignPointCalculator.powerBlock.C_exchanger;
+      C_generator = sCO2PBDesignPointCalculator.powerBlock.C_generator;
   else
-    C_HTR = -1;
-    C_LTR = -1;
-    C_turbine = -1;
-    C_mainCompressor = -1;
-    C_reCompressor = -1;
-    C_cooler = -1;
-    C_exchanger = -1;
-    C_generator = -1;
+      C_HTR = -1;
+      C_LTR = -1;
+      C_turbine = -1;
+      C_mainCompressor = -1;
+      C_reCompressor = -1;
+      C_cooler = -1;
+      C_exchanger = -1;
+      C_generator = -1;
   end if;
   
 //********************* Power Block Cost Calculation
   if which_PB_model == 0 then
-    if set_simple_PB_cost then
-      C_block = pri_block * P_gross / 1000 + C_exchanger;
-    else
-      C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
-    end if;
+      if set_simple_PB_cost then
+          C_block = pri_block * P_gross / 1000 + C_exchanger;
+      else
+          C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
+      end if;
   elseif which_PB_model == 1 then
-    if set_simple_PB_cost then
-      C_block = pri_block * P_gross / 1000 + C_exchanger;
-    else
-      C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
-    end if;
+      if set_simple_PB_cost then
+          C_block = pri_block * P_gross / 1000 + C_exchanger;
+      else
+          C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
+      end if;
   else
-    C_block = -1;
+      C_block = -1;
   end if;
   
-//************************************ Capital Cost Calculation
+  //************************************ Capital Cost Calculation
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop "Total equipment cost";
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 
 equation
-//************************************ Equations below exist to close the model
+  //************************************ Equations below exist to close the model
   particleReceiver.raw_input[1] = H_rcv "Particle receiver drop height - input to the static receiver surrogate model";
   particleReceiver.raw_input[2] = ar_rec "Particle receiver aspect ratio (H/W) - input to the static receiver surrogate model";
   particleReceiver.raw_input[3] = T_hot_set "Particle receiver outlet target temperature (K) - input to the static receiver surrogate model";
@@ -1137,13 +1153,13 @@ equation
   particleReceiver.raw_input[6] = particleReceiver.Tamb "Particle receiver ambient temp. (K) - input to the static receiver surrogate model";
   particleReceiver.raw_input[7] = 1 + 0.13929 * particleReceiver.Wspd * Modelica.Math.exp(-1 * ((abs(Modelica.SIunits.Conversions.to_deg(particleReceiver.Wdir) - 180) - 105) / 30) ^ 2) "Particle receiver wind factor (product of wind speed and wind direction) - input to the static receiver surrogate model";
 
-//************************************ Assigning the input to the surrogate model*/
+  //************************************ Assigning the input to the surrogate model*/
   powerBlock.raw_input[1] = powerBlock.load;
   powerBlock.raw_input[2] = tankHot.medium.T;
   powerBlock.raw_input[3] = data.Tdry;
   der(accumulated_m) = particleReceiver.fluid_a.m_flow;
 
-//************************************ Dispatch optimiser variables
+  //************************************ Dispatch optimiser variables
   SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
   DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
   SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Maximum storage level in MWhth";
@@ -1207,7 +1223,7 @@ equation
   R_spot = market.profit;
   der(TOD_W) = market.price.price * powerBlock.W_net;
 
-//************************************ Connections from data
+  //************************************ Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-113, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation(
@@ -1223,7 +1239,7 @@ equation
   connect(tankCold.T_amb, Tamb_input.y) annotation(
     Line(points = {{58.1, -8.3}, {58.1, 20}, {92, 20}, {92, 42}, {118, 42}, {118, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
-//************************************ Fluid connections
+  //************************************ Fluid connections
   connect(liftRC.fluid_a, tankCold.fluid_b) annotation(
     Line(points = {{5, -25}, {44, -25}}, color = {0, 127, 255}));
   connect(temperature.fluid_b, tankHot.fluid_a) annotation(
@@ -1237,7 +1253,7 @@ equation
   connect(LiftCold.fluid_b, tankCold.fluid_a) annotation(
     Line(points = {{112, -32}, {112, -13}, {64, -13}}, color = {0, 127, 255}));
 
-//************************************ controlHot connections
+  //************************************ controlHot connections
   connect(tankHot.L, controlHot.L_mea) annotation(
     Line(points = {{36.2, 68.4}, {40, 68.4}, {40, 68.5}, {47.52, 68.5}}, color = {0, 0, 127}));
   connect(controlHot.m_flow, liftHX.m_flow) annotation(
@@ -1245,13 +1261,13 @@ equation
   connect(controlHot.defocus, or1.u1) annotation(
     Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
-//************************************ Solar field connections i.e. solar.heat port and control
+  //************************************ Solar field connections i.e. solar.heat port and control
   connect(sun.solar, heliostatsField.solar) annotation(
     Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
   connect(or1.y, heliostatsField.defocus) annotation(
     Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
-//************************************ PowerBlock connections
+  //************************************ PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{143, 44}, {143, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(powerBlock.W_net, market.W_net) annotation(
@@ -1279,7 +1295,7 @@ equation
   connect(tankCold.L, particleReceiver.level) annotation(
     Line(points = {{44, -14}, {24, -14}, {24, 24}, {-20, 24}, {-20, 24}}, color = {0, 0, 127}));
 
-//************************************ End of The System Model ********************************************\\
+  //************************************ End of The System Model ********************************************\\
   connect(Wspd_input.y, wspdScaler.WspdGround) annotation(
     Line(points = {{-112, 30}, {-98, 30}, {-98, 50}, {-59, 50}, {-59, 45}}, color = {0, 0, 127}));
   connect(wspdScaler.WspdOut, particleReceiver.Wspd) annotation(
