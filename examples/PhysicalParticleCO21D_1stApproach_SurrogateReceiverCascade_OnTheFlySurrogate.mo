@@ -953,7 +953,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      P_gross = P_gross,
+      P_gross = P_net/(1-par_fr),
 	  D_outlet = D_outlet
 	  );
   

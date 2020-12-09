@@ -36,7 +36,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
-  parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
+  parameter Boolean set_external_parasities = false "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   
@@ -481,15 +481,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter FI.Money C_tower = 
       if set_SAM_tower_cost then 
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
-        //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
+        //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
-            (
-                2293496.5853409-
-                45954.7293032756 * H_tower + 
-                0.1048843661 * m_max + 
-                256.311306896 * H_tower^2 +       //=================> Tim Harvey structure only cost 
-                0.0015436937 * H_tower * m_max - 
-                0.0000000021 * m_max^2
+            ( 
+				18883.0137745081 * H_tower + 
+				5072300.012597866 * R_tower*2 - 
+				7.8766772597 * H_tower^2 + 
+				6544.5682400142 * H_tower * R_tower*2 - 
+				121032.5438027561 * (R_tower*2)^2 - 61971547.03836635
+			
             ) - 
             
             1.992 * H_tower^2.747 + 523100 +  //==================> SBP Material Cost
@@ -501,15 +501,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
             1573 * H_tower //==================> Ducting Cost
       else
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
-        //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
+        //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ SBP Tower Cost without Piping [Euro] + Ducting cost [USD]*/
             (
-                2293496.5853409-
-                45954.7293032756 * H_tower + 
-                0.1048843661 * m_max + 
-                256.311306896 * H_tower^2 +       //=================> Tim Harvey structure only cost
-                0.0015436937 * H_tower * m_max - 
-                0.0000000021 * m_max^2
+                 
+				18883.0137745081 * H_tower + 
+				5072300.012597866 * R_tower*2 - 
+				7.8766772597 * H_tower^2 + 
+				6544.5682400142 * H_tower * R_tower*2 - 
+				121032.5438027561 * (R_tower*2)^2 - 61971547.03836635
             ) - 
             
             1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
@@ -869,7 +869,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      P_gross = P_gross,
       D_outlet = D_outlet
   );
   
