@@ -157,11 +157,11 @@ equation
   if set_swaying_optical_eff == true then
     //********************* Assuming linear relationship between effective slope error vs. wind speed
     /*From DOE Guildline for G3P3 project--> Slope error 2 mrad in windy condition, and 1.5 mrad in calm condition*/
-    slope_error_runtime = slope_error + (2e-3-slope_error)/(Wspd_max) * max(Wspd_internal,0);
+    slope_error_runtime = slope_error + (slope_error_windy-slope_error)/(Wspd_max) * max(Wspd_internal,0);
     
-    if slope_error_runtime < 2e-3 then
+    if slope_error_runtime < slope_error_windy then
         //********************* Assuming linear relationship between effective slope error vs. optical efficiency
-        nu = nu_windy + (nu_calm - nu_windy) / (2e-3 - slope_error) * (slope_error_runtime - slope_error);
+        nu = nu_windy + (nu_calm - nu_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
     else
         nu = nu_windy;
     end if;
