@@ -1119,9 +1119,9 @@ initial equation
       R_tower = max(25/2,R_rcv_distance);
    else
 	  if R_rcv_distance>25/2 then
-	      R_tower = max(R_rcv_distance,towerInnerDiameterCalculator.D_inner_tower/2);
+	      R_tower = max(R_rcv_distance,towerInnerDiameterCalculator.D_inner_tower/2+1.83);
 	  else
-	      R_tower = max(25/2 ,towerInnerDiameterCalculator.D_inner_tower/2);
+	      R_tower = max(25/2 ,towerInnerDiameterCalculator.D_inner_tower/2+1.83);
       end if;
    end if;
    

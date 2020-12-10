@@ -1025,7 +1025,7 @@ initial equation
   if set_external_storage then
        R_tower = W_rcv / 2; //**********Assuming tower inner diameter = receiver width
   else
-       R_tower = towerInnerDiameterCalculator.D_inner_tower / 2;
+       R_tower = max(towerInnerDiameterCalculator.D_inner_tower / 2 + 1.83,25);
   end if;
    
   omega_twister = ceil(washingFrequencyCalculator.omega);
