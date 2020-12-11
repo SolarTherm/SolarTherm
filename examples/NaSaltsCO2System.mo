@@ -126,8 +126,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer outputsize_PB = 2;
 	parameter Real tolerance_kriging = 6e-3 "Mean Absolute Error";
 	parameter Real tolerance_ANN = 6e-3 "Mean Absolute Error";
-	parameter Integer which_surrogate = 1 "1 for Kriging, 2 for ANN";
-	parameter Real eta_gross_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
+	parameter Integer which_surrogate = 2 "1 for Kriging, 2 for ANN";
+	parameter Real eta_net_base = 0.48 "Net thermal-to-electric cycle efficiency after power cycle parasitic loads";
 	parameter Real eta_Q_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
 	parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
 	parameter SI.MassFlowRate m_flow_blk(fixed = false) "Mass flow rate to power block at design point, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
@@ -176,7 +176,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_start = 0.19896 "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf = 0.13264 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = 0.3316 "Energy fraction to the receiver at defocus state";
-	parameter Real hot_tnk_empty_lb = 180 / 11 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_lb = 16.5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 94 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 100 "Hot tank full trigger upper bound";
@@ -197,9 +197,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;/*1.388*/	
 	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
-	parameter SI.Length tank_min_l = 1.8 "Storage tank fluid minimum height"; //Based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Length H_storage = (4*V_max*tank_ar^2/CN.pi)^(1/3) + tank_min_l "Storage tank height"; //Adjusted to obtain a height of 11 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
-	parameter SI.Diameter D_storage = (V_max/(H_storage - tank_min_l)*4/CN.pi)^0.5 "Storage tank diameter"; //Adjusted to obtain a diameter of 60.1 m for 12 hours of storage based on NREL Gen3 SAM model v14.02.2020
+	parameter SI.Length H_storage = 10.9 "Storage tank height";
+	parameter SI.Diameter D_storage = 22.5 "Storage tank diameter";
 	//parameter SI.Pressure Dp_tube_design
 	//parameter SI.Pressure Dp_shell_design
 
@@ -326,8 +325,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Sodium-Salt heat exchanger cost
 	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
 	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
-	parameter Real hex_salt_co2_exp = 0.7 "Sodium-salt hex scaling exponent";
-	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^hex_salt_co2_exp "Sodium-salt hex unit price";
+	parameter Real hex_na_salt_exp = 0.7 "Sodium-salt hex scaling exponent";
+	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^hex_na_salt_exp "Sodium-salt hex unit price";
 
 	// Salt piping and valves
 	parameter SI.Length L_salt_cold = 20 "Length of cold salt piping (exc. expansion loops)";
@@ -625,7 +624,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		eta_isen_t = eta_turb, 
 		dT_mc_approach = dT_mc_approach, 
 		which_PB_model = 1, load_base = 1, 
-		eta_gross_base = eta_gross_base, 
+		eta_net_base = eta_net_base, 
 		eta_Q_base = eta_Q_base, 
 		Q_HX_des = Q_flow_des, 
 		m_HTF_des = m_flow_blk, 
@@ -680,7 +679,6 @@ initial equation
 		T_cold_set_CS);
 
 	Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
-	eta_gross_base = NREL_PB_configurations[11] "After cooling power, before other parasities and fixed self-power consumption";
 	eta_Q_base = NREL_PB_configurations[12];
 	m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
 	

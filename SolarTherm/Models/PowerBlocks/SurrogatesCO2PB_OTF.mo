@@ -12,7 +12,7 @@ model SurrogatesCO2PB_OTF
   import SolarTherm.Utilities.Kriging_OnTheFly.*;
   import SolarTherm.Utilities.ANN_OnTheFly.*;
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
-  replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+  replaceable package MedRec = SolarTherm.Media.ChlorideSalt.ChlorideSalt_pT;
   extends Icons.PowerBlock;
  
   Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = MedRec) annotation(
@@ -59,7 +59,7 @@ model SurrogatesCO2PB_OTF
   parameter String HTF_name = "CarboHSP";
   
   //********************************** On design efficiency values
-  parameter Real eta_gross_base = 0.005;
+  parameter Real eta_net_base = 0.005;
   parameter Real eta_Q_base = 5;
   
   parameter Integer inputsize = 3;
@@ -88,7 +88,7 @@ model SurrogatesCO2PB_OTF
   //******************** Kriging
   Kriging_properties Kriging_variables = Kriging_properties(
                                          P_gross, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base,
-                                         eta_gross_base,  eta_Q_base, base_path,
+                                         eta_net_base,  eta_Q_base, base_path,
                                          SolarTherm_path, inputsize, outputsize, tolerance_kriging, which_PB_model,
                                          htf_choice,dT_PHX_hot_approach, dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc, 
                                          eta_isen_t, dT_mc_approach, HTF_name) if which_surrogate == 1;
@@ -96,7 +96,7 @@ model SurrogatesCO2PB_OTF
   parameter Integer index_0 = 0;
   ANN_properties session_PB = ANN_properties(
                                          P_gross, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base,
-                                         eta_gross_base, eta_Q_base, 
+                                         eta_net_base, eta_Q_base, 
                                          index_0, base_path, SolarTherm_path, inputsize, outputsize, tolerance_ANN, 
                                          which_PB_model, htf_choice,dT_PHX_hot_approach, dT_PHX_cold_approach, eta_isen_mc,
                                          eta_isen_rc, eta_isen_t, dT_mc_approach, HTF_name) if which_surrogate == 2;
@@ -105,20 +105,20 @@ model SurrogatesCO2PB_OTF
   parameter Integer index_1 = 1;
   ANN_properties session_HX = ANN_properties(
                                          P_gross, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base,
-                                         eta_gross_base, eta_Q_base,
+                                         eta_net_base, eta_Q_base,
                                          index_1, base_path, SolarTherm_path, inputsize, outputsize, tolerance_ANN, 
                                          which_PB_model, htf_choice, dT_PHX_hot_approach, dT_PHX_cold_approach, eta_isen_mc,
                                          eta_isen_rc, eta_isen_t, dT_mc_approach, HTF_name) if which_surrogate == 2;
   
   //Results
-  Real deviation_eta_gross; 
+  Real deviation_eta_net; 
   Real deviation_eta_Q;
   Real[inputsize] raw_input;
   //Boolean m_sup "Disconnect the production of electricity when the mass flow rate of the HTF to the HX is not enough";
   Real load "mass flow fraction of the exchanger compared to design condition";
   Integer state "1 means PB on, 0 means PB off"; 
   
-  SI.Efficiency eta_gross;
+  SI.Efficiency eta_net;
   SI.Efficiency eta_Q;
   SI.Efficiency eta_cycle_net;
   SI.Power Q_HX;
@@ -152,20 +152,20 @@ model SurrogatesCO2PB_OTF
   //when mdot >= m_HTF_des * nu_min then
   if state == 1 then
     if which_surrogate==1 then
-      deviation_eta_gross = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 
+      deviation_eta_net = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_gross", "spherical"); 
       deviation_eta_Q = OTF_Kriging_interpolate(Kriging_variables, raw_input, "eta_Q", "spherical");
     else
-      deviation_eta_gross = OTF_ANN_predict(session_PB, raw_input, 0);
+      deviation_eta_net = OTF_ANN_predict(session_PB, raw_input, 0);
       deviation_eta_Q = OTF_ANN_predict(session_HX, raw_input, 1);
     end if; 
-    eta_gross = eta_gross_base - deviation_eta_gross;
+    eta_net = eta_net_base - deviation_eta_net;
     eta_Q = eta_Q_base - deviation_eta_Q;
     h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
     eta_cycle_net = W_net / Q_HX;
   else// mdot< 0.999 * m_HTF_des*nu_min then
-    deviation_eta_gross = 0;
+    deviation_eta_net = 0;
     deviation_eta_Q = 0;
-    eta_gross=0;
+    eta_net=0;
     eta_Q=0;
     h_out=h_out_ref;
     eta_cycle_net=0;
@@ -175,7 +175,7 @@ model SurrogatesCO2PB_OTF
 
   
   Q_HX = eta_Q * Q_HX_des;
-  W_gross = eta_gross * Q_HX;
+  W_gross = eta_net * Q_HX;
   
   if ramping then
     W_net = 0;
