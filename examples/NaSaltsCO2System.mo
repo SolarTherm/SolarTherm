@@ -198,7 +198,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length H_storage = 10.9 "Storage tank height";
-	parameter SI.Diameter D_storage = 22.5 "Storage tank diameter";
+	parameter SI.Diameter D_storage = 45 "Storage tank diameter";
 	//parameter SI.Pressure Dp_tube_design
 	//parameter SI.Pressure Dp_shell_design
 
