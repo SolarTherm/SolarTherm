@@ -19,6 +19,7 @@ model HeliostatFieldWindSpeed
   parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
+  parameter SI.Velocity Wspd_calm_max=10 "Wind calm speed limit";
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
@@ -60,8 +61,9 @@ model HeliostatFieldWindSpeed
   parameter SolarTherm.Types.Solar_angles angles = SolarTherm.Types.Solar_angles.dec_hra;
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table optical1(hra=solar.hra, dec=solar.dec, angles = angles, file = opt_file1, lat = lat);
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table optical2(hra=solar.hra, dec=solar.dec, angles = angles, file = opt_file2, lat = lat);
+  
+  SI.HeatFlowRate Q_dump_field "Variable heat flow rate for dumping due to field oversizing";
 
-protected
   SI.Power W_loss1;
   SI.Power W_loss2;
   //SI.Time t_start=30*60;
@@ -76,7 +78,6 @@ protected
   parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-  parameter SI.HeatFlowRate Q_curtail=1e10 "Fixed heat flow rate for curtailment" annotation(min=0,Dialog(group="Operating strategy"));
 
 initial equation
    on_internal=Q_raw>Q_start;
@@ -97,7 +98,7 @@ equation
 
   on_hf=(ele>ele_min) and (Wspd_internal<Wspd_max);
   
-  if Wspd_internal > 3 then
+  if Wspd_internal > Wspd_calm_max then
   eta_opt = optical2.nu;
   else 
   eta_opt = optical1.nu;
@@ -111,7 +112,7 @@ equation
     on_internal=false;
   end when;
 
-  Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else min(Q_curtail,Q_raw)) else 0;
+  Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else min(Q_dump_field,Q_raw)) else 0;
   heat.Q_flow= -Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
 //   optical.hra=solar.hra;
