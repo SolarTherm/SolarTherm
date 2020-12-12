@@ -209,6 +209,36 @@ class Tree(object):
 		self.xml_tree.write(output_xml)
 
 
+	def update_xml(self, xmlfile):
+		"""
+		Update the values of changable parameters in the original xml file  
+		with the nominal values in the tree
+
+		Argument:
+		xmlfile: str, directory of the xml file to be updated
+
+		"""		
+
+		xml_tree = ET.parse(xmlfile)	
+		xml_root=xml_tree.getroot()
+
+		names=self.children.keys()
+		for n in names:  
+			v=self.get(n+'.nominal')
+			u=self.get(n+'.unit')
+			d=self.get(n+'.description')
+
+			find=xml_root.find('*ScalarVariable[@name=\''+n+'\']')
+			if find!=None:
+				changable=find.attrib['isValueChangeable']
+				if changable=='true':
+					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
+					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
+					xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
+
+		xml_tree.write(xmlfile)
+
+
 	def filter_type(self, pmtype):
 		"""
 		Filter the specific type of parameters
