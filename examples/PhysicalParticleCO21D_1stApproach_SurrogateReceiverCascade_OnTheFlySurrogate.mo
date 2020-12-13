@@ -93,6 +93,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
+  parameter Real angular_range_parsed(fixed=false) " angular range of the multi-aperture configuration that is parsed to the model";
   parameter Integer num_aperture = 3 "[H&T] number of apertures";
   parameter SI.Length R_rcv_distance(fixed=false) "The raidal distrance of each aperture from the centre of the tower [m]";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
@@ -777,7 +778,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       W_rcv_2 = W_rcv_lv2, 
       W_rcv_3 = W_rcv_lv3, 
       tilt_rcv = tilt_rcv, 
-	  angular_range=angular_range,
+	  angular_range=angular_range_parsed,
 	  num_aperture=num_aperture,
       W_helio = W_helio, 
       H_helio = H_helio, 
@@ -1109,10 +1110,11 @@ algorithm
 */
 
 initial equation
+	angular_range_parsed=angular_range;
    W_rcv=max(W_rcv_lv1, W_rcv_lv3);
-   if tan(angular_range/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
+   if tan(angular_range_parsed/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
    else
-		R_rcv_distance=W_rcv*1.2/2/tan(angular_range/(num_aperture-1));
+		R_rcv_distance=W_rcv*1.2/2/tan(angular_range_parsed/(num_aperture-1));
    end if;
 
    if set_external_storage then
