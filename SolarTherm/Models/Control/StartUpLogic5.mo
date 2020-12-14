@@ -32,6 +32,25 @@ initial equation
 initial equation
   on_discharge= (level>level_on) and
                              (level>level_off);
+algorithm
+   when level>level_on then
+     on_discharge := true;
+   elsewhen level<level_off then
+     on_discharge := false;
+   end when;
+
+   when on_charge or on_discharge then
+     t_on := time;
+   end when;
+   when not (on_charge or on_discharge) then
+     t_off := time;
+   end when;
+//
+   when t_on-(t_off+t_standby)>0 then
+     startup:=true;
+   elsewhen (time-t_on)>t_start then
+     startup:=false;
+   end when;
 
 equation
 //
@@ -42,24 +61,6 @@ equation
 //
 //
 //
-   when level>level_on then
-     on_discharge = true;
-   elsewhen level<level_off then
-     on_discharge = false;
-   end when;
-
-   when on_charge or on_discharge then
-     t_on = time;
-   end when;
-   when not (on_charge or on_discharge) then
-     t_off = time;
-   end when;
-//
-   when t_on-(t_off+t_standby)>0 then
-     startup=true;
-   elsewhen (time-t_on)>t_start then
-     startup=false;
-   end when;
    standby = (time-t_off)<t_standby;
 //   y =if level then (if (startup) then y_start else y_des) else 0;
 

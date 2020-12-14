@@ -63,6 +63,7 @@ model HeliostatFieldWindSpeed
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table optical2(hra=solar.hra, dec=solar.dec, angles = angles, file = opt_file2, lat = lat);
   
   SI.HeatFlowRate Q_dump_field "Variable heat flow rate for dumping due to field oversizing";
+  SI.HeatFlowRate Q_defocus "Variable heat flow rate for dumping due to field oversizing";
 
   SI.Power W_loss1;
   SI.Power W_loss2;
@@ -77,7 +78,6 @@ model HeliostatFieldWindSpeed
     "Needed to connect to conditional connector";
   parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 
 initial equation
    on_internal=Q_raw>Q_start;

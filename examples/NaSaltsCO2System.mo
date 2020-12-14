@@ -178,8 +178,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_defocus = 0.3316 "Energy fraction to the receiver at defocus state";
 	parameter Real hot_tnk_empty_lb = 16.5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 94 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 100 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 120 "Hot tank full trigger lower bound";
+	parameter Real hot_tnk_full_ub = 123 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -467,7 +467,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		use_on = true,
 		use_defocus = true,
 		A_h = A_heliostat,
-		nu_defocus = nu_defocus,
+//		nu_defocus = nu_defocus,
 		nu_min = nu_min_sf,
 		Q_design = R_des,
 		nu_start = nu_start,
@@ -698,6 +698,12 @@ equation
 		Q_rec_out_des = heliostatsField.Q_dump_field*receiver.eta_rec;
 	else
 		Q_rec_out_des = heliostatsField.Q_dump_field;
+	end if;
+
+	if heliostatsField.defocus_internal and heliostatsField.on_internal then
+		powerBlock.Q_HX = heliostatsField.Q_defocus*receiver.eta_rec;
+	else
+		Q_flow_des = heliostatsField.Q_defocus;
 	end if;
 
 	connect(Wspd_input.y, receiver.Wspd);
