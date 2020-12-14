@@ -456,26 +456,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
   parameter Real USD_to_Euro_exchange_rate = 1.21 "[USD/Euro]";
-  
-  /*Old Tower Cost Function*/
-  //parameter FI.Money C_tower = 
-  //    if set_external_storage then 
-      //******************************* External storage
-  //        if set_SAM_tower_cost then 
-              //******************************* Evaluating tower cost using SAM correlation - Can be found in SAM application*/
-  //            pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
-  //        else 
-              //******************************* Evaluating tower cost using SBP correlation --> Reported by J.Sment email 21 November 2020
-  //            0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 65204 * H_tower - 731236 
-  //    else 
-    //******************************* Integrated storage
-  //        if set_SAM_tower_cost then 
-              //******************************* SAM Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-  //            7.743 * H_tower ^ 2.867 + 15410000 
-  //        else 
-              //******************************* SBP Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-  //            243.7 * H_tower ^ 2.001 + 2641000 
-  //"Tower cost -> Depends on the type of storage";
+  parameter FI.Money C_extra_structure(fixed=false);
   
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
   parameter FI.Money C_tower = 
@@ -483,13 +464,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
         //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
-            (
-                18883.0137745081* H_tower+
-                5072300.012597866 * R_tower*2
-                -7.8766772597*H_tower*H_tower+
-                6544.5682400142*H_tower*R_tower*2
-                -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-            ) - 
+            C_extra_structure - 
             
             1.992 * H_tower^2.747 + 523100 +  //==================> SBP Material Cost
             
@@ -502,14 +477,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
         //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ SBP Tower Cost without Piping [Euro] + Ducting cost [USD]*/
-            (
-                18883.0137745081* H_tower+
-                5072300.012597866 * R_tower*2
-                -7.8766772597*H_tower*H_tower+
-                6544.5682400142*H_tower*R_tower*2
-                -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-
-            ) - 
+            C_extra_structure - 
             
             1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
             
@@ -577,6 +545,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                 H_tower, 
                 R_tower * 2, m_max, 
                 D_outlet, 
+                packing_factor,
                 c_storage) + 
                 
           SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(
@@ -585,6 +554,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                 R_tower * 2, 
                 m_max, 
                 D_outlet, 
+                packing_factor,
                 c_storage) + 
           0.0471 * H_tower ^ 3.673 + 932100 
   "Storage bin for dome storage --> based on the type of storage";
@@ -868,7 +838,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      D_outlet = D_outlet
+      D_outlet = D_outlet,
+      phi=packing_factor
   );
   
   //********************* Receiver lift
@@ -962,6 +933,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not set_const_dispatch;
   
+  //********************* Tim Harvey Extra Cost for the tower structure
+  SolarTherm.Utilities.TowerExtraCostTimHarvey structureExtraCost(
+    H_tower = H_tower,
+    D_inner_tower = R_tower * 2
+  );
+  
   //********************* Variables
   SI.Power P_elec "Net output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
@@ -1022,6 +999,8 @@ algorithm
   end if;
 
 initial equation
+  C_extra_structure = structureExtraCost.C_extra_structure_cost;
+  
   if set_external_storage then
        R_tower = W_rcv / 2; //**********Assuming tower diameter = receiver width
   else

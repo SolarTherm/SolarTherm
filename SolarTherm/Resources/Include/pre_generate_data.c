@@ -10,7 +10,7 @@
 int main()
 {
     //double P_net[] = {100e6,50e6,10e6,250e6,500e6,115e6*0.9};
-	double P_net[] = {10e6,20e6,30e6,40e6,50e6,60e6,70e6,80e6,90e6,100e6,110e6,120e6,130e6,140e6,150e6};
+	double P_net[] = {100e6};//10e6,20e6,30e6,40e6,50e6,60e6,70e6,80e6,90e6,100e6,110e6,120e6,130e6,140e6,150e6};
     double T_in_ref_blk = 800 + 273.15;
     double T_cold_set = 550 + 273.15;
     double dT_PHX_cold_approach = 15;

@@ -93,7 +93,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
-  parameter Real angular_range_parsed(fixed=false) " angular range of the multi-aperture configuration that is parsed to the model";
   parameter Integer num_aperture = 3 "[H&T] number of apertures";
   parameter SI.Length R_rcv_distance(fixed=false) "The raidal distrance of each aperture from the centre of the tower [m]";
   parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
@@ -529,26 +528,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
   parameter Real USD_to_Euro_exchange_rate = 1.21 "[USD/Euro]";
-  
-  /*Old Tower Cost Function*/
-  //parameter FI.Money C_tower = 
-  //    if set_external_storage then 
-      //******************************* External storage
-  //        if set_SAM_tower_cost then 
-              //******************************* Evaluating tower cost using SAM correlation - Can be found in SAM application*/
-  //            pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) 
-  //        else 
-              //******************************* Evaluating tower cost using SBP correlation --> Reported by J.Sment email 21 November 2020
-  //            0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 65204 * H_tower - 731236 
-  //    else 
-    //******************************* Integrated storage
-  //        if set_SAM_tower_cost then 
-              //******************************* SAM Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-  //            7.743 * H_tower ^ 2.867 + 15410000 
-  //        else 
-              //******************************* SBP Correlation Reported by J.Sment in g3p3 conversation in email 21 November 2020
-  //            243.7 * H_tower ^ 2.001 + 2641000 
-  //"Tower cost -> Depends on the type of storage";
+  parameter FI.Money C_extra_structure(fixed=false);
   
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
   parameter FI.Money C_tower = 
@@ -556,13 +536,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
         //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
-            (
-                18883.0137745081* H_tower+
-                5072300.012597866 * R_tower*2
-                -7.8766772597*H_tower*H_tower+
-                6544.5682400142*H_tower*R_tower*2
-                -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-            ) - 
+            C_extra_structure - 
             
             1.992 * H_tower^2.747 + 523100 +  //==================> SBP Material Cost
             
@@ -575,13 +549,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
         //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
         //*********************************** Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 
         /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ SBP Tower Cost without Piping [Euro] + Ducting cost [USD]*/
-            (
-                18883.0137745081* H_tower+
-                5072300.012597866 * R_tower*2
-                -7.8766772597*H_tower*H_tower+
-                6544.5682400142*H_tower*R_tower*2
-                -121032.5438027561*(R_tower*2)^2 - 61971547.03836635
-            ) - 
+            C_extra_structure - 
             
             1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
             
@@ -645,8 +613,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
           SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(
                 Th_refractory_cold_tank, 
                 H_tower, 
-                R_tower * 2, m_max, 
+                R_tower * 2, 
+                m_max, 
                 D_outlet, 
+                packing_factor,
                 c_storage) + 
                 
           SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(
@@ -655,6 +625,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                 R_tower * 2, 
                 m_max, 
                 D_outlet, 
+                packing_factor,
                 c_storage) + 
           0.0471 * H_tower ^ 3.673 + 932100 
   "Storage bin for dome storage --> based on the type of storage";
@@ -778,7 +749,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       W_rcv_2 = W_rcv_lv2, 
       W_rcv_3 = W_rcv_lv3, 
       tilt_rcv = tilt_rcv, 
-	  angular_range=angular_range_parsed,
+	  angular_range=angular_range,
 	  num_aperture=num_aperture,
       W_helio = W_helio, 
       H_helio = H_helio, 
@@ -953,7 +924,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                             Th_refractory_cold_tank
                        else
                             max(Th_refractory_cold_tank,Th_refractory_hot_tank),
-      D_outlet = D_outlet
+      D_outlet = D_outlet,
+      phi = packing_factor
   );
   
   //********************* Receiver lift
@@ -1047,14 +1019,19 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
     Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not set_const_dispatch;
   
+  //********************* Tim Harvey Extra Cost for the tower structure
+  SolarTherm.Utilities.TowerExtraCostTimHarvey structureExtraCost(
+    H_tower = H_tower,
+    D_inner_tower = R_tower * 2
+  );
+  
   //********************* Variables
   SI.Power P_elec "Net output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-  /*
+  
   SI.Energy E_resource(start = 0, fixed = true);
   SI.Energy E_resource_after_optical_eff(start = 0, fixed = true);
-  SI.Energy E_helio_incident(start = 0, fixed = true);
   SI.Energy E_helio_raw(start = 0, fixed = true);
   SI.Energy E_helio_net(start = 0, fixed = true);
   SI.Energy E_recv_incident(start = 0, fixed = true);
@@ -1062,11 +1039,26 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   SI.Energy E_pb_input(start = 0, fixed = true);
   SI.Energy E_pb_gross(start = 0, fixed = true);
   SI.Energy E_pb_net(start = 0, fixed = true);
-  SI.Energy E_losses_curtailment(start = 0, fixed = true);
-  SI.Energy E_losses_availability(start = 0, fixed = true);
-  SI.Energy E_losses_optical(start = 0, fixed = true);
-  SI.Energy E_losses_defocus(start = 0, fixed = true);
-  SI.Energy E_check;
+ 
+  SI.Energy E_helio_incident_1(start = 0, fixed = true);
+  SI.Energy E_helio_incident_2(start = 0, fixed = true);
+  SI.Energy E_helio_incident_3(start = 0, fixed = true);
+  
+  SI.Energy E_losses_curtailment_1(start = 0, fixed = true);
+  SI.Energy E_losses_curtailment_2(start = 0, fixed = true);
+  SI.Energy E_losses_curtailment_3(start = 0, fixed = true);
+  
+  SI.Energy E_losses_availability_1(start = 0, fixed = true);
+  SI.Energy E_losses_availability_2(start = 0, fixed = true);
+  SI.Energy E_losses_availability_3(start = 0, fixed = true);
+  
+  SI.Energy E_losses_optical_1(start = 0, fixed = true);
+  SI.Energy E_losses_optical_2(start = 0, fixed = true);
+  SI.Energy E_losses_optical_3(start = 0, fixed = true);
+  
+  SI.Energy E_losses_defocus_1(start = 0, fixed = true);
+  SI.Energy E_losses_defocus_2(start = 0, fixed = true);
+  SI.Energy E_losses_defocus_3(start = 0, fixed = true);
   
   Real eta_curtail_off(start = 0);
   Real eta_optical(start = 0);
@@ -1078,8 +1070,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
-  */
-  
+    
   //*********************Dispatch optimiser variables
   Real SLinit;
   Real counter(start = const_t);
@@ -1092,10 +1083,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   Real TOD_W(start = 0, fixed = true) "Product of Time-of-day factor and instant of electric power";
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-/*
+
 algorithm
   if time > 31449600 then
-    eta_curtail_off := E_helio_incident / E_resource;
+    eta_curtail_off := (E_helio_incident_1 + E_helio_incident_2 + E_helio_incident_3) / E_resource;
     eta_optical := E_resource_after_optical_eff / E_resource;
     eta_he_av := he_av_design;
     eta_curtail_defocus := E_helio_net / E_helio_raw;
@@ -1105,16 +1096,14 @@ algorithm
     eta_pb_gross := E_pb_gross / E_pb_input;
     eta_pb_net := E_pb_net / E_pb_input;
     eta_solartoelec := E_pb_net / E_resource;
-    E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
-*/
-
+  
 initial equation
-	angular_range_parsed=angular_range;
+   C_extra_structure = structureExtraCost.C_extra_structure_cost;
    W_rcv=max(W_rcv_lv1, W_rcv_lv3);
-   if tan(angular_range_parsed/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
+   if tan(angular_range/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
    else
-		R_rcv_distance=W_rcv*1.2/2/tan(angular_range_parsed/(num_aperture-1));
+		R_rcv_distance=W_rcv*1.2/2/tan(angular_range/(num_aperture-1));
    end if;
 
    if set_external_storage then
@@ -1307,58 +1296,94 @@ equation
   //************* Equation here is to close the power block controller models  since the component is lack of 1 equation to close optimalMassFlow variable
   controlHot.logic.optimalMassFlow = if set_dispatch_optimiser == true then min(optimalDispatch / DEmax * m_flow_blk, m_flow_blk) else 0;
   dummyRatio = optimalDispatch / DEmax;
-  /*
-  der(E_resource) = max(sun.dni * n_helios_total * A_helio, 0.0);
-  der(E_losses_optical) = (1 - heliostatsField.nu_1) * 
-                                  max(heliostatsField.solar.dni * heliostatsField.n_helios_1 * heliostatsField.A_h, 0.0) +
-                          (1 - heliostatsField.nu_2) * 
-                                  max(heliostatsField.solar.dni * heliostatsField.n_helios_2 * heliostatsField.A_h, 0.0) +
-                          (1 - heliostatsField.nu_3) * 
-                                  max(heliostatsField.solar.dni * heliostatsField.n_helios_3 * heliostatsField.A_h, 0.0);
-                                  
-  der(E_losses_availability) = (1 - he_av_design) *
-                                    max(heliostatsField.nu_1 * heliostatsField.solar.dni * heliostatsField.n_helios_1 * heliostatsField.A_h, 0.0) + 
-                               (1 - he_av_design) *
-                                     max(heliostatsField.nu_2 * heliostatsField.solar.dni * heliostatsField.n_helios_2 * heliostatsField.A_h, 0.0) + 
-                               (1 - he_av_design) *
-                                     max(heliostatsField.nu_3 * heliostatsField.solar.dni * heliostatsField.n_helios_3 * heliostatsField.A_h, 0.0);
-                                     
-  der(E_losses_curtailment) = 
-            if heliostatsField.on_hf then // and heliostatsField.on_hf_2 and heliostatsField.on_hf_3 == true then 
-                      0 
-            else 
-                      (1 - he_av_design) *
-                                     max(heliostatsField.nu_1 * heliostatsField.solar.dni * heliostatsField.n_helios_1 * heliostatsField.A_h, 0.0) + 
-                      (1 - he_av_design) *
-                                     max(heliostatsField.nu_2 * heliostatsField.solar.dni * heliostatsField.n_helios_2 * heliostatsField.A_h, 0.0) + 
-                      (1 - he_av_design) *
-                                     max(heliostatsField.nu_3 * heliostatsField.solar.dni * heliostatsField.n_helios_3 * heliostatsField.A_h, 0.0);
-            
-  der(E_losses_defocus) = 
-        if heliostatsField.on_internal then //and heliostatsField.on_internal_2 and heliostatsField.on_internal_3 then 
+  
+  der(E_resource) = max(sun.dni * n_helios_total * A_helio, 0.0) "Raw sun energy that comes to the heliostat field [J]";
+  
+  der(E_losses_defocus_1) = 
+        if heliostatsField.on_internal_1 then 
             if heliostatsField.defocus_internal then 
-                  abs(heliostatsField.Q_net + heliostatsField.Q_net + heliostatsField.Q_net  - 
-                            heliostatsField.Q_raw - heliostatsField.Q_raw - heliostatsField.Q_raw
-                     ) 
+                  abs(heliostatsField.Q_net_1 - heliostatsField.Q_raw_1) 
             else 0 
         else 
             0;
-            
+  der(E_losses_defocus_2) = 
+        if heliostatsField.on_internal_2 then 
+            if heliostatsField.defocus_internal then 
+                  abs(heliostatsField.Q_net_2 - heliostatsField.Q_raw_2) 
+            else 0 
+        else 
+            0;
+  
+  der(E_losses_defocus_3) = 
+        if heliostatsField.on_internal_3 then 
+            if heliostatsField.defocus_internal then 
+                  abs(heliostatsField.Q_net_3 - heliostatsField.Q_raw_3) 
+            else 0 
+        else 
+            0;
+  
+  der(E_losses_availability_1) = (1 - he_av_design) * 
+                                      max(heliostatsField.nu_1 * heliostatsField.solar.dni * heliostatsField.n_h_1 *
+                                      heliostatsField.A_h, 0.0);
+  der(E_losses_availability_2) = (1 - he_av_design) * 
+                                      max(heliostatsField.nu_2 * heliostatsField.solar.dni * heliostatsField.n_h_2 *
+                                      heliostatsField.A_h, 0.0);
+  der(E_losses_availability_3) = (1 - he_av_design) * 
+                                      max(heliostatsField.nu_3 * heliostatsField.solar.dni * heliostatsField.n_h_3 *
+                                      heliostatsField.A_h, 0.0);
+  
+  der(E_losses_curtailment_1) = if heliostatsField.on_hf_1 == true then 0 else (1 - he_av_design) * max(heliostatsField.nu_1 * heliostatsField.solar.dni * heliostatsField.n_h_1 * heliostatsField.A_h, 0.0);
+  
+  der(E_losses_curtailment_2) = if heliostatsField.on_hf_2 == true then 0 else (1 - he_av_design) * max(heliostatsField.nu_2 * heliostatsField.solar.dni * heliostatsField.n_h_2 * heliostatsField.A_h, 0.0);
+  
+  der(E_losses_curtailment_3) = if heliostatsField.on_hf_3 == true then 0 else (1 - he_av_design) * max(heliostatsField.nu_3 * heliostatsField.solar.dni * heliostatsField.n_h_3 * heliostatsField.A_h, 0.0);
+                                      
+  
+  der(E_losses_optical_1) = if heliostatsField.on_internal_1 then 
+                                (1 - heliostatsField.nu_1) * 
+                                max(heliostatsField.solar.dni * heliostatsField.n_h_1 * heliostatsField.A_h, 0.0)
+                            else
+                                0;
+                                
+  der(E_losses_optical_2) = if heliostatsField.on_internal_2 then 
+                                (1 - heliostatsField.nu_2) * 
+                                max(heliostatsField.solar.dni * heliostatsField.n_h_2 * heliostatsField.A_h, 0.0)
+                            else
+                                0;
+                                
+  der(E_losses_optical_3) = if heliostatsField.on_internal_3 then
+                                (1 - heliostatsField.nu_3) * 
+                                max(heliostatsField.solar.dni * heliostatsField.n_h_3 * heliostatsField.A_h, 0.0)
+                            else
+                                0;
+              
   der(E_resource_after_optical_eff) = 
-                      max(sun.dni * heliostatsField.n_helios_1 * A_helio, 0.0) * heliostatsField.nu_1 +
-                      max(sun.dni * heliostatsField.n_helios_2 * A_helio, 0.0) * heliostatsField.nu_2 +
-                      max(sun.dni * heliostatsField.n_helios_3 * A_helio, 0.0) * heliostatsField.nu_3;
+                      max(sun.dni * heliostatsField.n_h_1 * A_helio, 0.0) * heliostatsField.nu_1 +
+                      max(sun.dni * heliostatsField.n_h_2 * A_helio, 0.0) * heliostatsField.nu_2 +
+                      max(sun.dni * heliostatsField.n_h_3 * A_helio, 0.0) * heliostatsField.nu_3;
                       
-  der(E_helio_incident) = heliostatsField.Q_raw  + heliostatsField.Q_raw + heliostatsField.Q_raw;
-  der(E_helio_raw) = heliostatsField.Q_raw  + heliostatsField.Q_raw + heliostatsField.Q_raw;
-  der(E_helio_net) = heliostatsField.Q_net + heliostatsField.Q_net + heliostatsField.Q_net;
+  der(E_helio_incident_1) = if heliostatsField.on_hf_1 then 
+                                heliostatsField.n_h_1 * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) 
+                            else 
+                                0.0;
+  der(E_helio_incident_2) = if heliostatsField.on_hf_2 then 
+                                heliostatsField.n_h_2 * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) 
+                            else 
+                                0.0;
+  der(E_helio_incident_3) = if heliostatsField.on_hf_3 then 
+                                heliostatsField.n_h_3 * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) 
+                            else 
+                                0.0;
+
+                                  
+  der(E_helio_raw) = heliostatsField.Q_raw_1  + heliostatsField.Q_raw_2 + heliostatsField.Q_raw_3;
+  der(E_helio_net) = heliostatsField.Q_net_1 + heliostatsField.Q_net_2 + heliostatsField.Q_net_3;
   
   der(E_recv_incident) = particleReceiver.heat.Q_flow;
   der(E_recv_net) = particleReceiver.Q_rcv;
   der(E_pb_input) = powerBlock.Q_HX;
   der(E_pb_gross) = -powerBlock.W_gross;
   der(E_pb_net) = powerBlock.W_net;
-  */
   
   P_elec = powerBlock.W_net;
   der(E_elec) = P_elec;

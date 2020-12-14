@@ -264,7 +264,7 @@ class OptimisationDakotaIn:
     output silent
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
-	def soga(self,seed=10983, max_eval=800, init_type='unique_random', pop_size=20, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 10):
+	def soga(self,seed=10983, max_eval=800, init_type='unique_random', pop_size=48, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 20):
 
 		'''
 		seed, int, index of seed, to generate repeatable results
