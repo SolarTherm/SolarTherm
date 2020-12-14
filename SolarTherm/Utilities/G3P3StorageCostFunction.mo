@@ -48,10 +48,6 @@ protected
   Real c_RF = c[3] "Specific cost of refractory [USD/m^3]";
   Real c_filler_floor = c[4] "Specific cost of floor filler material [USD/m^3]";
   Real c_particle = c[5] "Cost to hold particle mass [USD/kg]";
-  Real c_HX_vol_pair = c[6] "HX Volume for pair of 16.5 P1157C-1016 Units";
-  Real c_excav = c[7] "Specififc excavation cost[USD/m^3]";
-  Real cap_conveyor = c[8] "Capacity of transorting particle of a single conveyor [ton/h]";
-  Real c_conveyor = c[9] "Specific cost of conveyor [USD/unit]";
   
   /*Calculated intermediate cost*/
   Real C_HRC_33 = V_dome * 0.67 * c_HRC;
@@ -59,9 +55,7 @@ protected
   Real C_RF = V_refractory * c_RF;
   Real C_bin = 749.94344050475 * A_internal_bin + 332382.499345149;
   Real C_floor = V_floor * 0.9 * c_filler_floor + V_floor * 0.1 * rho_particle * c_particle;
-  //Real C_bin_refractory_dome_floor = 2 * (C_bin + C_RF + C_HRC_67 + C_floor);
   Real C_bin_refractory_dome_floor = (C_bin + C_RF + C_HRC_67 + C_floor);
-  //Real C_conveyor_excavator = 6 * c_HX_vol_pair * c_excav + m_tot * c_conveyor / (1000 * t_stg * cap_conveyor);
                 
 
 algorithm

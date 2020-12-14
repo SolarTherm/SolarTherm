@@ -12,11 +12,7 @@ Real c_portland = c[2] "Specific cost of portland concrete [USD/m^3]";
 Real c_RF = c[3] "Specific cost of refractory [USD/m^3]";
 Real c_filler_floor = c[4] "Specific cost of floor filler material [USD/m^3]";
 Real c_particle = c[5] "Cost to hold particle mass [USD/kg]";
-Real c_HX_vol_pair = c[6] "HX Volume for pair of 16.5 P1157C-1016 Units";
-Real c_excav = c[7] "Specififc excavation cost[USD/m^3]";
-Real cap_conveyor = c[8] "Capacity of transorting particle of a single conveyor [ton/h]";
-Real c_conveyor = c[9] "Specific cost of conveyor [USD/unit]";
-Real c_roof = c[10];
+Real c_roof = c[6];
 
 Real rho_particle = 2153 "kg/m^3";
 Real tan_30 = sqrt(3)/3;

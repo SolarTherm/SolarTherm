@@ -444,22 +444,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real pri_portland = 229 "[ST] Specific cost of portland concrete [USD/m^3]";
   parameter Real pri_RF = 2700 "[ST] Specific cost of refractory [USD/m^3]";
   parameter Real pri_filler_floor = 150 "[ST] Specific cost of floor filler material [USD/m^3]";
-  parameter Real pri_particle_storage = 0.6 "[ST] Cost to hold particle mass [USD/kg]";
-  parameter Real pri_HX_vol_pair = 41 "[ST] HX Volume for pair of 16.5 P1157C-1016 Units";
-  parameter Real pri_excav = 130.795893 "[ST] Specififc excavation cost[USD/m^3]";
-  parameter Real cap_conveyor = 1800 "[ST] Capacity of transorting particle of a single conveyor [ton/h]";
-  parameter Real pri_conveyor = 4.5e6 "[ST] Specific cost of conveyor [USD/unit]";
   parameter Real pri_roof = 457.4662 "[ST] Specific cost for roof (integrated storage)";
-  parameter Real[10] c_storage = {
+  parameter Real[6] c_storage = {
                         pri_HRC, 
                         pri_portland, 
                         pri_RF, 
                         pri_filler_floor, 
-                        pri_particle_storage, 
-                        pri_HX_vol_pair, 
-                        pri_excav, 
-                        cap_conveyor, 
-                        pri_conveyor, 
+                        pri_particle,
                         pri_roof};
                         
   parameter Real D_outlet = if E_max * 2.777778e-10 < 600 then 0.21 else 0.5 "If stg capacity >= 600 MWh then D_outlet is 0.5 else 0.21 m";
@@ -626,8 +617,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                 m_max, 
                 D_outlet, 
                 packing_factor,
-                c_storage) + 
-          0.0471 * H_tower ^ 3.673 + 932100 
+                c_storage) 
   "Storage bin for dome storage --> based on the type of storage";
   
   parameter FI.Money C_insulation = 
