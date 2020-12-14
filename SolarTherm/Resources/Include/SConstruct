@@ -7,7 +7,7 @@ env.Append(
 	LIBPATH = '$SSC_PATH'
 )
 
-env.Program('NREL100',['pre_generate_data.c']
+env.Program('train',['trainANN.c']
 	,LIBS = ['ssc','dl','m','python2.7','gsl','gslcblas','tensorflow']
 )
 
