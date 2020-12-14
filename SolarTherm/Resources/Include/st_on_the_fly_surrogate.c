@@ -987,6 +987,9 @@ char* SolarTherm_path, double T_HTF_cold_des, double* res)
     ssc_data_get_number(simulation_result,"cooler_tot_W_dot_fan",&W_dot_cooler_des);
     fprintf(stderr,"Cooler fan power at design point: %lf MW\n",W_dot_cooler_des);
 
+	double eta_gross_pure = (P_net)/(Q_dot_PHX_des*1e6);
+    fprintf(stderr,"PB cycle thermal efficiency (before cooling fan) = %lf \n",eta_gross_pure);
+
     double eta_gross_base = (P_net-(W_dot_cooler_des*1e6))/(Q_dot_PHX_des*1e6);
     fprintf(stderr,"PB cycle thermal efficiency (cooler fan has been included) = %lf \n",eta_gross_base);
 
