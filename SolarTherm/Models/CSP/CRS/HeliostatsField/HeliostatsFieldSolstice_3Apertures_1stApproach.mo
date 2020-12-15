@@ -44,10 +44,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.Length R_tower = 0.01 "Tower diameter";
   parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
   parameter Real fb=0.7 "factor to grow the field layout";
-  parameter SI.Efficiency helio_rho = 0.95 "reflectivity of heliostat max =1";
-  parameter SI.Efficiency helio_soil = 0.95 "percentage of the heliostat surface that is not soiled";
-  parameter SI.Efficiency helio_sf_ratio = 0.97 "percentage of avaiable heliostat reflective surface area ";
-  parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+ parameter SI.Efficiency helio_refl = 0.9 "The effective heliostat reflectance";
   parameter SI.Angle slope_error = 1.53e-3 "slope error of heliostats, in radiance";
   parameter SI.Angle slope_error_windy = 2e-3 "a larger optical error of heliostats under windy conditions, in radiance";
   parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
@@ -86,9 +83,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       R_tower=R_tower, 
       R1=R1, 
       fb=fb, 
-      helio_rho=helio_rho, 
-      helio_soil=helio_soil, 
-      helio_sf_ratio=helio_sf_ratio, 
+	  helio_refl=helio_refl,
       slope_error=slope_error, 
       slope_error_windy=slope_error_windy, 
       n_row_oelt=n_row_oelt, 

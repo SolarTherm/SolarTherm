@@ -65,7 +65,7 @@ def run_simul(inputs={}):
 		print('Load exsiting OELT')
 
 	else:
-		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=0, verbose=False)
+		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=False)
 		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, num_aperture=pm.num_aperture, gamma=pm.gamma)
 		
 		if pm.method==1:
@@ -113,7 +113,7 @@ def run_simul(inputs={}):
 
 if __name__=='__main__':
 	# tests
-	case="test-multi-aperture"
+	case="test-single-aperture"
 
 	if case=='test-single-aperture':
 		num_aperture=1
@@ -131,8 +131,9 @@ if __name__=='__main__':
 		n_W_rcv=17.3205080757
 		n_H_rcv=17.3205080757
 		n_rays=10e6
+		n_procs=2
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, "windy_optics":windy_optics }
+		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, "windy_optics":windy_optics, "n_procs": n_procs }
 
 	elif case=='test-multi-aperture':
 		num_aperture=3

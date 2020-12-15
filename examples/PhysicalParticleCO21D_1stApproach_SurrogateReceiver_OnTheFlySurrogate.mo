@@ -74,13 +74,16 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
-  parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
+  //parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
   parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
-  parameter Real n_procs = 1 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
+  parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_soil = 0.95 "[H&T] Heliostat soiling factor. 0.95 is the default value in SolarPILOT";
+  parameter SI.Efficiency helio_uncertain_factor = 1 "[H&T] Uncertainty multiplier to the effective heliostat reflectance. The uncertain range is made by making the effective reflectance in the range of 0.8 to 0.95";
+  parameter SI.Efficiency helio_refl = helio_rho*helio_sf_ratio*helio_soil*helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
+
   
   //****************************** Design condition of the plant
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
@@ -673,9 +676,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       R_tower = R_tower, 
       R1 = R1, 
       fb = fb, 
-      helio_rho = helio_rho, 
-      helio_soil = helio_soil, 
-      helio_sf_ratio = helio_sf_ratio, 
+	  helio_refl=helio_refl,
       slope_error = slope_error, 
 	  slope_error_windy=slope_error_windy,
       n_row_oelt = n_row_oelt, 
