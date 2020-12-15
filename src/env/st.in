@@ -93,7 +93,11 @@ scr = 'st_%s'%(sys.argv[1])
 if platform.system() == "Windows":
 	call = ["@PYTHON@",os.path.join(instp,"bin",scr)]
 else:
-	call = [scr] + sys.argv[2:]
+	call = [scr]
+
+if os.environ.get('VERBOSE'):
+	print("CALL =",call)
+	print("ARGS =",sys.argv[2:])
 
 res = subprocess.call(call + sys.argv[2:])
 sys.exit(res)
