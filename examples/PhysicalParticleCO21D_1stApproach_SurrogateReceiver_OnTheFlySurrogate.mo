@@ -67,7 +67,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Length W_helio = sqrt(A_helio / AR_helio) "width of heliostat in m";
   parameter SI.Length H_helio = AR_helio * W_helio "height of heliostat in m";
   parameter SI.Angle slope_error = 1.53e-3 "[H&T] slope error of heliostats, in radiance";
-  parameter SI.Angle slope_error_windy = 2e-3 "[H&T] a larger optical error of heliostats under windy conditions, in radiance";
+  parameter Real windy_slope_error_factor = 2/(1.53) "[H&T] Multiplier to the slope_error such that the product is the windy_slope_error (2 mrad at nominal)";
+  parameter SI.Angle slope_error_windy = windy_slope_error_factor * slope_error "A larger optical error of heliostats under windy conditions, in radiance";
   parameter SI.Length H_tower = 200 "[H&T] Tower height";
   parameter SI.Length R_tower(fixed=false) "Inner tower radius";
   parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
