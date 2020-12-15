@@ -33,7 +33,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
   parameter Boolean set_tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean set_tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
+  parameter Boolean set_external_storage = true "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
@@ -96,13 +96,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
   parameter Integer num_aperture = 3 "[H&T] number of apertures";
   parameter SI.Length R_rcv_distance(fixed=false) "The raidal distrance of each aperture from the centre of the tower [m]";
-  parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
+  //parameter Integer n_rays = 10000 "[H&T] number of rays for solstice";
   parameter Real n_row_oelt = 5 "[H&T] number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 22 "[H&T] number of columns of the lookup table (simulated hours per day)";
   parameter Real n_procs = 0 "[H&T] number of processors to run the MCRT, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
   parameter SI.Efficiency helio_rho = 0.95 "[H&T] Reflectivity of heliostat. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_sf_ratio = 0.97 "[H&T] Reflective surface ratio. 0.97 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_soil = 0.95 "[H&T] Heliostat soiling factor. 0.95 is the default value in SolarPILOT";
+  parameter SI.Efficiency helio_uncertain_factor = 1 "[H&T] Uncertainty multiplier to the effective heliostat reflectance. The uncertain range is made by making the effective reflectance in the range of 0.8 to 0.95";
+  parameter SI.Efficiency helio_refl = helio_rho*helio_sf_ratio*helio_soil*helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   
   //****************************** Design condition of the plant
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
@@ -748,9 +750,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       R_tower = R_tower, 
       R1 = R1, 
       fb = fb, 
-      helio_rho = helio_rho, 
-      helio_soil = helio_soil, 
-      helio_sf_ratio = helio_sf_ratio, 
+	  helio_refl=helio_refl,
       slope_error = slope_error, 
       slope_error_windy = slope_error_windy, 
       n_row_oelt = n_row_oelt, 
