@@ -6,3 +6,7 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/bin/activate")
 endif()
 
 configure_file("st_local_env.in" "st_local_env" @ONLY)
+configure_file("st.in" "st" @ONLY)
+
+install(PROGRAMS "st" DESTINATION "bin/")
+
