@@ -196,7 +196,7 @@ class Tree(object):
 		for n in names:  
 			v=self.get(n+'.nominal')
 			u=self.get(n+'.unit')
-			d=self.get(n+'.description')
+			#d=self.get(n+'.description')
 
 			find=self.xml_root.find('*ScalarVariable[@name=\''+n+'\']')
 			if find!=None:
@@ -204,7 +204,7 @@ class Tree(object):
 				if changable=='true':
 					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
 					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
-					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
+					#self.xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
 
 		self.xml_tree.write(output_xml)
 
@@ -226,7 +226,7 @@ class Tree(object):
 		for n in names:  
 			v=self.get(n+'.nominal')
 			u=self.get(n+'.unit')
-			d=self.get(n+'.description')
+			#d=self.get(n+'.description')
 
 			find=xml_root.find('*ScalarVariable[@name=\''+n+'\']')
 			if find!=None:
@@ -234,7 +234,7 @@ class Tree(object):
 				if changable=='true':
 					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
 					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
-					xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
+					#xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
 
 		xml_tree.write(xmlfile)
 
