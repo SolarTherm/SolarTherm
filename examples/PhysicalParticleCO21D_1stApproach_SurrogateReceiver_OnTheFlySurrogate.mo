@@ -446,7 +446,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
-  parameter Real USD_to_Euro_exchange_rate = 1.21 "[USD/Euro]";
+  parameter Real Euro_to_USD_exchange_rate = 1.21 "[USD/Euro]";
   parameter FI.Money C_extra_structure(fixed=false);
   
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
@@ -461,7 +461,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
             
             pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) - //==========> SAM Cost v2020.2.29
             
-            28000 * USD_to_Euro_exchange_rate * H_tower +  //================> Piping cost
+            28000 * Euro_to_USD_exchange_rate * H_tower +  //================> Piping cost
             
             1573 * H_tower //==================> Ducting Cost
       else
@@ -472,7 +472,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
             
             1.992 * H_tower^2.747 + 523100 + //==================> SBP Material Cost
             
-            (0.7452 * H_tower^3 - 148.25 * H_tower^2 + 37204*H_tower - 731236) * USD_to_Euro_exchange_rate +  //======> SBP no pipe cost 
+            (0.7452 * H_tower^3 - 148.25 * H_tower^2 + 37204*H_tower - 731236) * Euro_to_USD_exchange_rate +  //======> SBP no pipe cost 
             
             1573 * H_tower //======> Ducting Cost
   
