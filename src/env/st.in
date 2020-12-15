@@ -1,0 +1,60 @@
+#!@PYTHON@
+from __future__ import print_function
+# SolarTherm invocation script
+# This is an alternative to the current 'st_local_env' thing, which seems to be
+# unnecessarily complicated for new users. The idea is for this single script
+# to be installed on the user's PATH, and then for all SolarTherm scripts to
+# 
+import os, subprocess, sys
+
+if os.environ.get('MSYSTEM'):
+	os.environ['INSTALL_PREFIX'] = subprocess.check_output('cygpath "@CMAKE_INSTALL_PREFIX@"')
+else:
+	os.environ['INSTALL_PREFIX'] = "@CMAKE_INSTALL_PREFIX@"
+
+assert os.environ.get('HOME')
+
+os.environ['OPENMODELICALIBRARY']=os.path.expandvars("$HOME/.openmodelica/libraries:$INSTALL_PREFIX/lib/omlibrary:/usr/lib/omlibrary:/usr/local/lib/omlibrary")
+
+def prepend(path,envvar):
+	pp = os.environ.get(envvar,"")
+	if pp:
+		pp = ":" + pp
+	return path + pp
+
+def append(path,envvar):
+	pp = os.environ.get(envvar,"")
+	if pp:
+		pp = pp + ":"
+	return pp + path
+
+prepend(os.path.expandvars("$INSTALL_PREFIX/bin"),"PATH")
+
+version=sys.version_info[:2]
+pyp = os.path.expandvars("$INSTALL_PREFIX/lib/python{0}.{1}/site-packages".format(*version))
+append(pyp,'PYTHONPATH')
+
+prepend(os.path.expandvars("$INSTALL_PREFIX/lib"),'LD_LIBRARY_PATH')
+
+prepend(os.path.expandvars("$INSTALL_PREFIX/lib"),'LIBRARY_PATH')
+
+cmds = ['simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
+
+if len(sys.argv) == 1 or sys.argv[1] == "--help":
+	print("'st' is a helper script for running SolarTherm tools. It should be")
+	print("followed by a sub-command, eg \"st simulate\". The valid sub-commands")
+	print("are:")
+	print("    %s"%("\n    ".join(cmds)))
+	print("For help with sub-commands, type eg \"st simulate --help\"")
+	sys.exit(0)
+
+if sys.argv[1] not in cmds:
+	print("Invalid sub-command '%s'. Type \"st --help`\" for a list of valid options."%(sys.argv[1]))
+	sys.exit(1)
+
+# TODO, we may be able to gradually migrate to st_simulate etc not being installed
+# in the path. 
+res = subprocess.call(['st_%s'%(sys.argv[1])] + sys.argv[2:])
+sys.exit(res)
+
+	
