@@ -398,11 +398,11 @@ def load_values_from_excel(filename,tree):
 						assert v is not None, "No value next to label '%s'"%(c.value,)
 						r.add_value('type', study,replace=True)
 						r.add_value('nominal', v,replace=True)
-						r.add_value('unit', ws.cell(c.row,4).value,replace=True)
+						#r.add_value('unit', ws.cell(c.row,4).value,replace=True)
 						r.add_value('distribution', ws.cell(c.row,7).value,replace=True)
 						r.add_value('boundary1', ws.cell(c.row,8).value,replace=True)	
 						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)	
-						r.add_value('description', ws.cell(c.row,10).value,replace=True)						
+						#r.add_value('description', ws.cell(c.row,10).value,replace=True)						
 
 	return tree
 

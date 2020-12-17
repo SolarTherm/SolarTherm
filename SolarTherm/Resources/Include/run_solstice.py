@@ -65,7 +65,7 @@ def run_simul(inputs={}):
 		print('Load exsiting OELT')
 
 	else:
-		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=False)
+		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=True)
 		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, num_aperture=pm.num_aperture, gamma=pm.gamma)
 		
 		if pm.method==1:
