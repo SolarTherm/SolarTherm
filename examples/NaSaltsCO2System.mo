@@ -309,18 +309,19 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
 
 	//Cold and hot salt pump cost
-	parameter FI.Money_USD C_salt_pump_cold_ref =  3200000 "Cold salt pump reference cost";
-	parameter FI.Money_USD C_salt_pump_hot_ref =  3200000 "Hot salt pump reference cost";
+	parameter FI.Money_USD C_salt_pump_cold_ref =  3994270 "Cold salt pump reference cost";
+	parameter FI.Money_USD C_salt_pump_hot_ref =  2995703 "Hot salt pump reference cost";
 	parameter Real pump_salt_exp = 0.7 "Cold and hot salt pump cost scaling exponent";
 	parameter FI.Money_USD C_salt_pump_cold = C_salt_pump_cold_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Cold salt pump cost";
 	parameter FI.Money_USD C_salt_pump_hot = C_salt_pump_hot_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Hot salt pump cost";
 
 	// Power block cost
 	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
+	parameter SI.HeatFlowRate Q_flow_des_ref = 100000000 "Salt-CO2 primary heat exchanger reference size";	
 	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
-	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWth") = 284 "Salt-CO2 primary heat exchanger reference unit price";
 	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
-	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
+	parameter Real hex_salt_co2_exp = 1.0 "Salt-CO2 primary heat exchanger scaling exponent";
 
 	// Sodium-Salt heat exchanger cost
 	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
@@ -362,7 +363,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_piping_cold_salt = C_sc_ref*(D_sc/D_sc_ref)*L_salt_cold + C_sc_mat_pm*L_salt_cold "Cold salt piping cost";
 	parameter FI.Money_USD C_piping_hot_salt = C_sh_ref*(D_sh/D_sh_ref)*L_salt_hot + C_sh_mat_pm*L_salt_hot "Hot salt piping cost";
 
-	parameter FI.Money_USD C_salt_valves = 2000000 "Cost of salt valves";
+	parameter FI.Money_USD C_salt_valves = 1890000 "Cost of salt valves";
 
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
@@ -373,8 +374,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_salt_piping = C_piping_cold_salt + C_piping_hot_salt "Salt piping and valves cost";
 	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
-	parameter FI.Money_USD C_block = (1e-3)*P_gross_ref*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
-	parameter FI.Money_USD C_hex_salt_co2 = (1e-3)*P_gross_ref*pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "Salt-CO2 HEX cost";
+	parameter FI.Money_USD C_block = P_gross_ref/1000*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
+	parameter FI.Money_USD C_hex_salt_co2 = Q_flow_des_ref/1000*pri_hex_salt_co2_ref*(Q_flow_des/Q_flow_des_ref)^hex_salt_co2_exp "Salt-CO2 HEX cost";
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
@@ -867,6 +868,10 @@ equation
 		Released first version.</li>
 		<li><i>Feb 2020</i> by Armando Fontalvo:<br>
 		Power block model updated to a sCO2 cycle using SAM/NREL data.</li>
+		<li><i>Nov 2020</i> by Armando Fontalvo and Shuang Wang:<br>
+		Receiver model modified to calculate convective and radiation losses based on the loss analysis method.
+		<li><i>Dec 2020</i> by Armando Fontalvo and Philipe Gunawan:<br>
+		Power block model updated to an on the fly surrogate sCO2 recompression Brayton power cycle model using Kriging interpolation method.</li>
 	</ul>
 	</html>"),
 		__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));

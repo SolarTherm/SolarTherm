@@ -109,7 +109,7 @@ function Design_HX
   Real N_t_input_corr[l_vec1];
   
   //Tube-side
-  parameter SI.Length t_tube = TubeThickness(d_o=d_o);
+  parameter SI.Length t_tube = 1.2e-3 "Pipe thickness";//TubeThickness(d_o=d_o);
   parameter SI.Length d_i = d_o - 2 * t_tube;
   parameter SI.Area A_cs = CN.pi * d_i ^ 2 / 4;
   parameter SI.Length P_t = 1.25 * d_o;
