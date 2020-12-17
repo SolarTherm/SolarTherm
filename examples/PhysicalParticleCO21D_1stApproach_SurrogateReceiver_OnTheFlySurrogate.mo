@@ -39,6 +39,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -451,6 +452,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
   parameter Real Euro_to_USD_exchange_rate = 1.21 "[USD/Euro]";
   parameter FI.Money C_extra_structure(fixed=false);
+  parameter FI.Money C_tower_absolute = 83060926 "Absolute tower cost [USD]"; 
   
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
   parameter FI.Money C_tower = 
@@ -496,7 +498,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
                                             
   parameter FI.Money C_fpr = pri_receiver * A_rcv "Falling particle receiver cost";
   parameter FI.Money C_lift_rec = pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
-  parameter FI.Money C_receiver = C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
+  parameter FI.Money C_receiver = if set_absolute_tower_cost == true then 
+										 C_fpr + C_tower_absolute + C_lift_rec 
+
+								  else
+										 C_fpr + C_tower + C_lift_rec 
+  			
+  "Total receiver sub-system cost";
   
   //******************************* Cost of storage sub-system (bins + cold tank lift + particles + PHX lift + insulation)
   parameter FI.Money C_lift_cold = if set_external_storage then 
