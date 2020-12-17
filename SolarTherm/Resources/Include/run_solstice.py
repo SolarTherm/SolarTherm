@@ -65,7 +65,7 @@ def run_simul(inputs={}):
 		print('Load exsiting OELT')
 
 	else:
-		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=True)
+		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=False)
 		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, num_aperture=pm.num_aperture, gamma=pm.gamma)
 		
 		if pm.method==1:
@@ -78,6 +78,8 @@ def run_simul(inputs={}):
 		if pm.field_type[-3:]=='csv':
 			# simulate the oelt of an existing heliostat field
 			oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))
+			crs.eff_des='na'
+			crs.eff_annual='na'
 		else:
 			# design a new heliostat field
 			oelt, A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=False, plot=False)
