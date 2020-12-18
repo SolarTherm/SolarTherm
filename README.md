@@ -8,7 +8,6 @@ Solar thermal power station performance simulation and optimisation.
 
 See also our wiki, which includes
 * Instructions on [Building SolarTherm](https://github.com/SolarTherm/SolarTherm/wiki/Building-SolarTherm)
-* Instructions to [run Linux shell commands on Window 10](https://github.com/SolarTherm/SolarTherm/wiki/Running-Linux-shell-commands-on-Window-10)
 * Instrucitons on how to [use SolarTherm from OMEdit](https://github.com/SolarTherm/SolarTherm/wiki/Running-SolarTherm-via-OMEdit)
 * A description of our [continuous integration and automated testing](https://github.com/SolarTherm/SolarTherm/wiki/Automated-testing-of-SolarTherm-code) setup.
 * Instructions to [link CoolProp to SolarTherm](https://github.com/SolarTherm/SolarTherm/wiki/Integration-with-CoolProp).
