@@ -54,10 +54,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.RadiantPower R_des = Q_rec_out_des/(1 - rec_fr) "Input power to receiver at design point";
 	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
 	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
-	parameter Integer N_pa_rec = 10 "Number of panels in receiver";
+	parameter Integer N_pa_rec = 12 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.25e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-	parameter Real ar_rec = 24 / 16 "Height to diameter aspect ratio of receiver aperture";
 	parameter SI.Efficiency ab_rec = 0.98 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.91 "Receiver coating emissivity";
 	parameter Real[4] CL = {metadata_list[8],metadata_list[9],metadata_list[10],metadata_list[11]};
@@ -66,8 +65,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
 	parameter SI.Efficiency eff_ab = metadata_list[21] "Receiver effective coating absorptance";
 	parameter SI.Efficiency eff_em = metadata_list[22] "Receiver effective coating emissivity";
-	parameter SI.Temperature rec_T_amb_des = Modelica.SIunits.Conversions.from_degC(22.8) "Ambient temperature at design point";
-	parameter SI.Velocity Wspd_des = 2.6 "Wind speed at design point";
 	parameter Real F_mult=2.6 "Piping length multiplier";
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient";
 	parameter SI.Efficiency eta_pump = 0.85 "Design point efficiency of the tower/receiver pump";
@@ -87,8 +84,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	parameter FI.MassPrice material_sc = 80 "Material HX Specific Cost"; // UNS 06230
-	parameter Real hx_to_rec_factor = 1;	//Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
-	parameter Boolean ratio_cond = true "Activate ratio constraint";  //Default value = true
+	parameter Real hx_to_rec_factor = 1; //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+	parameter Boolean ratio_cond = true "Activate ratio constraint"; //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10) Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
 	parameter SI.Length L_max_input = 1 "Maximum HX length"; //If L_max_cond = true provide a value (default value = 10) If optimize_HX_design is "true", d_o, N_p and layout will be chosen as results of the optimization, otherwise provide the following input values:
@@ -113,10 +110,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.CoefficientOfHeatTransfer alpha = 0.4 "Tank constant heat transfer coefficient with ambient";
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold tank parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot tank parasitic power coefficient";
-	parameter SI.SpecificEnergy k_loss_cold_sodium = 0.21e3 "Sodium pump parasitic power coefficient";
+	parameter SI.SpecificEnergy k_loss_cold_sodium = 0.022e3 "Sodium pump parasitic power coefficient";
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
-	parameter Real tank_ar = 9.2/60.1 "storage aspect ratio"; //Updated to obtain a height of 11
 
 	// Power block
 	//*** Surrogate Power Block Parameters
@@ -173,11 +169,10 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-	parameter Real nu_start = 0.19896 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.13264 "Minimum turn-down energy fraction to stop the receiver";
-	parameter Real nu_defocus = 0.3316 "Energy fraction to the receiver at defocus state";
-	parameter Real hot_tnk_empty_lb = 16.5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
-	parameter Real hot_tnk_empty_ub = 20 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
+	parameter Real nu_start = 0.20 "Minimum energy start-up fraction to start the receiver";
+	parameter Real nu_min_sf = 0.20 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real hot_tnk_empty_lb = 10 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real hot_tnk_empty_ub = 12 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 120 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 123 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
@@ -194,7 +189,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
 	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = Q_hx_design / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
-	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;/*1.388*/	
+	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;
 	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length H_storage = 10.9 "Storage tank height";
@@ -228,7 +223,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
 	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";
-	parameter FI.EnergyPrice pri_storage = 39.47 "Storage cost per energy capacity ($/MWh)";
+	parameter FI.EnergyPrice pri_storage = 38.85 "Storage cost per energy capacity ($/MWh)";
 	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";
 	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";
 	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";
@@ -324,7 +319,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real hex_salt_co2_exp = 1.0 "Salt-CO2 primary heat exchanger scaling exponent";
 
 	// Sodium-Salt heat exchanger cost
-	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 2380 "Sodium-salt hex reference unit price";
+	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 1833.99 "Sodium-salt hex reference unit price";
 	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
 	parameter Real hex_na_salt_exp = 0.7 "Sodium-salt hex scaling exponent";
 	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^hex_na_salt_exp "Sodium-salt hex unit price";
@@ -379,11 +374,12 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
+	parameter FI.Money_USD C_salt_ullage = 300000 "Cost of nitrogen ullage gas system";
 
 	// Direct capital costs (subtotal)
 	parameter Real f_contingency = 0.1 "Contingency factor";
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping + C_salt_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
-	parameter FI.Money_USD C_contingency = f_contingency * C_cap_dir_sub "Contingency costs"; //Based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping + C_salt_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site + C_salt_ullage) "Direct capital cost subtotal"; // i.e. purchased equipment costs
+	parameter FI.Money_USD C_contingency = f_contingency * C_cap_dir_sub "Contingency costs";
 
 	// Total direct capital cost
 	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
@@ -430,7 +426,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	
 	//Parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpSodium.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss) 
+		y = heliostatsField.W_loss + pumpHot.W_loss + pumpSodium.W_loss + pumpCold2.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump) 
 		annotation(Placement(visible = true, transformation(origin = {149, 64}, extent = {{-13, -10}, {13, 10}}, rotation = -90)));
 
 	//Sodium loop Pressure Losses
@@ -468,7 +464,6 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		use_on = true,
 		use_defocus = true,
 		A_h = A_heliostat,
-//		nu_defocus = nu_defocus,
 		nu_min = nu_min_sf,
 		Q_design = R_des,
 		nu_start = nu_start,
@@ -537,7 +532,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		ratio_cond=ratio_cond,
 		ratio_max=ratio_max,
 		L_max_cond=L_max_cond,
-		L_max_input=L_max_input,// Q_flow_rec = Q_rec_out,
+		L_max_input=L_max_input,
 		N_t_input_on = N_t_input_on,
 		N_t_input = N_t_input)
 		annotation(Placement(visible = true, transformation(origin = {23, -1}, extent = {{21, -21}, {-21, 21}}, rotation = 90)));
@@ -624,7 +619,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		eta_isen_rc = eta_comp_re, 
 		eta_isen_t = eta_turb, 
 		dT_mc_approach = dT_mc_approach, 
-		which_PB_model = 1, load_base = 1, 
+		which_PB_model = 1, 
+		load_base = 1, 
 		eta_net_base = eta_net_base, 
 		eta_Q_base = eta_Q_base, 
 		Q_HX_des = Q_flow_des, 
@@ -684,7 +680,7 @@ initial equation
 	m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
 	
 	W_pump_pb = k_loss_hot*m_flow_blk;
-	W_pump_rec = k_loss_cold_sodium*m_flow_rec + m_flow_rec*((Shell_and_Tube_HX.Dp_tube_design + receiver.dP_net)/((rho_hot_set_Na + rho_cold_set_Na) / 2)/eta_pump);
+	W_pump_rec = k_loss_cold_sodium*m_flow_rec + m_flow_rec*((Shell_and_Tube_HX.Dp_tube_design + receiver.dP_net_des)/((rho_hot_set_Na + rho_cold_set_Na) / 2)/eta_pump);
 	W_pump_tk = k_loss_cold*m_flow_fac + m_flow_fac*(Shell_and_Tube_HX.Dp_shell_design/((rho_hot_set + rho_cold_set) / 2)/eta_pump);
 
 	par_fr_des = (1/P_gross)*(W_base_blk + W_cooling_des + W_tracking + W_pump_pb + W_pump_rec + W_pump_tk);

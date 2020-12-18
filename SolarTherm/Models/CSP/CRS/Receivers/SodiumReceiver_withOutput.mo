@@ -28,7 +28,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter SI.MassFlowRate m_flow_rec = 1 "Receiver mass flow rate at design";
 	parameter Real L_e_45 = 16.0 "Equivalent lenght for an 45 degree elbow";
 	parameter Real L_e_90 = 30.0 "Equivalent lenght for an 90 degree elbow";
-	parameter SI.PressureDifference dP_net = dP_tube*N_pa/N_fl + (H_tower - H_rcv/2)*d_out_0*g_n "Pressure drop per flow path";
+	parameter SI.PressureDifference dP_net_des = dP_tube_des*N_pa/N_fl + H_tower*d_out_0*g_n "Pressure drop per flow path";
 
 	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 	parameter Real[4] CL = {945.7112573259491,0.02720568,-0.00172737,0.07126733} "Coefficients to calculate T_ext_linear";
@@ -77,7 +77,15 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	Modelica.Blocks.Interfaces.RealOutput Q_out annotation (
 		Placement(visible = true, transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
 
-
+	SI.Power W_dot_pump "Pumping loss of the receiver/tower";
+	parameter SI.Efficiency eta_pump = 0.85 "Design point efficiency of the tower/receiver pump";
+	Real Re "Reynolds number";
+	Real f "Darcy friction factor";
+	SI.Velocity v "Pipe internal velocity";
+	SI.PressureDifference dP_tube "Pressure drop per tube";
+	SI.PressureDifference dP_net "Net pressure drop in the receiver";
+	Real est_load "ratio of design mass flow rate in the receiver";
+	SI.Efficiency eta_pump_adj "Adjusted efficiency of the tower/receiver pump";
 protected
 	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width";
 	parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
@@ -94,10 +102,10 @@ protected
 	parameter SI.SpecificEnthalpy d_out_0=Medium.density(state_out_0);
 
 	parameter Modelica.SIunits.Velocity v_des = (m_flow_rec/N_fl/N_tb_pa)/(d_out_0*0.25*pi*(D_tb-2*t_tb)^2) "HTF velocity at design point";
-	parameter Real Re_des = 4*(m_flow_rec/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb)) "Reynolds number at design point";
+	parameter Real Re_des = 4*(m_flow_rec/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb)*SolarTherm.Media.Sodium.Sodium_utilities.eta_T(T_out_0)) "Reynolds number at design point";
 	parameter Real f_des = (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re_des))^(-2) "Darcy friction factor at design point";
 
-	parameter SI.PressureDifference dP_tube = 0.5*f_des*H_rcv/(D_tb - 2*t_tb)*d_out_0*v_des^2 
+	parameter SI.PressureDifference dP_tube_des = 0.5*f_des*H_rcv/(D_tb - 2*t_tb)*d_out_0*v_des^2 
 											+ 2/2*f_des*L_e_45*d_out_0*v_des^2 
 											+ 4/2*f_des*L_e_90*d_out_0*v_des^2 "Pressure drop for a single panel in a flow path";
 
@@ -105,6 +113,14 @@ protected
 	Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_b.p,h_out);
 
 equation
+	v = ((fluid_a.m_flow/N_fl)/N_tb_pa)/(medium.d*pi*(D_tb/2-t_tb)^2);
+	Re = 4*(fluid_a.m_flow/N_fl/N_tb_pa)/(pi*(D_tb-2*t_tb)*SolarTherm.Media.Sodium.Sodium_utilities.eta_T(medium.T));
+	f = if on then (-1.8*log10((e/(D_tb - 2*t_tb)/3.7)^1.11 + 6.9/Re))^(-2) else 0;
+	dP_tube = 0.5*f*H_rcv/(D_tb - 2*t_tb)*medium.d*v^2 + 2/2*f*L_e_45*medium.d*v^2 + 4/2*f*L_e_90*medium.d*v^2;
+	dP_net = dP_tube*N_pa/N_fl + H_tower*medium.d*g_n;
+	est_load = max(0.25, fluid_a.m_flow/m_flow_rec)*100;
+	eta_pump_adj = 1.165437387*eta_pump*(-2.8825e-9*est_load^4 + 6.0231e-7*est_load^3 - 1.3867e-4*est_load^2 + 2.0683e-2*est_load);
+	W_dot_pump = dP_net*fluid_a.m_flow/medium.d/eta_pump_adj;
 
 	medium.h=(h_in+h_out)/2;
 	h_in=inStream(fluid_a.h_outflow);
