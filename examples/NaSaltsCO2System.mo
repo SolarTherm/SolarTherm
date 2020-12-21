@@ -223,7 +223,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
 	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";
-	parameter FI.EnergyPrice pri_storage = 38.85 "Storage cost per energy capacity ($/MWh)";
+	parameter FI.EnergyPrice pri_storage = 39.47 "Storage cost per energy capacity ($/MWh)";
 	parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";
 	parameter FI.AreaPrice pri_land = 10000 "Land cost per area ($/acre)";
 	parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";
@@ -277,7 +277,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_tank_na_ref = 2073640 "Sump tank reference cost";
 	parameter FI.Money_USD C_vessel_na_ref = 361522 "Inlet vessel reference cost";
 	parameter FI.Money_USD C_skid_na_ref = 494309 "Purification skid reference cost";
-	parameter FI.Money_USD C_pump_na_ref = 4400000 "Sodium pumps reference cost";
+	parameter FI.Money_USD C_pump_na_ref = 5475248 "Sodium pumps reference cost";
 	parameter FI.Money_USD C_argon_na_ref = 136210 "Argon system reference cost";
 
 	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
