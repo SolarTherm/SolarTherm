@@ -314,7 +314,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
 	parameter SI.HeatFlowRate Q_flow_des_ref = 100000000 "Salt-CO2 primary heat exchanger reference size";	
 	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
-	parameter Real pri_hex_salt_co2_ref(unit="$/kWth") = 284 "Salt-CO2 primary heat exchanger reference unit price";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWth") = 229 "Salt-CO2 primary heat exchanger reference unit price";
 	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
 	parameter Real hex_salt_co2_exp = 1.0 "Salt-CO2 primary heat exchanger scaling exponent";
 
@@ -328,23 +328,23 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Length L_salt_na_cold = 20 "Length of cold salt charge piping (exc. expansion loops)";
 	parameter SI.Length L_salt_na_hot = 20 "Length of hot salt charge piping (exc. expansion loops)";
 
-	parameter SI.Length L_salt_co2_cold = 20 "Length of cold salt discharge piping (exc. expansion loops)";
-	parameter SI.Length L_salt_co2_hot = 20 "Length of hot salt discharge piping (exc. expansion loops)";
+	parameter SI.Length L_salt_co2_cold = 10 "Length of cold salt discharge piping (exc. expansion loops)";
+	parameter SI.Length L_salt_co2_hot = 10 "Length of hot salt discharge piping (exc. expansion loops)";
 
 	parameter SI.Diameter D_salt_na_cold = 0.508 "Cold salt charge piping diameter";
-	parameter SI.Diameter D_salt_na_hot = 0.5588 "Hot salt charge piping diameter";
+	parameter SI.Diameter D_salt_na_hot = 0.508 "Hot salt charge piping diameter";
 
 	parameter SI.Diameter D_salt_co2_cold = 0.3556 "Cold salt discharge piping diameter";
-	parameter SI.Diameter D_salt_co2_hot = 0.3556 "Hot salt discharge piping diameter"
+	parameter SI.Diameter D_salt_co2_hot = 0.3556 "Hot salt discharge piping diameter";
 
-	parameter SI.Thickness t_salt_na_cold = 0.0127 "Cold salt charge piping wall thickness";
-	parameter SI.Thickness t_salt_na_hot = 0.022225 "Hot salt charge piping wall thickness";
+	parameter SI.Thickness t_salt_na_cold = 0.00635 "Cold salt charge piping wall thickness";
+	parameter SI.Thickness t_salt_na_hot = 0.00635 "Hot salt charge piping wall thickness";
 
-	parameter SI.Thickness t_salt_co2_cold = 0.0079248 "Cold salt discharge piping wall thickness"
-	parameter SI.Thickness t_salt_co2_hot = 0.0150622 "Hot salt discharge piping wall thickness"
+	parameter SI.Thickness t_salt_co2_cold = 0.00635 "Cold salt discharge piping wall thickness";
+	parameter SI.Thickness t_salt_co2_hot = 0.00635 "Hot salt discharge piping wall thickness";
 
-	parameter SI.Density rho_sc = 8.03 "Riser material density (g/cm3)"; //UNS S34709
-	parameter SI.Density rho_sh = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
+	parameter SI.Density rho_sc = 8.03 "Cold salt piping material density (g/cm3)"; //UNS S34709
+	parameter SI.Density rho_sh = 8.97 "Hot salt piping material density (g/cm3)"; //UNS 06230
 
 	parameter Real mass_pm_salt_na_cold(unit="kg/m") = (D_salt_na_cold^2-(D_salt_na_cold-2*t_salt_na_cold)^2)*CN.pi/4*rho_sc*1000 "Cold salt piping mass per meter";
 	parameter Real mass_pm_salt_na_hot(unit="kg/m") = (D_salt_na_hot^2-(D_salt_na_hot-2*t_salt_na_hot)^2)*CN.pi/4*rho_sh*1000 "Hot salt piping mass per meter";
@@ -395,7 +395,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_field = pri_field * A_field "Field cost";
 	parameter FI.Money_USD C_site = pri_site * A_field "Site improvements cost";
 	parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
-	parameter FI.Money_USD C_salt_ullage = 300000 "Cost of nitrogen ullage gas system";
+	parameter FI.Money_USD C_salt_ullage = 2860000 "Cost of nitrogen ullage gas system";
 
 	// Direct capital costs (subtotal)
 	parameter Real f_contingency = 0.1 "Contingency factor";
