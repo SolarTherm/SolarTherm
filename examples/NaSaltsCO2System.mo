@@ -325,20 +325,32 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^hex_na_salt_exp "Sodium-salt hex unit price";
 
 	// Salt piping and valves
-	parameter SI.Length L_salt_cold = 20 "Length of cold salt piping (exc. expansion loops)";
-	parameter SI.Length L_salt_hot = 20 "Length of hot salt piping (exc. expansion loops)";
+	parameter SI.Length L_salt_na_cold = 20 "Length of cold salt charge piping (exc. expansion loops)";
+	parameter SI.Length L_salt_na_hot = 20 "Length of hot salt charge piping (exc. expansion loops)";
 
-	parameter SI.Diameter D_sc = 0.61 "Cold salt piping diameter";
-	parameter SI.Diameter D_sh = 0.66 "Hot salt piping diameter";
+	parameter SI.Length L_salt_co2_cold = 20 "Length of cold salt discharge piping (exc. expansion loops)";
+	parameter SI.Length L_salt_co2_hot = 20 "Length of hot salt discharge piping (exc. expansion loops)";
 
-	parameter SI.Thickness t_sc = 0.00635 "Cold salt piping wall thickness";
-	parameter SI.Thickness t_sh = 0.007925 "Hot salt piping wall thickness";
+	parameter SI.Diameter D_salt_na_cold = 0.508 "Cold salt charge piping diameter";
+	parameter SI.Diameter D_salt_na_hot = 0.5588 "Hot salt charge piping diameter";
+
+	parameter SI.Diameter D_salt_co2_cold = 0.3556 "Cold salt discharge piping diameter";
+	parameter SI.Diameter D_salt_co2_hot = 0.3556 "Hot salt discharge piping diameter"
+
+	parameter SI.Thickness t_salt_na_cold = 0.0127 "Cold salt charge piping wall thickness";
+	parameter SI.Thickness t_salt_na_hot = 0.022225 "Hot salt charge piping wall thickness";
+
+	parameter SI.Thickness t_salt_co2_cold = 0.0079248 "Cold salt discharge piping wall thickness"
+	parameter SI.Thickness t_salt_co2_hot = 0.0150622 "Hot salt discharge piping wall thickness"
 
 	parameter SI.Density rho_sc = 8.03 "Riser material density (g/cm3)"; //UNS S34709
 	parameter SI.Density rho_sh = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
 
-	parameter Real mass_pm_sc(unit="kg/m") = (D_sc^2-(D_sc-2*t_sc)^2)*CN.pi/4*rho_sc*1000 "Cold salt piping mass per meter";
-	parameter Real mass_pm_sh(unit="kg/m") = (D_sh^2-(D_sh-2*t_sh)^2)*CN.pi/4*rho_sh*1000 "Hot salt piping mass per meter";
+	parameter Real mass_pm_salt_na_cold(unit="kg/m") = (D_salt_na_cold^2-(D_salt_na_cold-2*t_salt_na_cold)^2)*CN.pi/4*rho_sc*1000 "Cold salt piping mass per meter";
+	parameter Real mass_pm_salt_na_hot(unit="kg/m") = (D_salt_na_hot^2-(D_salt_na_hot-2*t_salt_na_hot)^2)*CN.pi/4*rho_sh*1000 "Hot salt piping mass per meter";
+
+	parameter Real mass_pm_salt_co2_cold(unit="kg/m") = (D_salt_co2_cold^2-(D_salt_co2_cold-2*t_salt_co2_cold)^2)*CN.pi/4*rho_sc*1000 "Cold salt piping mass per meter";
+	parameter Real mass_pm_salt_co2_hot(unit="kg/m") = (D_salt_co2_hot^2-(D_salt_co2_hot-2*t_salt_co2_hot)^2)*CN.pi/4*rho_sh*1000 "Hot salt piping mass per meter";
 
 	parameter Real lm_sc = 1.43 "Length multiplier for expansion loops on cold salt piping";
 	parameter Real lm_sh = 1.45 "Length multiplier for expansion loops on hot salt piping";
@@ -346,17 +358,26 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Diameter D_sc_ref = 0.7112 "Cold salt piping reference diameter";
 	parameter SI.Diameter D_sh_ref = 0.7112 "Hot salt piping reference diameter";
 
-	parameter Real C_sc_m(unit="$/kg") = 8 "Cold salt piping material cost";
-	parameter Real C_sh_m(unit="$/kg") = 80 "Hot salt piping material cost";
+	parameter Real C_sc_m(unit="$/kg") = 8 "Cold salt piping material cost"; //UNS S34709
+	parameter Real C_sh_m(unit="$/kg") = 80 "Hot salt piping material cost"; //UNS 06230
 
-	parameter Real C_sc_mat_pm(unit = "$/m") = C_sc_m*mass_pm_sc "Cold salt piping material cost per m";
-	parameter Real C_sh_mat_pm(unit = "$/m") = C_sh_m*mass_pm_sh "Hot salt piping material cost per m";
+	parameter Real C_salt_na_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_na_cold "Cold salt piping material cost per m";
+	parameter Real C_salt_na_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_na_hot "Hot salt piping material cost per m";
+
+	parameter Real C_salt_co2_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_na_cold "Cold salt piping material cost per m";
+	parameter Real C_salt_co2_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_na_hot "Hot salt piping material cost per m";
 
 	parameter Real C_sc_ref(unit="$/m") = 5192 "Cold salt reference cost (excluding pipe material)";
 	parameter Real C_sh_ref(unit="$/m") = 8056 "Hot saltreference cost (excluding pipe material";
 
-	parameter FI.Money_USD C_piping_cold_salt = C_sc_ref*(D_sc/D_sc_ref)*L_salt_cold + C_sc_mat_pm*L_salt_cold "Cold salt piping cost";
-	parameter FI.Money_USD C_piping_hot_salt = C_sh_ref*(D_sh/D_sh_ref)*L_salt_hot + C_sh_mat_pm*L_salt_hot "Hot salt piping cost";
+	parameter FI.Money_USD C_piping_cold_salt_na = C_sc_ref*(D_salt_na_cold/D_sc_ref)*L_salt_na_cold + C_salt_na_cold_mat_pm*L_salt_na_cold "Cold salt charge piping cost";
+	parameter FI.Money_USD C_piping_hot_salt_na = C_sh_ref*(D_salt_na_hot/D_sh_ref)*L_salt_na_hot + C_salt_na_hot_mat_pm*L_salt_na_hot "Hot salt charge piping cost";
+
+	parameter FI.Money_USD C_piping_cold_salt_co2 = C_sc_ref*(D_salt_co2_cold/D_sc_ref)*L_salt_co2_cold + C_salt_co2_cold_mat_pm*L_salt_co2_cold "Cold salt discharge piping cost";
+	parameter FI.Money_USD C_piping_hot_salt_co2 = C_sh_ref*(D_salt_co2_hot/D_sh_ref)*L_salt_co2_hot + C_salt_co2_hot_mat_pm*L_salt_co2_hot "Hot salt discharge piping cost";
+
+	parameter FI.Money_USD C_piping_cold_salt = C_piping_cold_salt_na + C_piping_cold_salt_co2 "Cold salt piping cost";
+	parameter FI.Money_USD C_piping_hot_salt = C_piping_hot_salt_na + C_piping_hot_salt_co2 "Hot salt piping cost";
 
 	parameter FI.Money_USD C_salt_valves = 1890000 "Cost of salt valves";
 
