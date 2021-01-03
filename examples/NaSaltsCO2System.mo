@@ -370,11 +370,11 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real C_sc_ref(unit="$/m") = 5192 "Cold salt reference cost (excluding pipe material)";
 	parameter Real C_sh_ref(unit="$/m") = 8056 "Hot saltreference cost (excluding pipe material";
 
-	parameter FI.Money_USD C_piping_cold_salt_na = C_sc_ref*(D_salt_na_cold/D_sc_ref)*L_salt_na_cold + C_salt_na_cold_mat_pm*L_salt_na_cold "Cold salt charge piping cost";
-	parameter FI.Money_USD C_piping_hot_salt_na = C_sh_ref*(D_salt_na_hot/D_sh_ref)*L_salt_na_hot + C_salt_na_hot_mat_pm*L_salt_na_hot "Hot salt charge piping cost";
+	parameter FI.Money_USD C_piping_cold_salt_na = C_sc_ref*(D_salt_na_cold/D_sc_ref)*lm_sc*L_salt_na_cold + C_salt_na_cold_mat_pm*lm_sc*L_salt_na_cold "Cold salt charge piping cost";
+	parameter FI.Money_USD C_piping_hot_salt_na = C_sh_ref*(D_salt_na_hot/D_sh_ref)*lm_sh*L_salt_na_hot + C_salt_na_hot_mat_pm*lm_sh*L_salt_na_hot "Hot salt charge piping cost";
 
-	parameter FI.Money_USD C_piping_cold_salt_co2 = C_sc_ref*(D_salt_co2_cold/D_sc_ref)*L_salt_co2_cold + C_salt_co2_cold_mat_pm*L_salt_co2_cold "Cold salt discharge piping cost";
-	parameter FI.Money_USD C_piping_hot_salt_co2 = C_sh_ref*(D_salt_co2_hot/D_sh_ref)*L_salt_co2_hot + C_salt_co2_hot_mat_pm*L_salt_co2_hot "Hot salt discharge piping cost";
+	parameter FI.Money_USD C_piping_cold_salt_co2 = C_sc_ref*(D_salt_co2_cold/D_sc_ref)*lm_sc*L_salt_co2_cold + C_salt_co2_cold_mat_pm*lm_sc*L_salt_co2_cold "Cold salt discharge piping cost";
+	parameter FI.Money_USD C_piping_hot_salt_co2 = C_sh_ref*(D_salt_co2_hot/D_sh_ref)*lm_sh*L_salt_co2_hot + C_salt_co2_hot_mat_pm*lm_sh*L_salt_co2_hot "Hot salt discharge piping cost";
 
 	parameter FI.Money_USD C_piping_cold_salt = C_piping_cold_salt_na + C_piping_cold_salt_co2 "Cold salt piping cost";
 	parameter FI.Money_USD C_piping_hot_salt = C_piping_hot_salt_na + C_piping_hot_salt_co2 "Hot salt piping cost";
