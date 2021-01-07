@@ -7,6 +7,7 @@ model ParabolicTrough
 
 	/*****************General Geometries**************************/
 	constant Real pi = Modelica.Constants.pi;
+	parameter Integer n_col = 1 "Number of collectors";
 	parameter Modelica.SIunits.Length L = 4.06 "length of tubes";
 	parameter Modelica.SIunits.Length A_P =5 "Aperture of the parabola";
 	
@@ -43,15 +44,25 @@ model ParabolicTrough
 	parameter Real A5 = -1.7;
 	parameter Real A6 = 0.0125;
 	/******************** HTF parameters ********************/
-	parameter Modelica.SIunits.Temperature T_fluid = Modelica.SIunits.Conversions.from_degC(400);
+	parameter Modelica.SIunits.Temperature T_fluid = Modelica.SIunits.Conversions.from_degC(345);
 
+	/******************** Design parameters *************/
+	parameter SI.Irradiance dni_des = 950 "DNI at design";
+	parameter SI.Velocity Wspd_des = 3 "Wind speed at design";
+	parameter SI.Angle dec_des = 0 "Solar declination at design";
+	parameter SI.Angle hra_des = 0 "Hour angle at design";
+	parameter SI.Angle zen_des = SolarTherm.Models.Sources.SolarFunctions.solarZenith(dec_des,hra_des,lat) "Solar zenith at design";
+	parameter SI.Angle inc_des = Modelica.Math.acos(((cos(zen_des))^2 + (cos(dec_des))^2*(sin(hra_des))^2)^0.5);
+	parameter Real IAM_des = cos(inc_des);
+	parameter Real eta_opt_des = rho_cl*Alpha_t*tau_g*IAM_des;
+	parameter SI.Temperature Tamb_des = Modelica.SIunits.Conversions.from_degC(25);
+	parameter Real HL_des(final unit="W/m") = A0 + A1*(T_fluid - Tamb_des) + A2*(to_degC(T_fluid))^2 + A3*(to_degC(T_fluid))^3 + A4*dni_des*IAM_des*(to_degC(T_fluid))^2 + Wspd_des^(1/2)*(A5 + A6*(T_fluid - Tamb_des));
 	/******************** Variables ********************/
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(transformation(origin = {-100,75}, extent={{-10,-10},{10,10}})));
 	Modelica.Blocks.Interfaces.RealInput Wspd annotation (Placement(transformation(origin = {-100,-75}, extent={{-10,-10},{10,10}})));
-	
+
 	SolarTherm.Interfaces.Connectors.SolarPort_a solar annotation (Placement(transformation(origin = {0,100}, extent={{-10,-10},{10,10}})));
-	
-//	Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_b heat annotation (Placement(transformation(origin = {100,0}, extent={{-10,-10},{10,10}})));
+
 	SI.Angle dec = solar.dec "Solar declination angle";
 	SI.Angle hra = solar.hra "Solar hour angle";
 	SI.HeatFlux dni = solar.dni "Direct normal irradiance";
@@ -67,18 +78,18 @@ model ParabolicTrough
 equation
 
 	zen = SolarTherm.Models.Sources.SolarFunctions.solarZenith(dec,hra,lat);
-	
+
 	inc = Modelica.Math.acos(((cos(zen))^2 + (cos(dec))^2*(sin(hra))^2)^0.5);
 
 	IAM = cos(inc);
-	
+
 	eta_opt = rho_cl*Alpha_t*tau_g*IAM;
 
-	Qabs = dni*A_reflector*rho_cl*Alpha_t*tau_g*IAM;
+	Qabs = dni*n_col*A_reflector*rho_cl*Alpha_t*tau_g*IAM;
 
-	HL = A0 	+ A1*(T_fluid - Tamb) + A2*(to_degC(T_fluid))^2 + A3*(to_degC(T_fluid))^3 + A4*dni*IAM*(to_degC(T_fluid))^2 + (max(0,Wspd))^(1/2)*(A5 + A6*(T_fluid - Tamb));
+	HL = A0 + A1*(T_fluid - Tamb) + A2*(to_degC(T_fluid))^2 + A3*(to_degC(T_fluid))^3 + A4*dni*IAM*(to_degC(T_fluid))^2 + (max(0,Wspd))^(1/2)*(A5 + A6*(T_fluid - Tamb));
 
-	Qf = max(0, Qabs - HL*L);
+	Qf = max(0, Qabs - HL*n_col*L);
 
 //	heat.Q_flow = -Qf;
 //	heat.T = T_fluid;
