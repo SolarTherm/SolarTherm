@@ -364,8 +364,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real C_salt_na_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_na_cold "Cold salt piping material cost per m";
 	parameter Real C_salt_na_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_na_hot "Hot salt piping material cost per m";
 
-	parameter Real C_salt_co2_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_na_cold "Cold salt piping material cost per m";
-	parameter Real C_salt_co2_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_na_hot "Hot salt piping material cost per m";
+	parameter Real C_salt_co2_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_co2_cold "Cold salt piping material cost per m";
+	parameter Real C_salt_co2_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_co2_hot "Hot salt piping material cost per m";
 
 	parameter Real C_sc_ref(unit="$/m") = 5192 "Cold salt reference cost (excluding pipe material)";
 	parameter Real C_sh_ref(unit="$/m") = 8056 "Hot saltreference cost (excluding pipe material";
