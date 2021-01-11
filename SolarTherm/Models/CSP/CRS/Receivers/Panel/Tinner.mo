@@ -28,6 +28,6 @@ algorithm
 	B0 := A0*Bi1/(1 - Bi1*log(a/b));
 	B1 := A1*(a/b)^2*(1 - Bi1)/(1 + Bi1);
 	B2 := A2*(a/b)^4*(2 - Bi1)/(2 + Bi1);
-	Tin := Tf + ab*Q_rcv*b/kt*(A0 + B0*log(a/b) + A1*(a/b) + A2*(a/b)^2 + B1*(b/a) + B2*(b/a));
+	Tin := Tf + ab*Q_rcv*b/kt*(A0 + A1*(a/b) + A2*(a/b)^2 + B1*(b/a) + B2*(b/a));
 
 end Tinner;
