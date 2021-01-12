@@ -107,8 +107,8 @@ equation
 	Re[1] = max(1,vf[1] * rho[1] * 2*a / muf[1]);
 	Pr[1] = max(0,muf[1] * Cp[1] / lambda[1]);
 	Nu[1] = 0.023*Re[1]^(0.8)*Pr[1]^(0.4);
-	alpha_ext[1] = h_ext + factor*Modelica.Constants.sigma*em*(Ts[1]^2+Tamb^2)*(Ts[1]+Tamb);
-	ktf[1] = 0.0163914878*Ts[1] + 6.8703621459;
+	alpha_ext[1] = h_ext + Modelica.Constants.sigma*em*(Ts[1]^2+Tamb^2)*(Ts[1]+Tamb);
+	ktf[1] = 0.0163914878*Ti[1] + 6.8703621459;
 	Bi1[1] = h_int[1]*a/ktf[1];
 	Bi2[1] = alpha_ext[1]*b/ktf[1];
 	Ta[1] = (Tamb - Tf[1])*ktf[1]/(ab*Q_rcv[1]*b);
@@ -133,8 +133,8 @@ equation
 		Re[i] = max(1,vf[i] * rho[i] * 2*a / muf[i]);
 		Pr[i] = max(0,muf[i] * Cp[i] / lambda[i]);
 		Nu[i] = 0.023*Re[i]^(0.8)*Pr[i]^(0.4);
-		alpha_ext[i] = h_ext + factor*Modelica.Constants.sigma*em*(Ts[i]^2+Tamb^2)*(Ts[i]+Tamb);
-		ktf[i] = 0.0163914878*Ts[i] + 6.8703621459;
+		alpha_ext[i] = h_ext + Modelica.Constants.sigma*em*(Ts[i]^2+Tamb^2)*(Ts[i]+Tamb);
+		ktf[i] = 0.0163914878*Ti[i] + 6.8703621459;
 		Bi1[i] = h_int[i]*a/ktf[i];
 		Bi2[i] = alpha_ext[i]*b/ktf[i];
 		Ta[i] = (Tamb - Tf[i])*ktf[i]/(ab*Q_rcv[i]*b);
