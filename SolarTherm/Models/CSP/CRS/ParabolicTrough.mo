@@ -9,6 +9,8 @@ model ParabolicTrough
 	constant Real pi = Modelica.Constants.pi;
 	parameter Integer n_col = 1 "Number of collectors";
 	parameter Modelica.SIunits.Length L = 4.06 "length of tubes";
+	parameter Modelica.SIunits.Length L_col = 100 "length of the collector";
+	parameter Modelica.SIunits.Length A_col = 470.3 "Area of collector";
 	parameter Modelica.SIunits.Length A_P =5 "Aperture of the parabola";
 	
 	/******************** Geometries&Properties of the tube  *******************************/
@@ -71,8 +73,10 @@ model ParabolicTrough
 	Real IAM "Incidence angle modifier";
 
 	SI.HeatFlowRate Qabs;
-	Real HL(unit="W/m", displayUnit="kW/m");
 	SI.HeatFlowRate Qf;
+	SI.HeatFlowRate Ql;
+
+	Real HL(unit="W/m", displayUnit="kW/m");
 	Real eta_opt;
 
 equation
@@ -85,11 +89,13 @@ equation
 
 	eta_opt = rho_cl*Alpha_t*tau_g*IAM;
 
-	Qabs = dni*n_col*A_reflector*rho_cl*Alpha_t*tau_g*IAM;
+	Qabs = dni*n_col*A_col*rho_cl*Alpha_t*tau_g*IAM;
 
 	HL = A0 + A1*(T_fluid - Tamb) + A2*(to_degC(T_fluid))^2 + A3*(to_degC(T_fluid))^3 + A4*dni*IAM*(to_degC(T_fluid))^2 + (max(0,Wspd))^(1/2)*(A5 + A6*(T_fluid - Tamb));
+	
+	Ql = HL*n_col*L_col;
 
-	Qf = max(0, Qabs - HL*n_col*L);
+	Qf = max(0, Qabs - Ql);
 
 //	heat.Q_flow = -Qf;
 //	heat.T = T_fluid;
