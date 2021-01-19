@@ -2,9 +2,9 @@
 double weather(8761,9)
 #METALABELS,name,lat,lon,elev,tzone,tstart
 #METAUNITS,str,deg,deg,m,h,s
-#METADATA,943170 - "NEWMAN AIRPORT",-23.42,119.8,524,8,0
 #TABLELABELS,time,ghi,dni,dry,dew,rhum,p,wdir,wspd
 #TABLEUNITS,s,W/m2,W/m2,degC,degC,%,mbar,deg,m/s
+#METADATA,943170 - "NEWMAN AIRPORT",-23.42,119.8,524,8,0
 0,0,0,33.6,17.7797,20,947,2.6,225
 1800,0,0,33.6,17.7797,20,947,2.6,225
 5400,0,0,33.1,17.2016,19,947,2.7,225
