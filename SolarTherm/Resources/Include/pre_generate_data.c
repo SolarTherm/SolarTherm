@@ -9,8 +9,8 @@
 
 int main()
 {
-    //double P_net[] = {100e6,50e6,10e6,250e6,500e6,115e6*0.9};
-	double P_net[] = {100e6};//10e6,20e6,30e6,40e6,50e6,60e6,70e6,80e6,90e6,100e6,110e6,120e6,130e6,140e6,150e6};
+	double P_net[] = {10e6,25e6,50e6,150e6,250e6};
+	double par_fr = 0.1;
     double T_in_ref_blk = 800 + 273.15;
     double T_cold_set = 550 + 273.15;
     double dT_PHX_cold_approach = 15;
@@ -30,20 +30,21 @@ int main()
     
     for(size_t i=0;i<sizeof(P_net)/sizeof(P_net[0]);i++)
     {
-        double P_gross = P_net[i] / (1-0.1);
+        double P_gross = P_net[i] / (1-par_fr);
 
         if(P_gross>3e7)
         {
-            eta_isen_t = 0.93; //#   Weiland & Thimsen 2016
+            eta_isen_t = 0.85; //#   Weiland & Thimsen 2016
                                //    Recommended turbine efficiencies are 90% for axial turbines above 30 MW, 
                                //    and 85% for radial turbines below 30 MW.
                                //    93 is used here referring to Dyreby off design paper
         }
         else
         {
-            eta_isen_t = 0.85; //#   Assuming radial turbine
+            eta_isen_t = 0.90; //#   Assuming radial turbine
         }
-
+		
+		
         initNRELPB(
             P_gross, 
             T_in_ref_blk, 
@@ -60,7 +61,7 @@ int main()
             T_cold_set,
             NREL_PB_configurations
             );
-      	/*  
+      	
         double eta_gross_base = NREL_PB_configurations[10];
         double eta_Q_base = NREL_PB_configurations[11];
         dT_PHX_hot_approach = NREL_PB_configurations[12];
@@ -95,7 +96,7 @@ int main()
         );
 
         destructKriging(Kriging_variables);
-
+		/*
 		Session_Props* sess0 = constructANN(
 			P_gross, 
 			T_in_ref_blk, 
@@ -151,7 +152,8 @@ int main()
 			"CarboHSP");
 
 			destructANN(sess0);
-			destructANN(sess1);*/
+			destructANN(sess1);
+		*/
 
     }
 

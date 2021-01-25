@@ -6,7 +6,7 @@ function LinProgFunc
  input Integer horison;
  input Real dt;
  input Real time_simul;
- input Real etaC;
+ input Real etaC[:];
  input Real etaG;
  input Real t_stg;
  input Real DEmax;

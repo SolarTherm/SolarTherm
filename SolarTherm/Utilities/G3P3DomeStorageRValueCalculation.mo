@@ -7,7 +7,7 @@ input Real Th_refractory;
 input Real H_bin;
 input Real D_bin;
 input String which_part;
-output Real R_out;
+output Real[2] R_out;
 
 protected
 /*Heat transfer property*/
@@ -64,11 +64,14 @@ Real R_total_cy = R_HD_cy + R_LD_cy + R_HRC_cy + R_construction_cy + R_ambient_h
 algorithm
 
 if which_part == "hemisphere" then
-    R_out := R_total_hemi;
+    R_out[1] := R_total_hemi;
+    R_out[2] := R_total_hemi - R_ambient_hemi;
 elseif which_part == "cylinder" then
-    R_out := R_total_cy;
+    R_out[1] := R_total_cy;
+    R_out[2] := R_total_cy - R_ambient_cy;
 else
-    R_out := -1000 "Invalid";
+    R_out[1] := -1000 "Invalid";
+    R_out[2] := -1000;
 end if;
 
 
