@@ -256,7 +256,7 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
 	printf("Optical efficiency :\n");
     for(size_t i=1;i<horison+1;i++)
     {
-        printf("[%.1f] ", etaC[i]);      
+        printf("[%.4f] ", etaC[i]);      
     }
 	
 	printSpace();
