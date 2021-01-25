@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
 
 	else:
-        sim.load_init()
+		sim.load_init()
 		par_n = [] # names
 		par_0 = [] # start
 		par_b = [] # bounds
