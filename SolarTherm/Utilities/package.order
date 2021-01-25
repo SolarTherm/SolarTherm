@@ -26,3 +26,5 @@ TowerInnerDiameterCalculator_IntegratedG3P3Storage
 PlotDiametervsMassIntegratedTower
 TesCost
 TowerExtraCostTimHarvey
+opt_eff_horizon
+wind_speed_horizon

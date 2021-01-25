@@ -2034,7 +2034,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
     {
         //******************************************** LOAD OD MATRIX *********************************************************//
         /*Generate OD training data array*/
-        generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, numdata,"LHS");
+        generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, numdata,"training");
         char* fn_OD = malloc(sizeof(char*)*(strlen(trainingdir) + strlen("/OD_matrix.csv") + 1));
         strcpy(fn_OD,trainingdir);
         strcat(fn_OD,"/OD_matrix.csv");
@@ -2206,7 +2206,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 
         /*Generate validation data array*/
         int rowval = 15;
-        generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, rowval,"LHS");
+        generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, rowval,"validation");
         genOffDesignArray(fn_OD, sim);
         free(fn_OD);
         len = sim->rows_OD;

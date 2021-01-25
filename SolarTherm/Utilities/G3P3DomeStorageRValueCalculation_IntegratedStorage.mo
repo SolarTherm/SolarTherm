@@ -4,7 +4,7 @@ function G3P3DomeStorageRValueCalculation_IntegratedStorage
 import ln = Modelica.Math.log;
 input Real Th_refractory,H_tower, D_tower_out, m_tot, D_outlet,t_storage;
 input String which_part;
-output Real R_out;
+output Real[2] R_out;
 
 protected 
 /*Heat transfer property*/
@@ -58,21 +58,26 @@ Real R_HD_cy = ln(r_HD/r_bin)/(2*pi*H_bin*k_HD_refractory*scaling_k_HD);
 Real R_LD_cy = ln(r_LD/r_HD)/(2*pi*H_bin*k_LD_refractory*scaling_k_LD);
 Real R_HRC_cy = ln(r_HRC/r_LD)/(2*pi*H_bin*k_HRC*1);
 Real R_construction_cy = ln(r_tower_wall/r_HRC)/(2*pi*H_bin*k_concrete*1);
-Real R_cy = R_construction_cy + R_HD_cy + R_LD_cy + R_HRC_cy "[K/W]";
+Real R_ambient_cy = 1 / (h_convection_ambient * 2 *pi * (r_bin + 1.83) * H_bin );
+Real R_cy = R_construction_cy + R_HD_cy + R_LD_cy + R_HRC_cy + R_ambient_cy "[K/W]";
 
 /*Roof*/
 Real R_air_roof = L_air/k_air/(pi*r_bin^2);
 Real R_mod = 0.3048/k_fiber/(pi*r_bin^2) "0.3048 is nutec modulus";
+Real R_ambient_roof = 1 / (h_convection_ambient * pi*r_bin^2);
 Real R_roof = R_air_roof + R_mod "[K/W]";
                                   
 algorithm
 
 if which_part == "cylinder" then 
-    R_out := R_cy;
+    R_out[1] := R_cy;
+    R_out[2] := R_cy - R_ambient_cy;
 elseif which_part == "hemisphere" then
-    R_out := R_roof;
+    R_out[1] := R_roof;
+    R_out[2] := R_roof - R_ambient_roof;
 else
-    R_out := -1000 "Invalid";
+    R_out[1] := -1000 "Invalid";
+    R_out[2] := -1000 "Invalid";
 end if;
 
 end G3P3DomeStorageRValueCalculation_IntegratedStorage;

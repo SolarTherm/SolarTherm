@@ -58,7 +58,7 @@ model HeliostatsFieldSolstice_1stApproach
         H_rcv=H_rcv, 
         W_rcv=W_rcv, 
         tilt_rcv=tilt_rcv, 
-        W_helio=W_helio, 
+        W_helio=W_helio,
         H_helio=H_helio, 
         H_tower=H_tower, 
         R_tower=R_tower, 
