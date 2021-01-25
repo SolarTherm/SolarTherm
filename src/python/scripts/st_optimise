@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
 
 	else:
-
+        #sim.load_init()
 		par_n = [] # names
 		par_0 = [] # start
 		par_b = [] # bounds
@@ -259,10 +259,11 @@ if __name__ == '__main__':
 		offset = []
 		scale = []
 
+        
 		for pp in args.par:
 			k, v = pp.split('=')
 			par_n.append(k)
-			vals = [simulation.parse_var_val(vv, sim.get_unit(k))
+			vals = [sim.parse_var_val(vv, sim.get_unit(k))
 				for vv in v.split(',')]
 			assert len(vals) >= 2, 'Expected parameter bounds + optional start value'
 
