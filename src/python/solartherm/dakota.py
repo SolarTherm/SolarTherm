@@ -202,6 +202,7 @@ class UncertaintyDakotaIn:
 		self.variables+='        lower_bounds'+lb+'\n'
 		self.variables+='        upper_bounds'+ub+'\n'
 		self.variables+='        descriptors'+descriptor+'\n'
+		return a, b
 
 	def beta(self, a, b, lb, ub, x):
 		'''
@@ -504,11 +505,12 @@ if __name__=='__main__':
 	# ref https://www.riskamp.com/beta-pert
 	import numpy as N
 	import matplotlib.pyplot as plt
-	lb=10.
-	ub=40.
-	n=20.
-	u=Uncertainty()
-	a,b=u.pert(var_names=['test'], nominal=[n], minimum=[lb], maximum=[ub]) 
+	lb=0.001
+	ub=0.003
+	n=0.00153
+	u=UncertaintyDakotaIn(None, None, None,None,None,None, None, None, None,None, None)
+	a,b=u.pert(var_names=['test'], nominals=[n], minimum=[lb], maximum=[ub]) 
+	print a, b
 	X=N.linspace(lb, ub, 100)
 	Y=u.beta(a, b, lb, ub, X)	
 	plt.plot(X, Y)
