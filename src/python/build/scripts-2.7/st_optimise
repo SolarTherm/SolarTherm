@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
 
 	else:
-
+		sim.load_init()
 		par_n = [] # names
 		par_0 = [] # start
 		par_b = [] # bounds
@@ -259,6 +259,7 @@ if __name__ == '__main__':
 		offset = []
 		scale = []
 
+        
 		for pp in args.par:
 			k, v = pp.split('=')
 			par_n.append(k)

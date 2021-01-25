@@ -53,8 +53,8 @@ model ParticleReceiver1DCalculator
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
   parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
-  parameter Boolean iterate_Q_flow = true "true T_out=T_out_design else heat.Q_flow / A_ap";
-  parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
+  parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
+  parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
   //********************** Variables
   SI.HeatFlowRate Q_in_rcv_calculated;
