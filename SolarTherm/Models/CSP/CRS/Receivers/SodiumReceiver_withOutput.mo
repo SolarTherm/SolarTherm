@@ -30,7 +30,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter Real L_e_90 = 30.0 "Equivalent lenght for an 90 degree elbow";
 	parameter SI.PressureDifference dP_net = dP_tube*N_pa/N_fl + (H_tower - H_rcv/2)*d_out_0*g_n "Pressure drop per flow path";
 
-	parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
+	//parameter Real[6] C = {1e-6,-5.31430664702905,1.22007103775149,-0.0689349243674013,0.0552713646754176,1e-6};
 	parameter Real[4] CL = {945.7112573259491,0.02720568,-0.00172737,0.07126733} "Coefficients to calculate T_ext_linear";
 	parameter Real[4] C4L = {953.7130902079241,0.02170311,-0.00196636,0.08407119} "Coefficients to calculate T_ext_4_linear";
 	parameter Real[5] CH = {7.61828573e-04,-3.54208032e-02,5.93470995e-01,-9.37379885e-01,9.26793247} "Coefficients to calculate h_ext";
