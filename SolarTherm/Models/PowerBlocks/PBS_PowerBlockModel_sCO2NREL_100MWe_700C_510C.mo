@@ -20,8 +20,10 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C
   parameter Real W_base=0.0 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
   parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
-  SI.Temperature T_in=Medium.temperature(state_in);
-  SI.Temperature T_out=Medium.temperature(state_out);
+  SI.Temperature T_in;//=Medium.temperature(state_in);
+  SI.Temperature T_out;//=Medium.temperature(state_out);
+  
+  
   
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
@@ -74,8 +76,10 @@ protected
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
   
-  Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
-  Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
+  //Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
+  //Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
+  Medium.BaseProperties state_in;
+  Medium.BaseProperties state_out;
   parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);
   parameter Medium.ThermodynamicState state_out_ref=Medium.setState_pTX(1e5,T_out_ref);
   parameter SI.SpecificEnthalpy h_in_ref=Medium.specificEnthalpy(state_in_ref);
@@ -86,6 +90,14 @@ protected
   parameter Real nu_eps=0.1;
 
 equation
+  //States
+  state_in.h = h_in;
+  state_out.h = h_out;
+  T_in = state_in.T;
+  T_out = state_out.T;
+  state_in.p = 1e5;
+  state_out.p = 1e5;
+  
   if enable_losses then
     connect(T_amb_internal,T_amb);
   else
@@ -100,8 +112,8 @@ equation
   logic=load>nu_min and fluid_a.m_flow > 1e-6;
   h_in=inStream(fluid_a.h_outflow);
 
-  fluid_b.h_outflow=h_out_ref;
-  fluid_a.h_outflow = h_in_ref;
+  fluid_b.h_outflow = h_out_ref;
+  fluid_a.h_outflow = h_out_ref;//h_in_ref;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
 

@@ -18,7 +18,7 @@ model Planar_Insulation_Parametric
   
   parameter Real T4 = 25.0 "degC ambient";
   parameter Real h = 10.0 "W/m2K ambient convection";
-  parameter Real T1 = 700.0 "Sodium temperature";
+  parameter Real T1 = 800.0 "Sodium temperature";
   
   //This is the max temperature (degC), a severe cost penalty applies if that is exceeded in Rockwool
   parameter Real T2_Max = 650.0 "Maximum tolerable rockwool temperature";

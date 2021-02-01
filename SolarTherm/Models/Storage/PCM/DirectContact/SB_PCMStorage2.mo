@@ -62,7 +62,7 @@ model SB_PCMStorage2
   //HTF
   parameter Real C_HTF = m_HTF * Medium.cost "Total cost of the HTF material (USD)";
   //Insulation
-  parameter Real C_insulation = A_surf_tank * (39.89 / U_loss_tank - 0.0539);
+  parameter Real C_insulation = A_surf_tank * (39.93 / U_loss_tank - 0.11497);
   //Discretization
   parameter SI.Mass m_node[n] = CV_Mass(rho_PCM_ref * A_PCM * z_PCM, CV_Thickness(growth_ratio, z_PCM, n)) "Mass of Nodes does not change";
   //Misc Costs

@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Spheres_Section
+model Thermocline_Spheres_Section_Compact
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -72,8 +72,8 @@ model Thermocline_Spheres_Section
   SI.MassFlowRate m_flow(start=0.0) "kg/s";
   //Boundary Conditions
   //SI.Temperature T_top(start = T_max) "Temperature at the top";
-  SI.Temperature T_top(start = T_min) "Temperature at the top";
-  SI.Temperature T_bot(start = T_min) "Temperature at the bottom";
+  SI.Temperature T_top;//(start = T_min) "Temperature at the top";
+  SI.Temperature T_bot;//(start = T_min) "Temperature at the bottom";
   SI.Velocity u_flow "m/s";
   //Analyiics
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min)";
@@ -108,6 +108,8 @@ model Thermocline_Spheres_Section
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0;
   
+  SI.HeatFlowRate Q_loss_total "Heat loss from the entire surface area";
+
 protected  
 
   //Convection Properties
@@ -132,7 +134,6 @@ protected
   SI.HeatFlowRate Q_loss_wall[N_f] "Heat loss from the wall";
   SI.HeatFlowRate Q_loss_top "Heat loss from the top";
   SI.HeatFlowRate Q_loss_bot "Heat loss from the bottom";
-  SI.HeatFlowRate Q_loss_total "Heat loss from the entire surface area";
   
   //Fluid Properties
 
@@ -141,9 +142,14 @@ protected
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
   
-  //State Properties
+  //State Properties, remove filler states from compact version
+  /*
   Filler_Package.State filler[N_f, N_p] "Filler object array";
-  Fluid_Package.State fluid[N_f] "Fluid object array";
+  */
+  Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
+  
+  //Add mass liquid fraction for compact
+  Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
 
 algorithm
 //Operational State logic based on an imposed mass flow rate
@@ -154,8 +160,10 @@ initial equation
   end for;
 equation
 
-  if m_flow < 0.0 then //mass is flowing downwards so charging
+  if m_flow < 0 then //mass is flowing downwards so charging
     State = 1;
+  //elseif m_flow > 1.0e-6 then //discharging
+    //State = 2;
   else //mass is flowing upwards so discharging
     State = 3;
   end if;
@@ -287,9 +295,15 @@ equation
 //Particle Property evaluation quartzite and sand
   for i in 1:N_f loop
     for j in 1:N_p loop
+      /*
       filler[i, j].h = h_p[i, j];
       k_p[i, j] = filler[i, j].k;
       T_p[i, j] = filler[i, j].T;
+      */
+      (T_p[i,j],f_p[i,j]) = Filler_Package.Tf_h(h_p[i,j]);
+      //f_p[i,j] = Filler_Package.f_h(h_p[i,j]);
+      k_p[i,j] = Filler_Package.k_Tf(T_p[i,j],f_p[i,j]);
+      
     end for;
   end for;
 //Convection Equations
@@ -374,4 +388,4 @@ equation
 		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
 
-end Thermocline_Spheres_Section;
+end Thermocline_Spheres_Section_Compact;

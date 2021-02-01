@@ -219,7 +219,8 @@ model TestSCO2PB_Zeb
   SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
   // Variables:
   SI.Power P_elec "Output power of power block";
-  SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
+  Modelica.SIunits.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity" annotation(
+    Placement(visible = true, transformation(extent = {{84, -2}, {120, 36}}, rotation = 0)));
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   Modelica.Blocks.Sources.RealExpression m_flow_in(y = 85.8) annotation(
     Placement(visible = true, transformation(origin = {125, 125}, extent = {{22, 11}, {-22, -11}}, rotation = 0)));
@@ -239,7 +240,8 @@ initial equation
   end if;
 //  T_cold_set = powerBlock.exchanger.T_HTF_des[1];
   T_cold_set = T_out_ref_blk;
-  C_block = 0.0;//= //powerBlock.C_PB;
+  C_block = 0.0;
+//= //powerBlock.C_PB;
   C_cap = (C_field + C_site + C_receiver + C_storage + C_block + C_bop) * (1 + r_contg) * (1 + r_indirect) * (1 + r_cons) + C_land;
 equation
 //Connections from data
@@ -271,7 +273,7 @@ equation
     Line(points = {{-14, 54}, {0, 54}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
-    Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
+    Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
     experiment(StopTime = 300, StartTime = 0, Tolerance = 0.0001, Interval = 1),
     __Dymola_experimentSetupOutput,
     Documentation(info = "<html>

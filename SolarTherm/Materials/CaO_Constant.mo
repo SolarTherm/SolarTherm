@@ -32,7 +32,7 @@ package CaO_Constant
   redeclare function rho_Tf "find density from temperature"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
-    output SI.SpecificEnthalpy rho "Density (kg/m3)";
+    output SI.Density rho "Density (kg/m3)";
   algorithm
     rho := 3340.0;
   end rho_Tf;
@@ -47,4 +47,29 @@ package CaO_Constant
   algorithm
     k := Interpolate1D(T_table,k_table,T);
   end k_Tf;
+  
+  function Tf_h "Find temperature and liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absoulte temperature (K)";
+    output Real f "mass liquid fraction";
+  algorithm
+    T := 298.15 + (h/900.0);
+    f := 0.0;
+  end Tf_h;
+  /*
+  function T_h "Find temperature from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absoulte temperature (K)";
+  algorithm
+    T := 298.15 + (h/900.0);
+  end T_h;
+  
+  function f_h "Find liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output Real f "mass liquid fraction";
+  algorithm
+    f := 0.0;
+  end f_h;
+  */
+
 end CaO_Constant;

@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Spheres_SingleTank
+model Thermocline_Spheres_SingleTank_Compact
 extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
 
   import SI = Modelica.SIunits;
@@ -56,7 +56,7 @@ extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
         origin={46, 0},extent={{6, -6}, {-6, 6}},
         rotation=0)));
   
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Compact Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank);
   //Try
   Medium.BaseProperties fluid_top;
   Medium.BaseProperties fluid_bot;
@@ -107,4 +107,4 @@ annotation(
 		<p>This model contains the fluid_a (top) and fluid_b (bottom) ports, basically a complete CSP component. This model simply connects the Thermocline_Spheres_Section models to the correct ports.</p>
 		</html>"));
 
-end Thermocline_Spheres_SingleTank;
+end Thermocline_Spheres_SingleTank_Compact;

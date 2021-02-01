@@ -48,4 +48,28 @@ package PCM_520 "17%NaF + 21%KF + 62%K2CO3"
     rho := 2380.0;
   end rho_Tf;
 
+  function k_Tf "find thermal conductivity from temperature"
+    input SI.Temperature T;
+    input Real f;
+    output SI.ThermalConductivity k;
+  algorithm
+    k := 1.50;
+  end k_Tf;
+  
+  function Tf_h "Find temperature and liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absoulte temperature (K)";
+    output Real f "mass liquid fraction";
+  algorithm
+    if h <= 579150.0 then
+      f := 0.0;
+      T := 298.15 + (h/1170.0);
+    elseif h >= 853150.0 then
+      f := 1.0;
+      T := 793.15 + (h - 853150.0)/1380.0;
+    else
+      T := 793.15;
+      f := (h - 579150.0)/274000.0;
+    end if;
+  end Tf_h;
 end PCM_520;
