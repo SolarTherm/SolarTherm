@@ -14,9 +14,9 @@ protected
 Real k_HD_refractory = 1.7	"W/(m*K)	Conductivity of HD Refractory Layer";
 Real k_LD_refractory = 0.4	"W/(m*K)	Conductivity of LD Refractory Layer";
 Real k_HRC = 1.1	 "W/(m*K)	Conductivity of Heat Resistant Concrete";
-Real k_concrete = 1.1 "W/(m*K)	Conductivity of Concrete";
+Real k_concrete = 1.6 "W/(m*K)	Conductivity of Concrete";
 Real k_fiber = 1.28	"W/(m*K)	Conductivity of fiber modules";
-Real k_air = 0.027 "W/(m*K)	Conductivity of air";
+Real k_air = 0.061 "W/(m*K)	Conductivity of air";
 
 /*Some constants*/
 Real pi = 3.1415926536;
