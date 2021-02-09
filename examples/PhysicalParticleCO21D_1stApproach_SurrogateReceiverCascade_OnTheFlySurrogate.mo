@@ -167,7 +167,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real F = 0.54 "[RCV] View Factor of the particle curtain - based on EES code by Sandia";
   parameter Real eps_w = 0.8 "[RCV] Receiver wall emmisivity - based on EES code by Sandia";
   
-  //****************************** NN Based Receiver Parameter
+  //****************************** NN Based Cascaded Receiver Parameters
   parameter Integer inputsize_rcv = 13;
   
   parameter SI.Area A_ap_lv1_max = 596.1468216938;
@@ -184,29 +184,26 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   parameter SI.Temperature T_amb_max_rcv = 323.1293457347;
   parameter SI.Temperature T_in_max_rcv = 973.1350462299;
-  parameter SI.Temperature T_out_max_rcv = 2812.3367217403998;
+  parameter SI.Temperature T_out_max_rcv = 2811.7641373140996;
   parameter Real F_wind_max_rcv = 4.8919307372;
   
   parameter SI.Area A_ap_lv1_min = 200.6048838129;
   parameter SI.Area A_ap_lv2_min = 200.66625353220002;
   parameter SI.Area A_ap_lv3_min =202.829754768;
   
-  parameter Real ar_rec_lv1_min =0.45372523439999995;
-  parameter Real ar_rec_lv2_min =0.44405648950000004;
+  parameter Real ar_rec_lv1_min =0.4537252344;
+  parameter Real ar_rec_lv2_min =0.4440564895;
   parameter Real ar_rec_lv3_min =0.6528287836;
   
-  parameter SI.HeatFlowRate Q_in_rcv_lv1_min =100331245.40351701;
+  parameter SI.HeatFlowRate Q_in_rcv_lv1_min =100331245.403517;
   parameter SI.HeatFlowRate Q_in_rcv_lv2_min =100417983.330101;
   parameter SI.HeatFlowRate Q_in_rcv_lv3_min =100020977.94985;
   
   parameter SI.Temperature T_amb_min_rcv =253.1670653414;
   parameter SI.Temperature T_in_min_rcv =773.3075388557;
-  parameter SI.Temperature T_out_min_rcv =836.3384646916;
+  parameter SI.Temperature T_out_min_rcv =852.8923106944002;
   parameter Real F_wind_min_rcv =1.0000008589;
-    
-  parameter SI.Efficiency eta_rcv_max = 0.9573148743000001;
-  parameter SI.Efficiency eta_rcv_min =0.000983993;
-  
+      
   parameter Real[inputsize_rcv] X_max_rcv = {
                                     A_ap_lv1_max, 
                                     A_ap_lv2_max, 
@@ -238,13 +235,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
                                     T_out_min_rcv,
                                     F_wind_min_rcv
                                 };
-  parameter Real y_max_rcv = 0.99893263;
-  parameter Real y_min_rcv = 0.01285256;
+  parameter Real y_max_rcv = 0.9573148743;
+  parameter Real y_min_rcv = 0.2329207794;
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
-              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/CascadeReceiver/surrogate_receiver"
+              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/CascadeReceiver/surrogate_receiver_2"
               )
-  "[RCV] path to which the static particle receiver surrogate model is stored";
+  "[RCV] path to which the static particle receiver surrogate model is stored - Updated model MSE_test = 0.0067, old-model MSE = 0.08";
   
   //****************************** OnTheFlySurrogate Power Block Parameters
   /************************************************************************************************************** /
@@ -394,7 +391,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Integer horizon = 48 "[CTRL] Forecast horizon of the dispatch optimisation algoriuthm in GLPK";
   parameter Real dt = 1 "[CTRL] delta t of the optimisation. For each how many hour the dispatch optimiser is gonna be called";
   parameter Real etaG(fixed = false) "By product of power block intialisation";
-  parameter Real SLminrel = hot_tnk_empty_lb / 100 "hot tank empt trigger point";
+  parameter Real SLminrel = hot_tnk_empty_lb / 100 "hot tank empty trigger point";
   parameter Real Ahelio = A_field;
   parameter Real const_t = -dt * 3600;
   
