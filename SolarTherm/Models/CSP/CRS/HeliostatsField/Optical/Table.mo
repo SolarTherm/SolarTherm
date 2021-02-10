@@ -17,7 +17,6 @@ model Table "From table"
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file)
     annotation (Placement(transformation(extent={{12,12},{32,32}})));
-    
   Modelica.Blocks.Sources.RealExpression angle2_input(y=to_deg(angle2))
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))

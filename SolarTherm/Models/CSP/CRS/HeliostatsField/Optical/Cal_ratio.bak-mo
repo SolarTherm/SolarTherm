@@ -1,6 +1,0 @@
-within SolarTherm.Models.CSP.CRS.HeliostatsField.Optical;
-
-function Cal_ratio
-algorithm
-
-end Cal_ratio;

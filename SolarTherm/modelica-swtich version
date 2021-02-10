@@ -1,0 +1,8 @@
+sudo apt-get remove omc
+sudo apt-get autoremove
+vim sources.list---delete the line with 'nightly' version
+for deb in deb; do echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+#for deb in deb; do echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/1.16.0/ `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+sudo apt-get update
+sudo apt-get install openmodelica 
+apt-cache search "omlib-.*"

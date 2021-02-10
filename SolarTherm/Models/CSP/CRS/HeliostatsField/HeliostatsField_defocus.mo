@@ -20,7 +20,7 @@ model HeliostatsField_defocus
   parameter Boolean use_wind = false "= true to use Wind-stop strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_design=529.412 "Receiver design input power (without heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
@@ -33,6 +33,7 @@ model HeliostatsField_defocus
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
   SI.HeatFlowRate Q_inc;
+  SI.HeatFlowRate Q_field_avail;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
         transformation(extent={{-20,-20},{20,20}},
@@ -56,6 +57,7 @@ model HeliostatsField_defocus
   SI.Angle azi;
   SI.Energy E_dni;
   SI.Energy E_field;
+  SI.Energy E_field_avail;
   SI.Energy E_raw "including dumping loss"; 
   SI.Energy E_inc;
   SI.Energy E_low_dumping;
@@ -105,6 +107,7 @@ equation
   on_hf=(ele>ele_min) and
                      (Wspd_internal<Wspd_max);
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+  Q_field_avail= if on_hf then max(n_h*A_h*solar.dni*min(he_av,1-optical.nu_unavail),0) else 0;
   Q_inc= if on_hf then max(he_av*n_h*A_h*solar.dni,0) else 0;
   
   when Q_raw>Q_start then
@@ -153,6 +156,7 @@ equation
 
   der(E_field) = Q_net;
   der(E_dni) = he_av*n_h*A_h*solar.dni;
+  der(E_field_avail) = Q_field_avail;
   der(E_raw) = Q_raw;
   der(E_inc) = Q_inc;
   damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;

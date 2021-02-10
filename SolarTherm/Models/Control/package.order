@@ -9,3 +9,11 @@ StartUpLogic5
 Switch2
 HXControl
 m_flow_calculations_simple
+HX_Control
+FakeControl
+HX_Control_new
+m_flow_calculations_simple_alg
+IdealMassflowBlockCalculation
+m_flow_calculations
+m_flow_calculations_simple_2
+HX_Control_new_alg
