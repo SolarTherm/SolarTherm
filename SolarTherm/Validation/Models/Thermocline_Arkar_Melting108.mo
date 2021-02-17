@@ -9,7 +9,7 @@ model Thermocline_Arkar_Melting108
   package RT20_Paraffin = SolarTherm.Materials.RT20_Paraffin_Melting;
   package Air = SolarTherm.Materials.Air_Table;
 
-  parameter Integer N_f = 105;
+  parameter Integer N_f = 105; 
   parameter Integer N_p = 5;
   parameter SI.Length H_tank = 1.52;
   parameter SI.Diameter D_tank = 0.34;

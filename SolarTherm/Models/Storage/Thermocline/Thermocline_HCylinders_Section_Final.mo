@@ -10,6 +10,7 @@ model Thermocline_HCylinders_Section_Final
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
   replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
   replaceable package Tank_Package = SolarTherm.Materials.SS316L "Tank Package (steel shell)";
+  replaceable package Encapsulation_Package = Filler_Package "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
   
   //Fluid Material States
   Fluid_Package.State fluid_in "Model which calculates properties at inlet of the section";
@@ -26,10 +27,12 @@ model Thermocline_HCylinders_Section_Final
   parameter Real ar = 2.0 "Tank Aspect ratio H/D";
   parameter Real eta = 0.22 "Porosity";
   parameter Real d_p = 0.015 "Diameter of filler (particle) (m)";
+  parameter Real t_e = d_p/(2.0*N_p) "Thickness of encapsulation, default is such that it is at a value that preserves equidistant radii discretizations (m)";
   
   //Temperature Bounds
   parameter SI.Temperature T_min = CV.from_degC(620) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(820) "Design hot Temperature of everything in the tank (K)";
+  parameter SI.Temperature T_start = T_min "Initial (uniform) temperature of all components (K), defaults to T_min";
   
   //Calculated Tank Design Parameters
   parameter SI.Length H_tank = (4 * E_max / (CN.pi * (1 / ar) ^ 2 * (rho_f_avg * (h_f_max - h_f_min) * eta + rho_p * (h_p_max - h_p_min) * (1.0 - eta)))) ^ (1 / 3);
@@ -47,13 +50,14 @@ model Thermocline_HCylinders_Section_Final
   //Inititalize temperature and enthalpy profile
   parameter SI.Temperature T_f_start[N_f] = fill(T_min, N_f);
   parameter SI.Temperature T_p_start[N_f, N_p] = fill(fill(T_min, N_p), N_f);
-  parameter SI.SpecificEnthalpy h_f_start[N_f] = fill(h_f_min, N_f);
-  parameter SI.SpecificEnthalpy h_p_start[N_f, N_p] = fill(fill(h_p_min, N_p), N_f);
+  parameter SI.Temperature T_e_start = T_start;
+  parameter SI.SpecificEnthalpy h_f_start[N_f] = fill(Fluid_Package.h_Tf(T_start, 0.0), N_f) "Defaults to uniform";
+  parameter SI.SpecificEnthalpy h_p_start[N_f, N_p] = fill( cat(1,fill(Filler_Package.h_Tf(T_start, 0.0), N_p-1), {Encapsulation_Package.h_Tf(T_start, 0.0)}) , N_f) "Defaults to uniform";
   
   //Property bounds
     //Fluid
-  parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0) "Starting enthalpy of the HTF";
-  parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 0) "Starting enthalpy of the HTF";
+  parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0);
+  parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 0);
   parameter SI.Density rho_f_min = Fluid_Package.rho_Tf(T_min, 0);
   parameter SI.Density rho_f_max = Fluid_Package.rho_Tf(T_max, 0);
   parameter SI.Density rho_f_avg = (rho_f_min + rho_f_max) / 2;
@@ -63,9 +67,16 @@ model Thermocline_HCylinders_Section_Final
   parameter SI.Density rho_p_min = Filler_Package.rho_Tf(T_min, 0.0);
   parameter SI.Density rho_p_max = Filler_Package.rho_Tf(T_max, 1.0);
   parameter SI.Density rho_p = min(rho_p_min, rho_p_max) "kg/m3";
+    //Encapsulation
+  parameter SI.SpecificEnthalpy h_e_max = Encapsulation_Package.h_Tf(T_max, 1.0);
+  parameter SI.SpecificEnthalpy h_e_min = Encapsulation_Package.h_Tf(T_min, 0.0);
+  parameter SI.Density rho_e_min = Encapsulation_Package.rho_Tf(T_min, 0.0);
+  parameter SI.Density rho_e_max = Encapsulation_Package.rho_Tf(T_max, 1.0);
+  parameter SI.Density rho_e = min(rho_e_min,rho_e_max) "kg/m3";
+  
     //Discretization
   parameter SI.Length dz = H_tank / N_f "discretization vertical length of fluid";
-  parameter SI.Length dr = 0.5 * d_p / N_p "discretization radial length of particle";
+  parameter SI.Length dr[N_p] = cat(1,fill(0.5 * ((d_p - 2.0*t_e) / (N_p - 1)),N_p-1),{t_e}) "radial thickness of each particle discretization, with last one being the encapsulation"; 
   parameter Integer N_f = 25 "Number of finite volume elements in fluid";
   parameter Integer N_p = 5 "Number of finite volume elements in particles";
 
@@ -106,15 +117,18 @@ model Thermocline_HCylinders_Section_Final
   
   //Cost breakdown
   parameter Real C_fluid = min(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
-  parameter Real C_filler = min(rho_p_max,rho_p_min)*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost;
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank;
   parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank+0.04269)*A_loss_tank else 0.0;
-  //parameter Real C_tank = 14.955*((E_max/(2790*1e6*3600.0))^0.8);
-  //parameter Real C_tank = A_loss_tank*4595.0; //Assuming tank steel cost scales with surf area
   parameter Real C_tank = C_shell(min(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15, 0.0), 4.0);
+  
+  parameter Real C_filler = (if Filler_Package.MM == Encapsulation_Package.MM then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost * (((d_p-2*t_e)/d_p)^2));
+  parameter Real C_encapsulation = (if Filler_Package.MM == Encapsulation_Package.MM then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^2)));
   
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
+  
+  //Initialise Filler surface temperature
+  SI.Temperature T_s[N_f](start = T_f_start);
 
 protected
   //Convection Properties
@@ -126,16 +140,15 @@ protected
   SI.ThermalConductance U_out[N_f, N_p] "K/W";
   
   //Filler Properties
-  SI.SpecificEnthalpy h_p[N_f, N_p](start = h_p_start) "J/kg";
+  SI.SpecificEnthalpy h_p[N_f, N_p];//(start = h_p_start) "J/kg";
   SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
   
-  //Initialise Filler surface temperature
-  SI.Temperature T_s[N_f](start = T_f_start);
+
   //Filler geometry
-  parameter SI.Length r_p[N_f, N_p] = fill(Cylinder_Radii(d_p, N_p), N_f) "Radii of each cylinder element centre";
-  parameter SI.Mass m_p[N_f, N_p] = fill(Cylinder_Masses(d_p, N_p, rho_p, L_filler_cylinder), N_f) "Masses of each filler cylinder element in each vertical tank slice";
+  parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each cylinder element centre";
+  parameter SI.Mass m_p[N_f, N_p] = fill( cat(1,Cylinder_Masses(d_p-2*t_e, N_p-1, rho_p, L_filler_cylinder), {CN.pi*(d_p-t_e)*(t_e)*(L_filler_cylinder)*rho_e} ) , N_f) "Masses of each filler cylinder element in each vertical tank slice";
   parameter SI.Length L_filler_cylinder = (1 - eta) * D_tank ^ 2 * dz / d_p ^ 2 "Equivalent length of continuous cylinder filler in each vertical element which results in the set porosity of the storage";
-  parameter SI.Mass m_filler_total = sum(m_p);
+  //parameter SI.Mass m_filler_total = sum(m_p);
   
   //Pressure Drop
   SI.Pressure p_drop[N_f] "Pressure drop across each mesh element";
@@ -152,15 +165,20 @@ protected
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
   
   //Fluid and filler states
-  Filler_Package.State filler[N_f, N_p] "Filler object array";
+  Filler_Package.State filler[N_f, N_p-1] "Filler object array";
   Fluid_Package.State fluid[N_f];//(each h_start = h_f_min) "Fluid object array";
-  
+  Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
+
   //Filler mass-liquid fraction
   Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
 
 initial equation
   for i in 1:N_f loop
     fluid[i].h = h_f_start[i];
+    for j in 1:N_p-1 loop
+      filler[i,j].h = h_p_start[i,j];
+    end for;
+    encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
 
@@ -249,11 +267,16 @@ equation
   end for;
   //Particle Property evaluation quartzite and sand
   for i in 1:N_f loop
-    for j in 1:N_p loop
+    for j in 1:N_p-1 loop
       filler[i, j].h = h_p[i, j];
       k_p[i, j] = filler[i, j].k;
       T_p[i, j] = filler[i, j].T;
+      f_p[i,j] = filler[i,j].f;
     end for;
+    encapsulation[i].h = h_p[i,N_p];
+    T_p[i,N_p] = encapsulation[i].T;
+    k_p[i,N_p] = encapsulation[i].k;
+    f_p[i,N_p] = encapsulation[i].f;
   end for;
   //Convection Equations
   for i in 1:N_f loop
@@ -294,17 +317,17 @@ equation
   //Particle Equations
   for i in 1:N_f loop
   //Inner Particle Shell (actually just a sphere)
-    2.0 * CN.pi * L_filler_cylinder / U_out[i, 1] = log((r_p[i, 1] + 0.5 * dr) / r_p[i, 1]) / k_p[i, 1] + log(r_p[i, 2] / (r_p[i, 2] - 0.5 * dr)) / k_p[i, 2];
+    2.0 * CN.pi * L_filler_cylinder / U_out[i, 1] = log((r_p[1] + 0.5 * dr[1]) / r_p[1]) / k_p[i, 1] + log(r_p[2] / (r_p[2] - 0.5 * dr[2])) / k_p[i, 2];
     m_p[i, 1] * der(h_p[i, 1]) = U_out[i, 1] * (T_p[i, 2] - T_p[i, 1]);
   //End Inner Particle Shell
   //Middle Particle Shells
     for j in 2:N_p - 1 loop
-      2.0 * CN.pi * L_filler_cylinder / U_out[i, j] = log((r_p[i, j] + 0.5 * dr) / r_p[i, j]) / k_p[i, j] + log(r_p[i, j + 1] / (r_p[i, j + 1] - 0.5 * dr)) / k_p[i, j + 1];
+      2.0 * CN.pi * L_filler_cylinder / U_out[i, j] = log((r_p[j] + 0.5 * dr[j]) / r_p[j]) / k_p[i, j] + log(r_p[j + 1] / (r_p[j + 1] - 0.5 * dr[j+1])) / k_p[i, j + 1];
       m_p[i, j] * der(h_p[i, j]) = U_out[i, j] * (T_p[i, j + 1] - T_p[i, j]) - U_out[i, j - 1] * (T_p[i, j] - T_p[i, j - 1]);
     end for;
   //End Middle Particle Shells
   //Outer Particle Shell
-    2.0 * CN.pi * L_filler_cylinder / U_out[i, N_p] = log((r_p[i, N_p] + 0.5 * dr) / r_p[i, N_p]) / k_p[i, N_p];
+    2.0 * CN.pi * L_filler_cylinder / U_out[i, N_p] = log((r_p[N_p] + 0.5 * dr[N_p]) / r_p[N_p]) / k_p[i, N_p];
     m_p[i, N_p] * der(h_p[i, N_p]) = U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) - U_out[i, N_p - 1] * (T_p[i, N_p] - T_p[i, N_p - 1]);
   end for;
   //Particle Surface equations energy balance

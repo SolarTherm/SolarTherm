@@ -10,6 +10,7 @@ model Thermocline_HCylinders_SingleTank_Final
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial;
+  replaceable package Encapsulation_Package = Filler_Package; //Defaults to filler material
   
   //Storage Parameter Settings
   parameter Integer Correlation = 1 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
@@ -24,6 +25,9 @@ model Thermocline_HCylinders_SingleTank_Final
   
     //Filler diameter of materials
   parameter SI.Length d_p = 0.015 "Filler sphere diameter";
+  
+    //Encapsulation thickness
+  parameter SI.Length t_e = d_p/(2*N_p) "Encapsulation thickness"; //Defaults to equidistant radial discretization
   
     //Discretization Settings
   parameter Integer N_f = 10;
@@ -74,7 +78,7 @@ model Thermocline_HCylinders_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, redeclare replaceable package  Encapsulation_Package = Encapsulation_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank, t_e = t_e);
 
 
   //Cost BreakDown
@@ -83,6 +87,7 @@ model Thermocline_HCylinders_SingleTank_Final
   parameter Real C_total = Tank_A.C_section;
   parameter Real C_tank = Tank_A.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation;
+  parameter Real C_encapsulation = Tank_A.C_encapsulation;
   //Theoretical Tank Level
   Real Level;
 
@@ -122,12 +127,12 @@ equation
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
   if fluid_a.m_flow > 0.0 then //mass is flowing into the top, direction is downwards so Tank_A.m_flow is (negative), charging
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
-    Tank_A.h_top = inStream(fluid_a.h_outflow);
+    Tank_A.h_in = inStream(fluid_a.h_outflow);
     fluid_a.h_outflow = Tank_A.h_in;//Tank_A.h_f[N_f];//fluid_top.h;
     fluid_b.h_outflow = Tank_A.h_out;//Tank_A.h_f[1];//fluid_bot.h;
   else //discharging
     Tank_A.m_flow = -1.0*fluid_a.m_flow;
-    Tank_A.h_bot = inStream(fluid_b.h_outflow);
+    Tank_A.h_in = inStream(fluid_b.h_outflow);
     fluid_a.h_outflow = Tank_A.h_out;//Tank_A.h_f[N_f];//fluid_top.h;
     fluid_b.h_outflow = Tank_A.h_in;//Tank_A.h_f[1];//fluid_bot.h;
   end if;

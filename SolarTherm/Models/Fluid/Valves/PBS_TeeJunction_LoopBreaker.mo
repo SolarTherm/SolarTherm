@@ -4,10 +4,10 @@ model PBS_TeeJunction_LoopBreaker
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
       annotation (choicesAllMatching = true);
-  Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = Medium) annotation (Placement(visible = true,transformation(extent = {{-10, 0}, {10, 20}}, rotation = 0), iconTransformation(origin = {0, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-  Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = Medium) annotation (Placement(visible = true,transformation(extent = {{-6, 0}, {14, 20}}, rotation = 0), iconTransformation(origin = {0, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
+  Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = Medium) annotation (Placement(visible = true,transformation(extent = {{-10, 0}, {10, 20}}, rotation = 0), iconTransformation(origin = {-80, 80}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
+  Modelica.Fluid.Interfaces.FluidPort_b fluid_b(redeclare package Medium = Medium) annotation (Placement(visible = true,transformation(extent = {{-6, 0}, {14, 20}}, rotation = 0), iconTransformation(origin = {82, 80}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
   Modelica.Fluid.Interfaces.FluidPort_a fluid_c(redeclare package Medium = Medium) annotation (Placement(visible = true,transformation(extent = {{-68, 60}, {-48, 80}}, rotation = 0),
-        iconTransformation(origin = {-80, 80}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
+        iconTransformation(origin = {0, -2}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 
 equation
   //This component is a loop breaker, thus no pressure equality or mass conservation is needed.

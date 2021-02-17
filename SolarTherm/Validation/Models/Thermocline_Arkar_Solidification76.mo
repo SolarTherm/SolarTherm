@@ -23,7 +23,9 @@ model Thermocline_Arkar_Solidification76
   parameter SI.Temperature h_p_start[N_f,N_p] = fill(fill(RT20_Paraffin_Slow.h_Tf(307.494497607655,1.0),N_p),N_f);
 
   //Thermocline Tank A (Bottom PCM)
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Section2 Tank_A (redeclare package Fluid_Package = Air, redeclare package Filler_Package = RT20_Paraffin_Slow, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=T_max,T_min=T_min,d_p=50.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,eta=eta,rho_p=RT20_Paraffin_Slow.rho_Tf(T_max,1.0),U_loss_tank = 0.0) "The bottom tank";
+  //SolarTherm.Models.Storage.Thermocline.Thermocline_Section2 Tank_A (redeclare package Fluid_Package = Air, redeclare package Filler_Package = RT20_Paraffin_Slow, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=T_max,T_min=T_min,d_p=50.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,eta=eta,rho_p=RT20_Paraffin_Slow.rho_Tf(T_max,1.0),U_loss_tank = 0.0) "The bottom tank";
+  
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A (redeclare package Fluid_Package = Air, redeclare package Filler_Package = RT20_Paraffin_Slow, N_f = N_f, N_p = N_p,h_f_start=h_f_start,h_p_start=h_p_start,T_max=T_max,T_min=T_min,d_p=50.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,eta=eta,rho_p=RT20_Paraffin_Slow.rho_Tf(T_max,1.0),U_loss_tank = 0.0) "The bottom tank";
   
   //All tank sections have HTF type in common!
   Air Fluid "Fluid package";
@@ -58,8 +60,9 @@ model Thermocline_Arkar_Solidification76
 equation
   //Connections
   m_flow = Tank_A.m_flow;
-  h_bot = Tank_A.h_bot;
-  h_top = Tank_A.h_top;
+  //if m_flow > 0.0 then //
+  h_bot = Tank_A.h_in;
+  h_top = Tank_A.h_out;
   
   //Validation set A assumes inlet discharge volumetric flow rate of 76 m3/hr
   m_flow = (76.0/3600.0)*rho_f_avg;
@@ -72,7 +75,9 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
   
-annotation(experiment(StopTime = 61200, StartTime = 0, Tolerance = 1e-3, Interval = 180.0));
+annotation(experiment(StopTime = 61200, StartTime = 0, Tolerance = 1e-3, Interval = 180.0),
+    Diagram(coordinateSystem(extent = {{-200, -200}, {200, 200}}, preserveAspectRatio = false)),
+    Icon(coordinateSystem(extent = {{-200, -200}, {200, 200}}, preserveAspectRatio = false)));
 
 
 

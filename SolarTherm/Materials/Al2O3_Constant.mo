@@ -44,4 +44,13 @@ package Al2O3_Constant
   algorithm
     k := 85.868 + (-0.22972*T) + ((2.607e-4)*(T^2)) + ((-1.3607e-7)*(T^3)) + ((2.7092e-11)*(T^4));
   end k_Tf;
+  
+  function Tf_h "Find temperature and liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absoulte temperature (K)";
+    output Real f "mass liquid fraction";
+  algorithm
+    T := 298.15 + (h/900.0);
+    f := 0.0;
+  end Tf_h;
 end Al2O3_Constant;

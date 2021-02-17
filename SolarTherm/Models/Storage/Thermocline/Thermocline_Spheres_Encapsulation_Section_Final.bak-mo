@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Spheres_Section_Final
+model Thermocline_Spheres_Encapsulation_Section_Final
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -32,7 +32,6 @@ model Thermocline_Spheres_Section_Final
   //Temperature Bounds
   parameter SI.Temperature T_min = CV.from_degC(620) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(820) "Design hot Temperature of everything in the tank (K)";
-  parameter SI.Temperature T_start = T_min "Initial (uniform) temperature of all components (K), defaults to T_min";
   
   //Calculated Tank Design Parameters
   parameter SI.Length H_tank = (4 * E_max / (CN.pi * (1 / ar) ^ 2 * (rho_f_avg * (h_f_max - h_f_min) * eta + rho_p * (h_p_max - h_p_min) * (1.0 - eta)))) ^ (1 / 3);
@@ -48,11 +47,11 @@ model Thermocline_Spheres_Section_Final
   parameter SI.CoefficientOfHeatTransfer U_bot = U_loss_tank "Bottom circle heat loss coeff (W/m2K)";
   
   //Inititalize temperature and enthalpy profile
-  parameter SI.Temperature T_f_start[N_f] = fill(T_start,N_f);
-  parameter SI.Temperature T_p_start[N_f,N_p] = fill(fill(T_start, N_p), N_f);
-  parameter SI.Temperature T_e_start = T_start;
-  parameter SI.SpecificEnthalpy h_f_start[N_f] = fill(Fluid_Package.h_Tf(T_start, 0.0), N_f) "Defaults to uniform";
-  parameter SI.SpecificEnthalpy h_p_start[N_f, N_p] = fill( cat(1,fill(Filler_Package.h_Tf(T_start, 0.0), N_p-1), {Encapsulation_Package.h_Tf(T_start, 0.0)}) , N_f) "Defaults to uniform";
+  parameter SI.Temperature T_f_start[N_f] = fill(T_min,N_f);
+  parameter SI.Temperature T_p_start[N_f,N_p] = fill(fill(T_min, N_p), N_f);
+  parameter SI.Temperature T_e_start = T_min;
+  parameter SI.SpecificEnthalpy h_f_start[N_f] = fill(h_f_min, N_f);
+  parameter SI.SpecificEnthalpy h_p_start[N_f,N_p] = fill(fill(h_p_min, N_p), N_f);
   //Property bounds
     //Fluid
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min,0) "Starting enthalpy of the HTF";
@@ -83,7 +82,7 @@ model Thermocline_Spheres_Section_Final
   //Initialise Fluid Array
   parameter SI.Length z_f[N_f] = Z_position(H_tank, N_f) .+ z_offset;
   SI.Temperature T_f[N_f] "(K)";
-  SI.SpecificEnthalpy h_f[N_f];//(start = h_f_start) "J/kg";
+  SI.SpecificEnthalpy h_f[N_f](start = h_f_start) "J/kg";
 
   //Plotting
   parameter Real ZDH[N_f] = Relative_Tank_Axes(H_tank, N_f) "Non-dimensional tank vertical axis";
@@ -125,8 +124,8 @@ model Thermocline_Spheres_Section_Final
   parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   parameter Real C_tank = C_shell(max(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
   
-  parameter Real C_filler = (if Filler_Package.MM == Encapsulation_Package.MM then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost*(((d_p-2*t_e)/d_p)^3));
-  parameter Real C_encapsulation = (if Filler_Package.MM == Encapsulation_Package.MM then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^3)));
+  parameter Real C_filler = (if Filler_Package.MM == Encapsulation_Package.MM then min(rho_p_max,rho_p_min)*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost else min(rho_p_max,rho_p_min)*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost*(((d_p-2*t_e)/d_p)^3));
+  parameter Real C_encapsulation = (if Filler_Package.MM == Encapsulation_Package.MM then 0.0 else min(rho_e_max,rho_e_min)*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^3)));
 
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
@@ -184,10 +183,6 @@ protected
 initial equation
   for i in 1:N_f loop
     fluid[i].h = h_f_start[i];
-    for j in 1:N_p-1 loop
-      filler[i,j].h = h_p_start[i,j];
-    end for;
-    encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
 
@@ -381,4 +376,4 @@ equation
 		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
 
-end Thermocline_Spheres_Section_Final;
+end Thermocline_Spheres_Encapsulation_Section_Final;

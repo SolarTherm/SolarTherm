@@ -48,14 +48,19 @@ package CaO_Constant
     k := Interpolate1D(T_table,k_table,T);
   end k_Tf;
   
-  function Tf_h "Find temperature and liquid fraction from temperature"
+  redeclare function T_h "Find temperature and liquid fraction from temperature"
     input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
     output SI.Temperature T "Absoulte temperature (K)";
-    output Real f "mass liquid fraction";
   algorithm
     T := 298.15 + (h/900.0);
+  end T_h;
+  
+  redeclare function f_h "Find temperature and liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output Real f "mass liquid fraction";
+  algorithm
     f := 0.0;
-  end Tf_h;
+  end f_h;
   /*
   function T_h "Find temperature from temperature"
     input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
