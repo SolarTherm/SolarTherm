@@ -33,12 +33,14 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
   parameter Boolean set_tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean set_tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
+  parameter Boolean set_external_storage = true "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_optics_verbose = true "[H&T] true if to save all the optical simulation details";
+  parameter Boolean set_optics_view_scene = true "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -732,7 +734,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       Q_design_3 = Q_flow_defocus_calculated_lv3, 
       Q_in_rcv = Q_in_rcv,
       H_rcv_1 = H_rcv_lv1, 
-      H_rcv_2 = H_rcv_lv3, 
+      H_rcv_2 = H_rcv_lv2, 
       H_rcv_3 = H_rcv_lv3, 
       W_rcv_1 = W_rcv_lv1, 
       W_rcv_2 = W_rcv_lv2, 
@@ -754,6 +756,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       n_procs = n_procs, 
       psave = casefolder, 
       wea_file = wea_file,
+	  optics_verbose=set_optics_verbose,
+	  optics_view_scene=set_optics_view_scene,
       set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   
