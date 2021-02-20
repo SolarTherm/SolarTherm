@@ -16,8 +16,10 @@ extends OpticalEfficiency_3Apertures;
   parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-  parameter Integer argc =28 "Number of variables to be passed to the C function";
+  parameter Integer argc =30 "Number of variables to be passed to the C function";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
 
   //parameter Boolean single_field = true "True for single field, false for multi tower";
   //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
@@ -55,6 +57,8 @@ extends OpticalEfficiency_3Apertures;
 
   parameter String tablefile(fixed=false);
   parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
+  parameter Integer verbose(fixed=false) "save all the optical simulation details or not? 1 is yes, 0 is no";
+  parameter Integer gen_vtk(fixed=false) "visualise the optical simulation scene or not? 1 is yes, 0 is no";
 
   SI.Angle angle1;
   SI.Angle angle2;
@@ -116,7 +120,15 @@ initial algorithm
   else windy_optics:=0;
   end if;
 
-  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, num_aperture, angular_range, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
+  if optics_verbose then verbose:=1;
+  else verbose:=0;
+  end if;
+
+  if optics_view_scene then gen_vtk:=1;
+  else gen_vtk:=0;
+  end if;
+
+  tablefile :=  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "n_helios", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, num_aperture, angular_range, Q_in_rcv, n_helios, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs, verbose, gen_vtk}); 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
     angle1=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(dec);

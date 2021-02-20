@@ -39,13 +39,15 @@ def run_simul(inputs={}):
 
 	pm.num_aperture=int(pm.num_aperture)
 	if pm.num_aperture>1:
-		pm.H_rcv=[]
-		pm.W_rcv=[]
+		H_rcv={}
+		W_rcv={}
 		for i in range(pm.num_aperture):
-			pm.H_rcv.append(getattr(pm, 'H_rcv_%s'%(i+1)))
-			pm.W_rcv.append(getattr(pm, 'W_rcv_%s'%(i+1)))
+			H_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'H_rcv_%s'%(i+1))
+			W_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'W_rcv_%s'%(i+1))
 
-		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, W_rcv=pm.W_rcv, H_rcv=pm.H_rcv)
+		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, R_tower=pm.R_tower, W_rcv=W_rcv, H_rcv=H_rcv)
+		pm.W_rcv=mac.W_rcv
+		pm.H_rcv=mac.H_rcv
 		pm.Z_rcv=[]
 
 		for i in range(pm.num_aperture):
@@ -65,13 +67,14 @@ def run_simul(inputs={}):
 		print('Load exsiting OELT')
 
 	else:
-		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=False)
-		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, num_aperture=pm.num_aperture, gamma=pm.gamma)
+
+		crs=CRS(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs), verbose=pm.verbose)
+		crs.receiversystem(receiver=pm.rcv_type, rec_w=pm.W_rcv, rec_h=pm.H_rcv, rec_x=pm.X_rcv, rec_y=pm.Y_rcv, rec_z=pm.Z_rcv, rec_tilt=pm.tilt_rcv, rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=pm.alpha_rcv, mac=mac)
 		
 		if pm.method==1:
-			crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
+			crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep, mac=mac)
 		else:
-			crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
+			crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep, mac=mac)
 
 		crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
@@ -82,7 +85,7 @@ def run_simul(inputs={}):
 			crs.eff_annual=0
 		else:
 			# design a new heliostat field
-			oelt, A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=False, plot=False)
+			oelt, A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=pm.gen_vtk, plot=False)
 
 		if (A_land==0):    
 			tablefile=None
@@ -115,7 +118,7 @@ def run_simul(inputs={}):
 
 if __name__=='__main__':
 	# tests
-	case="test-single-aperture"
+	case="test-multi-aperture"
 
 	if case=='test-single-aperture':
 		num_aperture=1
@@ -130,8 +133,8 @@ if __name__=='__main__':
 		R1=80.
 		fb=0.6
 		windy_optics=1
-		n_W_rcv=17.3205080757
-		n_H_rcv=17.3205080757
+		n_W_rcv=10
+		n_H_rcv=10
 		n_rays=10e6
 		n_procs=2
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
@@ -151,17 +154,17 @@ if __name__=='__main__':
 		R1=80.
 		fb=0.6
 		windy_optics=1
-		W_rcv_1=17.3205080757
-		H_rcv_1=17.3205080757
-		W_rcv_2=17.3205080757
-		H_rcv_2=17.3205080757
-		W_rcv_3=17.3205080757
-		H_rcv_3=17.3205080757
-		n_W_rcv=17.3205080757
-		n_H_rcv=17.3205080757
+		W_rcv_1=20
+		H_rcv_1=20
+		W_rcv_2=20
+		H_rcv_2=20
+		W_rcv_3=30
+		H_rcv_3=30
+		n_W_rcv=10
+		n_H_rcv=10
 		n_rays=10e6
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics, "angular_range":angular_range }
+		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics, "gamma":angular_range }
 
 	run_simul(inputs)
 
