@@ -39,8 +39,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
-  parameter Boolean set_optics_verbose = true "[H&T] true if to save all the optical simulation details";
-  parameter Boolean set_optics_view_scene = true "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
+  parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
