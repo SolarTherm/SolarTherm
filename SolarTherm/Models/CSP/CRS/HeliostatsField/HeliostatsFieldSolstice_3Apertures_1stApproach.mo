@@ -15,6 +15,8 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_in_rcv = 800e6;
   
   parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
+  parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   
   /*Parameter for each aperture*/
   parameter SI.HeatFlowRate Q_in_rcv_1(fixed=false);
@@ -93,7 +95,9 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       rcv_type=rcv_type, 
       psave=psave, 
       wea_file=wea_file,
-      set_swaying_optical_eff = set_swaying_optical_eff);
+      set_swaying_optical_eff = set_swaying_optical_eff,
+	  optics_verbose=optics_verbose,
+	  optics_view_scene=optics_view_scene);
   
   /*Variables for each aperture*/
   SI.HeatFlowRate Q_raw_1;
