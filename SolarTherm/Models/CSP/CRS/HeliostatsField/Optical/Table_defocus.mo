@@ -25,25 +25,25 @@ model Table_defocus "From table"
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
   
-  Modelica.Blocks.Tables.CombiTable2D nu_table_120(
+  Modelica.Blocks.Tables.CombiTable2D nu_table_124(
     tableOnFile=true,
-    tableName="optics_1.2",
+    tableName="optics_1.24",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
-  Modelica.Blocks.Tables.CombiTable2D nu_table_80(
+  Modelica.Blocks.Tables.CombiTable2D nu_table_76(
     tableOnFile=true,
-    tableName="optics_0.8",
+    tableName="optics_0.76",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
-  Modelica.Blocks.Tables.CombiTable2D nu_table_60(
+  Modelica.Blocks.Tables.CombiTable2D nu_table_52(
     tableOnFile=true,
-    tableName="optics_0.6",
+    tableName="optics_0.52",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
   
-  Modelica.Blocks.Tables.CombiTable2D unavail_120(
+  Modelica.Blocks.Tables.CombiTable2D unavail_124(
     tableOnFile=true,
-    tableName="unavail_1.2",
+    tableName="unavail_1.24",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
   Modelica.Blocks.Tables.CombiTable2D unavail_100(
@@ -51,14 +51,14 @@ model Table_defocus "From table"
     tableName="unavail_1.0",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
-  Modelica.Blocks.Tables.CombiTable2D unavail_80(
+  Modelica.Blocks.Tables.CombiTable2D unavail_76(
     tableOnFile=true,
-    tableName="unavail_0.8",
+    tableName="unavail_0.76",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
-  Modelica.Blocks.Tables.CombiTable2D unavail_60(
+  Modelica.Blocks.Tables.CombiTable2D unavail_52(
     tableOnFile=true,
-    tableName="unavail_0.6",
+    tableName="unavail_0.52",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file);
  
@@ -78,49 +78,49 @@ equation
     angle2=SolarTherm.Models.Sources.SolarFunctions.solarAzimuth(dec,hra,lat);
   end if;
   nu_100=max(0,nu_table.y);
-  nu_120=max(0,nu_table_120.y);
-  nu_80=max(0,nu_table_80.y);
-  nu_60=max(0,nu_table_60.y);
-  nu=max(0,SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SWInterp(nu_60,nu_80,nu_100,nu_120,ele,dni));
+  nu_124=max(0,nu_table_124.y);
+  nu_76=max(0,nu_table_76.y);
+  nu_52=max(0,nu_table_52.y);
+  nu=max(0,SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SWInterp(nu_52,nu_76,nu_100,nu_124,ele,dni));
   
-  nu_unavail_120=max(0,unavail_120.y);
+  nu_unavail_124=max(0,unavail_124.y);
   nu_unavail_100=max(0,unavail_100.y);
-  nu_unavail_80=max(0,unavail_80.y);
-  nu_unavail_60=max(0,unavail_60.y);
-  nu_unavail=max(0,SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SWInterp(nu_unavail_60,nu_unavail_80,nu_unavail_100,nu_unavail_120,ele,dni));
+  nu_unavail_76=max(0,unavail_76.y);
+  nu_unavail_52=max(0,unavail_52.y);
+  nu_unavail=max(0,SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SWInterp(nu_unavail_52,nu_unavail_76,nu_unavail_100,nu_unavail_124,ele,dni));
   //nu=nu_100;
   connect(angle2_input.y, nu_table.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
   connect(angle1_input.y, nu_table.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-  connect(angle2_input.y, nu_table_120.u2)
+  connect(angle2_input.y, nu_table_124.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, nu_table_120.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, nu_table_124.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-  connect(angle2_input.y, nu_table_80.u2)
+  connect(angle2_input.y, nu_table_76.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, nu_table_80.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, nu_table_76.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-  connect(angle2_input.y, nu_table_60.u2)
+  connect(angle2_input.y, nu_table_52.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, nu_table_60.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, nu_table_52.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
 
-  connect(angle2_input.y, unavail_120.u2)
+  connect(angle2_input.y, unavail_124.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, unavail_120.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, unavail_124.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
   connect(angle2_input.y, unavail_100.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
   connect(angle1_input.y, unavail_100.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-  connect(angle2_input.y, unavail_80.u2)
+  connect(angle2_input.y, unavail_76.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, unavail_80.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, unavail_76.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
-  connect(angle2_input.y, unavail_60.u2)
+  connect(angle2_input.y, unavail_52.u2)
     annotation (Line(points={{-8.6,16},{10,16}}, color={0,0,127}));
-  connect(angle1_input.y, unavail_60.u1) annotation (Line(points={{-8.6,32},{2,32},
+  connect(angle1_input.y, unavail_52.u1) annotation (Line(points={{-8.6,32},{2,32},
           {2,28},{10,28}}, color={0,0,127}));
 
 end Table_defocus;

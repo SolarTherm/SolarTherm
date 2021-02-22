@@ -23,17 +23,19 @@ model HeliostatsField_defocus
   parameter SI.HeatFlowRate Q_design=529.412 "Receiver design input power (without heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
   parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  Real nu_ope_field "Efficiency of the field on operation";
+  //parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
-
+  
   Optical optical(hra=solar.hra, dec=solar.dec, lat=lat,dni=solar.dni);
-  SI.HeatFlowRate Q_raw;
-  SI.HeatFlowRate Q_net;
-  SI.HeatFlowRate Q_inc;
+  SI.HeatFlowRate Q_rec_inc_max;
+  SI.HeatFlowRate Q_rec_inc;
+  SI.HeatFlowRate Q_avail;
   SI.HeatFlowRate Q_field_avail;
+  //SI.HeatFlowRate Q_optic_loss;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
         transformation(extent={{-20,-20},{20,20}},
@@ -56,16 +58,20 @@ model HeliostatsField_defocus
   SI.Angle zen2;
   SI.Angle azi;
   SI.Energy E_dni;
-  SI.Energy E_field;
-  SI.Energy E_field_avail;
-  SI.Energy E_raw "including dumping loss"; 
-  SI.Energy E_inc;
-  SI.Energy E_low_dumping;
-  SI.Energy E_curtail;
-  SI.Energy E_high_dumping;
-
-  SI.HeatFlowRate Q_dump_field "Variable heat flow rate for dumping due to field oversizing";
+  SI.Energy E_avail;
+  //SI.Energy E_rec_inc_max;
+  SI.Energy E_defoc_ele;
+  SI.Energy E_defoc_wind;
+  SI.Energy E_defoc_max;
+  SI.Energy E_defoc_low;
+  SI.Energy E_defoc_storage;
+  SI.Energy E_defoc_HX;
+  SI.Energy E_optic_loss;
+  SI.Energy E_rec_inc;
   
+  
+  SI.HeatFlowRate Q_field_HX_max "Variable heat flow rate for dumping due to field oversizing";
+  SI.HeatFlowRate Q_field_PB_in "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
   SI.Power W_loss;
   Real damping;
 //protected
@@ -84,11 +90,10 @@ protected
     "Needed to connect to conditional connector";
   parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-  //parameter SI.HeatFlowRate Q_curtail=1e10 "Fixed heat flow rate for curtailment" annotation(min=0,Dialog(group="Operating strategy"));
+ 
 
 initial equation
-   on_internal=Q_raw>Q_start;
+   on_internal=Q_rec_inc_max>Q_start;
 equation
   if use_on then
     connect(on,on_internal);
@@ -103,39 +108,59 @@ equation
   else
     Wspd_internal = -1;
   end if;
-
+  nu_ope_field = optical.nu/(1-optical.nu_unavail);
   on_hf=(ele>ele_min) and
                      (Wspd_internal<Wspd_max);
-  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
-  Q_field_avail= if on_hf then max(n_h*A_h*solar.dni*min(he_av,1-optical.nu_unavail),0) else 0;
-  Q_inc= if on_hf then max(he_av*n_h*A_h*solar.dni,0) else 0;
+  if ele>ele_min then
+    //Q_avail = max(he_av*n_h*A_h*solar.dni,0);
+    der(E_defoc_ele) = 0;
+    if Wspd_internal<Wspd_max then
+      Q_avail = max(he_av*n_h*A_h*solar.dni,0);
+      der(E_defoc_wind) = 0;
+    else
+      Q_avail = 0;
+      der(E_defoc_wind) = max(he_av*n_h*A_h*solar.dni,0);
+    end if;
+  else
+    Q_avail = 0;
+    der(E_defoc_wind) = 0;
+    der(E_defoc_ele) = max(he_av*n_h*A_h*solar.dni,0);
+  end if;
+  //Q_avail = if on_hf then max(he_av*n_h*A_h*solar.dni,0) else 0;
   
-  when Q_raw>Q_start then
+  Q_field_avail= if on_hf then max(n_h*A_h*solar.dni*min(he_av,1-optical.nu_unavail),0) else 0;
+  Q_rec_inc_max= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+  
+  when Q_rec_inc_max>Q_start then
     on_internal=true;
-  elsewhen Q_raw<Q_min then
+  elsewhen Q_rec_inc_max<Q_min then
     on_internal=false;
   end when;
 
   if on_internal then
     if defocus_internal then
-      Q_net=min(Q_defocus,Q_raw);
-      der(E_curtail) = Q_raw-Q_net;
-      der(E_low_dumping) = 0;
-      der(E_high_dumping) = 0;
+      Q_rec_inc=min(Q_field_PB_in,Q_rec_inc_max);
+      der(E_defoc_storage) = (min(Q_field_HX_max,Q_rec_inc_max)-Q_rec_inc)/nu_ope_field;
+      der(E_defoc_HX) = (Q_rec_inc_max-min(Q_field_HX_max,Q_rec_inc_max))/nu_ope_field;
+      der(E_defoc_low) = 0;
     else
-      Q_net=min(Q_dump_field,Q_raw);
-      der(E_high_dumping)=Q_raw-Q_net;
-      der(E_curtail) = 0;
-      der(E_low_dumping) = 0;
-    end if;
+      Q_rec_inc=min(Q_field_HX_max,Q_rec_inc_max);
+      der(E_defoc_HX)=(Q_rec_inc_max-Q_rec_inc)/nu_ope_field;
+      der(E_defoc_storage) = 0;
+      der(E_defoc_low) = 0;
+    end if;      
+    der(E_optic_loss) = Q_field_avail-(Q_rec_inc_max-Q_rec_inc)/nu_ope_field-Q_rec_inc;
   else 
-    Q_net=0;
-    der(E_low_dumping) = Q_raw-Q_net;
-    der(E_high_dumping)=0;
-      der(E_curtail) = 0;
+    Q_rec_inc=0;
+    der(E_defoc_low) = Q_field_avail;
+    der(E_defoc_HX)=0;
+    der(E_defoc_storage) = 0;
+    der(E_optic_loss) = 0;
   end if;
-  //Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else min(Q_dump_field,Q_raw)) else 0;
-  heat.Q_flow= -Q_net;
+  
+  
+  //Q_rec_inc= if on_internal then (if defocus_internal then min(Q_defocus,Q_rec_inc_max) else min(Q_field_HX_max,Q_rec_inc_max)) else 0;
+  heat.Q_flow= -Q_rec_inc;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
 //   optical.hra=solar.hra;
 //   optical.dec=solar.dec;
@@ -154,12 +179,11 @@ equation
     solar.hra,
     lat);
 
-  der(E_field) = Q_net;
   der(E_dni) = he_av*n_h*A_h*solar.dni;
-  der(E_field_avail) = Q_field_avail;
-  der(E_raw) = Q_raw;
-  der(E_inc) = Q_inc;
-  damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;
+  der(E_avail) = Q_avail;
+  der(E_defoc_max) = Q_avail-Q_field_avail;
+  der(E_rec_inc) = Q_rec_inc;
+  damping= if on_internal then Q_rec_inc/(Q_rec_inc_max+1e-3) else 1;
   W_loss1=if ele>1e-2 then n_h*he_av*damping*W_track else 0;
   when ele>1e-2 then
     t_on=time;

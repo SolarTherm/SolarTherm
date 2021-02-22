@@ -36,7 +36,7 @@ model SodiumReceiver_withOutput "ReceiverSimple with convective losses"
 	parameter Real[5] CH = {7.61828573e-04,-3.54208032e-02,5.93470995e-01,-9.37379885e-01,9.26793247} "Coefficients to calculate h_ext";
 
 	SI.HeatFlowRate Q_loss "Convective and emmisive losses from the receiver";
-	SI.HeatFlowRate Q_rcv "Heat flow captured by HTF after piping losses";
+	SI.HeatFlowRate Q_rec "Heat flow captured by HTF after piping losses";
 	SI.HeatFlowRate Q_ref  "Receiver losses due to reflection";
 	SI.HeatFlowRate Q_rad  "Receiver losses due to re-radiation";
 	SI.HeatFlowRate Q_conv "Receiver losses due to forced convection";
@@ -145,11 +145,11 @@ equation
 		Q_conv = 0;
 	end if;
 	0 = heat.Q_flow + Q_loss + max(1e-3,fluid_a.m_flow)*(h_in-h_out);
-	Q_rcv = fluid_a.m_flow*h_out + fluid_b.m_flow*h_in;
-	eff = Q_rcv/max(1,heat.Q_flow);
+	Q_rec = fluid_a.m_flow*h_out + fluid_b.m_flow*h_in;
+	eff = Q_rec/max(1,heat.Q_flow);
 	Q_out = heat.Q_flow*eta_rec;
     
-	der(E_rec) = Q_rcv;
+	der(E_rec) = Q_rec;
 	der(E_ref) = Q_ref;
 	der(E_rad) = Q_rad;
 	der(E_conv) = Q_conv;
