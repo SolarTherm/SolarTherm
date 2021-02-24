@@ -209,12 +209,14 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_start_3 = nu_start * Q_in_rcv_3 "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min_3 = nu_min*Q_in_rcv_3 "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_defocus_3 = nu_defocus*Q_design_3 "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-  
+
+initial algorithm
+   opt_file:=optical.tablefile;
+ 
 initial equation
    on_internal_1=Q_raw_1>Q_start_1;
    on_internal_2=Q_raw_2>Q_start_2;
    on_internal_3=Q_raw_3>Q_start_3;
-   opt_file=optical.tablefile;
    
    Q_in_rcv_1 = metadata_list[10];
    Q_in_rcv_2 = metadata_list[15];

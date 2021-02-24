@@ -979,6 +979,36 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   SI.Energy E_losses_defocus(start = 0, fixed = true);
   SI.Energy E_check;
   
+  //******************** New terms for Sankey diagram
+  SI.Energy E_solars(start=0) "The energy of the sun received by the heliostat, whether it turns on or not";
+  SI.Energy E_loss_curtailments(start=0) "Loss energy due to wind speed, low solar angles, low DNI";
+  
+  SI.Energy E_resources_after_curtailments(start=0) "The energy that goes to the heliostat field after curtailment losses";
+  SI.Energy E_loss_availabilitys(start=0) "Loss energy due to heliostat availability";
+  
+  SI.Energy E_helio_raws(start=0) "The energy that goes into the heliostat field";
+  SI.Energy E_loss_opticals(start=0) "Loss energy due to optical efficiency";
+  
+  SI.Energy E_helio_nets(start=0) "Energy after optical efficiency";
+  SI.Energy E_loss_defocuss(start=0) "Loss energy due to defocus";
+  
+  SI.Energy E_incident_rcv(start=0) "Energy that comes into the receiver aperture";
+  SI.Energy E_loss_rcvs(start=0) "Energy loss ion the rcv";
+  
+  SI.Energy E_absorbed_rcv(start=0) "Energy that is absorbed by the rcv";
+  
+  SI.Energy E_loss_tank(start=0) "Energy loss in the tank";
+  
+  SI.Energy E_PB_input(start=0) "PB input";
+  SI.Energy E_PB_loss_thermal_to_electric(start=0) "PB loss (efficiency thermal to electric)";
+  
+  SI.Energy E_PB_gross(start=0) "PB gross energy before parasitics";
+  SI.Energy E_PB_loss_parasitics(start=0) "PB loss (parasitics)";
+  
+  SI.Energy E_PB_net(start=0) "PB net energy after parasitics";
+  SI.Energy E_checks(start=0);
+   
+  
   Real eta_curtail_off(start = 0);
   Real eta_optical(start = 0);
   Real eta_he_av(start = 0);
@@ -1150,6 +1180,61 @@ initial equation
   C_cap = C_direct + C_indirect;
 
 equation
+  //************************************ Sankey diagram calculation
+  der(E_solars) =  max(sun.dni * n_helios * A_helio, 0.0);
+  der(E_loss_curtailments) = if heliostatsField.on_internal == false then
+                                max(sun.dni * n_helios * A_helio, 0.0)
+                             else
+                                0;
+  der(E_resources_after_curtailments) = if heliostatsField.on_internal == true then 
+                                                  max(sun.dni * n_helios * A_helio, 0.0)
+                                             else
+                                                  0;
+                                                  
+  der(E_loss_availabilitys) = if heliostatsField.on_internal == true then 
+                                                  max(sun.dni * n_helios * A_helio * (1-he_av_design), 0.0)
+                                   else
+                                                  0;
+  
+  der(E_helio_raws)         = if heliostatsField.on_internal == true then 
+                                                  max(sun.dni * n_helios * A_helio * he_av_design, 0.0) 
+                                   else
+                                                  0;
+  der(E_loss_opticals) = if heliostatsField.on_internal == true then 
+                                                  max(sun.dni * n_helios * A_helio * he_av_design * (1 - heliostatsField.nu), 0.0)
+                                   else
+                                                  0;
+  
+  der(E_helio_nets) = if heliostatsField.on_internal == true then 
+                                                  max(sun.dni * n_helios * A_helio * he_av_design * (heliostatsField.nu), 0.0) 
+                                   else
+                                                  0;
+                                                  
+  der(E_loss_defocuss) =  if heliostatsField.on_internal == true then 
+                                if heliostatsField.defocus_internal == true then
+                                    max(heliostatsField.Q_raw - heliostatsField.Q_defocus,0)
+                                else
+                                    0
+                          else
+                                                  0;
+  
+  der(E_incident_rcv) = particleReceiver.heat.Q_flow;
+  der(E_loss_rcvs) =  (1 - particleReceiver.eta_rcv) * particleReceiver.heat.Q_flow;
+  der(E_absorbed_rcv) =  (particleReceiver.eta_rcv) * particleReceiver.heat.Q_flow;
+  
+  der(E_loss_tank) =  abs(tankCold.Q_losses_total) + abs(tankHot.Q_losses_total);
+  
+  der(E_PB_input) = powerBlock.Q_HX;
+  der(E_PB_loss_thermal_to_electric) = powerBlock.Q_HX - powerBlock.W_gross;
+  
+  der(E_PB_gross) =  powerBlock.W_gross;
+  der(E_PB_loss_parasitics) = powerBlock.W_gross - powerBlock.W_net;
+  
+  der(E_PB_net) = powerBlock.W_net;
+  
+  E_checks = E_solars - E_loss_curtailments - E_loss_availabilitys - E_loss_opticals - E_loss_defocuss - E_loss_rcvs - E_loss_tank - E_PB_loss_thermal_to_electric - E_PB_loss_parasitics - E_PB_net;
+
+
   //************************************ Equations below exist to close the model
   particleReceiver.raw_input[1] = H_rcv "Particle receiver drop height - input to the static receiver surrogate model";
   particleReceiver.raw_input[2] = ar_rec "Particle receiver aspect ratio (H/W) - input to the static receiver surrogate model";
