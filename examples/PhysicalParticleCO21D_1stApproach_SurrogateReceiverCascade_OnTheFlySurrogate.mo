@@ -18,8 +18,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   import SolarTherm.Utilities.Kriging_OnTheFly.*;
   import SolarTherm.Utilities.ANN_OnTheFly.*;
   import metadata = SolarTherm.Utilities.Metadata_Optics_3Apertures;
+  import SolarTherm.Models.CSP.CRS.HeliostatsField.TowerRadiusCalculator;
   extends SolarTherm.Media.CO2.PropCO2;
   extends Modelica.Icons.Example;
+
+
   
   //****************************** Simulation Set-up
   parameter Boolean set_pri_field_wspd = false "[H&T] true = using wspd_max dependent heliostat cost based on Emes 2017 https://is.gd/xSgpMV ";
@@ -1088,14 +1091,15 @@ algorithm
     eta_pb_net := E_pb_net / E_pb_input;
     eta_solartoelec := E_pb_net / E_resource;
   end if;
+
+initial algorithm
+	R_rcv_distance:=TowerRadiusCalculator(angular_range, num_aperture, W_rcv);
   
 initial equation
    C_extra_structure = structureExtraCost.C_extra_structure_cost;
+
    W_rcv=max(W_rcv_lv1, W_rcv_lv3);
-   if tan(angular_range/(num_aperture-1))<1e-20 then R_rcv_distance=W_rcv*1.2/2;
-   else
-		R_rcv_distance=W_rcv*1.2/2/tan(angular_range/(num_aperture-1));
-   end if;
+
 
    if set_external_storage then
       R_tower = max(25/2,R_rcv_distance);
