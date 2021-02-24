@@ -118,7 +118,7 @@ def run_simul(inputs={}):
 
 if __name__=='__main__':
 	# tests
-	case="test-multi-aperture"
+	case="test-single-aperture"
 
 	if case=='test-single-aperture':
 		num_aperture=1
@@ -128,6 +128,7 @@ if __name__=='__main__':
 		W_helio=12.0156148407
 		H_helio=12.0156148407
 		H_tower=200.
+		R_tower=20.
 		n_row_oelt=3
 		n_col_oelt=6
 		R1=80.
@@ -136,19 +137,24 @@ if __name__=='__main__':
 		n_W_rcv=10
 		n_H_rcv=10
 		n_rays=10e6
-		n_procs=2
+		n_procs=1
+		verbose=True
+		gen_vtk=True
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, "windy_optics":windy_optics, "n_procs": n_procs }
+		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower,'R_tower':R_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, "windy_optics":windy_optics, "n_procs": n_procs, "verbose": verbose, "gen_vtk": gen_vtk }
 
 	elif case=='test-multi-aperture':
+		verbose=True
+		gen_vtk=True
 		num_aperture=3
-		angular_range=180
+		angular_range=270
 		rcv_type='multi-aperture'    
 		field_type='multi-aperture' 
 		Q_in_rcv=64227613.194 #W
 		W_helio=12.0156148407
 		H_helio=12.0156148407
 		H_tower=200.
+		R_tower=25.
 		n_row_oelt=3
 		n_col_oelt=6
 		R1=80.
@@ -164,7 +170,7 @@ if __name__=='__main__':
 		n_H_rcv=10
 		n_rays=10e6
 		wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics, "gamma":angular_range }
+		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'W_rcv_1':W_rcv_1, 'H_rcv_1':H_rcv_1, 'W_rcv_2':W_rcv_2, 'H_rcv_2':H_rcv_2,'W_rcv_3':W_rcv_3, 'H_rcv_3':H_rcv_3,'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower, 'R_tower':R_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays , "windy_optics":windy_optics, "gamma":angular_range, "verbose": verbose, "gen_vtk": gen_vtk }
 
 	run_simul(inputs)
 
