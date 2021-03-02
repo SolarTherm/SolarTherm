@@ -31,7 +31,9 @@ model Tank
                                                            annotation (Dialog(group="Heater"));
   parameter SI.Efficiency e_ht=0.99 "Tank Heater Efficiency"
                                                             annotation (Dialog(group="Heater"));
-
+  
+  Modelica.Blocks.Interfaces.RealOutput h_fluid = medium.h "Enthalpy of fluid" annotation (Placement(visible = true, transformation(origin = {107, 3}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {102, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0))) ;
+  
   SI.Volume V;
 
   SI.Mass m;

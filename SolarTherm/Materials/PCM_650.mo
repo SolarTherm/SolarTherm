@@ -31,9 +31,11 @@ package PCM_650 "33.4%LiF + 49.9%NaF + 17.1%MgF2"
     input Real f "liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    if f <= 0.0 then //solid
+    if T < T_melt then
+    //if f <= 0.0 then //solid
       h := 1420.0*(T-298.15); //h := cp_s*(T-298.15)
-    elseif f >= 1.0 then //liquid
+    elseif T > T_melt then
+    //elseif f >= 1.0 then //liquid
       h := 1747500.0 + 1420.0*(T-923.15); //h := cp_s*(T_melt-298.15) + h_melt + cp_l*(T-T_melt)
     else
       h := 887500.0 + f*(860000); //h := cp_s*(T_melt-298.15) + f*h_melt

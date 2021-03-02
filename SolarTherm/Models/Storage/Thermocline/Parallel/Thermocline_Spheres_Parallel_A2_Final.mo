@@ -11,6 +11,9 @@ model Thermocline_Spheres_Parallel_A2_Final
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_A = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_B = SolarTherm.Materials.PartialMaterial;
+  
+  replaceable package Encapsulation_Package_A = Filler_Package_A; //Defaults to filler material
+  replaceable package Encapsulation_Package_B = Filler_Package_B; //Defaults to filler material
   //Storage Parameter Settings
   parameter Integer Correlation = 3 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
     //Storage Cpacity and Fractions
@@ -25,6 +28,9 @@ model Thermocline_Spheres_Parallel_A2_Final
     //Filler diameter of materials
   parameter Real d_p_A = 0.3 "Filler diameter";
   parameter Real d_p_B = d_p_A "Filler diameter";
+    //Encapsulation thickness
+  parameter SI.Length t_e_A = d_p_A/(2*N_p_A) "Encapsulation thickness"; //Defaults to equidistant radial
+  parameter SI.Length t_e_B = d_p_B/(2*N_p_B) "Encapsulation thickness"; //Defaults to equidistant radial
     //Discretization settings
   parameter Integer N_f_A = 20 "Number of fluid CVs in Tank_A";
   parameter Integer N_p_A = 5 "Number of filler CVs in Tank_A";
@@ -54,9 +60,9 @@ model Thermocline_Spheres_Parallel_A2_Final
   Modelica.Blocks.Interfaces.RealInput p_amb "Ambient Pressure" annotation(
     Placement(visible = true, transformation(origin = {48, 8.88178e-16}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {46, 0}, extent = {{6, -6}, {-6, 6}}, rotation = 0)));
   //Initialize Tank_A
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_A, Correlation = Correlation, E_max = E_max * frac_1, ar = ar_A, eta = eta_A, d_p = d_p_A, T_min = T_min, T_max = T_max, N_f = N_f_A, N_p = N_p_A, U_loss_tank = U_loss_tank_A, z_offset = 0.0);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_A, redeclare replaceable package Encapsulation_Package = Encapsulation_Package_A, Correlation = Correlation, E_max = E_max * frac_1, ar = ar_A, eta = eta_A, d_p = d_p_A, T_min = T_min, T_max = T_max, N_f = N_f_A, N_p = N_p_A, U_loss_tank = U_loss_tank_A, t_e = t_e_A, z_offset = 0.0);
   //Initialize Tank_B
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_B(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_B, Correlation = Correlation, E_max = E_max * (1.0 - frac_1), ar = ar_B, eta = eta_B, d_p = d_p_B, T_min = T_min, T_max = T_max, N_f = N_f_B, N_p = N_p_B, U_loss_tank = U_loss_tank_B, z_offset = 0.0);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_B(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_B, redeclare replaceable package Encapsulation_Package = Encapsulation_Package_B, Correlation = Correlation, E_max = E_max * (1.0 - frac_1), ar = ar_B, eta = eta_B, d_p = d_p_B, T_min = T_min, T_max = T_max, N_f = N_f_B, N_p = N_p_B, U_loss_tank = U_loss_tank_B, t_e = t_e_A, z_offset = 0.0);
 
   //Cost BreakDown
   parameter Real C_filler = Tank_A.C_filler + Tank_B.C_filler;
@@ -64,6 +70,7 @@ model Thermocline_Spheres_Parallel_A2_Final
   parameter Real C_total = Tank_A.C_section + Tank_B.C_section;
   parameter Real C_tank = Tank_A.C_tank + Tank_B.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation + Tank_B.C_insulation;
+  parameter Real C_encapsulation = Tank_A.C_encapsulation + Tank_B.C_encapsulation;
   
   //Analytics
     //Tank Energy Levels

@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
-model Part5_MgO_6h_10h_8h
+model Part13_MgO_6h_10h_8h
   //Part one of the documentation studies effect of mesh refinement on output.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -21,7 +21,7 @@ model Part5_MgO_6h_10h_8h
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -29,7 +29,7 @@ model Part5_MgO_6h_10h_8h
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.30 "Filler diameter";
+  parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
@@ -50,7 +50,7 @@ model Part5_MgO_6h_10h_8h
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = 1.0/3.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_bot_high = T_Recv_max - 1, T_top_low = T_PB_min + 1, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -124,12 +124,14 @@ algorithm
 equation
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
-  if thermocline_Tank.Tank_A.m_flow > 1e-3 then
-//dicharging
-    T_outlet_degC = T_top_degC;
-  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then
-//charging
-    T_outlet_degC = T_bot_degC;
+  if abs(thermocline_Tank.fluid_a.m_flow) > 1e-3 then //there is mass flow
+    if thermocline_Tank.Active_Tank == 1 then
+      T_outlet_degC = thermocline_Tank.Tank_A.fluid_out.T - 273.15;
+    elseif thermocline_Tank.Active_Tank == 2 then
+      T_outlet_degC = thermocline_Tank.Tank_B.fluid_out.T - 273.15;
+    else
+      T_outlet_degC = thermocline_Tank.Tank_C.fluid_out.T - 273.15;
+    end if;
   else
     T_outlet_degC = 25.0;
 //reference value
@@ -163,8 +165,8 @@ equation
       der(E_charged) = 0.0;
       der(E_discharged) = 0.0;
     end if;
-    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
-    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
+    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
+    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
   else
     der(numer) = 0.0;
     der(E_charged) = 0.0;
@@ -215,4 +217,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part5_MgO_6h_10h_8h;
+end Part13_MgO_6h_10h_8h;

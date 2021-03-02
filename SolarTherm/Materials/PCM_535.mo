@@ -31,9 +31,11 @@ package PCM_535 "37%MgCl2 + 63%SrCl2"
     input Real f "liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    if f <= 0.0 then //solid
+    if T < T_melt then
+    //if f <= 0.0 then //solid
       h := 670.0*(T-298.15); //h := cp_s*(T-298.15)
-    elseif f >= 1.0 then //liquid
+    elseif T > T_melt then
+    //elseif f >= 1.0 then //liquid
       h := 580700.0 + 800.0*(T-808.15); //h := cp_s*(T_melt-298.15) + h_melt + cp_l*(T-T_melt)
     else
       h := 341700.0 + f*(239000); //h := cp_s*(T_melt-298.15) + f*h_melt

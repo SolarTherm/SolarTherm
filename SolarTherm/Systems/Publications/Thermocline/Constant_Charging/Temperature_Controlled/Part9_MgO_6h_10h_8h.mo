@@ -135,7 +135,7 @@ equation
 //charging
     T_outlet_degC = T_bot_degC;
   else
-    T_outlet_degC = 298.15;
+    T_outlet_degC = 25.0;
 //reference value
   end if;
 /*

@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
-model Part5_MgO_6h_10h_8h
+model Part9_Cascaded_6h_10h_8h
   //Part one of the documentation studies effect of mesh refinement on output.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -10,7 +10,11 @@ model Part5_MgO_6h_10h_8h
   //Do not change
   package Fluid_Package = SolarTherm.Materials.Sodium;
   //Do not change
-  package Filler_Package = SolarTherm.Materials.MgO_Constant;
+  package Filler_Package_B = SolarTherm.Materials.PCM_650;
+  package Filler_Package_A = SolarTherm.Materials.PCM_520;
+  package Filler_Package_C = SolarTherm.Materials.PCM_710;
+  package Encapsulation_Package = SolarTherm.Materials.SS316L;
+  parameter SI.Length t_e = 1.0e-3 "Encapsulation thickness for Tank_A and Tank_C is 1mm";
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -29,7 +33,7 @@ model Part5_MgO_6h_10h_8h
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
-  parameter SI.Length d_p = 0.30 "Filler diameter";
+  parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
@@ -50,7 +54,7 @@ model Part5_MgO_6h_10h_8h
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package_A, redeclare package Filler_Package_B = Filler_Package_B, redeclare package Filler_Package_C = Filler_Package_C, frac_1 = 0.1, frac_2 = 0.8, N_f_A = 10, N_f_B = 80, N_f_C = 10, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, Correlation = Correlation, redeclare package Encapsulation_Package_A = Encapsulation_Package, redeclare package Encapsulation_Package_B = Encapsulation_Package, redeclare package Encapsulation_Package_C = Encapsulation_Package, t_e_A = t_e, t_e_B = t_e, t_e_C = t_e) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -163,8 +167,8 @@ equation
       der(E_charged) = 0.0;
       der(E_discharged) = 0.0;
     end if;
-    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
-    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
+    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
+    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
   else
     der(numer) = 0.0;
     der(E_charged) = 0.0;
@@ -215,4 +219,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part5_MgO_6h_10h_8h;
+end Part9_Cascaded_6h_10h_8h;

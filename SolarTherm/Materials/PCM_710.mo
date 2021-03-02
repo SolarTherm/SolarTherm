@@ -31,9 +31,11 @@ package PCM_710 "51%K2CO3 + 49%Na2CO3"
     input Real f "liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    if f <= 0.0 then //solid
+    if T < T_melt then
+    //if f <= 0.0 then //solid
       h := 1670.0*(T-298.15);
-    elseif f >= 1.0 then //liquid
+    //elseif f >= 1.0 then //liquid
+    elseif T > T_melt then
       h := 1306950.0 + 1560*(T-983.15);
     else
       h := 1143950.0 + f*(163000);

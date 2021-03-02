@@ -133,7 +133,7 @@ equation
       T_outlet_degC = thermocline_Tank.Tank_C.fluid_out.T - 273.15;
     end if;
   else
-    T_outlet_degC = 298.15;
+    T_outlet_degC = 25.0;
 //reference value
   end if;
 /*

@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Spheres_Section_Final
+model Thermocline_Spheres_Section_VD_Final
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -89,7 +89,7 @@ model Thermocline_Spheres_Section_Final
   parameter Real ZDH[N_f] = Relative_Tank_Axes(H_tank, N_f) "Non-dimensional tank vertical axis";
   
   //Operational Controls
-  Integer State(start = 2) "operational state 2=standby, 3=discharge, 1=charge";
+  Integer State(start = 1) "operational state 2=standby, 3=discharge, 1=charge";
 
   //Inlet and outlet enthalpies and temperatures
   SI.SpecificEnthalpy h_in "Inlet Enthalpy depends on mass flow direction (J/kg)";
@@ -98,8 +98,14 @@ model Thermocline_Spheres_Section_Final
   SI.Temperature T_out "Outlet Temperature depends on mass flow direction";
   
   //Mass flow rates and superficial velocity
-  SI.MassFlowRate m_flow(start=0.0) "kg/s";
-  SI.Velocity u_flow "m/s";
+  Real m_flow_in(start=0.0) "kg/s";
+  Real m_flow_out(start=0.0) "kg/s";
+  SI.Velocity u_flow[N_f] "m/s";
+  
+  SI.Density rho_f[N_f](start=fill(rho_f_min,N_f)) "Fluid variable density kg/m3";
+  SI.Density rho_in "Fluid inlet density kg/m3";
+  SI.Velocity u_in "Fluid inlet velocity m/s";//Direction matters
+  Real m_flow[N_f] "kg/s";
   
   //Analytics
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min for this to be correct";
@@ -172,7 +178,7 @@ protected
   SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
-  Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
+  Fluid_Package.State fluid[N_f] "Fluid object array";
   
   //Try filler state "Remove this if using function-based calculation"
   Filler_Package.State filler[N_f,N_p-1] "Filler object array";
@@ -191,14 +197,19 @@ initial equation
   end for;
 equation
 
+  /*
   //Determine which operational state: In this version, standby and discharge are lumped.
-  if m_flow < 0.0 then //mass is flowing downwards so charging
+  if m_flow_in < 0.0 then //mass is flowing downwards so charging
     State = 1;
   else //mass is flowing upwards so discharging
     State = 3;
   end if;
-
-  u_flow = m_flow / (eta * rho_f_avg * A); //positive if flowing upwards (discharge)
+  */
+  
+  //u_flow = m_flow / (eta * rho_f_avg * A); //positive if flowing upwards (discharge)
+  u_in = m_flow_in / (eta*rho_in*A);
+  rho_in = fluid_in.rho;
+  
 
   //Fluid inlet and outlet properties
   fluid_in.h = h_in;
@@ -207,64 +218,77 @@ equation
   fluid_out.T = T_out;
 
   //Fluid Equations
-  if State == 1 then
+  if State == 1 then //m_flow_in negative
   //Charging (Mass flows top to bottom)
   //Bottom Charging Fluid Node
-    rho_f_avg * der(h_f[1]) =
+    der(rho_f[1]*h_f[1]) =
     (-2.0*k_eff[1]*k_eff[2])*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
-    + (rho_f_avg*u_flow)*(h_f[1]-h_f[2])/dz
+    + (rho_f[1]*u_flow[1]*h_f[1]-rho_f[2]*u_flow[2]*h_f[2])/dz
     - h_v[1]*(T_f[1] - T_s[1])/eta
     - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz) 
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
+    
+    der(rho_f[1]) = (rho_f[1]*u_flow[1] - rho_f[2]*u_flow[2])/dz;
+    m_flow_out = eta*rho_f[1]*u_flow[1]*A;
     
     h_out = h_f[1];
   //End Bottom Charging Fluid Node
   //Middle Charging Fluid Nodes
     for i in 2:N_f - 1 loop
-      rho_f_avg*der(h_f[i]) = 
+      der(rho_f[i]*h_f[i]) = 
       2.0*k_eff[i - 1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
       - 2.0*k_eff[i]*k_eff[i+1]*(T_f[i]-T_f[i + 1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
-      + (rho_f_avg*u_flow)*(h_f[i]-h_f[i+1])/dz
+      + (rho_f[i]*u_flow[i]*h_f[i]-rho_f[i+1]*u_flow[i+1]*h_f[i+1])/dz
       - h_v[i]*(T_f[i]-T_s[i])/eta
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
+      
+      der(rho_f[i]) = (rho_f[i]*u_flow[i] - rho_f[i+1]*u_flow[i+1])/dz;
     end for;
   //End Middle Charging Fluid Nodes
   //Top Charging Fluid Node
-    rho_f_avg*der(h_f[N_f]) = 
+    der(rho_f[N_f]*h_f[N_f]) = 
     2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
-    + (rho_f_avg*u_flow)*(h_f[N_f]-h_in)/dz
-    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
-    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
-  //End Top Charging Fluid Node
-  else
-  //Discharge (Mass flows bottom to top)
-  //Bottom Discharge Node
-    rho_f_avg*der(h_f[1]) =
-    -2.0*k_eff[1]*k_eff[2]*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
-    + (rho_f_avg*u_flow)*(h_in-h_f[1])/dz
-    - h_v[1]*(T_f[1]-T_s[1])/eta
-    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz)
-    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
-  //End Bottom Discharge Node
-  //Middle Discharge Nodes
-    for i in 2:N_f - 1 loop
-      rho_f_avg*der(h_f[i]) =
-      2.0*k_eff[i-1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
-      - 2.0*k_eff[i]*k_eff[i + 1]*(T_f[i]-T_f[i+1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
-      + (rho_f_avg*u_flow)*(h_f[i-1]-h_f[i])/dz
-      - h_v[i]*(T_f[i]-T_s[i])/eta
-      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
-    end for;
-  //End Middle Discharge Nodes
-  //Top Discharge Node
-    rho_f_avg*der(h_f[N_f]) =
-    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
-    + (rho_f_avg*u_flow)*(h_f[N_f-1]-h_f[N_f])/dz
+    + (rho_f[N_f]*u_flow[N_f]*h_f[N_f]-rho_in*u_in*h_in)/dz
     - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
     - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
     
+    der(rho_f[N_f]) = (rho_f[N_f]*u_flow[N_f] - rho_in*u_in)/dz;
+  //End Top Charging Fluid Node
+  else
+  //Discharge (Mass flows bottom to top)
+  //Bottom Discharge Node
+    der(rho_f[1]*h_f[1]) =
+    -2.0*k_eff[1]*k_eff[2]*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    + (rho_in*u_in*h_in-rho_f[1]*u_flow[1]*h_f[1])/dz
+    - h_v[1]*(T_f[1]-T_s[1])/eta
+    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz)
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
+    
+    der(rho_f[1])=(rho_in*u_in - rho_f[1]*u_flow[1])/dz;
+  //End Bottom Discharge Node
+  //Middle Discharge Nodes
+    for i in 2:N_f - 1 loop
+      der(rho_f[i]*h_f[i]) =
+      2.0*k_eff[i-1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
+      - 2.0*k_eff[i]*k_eff[i + 1]*(T_f[i]-T_f[i+1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      + (rho_f[i-1]*u_flow[i-1]*h_f[i-1]-rho_f[i]*u_flow[i]*h_f[i])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
+    
+      der(rho_f[i]) = (rho_f[i-1]*u_flow[i-1] - rho_f[i]*u_flow[i])/dz;
+    end for;
+  //End Middle Discharge Nodes
+  //Top Discharge Node
+    der(rho_f[N_f]*h_f[N_f]) =
+    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    + (rho_f[N_f-1]*u_flow[N_f-1]*h_f[N_f-1]-rho_f[N_f]*u_flow[N_f]*h_f[N_f])/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
+    
+    der(rho_f[N_f]) = (rho_f[N_f - 1] * u_flow[N_f - 1] - rho_f[N_f] * u_flow[N_f]) / dz;
+    m_flow_out = eta*rho_f[N_f]*u_flow[N_f]*A;
     h_out = h_f[N_f];
   end if;
   //Fluid Property evaluation SolarSalt
@@ -275,6 +299,10 @@ equation
     k_f[i] = fluid[i].k;
     k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
     mu_f[i] = fluid[i].mu;
+    
+    rho_f[i] = fluid[i].rho;
+    
+    m_flow[i] = eta*rho_f[i]*u_flow[i]*A;
 
   end for;
   //Particle Property evaluation quartzite and sand
@@ -301,8 +329,8 @@ equation
   end for;
   //Convection Equations
   for i in 1:N_f loop
-    if abs(u_flow) > 1e-12 then //There is actually mass flowing
-      Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
+    if abs(u_flow[i]) > 1e-12 then //There is actually mass flowing
+      Re[i] = rho_f[i] * d_p * abs(u_flow[i]) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       if Correlation == 1 then 
         Nu[i] = 2.0 + 1.1 * (Re[i] ^ 0.6) * (Pr[i] ^ (1 / 3)); //Wakao and Kaguei
@@ -365,15 +393,18 @@ equation
   //End heat loss calculations
 
   //Analyics
-  der(E_stored) = abs(m_flow) * (h_in - h_out) - Q_loss_total;
+  der(E_stored) = (m_flow_in*h_in) - (m_flow_out*h_out) - Q_loss_total;
   Level = E_stored / E_max;
   
   //Calculated Pumping losses
   for i in 1:N_f loop
-    p_drop[i] = dz*(((600*((1-eta)^2)*mu_f[i]*abs(m_flow))/((eta^3)*(d_p^2)*rho_f_avg*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow^2))/((eta^3)*d_p*rho_f_avg*CN.pi*CN.pi*(D_tank^4))));
+    //p_drop[i] = dz*(((600*((1-eta)^2)*mu_f[i]*abs(m_flow[i]))/((eta^3)*(d_p^2)*rho_f[i]*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow[i]^2))/((eta^3)*d_p*rho_f[i]*CN.pi*CN.pi*(D_tank^4))));
+    p_drop[i] = 0.0;
   end for;
   p_drop_total = sum(p_drop);
-  W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
+  //W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
+  //W_loss_pump = (sum(p_drop.*abs(m_flow)./rho_f))/eff_pump;
+  W_loss_pump = 0.0;
   
   annotation (Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>
@@ -381,4 +412,4 @@ equation
 		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
 
-end Thermocline_Spheres_Section_Final;
+end Thermocline_Spheres_Section_VD_Final;
