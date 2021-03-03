@@ -15,6 +15,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter SI.HeatFlowRate Q_in_rcv = 800e6;
   
   parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
+  parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   
@@ -96,9 +97,18 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       psave=psave, 
       wea_file=wea_file,
       set_swaying_optical_eff = set_swaying_optical_eff,
+ 	  get_optics_breakdown = get_optics_breakdown,
 	  optics_verbose=optics_verbose,
 	  optics_view_scene=optics_view_scene);
   
+  SI.HeatFlowRate Q_spil;
+  SI.HeatFlowRate Q_cosine;
+  SI.Efficiency nu_spil;
+  SI.Efficiency nu_spil_calm;
+  SI.Efficiency nu_spil_windy;
+  SI.Efficiency nu_cosine;
+  SI.Efficiency nu_cosine_calm;
+  SI.Efficiency nu_cosine_windy;
   /*Variables for each aperture*/
   SI.HeatFlowRate Q_raw_1;
   SI.HeatFlowRate Q_net_1;
@@ -253,6 +263,11 @@ equation
   nu_1_windy = optical.nu_1_windy;
   nu_2_windy = optical.nu_2_windy;
   nu_3_windy = optical.nu_3_windy;
+
+  nu_spil_calm = optical.nu_spil;
+  nu_spil_windy = optical.nu_spil_windy;
+  nu_cosine_calm = optical.nu_cosine;
+  nu_cosine_windy = optical.nu_cosine_windy;
   
   if set_swaying_optical_eff == true then
     //********************* Assuming linear relationship between effective slope error vs. wind speed
@@ -264,10 +279,27 @@ equation
         nu_1 = nu_1_windy + (nu_1_calm - nu_1_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
         nu_2 = nu_2_windy + (nu_2_calm - nu_2_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
         nu_3 = nu_3_windy + (nu_3_calm - nu_3_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+		if get_optics_breakdown then 
+			nu_spil = nu_spil_windy + (nu_spil_calm - nu_spil_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+			nu_cosine = nu_cosine_windy + (nu_cosine_calm - nu_cosine_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+		else
+			nu_spil = 0;
+			nu_cosine = 0;
+		end if;
+
+
     else
         nu_1 = nu_1_windy;
         nu_2 = nu_2_windy;
         nu_3 = nu_3_windy;
+		if get_optics_breakdown then 
+			nu_spil = nu_spil_windy;
+			nu_cosine = nu_cosine_windy;
+		else
+			nu_spil = 0;
+			nu_cosine = 0;
+		end if;
+
     end if;
     
   else
@@ -275,11 +307,21 @@ equation
     nu_1 = nu_1_calm;
     nu_2 = nu_2_calm;
     nu_3 = nu_3_calm;
+	if get_optics_breakdown then 
+		nu_spil = nu_spil_calm;
+		nu_cosine = nu_cosine_calm;
+	else
+		nu_spil = 0;
+		nu_cosine = 0;
+	end if;
   end if;
   
   Q_raw_1= if on_hf_1 then max(he_av*n_h_1*A_h*solar.dni*nu_1,0) else 0;
   Q_raw_2= if on_hf_2 then max(he_av*n_h_2*A_h*solar.dni*nu_2,0) else 0;
   Q_raw_3= if on_hf_3 then max(he_av*n_h_3*A_h*solar.dni*nu_3,0) else 0;
+
+  Q_spil=if on_hf_1 then max(he_av*(n_h_1+n_h_2+n_h_3)*A_h*solar.dni*nu_spil,0) else 0;
+  Q_cosine=if on_hf_1 then max(he_av*(n_h_1+n_h_2+n_h_3)*A_h*solar.dni*nu_cosine,0) else 0;
 
   when Q_raw_1>Q_start_1 then
     on_internal_1=true;
