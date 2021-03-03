@@ -42,6 +42,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
   parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   
@@ -761,6 +762,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       wea_file = wea_file,
 	  optics_verbose=set_optics_verbose,
 	  optics_view_scene=set_optics_view_scene,
+	  get_optics_breakdown=get_optics_breakdown,
       set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   
@@ -1028,6 +1030,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   SI.Energy E_resource_after_optical_eff(start = 0, fixed = true);
   SI.Energy E_helio_raw(start = 0, fixed = true);
   SI.Energy E_helio_net(start = 0, fixed = true);
+  SI.Energy E_helio_spillage(start = 0, fixed = true);
+  SI.Energy E_helio_cosine(start = 0, fixed = true);
   SI.Energy E_recv_incident(start = 0, fixed = true);
   SI.Energy E_recv_net(start = 0, fixed = true);
   SI.Energy E_pb_input(start = 0, fixed = true);
@@ -1373,6 +1377,8 @@ equation
                                   
   der(E_helio_raw) = heliostatsField.Q_raw_1  + heliostatsField.Q_raw_2 + heliostatsField.Q_raw_3;
   der(E_helio_net) = heliostatsField.Q_net_1 + heliostatsField.Q_net_2 + heliostatsField.Q_net_3;
+  der(E_helio_spillage)= heliostatsField.Q_spil;
+  der(E_helio_cosine)= heliostatsField.Q_cosine;
   
   der(E_recv_incident) = particleReceiver.heat.Q_flow;
   der(E_recv_net) = particleReceiver.Q_rcv;
