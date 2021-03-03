@@ -947,7 +947,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
     
   Modelica.Blocks.Types.ExternalCombiTable2D opt_eff_windy = Modelica.Blocks.Types.ExternalCombiTable2D(
-    tableName = "optics_windy", 
+    tableName = if set_swaying_optical_eff == true then "optics_windy" else "optics", 
     fileName = opt_file, 
     table = fill(0.0, 0, 2), 
     smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
