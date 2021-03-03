@@ -26,7 +26,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_detail_field_om = false "[H&T] true = use detail washing and field O&M cost";
   parameter Boolean set_const_dispatch = true "[CTRL] Constant dispatch of energy";
   parameter Boolean set_feedforward = true "[CTRL] if true then defocus heat is calculated using expensive PB model. False = defocus heat is a function of Q_in_rcv";
-  parameter Boolean set_dispatch_optimiser = true;
+  parameter Boolean set_dispatch_optimiser = false;
   parameter Boolean set_new_storage_calc = false "[ST] if true = use tuffcrete and microporous insulation (Zebedee Kee's idea)";
   parameter Boolean set_use_neural_network = true;
   parameter Boolean set_dome_storage = true "[ST] If true then use dome storage calculation provided by Jeremy Sment from Sandia";
@@ -38,8 +38,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
+  parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
   
   //****************************** Importing medium and external files
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -692,6 +693,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       n_procs = n_procs, 
       psave = casefolder, 
       wea_file = wea_file,
+	  get_optics_breakdown = get_optics_breakdown,
       set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
   
@@ -968,6 +970,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   SI.Energy E_helio_incident(start = 0, fixed = true);
   SI.Energy E_helio_raw(start = 0, fixed = true);
   SI.Energy E_helio_net(start = 0, fixed = true);
+  SI.Energy E_helio_spillage(start = 0, fixed = true);
+  SI.Energy E_helio_cosine(start = 0, fixed = true);
   SI.Energy E_recv_incident(start = 0, fixed = true);
   SI.Energy E_recv_net(start = 0, fixed = true);
   SI.Energy E_pb_input(start = 0, fixed = true);
@@ -1353,6 +1357,8 @@ equation
   der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
+  der(E_helio_spillage)= heliostatsField.Q_spil;
+  der(E_helio_cosine)= heliostatsField.Q_cosine;
   der(E_recv_incident) = particleReceiver.heat.Q_flow;
   der(E_recv_net) = particleReceiver.Q_rcv;
   der(E_pb_input) = powerBlock.Q_HX;
