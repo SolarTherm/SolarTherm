@@ -133,6 +133,8 @@ model SimpleSystemOptimalDispatch
 	Real SLminrel "Minimum level of the tank [-]";
 	Real eta_opt_horizon[horizon] "The forecasted optical efficiency";
 	
+	Real TOD_W(start=0);
+	
 	
 initial equation
  
@@ -356,5 +358,6 @@ equation
 
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
+	der(TOD_W) = P_elec*pri.price * (1e6*3600) "Multiplied by 3.6e9 to convert back into TOD";
 	annotation(experiment(StartTime= 0, StopTime=31536000.0, Interval= 3600, Tolerance=1e-06));
 end SimpleSystemOptimalDispatch;
