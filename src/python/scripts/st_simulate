@@ -6,21 +6,26 @@ import multiprocessing as mp
 from functools import partial
 from solartherm import postproc
 from solartherm import simulation
+from solartherm import params
 from time import time
 
 # TODO: Pass on any command line arguments to simulation executable
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, i, par_v):
+def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, peaker, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""
-	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
+
+	sim = simulation.Simulator(fn, suffix=str(i))
+
 	sim.load_init()
+
 	sim.update_pars(par_n, par_v)
+
 	sim.simulate(start=start, stop=stop, step=step, tolerance=tolerance, initStep=initStep, maxStep=maxStep,
 		integOrder=integOrder, solver=solver, nls=nls, lv=lv, args=args)
 	res = resultclass(sim.res_fn)
-	perf = res.calc_perf()
+	perf = res.calc_perf(peaker)
 	return perf
 
 class LoggerPerf(object):
@@ -67,6 +72,8 @@ if __name__ == '__main__':
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--nosim', action='store_true',
 			help='no simulation')
+	parser.add_argument('--peaker', action='store_true',
+			help='peaker configuration')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', type=str, default='1y',
@@ -119,9 +126,31 @@ if __name__ == '__main__':
 			help='run post-processing calculations for levelised cost of fuel')
 	parser.add_argument('--fuse', action='store_true',
 			help='disable use of unionfs-fuse to clean temporary files')
+	parser.add_argument('--excel', type=str, default=None,
+			help='the directry of the input excel data sheet')
+	parser.add_argument('--wd', type=str, default=os.getcwd(),
+			help='the working directory')
+
+
 	args = parser.parse_args()
 
-	sim = simulation.Simulator(args.file,fusemount=args.fuse);
+	fn=os.path.abspath(args.file)
+	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
+	input_xml=mn+'_init.xml'
+
+	'''
+	if not os.path.isabs(args.wd):
+		savedir=os.path.join(os.getcwd(),args.wd)
+	else:
+		savedir=args.wd
+
+	if not os.path.exists(args.wd):
+		os.makedirs(args.wd)	
+
+	os.chdir(args.wd)
+	'''
+
+	sim = simulation.Simulator(fn,fusemount=args.fuse)
 	fuse_dirs = sim.get_fuse_dirs()
 
 	mcargs = []
@@ -145,6 +174,15 @@ if __name__ == '__main__':
 	else:
 		resultclass = postproc.SimResultElec
 
+
+	if args.excel!=None:
+		tree=params.Tree()
+		tree.load_xml(input_xml)
+		#TODO check the units of the loaded parameters
+		# convert the units if nessary using simulation.parse_var_val
+		params.load_values_from_excel(args.excel, tree)	
+		tree.write_xml(input_xml)
+
 	sim.load_init()
 
 	dims = [] # dimensions
@@ -162,11 +200,14 @@ if __name__ == '__main__':
 
 	f_ilog = open(sim.model+'_init.log', 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
+
+
 	var_vals = []
 	for i, val in enumerate(itertools.product(*par_v)):
 		var_vals.append(val)
 		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
 		
+
 	logger = LoggerPerf(resultclass)
 	perfs = [None]*len(var_vals)
 	if not args.nosim:
@@ -174,7 +215,7 @@ if __name__ == '__main__':
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
 				args.stop, args.step, args.tolerance, args.initStep, args.maxStep, args.integOrder,
-				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs)
+				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs, args.peaker)
 		if args.np:
 			pool = mp.Pool(processes=args.np)
 			# use apply_async in loop (not map_async) so callback runs 1x per sim.
