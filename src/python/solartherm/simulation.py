@@ -274,6 +274,25 @@ class Simulator(object):
 			+ args
 			+ ['-i='+self.model, self.fn]
 			+ libs)
+			
+		#TODO solve the issue of the latest msys2 (v20210228)
+		#if (((msys2 and problem version))):
+		makefile=self.model+'.makefile'	
+		extraflags = " -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low\n"
+
+		f=open(makefile, "r")
+		s=f.readlines()
+		f.close()
+		
+		i=0
+		for r in s:
+			if 'LDFLAGS' in r:
+				s[i]=r[:-1]+extraflags
+			i+=1
+
+		f=open(makefile, "w")
+		f.writelines(s)
+		f.close()		
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
