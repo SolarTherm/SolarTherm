@@ -289,7 +289,7 @@ class Simulator(object):
 			f.close()
 			i=0
 			for r in s:
-				if 'LDFLAGS' in r:
+				if 'LDFLAGS=' in r[:8]:
 					s[i]=r[:-1]+extraflags
 				i+=1
 			f=open(makefile, "w")
