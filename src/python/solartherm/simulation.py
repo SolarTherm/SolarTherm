@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import multiprocessing as mp
 import re
 import tempfile
+import sysconfig
 
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
@@ -277,22 +278,23 @@ class Simulator(object):
 			
 		#TODO solve the issue of the latest msys2 (v20210228)
 		#if (((msys2 and problem version))):
-		makefile=self.model+'.makefile'	
-		extraflags = " -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low\n"
+		if sysconfig.get_platform()=='mingw':
+			makefile=self.model+'.makefile'	
+			extraflags = " -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low\n"
 
-		f=open(makefile, "r")
-		s=f.readlines()
-		f.close()
+			f=open(makefile, "r")
+			s=f.readlines()
+			f.close()
 		
-		i=0
-		for r in s:
-			if 'LDFLAGS' in r:
-				s[i]=r[:-1]+extraflags
-			i+=1
+			i=0
+			for r in s:
+				if 'LDFLAGS' in r:
+					s[i]=r[:-1]+extraflags
+				i+=1
 
-		f=open(makefile, "w")
-		f.writelines(s)
-		f.close()		
+			f=open(makefile, "w")
+			f.writelines(s)
+			f.close()		
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
