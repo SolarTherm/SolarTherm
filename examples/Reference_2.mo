@@ -196,8 +196,8 @@ model Reference_2
 	parameter Real r_disc = 0.07 "Real discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 
-	parameter Integer t_life(unit = "year") = 27 "Lifetime of plant";
-	parameter Integer t_cons(unit = "year") = 3 "Years of construction";
+	parameter Integer t_life = 27 "Lifetime of plant in years";
+	parameter Integer t_cons = 3 "Years of construction";
 
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
@@ -413,7 +413,7 @@ model Reference_2
 																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
 	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
-	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
+	// SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	// Variables:
 	SI.Power P_elec "Output power of power block";
@@ -422,7 +422,7 @@ model Reference_2
 
 initial equation
 	if fixed_field then
-		P_gross = Q_flow_des * eff_cyc;
+		P_gross = Q_flow_des * eff_blk;
 	else
 		R_des = if match_sam then SM*Q_flow_des*(1 + rec_fr) else SM*Q_flow_des/(1 - rec_fr);
 	end if;
