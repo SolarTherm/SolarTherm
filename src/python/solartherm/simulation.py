@@ -276,8 +276,10 @@ class Simulator(object):
 			+ ['-i='+self.model, self.fn]
 			+ libs)
 			
-		#TODO solve the issue of the latest msys2 (v20210228)
-		#if (((msys2 and problem version))):
+		#TODO solve the issue of linker flags in the latest msys2 (v20210228), ASLR enabled by default
+		# Ref: 
+		# https://www.msys2.org/news/#2021-01-31-aslr-enabled-by-default 
+		# https://github.com/msys2/MINGW-packages/issues/7023
 		if sysconfig.get_platform()=='mingw':
 			makefile=self.model+'.makefile'	
 			extraflags = " -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low\n"
@@ -285,13 +287,11 @@ class Simulator(object):
 			f=open(makefile, "r")
 			s=f.readlines()
 			f.close()
-		
 			i=0
 			for r in s:
 				if 'LDFLAGS' in r:
 					s[i]=r[:-1]+extraflags
 				i+=1
-
 			f=open(makefile, "w")
 			f.writelines(s)
 			f.close()		
