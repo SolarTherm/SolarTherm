@@ -634,8 +634,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		dTemp_HTF_PHX = -1, 
 		T_amb_base = blk_T_amb_des, 
 		htf_choice = 50, 
-		dT_PHX_hot_approach = 70.817253,//dT_PHX_hot_approach, 
-		dT_PHX_cold_approach = 15.000000,//dT_PHX_cold_approach, 
+		dT_PHX_hot_approach = dT_PHX_hot_approach, 
+		dT_PHX_cold_approach = dT_PHX_cold_approach, 
 		eta_isen_mc = eta_comp_main, 
 		eta_isen_rc = eta_comp_re, 
 		eta_isen_t = eta_turb, 
@@ -697,7 +697,9 @@ initial equation
 		T_cold_set_CS);
 
 	Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
+	//eta_net_base = NREL_PB_configurations[11] "PB cycle thermal efficiency (cooler fan has been included)";
 	eta_Q_base = NREL_PB_configurations[12];
+	dT_PHX_hot_approach = NREL_PB_configurations[13] "Heat transfer of the PHX at the design point";
 	m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
 	
 	W_pump_pb = k_loss_hot*m_flow_blk;
