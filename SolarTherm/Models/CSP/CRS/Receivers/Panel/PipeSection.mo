@@ -64,10 +64,18 @@ model PipeSection
   parameter Modelica.SIunits.LinearExpansionCoefficient lambda = 18.5e-6 "Coefficient of linear thermal expansion receiver tube material";
   parameter Modelica.SIunits.Stress E = 165e9 "Young's Modulus receiver tube material";
   parameter Modelica.SIunits.Efficiency poisson = 0.3 "Poisson ratio of receiver tube material";
+  parameter Real K_safe = 0.9 "Security factor";
+  parameter Real A(final unit="1/(Pa^0.66.s)") = 2.688e-45 "Structure-dependent constant";
+  parameter Real n = 6.6 "Stress exponent in Norton-Bailey equation";
+  parameter Real m = 0 "Time exponent in Norton-Bailey equation";
+  parameter Real Q(final unit="J/(mol)") = 322e3 "Activation energy for creep";
+  parameter Real R(final unit="J/(mol.K)") = Modelica.Constants.R "Molar gas constant (previous value: 8.314472)";
+  parameter Modelica.SIunits.Time t_stab = 108000 "Relaxation time";
 
   Modelica.SIunits.Stress sigma_theta;
   Modelica.SIunits.Stress sigma_z;
   Modelica.SIunits.Stress sigma_eq;
+  //Modelica.SIunits.Stress sigma_creep;
 
   Modelica.SIunits.CoefficientOfHeatTransfer hf "Internal coefficient of heat transfer due to forced convection";
   Modelica.SIunits.Temperature Ts;
@@ -133,5 +141,7 @@ equation
   Ts = A0 + B0 * log(Ro) + sum(An[j] * gn[j] for j in 1:N);
   Ti = A0 + B0 * log(Ri) + sum(An[j] * g(Ri, j, Ri, Bif) for j in 1:N);
   Tprom = A0 + B0 * log(Ro);
+  
+  //sigma_creep = E*((1-n)*((sigma_eq/E)^(1-n)/(1-n) - A*E^n*exp(-Q/(R*923))*t_stab)^(1/(1-n)))/K_safe;
   
 end PipeSection;
