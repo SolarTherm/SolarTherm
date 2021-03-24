@@ -19,7 +19,7 @@ class TestSolsticePyFunc(unittest.TestCase):
 
 	def test_touching(self):
 		
-		self.assertEqual(round(self.res.interpolate('opt_eff', 0),4), 0.8785)
+		self.assertTrue(abs(self.res.interpolate('opt_eff', 0)-0.8785)<1e-3)
 		os.system('rm TestSolsticeOELT_*')
 		os.system('rm TestSolsticeOELT')
 		os.system('rm TestSolsticeOELT.c')
