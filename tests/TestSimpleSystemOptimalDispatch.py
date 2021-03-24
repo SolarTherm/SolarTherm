@@ -8,7 +8,7 @@ from solartherm import postproc
 
 import os
 
-class TestScheduler(unittest.TestCase):
+class TestOptimalDispatch(unittest.TestCase):
 	def setUp(self):
 		fn = '../examples/SimpleSystemOptimalDispatch.mo'
 		sim = simulation.Simulator(fn)
@@ -18,7 +18,7 @@ class TestScheduler(unittest.TestCase):
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf(peaker=True)
 
-	def test_sched(self):
+	def test_system(self):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
