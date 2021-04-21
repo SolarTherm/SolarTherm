@@ -8,6 +8,7 @@ model HeliostatsFieldSolstice_1stApproach
     parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
     parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
+	parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
@@ -74,14 +75,24 @@ model HeliostatsFieldSolstice_1stApproach
         rcv_type=rcv_type, 
         psave=psave, 
         wea_file=wea_file,
-        set_swaying_optical_eff = set_swaying_optical_eff);
+        set_swaying_optical_eff = set_swaying_optical_eff,
+	    get_optics_breakdown = get_optics_breakdown);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
+  SI.HeatFlowRate Q_spil;
+  SI.HeatFlowRate Q_cosine;
   
   SI.Efficiency nu;
   SI.Efficiency nu_windy;
   SI.Efficiency nu_calm;
+  SI.Efficiency nu_spil;
+  SI.Efficiency nu_spil_calm;
+  SI.Efficiency nu_spil_windy;
+  SI.Efficiency nu_cosine;
+  SI.Efficiency nu_cosine_calm;
+  SI.Efficiency nu_cosine_windy;
+
   SI.Angle slope_error_runtime;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
@@ -149,6 +160,10 @@ equation
   
   nu_calm = optical.nu;
   nu_windy = optical.nu_windy;
+  nu_spil_calm = optical.nu_spil;
+  nu_spil_windy = optical.nu_spil_windy;
+  nu_cosine_calm = optical.nu_cosine;
+  nu_cosine_windy = optical.nu_cosine_windy;
   
   if set_swaying_optical_eff == true then
     //********************* Assuming linear relationship between effective slope error vs. wind speed
@@ -158,16 +173,41 @@ equation
     if slope_error_runtime < slope_error_windy then
         //********************* Assuming linear relationship between effective slope error vs. optical efficiency
         nu = nu_windy + (nu_calm - nu_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+		if get_optics_breakdown then 
+			nu_spil = nu_spil_windy + (nu_spil_calm - nu_spil_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+			nu_cosine = nu_cosine_windy + (nu_cosine_calm - nu_cosine_windy) / (slope_error_windy - slope_error) * (slope_error_runtime - slope_error);
+		else
+			nu_spil = 0;
+			nu_cosine = 0;
+		end if;
+
     else
         nu = nu_windy;
+		if get_optics_breakdown then 
+			nu_spil = nu_spil_windy;
+			nu_cosine = nu_cosine_windy;
+		else
+			nu_spil = 0;
+			nu_cosine = 0;
+		end if;
     end if;
     
+
   else
     slope_error_runtime = -1;
     nu = nu_calm;
+	if get_optics_breakdown then 
+		nu_spil = nu_spil_calm;
+		nu_cosine = nu_cosine_calm;
+	else
+		nu_spil = 0;
+		nu_cosine = 0;
+	end if;
   end if;
   
-  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*nu,0) else 0;
+  Q_spil=if on_hf then max(he_av*n_h*A_h*solar.dni*nu_spil,0) else 0;
+  Q_cosine=if on_hf then max(he_av*n_h*A_h*solar.dni*nu_cosine,0) else 0;
 
   when Q_raw>Q_start then
     on_internal=true;
@@ -176,6 +216,7 @@ equation
   end when;
 
   Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
+
 
   heat.Q_flow= -Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);

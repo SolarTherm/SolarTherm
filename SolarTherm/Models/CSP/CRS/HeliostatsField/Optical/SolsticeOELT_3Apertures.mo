@@ -18,6 +18,7 @@ extends OpticalEfficiency_3Apertures;
 
   parameter Integer argc =30 "Number of variables to be passed to the C function";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
 
@@ -66,6 +67,10 @@ extends OpticalEfficiency_3Apertures;
   SI.Efficiency nu_1_windy;
   SI.Efficiency nu_2_windy;
   SI.Efficiency nu_3_windy; 
+  SI.Efficiency nu_spil_windy;
+  SI.Efficiency nu_cosine_windy;
+  SI.Efficiency nu_spil;
+  SI.Efficiency nu_cosine;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_1(
     tableOnFile=true,
@@ -108,12 +113,45 @@ extends OpticalEfficiency_3Apertures;
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=tablefile)
     annotation (Placement(visible = true, transformation(extent = {{14, -88}, {34, -68}}, rotation = 0)));
-    
+
+Modelica.Blocks.Tables.CombiTable2D nu_table_spil(
+    tableOnFile=true,
+    tableName= if get_optics_breakdown then "eta_spillage" else "optical_efficiency_level_1",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=tablefile)
+  annotation (Placement(visible = true, transformation(extent = {{16, -38}, {36, -18}}, rotation = 0)));
+
+  Modelica.Blocks.Tables.CombiTable2D nu_table_spil_windy(
+    tableOnFile=true,
+    tableName= if get_optics_breakdown and set_swaying_optical_eff then "eta_spillage_windy" else "optical_efficiency_level_1",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=tablefile)
+  annotation (Placement(visible = true, transformation(extent = {{16, -38}, {36, -18}}, rotation = 0)));
+
+
+  Modelica.Blocks.Tables.CombiTable2D nu_table_cosine(
+    tableOnFile=true,
+    tableName= if get_optics_breakdown then "eta_cosine" else "optical_efficiency_level_1",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=tablefile)
+  annotation (Placement(visible = true, transformation(extent = {{16, -38}, {36, -18}}, rotation = 0)));
+
+  Modelica.Blocks.Tables.CombiTable2D nu_table_cosine_windy(
+    tableOnFile=true,
+    tableName= if get_optics_breakdown and set_swaying_optical_eff then "eta_cosine_windy" else "optical_efficiency_level_1",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    fileName=tablefile)
+  annotation (Placement(visible = true, transformation(extent = {{16, -38}, {36, -18}}, rotation = 0)));
+
+  
   Modelica.Blocks.Sources.RealExpression angle2_input(y=to_deg(angle2))
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
     
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
-    annotation (Placement(transformation(extent={{-38,22},{-10,42}})));    
+    annotation (Placement(transformation(extent={{-38,22},{-10,42}})));   
+
+
+ 
 
 initial algorithm
   if set_swaying_optical_eff then windy_optics:=1;
@@ -152,6 +190,12 @@ equation
   nu_1_windy = max(0,nu_table_1_windy.y);
   nu_2_windy = max(0,nu_table_2_windy.y);
   nu_3_windy = max(0,nu_table_3_windy.y);
+
+  nu_spil=if get_optics_breakdown then max(0,nu_table_spil.y) else 0;
+  nu_spil_windy=if get_optics_breakdown and set_swaying_optical_eff then max(0,nu_table_spil_windy.y) else 0;
+
+  nu_cosine=if get_optics_breakdown then max(0,nu_table_cosine.y) else 0;
+  nu_cosine_windy=if get_optics_breakdown and set_swaying_optical_eff then max(0,nu_table_cosine_windy.y) else 0;
   
  connect(angle2_input.y, nu_table_1.u2) annotation(
     Line(points = {{-8.6, 16}, {14, 16}}, color = {0, 0, 127}));
@@ -173,4 +217,20 @@ equation
  connect(angle1_input.y,nu_table_3_windy.u1);
  connect(angle2_input.y,nu_table_3_windy.u2);
 
+ connect(angle1_input.y, nu_table_spil.u1) annotation (Line(points={{-8.6,32},{2,32},
+          {2,28},{10,28}}, color={0,0,127}));
+  connect(angle1_input.y, nu_table_spil_windy.u1) annotation(
+    Line(points = {{-8, 32}, {2, 32}, {2, -22}, {14, -22}, {14, -22}}, color = {0, 0, 127}));
+  connect(angle1_input.y, nu_table_cosine.u1) annotation (Line(points={{-8.6,32},{2,32},
+          {2,28},{10,28}}, color={0,0,127}));
+  connect(angle1_input.y, nu_table_cosine_windy.u1) annotation(
+    Line(points = {{-8, 32}, {2, 32}, {2, -22}, {14, -22}, {14, -22}}, color = {0, 0, 127}));
+ connect(angle2_input.y, nu_table_spil.u2) annotation(
+    Line(points = {{-8, 16}, {10, 16}, {10, 16}, {10, 16}}, color = {0, 0, 127}));
+  connect(angle2_input.y, nu_table_spil_windy.u2) annotation(
+    Line(points = {{-8, 16}, {-8, 16}, {-8, -34}, {14, -34}, {14, -34}}, color = {0, 0, 127}));
+  connect(angle2_input.y, nu_table_cosine.u2) annotation(
+    Line(points = {{-8, 16}, {10, 16}, {10, 16}, {10, 16}}, color = {0, 0, 127}));
+  connect(angle2_input.y, nu_table_cosine_windy.u2) annotation(
+    Line(points = {{-8, 16}, {-8, 16}, {-8, -34}, {14, -34}, {14, -34}}, color = {0, 0, 127}));
 end SolsticeOELT_3Apertures;
