@@ -9,8 +9,8 @@ model SimpleSystemOptimalDispatch
 	extends Modelica.Icons.Example;
 
 	// Parameters
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab");
-	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[SYS] Weather file";
+	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity price file";
     
     parameter nSI.Angle_deg lon = -116.800 "Longitude (+ve East)";
     parameter nSI.Angle_deg lat = 34.850 "Lati1tude (+ve North)";
@@ -117,11 +117,13 @@ model SimpleSystemOptimalDispatch
 	FI.Money R_spot(start=0, fixed=true)
 		"Spot market revenue";
 	SI.Energy E_elec(start=0, fixed=true) "Generate electricity";
-	
+    
+    /*Dispatch optimisation*/
+    parameter Real DEmax = P_name / eff_blk * 1e-6 "Thermal rating of the power block ==> maximum dispatched thermal power to the PB (MWth)";
 	parameter Real const_t = -3600;
 	parameter Real dt =1 "delta t";
-	parameter Integer horison = 24;
-	parameter Boolean dispatch_optimiser = false;
+	parameter Integer horizon = 24;
+	parameter Boolean dispatch_optimiser = true;
 	
 	Real counter(start = const_t);
 	Real time_simul "time of the optimisation";
@@ -129,6 +131,7 @@ model SimpleSystemOptimalDispatch
 	Real SLinit "Current capacity the tank MWh";
 	Real SLmax "Max capacity MWhth";
 	Real SLminrel "Minimum level of the tank [-]";
+	Real eta_opt_horizon[horizon] "The forecasted optical efficiency";
 	
 	
 initial equation
@@ -295,18 +298,32 @@ equation
 	end if;
 	
 	der(counter) = 1;
-    SLinit = E* 2.77778e-10;	
-    SLmax = E_max * 2.77778e-10;	
-    SLminrel = E_low_l/E_max;
+    SLinit = E * 2.77778e-10 "Initial stored energy at TES"; 	
+    SLmax = E_max * 2.77778e-10 "Maximum stored energy at TES";	
+    SLminrel = E_low_l/E_max "Lowest energy fraction in the tank";
+    
+    for i in 1: horizon loop
+        eta_opt_horizon[i] = 0.65 * eff_rec;
+    end for;
+    
     when counter > 0 then
-    time_simul = floor(time);
-    optimalDispatch = SolarTherm.Utilities.LinProgFunc(
-      "/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab", 
-      "/home/philgun/solartherm-particle/SolarTherm/Data/Prices/aemo_vic_2014.motab",
-      horison, dt, time_simul, 
-      C, eff_blk, t_storage, P_name/eff_blk*1e-6, 
-      SLmax, SLinit, SLminrel+1e-5, A_rec);
-      reinit(counter, -dt * 3600);  
+        time_simul = floor(time);
+        optimalDispatch = SolarTherm.Utilities.LinProgFunc(
+            wea_file, 
+            pri_file,
+            horizon, 
+            dt, 
+            time_simul, 
+            eta_opt_horizon, 
+            eff_blk, 
+            t_storage, 
+            DEmax, 
+            SLmax, 
+            SLinit, 
+            SLminrel, 
+            A_col
+          );
+          reinit(counter, -dt * 3600);  
     end when;
                          
  

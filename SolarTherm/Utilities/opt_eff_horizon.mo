@@ -1,5 +1,7 @@
 within SolarTherm.Utilities;
 function opt_eff_horizon
+/*This function is for interpolating optical efficiency as a function of declination and solar angle, using a pre-loaded table opt_eff*/
+
 extends Modelica.Icons.Function;
   input Modelica.SIunits.Angle dec_horizon "Solar declination angle ";
   input Modelica.SIunits.Angle hra_horizon "Solar hour angle";

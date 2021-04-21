@@ -1128,10 +1128,10 @@ initial equation
   if which_PB_model == 1 then
       //************************************ Based on NREL Power Block - Cost function is based on Kevin Albrect, 2019 https://is.gd/3VN0O7
       C_HTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
-      C_LTR = pri_recuperator * NREL_PB_configurations[1] ^ 0.8933;
+      C_LTR = pri_recuperator * NREL_PB_configurations[2] ^ 0.8933;
       C_turbine = pri_turbine * (NREL_PB_configurations[3] / 10 ^ 3) ^ 0.5886;
       C_mainCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
-      C_reCompressor = pri_compressor * (NREL_PB_configurations[4] / 10 ^ 3) ^ 0.9142;
+      C_reCompressor = pri_compressor * (NREL_PB_configurations[5] / 10 ^ 3) ^ 0.9142;
       C_cooler = pri_cooler * NREL_PB_configurations[6];
       C_exchanger = (pri_PHX_per_area) * A_HX + pri_PHX_BOP_s * m_flow_blk + pri_PHX_BOP_CO2 * NREL_PB_configurations[8];
       C_generator = pri_generator * (P_gross / 10 ^ 6) ^ 0.5463;

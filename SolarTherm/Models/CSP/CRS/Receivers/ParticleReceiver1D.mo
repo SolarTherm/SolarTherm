@@ -353,7 +353,7 @@ equation
   for i in 1:N loop  
       Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
       Qloss_conv_curtain_discrete[i]= q_conv_curtain[i]* dx * W_rcv;
-      Qloss_jcf_discrete[i] = jc_f[i] * dx * W_rcv;
+      Qloss_jcf_discrete[i] = jc_f[i] * dx * W_rcv * F;
       Qloss_jcb_discrete[i] = jc_b[i] * dx * W_rcv;
       Qgain_gcb_discrete[i] = gc_b[i] * dx * W_rcv;
   end for;

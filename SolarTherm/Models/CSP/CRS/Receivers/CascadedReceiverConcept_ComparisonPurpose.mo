@@ -1,15 +1,19 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 
-model CascadeParticleReceiver1DCalculator
+model CascadedReceiverConcept_ComparisonPurpose
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SI = Modelica.SIunits;
   import Modelica.Math.*;
   
   //********************* Particle Receiver Design Parameters
-  parameter SI.Area A_ap_lv1 = 400 "Aperture area of the 1st receiver";
-  parameter SI.Area A_ap_lv2 = 400 "Aperture area of the 2nd receiver";
-  parameter SI.Area A_ap_lv3 = 400 "Aperture area of the 3rd receiver";
+  parameter Real top_ratio = 0.33 "--> controlled by Python";
+  parameter Real mid_ratio = 0.33 " --> controlled by Python";
+  parameter Real bottom_ratio = 1 - top_ratio - mid_ratio;
+  parameter SI.Area A_rcv_total = 1000 "Total area of the apertures --> controlled by Python";
+  parameter SI.Area A_ap_lv1 = A_rcv_total * top_ratio "Aperture area of the 1st receiver";
+  parameter SI.Area A_ap_lv2 = A_rcv_total * mid_ratio "Aperture area of the 2nd receiver";
+  parameter SI.Area A_ap_lv3 = A_rcv_total * bottom_ratio "Aperture area of the 3rd receiver";
   
   parameter Real ar_rec_lv1 = 1 "Aspect ratio for the 1st receiver";
   parameter Real ar_rec_lv2 = 1 "Aspect ratio for the 2nd receiver";
@@ -19,6 +23,14 @@ model CascadeParticleReceiver1DCalculator
   parameter SI.Length H_drop_design_lv2 = sqrt(A_ap_lv2*ar_rec_lv2) "2nd receiver's height";
   parameter SI.Length H_drop_design_lv3 = sqrt(A_ap_lv3*ar_rec_lv3) "2nd receiver's height";
   
+  //**********************Operation parameters
+  parameter SI.HeatFlowRate Q_in_total = 1e9 "Sum of the total heat flow rate [W] --> controlled by Python";
+  parameter SI.HeatFlowRate Q_in_lv1 = Q_in_total * top_ratio "Heat Flow Rate to the 1st receiver [W]";
+  parameter SI.HeatFlowRate Q_in_lv2 = Q_in_total * mid_ratio "Heat Flow Rate to the 2nd receiver [W]";
+  parameter SI.HeatFlowRate Q_in_lv3 = Q_in_total * bottom_ratio "Heat Flow Rate to the 3rd receiver [W]";
+  
+  parameter SI.MassFlowRate mdot_total = 1000;
+    
   //********************* Heat Trasnfer Properties
   parameter SI.Length th_w = 0.05 "Backwall thickness of the receiver";
   parameter SI.ThermalConductance k_w = 0.2 "Thermal conductance of the back wall of the receiver";
@@ -28,19 +40,14 @@ model CascadeParticleReceiver1DCalculator
   //********************* Thermophysical Properties of the working fluid
   parameter SI.Length d_p = 0.00035 "Particle diameter [m]";
   parameter SI.SpecificHeatCapacity cp_s = 1200 "particle specific heat capacity [J/kgK]";
-  parameter SI.Density rho_s = 3300 "Particle density [kg/m3]";
-  parameter Real eps_s = 0.9 "Particle emmisivity";
-  parameter Real abs_s = 0.9 "Particle absorptivity";
-  parameter Real F = 0.54 "View Factor of the particle curtain";
+  parameter SI.Density rho_s = 3550 "Particle density [kg/m3]";
+  parameter Real eps_s = 0.87 "Particle emmisivity";
+  parameter Real abs_s = 0.87 "Particle absorptivity";
+  parameter Real F = 0.9 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
-  parameter Real std_deviation = 0.1;
-  
+    
   //********************* Ambient Condition
-  parameter SI.HeatFlowRate Q_in_left = 500e6 "Heat Flow Rate to the 1st receiver [W]";
-  parameter SI.HeatFlowRate Q_in_centre = 500e6 "Heat Flow Rate to the 2nd receiver [W]";
-  parameter SI.HeatFlowRate Q_in_right = 500e6 "Heat Flow Rate to the 3rd receiver [W]";
-  
   parameter SI.Temperature T_amb_design = 273.15 "Ambient temperature at design point [K]";
   parameter Real Wdir =  270 "Wind direction [degree]";
   parameter SI.Velocity Wspd = 25 "Wind speed [m/s]";
@@ -48,26 +55,34 @@ model CascadeParticleReceiver1DCalculator
   parameter SI.Temperature T_in = 550 + 273.15 "Inlet particle temperature to the 1st receiver [K]";
   parameter SI.Temperature T_out_target = 800 + 273.15 "Outlet target temperature from the 3rd receiver [K]";
   
+  //**********************************************Not used
   parameter Real delta_T_lv1 = (T_out_target-T_in) * A_ap_lv1 / (A_ap_lv1+A_ap_lv2+A_ap_lv3);
   parameter Real delta_T_lv2 = (T_out_target-T_in) * A_ap_lv2 / (A_ap_lv1+A_ap_lv2+A_ap_lv3);
   parameter Real delta_T_lv3 = (T_out_target-T_in) * A_ap_lv3 / (A_ap_lv1+A_ap_lv2+A_ap_lv3);
-  
-  parameter SI.MassFlowRate m_in = 1000;
-  
+    
   //********************* Simulation Set up
-  parameter Boolean test_mode = false;
   parameter Boolean with_detail_h_ambient = true "using size dependent advection heat transfer coefficient";
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
+  parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
   parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
   parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
-  parameter Boolean with_iterate_mdot_outer_loop = false;
+  parameter Boolean with_iterate_mdot_outer_loop = true "true =  mass flow rate is iterated T_out = T_out design. False =  mass flow rate is given";
   
-  //********************* Variables
+  //*********************** Analytics variables
+  SI.HeatFlowRate Q_absorbed;
+  SI.HeatFlowRate Q_loss_advection_curtain;
+  SI.HeatFlowRate Q_loss_advection_backwall;
+  SI.HeatFlowRate Q_loss_radiation;
+  
+  Real eta_rcv;
+  Real eta_advection_curtain;
+  Real eta_advection_backwall;
+  Real eta_radiation;
+  
   SI.MassFlowRate mdot(start=500,min=10,max=4e3,nominal=500) "Iterated mass flow to reach T_out_target";
   SI.Temperature T_out "Particle outlet temperature from receiver 3";
-  SI.Efficiency eta_rcv "Net thermal efficiency of the cascade receiver";
   
   SI.HeatFlowRate Q_rcv_lv1_calculated;
   SI.HeatFlowRate Q_rcv_lv2_calculated;
@@ -75,7 +90,7 @@ model CascadeParticleReceiver1DCalculator
   
   //********************* Component Instantiation
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv1(
-      N = 20, 
+      N = 30, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -108,7 +123,7 @@ model CascadeParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-19, -63}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
 
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv2(
-      N = 20, 
+      N = 30, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -142,7 +157,7 @@ model CascadeParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-18, -7.10543e-15}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
   
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv3(
-      N = 20, 
+      N = 30, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -222,21 +237,40 @@ model CascadeParticleReceiver1DCalculator
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(cont_m_flow = true, use_input = true)  annotation(
     Placement(visible = true, transformation(origin = {30, -98}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
-  T_out = particleReceiver1D_lv3.T_out;
-  
   if with_iterate_mdot_outer_loop then
     T_out = T_out_target;
   else
-    mdot = m_in;
+    mdot = mdot_total;
   end if;
   
+  T_out = particleReceiver1D_lv3.T_out;
+    
   Q_rcv_lv1_calculated = A_ap_lv1 * particleReceiver1D_lv1.q_solar;
   Q_rcv_lv2_calculated = A_ap_lv2 * particleReceiver1D_lv2.q_solar;
   Q_rcv_lv3_calculated = A_ap_lv3 * particleReceiver1D_lv3.q_solar;
     
   liftSimple.m_flow = mdot;
   
-  eta_rcv = mdot * (Utils.h_T(T_out) - Utils.h_T(T_in)) / (Q_in_lv1 + Q_in_lv2 + Q_in_lv3);
+  Q_absorbed = particleReceiver1D_lv1.Qabsorbed + 
+                                particleReceiver1D_lv2.Qabsorbed + 
+                                    particleReceiver1D_lv3.Qabsorbed;
+                    
+  Q_loss_advection_curtain = particleReceiver1D_lv1.Qloss_conv_curtain + 
+                                particleReceiver1D_lv2.Qloss_conv_curtain + 
+                                    particleReceiver1D_lv3.Qloss_conv_curtain;
+                                    
+  Q_loss_advection_backwall = particleReceiver1D_lv1.Qloss_conv_wall + 
+                                particleReceiver1D_lv2.Qloss_conv_wall + 
+                                    particleReceiver1D_lv3.Qloss_conv_wall;
+
+  Q_loss_radiation = particleReceiver1D_lv1.Qloss_jcf + 
+                        particleReceiver1D_lv2.Qloss_jcf + 
+                            particleReceiver1D_lv3.Qloss_jcf;
+                    
+  eta_rcv = Q_absorbed / Q_in_total;
+  eta_advection_curtain = Q_loss_advection_curtain/Q_in_total;
+  eta_advection_backwall = Q_loss_advection_backwall/Q_in_total;
+  eta_radiation = 1 - eta_rcv - eta_advection_curtain - eta_advection_backwall;
   
   connect(particleReceiver1D_lv1.fluid_b, particleReceiver1D_lv2.fluid_a) annotation(
     Line(points = {{-13, -55}, {8, -55}, {8, -16}, {-14, -16}}, color = {0, 127, 255}));
@@ -278,4 +312,4 @@ equation
     Line(points = {{-96, 116}, {-18, 116}, {-18, 14}, {-18, 14}}, color = {0, 0, 127}));
   connect(Wind_speed.y, particleReceiver1D_lv1.Wspd) annotation(
     Line(points = {{-96, 116}, {-18, 116}, {-18, -50}, {-18, -50}}, color = {0, 0, 127}));
-end CascadeParticleReceiver1DCalculator;
+end CascadedReceiverConcept_ComparisonPurpose;
