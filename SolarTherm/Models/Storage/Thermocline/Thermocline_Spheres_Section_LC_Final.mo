@@ -171,24 +171,86 @@ protected
   
   //Fluid Properties
   SI.ThermalConductivity k_f[N_f] "W/mK";
-  SI.ThermalConductivity k_eff[N_f] "W/mK";
+  //SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
   Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
   
   //Try filler state "Remove this if using function-based calculation"
   Filler_Package.State filler[N_f] "Filler object array";
-  
   //.State encapsulation[N_f] "Encapsulation object array";
+  Real der_h_f[N_f] "rate of change of h_f calculated explicitly";
   
+algorithm
+  //Fluid Equations
+  if State == 1 then
+  //Charging (Mass flows top to bottom)
+  //Bottom Charging Fluid Node
+    der_h_f[1] :=
+    ((-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
+    + (rho_f_avg*u_flow)*(h_f[1]-h_f[2])/dz
+    - h_v[1]*(T_f[1] - T_s[1])/eta
+    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A) ) / rho_f_avg ;
+    
+    h_out := h_f[1];
+  //End Bottom Charging Fluid Node
+  //Middle Charging Fluid Nodes
+    for i in 2:N_f - 1 loop
+      der_h_f[i] := 
+      ( 2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
+      + (rho_f_avg*u_flow)*(h_f[i]-h_f[i+1])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A) ) / rho_f_avg ;
+    end for;
+  //End Middle Charging Fluid Nodes
+  //Top Charging Fluid Node
+    der_h_f[N_f] := 
+    ( 2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
+    + (rho_f_avg*u_flow)*(h_f[N_f]-h_in)/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz) ) / rho_f_avg;
+  //End Top Charging Fluid Node
+  else
+  //Discharge (Mass flows bottom to top)
+  //Bottom Discharge Node
+    der_h_f[1] :=
+    ( -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
+    + (rho_f_avg*u_flow)*(h_in-h_f[1])/dz
+    - h_v[1]*(T_f[1]-T_s[1])/eta
+    - U_bot*(T_f[1]-T_amb)/(eta*dz)
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A) )/ rho_f_avg;
+  //End Bottom Discharge Node
+  //Middle Discharge Nodes
+    for i in 2:N_f - 1 loop
+      der_h_f[i] :=
+      ( 2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
+      + (rho_f_avg*u_flow)*(h_f[i-1]-h_f[i])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A) ) / rho_f_avg;
+    end for;
+  //End Middle Discharge Nodes
+  //Top Discharge Node
+    der_h_f[N_f] :=
+    ( 2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
+    + (rho_f_avg*u_flow)*(h_f[N_f-1]-h_f[N_f])/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz) ) / rho_f_avg;
+    
+    h_out := h_f[N_f];
+  end if;  
 
 
 initial equation
   for i in 1:N_f loop
     fluid[i].h = h_f_start[i];
-    for j in 1:N_p-1 loop
+    //for j in 1:N_p-1 loop
       filler[i].h = h_p_start[i];
-    end for;
+    //end for;
     //encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
@@ -196,6 +258,11 @@ equation
     T_s[i] = T_p[i];
   end for;
 
+  //Fluid Equations
+  for i in 1:N_f loop
+    der(h_f[i]) = der_h_f[i];
+  end for;
+  
   //Determine which operational state: In this version, standby and discharge are lumped.
   if m_flow < 0.0 then //mass is flowing downwards so charging
     State = 1;
@@ -211,15 +278,16 @@ equation
   fluid_in.T = T_in;
   fluid_out.T = T_out;
 
+  /*
   //Fluid Equations
   if State == 1 then
   //Charging (Mass flows top to bottom)
   //Bottom Charging Fluid Node
     rho_f_avg * der(h_f[1]) =
-    (-2.0*k_eff[1]*k_eff[2])*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    (-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
     + (rho_f_avg*u_flow)*(h_f[1]-h_f[2])/dz
     - h_v[1]*(T_f[1] - T_s[1])/eta
-    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz) 
+    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
     
     h_out = h_f[1];
@@ -227,8 +295,8 @@ equation
   //Middle Charging Fluid Nodes
     for i in 2:N_f - 1 loop
       rho_f_avg*der(h_f[i]) = 
-      2.0*k_eff[i - 1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
-      - 2.0*k_eff[i]*k_eff[i+1]*(T_f[i]-T_f[i + 1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
       + (rho_f_avg*u_flow)*(h_f[i]-h_f[i+1])/dz
       - h_v[i]*(T_f[i]-T_s[i])/eta
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
@@ -236,27 +304,27 @@ equation
   //End Middle Charging Fluid Nodes
   //Top Charging Fluid Node
     rho_f_avg*der(h_f[N_f]) = 
-    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
     + (rho_f_avg*u_flow)*(h_f[N_f]-h_in)/dz
     - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
   //End Top Charging Fluid Node
   else
   //Discharge (Mass flows bottom to top)
   //Bottom Discharge Node
     rho_f_avg*der(h_f[1]) =
-    -2.0*k_eff[1]*k_eff[2]*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
     + (rho_f_avg*u_flow)*(h_in-h_f[1])/dz
     - h_v[1]*(T_f[1]-T_s[1])/eta
-    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz)
+    - U_bot*(T_f[1]-T_amb)/(eta*dz)
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
   //End Bottom Discharge Node
   //Middle Discharge Nodes
     for i in 2:N_f - 1 loop
       rho_f_avg*der(h_f[i]) =
-      2.0*k_eff[i-1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
-      - 2.0*k_eff[i]*k_eff[i + 1]*(T_f[i]-T_f[i+1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
       + (rho_f_avg*u_flow)*(h_f[i-1]-h_f[i])/dz
       - h_v[i]*(T_f[i]-T_s[i])/eta
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
@@ -264,21 +332,22 @@ equation
   //End Middle Discharge Nodes
   //Top Discharge Node
     rho_f_avg*der(h_f[N_f]) =
-    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
     + (rho_f_avg*u_flow)*(h_f[N_f-1]-h_f[N_f])/dz
     - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
     
     h_out = h_f[N_f];
   end if;
+  */
   //Fluid Property evaluation SolarSalt
   for i in 1:N_f loop
-    h_f[i] = fluid[i].h;
+    fluid[i].h = h_f[i];
     T_f[i] = fluid[i].T;
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
-    k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
+    //k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
     mu_f[i] = fluid[i].mu;
 
   end for;
@@ -310,7 +379,7 @@ equation
   end for;
   //Convection Equations
   for i in 1:N_f loop
-    Bi[i] = Nu[i]/6;
+    Bi[i] = (Nu[i]*k_f[i])/(6.0*k_p[i]);
     if abs(u_flow) > 1e-12 then //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];

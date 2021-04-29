@@ -15,3 +15,4 @@ PowerBlockModel_sCO2NREL
 SB_PowerBlockModel
 SB_StirlingPowerBlockModel
 PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C
+SSCSP_PowerBlockModel_sCO2NREL_31p5kWe_574C_290C

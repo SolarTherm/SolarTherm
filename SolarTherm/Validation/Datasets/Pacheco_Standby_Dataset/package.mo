@@ -1,8 +1,8 @@
 within SolarTherm.Validation.Datasets;
 
 package Pacheco_Standby_Dataset "Pacheco's Standby case initial temperature distribution and enthalpies based on Niedermeier's material property assumptions"
-  package Fluid = SolarTherm.Media.Materials.SolarSalt_Constant;
-  package Filler = SolarTherm.Media.Materials.Quartzite_Sand;
+  package Fluid = SolarTherm.Materials.SolarSalt_Constant;
+  package Filler = SolarTherm.Materials.Quartzite_Sand;
 
   function Initial_Temperature_f "Input a height array, obtain a Temperature array"
     input SI.Length[:] z_f;

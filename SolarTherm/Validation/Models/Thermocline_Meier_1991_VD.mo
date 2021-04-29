@@ -9,7 +9,7 @@ model Thermocline_Meier_1991_VD
   package Medium = SolarTherm.Media.Air.Air_amb_p;
   package Filler = SolarTherm.Materials.Steatite_Constant;
   package Fluid = SolarTherm.Materials.Air_Table;
-  parameter Integer N_f = 100;
+  parameter Integer N_f = 50;
   parameter Integer N_p = 10;
   parameter SI.Length H_tank = 1.20;
   parameter SI.Diameter D_tank = 0.15;

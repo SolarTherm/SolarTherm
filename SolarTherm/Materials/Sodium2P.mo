@@ -45,7 +45,8 @@ package Sodium2P
     h_l = h_T(T);
     h_v = h_v_T(T);
     
-    rho = (1.0-x)*rho_l + x*rho_v;
+    //rho = (1.0-x)*rho_l + x*rho_v;
+    v = (1.0-x)*v_l + x*v_v;
     h = (1.0-x)*h_l + x*h_v;
     v = 1.0/rho;
   end State;
@@ -62,7 +63,7 @@ package Sodium2P
     end if;
   end h_T;
   
-  function h_Tf "Specific enthalpy of liquid sodium vs Temperature"
+  redeclare function h_Tf "Specific enthalpy of liquid sodium vs Temperature"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
@@ -156,7 +157,7 @@ package Sodium2P
     rho := 219 + 275.32 * (1 - T / 2503.7) + 511.58 * sqrt(1 - T / 2503.7);
   end rho_T;
   
-  function rho_Tf "Density of liquid sodium"
+  redeclare function rho_Tf "Density of liquid sodium"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
     output SI.Density rho "Density (kg/m3)";

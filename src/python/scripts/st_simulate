@@ -124,7 +124,7 @@ if __name__ == '__main__':
 	sim = simulation.Simulator(args.file,fusemount=args.fuse);
 	fuse_dirs = sim.get_fuse_dirs()
 
-	mcargs = []
+	mcargs = ["--maxSizeLinearTearing=400"]
 	#if len(args.mcargs) == 1:
 	#	mcargs = args.mcargs[0].split(' ')
 

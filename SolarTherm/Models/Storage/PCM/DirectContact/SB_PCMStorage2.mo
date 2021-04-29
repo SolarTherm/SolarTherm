@@ -60,7 +60,7 @@ model SB_PCMStorage2
   parameter SI.SpecificEnthalpy h_PCM_theoretical = PCM_Package.h_Tf(T_max, 1.0) - PCM_Package.h_Tf(T_min, 0.0) "Theoretical specific enthalpy difference between max and min temperatures";
   parameter Real C_PCM = m_PCM * PCM_Package.cost "Total cost of the PCM material (USD)";
   //HTF
-  parameter Real C_HTF = m_HTF * Medium.cost "Total cost of the HTF material (USD)";
+  parameter Real C_HTF = m_HTF * HTF_Package.cost;//Medium.cost "Total cost of the HTF material (USD)";
   //Insulation
   parameter Real C_insulation = A_surf_tank * (39.93 / U_loss_tank - 0.11497);
   //Discretization
@@ -216,7 +216,8 @@ equation
   T_HTF = HTF_State.T;
   x_HTF = HTF_State.x;
   //p_HTF = HTF_State.p;
-  v_liq = 1.0 / HTF_Package.rho_T(T_HTF);
+  //v_liq = 1.0 / HTF_Package.rho_Tf(T_HTF,0.0);
+  v_liq = 1.0/HTF_State.rho_liq;
 //h_fg = HTF_Package.h_fg_T(T_HTF);
   
   v_HTF = 1.0 / d_HTF;

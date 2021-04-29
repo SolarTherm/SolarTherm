@@ -84,7 +84,7 @@ class SetPar:
 	print('\n\n',self.src[0],self.src[-1],self.src[-1][:-1],'\n\n')
 	self.src[0]=self.src[0]+'_%s'%suffix
 	self.src[-1]=self.src[-1][:-1]+'_%s;'%suffix
-
+	
         for i, n in enumerate(par_n):
             par_v[i]=float(par_v[i])
             if par_v[i]>100:
@@ -103,8 +103,13 @@ class SetPar:
                 par_v[i]='%.7f'%par_v[i]    
             elif par_v[i]>1e-13:
                 par_v[i]='%.13f'%par_v[i]         
-
+	    
+	    
+	    print(self.content["variables"])
             info=self.content["variables"][n]
+	    
+	    #info=self.content["parameter"][n]
+
             ln=info['source']['info']['lineEnd'] # line number
             line=self.src[int(ln)-1].split(" ") # content in that line in .mo 
             t=0

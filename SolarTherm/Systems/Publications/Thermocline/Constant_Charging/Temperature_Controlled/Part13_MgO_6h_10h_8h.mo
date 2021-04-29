@@ -21,7 +21,7 @@ model Part13_MgO_6h_10h_8h
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -50,7 +50,7 @@ model Part13_MgO_6h_10h_8h
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = 1.0/3.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_bot_high = T_Recv_max - 1, T_top_low = T_PB_min + 1, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = 0.2, frac_2 = 0.6, N_f_A = 20, N_f_B = 60, N_f_C = 20, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_bot_high = T_Recv_max - 1, T_top_low = T_PB_min + 1, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));

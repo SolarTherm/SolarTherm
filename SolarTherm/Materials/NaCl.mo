@@ -64,7 +64,12 @@ package NaCl "Pure sodium chloride, sharp melting point"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
+  protected
+    SI.Density rho_sol "Density of solid (kg/m3)";
+    SI.Density rho_liq "Density of liquid (kg/m3)";
   algorithm
-    rho := (f*(1000.0*(2.061-T*4.759E-4)))+((1.0-f)*(2230.0-0.313*T));
+    rho_sol := 2230.0 - 0.313*T;
+    rho_liq := 2061.0 - 0.4759*T;
+    rho := (rho_liq*rho_sol)/(f*rho_sol+rho_liq-f*rho_liq);
   end rho_Tf;
 end NaCl;

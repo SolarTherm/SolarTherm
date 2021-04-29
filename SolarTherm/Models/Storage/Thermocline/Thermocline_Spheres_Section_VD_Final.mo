@@ -131,8 +131,8 @@ model Thermocline_Spheres_Section_VD_Final
   parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   parameter Real C_tank = C_shell(max(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
   
-  parameter Real C_filler = (if Filler_Package.MM == Encapsulation_Package.MM then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost*(((d_p-2*t_e)/d_p)^3));
-  parameter Real C_encapsulation = (if Filler_Package.MM == Encapsulation_Package.MM then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^3)));
+  parameter Real C_filler = (if abs(Filler_Package.MM - Encapsulation_Package.MM) < 1e-6 then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost*(((d_p-2*t_e)/d_p)^3));
+  parameter Real C_encapsulation = (if abs(Filler_Package.MM - Encapsulation_Package.MM) < 1e-6 then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^3)));
 
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
@@ -175,7 +175,7 @@ protected
   
   //Fluid Properties
   SI.ThermalConductivity k_f[N_f] "W/mK";
-  SI.ThermalConductivity k_eff[N_f] "W/mK";
+  //SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
   Fluid_Package.State fluid[N_f] "Fluid object array";
@@ -222,10 +222,10 @@ equation
   //Charging (Mass flows top to bottom)
   //Bottom Charging Fluid Node
     der(rho_f[1]*h_f[1]) =
-    (-2.0*k_eff[1]*k_eff[2])*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    (-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
     + (rho_f[1]*u_flow[1]*h_f[1]-rho_f[2]*u_flow[2]*h_f[2])/dz
     - h_v[1]*(T_f[1] - T_s[1])/eta
-    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz) 
+    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
     
     der(rho_f[1]) = (rho_f[1]*u_flow[1] - rho_f[2]*u_flow[2])/dz;
@@ -236,8 +236,8 @@ equation
   //Middle Charging Fluid Nodes
     for i in 2:N_f - 1 loop
       der(rho_f[i]*h_f[i]) = 
-      2.0*k_eff[i - 1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
-      - 2.0*k_eff[i]*k_eff[i+1]*(T_f[i]-T_f[i + 1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
       + (rho_f[i]*u_flow[i]*h_f[i]-rho_f[i+1]*u_flow[i+1]*h_f[i+1])/dz
       - h_v[i]*(T_f[i]-T_s[i])/eta
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
@@ -247,11 +247,11 @@ equation
   //End Middle Charging Fluid Nodes
   //Top Charging Fluid Node
     der(rho_f[N_f]*h_f[N_f]) = 
-    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
     + (rho_f[N_f]*u_flow[N_f]*h_f[N_f]-rho_in*u_in*h_in)/dz
     - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
     
     der(rho_f[N_f]) = (rho_f[N_f]*u_flow[N_f] - rho_in*u_in)/dz;
   //End Top Charging Fluid Node
@@ -259,10 +259,10 @@ equation
   //Discharge (Mass flows bottom to top)
   //Bottom Discharge Node
     der(rho_f[1]*h_f[1]) =
-    -2.0*k_eff[1]*k_eff[2]*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
     + (rho_in*u_in*h_in-rho_f[1]*u_flow[1]*h_f[1])/dz
     - h_v[1]*(T_f[1]-T_s[1])/eta
-    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz)
+    - U_bot*(T_f[1]-T_amb)/(eta*dz)
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
     
     der(rho_f[1])=(rho_in*u_in - rho_f[1]*u_flow[1])/dz;
@@ -270,8 +270,8 @@ equation
   //Middle Discharge Nodes
     for i in 2:N_f - 1 loop
       der(rho_f[i]*h_f[i]) =
-      2.0*k_eff[i-1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
-      - 2.0*k_eff[i]*k_eff[i + 1]*(T_f[i]-T_f[i+1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
       + (rho_f[i-1]*u_flow[i-1]*h_f[i-1]-rho_f[i]*u_flow[i]*h_f[i])/dz
       - h_v[i]*(T_f[i]-T_s[i])/eta
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
@@ -281,11 +281,11 @@ equation
   //End Middle Discharge Nodes
   //Top Discharge Node
     der(rho_f[N_f]*h_f[N_f]) =
-    2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
     + (rho_f[N_f-1]*u_flow[N_f-1]*h_f[N_f-1]-rho_f[N_f]*u_flow[N_f]*h_f[N_f])/dz
     - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz);
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
     
     der(rho_f[N_f]) = (rho_f[N_f - 1] * u_flow[N_f - 1] - rho_f[N_f] * u_flow[N_f]) / dz;
     m_flow_out = eta*rho_f[N_f]*u_flow[N_f]*A;
@@ -297,7 +297,7 @@ equation
     T_f[i] = fluid[i].T;
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
-    k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
+    //k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
     mu_f[i] = fluid[i].mu;
     
     rho_f[i] = fluid[i].rho;

@@ -293,20 +293,20 @@ package SodiumBoiler
     SI.Energy E_pb_gross(start = 0);
     SI.Energy E_pb_net(start = 0);
     /*
-              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-              Real eta_shading;
-              Real eta_cosine;
-              Real eta_reflection;
-              Real eta_blocking;
-              Real eta_attenuation;
-              Real eta_intercept;
-              */
+                                                                                                      Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                      Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                                                                                                      Real eta_shading;
+                                                                                                      Real eta_cosine;
+                                                                                                      Real eta_reflection;
+                                                                                                      Real eta_blocking;
+                                                                                                      Real eta_attenuation;
+                                                                                                      Real eta_intercept;
+                                                                                                      */
     Real eta_curtail_off(start = 0);
     Real eta_optical(start = 0);
     Real eta_he_av(start = 0);
@@ -521,8 +521,9 @@ package SodiumBoiler
     parameter String phi_pct_string = "100";
     parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
     //Constants
-    replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph "Medium props for molten salt";
-    replaceable package PCM = SolarTherm.Materials.NaCl "Material model for Sodium Chloride PCM";
+    replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph_table "Medium props for sodium";
+    replaceable package PCM = SolarTherm.Materials.NaCl_10K "Material model for Sodium Chloride PCM";
+    replaceable package HTF = SolarTherm.Materials.Sodium2P_Table "Material model for Sodium HTF";
     parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
     parameter Currency currency = Currency.USD "Currency used for cost analysis";
     // Weather data
@@ -728,7 +729,7 @@ package SodiumBoiler
     SolarTherm.Models.CSP.CRS.Receivers.SB_Receiver receiver(redeclare package Medium = Medium, concept = if field_type == "polar" then "Billboard" else "Cylindrical", convection = "Siebers", H_tower = H_tower, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_PCM_melt, h_c_const = h_conv_recv, T_super = T_superheat) annotation(
       Placement(visible = true, transformation(origin = {-40, 26}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
     //Storage
-    SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 tankHot(z_tank = z_tank, d_tank = d_tank, t_tank = 5e-3, z_tray = z_tray, d_tray = d_tray, t_tray = 5e-3, N_tray = N_tray, z_PCM = z_PCM, m_HTF = m_HTF, n = nodes, growth_ratio = growth_ratio, T_max = T_up_u, T_min = T_low_l, T_start = T_low_l, U_loss_tank = U_loss_tank, Q_flow_ref_blk = Q_flow_ref_blk) annotation(
+    SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 tankHot(z_tank = z_tank, d_tank = d_tank, t_tank = 10e-3, z_tray = z_tray, d_tray = d_tray, t_tray = 10e-3, N_tray = N_tray, z_PCM = z_PCM, m_HTF = m_HTF, n = nodes, growth_ratio = growth_ratio, T_max = T_up_u, T_min = T_low_l, T_start = T_low_l, U_loss_tank = U_loss_tank, Q_flow_ref_blk = Q_flow_ref_blk, redeclare package PCM_Package = PCM, redeclare package HTF_Package = HTF, redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {28, 24}, extent = {{-22, -22}, {22, 22}}, rotation = 0)));
     //Loop Breakers
     SolarTherm.Models.Fluid.HeatExchangers.loop_breaker loop_breaker1(redeclare package Medium = Medium) annotation(
@@ -1009,8 +1010,9 @@ package SodiumBoiler
     parameter String phi_pct_string = "100";
     parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
     //Constants
-    replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph "Medium props for molten salt";
-    replaceable package PCM = SolarTherm.Materials.NaCl "Material model for Sodium Chloride PCM";
+    replaceable package Medium = SolarTherm.Media.Sodium.Sodium_ph_table "Medium props for sodium";
+    replaceable package PCM = SolarTherm.Materials.NaCl_10K "Material model for Sodium Chloride PCM";
+    replaceable package HTF = SolarTherm.Materials.Sodium2P_Table "Material model for Sodium HTF";
     parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
     parameter Currency currency = Currency.USD "Currency used for cost analysis";
     // Weather data
@@ -1216,8 +1218,8 @@ package SodiumBoiler
     SolarTherm.Models.CSP.CRS.Receivers.SB_Receiver receiver(redeclare package Medium = Medium, concept = if field_type == "polar" then "Billboard" else "Cylindrical", convection = "Siebers", H_tower = H_tower, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_PCM_melt, h_c_const = h_conv_recv, T_super = T_superheat) annotation(
       Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     //Storage
-    SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 tankHot(z_tank = z_tank, d_tank = d_tank, t_tank = 5e-3, z_tray = z_tray, d_tray = d_tray, t_tray = 5e-3, N_tray = N_tray, z_PCM = z_PCM, m_HTF = m_HTF, n = nodes, growth_ratio = growth_ratio, T_max = T_up_u, T_min = T_low_l, T_start = T_low_l, U_loss_tank = U_loss_tank, Q_flow_ref_blk = Q_flow_ref_blk) annotation(
-      Placement(visible = true, transformation(origin = {30, 22}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
+    SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 tankHot(z_tank = z_tank, d_tank = d_tank, t_tank = 5e-3, z_tray = z_tray, d_tray = d_tray, t_tray = 5e-3, N_tray = N_tray, z_PCM = z_PCM, m_HTF = m_HTF, n = nodes, growth_ratio = growth_ratio, T_max = T_up_u, T_min = T_low_l, T_start = T_low_l, U_loss_tank = U_loss_tank, Q_flow_ref_blk = Q_flow_ref_blk, redeclare package PCM_Package = PCM, redeclare package HTF_Package = HTF, redeclare package Medium = Medium) annotation(
+      Placement(visible = true, transformation(origin = {28, 24}, extent = {{-22, -22}, {22, 22}}, rotation = 0)));
     //Loop Breakers
     SolarTherm.Models.Fluid.HeatExchangers.loop_breaker loop_breaker1(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-4, 32}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

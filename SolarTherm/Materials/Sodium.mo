@@ -36,10 +36,10 @@ package Sodium
   redeclare function rho_Tf
     input SI.Temperature T;
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
-    output SI.SpecificEnthalpy rho;
+    output SI.Density rho;
   algorithm
     //rho := SolarTherm.Media.Sodium.Sodium_utilities.rho_T(T);
-    rho := -0.23465*T + 1014.5;
+    rho := SolarTherm.Media.Sodium.Sodium_utilities.rho_T(T);//-0.23465*T + 1014.5;
   end rho_Tf;
   
   function mu_T

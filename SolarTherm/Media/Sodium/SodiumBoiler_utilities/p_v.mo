@@ -9,7 +9,7 @@ protected
 	constant Real c = -0.4672;
 algorithm
 	//Ref. ANL/RE-95/2, pp. 55
-	//p := (1e+6) * exp(a + b / T + c * log(T));
-	p := (1e6)*exp(a+b/T)*(T^c);
+	p := (1e+6) * exp(a + b / T + c * log(T));
+	//p := (1e6)*exp(a+b/T)*(T^c);
 	annotation(derivative = p_v_T_der);
 end p_v;

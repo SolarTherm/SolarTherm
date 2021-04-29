@@ -32,7 +32,7 @@ package SolarSalt_Constant
   redeclare function rho_Tf "Density of liquid solar salt vs Temperature"
     input SI.Temperature T;
     input Real f = 0 "Liquid mass melt fraction (No effect on result)";
-    output SI.SpecificEnthalpy rho;
+    output SI.Density rho;
   algorithm
     rho := 1733.0;
   end rho_Tf;

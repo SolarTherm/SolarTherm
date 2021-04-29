@@ -55,7 +55,7 @@ algorithm
   
   when Level_Hot > 99 then 
     Chg := false;
-  elsewhen Level_Hot < 1 then
+  elsewhen Level_Hot < 95 then
     Chg := true;
   end when;
 

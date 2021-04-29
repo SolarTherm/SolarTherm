@@ -34,8 +34,8 @@ model Thermocline_Spheres_Parallel_A2_Final
     //Discretization settings
   parameter Integer N_f_A = 20 "Number of fluid CVs in Tank_A";
   parameter Integer N_p_A = 5 "Number of filler CVs in Tank_A";
-  parameter Integer N_f_B = 20 "Number of fluid CVs in Tank_B";
-  parameter Integer N_p_B = 5 "Number of filler CVs in Tank_B";
+  parameter Integer N_f_B = N_f_A "Number of fluid CVs in Tank_B";
+  parameter Integer N_p_B = N_p_A "Number of filler CVs in Tank_B";
     //Heat loss coefficient of tanks
   parameter SI.CoefficientOfHeatTransfer U_loss_tank_A = 0.1 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank_B = U_loss_tank_A "W/m2K";
@@ -98,12 +98,14 @@ model Thermocline_Spheres_Parallel_A2_Final
   
 algorithm
   //Internal control algorithm
-  when T_05_A > T_bot_high then
+  //when T_05_A > T_bot_high then
+  when Tank_A.T_f[1] > T_bot_high then
     if Active_Tank == 1 then//and fluid_a.m_flow > m_0 then
       Active_Tank := 2;
     end if;
   end when;
-  when T_95_B < T_top_low then
+  //when T_95_B < T_top_low then
+  when Tank_B.T_f[N_f_B] < T_top_low then
     if Active_Tank == 2 then//and fluid_a.m_flow < m_0 then
       Active_Tank := 1;
     end if;

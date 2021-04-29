@@ -141,15 +141,15 @@ equation
     Tank_C.h_in = inStream(fluid_a.h_outflow);
     fluid_a.h_outflow = Tank_C.h_in;
     fluid_b.h_outflow = Tank_A.h_out;
-    Tank_C.h_out = Tank_B.h_in;
-    Tank_B.h_out = Tank_A.h_in;
+    Tank_B.h_in = Tank_C.h_out;
+    Tank_A.h_in = Tank_B.h_out;
   else//discharging
     Tank_C.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_in = inStream(fluid_b.h_outflow);
     fluid_b.h_outflow = Tank_A.h_in;
     fluid_a.h_outflow = Tank_C.h_out;
-    Tank_A.h_out = Tank_B.h_in;
-    Tank_B.h_out = Tank_C.h_in;
+    Tank_B.h_in = Tank_A.h_out;
+    Tank_C.h_in = Tank_B.h_out;
   end if;
   
   //Connect pressure and ambient temp

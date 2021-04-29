@@ -8,7 +8,7 @@ model Part7_MgO_6h_10h_8h
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   //Do not change
-  package Fluid_Package = SolarTherm.Materials.Sodium;
+  package Fluid_Package = SolarTherm.Materials.Sodium_Table;
   //Do not change
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
   //Design Parameters
@@ -21,7 +21,7 @@ model Part7_MgO_6h_10h_8h
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 33 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 33 "Number of fluid CVs in each tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -46,8 +46,8 @@ model Part7_MgO_6h_10h_8h
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Efficiency
-  parameter SI.Energy denom = m_charge * t_charge * (h_f_max - h_f_min);
-  SI.Energy numer(start = 0.0);
+  parameter SI.Energy denominator = m_charge * t_charge * (h_f_max - h_f_min);
+  SI.Energy numerator(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
   SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = 1.0/3.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, Correlation = Correlation) annotation(
@@ -151,7 +151,7 @@ equation
 */
 //efficiency
   if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
-    der(numer) = PB_Sink.port_a.m_flow * (inStream(PB_Sink.port_a.h_outflow) - h_f_min);
+    der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
     if time < t_cycle * 5.0 + t_charge then
 //charging
       der(E_charged) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
@@ -166,7 +166,7 @@ equation
     der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
     der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
   else
-    der(numer) = 0.0;
+    der(numerator) = 0.0;
     der(E_charged) = 0.0;
     der(E_discharged) = 0.0;
     der(E_lost) = 0.0;
@@ -174,7 +174,7 @@ equation
   end if;
   if time > t_cycle * 5.0 + 100.0 then
 //eff_storage = (numer)/denom;
-    eff_storage = (numer - E_pump) / denom;
+    eff_storage = (numerator - E_pump) / denominator;
 //subtract pumping power
   else
     eff_storage = 0.0;
