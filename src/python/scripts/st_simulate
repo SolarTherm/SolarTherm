@@ -13,15 +13,19 @@ from time import time
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, i, par_v):
+def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, peaker, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""
-	sim = simulation.Simulator(fn, suffix=str(i), reuse=reuse);
+
+	sim = simulation.Simulator(fn, suffix=str(i))
+
 	sim.load_init()
+
 	sim.update_pars(par_n, par_v)
+
 	sim.simulate(start=start, stop=stop, step=step, tolerance=tolerance, initStep=initStep, maxStep=maxStep,
 		integOrder=integOrder, solver=solver, nls=nls, lv=lv, args=args)
 	res = resultclass(sim.res_fn)
-	perf = res.calc_perf()
+	perf = res.calc_perf(peaker)
 	return perf
 
 class LoggerPerf(object):
@@ -68,6 +72,8 @@ if __name__ == '__main__':
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--nosim', action='store_true',
 			help='no simulation')
+	parser.add_argument('--peaker', action='store_true',
+			help='peaker configuration')
 	parser.add_argument('--start', type=str, default='0',
 			help='simulation start time: <number>[,y,d,m,s]')
 	parser.add_argument('--stop', type=str, default='1y',
@@ -124,17 +130,27 @@ if __name__ == '__main__':
 			help='the directry of the input excel data sheet')
 	parser.add_argument('--wd', type=str, default=os.getcwd(),
 			help='the working directory')
+
+
 	args = parser.parse_args()
 
 	fn=os.path.abspath(args.file)
 	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
+	input_xml=mn+'_init.xml'
+
+	'''
+	if not os.path.isabs(args.wd):
+		savedir=os.path.join(os.getcwd(),args.wd)
+	else:
+		savedir=args.wd
 
 	if not os.path.exists(args.wd):
-		os.makedirs(args.wd)
+		os.makedirs(args.wd)	
 
 	os.chdir(args.wd)
+	'''
 
-	sim = simulation.Simulator(fn,fusemount=args.fuse);
+	sim = simulation.Simulator(fn,fusemount=args.fuse)
 	fuse_dirs = sim.get_fuse_dirs()
 
 	mcargs = []
@@ -158,50 +174,48 @@ if __name__ == '__main__':
 	else:
 		resultclass = postproc.SimResultElec
 
+
+	if args.excel!=None:
+		tree=params.Tree()
+		tree.load_xml(input_xml)
+		#TODO check the units of the loaded parameters
+		# convert the units if nessary using simulation.parse_var_val
+		params.load_values_from_excel(args.excel, tree)	
+		tree.write_xml(input_xml)
+
 	sim.load_init()
 
 	dims = [] # dimensions
 	par_n = [] # names
 	par_v = [] # values
+	for pp in args.par:
+		k, v = pp.split('=')
+		par_n.append(k)
+		vals = [str(simulation.parse_var_val(vv, sim.get_unit(k)))
+			for vv in v.split(',')]
+		par_v.append(vals)
 
-	if args.excel!=None:
-		input_xml=sim.model +'_init.xml'
-		tree=params.Tree()
-		tree.load_xml(input_xml)
-		params.load_values_from_excel(args.excel, tree)
-		par_n=tree.filter_type(0)
-		for n in par_n:
-			vals = [str(tree.get(n+'.nominal'))]
-			par_v.append(vals)
-			#TODO: simulation.parse_var_val(vv, sim.get_unit(k)) checked for units. The excel does not
-			#if len(vals) >= 2:
-			#	dims.append(len(par_n) - 1)
-	else:
-		for pp in args.par:
-			k, v = pp.split('=')
-			par_n.append(k)
-			vals = [str(simulation.parse_var_val(vv, sim.get_unit(k)))
-				for vv in v.split(',')]
-			par_v.append(vals)
-
-			if len(vals) >= 2:
-				dims.append(len(par_n) - 1)
+		if len(vals) >= 2:
+			dims.append(len(par_n) - 1)
 
 	f_ilog = open(sim.model+'_init.log', 'w')
 	f_ilog.write(','.join(['index']+par_n) + '\n')
+
+
 	var_vals = []
 	for i, val in enumerate(itertools.product(*par_v)):
 		var_vals.append(val)
 		f_ilog.write(','.join([str(i)]+list(val)) + '\n')
 		
+
 	logger = LoggerPerf(resultclass)
 	perfs = [None]*len(var_vals)
 	if not args.nosim:
 		t = time()
 		logger.header()
-		worker_enc = partial(simulation_worker, fn, args.start,
+		worker_enc = partial(simulation_worker, args.file, args.start,
 				args.stop, args.step, args.tolerance, args.initStep, args.maxStep, args.integOrder,
-				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs)
+				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs, args.peaker)
 		if args.np:
 			pool = mp.Pool(processes=args.np)
 			# use apply_async in loop (not map_async) so callback runs 1x per sim.
@@ -217,7 +231,7 @@ if __name__ == '__main__':
 				perf = worker_enc(i, val)
 				simulation_callback(perfs,i,logger,perf)
 
-		print "Simulation time: %fs"%(time()-t)
+		print("Simulation time: %fs"%(time()-t))
 
 	if args.plot is not None:
 		from solartherm import plotting

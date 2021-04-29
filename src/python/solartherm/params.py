@@ -167,6 +167,13 @@ class Tree(object):
 				#note: some of the variable does not have a 'start' value
 				if start!=None:
 					value=start.attrib['start']
+					if par.attrib.has_key("description"):
+						description=par.attrib["description"]
+						classification, description=self.get_classification(description)
+					else:
+						description='-'
+						classification='-'
+
 					if start.attrib.has_key('unit'):
 						unit=start.attrib['unit']
 					else:
@@ -174,6 +181,8 @@ class Tree(object):
 					r=self.add_child(name, replace=True)
 					r.add_value('nominal', value, replace=True)
 					r.add_value('unit', unit, replace=True)
+					r.add_value('description', description, replace=True)
+					r.add_value('classification', classification, replace=True)
 
 
 	def write_xml(self, output_xml):
@@ -186,12 +195,48 @@ class Tree(object):
 		names=self.children.keys()
 		for n in names:  
 			v=self.get(n+'.nominal')
+			u=self.get(n+'.unit')
+			#d=self.get(n+'.description')
+
 			find=self.xml_root.find('*ScalarVariable[@name=\''+n+'\']')
 			if find!=None:
 				changable=find.attrib['isValueChangeable']
 				if changable=='true':
-					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)	
+					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
+					self.xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
+					#self.xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
+
 		self.xml_tree.write(output_xml)
+
+
+	def update_xml(self, xmlfile):
+		"""
+		Update the values of changable parameters in the original xml file  
+		with the nominal values in the tree
+
+		Argument:
+		xmlfile: str, directory of the xml file to be updated
+
+		"""		
+
+		xml_tree = ET.parse(xmlfile)	
+		xml_root=xml_tree.getroot()
+
+		names=self.children.keys()
+		for n in names:  
+			v=self.get(n+'.nominal')
+			u=self.get(n+'.unit')
+			#d=self.get(n+'.description')
+
+			find=xml_root.find('*ScalarVariable[@name=\''+n+'\']')
+			if find!=None:
+				changable=find.attrib['isValueChangeable']
+				if changable=='true':
+					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = str(v)
+					xml_root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['unit'] = str(u)
+					#xml_root.find('*ScalarVariable[@name=\''+n+'\']').attrib['description'] = str(d)
+
+		xml_tree.write(xmlfile)
 
 
 	def filter_type(self, pmtype):
@@ -236,6 +281,45 @@ class Tree(object):
 			if d==dist:
 				outlist.append(n)
 		return outlist
+
+
+	def get_classification(self, description):
+		'''
+		description, str, the description of a parameter 
+		'''
+		if '[SYS]' in description:
+			c='System level'
+			description=description.replace('[SYS]','')
+
+		elif '[H&T]' in description:
+			c='Heliostat field and tower'
+			description=description.replace('[H&T]','')
+
+		elif '[RCV]' in description:
+			c='Receiver'
+			description=description.replace('[RCV]','')
+
+		elif '[ST]' in description:
+			c='Storage'
+			description=description.replace('[ST]','')
+
+		elif 'PB' in description:
+			c='Power block'
+			description=description.replace('[PB]','')
+
+		elif '[CTRL]' in description:
+			c='Control system'
+			description=description.replace('[CTRL]','')
+
+		elif '[FN]' in description:
+			c='Finance'
+			description=description.replace('[FN]','')
+		else:
+			c='NEC' # not elsewhere classified
+
+		return c, description
+
+
 
 
 class ValueNode(object):
@@ -314,10 +398,11 @@ def load_values_from_excel(filename,tree):
 						assert v is not None, "No value next to label '%s'"%(c.value,)
 						r.add_value('type', study,replace=True)
 						r.add_value('nominal', v,replace=True)
-						r.add_value('unit', ws.cell(c.row,4).value,replace=True)
+						#r.add_value('unit', ws.cell(c.row,4).value,replace=True)
 						r.add_value('distribution', ws.cell(c.row,7).value,replace=True)
 						r.add_value('boundary1', ws.cell(c.row,8).value,replace=True)	
-						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)						
+						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)	
+						#r.add_value('description', ws.cell(c.row,10).value,replace=True)						
 
 	return tree
 
@@ -373,15 +458,21 @@ def export_values_to_excel(filename, tree, inputxml=None):
 
 		name=names[i]
 		value=tree.get(name+'.nominal')
-		unit=tree.get(name+'.unit')		
+		unit=tree.get(name+'.unit')	
+		description=tree.get(name+'.description')
+		classification=tree.get(name+'.classification')			
 
+		class_cell='A%s'%(i+3)
 		symbol_cell='B%s'%(i+3)
 		value_cell='C%s'%(i+3)		
 		unit_cell='D%s'%(i+3)
 		info_cell='K%s'%(i+3)
+		description_cell='J%s'%(i+3)
+		sheet[class_cell]=classification
 		sheet[symbol_cell]=name
 		sheet[value_cell]=value
 		sheet[unit_cell]=unit
+		sheet[description_cell]=description
 		sheet[info_cell]='exported from xml file : %s'%inputxml	
 
 	book.save(filename)

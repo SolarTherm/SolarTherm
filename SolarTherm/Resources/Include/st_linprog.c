@@ -22,7 +22,7 @@ Ahelio = m.sq
 
 double st_linprog(char* filepathDNI, char* filepathPrice, 
                   int horison, double dt, double time_simul,
-                  double etaC, double etaG, double t_stg,
+                  double etaC[], double etaG, double t_stg,
                   double DEmax, double SLmax, double SLinit, 
                   double SLminrel, double Ahelio)
 {
@@ -158,10 +158,10 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
             glp_set_row_bnds(lp,(int)i+horison,GLP_UP,0,0);
         }
         //-SEn.Δt - XEn.Δt ≤ -A * ηC * DNIn.Δt --> Upper bound
-        glp_set_row_bnds(lp,(int)i+2*horison,GLP_UP,0.0,-Ahelio*etaC*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
+        glp_set_row_bnds(lp,(int)i+2*horison,GLP_UP,0.0,-Ahelio*etaC[i]*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
 
         //SEn.Δt + XEn.Δt ≤ A * ηC * DNIn.Δt --> Upper bound
-        glp_set_row_bnds(lp,(int)i+3*horison,GLP_UP,0.0,Ahelio*etaC*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
+        glp_set_row_bnds(lp,(int)i+3*horison,GLP_UP,0.0,Ahelio*etaC[i]*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
 
         //∑(DEn-SEn) ≤ 0 --> Upper bound
         glp_set_row_bnds(lp,(int)i+4*horison,GLP_UP,0.0,0.0);
@@ -181,7 +181,7 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
         glp_set_obj_coef(lp,(int)i+horison,etaG*price[time_index+i-1]); //==> coefficient of objective function
 
         /*SEn ==> 0 ≤ SEn ≤ A * ηC * DNIn n = 2 * horison + 1 -> 3 horison*/
-        double cons = Ahelio*etaC*DNI[time_index+i-1];
+        double cons = Ahelio*etaC[i]*DNI[time_index+i-1];
         if (cons != 0)
         {
             glp_set_col_bnds(lp,(int)i+2*horison,GLP_DB,0.0,cons);
@@ -252,6 +252,14 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     }
 
     printSpace();
+	
+	printf("Optical efficiency :\n");
+    for(size_t i=1;i<horison+1;i++)
+    {
+        printf("[%.4f] ", etaC[i]);      
+    }
+	
+	printSpace();
 
     printf("Optimal Dispatch Energy DE [MWth] :\n");
     for(size_t i=1;i<horison+1;i++)
@@ -261,7 +269,13 @@ double st_linprog(char* filepathDNI, char* filepathPrice,
     }
 
     printSpace();
-	
+    printf("Price [USD/MWh] :\n");
+    for(size_t i=1;i<horison+1;i++)
+    {
+        printf("[%.2f]", price[time_index+i-1]);      
+    }
+
+    printSpace();
     double optimalDispatch = x[0];
 
 	printf("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f\n\n",optimalDispatch);

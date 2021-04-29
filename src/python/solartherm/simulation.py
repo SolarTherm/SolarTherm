@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import multiprocessing as mp
 import re
 import tempfile
+import sysconfig
 
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
@@ -274,6 +275,26 @@ class Simulator(object):
 			+ args
 			+ ['-i='+self.model, self.fn]
 			+ libs)
+			
+		#TODO solve the issue of linker flags in the latest msys2 (v20210228), ASLR enabled by default
+		# Ref: 
+		# https://www.msys2.org/news/#2021-01-31-aslr-enabled-by-default 
+		# https://github.com/msys2/MINGW-packages/issues/7023
+		if sysconfig.get_platform()=='mingw':
+			makefile=self.model+'.makefile'	
+			extraflags = " -Wl,--disable-dynamicbase,--disable-high-entropy-va,--default-image-base-low\n"
+
+			f=open(makefile, "r")
+			s=f.readlines()
+			f.close()
+			i=0
+			for r in s:
+				if 'LDFLAGS=' in r[:8]:
+					s[i]=r[:-1]+extraflags
+				i+=1
+			f=open(makefile, "w")
+			f.writelines(s)
+			f.close()		
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
@@ -300,7 +321,6 @@ class Simulator(object):
 		derives its value from a non-final changed parameter.
 		"""
 		root = self.init_et.getroot()
-
 		for i, n in enumerate(par_n):
 			root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start'] = par_v[i]
 
@@ -355,7 +375,8 @@ class Simulator(object):
 		if lv==None:
 			sim_args = [e for e in sim_args if e not in ('-lv', lv)]
 
-		sp.check_call(['./'+self.model] + sim_args + args)
+		#sp.check_call(['./'+self.model] + sim_args + args)
+		sp.call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
 

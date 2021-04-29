@@ -85,16 +85,17 @@ class UncertaintyDakotaIn:
 	'''
 	description and architecture
 	'''
-	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, perf_num=1, perf_i=[1]):
+	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, runsolstice=False, peaker=False, perf_num=1, perf_i=[1]):
+
 
 		if perf_num!=len(perf_i):
 			perf_num=len(perf_i)
 
 		self.variables='	discrete_state_set\n'
-		self.variables+='        string %s\n'%(12+perf_num*2)
+		self.variables+='        string %s\n'%(14+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
 
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
 			set_n+='  "index%s"'%i
@@ -201,6 +202,7 @@ class UncertaintyDakotaIn:
 		self.variables+='        lower_bounds'+lb+'\n'
 		self.variables+='        upper_bounds'+ub+'\n'
 		self.variables+='        descriptors'+descriptor+'\n'
+		return a, b
 
 	def beta(self, a, b, lb, ub, x):
 		'''
@@ -263,7 +265,7 @@ class OptimisationDakotaIn:
     output silent
 '''%(seed, max_eval, init_type, crossover_type, num_offspring, num_parents, crossover_rate, mutation_type , mutation_rate, fitness_type, percent_change, num_generations, final_solutions)
 
-	def soga(self,seed=10983, max_eval=2500, init_type='unique_random', pop_size=30, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 30):
+	def soga(self,seed=10983, max_eval=2000, init_type='unique_random', pop_size=48, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 20):
 
 		'''
 		seed, int, index of seed, to generate repeatable results
@@ -304,15 +306,15 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, pop_size, crossover, mutation_type , mutation_rate, fitness_type, percent_change, num_generations)
 
 
-	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv):
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice=False, peaker=False):
 
 		perf_num=len(perf_sign)
 
 		v='    discrete_state_set\n'
-		v+='        string %s\n'%(12+perf_num*2)
+		v+='        string %s\n'%(14+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
 
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, perf_num)
 
 		for i in range(perf_num):
 			if system=='TEST':
@@ -397,20 +399,34 @@ solver=str(params.__getitem__("solver"))
 nls=str(params.__getitem__("nls"))
 lv=str(params.__getitem__("lv"))
 
+runsolstice=params.__getitem__("runsolstice")
+peaker=params.__getitem__("peaker")
+
+
 initStep = None if initStep == 'None' else str(initStep)
 maxStep = None if maxStep == 'None' else str(maxStep)
 
 var_n=[] # variable names
 var_v=[] # variable values
 
-print ''
-print names[:-(12+2*num_perf)]
-for n in names[:-(12+2*num_perf)]:
+print('')
+
+print(names[:-(14+2*num_perf)])
+for n in names[:-(14+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
-	print 'variable   : ', n, '=', params.__getitem__(n)
+	print('variable   : ', n, '=', params.__getitem__(n))
+
 # case suffix
 suffix=results.results_file.split(".")[-1]
+
+
+if runsolstice=='True':
+	optic_folder='optic_case_%s'%suffix
+	var_n.append('casefolder')
+	var_v.append(optic_folder)
+	print('casefolder = '+ optic_folder)
+
 
 # run solartherm
 from solartherm import postproc
@@ -434,7 +450,11 @@ else:
 		resultclass = postproc.SimResultFuel(sim.res_fn)
 	else:
 		resultclass = postproc.SimResultElec(sim.res_fn)
-	perf = resultclass.calc_perf()
+
+	if peaker=='True':
+		perf = resultclass.calc_perf(peaker=True)
+	else:
+		perf = resultclass.calc_perf()
 
 
 solartherm_res=[]
@@ -445,13 +465,13 @@ for i in range(num_perf):
 	if system=='TEST':
 		name=params.__getitem__("index%s"%i)
 		solartherm_res.append(sign*res.data(name)[0])
-		print 'objective %s: '%i, name, sign*res.data(name)[0]
+		print('objective %s: '%i, name, sign*res.data(name)[0])
 	else:
 		idx=int(params.__getitem__("index%s"%i))
 		solartherm_res.append(sign*perf[idx])
-		print 'objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx]
+		print('objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx])
 
-print ''
+print('')
 
 # Return the results to Dakota
 for i, r in enumerate(results.responses()):
@@ -485,11 +505,12 @@ if __name__=='__main__':
 	# ref https://www.riskamp.com/beta-pert
 	import numpy as N
 	import matplotlib.pyplot as plt
-	lb=10.
-	ub=40.
-	n=20.
-	u=Uncertainty()
-	a,b=u.pert(var_names=['test'], nominal=[n], minimum=[lb], maximum=[ub]) 
+	lb=0.001
+	ub=0.003
+	n=0.00153
+	u=UncertaintyDakotaIn(None, None, None,None,None,None, None, None, None,None, None)
+	a,b=u.pert(var_names=['test'], nominals=[n], minimum=[lb], maximum=[ub]) 
+	print a, b
 	X=N.linspace(lb, ub, 100)
 	Y=u.beta(a, b, lb, ub, X)	
 	plt.plot(X, Y)
