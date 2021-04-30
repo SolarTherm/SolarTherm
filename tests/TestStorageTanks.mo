@@ -63,44 +63,60 @@ model TestStorageTanks
     Placement(visible = true, transformation(extent = {{-10, -8}, {10, 12}}, rotation = 0)));
   //Start value of level in %
   Modelica.Blocks.Sources.Constant T_amb(k = 273.15 + 25.0) annotation(
-    Placement(visible = true, transformation(origin = {-24, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-20, 46}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.Constant p_amb(k = 101325) annotation(
-    Placement(visible = true, transformation(origin = {22, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {18, 46}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT Recv(redeclare package Medium = Medium, T = 565 + 273.15, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-86, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink fluidSink(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {88, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {84, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pump_recv(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-48, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.Constant m_flow_recv(k = 10) annotation(
-    Placement(visible = true, transformation(origin = {-72, 86}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pump_PB(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {44, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.Constant m_flow_PB(k = 2) annotation(
-    Placement(visible = true, transformation(origin = {-46, 86}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_flow_recv_cycle(y = m_recv_signal) annotation(
-    Placement(visible = true, transformation(origin = {-64, 38}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Real m_recv_signal "Signal value sine wave";
-  Modelica.Blocks.Sources.RealExpression m_flow_PB_var annotation(
-    Placement(visible = true, transformation(origin = {56, 38}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {46, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression m_flow_recv_var(y = m_recv_signal) annotation(
+    Placement(visible = true, transformation(origin = {-64, 32}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Real m_recv_signal "Signal value";
+  Real m_pb_signal "Signal value";
+  Real tank_full_checker;
+  Modelica.Blocks.Sources.RealExpression m_flow_PB_var(y = m_pb_signal) annotation(
+    Placement(visible = true, transformation(origin = {64, 32}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+initial equation
+  m_recv_signal = 20;
+  m_pb_signal = 12;
+algorithm
+  when tankHot.L > 99 then
+    m_recv_signal := 0;
+    tank_full_checker := 1;
+  elsewhen tankHot.L < 90 then
+    m_recv_signal := 12;
+    tank_full_checker := 0;
+  end when;
+  when tankHot.L > 30 then
+    m_pb_signal := 20;
+  elsewhen tankHot.L < 20 then
+    m_pb_signal := 0;
+  end when;
 equation
-  m_recv_signal = 10.0 * sin(time * 2.0 * CN.pi * (1.0 / (3600.0 * 24)));
+//m_recv_signal = 10.0 * sin(time * 2.0 * CN.pi * (1.0 / (3600.0 * 24)));
   connect(T_amb.y, tankHot.T_amb) annotation(
-    Line(points = {{-13, 42}, {-4, 42}, {-4, 12}}, color = {0, 0, 127}));
+    Line(points = {{-9, 46}, {-4, 46}, {-4, 12}}, color = {0, 0, 127}));
   connect(p_amb.y, tankHot.p_top) annotation(
-    Line(points = {{33, 42}, {4, 42}, {4, 12}}, color = {0, 0, 127}));
+    Line(points = {{7, 46}, {4, 46}, {4, 12}}, color = {0, 0, 127}));
   connect(Recv.ports[1], pump_recv.fluid_a) annotation(
     Line(points = {{-76, 8}, {-58, 8}}, color = {0, 127, 255}));
   connect(pump_recv.fluid_b, tankHot.fluid_a) annotation(
     Line(points = {{-38, 8}, {-10, 8}}, color = {0, 127, 255}));
   connect(tankHot.fluid_b, pump_PB.fluid_a) annotation(
-    Line(points = {{10, -4}, {20, -4}, {20, 0}, {34, 0}}, color = {0, 127, 255}));
+    Line(points = {{10, -4}, {36, -4}}, color = {0, 127, 255}));
   connect(pump_PB.fluid_b, fluidSink.port_a) annotation(
-    Line(points = {{54, 0}, {78, 0}}, color = {0, 127, 255}));
-  connect(m_flow_recv_cycle.y, pump_recv.m_flow) annotation(
-    Line(points = {{-53, 38}, {-48, 38}, {-48, 16}}, color = {0, 0, 127}));
+    Line(points = {{56, -4}, {74, -4}}, color = {0, 127, 255}));
+  connect(m_flow_recv_var.y, pump_recv.m_flow) annotation(
+    Line(points = {{-53, 32}, {-48, 32}, {-48, 16}}, color = {0, 0, 127}));
   connect(m_flow_PB_var.y, pump_PB.m_flow) annotation(
-    Line(points = {{67, 38}, {84, 38}, {84, 14}, {44, 14}, {44, 8}}, color = {0, 0, 127}));
+    Line(points = {{53, 32}, {46, 32}, {46, 5}}, color = {0, 0, 127}));
+  connect(T_amb.y, tankHot.T_amb) annotation(
+    Line(points = {{-9, 46}, {-4, 46}, {-4, 12}}, color = {0, 0, 127}));
   annotation(
     uses(Modelica(version = "3.2.2"), SolarTherm(version = "0.2")));
 end TestStorageTanks;
