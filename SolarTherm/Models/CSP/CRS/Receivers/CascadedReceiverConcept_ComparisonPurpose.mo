@@ -5,15 +5,25 @@ model CascadedReceiverConcept_ComparisonPurpose
   import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SI = Modelica.SIunits;
   import Modelica.Math.*;
+  import metadata = SolarTherm.Utilities.Metadata_Optics_3Apertures;
+  
+  parameter String opt_file(fixed = false);
+  parameter Real metadata_list[24] = metadata(opt_file);
+  parameter String casefolder = "./optics" "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
+
+  parameter Real n_helios_total = metadata_list[6] "Number of heliostats";
+  parameter SI.Area A_field = n_helios_total * metadata_list[5] "Heliostat field reflective area (m^2)";
+  parameter Real A_land = metadata_list[3] "Land area consumed by the plant - calculated value by Solstice (m^2)";
+  parameter Real etaC = metadata_list[1] "Efficiency of the field at design point";
   
   //********************* Particle Receiver Design Parameters
-  parameter Real top_ratio = 0.33 "--> controlled by Python";
-  parameter Real mid_ratio = 0.33 " --> controlled by Python";
-  parameter Real bottom_ratio = 1 - top_ratio - mid_ratio;
-  parameter SI.Area A_rcv_total = 1000 "Total area of the apertures --> controlled by Python";
-  parameter SI.Area A_ap_lv1 = A_rcv_total * top_ratio "Aperture area of the 1st receiver";
-  parameter SI.Area A_ap_lv2 = A_rcv_total * mid_ratio "Aperture area of the 2nd receiver";
-  parameter SI.Area A_ap_lv3 = A_rcv_total * bottom_ratio "Aperture area of the 3rd receiver";
+  //parameter Real top_ratio = 0.33 "--> controlled by Python";
+  //parameter Real mid_ratio = 0.33 " --> controlled by Python";
+ // parameter Real bottom_ratio = 1 - top_ratio - mid_ratio;
+  parameter SI.Area A_rcv_total = A_ap_lv1+A_ap_lv2+A_ap_lv3 "Total area of the apertures --> controlled by Python";
+  parameter SI.Area A_ap_lv1 = 300 "Aperture area of the 1st receiver";
+  parameter SI.Area A_ap_lv2 = A_ap_lv1 "Aperture area of the 2nd receiver";
+  parameter SI.Area A_ap_lv3 = 300 "Aperture area of the 3rd receiver";
   
   parameter Real ar_rec_lv1 = 1 "Aspect ratio for the 1st receiver";
   parameter Real ar_rec_lv2 = 1 "Aspect ratio for the 2nd receiver";
@@ -24,10 +34,10 @@ model CascadedReceiverConcept_ComparisonPurpose
   parameter SI.Length H_drop_design_lv3 = sqrt(A_ap_lv3*ar_rec_lv3) "2nd receiver's height";
   
   //**********************Operation parameters
-  parameter SI.HeatFlowRate Q_in_total = 1e9 "Sum of the total heat flow rate [W] --> controlled by Python";
-  parameter SI.HeatFlowRate Q_in_lv1 = Q_in_total * top_ratio "Heat Flow Rate to the 1st receiver [W]";
-  parameter SI.HeatFlowRate Q_in_lv2 = Q_in_total * mid_ratio "Heat Flow Rate to the 2nd receiver [W]";
-  parameter SI.HeatFlowRate Q_in_lv3 = Q_in_total * bottom_ratio "Heat Flow Rate to the 3rd receiver [W]";
+  parameter SI.HeatFlowRate Q_in_total = 883093205.983 "Sum of the total heat flow rate [W] --> controlled by Python";
+  parameter SI.HeatFlowRate Q_in_lv1 = metadata_list[10] "Heat Flow Rate to the 1st receiver [W]";
+  parameter SI.HeatFlowRate Q_in_lv2 = metadata_list[15]"Heat Flow Rate to the 2nd receiver [W]";
+  parameter SI.HeatFlowRate Q_in_lv3 = metadata_list[20]"Heat Flow Rate to the 3rd receiver [W]";
   
   parameter SI.MassFlowRate mdot_total = 1000;
     
@@ -69,6 +79,55 @@ model CascadedReceiverConcept_ComparisonPurpose
   parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
   parameter Boolean with_iterate_mdot_outer_loop = true "true =  mass flow rate is iterated T_out = T_out design. False =  mass flow rate is given";
+
+  //********************* Solstice Optical simulations *******************************
+  import SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticePyFunc;
+  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
+  parameter String pname = "run_solstice_dp" "Name of the Python script";
+  parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
+
+  parameter String psave = casefolder "the directory for saving the results"; 
+  parameter String field_type = "multi-aperture" "Other options are : surround";
+  parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl"; 
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");  			
+  parameter Integer argc =27 "Number of variables to be passed to the C function";
+
+
+  //parameter Boolean single_field = true "True for single field, false for multi tower";
+  //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
+  parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
+  parameter SI.HeatFlowRate Q_in_rcv = Q_in_total;
+  parameter Integer num_aperture = 3 "number of apertures";
+  parameter Real angular_range = 238.5 "Angular range of the multi-aperture configuration";
+
+  parameter SI.Length H_rcv_1=H_drop_design_lv1 "Receiver aperture height at level 1";
+  parameter SI.Length W_rcv_1=H_drop_design_lv1 "Receiver aperture width at level 1";
+
+  parameter SI.Length H_rcv_2=H_drop_design_lv2 "Receiver aperture height at level 2";
+  parameter SI.Length W_rcv_2=H_drop_design_lv2 "Receiver aperture width at level 2";
+
+  parameter SI.Length H_rcv_3=H_drop_design_lv3 "Receiver aperture height at level 3";
+  parameter SI.Length W_rcv_3=H_drop_design_lv3"Receiver aperture width at level 3";
+
+  parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
+  parameter Real n_W_rcv=10 "num of grid in the horizontal/circumferetial direction (for flux map)";
+  parameter SI.Angle tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+  parameter SI.Length W_helio = 12 "width of heliostat in m";
+  parameter SI.Length H_helio = 12 "height of heliostat in m";
+  parameter SI.Length H_tower = 221.2 "Tower height";
+  parameter SI.Length R_tower = 0.01 "Tower diameter";
+  parameter SI.Length R1=45 "distance between the first row heliostat and the tower";
+  parameter Real fb=0.8 "factor to grow the field layout";
+  parameter SI.Efficiency helio_refl = 0.875425 "The effective heliostat reflectance";
+  parameter SI.Angle slope_error = 1.53e-3 "slope error of heliostats, in radiance";
+  parameter SI.Angle slope_error_windy = 2e-3 "a larger optical error of heliostats under windy conditions, in radiance";
+  parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+  parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
+
+  parameter Integer windy_optics=0 "simulate the windy oelt or not? 1 is yes, 0 is no";
+  parameter Integer verbose=0  "save all the optical simulation details or not? 1 is yes, 0 is no";
+  parameter Integer gen_vtk=0 "visualise the optical simulation scene or not? 1 is yes, 0 is no";
+
   
   //*********************** Analytics variables
   SI.HeatFlowRate Q_absorbed;
@@ -236,6 +295,11 @@ model CascadedReceiverConcept_ComparisonPurpose
   
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(cont_m_flow = true, use_input = true)  annotation(
     Placement(visible = true, transformation(origin = {30, -98}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+initial equation
+opt_file =  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type,  wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk}); 
+
+
 equation
   if with_iterate_mdot_outer_loop then
     T_out = T_out_target;
