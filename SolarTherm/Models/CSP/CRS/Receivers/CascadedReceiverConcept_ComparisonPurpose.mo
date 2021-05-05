@@ -4,6 +4,7 @@ model CascadedReceiverConcept_ComparisonPurpose
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SI = Modelica.SIunits;
+  import FI = SolarTherm.Models.Analysis.Finances;
   import Modelica.Math.*;
   import metadata = SolarTherm.Utilities.Metadata_Optics_3Apertures;
   
@@ -115,7 +116,7 @@ model CascadedReceiverConcept_ComparisonPurpose
   parameter SI.Length W_helio = 12 "width of heliostat in m";
   parameter SI.Length H_helio = 12 "height of heliostat in m";
   parameter SI.Length H_tower = 221.2 "Tower height";
-  parameter SI.Length R_tower = 0.01 "Tower diameter";
+  parameter SI.Length R_tower = 25 "Tower diameter";
   parameter SI.Length R1=45 "distance between the first row heliostat and the tower";
   parameter Real fb=0.8 "factor to grow the field layout";
   parameter SI.Efficiency helio_refl = 0.875425 "The effective heliostat reflectance";
@@ -128,6 +129,11 @@ model CascadedReceiverConcept_ComparisonPurpose
   parameter Integer verbose=0  "save all the optical simulation details or not? 1 is yes, 0 is no";
   parameter Integer gen_vtk=0 "visualise the optical simulation scene or not? 1 is yes, 0 is no";
 
+  parameter Real Euro_to_USD_exchange_rate = 1.21 "[USD/Euro]";
+  parameter FI.Money C_extra_structure(fixed=false);
+
+  parameter FI.Money C_tower = C_extra_structure  -1.992 * H_tower^2.747 + 523100 + (0.7452 * H_tower^3 - 148.25 * H_tower^2 + 37204*H_tower - 731236) * Euro_to_USD_exchange_rate + 1573 * H_tower; 
+
   
   //*********************** Analytics variables
   SI.HeatFlowRate Q_absorbed;
@@ -139,6 +145,11 @@ model CascadedReceiverConcept_ComparisonPurpose
   Real eta_advection_curtain;
   Real eta_advection_backwall;
   Real eta_radiation;
+
+  SolarTherm.Utilities.TowerExtraCostTimHarvey structureExtraCost(
+    H_tower = H_tower,
+    D_inner_tower = R_tower * 2
+  );
   
   SI.MassFlowRate mdot(start=500,min=10,max=4e3,nominal=500) "Iterated mass flow to reach T_out_target";
   SI.Temperature T_out "Particle outlet temperature from receiver 3";
@@ -299,6 +310,7 @@ model CascadedReceiverConcept_ComparisonPurpose
 initial equation
 opt_file =  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type,  wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk}); 
 
+C_extra_structure = structureExtraCost.C_extra_structure_cost;
 
 equation
   if with_iterate_mdot_outer_loop then

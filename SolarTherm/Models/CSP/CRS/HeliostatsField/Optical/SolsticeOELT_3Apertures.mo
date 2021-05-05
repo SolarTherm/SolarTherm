@@ -41,7 +41,7 @@ extends OpticalEfficiency_3Apertures;
 
   parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
   parameter Real n_W_rcv=10 "num of grid in the horizontal/circumferetial direction (for flux map)";
-  parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+  parameter SI.Angle tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
   parameter SI.Length W_helio = 10 "width of heliostat in m";
   parameter SI.Length H_helio = 10 "height of heliostat in m";
   parameter SI.Length H_tower = 100 "Tower height";
