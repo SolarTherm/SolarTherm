@@ -1,17 +1,17 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 
 model CascadedReceiverConcept_ComparisonPurpose
-  replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
-  import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SI = Modelica.SIunits;
+  import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import FI = SolarTherm.Models.Analysis.Finances;
   import Modelica.Math.*;
-  import metadata = SolarTherm.Utilities.Metadata_Optics_3Apertures;
   
+  replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
+
+  import metadata = SolarTherm.Utilities.Metadata_Optics_3Apertures;
   parameter String opt_file(fixed = false);
   parameter Real metadata_list[24] = metadata(opt_file);
   parameter String casefolder = "./optics" "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
-
   parameter Real n_helios_total = metadata_list[6] "Number of heliostats";
   parameter SI.Area A_field = n_helios_total * metadata_list[5] "Heliostat field reflective area (m^2)";
   parameter Real A_land = metadata_list[3] "Land area consumed by the plant - calculated value by Solstice (m^2)";
@@ -21,7 +21,7 @@ model CascadedReceiverConcept_ComparisonPurpose
   //parameter Real top_ratio = 0.33 "--> controlled by Python";
   //parameter Real mid_ratio = 0.33 " --> controlled by Python";
  // parameter Real bottom_ratio = 1 - top_ratio - mid_ratio;
-  parameter SI.Area A_rcv_total = A_ap_lv1+A_ap_lv2+A_ap_lv3 "Total area of the apertures --> controlled by Python";
+  parameter SI.Area A_rcv_total = A_ap_lv1+A_ap_lv2+A_ap_lv3 "Total area of the apertures";
   parameter SI.Area A_ap_lv1 = 300 "Aperture area of the 1st receiver";
   parameter SI.Area A_ap_lv2 = A_ap_lv1 "Aperture area of the 2nd receiver";
   parameter SI.Area A_ap_lv3 = 300 "Aperture area of the 3rd receiver";
@@ -35,16 +35,23 @@ model CascadedReceiverConcept_ComparisonPurpose
   parameter SI.Length H_drop_design_lv3 = sqrt(A_ap_lv3*ar_rec_lv3) "2nd receiver's height";
   
   //**********************Operation parameters
-  parameter SI.HeatFlowRate Q_in_total = 883093205.983 "Sum of the total heat flow rate [W] --> controlled by Python";
+  parameter SI.HeatFlowRate Q_in_total = 1e9 "Sum of the total heat flow rate [W] --> controlled by Python";
   parameter SI.HeatFlowRate Q_in_lv1 = metadata_list[10] "Heat Flow Rate to the 1st receiver [W]";
   parameter SI.HeatFlowRate Q_in_lv2 = metadata_list[15]"Heat Flow Rate to the 2nd receiver [W]";
   parameter SI.HeatFlowRate Q_in_lv3 = metadata_list[20]"Heat Flow Rate to the 3rd receiver [W]";
   
   parameter SI.MassFlowRate mdot_total = 1000;
-    
+   
+
+
+
+
+
+ 
   //********************* Heat Trasnfer Properties
   parameter SI.Length th_w = 0.05 "Backwall thickness of the receiver";
   parameter SI.ThermalConductance k_w = 0.2 "Thermal conductance of the back wall of the receiver";
+
   parameter SI.CoefficientOfHeatTransfer h_conv_curtain = 32. "Convective heat transfer coefficient (curtain) [W/m^2-K]";
   parameter SI.CoefficientOfHeatTransfer h_conv_backwall = 10. "Convective heat transfer coefficient (backwall) [W/m^2-K]";
   
@@ -159,6 +166,7 @@ model CascadedReceiverConcept_ComparisonPurpose
   SI.HeatFlowRate Q_rcv_lv3_calculated;
   
   //********************* Component Instantiation
+  //Receivers
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv1(
       N = 30, 
       fixed_cp = false, 
@@ -259,6 +267,7 @@ model CascadedReceiverConcept_ComparisonPurpose
       with_pre_determined_eta = with_pre_determined_eta) annotation(
     Placement(visible = true, transformation(origin = {-18, 60}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   
+  //Source and sink
   Modelica.Fluid.Sources.FixedBoundary source(
       redeclare package Medium = Medium, 
       T = T_in, 
@@ -268,6 +277,7 @@ model CascadedReceiverConcept_ComparisonPurpose
       use_p = false)  annotation(
     Placement(visible = true, transformation(origin = {72, -96}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   
+
   Modelica.Fluid.Sources.FixedBoundary sink(
       redeclare package Medium = Medium, 
       T = 300.0, 
@@ -277,15 +287,32 @@ model CascadedReceiverConcept_ComparisonPurpose
       use_T = true)  annotation(
     Placement(visible = true, transformation(origin = {66, 92}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   
-  Modelica.Blocks.Sources.RealExpression Wind_speed(y=Wspd) annotation(
-    Placement(visible = true, transformation(origin = {-108, 116}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  
-  Modelica.Blocks.Sources.RealExpression Wind_direction(y=Wdir) annotation(
-    Placement(visible = true, transformation(origin = {-108, 94}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  
+
+  //Lift
+  SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(cont_m_flow = true, use_input = true)  annotation(
+    Placement(visible = true, transformation(origin = {30, -98}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+
+
+
+
+  //Booleans
   Modelica.Blocks.Sources.BooleanExpression always_on(y = true)  annotation(
     Placement(visible = true, transformation(origin = {-108, -90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
+
+
+
+
+  //Ambient conditions
+  Modelica.Blocks.Sources.RealExpression Ambient(y=T_amb_design) annotation(
+    Placement(visible = true, transformation(origin = {-108, 138}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Wind_speed(y=Wspd) annotation(
+    Placement(visible = true, transformation(origin = {-108, 116}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Wind_direction(y=Wdir) annotation(
+    Placement(visible = true, transformation(origin = {-108, 94}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  
+  //Input heat
   Modelica.Thermal.HeatTransfer.Sources.FixedHeatFlow Q_in_rcv_lv1(
     Q_flow = Q_in_lv1,
     T_ref = 298.15) annotation(
@@ -301,11 +328,10 @@ model CascadedReceiverConcept_ComparisonPurpose
   T_ref = 298.15) annotation(
     Placement(visible = true, transformation(origin = {-108, 66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
-  Modelica.Blocks.Sources.RealExpression Ambient(y=T_amb_design) annotation(
-    Placement(visible = true, transformation(origin = {-108, 138}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  
-  SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(cont_m_flow = true, use_input = true)  annotation(
-    Placement(visible = true, transformation(origin = {30, -98}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+
+
+
 
 initial equation
 opt_file =  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type,  wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk}); 
@@ -319,6 +345,10 @@ equation
     mdot = mdot_total;
   end if;
   
+
+
+
+
   T_out = particleReceiver1D_lv3.T_out;
     
   Q_rcv_lv1_calculated = A_ap_lv1 * particleReceiver1D_lv1.q_solar;
@@ -348,6 +378,8 @@ equation
   eta_advection_backwall = Q_loss_advection_backwall/Q_in_total;
   eta_radiation = 1 - eta_rcv - eta_advection_curtain - eta_advection_backwall;
   
+
+
   connect(particleReceiver1D_lv1.fluid_b, particleReceiver1D_lv2.fluid_a) annotation(
     Line(points = {{-13, -55}, {8, -55}, {8, -16}, {-14, -16}}, color = {0, 127, 255}));
   connect(particleReceiver1D_lv2.fluid_b, particleReceiver1D_lv3.fluid_a) annotation(

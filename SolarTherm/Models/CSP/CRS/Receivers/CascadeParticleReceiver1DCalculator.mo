@@ -1,10 +1,12 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 
 model CascadeParticleReceiver1DCalculator
-  replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
-  import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import SI = Modelica.SIunits;
+  import Utils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   import Modelica.Math.*;
+
+  //******************************** Mediums
+  replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   
   //********************* Particle Receiver Design Parameters
   parameter SI.Area A_ap_lv1 = 400 "Aperture area of the 1st receiver";
@@ -34,13 +36,8 @@ model CascadeParticleReceiver1DCalculator
   parameter Real F = 0.54 "View Factor of the particle curtain";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
-  parameter Real std_deviation = 0.1;
   
   //********************* Ambient Condition
-  parameter SI.HeatFlowRate Q_in_left = 500e6 "Heat Flow Rate to the 1st receiver [W]";
-  parameter SI.HeatFlowRate Q_in_centre = 500e6 "Heat Flow Rate to the 2nd receiver [W]";
-  parameter SI.HeatFlowRate Q_in_right = 500e6 "Heat Flow Rate to the 3rd receiver [W]";
-  
   parameter SI.Temperature T_amb_design = 273.15 "Ambient temperature at design point [K]";
   parameter Real Wdir =  270 "Wind direction [degree]";
   parameter SI.Velocity Wspd = 25 "Wind speed [m/s]";

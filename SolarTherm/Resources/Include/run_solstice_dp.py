@@ -42,6 +42,7 @@ def run_simul(inputs={}):
 
 	pm.num_aperture=int(pm.num_aperture)
 	if pm.num_aperture>1:
+		# the sequence of the multi-aperture is (left, right, centre) or (lv1, lv2, lv3) 
 		H_rcv={}
 		W_rcv={}
 		for i in range(pm.num_aperture):
@@ -52,11 +53,14 @@ def run_simul(inputs={}):
 		pm.W_rcv=mac.W_rcv
 		pm.H_rcv=mac.H_rcv
 		pm.Z_rcv=[]
-
-		for i in range(pm.num_aperture):
-			lv=int(mac.get_lv_index(i))
-			zi=mac.get_elev_height(lv)
-			pm.Z_rcv.append(zi)
+		if pm.rcv_type=='multi-aperture-parallel':
+			for i in range(pm.num_aperture):
+				pm.Z_rcv.append(pm.H_tower)
+		else:
+			for i in range(pm.num_aperture):
+				lv=int(mac.get_lv_index(i))
+				zi=mac.get_elev_height(lv)
+				pm.Z_rcv.append(zi)
 	else:
 		mac=None
 
@@ -140,7 +144,7 @@ if __name__=='__main__':
 		gen_vtk=True
 		num_aperture=3
 		angular_range=270
-		rcv_type='multi-aperture'    
+		rcv_type='multi-aperture-parallel'    
 		field_type='multi-aperture' 
 		Q_in_rcv=64227613.194 #W
 		W_helio=12.0156148407
