@@ -49,18 +49,18 @@ def run_simul(inputs={}):
 			H_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'H_rcv_%s'%(i+1))
 			W_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'W_rcv_%s'%(i+1))
 
-		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, R_tower=pm.R_tower, W_rcv=W_rcv, H_rcv=H_rcv)
+		if pm.rcv_type=='multi-aperture-parallel':
+			parallel=True
+		else:
+			parallel=False		
+		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, R_tower=pm.R_tower, W_rcv=W_rcv, H_rcv=H_rcv, parallel=parallel)
 		pm.W_rcv=mac.W_rcv
 		pm.H_rcv=mac.H_rcv
 		pm.Z_rcv=[]
-		if pm.rcv_type=='multi-aperture-parallel':
-			for i in range(pm.num_aperture):
-				pm.Z_rcv.append(pm.H_tower)
-		else:
-			for i in range(pm.num_aperture):
-				lv=int(mac.get_lv_index(i))
-				zi=mac.get_elev_height(lv)
-				pm.Z_rcv.append(zi)
+
+		for i in range(pm.num_aperture):
+			xi, yi, zi=mac.get_cood_pos(i)
+			pm.Z_rcv.append(zi)
 	else:
 		mac=None
 

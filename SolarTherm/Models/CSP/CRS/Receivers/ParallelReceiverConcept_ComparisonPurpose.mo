@@ -104,7 +104,6 @@ model ParallelReceiverConcept_ComparisonPurpose
   //parameter Boolean single_field = true "True for single field, false for multi tower";
   //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
   parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
-  parameter Real parallel = 1 "receiver configuration, 1 is the parallel configuration, 0 is cascasded design";
   parameter SI.HeatFlowRate Q_in_rcv = Q_in_total;
   parameter Integer num_aperture = 3 "number of apertures";
   parameter Real angular_range = 238.5 "Angular range of the multi-aperture configuration";
@@ -335,7 +334,7 @@ model ParallelReceiverConcept_ComparisonPurpose
 
 
 initial equation
-opt_file =  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type,  wea_file, argc, {"method", "parallel", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, parallel, num_aperture, angular_range, Q_in_rcv, H_rcv_left, W_rcv_left, H_rcv_right, W_rcv_right, H_rcv_centre, W_rcv_centre, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk}); 
+opt_file =  SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type,  wea_file, argc, {"method", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk"}, {method, num_aperture, angular_range, Q_in_rcv, H_rcv_left, W_rcv_left, H_rcv_right, W_rcv_right, H_rcv_centre, W_rcv_centre, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk}); 
 
 C_extra_structure = structureExtraCost.C_extra_structure_cost;
 
