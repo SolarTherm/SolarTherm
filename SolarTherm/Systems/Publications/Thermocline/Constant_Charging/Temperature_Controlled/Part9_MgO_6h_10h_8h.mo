@@ -1,7 +1,7 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
 model Part9_MgO_6h_10h_8h
-  //Part one of the documentation studies effect of mesh refinement on output.
+  //Cascaded storage system with MgO main tank and PCM top + bottom
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -27,7 +27,7 @@ model Part9_MgO_6h_10h_8h
   //Tanks
   parameter Real frac_1 = 0.1 "Fraction of E_max in Tank A";
   parameter Real frac_2 = 0.8 "Fraction of E_max in Tank B";
-  parameter Integer N_f = 100 "Number of fluid CVs in total";
+  parameter Integer N_f = 100 "Total Number of fluid CVs in total";
   
   parameter Integer N_f_A = SolarTherm.Utilities.Round(frac_1*N_f);
   parameter Integer N_f_B = SolarTherm.Utilities.Round(frac_2*N_f);

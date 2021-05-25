@@ -17,7 +17,7 @@ model Thermocline_HCylinders_Section_Final
   Fluid_Package.State fluid_out "Model which calculates properties at outlet of the section";
 
   //Interfacial heat transfer Settings
-  parameter Integer Correlation = 8 "1=WakaoKaguei, 2=MelissariArgyropolus, 3=Conservative, 4=Bellan, 5=Laminar, 6=Laminar+Turbulent, 7 = Nie, 8 = Nu[i] = (Re[i] * Pr[i]) ^ 0.5"; //Option 8 is for horizontal cylinders
+  parameter Integer Correlation = 8 "1=WakaoKaguei, 2=MelissariArgyropolus, 3=Conservative, 4=Bellan, 5=Laminar, 6=Laminar+Turbulent, 7 = Nie, 8 = Nu[i] = (Re[i] * Pr[i]) ^ 0.5, 9 : Nu = 5.5 + 0.025*Pe (Borishanski 1967)"; //Option 8 is for horizontal cylinders
   
   //Height offset for plotting purposes
   parameter SI.Length z_offset = 0.0 "Amount of height offset if there is a tank below it";
@@ -124,21 +124,41 @@ model Thermocline_HCylinders_Section_Final
   parameter Real C_filler = (if abs(Filler_Package.MM - Encapsulation_Package.MM) < 1e-6  then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost * (((d_p-2*t_e)/d_p)^2));
   parameter Real C_encapsulation = (if abs(Filler_Package.MM - Encapsulation_Package.MM) < 1e-6 then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^2)));
   
-  //Filler Surface Area Correction
-  parameter Real f_surface = 1.0 "Don't touch this";
+  //Fluid-Filler heat transfer correlation Correction
+  parameter Real f_ht = 1.0 "Don't touch this";
+  
+  //Nusselt Number correction factor
+  parameter Real f_Nu = 1.0 "Don't touch this";
   
   //Initialise Filler surface temperature
   SI.Temperature T_s[N_f](start = T_f_start);
   
   Real Bi[N_f] "Biot Number";
-protected
-  //Convection Properties
   Real Re[N_f] "Reynolds";
   Real Pr[N_f] "Prandtl";
+  
+  //Nusselt number constants
+  parameter Real p_on_d = 0.952313/((1.0-eta)^0.5) "Pitch to diameter ratio of tube banks";
+  //parameter Real Nu_const_a = 7.55*p_on_d - 20.0*(p_on_d^(-13.0)) "Constant a in Nu = a + b*(Pe)^c";
+  //parameter Real Nu_const_b = (3.67/90.0)*((p_on_d)^(-2)) "Constant a in Nu = a + b*(Pe)^c";
+  //parameter Real Nu_const_c = 0.56+0.19*p_on_d"Constant a in Nu = a + b*(Pe)^c";
   Real Nu[N_f] "Nusselt";
-  Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
   //Filler heat transfer conductivity
   SI.ThermalConductance U_out[N_f, N_p] "K/W";
+  
+  //Fluid Thermal Conductivity
+  SI.ThermalConductivity k_f[N_f] "W/mK";
+  
+  /*
+  Real Q_check_left[N_p] "Heat entering from the left";
+  Real Q_check_right[N_p] "Heat exiting from the right";
+  */
+protected
+  //Convection Properties
+
+
+  Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
+
   
   //Filler Properties
   SI.SpecificEnthalpy h_p[N_f, N_p];//(start = h_p_start) "J/kg";
@@ -148,7 +168,7 @@ protected
   //Filler geometry
   parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each cylinder element centre";
   parameter SI.Mass m_p[N_f, N_p] = fill( cat(1,Cylinder_Masses(d_p-2*t_e, N_p-1, rho_p, L_filler_cylinder), {CN.pi*(d_p-t_e)*(t_e)*(L_filler_cylinder)*rho_e} ) , N_f) "Masses of each filler cylinder element in each vertical tank slice";
-  parameter SI.Length L_filler_cylinder = (1 - eta) * D_tank ^ 2 * dz / (d_p ^ 2) "Equivalent length of continuous cylinder filler in each vertical element which results in the set porosity of the storage";
+  parameter SI.Length L_filler_cylinder = (1 - eta) * (D_tank ^ 2) * dz / (d_p ^ 2) "Equivalent length of continuous cylinder filler in each vertical element which results in the set porosity of the storage";
   //parameter SI.Mass m_filler_total = sum(m_p);
   
   //Pressure Drop
@@ -159,8 +179,7 @@ protected
   SI.HeatFlowRate Q_loss_top "Heat loss from the top";
   SI.HeatFlowRate Q_loss_bot "Heat loss from the bottom";
 
-  //Fluid Thermal Conductivity
-  SI.ThermalConductivity k_f[N_f] "W/mK";
+  
   //SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
@@ -230,7 +249,8 @@ algorithm
   //Top Discharge Node
     der_h_f[N_f] := 
     ( 2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz) 
-    + rho_f_avg*u_flow*(h_f[N_f-1]-h_f[N_f])/dz-h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta 
+    + rho_f_avg*u_flow*(h_f[N_f-1]-h_f[N_f])/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta 
     - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A) 
     - U_top*(T_f[N_f]-T_amb)/(eta*dz) )/ rho_f_avg;
     h_out := h_f[N_f];
@@ -245,6 +265,17 @@ initial equation
     encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
+/*
+  for j in 2:N_p-1 loop
+    Q_check_left[j] = U_out[50,j-1] * (T_p[50,j-1] - T_p[50,j]);
+    Q_check_right[j] = U_out[50,j]*(T_p[50,j]-T_p[50,j+1]);
+  end for;
+    Q_check_left[1] = 0.0;
+    Q_check_right[1] = (U_out[50, 1] * (T_p[50, 1] - T_p[50, 2]));
+    Q_check_left[N_p] = U_out[50,N_p-1]*(T_p[50,N_p-1]-T_p[50,N_p]);
+    Q_check_right[N_p] = U_out[50,N_p]*(T_p[50,N_p] - T_s[50]);
+*/
+  
   for i in 1:N_f loop
     der(h_f[i]) = der_h_f[i];
   end for;
@@ -313,36 +344,49 @@ equation
         Nu[i] = 0.052 * ((1.0 - eta) ^ 0.14 / eta) * Re[i] ^ 0.86 * Pr[i] ^ (1 / 3);
       elseif Correlation == 7 then
         Nu[i] = 2.06 / eta * Re[i] ^ 0.425 * Pr[i] ^ (1 / 3);
-      else
+      elseif Correlation == 8 then
   //Nu=(Re*Pr)^0.5
         Nu[i] = (Re[i] * Pr[i]) ^ 0.5;
+      else
+        Nu[i] = f_Nu*(5.5 + 0.025*((Re[i]*Pr[i])^0.8));
       end if;
     else
-      Re[i] = 0;
-      Pr[i] = 0;
-      Nu[i] = 2.0;
+      if Correlation < 9 then
+        Re[i] = 0;
+        Pr[i] = 0;
+        Nu[i] = 2.0;
+      else
+        Re[i] = 0;
+        Pr[i] = 0;
+        Nu[i] = f_Nu*5.5;
+      end if;
     end if;
-    h_v[i] = f_surface * 4.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
+    h_v[i] = f_ht * 4.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
   end for;
   //Particle Equations
   for i in 1:N_f loop
   //Inner Particle Shell (actually just a sphere)
-    2.0 * CN.pi * L_filler_cylinder / U_out[i, 1] = log((r_p[1] + 0.5 * dr[1]) / r_p[1]) / k_p[i, 1] + log(r_p[2] / (r_p[2] - 0.5 * dr[2])) / k_p[i, 2];
-    m_p[i, 1] * der(h_p[i, 1]) = U_out[i, 1] * (T_p[i, 2] - T_p[i, 1]);
+    //2.0 * CN.pi * L_filler_cylinder / U_out[i, 1] = log((r_p[1] + 0.5 * dr[1]) / r_p[1]) / k_p[i, 1] + log(r_p[2] / (r_p[2] - 0.5 * dr[2])) / k_p[i, 2];
+    U_out[i, 1] = 2.0*CN.pi*L_filler_cylinder / ( (log((r_p[1]+0.5*dr[1])/r_p[1])/k_p[i,1]) + (log(r_p[2]/(r_p[2]-0.5*dr[2]))/k_p[i,2]) );
+    der(h_p[i, 1]) = (U_out[i, 1] * (T_p[i, 2] - T_p[i, 1])) / m_p[i, 1];
   //End Inner Particle Shell
   //Middle Particle Shells
     for j in 2:N_p - 1 loop
-      2.0 * CN.pi * L_filler_cylinder / U_out[i, j] = log((r_p[j] + 0.5 * dr[j]) / r_p[j]) / k_p[i, j] + log(r_p[j + 1] / (r_p[j + 1] - 0.5 * dr[j+1])) / k_p[i, j + 1];
-      m_p[i, j] * der(h_p[i, j]) = U_out[i, j] * (T_p[i, j + 1] - T_p[i, j]) - U_out[i, j - 1] * (T_p[i, j] - T_p[i, j - 1]);
+      //2.0 * CN.pi * L_filler_cylinder / U_out[i, j] = log((r_p[j] + 0.5 * dr[j]) / r_p[j]) / k_p[i, j] + log(r_p[j + 1] / (r_p[j + 1] - 0.5 * dr[j+1])) / k_p[i, j + 1];
+      U_out[i, j] = 2.0*CN.pi*L_filler_cylinder / ( (log((r_p[j]+0.5*dr[j])/r_p[j])/k_p[i,j]) + log(r_p[j+1]/(r_p[j+1]-0.5*dr[j+1]))/k_p[i,j+1] );
+      //m_p[i, j] * der(h_p[i, j]) = U_out[i, j] * (T_p[i, j + 1] - T_p[i, j]) - U_out[i, j - 1] * (T_p[i, j] - T_p[i, j - 1]);
+      der(h_p[i,j]) = ( U_out[i,j-1] * (T_p[i,j-1] - T_p[i,j]) + U_out[i,j]*(T_p[i,j+1] - T_p[i,j]) ) / m_p[i,j];
     end for;
   //End Middle Particle Shells
   //Outer Particle Shell
-    2.0 * CN.pi * L_filler_cylinder / U_out[i, N_p] = log((r_p[N_p] + 0.5 * dr[N_p]) / r_p[N_p]) / k_p[i, N_p];
-    m_p[i, N_p] * der(h_p[i, N_p]) = U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) - U_out[i, N_p - 1] * (T_p[i, N_p] - T_p[i, N_p - 1]);
+    //2.0 * CN.pi * L_filler_cylinder / U_out[i, N_p] = log((r_p[N_p] + 0.5 * dr[N_p]) / r_p[N_p]) / k_p[i, N_p];
+    //m_p[i, N_p] * der(h_p[i, N_p]) = U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) - U_out[i, N_p - 1] * (T_p[i, N_p] - T_p[i, N_p - 1]);
+    U_out[i,N_p] = 2.0*CN.pi*L_filler_cylinder / ( log((r_p[N_p]+0.5*dr[N_p])/r_p[N_p])/k_p[i,N_p]);
+    der(h_p[i, N_p]) = ( U_out[i,N_p-1] * (T_p[i,N_p-1] - T_p[i,N_p]) + U_out[i,N_p]*(T_s[i] - T_p[i,N_p]) ) / m_p[i,N_p];
   end for;
   //Particle Surface equations energy balance
   for i in 1:N_f loop
-    U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) = CN.pi * D_tank ^ 2 * dz * h_v[i] * (T_f[i] - T_s[i]) / 4.0;
+    U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) = CN.pi * (D_tank ^ 2) * dz * h_v[i] * (T_f[i] - T_s[i]) / 4.0;
   end for;
   //Heat loss calculations, different form than the equations above as they were in terms of rho*dh/dt not m*dh/dt
   Q_loss_top = U_top * CN.pi * D_tank * D_tank * 0.25 * (T_f[N_f] - T_amb);

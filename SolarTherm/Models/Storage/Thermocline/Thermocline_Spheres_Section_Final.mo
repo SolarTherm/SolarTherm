@@ -99,7 +99,8 @@ model Thermocline_Spheres_Section_Final
   
   //Mass flow rates and superficial velocity
   SI.MassFlowRate m_flow(start=0.0) "kg/s";
-  SI.Velocity u_flow "m/s";
+  SI.Velocity u_flow "Fluid velocity in packed bed (m/s)";
+  SI.Velocity u_0 "Fluid velocity through empty cross section = u_flow/eta (m/s)";
   
   //Analytics
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min for this to be correct";
@@ -139,11 +140,12 @@ model Thermocline_Spheres_Section_Final
   Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
   Real Pe[N_f] "Peclet Number";
   Real Bi[N_f] "Biot Number";
+  Real Re[N_f] "Reynolds";
+  Real Pr[N_f] "Prandtl";
   
 protected  
   //Convection Properties
-  Real Re[N_f] "Reynolds";
-  Real Pr[N_f] "Prandtl";
+
   Real Nu[N_f] "Nusselt";
   Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete
@@ -263,7 +265,7 @@ equation
   end if;
 
   u_flow = m_flow / (eta * rho_f_avg * A); //positive if flowing upwards (discharge)
-
+  u_0 = u_flow*eta; //Velocity through empty cross-section
   //Fluid inlet and outlet properties
   fluid_in.h = h_in;
   fluid_out.h = h_out;
@@ -308,7 +310,7 @@ equation
     Bi[i] = (Nu[i]*k_f[i])/(6.0*k_p[i,N_p]); //Use outermost shell conductivity
     Pe[i] = Re[i]*Pr[i];
     if abs(u_flow) > 1e-12 then //There is actually mass flowing
-      Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
+      Re[i] = rho_f_avg * d_p * abs(u_0) / mu_f[i]; //Changed from abs(u_flow) to abs(u_0)
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       if Correlation == 1 then 
         Nu[i] = 2.0 + 1.1 * (Re[i] ^ 0.6) * (Pr[i] ^ (1 / 3)); //Wakao and Kaguei

@@ -222,17 +222,17 @@ package CFD_Comparison_Study
     extends Modelica.Icons.Example;
     package Medium = SolarTherm.Media.Sodium.Sodium_pT;
     //Do not change
-    package Fluid_Package = SolarTherm.Materials.Sodium_Table_20K;
+    package Fluid_Package = SolarTherm.Materials.Sodium_Table;
     //Do not change
     package Filler_Package = SolarTherm.Materials.MgO_Constant;
     //MgO_Constant;  //Can investigate different filler
     //Design Parameters
     //Fixed
-    parameter Integer Correlation = 8 "Botishanski 1963";
-    parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
-    parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
-    parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
-    parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
+    parameter Integer Correlation = 9 "Botishanski 1963";
+    parameter SI.Temperature T_min = 520 + 273.15 "Minimum temperature";
+    parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature";
+    parameter SI.Temperature T_PB_min = 700 + 273.15 "Minimum tolerated outlet temperature to PB";
+    parameter SI.Temperature T_Recv_max = 560 + 273.15 "Maximum tolerated outlet temperature to recv";
     parameter Real eta = 0.05 "Porosity";
     //0.36 if randomly packed, 0.26 for perfect packing.
     //Tanks
@@ -242,18 +242,20 @@ package CFD_Comparison_Study
     parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
     parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
     parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
-    parameter SI.Length d_p = 0.114 "Filler diameter is equal to the side-length of a brick";
+    parameter SI.Length d_p = 0.1612 "Filler diameter is equal to the side-length of a brick";
     //Optimise
     parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K Ignore heat-loss";
     parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
     parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
-    parameter Real ar = 2.0 "Tank aspect ratio";
+    parameter Real ar = 2.0004 "Tank aspect ratio";
+    parameter SI.Length H_tank = 31.07 "Tank height m";
+    parameter SI.Length D_tank = 15.532 "Tank diameter m";
     //Derived
     parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
     parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
     parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
-    parameter SI.MassFlowRate m_charge = E_max / (t_charge * (h_f_max - h_f_min));
-    parameter SI.MassFlowRate m_discharge = E_max / (t_discharge * (h_f_max - h_f_min));
+    parameter SI.MassFlowRate m_charge = 725.066;//E_max / (t_charge * (h_f_max - h_f_min));
+    parameter SI.MassFlowRate m_discharge = 435.04;//E_max / (t_discharge * (h_f_max - h_f_min));
     Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
       Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
     Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
@@ -264,7 +266,7 @@ package CFD_Comparison_Study
     Real effectiveness_storage(start = 0.0) "Storage effectiveness";
     Real efficiency_storage(start = 0.0) "Storage 1st law efficiency";
     //COntrol
-    SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
+    SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation, Tank_A.H_tank = H_tank, Tank_A.D_tank = D_tank) annotation(
       Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
     SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -357,13 +359,13 @@ package CFD_Comparison_Study
     end if;
   */
   //efficiency
-    if time > t_cycle * 1.0 and time < t_cycle * 2.0 then
-      der(numer) = PB_Sink.port_a.m_flow * (inStream(PB_Sink.port_a.h_outflow) - h_f_min);
-      if time < t_cycle * 1.0 + t_charge then
+    if time > t_cycle * 0.0 and time < t_cycle * 1.0 then
+      der(numer) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
+      if time < t_cycle * 0.0 + t_charge then
   //charging
         der(E_charged) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
         der(E_discharged) = 0.0;
-      elseif time > t_cycle * 1.0 + t_charge and time < t_cycle * 1.0 + t_charge + t_discharge then
+      elseif time > t_cycle * 0.0 + t_charge and time < t_cycle * 0.0 + t_charge + t_discharge then
         der(E_charged) = 0.0;
         der(E_discharged) = thermocline_Tank.fluid_b.m_flow * (thermocline_Tank.fluid_a.h_outflow - inStream(thermocline_Tank.fluid_b.h_outflow));
       else
@@ -379,7 +381,7 @@ package CFD_Comparison_Study
       der(E_lost) = 0.0;
       der(E_pump) = 0.0;
     end if;
-    if time > t_cycle * 1.0 + 100.0 then
+    if time > t_cycle * 0.0 + 100.0 then
   //eff_storage = (numer)/denom;
       effectiveness_storage = numer / denom;
   //subtract pumping power
@@ -423,6 +425,6 @@ package CFD_Comparison_Study
   connect(thermocline_Splitter1.fluid_c, thermocline_Tank.fluid_a) annotation(
       Line(points = {{0, 68}, {0, 28}}, color = {0, 127, 255}));
     annotation(
-      experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
+      experiment(StopTime = 86400, StartTime = 0, Tolerance = 1e-3, Interval = 120));
   end Part2_MgO_5pctporosity_HCylinders;
 end CFD_Comparison_Study;

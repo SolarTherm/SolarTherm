@@ -13,7 +13,7 @@ model Air_MgO_6h_10h_8h
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
   //Design Parameters
   //Fixed
-  parameter Integer Correlation = 1 "Conservative";
+  parameter Integer Correlation = 1 "Wakao Kaguei";
   parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
   parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
@@ -21,7 +21,7 @@ model Air_MgO_6h_10h_8h
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 200 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank (useless)";
   //Study this
@@ -31,7 +31,7 @@ model Air_MgO_6h_10h_8h
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
   parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
