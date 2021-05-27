@@ -72,7 +72,7 @@ model PBS_Surround_SCO2NREL
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
-  parameter Integer N_f = 144 "Number of discretizations in fluid phase";
+  parameter Integer N_f = 100 "Number of discretizations in fluid phase";
   parameter Integer N_p = 10 "Number of discretizations in filler phase";
   //Filler Properties
   replaceable package Filler_A = SolarTherm.Materials.PCM_520 "Bottom tank filler";

@@ -76,7 +76,7 @@ equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
   m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
-  
+  /*
   if Chg == false and Disch == false then //6 or 3
     if m_guess < m_flow_PB_des then
       Control_State = 6;
@@ -132,7 +132,31 @@ equation
       end if;
     end if;
   end if;
-    
+  */
+  if m_guess < m_min then
+    if Disch == true then
+      Control_State = 2;
+    else
+      Control_State = 6;
+    end if;
+  elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
+    if Disch == true then
+      Control_State = 4;
+    else
+      if Chg == true then
+        Control_State = 1;
+      else
+        Control_State = 6;
+      end if;
+    end if;
+  else
+    if Chg == true then
+      Control_State = 5;
+    else
+      Control_State = 3;
+    end if;
+  end if;
+   
   if Control_State == 1 then
     m_flow_recv = Q_rcv_raw/(h_target-h_tank_outlet);
     m_flow_PB = m_0;

@@ -310,7 +310,7 @@ equation
     Bi[i] = (Nu[i]*k_f[i])/(6.0*k_p[i,N_p]); //Use outermost shell conductivity
     Pe[i] = Re[i]*Pr[i];
     if abs(u_flow) > 1e-12 then //There is actually mass flowing
-      Re[i] = rho_f_avg * d_p * abs(u_0) / mu_f[i]; //Changed from abs(u_flow) to abs(u_0)
+      Re[i] = rho_f_avg * d_p * abs(u_0) / mu_f[i]; //Use superficial velocity u_0 instead of intersitial velocity u_flow
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       if Correlation == 1 then 
         Nu[i] = 2.0 + 1.1 * (Re[i] ^ 0.6) * (Pr[i] ^ (1 / 3)); //Wakao and Kaguei
@@ -368,13 +368,9 @@ equation
   //End heat loss calculations
   
   //Calculated Pumping losses
-  for i in 2:N_f-1 loop
+  for i in 1:N_f loop
     p_drop[i] = dz*(((600*((1-eta)^2)*mu_f[i]*abs(m_flow))/((eta^3)*(d_p^2)*rho_f_avg*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow^2))/((eta^3)*d_p*rho_f_avg*CN.pi*CN.pi*(D_tank^4))));
   end for;
-  //Top and bottom have half node thickness
-  p_drop[1] = 0.5*dz*(((600*((1-eta)^2)*mu_f[1]*abs(m_flow))/((eta^3)*(d_p^2)*rho_f_avg*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow^2))/((eta^3)*d_p*rho_f_avg*CN.pi*CN.pi*(D_tank^4))));
-  
-  p_drop[N_f] = 0.5*dz*(((600*((1-eta)^2)*mu_f[N_f]*abs(m_flow))/((eta^3)*(d_p^2)*rho_f_avg*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow^2))/((eta^3)*d_p*rho_f_avg*CN.pi*CN.pi*(D_tank^4))));
   
   p_drop_total = sum(p_drop);
   W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
