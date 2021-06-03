@@ -13,7 +13,7 @@ model PowerBlockControl
   parameter SI.SpecificEnergy k_loss = 0.55e3 "Hot tank parasitic power coefficient";
   SI.Power W_loss;
   //Zeb Ramping
-  parameter SI.Time t_ramp_delay = 7200 "Half hour startup delay";
+  parameter SI.Time t_ramp_delay = 1800 "Half hour startup delay";
   SI.Time t_ramp_start(start = 0.0) "current time of simulation when ramping starts";
   SI.Time t_ramp_end(start = t_ramp_delay) "current time of simulation when ramping starts";
   Modelica.Blocks.Interfaces.RealOutput PB_ramp_fraction annotation(
