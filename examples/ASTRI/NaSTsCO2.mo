@@ -22,7 +22,7 @@ model NaSTsCO2
 //Actually SM*10"
     HT_pct := max(70, min(130, 5 * round(HT_pct_guess * 0.2)));
     f_recv := max(70, min(130, 5 * round(f_recv_guess * 20.0)));
-    SM_string := String(SM);
+    SM_string := String(SM); 
     HT_pct_string := String(HT_pct);
     f_recv_string := String(f_recv);
     opt_file := Modelica.Utilities.Files.loadResource(prefix + SM_string + "dSM/isp_designpt/" + phi_pct_string + "%phi_" + HT_pct_string + "%HT_" + f_recv_string + "%Arecv_optics.motab");

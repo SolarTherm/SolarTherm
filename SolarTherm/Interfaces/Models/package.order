@@ -13,3 +13,5 @@ Pipe
 HeatExchangerInterface
 Compressor
 Turbine
+PCMshortInterface
+StorageFluid_Thermocline

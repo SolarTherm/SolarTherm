@@ -33,3 +33,5 @@ HeliostatFieldModel2
 Compressor
 HeatExchangerIcon
 Turbine
+PCMshortIcon
+ThermoclineModel
