@@ -39,7 +39,7 @@ package SS316L
   redeclare function rho_Tf "find density from temperature and liquid fraction"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
-    output SI.SpecificEnthalpy rho "Density (kg/m3)";
+    output SI.Density rho "Density (kg/m3)";
   protected
     Real T_data[10] = {293.15,363.15,473.15,593.15,703.15,813.15,923.15,1033.15,1143.15,1253.15};
     Real rho_data[10] = {7950.0,7920.0,7880.0,7830.0,7790.0,7740.0,7690.0,7640.0,7590.0,7540.0};
