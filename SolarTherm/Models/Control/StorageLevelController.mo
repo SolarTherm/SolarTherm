@@ -55,7 +55,7 @@ algorithm
   //Changing Storage State
   when level < level_min then 
     Disch := false;
-  elsewhen level < level_dischg then 
+  elsewhen level > level_dischg then 
     Disch := true;
   end when;
   
