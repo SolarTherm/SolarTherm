@@ -138,7 +138,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Efficiency eta_thermal_max_rcv = 0.994938075936658 "[RCV] maximum thermal efficiency of the receiver of surrogate model";
   parameter SI.Efficiency eta_thermal_min_rcv = 0.200162648750876 "[RCV] minimum thermal efficiency of the receiver of surrogate model";
   parameter Real[inputsize_rcv] X_max_rcv = {H_drop_max_rcv, ar_rec_max_rcv, T_out_max_rcv, Q_in_max_rcv, T_in_max_rcv, T_amb_max_rcv, F_wind_max_rcv};
-  parameter Real[inputsize_rcv] X_min_rcv = {H_drop_min_rcv, ar_rec_max_rcv, T_out_min_rcv, Q_in_min_rcv, T_in_min_rcv, T_amb_min_rcv, F_wind_min_rcv};
+  parameter Real[inputsize_rcv] X_min_rcv = {H_drop_min_rcv, ar_rec_min_rcv , T_out_min_rcv, Q_in_min_rcv, T_in_min_rcv, T_amb_min_rcv, F_wind_min_rcv};
   parameter Real y_max_rcv = eta_thermal_max_rcv;
   parameter Real y_min_rcv = eta_thermal_min_rcv;
   parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/SingleApertureAiCHE") "[RCV] path to which the static particle receiver surrogate model is stored";
