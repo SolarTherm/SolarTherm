@@ -1,0 +1,9 @@
+#How to install GSL 2.6 in your LINUX machine
+
+1. CD to your home folder and download sudo wget https://ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz
+2. Unzip the tar.gz file y running sudo tar -zxf gsl-2.6.tar.gz --> will unzip the tar file and create gsl-2.6 folder
+3. CD to gsl-2.6 folder
+4. run ./configure
+5. run make
+6. run sudo make install
+

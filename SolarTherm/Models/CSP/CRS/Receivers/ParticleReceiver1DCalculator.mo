@@ -22,15 +22,16 @@ model ParticleReceiver1DCalculator
   parameter Real eff_block_design = 0.502;
   parameter SI.Efficiency eta_opt_des = 0.5;
   parameter Real SolarMultiple = 2.5;
-  parameter SI.Length H_drop_design = 15;
-  parameter SI.HeatFlowRate Q_in = 6e8;
-  parameter Real T_in_design = 823.15;
-  parameter Real T_out_design = 1073.15;
-  parameter Real T_amb_design = 283.15;
-  parameter Real Wspd_design = 0;
-  parameter Real Wspd_dir = 180;
+  parameter SI.Length H_drop_design = 20 "Drop height of the rcv aperture [m]";
+  parameter SI.Length H_drop_catch_and_release = 1 "Distance between 2 catch and release mechanism";
+  parameter SI.HeatFlowRate Q_in = 100e6 * 3.53 / 0.5 / 0.88;
+  parameter Real T_in_design = 823.15 "Input temperature in K to the rcv";
+  parameter Real T_out_design = 1073.15 "Desired outlet temperature in K";
+  parameter Real T_amb_design = 283.15 "Ambient temperature in K";
+  parameter Real Wspd_design = 0 "Wind speed design in m/s";
+  parameter Real Wspd_dir = 0 "Wind speed direction in degree";
   parameter Real eta_rec_determined = 0.4247535903;
-  parameter SI.MassFlowRate m_design = 206.821541380436;
+  parameter SI.MassFlowRate m_design = 1000 "Design mass flow rate in kg/s. Used when iterate m flow is false";
   parameter Real ar_rec = 1;
   parameter Real CR = 1200;
   parameter SI.HeatFlux dni_des = 950;
@@ -42,20 +43,23 @@ model ParticleReceiver1DCalculator
   parameter SI.Length d_p = 0.00035 "Particle diameter [m]";
   parameter SI.SpecificHeatCapacity cp_s = 1200 "particle specific heat capacity [J/kgK]";
   parameter SI.Density rho_s = 3300 "Particle density [kg/m3]";
-  parameter Real eps_s = 0.9 "Particle emmisivity";
-  parameter Real abs_s = 0.9 "Particle absorptivity";
-  parameter Real F = 0.54 "View Factor of the particle curtain";
+  parameter Real eps_s = 0.9 "Particle emmisivity. G3P3 = 0.9, Luis paper 0.87";
+  parameter Real abs_s = 0.9 "Particle absorptivity. G3P3 = 0.9, Luis paper 0.87";
+  parameter Real F = 0.54 "View Factor of the particle curtain. G3P3 = 0.54, Luis latest code 0.9";
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
   parameter Real std_deviation = 0.1;
+  
   //********************* Simulation Set up
   parameter Boolean with_detail_h_ambient = true "using size dependent advection heat transfer coefficient";
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
   parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
-  parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
-  parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
+  parameter Boolean iterate_Q_flow = true "true T_out=T_out_design else heat.Q_flow / A_ap";
+  parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
+  parameter Boolean with_catch_and_release_mechanism = false "if true, activate the catch and release mechanism as such the Re number is based on H_drop_catch_and_release and curtain thickness is reinitialise when the particles are caught";
+  
   //********************** Variables
   SI.HeatFlowRate Q_in_rcv_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
@@ -70,7 +74,7 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 96}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, AR=ar_rec, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, H_drop_catch_and_release = H_drop_catch_and_release, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, AR=ar_rec, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta, with_catch_and_release_mechanism = with_catch_and_release_mechanism) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression realExpression1(y = Wspd_design) annotation(
     Placement(visible = true, transformation(origin = {-56, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

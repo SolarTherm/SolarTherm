@@ -46,6 +46,8 @@ model ParticleReceiver1D
   parameter SI.SpecificHeatCapacity cp_s = 1200. "solid specific heat capacity [J/kg-K]";
   parameter Boolean with_wind_effect = false;
   parameter Boolean with_pre_determined_eta = false;
+  parameter Boolean with_catch_and_release_mechanism = true;
+  
   parameter SI.Efficiency eta_rec_determined = 0.95;
   
   //Discretisation
@@ -95,6 +97,7 @@ model ParticleReceiver1D
   
   // Receiver geometry
   parameter SI.Length H_drop_design = 25.80006;
+  parameter SI.Length H_drop_catch_and_release = 1 "Distance between catch and release mechanism [m]"; 
   SI.Length H_drop(start = 25, min=10, max=50, nominal=25) "Receiver drop height [m]";
   SI.Length W_rcv;
   SI.Area A_ap "Receiver aperture area [m2]";
@@ -125,6 +128,7 @@ model ParticleReceiver1D
     start = linspace(0.999, 0.972, N), 
     max = fill(1., N), 
     min = fill(0., N)) "Curtain absorptance";
+    
   
   //Radiation heat fluxes
   SI.HeatFlux q_solar(min=0, start=3e5,max=2e6) "Uniform solar flux [W/m2]";
@@ -165,7 +169,7 @@ model ParticleReceiver1D
   SI.HeatFlowRate Qloss_jcb;
   SI.HeatFlowRate Qgain_gcb;
   SI.HeatFlowRate Q_check_curtain;
-  
+    
   //Overall performance
   SI.HeatFlowRate Qdot_rec "Total heat rate absorbed by the receiver";
   SI.HeatFlowRate Qdot_inc "Total heat rate incident upon the receiver (before losses)";
@@ -240,17 +244,29 @@ equation
   x[N + 2] = H_drop;
   //t_c_in = mdot / (phi_max * vp_in * W_rcv * rho_s);
   t_c_in = (60 * mdot / (62 * W_rcv * phi_max * rho_s * sqrt(Modelica.Constants.g_n))) ^ (1/1.5) + 1.4 * d_p;
+  
   if mdot > 1e-6 then 
       for i in 1:N + 2 loop
-    // Curtain thickness
+      // Curtain thickness
+      if with_catch_and_release_mechanism then
+        t_c[i] = t_c_in + 0.0087 * (x[i] - div(x[i],H_drop_catch_and_release));
+      else
         t_c[i] = t_c_in + 0.0087 * x[i];
+      end if;
     // Oles and Jackson (Sol. En. 2015), Eq 18.
       end for;
       for i in 2:N + 1 loop
-    // Curtain momentum balance (gravity causing decreased curtain opacity)
-        vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
-    // Mass balance
-        phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
+        if with_catch_and_release_mechanism then
+        // Curtain momentum balance (gravity causing decreased curtain opacity)
+            vp[i] = (2 * CONST.g_n * (x[i] - div(x[i],H_drop_catch_and_release))) ^ 0.5;
+        // Mass balance
+            phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
+        else
+        // Curtain momentum balance (gravity causing decreased curtain opacity)
+            vp[i] = (vp[i - 1] ^ 2 + 2 * (x[i] - x[i - 1]) * CONST.g_n) ^ 0.5;
+        // Mass balance
+            phi[i] = mdot / (rho_s * vp[i] * t_c[i] * W_rcv);
+        end if;
       end for;
   else
       for i in 1:N + 2 loop
@@ -289,14 +305,18 @@ equation
   miu = MedAir.DryAirNasa.dynamicViscosity(state_air);
   Cp_air = MedAir.DryAirNasa.specificHeatCapacityCp(state_air);
   rho_air = MedAir.DryAirNasa.density(state_air);
-  Re = sqrt(2 * Modelica.Constants.g_n * H_drop) * rho_air * H_drop / miu;
+  if with_catch_and_release_mechanism then
+    Re = sqrt(2 * Modelica.Constants.g_n * H_drop_catch_and_release) * rho_air * H_drop_catch_and_release / miu;
+  else
+    Re = sqrt(2 * Modelica.Constants.g_n * H_drop) * rho_air * H_drop / miu;
+  end if;
   Nu = -758.9 + 0.05737 * Re^(0.8571) "Correlation from Brantley Mills CFD ";
   if with_detail_h_ambient then
     h_ambient = Nu * k_air / H_drop;
   else
     h_ambient = h_conv_curtain;
   end if;
-  
+    
   W_dir_mod = Modelica.Math.exp(-1*((abs(Wdir-180)-105)/30)^2);
   
   if with_wind_effect then
@@ -353,7 +373,7 @@ equation
   for i in 1:N loop  
       Qloss_conv_wall_discrete[i] = q_conv_wall[i] * dx * W_rcv;
       Qloss_conv_curtain_discrete[i]= q_conv_curtain[i]* dx * W_rcv;
-      Qloss_jcf_discrete[i] = jc_f[i] * dx * W_rcv * F;
+      Qloss_jcf_discrete[i] = jc_f[i] * dx * W_rcv;
       Qloss_jcb_discrete[i] = jc_b[i] * dx * W_rcv;
       Qgain_gcb_discrete[i] = gc_b[i] * dx * W_rcv;
   end for;
@@ -365,7 +385,7 @@ equation
   Qloss_jcb = sum(Qloss_jcb_discrete);
   Qgain_gcb = sum(Qgain_gcb_discrete);
   Qabsorbed = abs(mdot * h_s[1] - mdot * h_s[N + 1]);
-  Q_check_curtain = Qabsorbed - sum(dx * W_rcv * q_net[i] for i in 1:N);
+  Q_check_curtain = Qdot_inc - Qabsorbed - Qloss_jcf + Qgain_gcb - Qloss_jcb - Qloss_conv_curtain;
 annotation(
     experiment(StartTime = 0, StopTime = 140000, Tolerance = 1e-6, Interval = 1800));
 end ParticleReceiver1D;

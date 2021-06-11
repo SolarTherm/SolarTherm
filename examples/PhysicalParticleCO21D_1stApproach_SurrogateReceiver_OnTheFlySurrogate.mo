@@ -33,12 +33,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_simple_PB_cost = true "[PB] sub system (excluding the primary heat exchanger) are evaluated using gen3_cost";
   parameter Boolean set_tnk_use_p_top = true "true if tank pressure is to connect to weather file";
   parameter Boolean set_tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-  parameter Boolean set_external_storage = false "[ST] true if storage bins are not integrated with tower";
+  parameter Boolean set_external_storage = true "[ST] true if storage bins are not integrated with tower";
   parameter Boolean set_SAM_tower_cost = true "[H&T] true tower cost is evaluated to match SAM";
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
   
