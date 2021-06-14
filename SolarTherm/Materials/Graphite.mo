@@ -34,6 +34,7 @@ package Graphite
 	//T = 200 to 3500 K. Least squares fit of 'best' data gives: 
 	// Cp = 0.538657 + 9.11129x10-6T - 90.2725T^-1 - 43449.3T^-2 + 1.59309x107T^-3 - 1.43688x109T^-4 cal/g*K (250 to 3000 K)
     input SI.Temperature T "Absolute temperature (K)";
+    input Real f "Liquid mass fraction (not used anyway)";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
 
   protected
