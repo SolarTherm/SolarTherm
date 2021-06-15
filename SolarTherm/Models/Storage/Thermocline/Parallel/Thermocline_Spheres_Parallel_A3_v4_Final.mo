@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline.Parallel;
 
-model Thermocline_Spheres_Parallel_A3_v2_Final
+model Thermocline_Spheres_Parallel_A3_v4_Final
   //A2 Refers to A: Charge 1-2, Discharge 2-1; 2: 2-Tanks
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
@@ -59,10 +59,11 @@ model Thermocline_Spheres_Parallel_A3_v2_Final
   Integer Active_Tank(start = 1) "Which tank is in use currently";
   
   //v2 additions
-  Boolean Partial_Flow(start = true) "Is the tank flow rate diverted?, always true in this version";
+  Boolean Partial_Flow(start = false) "Is the tank flow rate diverted?, always true in this version";
   parameter SI.Temperature T_high_1 = 700.0 + 273.15 "Thereshold when top temperature falls below it, causes partial flow";
   parameter SI.Temperature T_low_1 = 530.0 + 273.15 "Thereshold when bottom temperature falls below it, causes partial flow";
-  parameter Real f_divert = 0.5 "Fraction of mass flow diverted to the next tank in line";
+  Real f_divert(start = f_divert_max) "Fraction of mass flow diverted to the next tank in line (max)";
+  parameter Real f_divert_max = 0.5 "Real-time fraction of mass flow diverted, depends on temperature of active tank";
   
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)" annotation(
@@ -129,21 +130,33 @@ algorithm
   when Tank_A.T_f[1] > T_bot_high then
     if Active_Tank == 1 then
       Active_Tank := 2;
+      if Tank_B.T_f[1] <= T_low_1 then
+        Partial_Flow := false;
+      end if;
     end if;
   end when;
   when Tank_B.T_f[1] > T_bot_high then
     if Active_Tank == 2 then
       Active_Tank := 3;
+      if Tank_C.T_f[1] <= T_low_1 then
+        Partial_Flow := false;
+      end if;
     end if;
   end when;
   when Tank_C.T_f[N_f_C] < T_top_low then
     if Active_Tank == 3 then
       Active_Tank := 2;
+      if Tank_B.T_f[N_f_B] >= T_high_1 then
+        Partial_Flow := false;
+      end if;
     end if;
   end when;
   when Tank_B.T_f[N_f_B] < T_top_low then
     if Active_Tank == 2 then
       Active_Tank := 1;
+      if Tank_A.T_f[N_f_B] >= T_high_1 then
+        Partial_Flow := false;
+      end if;
     end if;
   end when; 
   //Measured temperatures at the bottom and top
@@ -153,32 +166,54 @@ algorithm
   T_top_measured := Tank_A.T_f[N_f_A];
   
   //v2 additions Partial_Flow decides on when to modulate flow.
-  /*
-  when T_05_A > T_low_1 then
+  
+  //when T_05_A > T_low_1 then
+  when Tank_A.T_f[1] > T_low_1 then
     if Active_Tank == 1 then
       Partial_Flow := true;
     end if;
   end when;
-  when T_05_B > T_low_1 then
+  //when T_05_B > T_low_1 then
+  when Tank_B.T_f[1] > T_low_1 then
     if Active_Tank == 2 then
       Partial_Flow := true;
     end if;
   end when;
   
-  when T_95_B < T_high_1 then
+  //when T_95_B < T_high_1 then
+  when Tank_B.T_f[N_f_B] < T_high_1 then
     if Active_Tank == 2 then
       Partial_Flow := true;
     end if;
   end when;
-  when T_95_C < T_high_1 then
+  //when T_95_C < T_high_1 then
+  when Tank_C.T_f[N_f_C] < T_high_1 then
     if Active_Tank == 3 then
       Partial_Flow := true;
     end if;
   end when;
-  */
+  
 
 equation
-  Partial_Flow = true;
+  if fluid_a.m_flow > 1.0e-6 then //charging
+    if Active_Tank == 1 then
+      f_divert = f_divert_max*(Tank_A.T_f[1]-T_low_1)/(T_bot_high-T_low_1);
+    elseif Active_Tank == 2 then
+      f_divert = f_divert_max*(Tank_B.T_f[1]-T_low_1)/(T_bot_high-T_low_1);
+    else //Active_Tank == 3
+      f_divert = 0.0;//Cannot divert
+    end if;
+  elseif fluid_a.m_flow < -1.0e-6 then //discharging
+    if Active_Tank == 1 then
+      f_divert = 0.0;
+    elseif Active_Tank == 2 then
+      f_divert = f_divert_max*(1.0-(Tank_B.T_f[N_f_B]-T_top_low)/(T_high_1-T_top_low));
+    else //Active_Tank == 3
+      f_divert = f_divert_max*(1.0-(Tank_C.T_f[N_f_C]-T_top_low)/(T_high_1-T_top_low)); //Cannot divert
+    end if;
+  else
+    f_divert = 0.0;
+  end if;
   //Determine inlet/outlet fluid state for plotting only. If mass flow is close to zero, return 298.15K temperature.
   if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
@@ -361,4 +396,4 @@ equation
   fluid_a.m_flow = -1.0 * fluid_b.m_flow;
   annotation(
     Icon(graphics = {Rectangle(origin = {9, 49}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-49, 11}, {31, -109}}), Text(origin = {-35, 37}, extent = {{-5, 5}, {5, -7}}, textString = "A"), Text(origin = {-7, 37}, extent = {{-5, 5}, {5, -7}}, textString = "B"), Rectangle(origin = {1, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {1, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {-7, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {-5, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {1, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {21, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {27, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {19, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {27, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Line(origin = {-26, -34}, points = {{0, -12}, {0, 12}, {0, 12}}), Line(origin = {-26, 38}, points = {{0, 8}, {0, -8}, {0, -8}}), Line(origin = {-15.5, 46}, points = {{-10.5, 0}, {11.5, 0}, {9.5, 0}}), Line(origin = {-11, 38}, points = {{-11, 8}, {11, 8}, {11, -8}, {11, -8}}), Line(origin = {0, 53}, points = {{0, 7}, {0, -7}, {0, -7}}), Line(origin = {0, -53}, points = {{0, -7}, {0, 7}, {0, 7}}), Line(origin = {-15, -46}, points = {{-11, 0}, {11, 0}, {11, 0}}), Line(origin = {-11, -34}, points = {{11, 12}, {11, -12}, {-11, -12}, {-11, -12}}), Ellipse(origin = {-5, -41}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Ellipse(origin = {-5, 51}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Rectangle(origin = {47, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {45, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {53, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {47, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {47, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {47, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Line(origin = {13, 38}, points = {{-13, 8}, {13, 8}, {13, -8}, {13, -8}}),  Text(origin = {21, 37}, extent = {{-5, 5}, {5, -7}}, textString = "C"), Line(origin = {13, -34}, points = {{-13, -12}, {13, -12}, {13, 12}, {13, 12}}), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {59, 66}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {50, 35.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {50, -10}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {50, -26.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {62, -63}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {-52, -65}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {-62, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb")}, coordinateSystem(initialScale = 0.1)));
-end Thermocline_Spheres_Parallel_A3_v2_Final;
+end Thermocline_Spheres_Parallel_A3_v4_Final;

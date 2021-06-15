@@ -138,14 +138,14 @@ model Thermocline_Spheres_Section_Final
   parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
   //Filler mass-liquid fraction
   Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
+
+  
+protected  
+  //Convection Properties
   Real Pe[N_f] "Peclet Number";
   Real Bi[N_f] "Biot Number";
   Real Re[N_f] "Reynolds";
   Real Pr[N_f] "Prandtl";
-  
-protected  
-  //Convection Properties
-
   Real Nu[N_f] "Nusselt";
   Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete

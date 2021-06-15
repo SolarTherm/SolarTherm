@@ -228,7 +228,7 @@ package CFD_Comparison_Study
     //MgO_Constant;  //Can investigate different filler
     //Design Parameters
     //Fixed
-    parameter Integer Correlation = 9 "Botishanski 1963";
+    parameter Integer Correlation = 10 "Mehdi";
     parameter SI.Temperature T_min = 520 + 273.15 "Minimum temperature";
     parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature";
     parameter SI.Temperature T_PB_min = 700 + 273.15 "Minimum tolerated outlet temperature to PB";
@@ -236,13 +236,13 @@ package CFD_Comparison_Study
     parameter Real eta = 0.05 "Porosity";
     //0.36 if randomly packed, 0.26 for perfect packing.
     //Tanks
-    parameter Integer N_f = 100 "Number of fluid CVs in main tank";
+    parameter Integer N_f = 400 "Number of fluid CVs in main tank";
     parameter Integer N_p = 10 "Number of filler CVs  in main tank";
     parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
     parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
     parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
     parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
-    parameter SI.Length d_p = 0.1612 "Filler diameter is equal to the side-length of a brick";
+    parameter SI.Length d_p = 0.1104 "Filler diameter is equal to the side-length of a brick";
     //Optimise
     parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K Ignore heat-loss";
     parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";

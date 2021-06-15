@@ -216,5 +216,5 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false)));
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
 end Part3_Preserve_H;

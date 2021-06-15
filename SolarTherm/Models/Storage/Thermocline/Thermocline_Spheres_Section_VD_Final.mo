@@ -101,6 +101,7 @@ model Thermocline_Spheres_Section_VD_Final
   Real m_flow_in(start=0.0) "kg/s";
   Real m_flow_out(start=0.0) "kg/s";
   SI.Velocity u_flow[N_f] "m/s";
+  SI.Velocity u_0[N_f] "Fluid velocity through empty cross section = u_flow/eta (m/s)";
   
   SI.Density rho_f[N_f](start=fill(rho_f_min,N_f)) "Fluid variable density kg/m3";
   SI.Density rho_in "Fluid inlet density kg/m3";
@@ -303,6 +304,7 @@ equation
     rho_f[i] = fluid[i].rho;
     
     m_flow[i] = eta*rho_f[i]*u_flow[i]*A;
+    u_0[i] = u_flow[i]*eta; //Velocity through empty cross-section
 
   end for;
   //Particle Property evaluation quartzite and sand
@@ -330,7 +332,7 @@ equation
   //Convection Equations
   for i in 1:N_f loop
     if abs(u_flow[i]) > 1e-12 then //There is actually mass flowing
-      Re[i] = rho_f[i] * d_p * abs(u_flow[i]) / mu_f[i];
+      Re[i] = rho_f[i] * d_p * abs(u_0[i]) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       if Correlation == 1 then 
         Nu[i] = 2.0 + 1.1 * (Re[i] ^ 0.6) * (Pr[i] ^ (1 / 3)); //Wakao and Kaguei

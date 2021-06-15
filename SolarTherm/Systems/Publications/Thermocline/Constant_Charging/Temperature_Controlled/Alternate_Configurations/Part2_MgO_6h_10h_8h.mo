@@ -1,16 +1,17 @@
-within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled.Parallel_3Tank_Study;
+within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled.Alternate_Configurations;
 
-model Part1_Baseline
-  //Part one of the documentation studies effect of mesh refinement on output.
+model Part2_MgO_6h_10h_8h
+  //Part one of the baseline comparisons, this one is just the base case.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   //Do not change
-  package Fluid_Package = SolarTherm.Materials.Sodium;
+  package Fluid_Package = SolarTherm.Materials.Sodium_Table;
   //Do not change
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
+  package PCM_Package = SolarTherm.Materials.PCM_520;
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
@@ -30,11 +31,15 @@ model Part1_Baseline
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
   parameter SI.Length d_p = 0.10 "Filler diameter";
+  parameter SI.Length d_p_2 = 0.10 "Filler diameter";
+  parameter SI.Length t_e_2 = 0.02 "Filler enclasulation thickness";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank2 = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
+  parameter Real f_secondary = 0.05 "Energy fraction of secondary tank";
   //Derived
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
@@ -44,34 +49,32 @@ model Part1_Baseline
   Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
-    Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
-  //Efficiency
-  parameter SI.Energy denom = m_charge * t_charge * (h_f_max - h_f_min);
-  SI.Energy numer(start = 0.0);
-  Real eff_storage(start = 0.0) "Storage efficiency";
-  //COntrol
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
-    Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {104, -34}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
+  //Control
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = (1-f_secondary)*E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation,Tank_A.z_offset = thermocline_Tank_2.Tank_A.H_tank) annotation(
+    Placement(visible = true, transformation(origin = {-8.88178e-16, 12}, extent = {{-24, -24}, {24, 24}}, rotation = 0)));
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank_2(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = PCM_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = (f_secondary)*E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank2, Correlation = Correlation, t_e = t_e_2) annotation(
+    Placement(visible = true, transformation(origin = {-1.77636e-15, -55}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-120, -40}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
-    Placement(visible = true, transformation(origin = {-38, -2}, extent = {{-12, -18}, {12, 18}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-36, 12}, extent = {{-12, -18}, {12, 18}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow_Recv(y = m_Recv_signal) annotation(
     Placement(visible = true, transformation(origin = {-103, 5}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpSimple_EqualPressure2(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-56, -36}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-60, -68}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction thermocline_Splitter1(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {0, 67.5547}, extent = {{-16, 0}, {16, 22.4453}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction thermocline_Splitter2(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {0, -36.3493}, extent = {{-14, 0}, {14, 21.6507}}, rotation = 180)));
+    Placement(visible = true, transformation(origin = {0.5435, -15.3493}, extent = {{-11, 0}, {11, 15.0968}}, rotation = 180)));
   Modelica.Blocks.Sources.RealExpression m_flow_PB(y = m_PB_signal) annotation(
     Placement(visible = true, transformation(origin = {110, 3}, extent = {{20, -19}, {-20, 19}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure3(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {40, -60}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {43, -23}, extent = {{9, -9}, {-9, 9}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink PB_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {102, 44}, extent = {{-24, -24}, {24, 24}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_amb(y = 101325) annotation(
-    Placement(visible = true, transformation(origin = {41, -2}, extent = {{13, -16}, {-13, 16}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {39, 12}, extent = {{13, -16}, {-13, 16}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-54, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpSimple_EqualPressure1(redeclare package Medium = Medium) annotation(
@@ -96,6 +99,12 @@ model Part1_Baseline
   Real T_outlet_degC;
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {0, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
+    
+  //Efficiency
+  parameter SI.Energy denominator = m_charge * t_charge * (h_f_max - h_f_min);
+  SI.Energy numerator(start = 0.0);
+  //Real der_numerator "rate of change of the numerator for eff_storage calculations";
+  Real eff_storage(start = 0.0) "Storage efficiency";
 algorithm
   when rem(time, t_cycle) > 1e-6 then
     m_Recv_signal := m_charge;
@@ -109,19 +118,28 @@ algorithm
     m_Recv_signal := 0.0;
     m_PB_signal := 0.0;
   end when;
-  when thermocline_Tank.T_bot_measured > T_Recv_max then
+  when thermocline_Tank_2.T_bot_measured > T_Recv_max then //Modified
     m_Recv_signal := 0.0;
   end when;
-//when thermocline_Tank.fluid_bot.T > T_Recv_max then
-//if rem(time, t_cycle) < t_charge then
-//end if;
   when thermocline_Tank.T_top_measured < T_PB_min then
     m_PB_signal := 0.0;
   end when;
-//when thermocline_Tank.fluid_top.T < T_PB_min then
-//if rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge then
-//end if;
+
+/*
+  if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
+    der_numerator := PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
+  else
+    der_numerator := 0.0;
+  end if;
+*/
 equation
+  //der(numerator) = der_numerator;
+  if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
+    der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
+  else
+    der(numerator) = 0.0;
+  end if;
+  
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
   if thermocline_Tank.Tank_A.m_flow > 1e-3 then
@@ -134,24 +152,9 @@ equation
     T_outlet_degC = 25.0;
 //reference value
   end if;
-/*
-//controls
-  if rem(time, t_cycle) < t_charge and thermocline_Tank.T_bot_measured < T_Recv_max then
-//charging
-    m_Recv_signal = m_charge;
-    m_PB_signal = 0.0;
-  elseif rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge and thermocline_Tank.T_top_measured > T_PB_min then
-//discharging
-    m_Recv_signal = 0.0;
-    m_PB_signal = m_discharge;
-  else
-    m_Recv_signal = 0.0;
-    m_PB_signal = 0.0;
-  end if;
-*/
+  
 //efficiency
   if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
-    der(numer) = PB_Sink.port_a.m_flow * (inStream(PB_Sink.port_a.h_outflow) - h_f_min);
     if time < t_cycle * 5.0 + t_charge then
 //charging
       der(E_charged) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
@@ -166,7 +169,6 @@ equation
     der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
     der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
   else
-    der(numer) = 0.0;
     der(E_charged) = 0.0;
     der(E_discharged) = 0.0;
     der(E_lost) = 0.0;
@@ -174,45 +176,49 @@ equation
   end if;
   if time > t_cycle * 5.0 + 100.0 then
 //eff_storage = (numer)/denom;
-    eff_storage = (numer - E_pump) / denom;
+    eff_storage = (numerator - E_pump) / denominator;
 //subtract pumping power
   else
     eff_storage = 0.0;
   end if;
-  connect(thermocline_Tank.fluid_b, thermocline_Splitter2.fluid_c) annotation(
-    Line(points = {{0, -32}, {0, -46}}, color = {0, 127, 255}));
-  connect(thermocline_Splitter2.fluid_b, pumpSimple_EqualPressure2.fluid_a) annotation(
-    Line(points = {{-12, -60}, {-34, -60}, {-34, -36}, {-46, -36}}, color = {0, 127, 255}));
   connect(m_flow_Recv.y, pumpSimple_EqualPressure2.m_flow) annotation(
-    Line(points = {{-82, 5}, {-56, 5}, {-56, -27}}, color = {0, 0, 127}));
-  connect(pumpSimple_EqualPressure3.fluid_b, thermocline_Splitter2.fluid_a) annotation(
-    Line(points = {{30, -60}, {12, -60}}, color = {0, 127, 255}));
+    Line(points = {{-82, 5}, {-60, 5}, {-60, -59}}, color = {0, 0, 127}));
   connect(thermocline_Tank.T_amb, Tamb.y) annotation(
-    Line(points = {{-17, -2}, {-25, -2}}, color = {0, 0, 127}));
+    Line(points = {{-11, 12}, {-23, 12}}, color = {0, 0, 127}));
   connect(pumpSimple_EqualPressure.fluid_b, thermocline_Splitter1.fluid_a) annotation(
     Line(points = {{-44, 48}, {-30, 48}, {-30, 92}, {-13, 92}}, color = {0, 127, 255}));
   connect(thermocline_Splitter1.fluid_b, pumpSimple_EqualPressure1.fluid_a) annotation(
     Line(points = {{13, 92}, {22, 92}, {22, 44}, {34, 44}}, color = {0, 127, 255}));
   connect(thermocline_Tank.p_amb, p_amb.y) annotation(
-    Line(points = {{17, -2}, {27, -2}}, color = {0, 0, 127}));
+    Line(points = {{11, 12}, {25, 12}}, color = {0, 0, 127}));
   connect(Recv_outlet.ports[1], pumpSimple_EqualPressure.fluid_a) annotation(
     Line(points = {{-96, 48}, {-64, 48}}, color = {0, 127, 255}));
   connect(PB_outlet.ports[1], pumpSimple_EqualPressure3.fluid_a) annotation(
-    Line(points = {{76, -60}, {50, -60}}, color = {0, 127, 255}));
+    Line(points = {{88, -34}, {63, -34}, {63, -23}, {52, -23}}, color = {0, 127, 255}));
   connect(m_flow_Recv.y, pumpSimple_EqualPressure.m_flow) annotation(
     Line(points = {{-82, 5}, {-74, 5}, {-74, 72}, {-54, 72}, {-54, 56}}, color = {0, 0, 127}));
   connect(m_flow_PB.y, pumpSimple_EqualPressure1.m_flow) annotation(
     Line(points = {{88, 3}, {70, 3}, {70, 70}, {44, 70}, {44, 52}}, color = {0, 0, 127}));
   connect(m_flow_PB.y, pumpSimple_EqualPressure3.m_flow) annotation(
-    Line(points = {{88, 3}, {70, 3}, {70, -30}, {40, -30}, {40, -52}}, color = {0, 0, 127}));
+    Line(points = {{88, 3}, {70, 3}, {70, -8}, {43, -8}, {43, -15}}, color = {0, 0, 127}));
   connect(Recv_Sink.port_a, pumpSimple_EqualPressure2.fluid_b) annotation(
-    Line(points = {{-94, -36}, {-66, -36}, {-66, -36}, {-66, -36}}, color = {0, 127, 255}));
+    Line(points = {{-94, -40}, {-80, -40}, {-80, -68}, {-70, -68}}, color = {0, 127, 255}));
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   connect(mass_loop_breaker.port_b, thermocline_Tank.fluid_a) annotation(
-    Line(points = {{0, 36}, {0, 28}}, color = {0, 127, 255}));
+    Line(points = {{0, 36}, {0, 31}}, color = {0, 127, 255}));
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
+  connect(thermocline_Tank_2.fluid_b, pumpSimple_EqualPressure2.fluid_a) annotation(
+    Line(points = {{0, -66}, {0, -68}, {-50, -68}}, color = {0, 127, 255}));
+  connect(Tamb.y, thermocline_Tank_2.T_amb) annotation(
+    Line(points = {{-22, 12}, {-18, 12}, {-18, -55}, {-6, -55}}, color = {0, 0, 127}));
+  connect(thermocline_Tank.fluid_b, thermocline_Splitter2.fluid_c) annotation(
+    Line(points = {{0, -8}, {0, -12}, {1, -12}, {1, -18}}, color = {0, 127, 255}));
+  connect(thermocline_Splitter2.fluid_a, pumpSimple_EqualPressure3.fluid_b) annotation(
+    Line(points = {{9, -30}, {14, -30}, {14, -22}, {34, -22}}, color = {0, 127, 255}));
+  connect(thermocline_Splitter2.fluid_b, thermocline_Tank_2.fluid_a) annotation(
+    Line(points = {{-8, -30}, {-14, -30}, {-14, -44}, {0, -44}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part1_Baseline;
+end Part2_MgO_6h_10h_8h;

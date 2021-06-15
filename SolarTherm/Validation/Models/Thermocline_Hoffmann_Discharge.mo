@@ -12,7 +12,7 @@ model Thermocline_Hoffmann_Discharge
   package CaO = SolarTherm.Materials.CaO;
   package Quartzite = SolarTherm.Materials.Quartzite;
 
-  parameter Integer N_f = 100;
+  parameter Integer N_f = 320;
   parameter Integer N_p = 10;
   parameter SI.Length H_tank = 6.1;
   parameter SI.Diameter D_tank = 3.0;
@@ -80,6 +80,9 @@ model Thermocline_Hoffmann_Discharge
   //Boundary Conditions
   SI.Temperature T_top (start=T_min) "Temperature at the top";
   SI.Temperature T_bot (start=T_min) "Temperature at the bottom";
+  
+  //Measure discharged energy
+  SI.Energy E_disch(start=0) "Energy discharged";
 
 equation
   //Connections
@@ -96,6 +99,11 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
 
+  if time < 2.0*3600.0 then
+    der(E_disch) = Tank_A.m_flow*(Tank_A.h_out-Tank_A.h_in);
+  else
+    der(E_disch) = 0.0;
+  end if;
   
 annotation(experiment(StopTime = 9000, StartTime = 0, Tolerance = 1e-3, Interval = 180.0));
 
