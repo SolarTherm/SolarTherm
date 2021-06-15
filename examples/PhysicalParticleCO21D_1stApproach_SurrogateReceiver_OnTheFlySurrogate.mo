@@ -43,6 +43,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
   
   //****************************** Importing medium and external files
+  replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity or Time-of-day factor file";
@@ -241,13 +242,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Temperature T_hot_start = T_hot_set "Hot tank starting temperature";
   
   /*Thermophysical of the particle*/
-  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold partilces thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hot partilces thermodynamic state at design";
   parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 
   "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank 
    so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
-  parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
-  parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
+  parameter SI.Density rho_cold_set = Particle_Package.rho_T(T_cold_set)  "Cold particles density at design";
+  parameter SI.Density rho_hot_set = Particle_Package.rho_T(T_hot_set) "Hot particles density at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy [J]";
   parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks [kg]";
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor 
@@ -282,8 +281,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
   parameter Integer N_exch_parameter = 15 "Heat exchanger discretisation - CEA PB Parameters";
   parameter Real nu_min_blk = 0.5 "[PB] Minimum allowed part-load mass flow fraction to power block";
-  parameter Medium.ThermodynamicState state_co2_in_set = MedPB.setState_pTX(p_high, T_in_ref_co2) "Cold CO2 thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_co2_out_set = MedPB.setState_pTX(p_high, T_out_ref_co2) "Hot CO2 thermodynamic state at design";
   parameter SI.CoefficientOfHeatTransfer h_conv_CO2 = 2000 "[PB] According to Sandia EES Code";
   parameter Real A_HX(fixed = false) "Heat exchanger total surface area --> UA_HX / U_HX";
   parameter Real UA_HX(fixed = false) "By product of initialisation of the PB model regardless which PB model is chosen";
@@ -332,10 +329,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "[RCV] Receiver length (depth) (m)";
-  parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold particles specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot particles specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_co2_in_set = MedPB.specificEnthalpy(state_co2_in_set) "Cold CO2 specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_co2_out_set = MedPB.specificEnthalpy(state_co2_out_set) "Hot CO2 specific enthalpy at design";
+  parameter SI.SpecificEnthalpy h_cold_set = Particle_Package.h_T(T_cold_set) "Cold particles specific enthalpy at design";
+  parameter SI.SpecificEnthalpy h_hot_set = Particle_Package.h_T(T_hot_set) "Hot particles specific enthalpy at design";
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";

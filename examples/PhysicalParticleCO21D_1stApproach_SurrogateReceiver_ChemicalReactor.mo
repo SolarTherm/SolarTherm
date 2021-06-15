@@ -39,7 +39,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
+  
   //****************************** Importing medium and external files
+  replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity or Time-of-day factor file";
@@ -199,12 +201,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Temperature T_hot_set = 800 + 273.15 "[ST] Hot tank target temperature == HTF inlet temperature to the reactor at design point (K)";
   parameter SI.Temperature T_cold_start = T_cold_set "Cold tank starting temperature";
   parameter SI.Temperature T_hot_start = T_hot_set "Hot tank starting temperature";
+  
   /*Thermophysical of the particle*/
-  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold partilces thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hot partilces thermodynamic state at design";
   parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
-  parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold particles density at design";
-  parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot particles density at design";
+  parameter SI.Density rho_cold_set = Particle_Package.rho_T(T_cold_set) "Cold particles density at design";
+  parameter SI.Density rho_hot_set = Particle_Package.rho_T(T_hot_set) "Hot particles density at design";
   parameter SI.Energy E_max = t_storage * 3600 * Q_reactor "Maximum tank stored energy [J]";
   parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks [kg]";
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
@@ -225,8 +226,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Temperature T_out_ref_co2 = T_high "CO2 outlet temperature from particle heat exchanger at design";
   parameter Integer N_exch_parameter = 15 "Heat exchanger discretisation - CEA PB Parameters";
   parameter Real nu_min_blk = 0.5 "[PB] Minimum allowed part-load mass flow fraction to power block";
-  parameter Medium.ThermodynamicState state_co2_in_set = MedPB.setState_pTX(p_high, T_in_ref_co2) "Cold CO2 thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_co2_out_set = MedPB.setState_pTX(p_high, T_out_ref_co2) "Hot CO2 thermodynamic state at design";
   parameter SI.CoefficientOfHeatTransfer h_conv_CO2 = 2000 "[PB] According to Sandia EES Code";
   parameter Real A_HX(fixed = false) "Heat exchanger total surface area --> UA_HX / U_HX";
   parameter Real UA_HX(fixed = false) "By product of initialisation of the PB model regardless which PB model is chosen";
@@ -267,10 +266,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Length H_rcv = sqrt(A_rcv * ar_rec) "Receiver aperture height";
   parameter SI.Length W_rcv = A_rcv / H_rcv "Receiver aperture width";
   parameter SI.Length L_rcv = 1 "[RCV] Receiver length (depth) (m)";
-  parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold particles specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot particles specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_co2_in_set = MedPB.specificEnthalpy(state_co2_in_set) "Cold CO2 specific enthalpy at design";
-  parameter SI.SpecificEnthalpy h_co2_out_set = MedPB.specificEnthalpy(state_co2_out_set) "Hot CO2 specific enthalpy at design";
+  parameter SI.SpecificEnthalpy h_cold_set = Particle_Package.h_T(T_cold_set) "Cold particles specific enthalpy at design";
+  parameter SI.SpecificEnthalpy h_hot_set = Particle_Package.h_T(T_hot_set) "Hot particles specific enthalpy at design";
+  
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
@@ -494,7 +492,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SolarTherm.Models.Control.ReactorControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser, T_crit_reactor = T_critical_reactor) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   //********************* Power block
-  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H) annotation(
+  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H, redeclare replaceable package Particle_Package = Particle_Package) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //*********************Power Block Calculator
   SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
@@ -523,6 +521,19 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   Real dummyRatio;
   Real accumulated_m;
   Real TOD_W(start = 0, fixed = true) "Product of Time-of-day factor and instant of electric power";
+  SI.Energy E_resource(start = 0, fixed = true);
+  SI.Energy E_resource_after_optical_eff(start = 0, fixed = true);
+  SI.Energy E_helio_incident(start = 0, fixed = true);
+  SI.Energy E_helio_raw(start = 0, fixed = true);
+  SI.Energy E_helio_net(start = 0, fixed = true);
+  SI.Energy E_recv_incident(start = 0, fixed = true);
+  SI.Energy E_recv_net(start = 0, fixed = true);
+  Real eta_curtail_off(start = 0);
+  Real eta_optical(start = 0);
+  Real eta_he_av(start = 0);
+  Real eta_curtail_defocus(start = 0);
+  Real eta_recv_abs(start = 0);
+  Real eta_recv_thermal(start = 0);
   SI.Angle dec_horizon[horizon] "Solar declination angle for the next forecast horizon";
   SI.Angle hra_horizon[horizon] "Solar hour angle for the next forecast horizon";
   SI.Efficiency eta_opt_horizon_calm[horizon] "Optical efficiency for calm condition for the next horizon";
@@ -532,7 +543,16 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SI.Angle slope_error_runtime[horizon] "Slope error as a function of wind speed during runtime";
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
 algorithm
+  if time > 31449600 then
+      eta_curtail_off := E_helio_incident / E_resource;
+      eta_optical := E_resource_after_optical_eff / E_resource;
+      eta_he_av := he_av_design;
+      eta_curtail_defocus := E_helio_net / E_helio_raw;
+      eta_recv_abs := E_recv_incident / E_helio_net;
+      eta_recv_thermal := E_recv_net / E_recv_incident;
+  end if;
 
 initial equation
   C_extra_structure = structureExtraCost.C_extra_structure_cost;
@@ -635,6 +655,13 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
+  der(E_resource) = max(sun.dni * n_helios * A_helio, 0.0);
+  der(E_resource_after_optical_eff) = max(sun.dni * n_helios * A_helio, 0.0) * heliostatsField.nu;
+  der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
+  der(E_helio_raw) = heliostatsField.Q_raw;
+  der(E_helio_net) = heliostatsField.Q_net;
+  der(E_recv_incident) = particleReceiver.heat.Q_flow;
+  der(E_recv_net) = particleReceiver.Q_rcv;
 //************************************ Equations below exist to close the model
   particleReceiver.raw_input[1] = H_rcv "Particle receiver drop height - input to the static receiver surrogate model";
   particleReceiver.raw_input[2] = ar_rec "Particle receiver outlet target temperature (K) - input to the static receiver surrogate model";

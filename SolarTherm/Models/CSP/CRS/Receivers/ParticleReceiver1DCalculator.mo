@@ -24,9 +24,9 @@ model ParticleReceiver1DCalculator
   parameter Real SolarMultiple = 2.5;
   parameter SI.Length H_drop_design = 20 "Drop height of the rcv aperture [m]";
   parameter SI.Length H_drop_catch_and_release = 1 "Distance between 2 catch and release mechanism";
-  parameter SI.HeatFlowRate Q_in = 100e6 * 3.53 / 0.5 / 0.88;
-  parameter Real T_in_design = 823.15 "Input temperature in K to the rcv";
-  parameter Real T_out_design = 1073.15 "Desired outlet temperature in K";
+  parameter SI.HeatFlowRate Q_in = 500e6;
+  parameter Real T_in_design = 550 + 273.15 "Input temperature in K to the rcv";
+  parameter Real T_out_design = 800 + 273.15 "Desired outlet temperature in K";
   parameter Real T_amb_design = 283.15 "Ambient temperature in K";
   parameter Real Wspd_design = 0 "Wind speed design in m/s";
   parameter Real Wspd_dir = 0 "Wind speed direction in degree";
@@ -55,8 +55,8 @@ model ParticleReceiver1DCalculator
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
   parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
-  parameter Boolean iterate_Q_flow = true "true T_out=T_out_design else heat.Q_flow / A_ap";
-  parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
+  parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
+  parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
   parameter Boolean with_catch_and_release_mechanism = false "if true, activate the catch and release mechanism as such the Re number is based on H_drop_catch_and_release and curtain thickness is reinitialise when the particles are caught";
   

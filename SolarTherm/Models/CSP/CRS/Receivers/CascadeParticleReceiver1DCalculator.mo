@@ -49,6 +49,10 @@ model CascadeParticleReceiver1DCalculator
   parameter Real delta_T_lv2 = (T_out_target-T_in) * A_ap_lv2 / (A_ap_lv1+A_ap_lv2+A_ap_lv3);
   parameter Real delta_T_lv3 = (T_out_target-T_in) * A_ap_lv3 / (A_ap_lv1+A_ap_lv2+A_ap_lv3);
   
+  parameter SI.HeatFlowRate Q_in_lv1 = 100e6;
+  parameter SI.HeatFlowRate Q_in_lv2 = 100e6;
+  parameter SI.HeatFlowRate Q_in_lv3 = 100e6;
+  
   parameter SI.MassFlowRate m_in = 1000;
   
   //********************* Simulation Set up
