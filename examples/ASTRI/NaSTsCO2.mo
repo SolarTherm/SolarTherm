@@ -69,9 +69,6 @@ model NaSTsCO2
   parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.01 "Heat loss coefficient of all tanks";
-  parameter Real eta = 0.26 "Packed bed porosity factor of all tanks";
-  parameter Real ar = 2.0 "Aspect ratio (H/D) of all tanks";
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   // replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
@@ -109,11 +106,15 @@ model NaSTsCO2
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   //Metadata from the optical lookup table file(s)
   parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
+
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
   parameter SI.Area A_heliostat = MetaA[2] "Area of one heliostat";
   parameter Real eff_opt_des = MetaA[3];
+  // + opt_file_weight * (MetaB[3] - MetaA[3]) "Design optical efficiency (interpolated)";
   parameter SI.Length H_recv = MetaA[4];
+  // + opt_file_weight * (MetaB[4] - MetaA[4]) "Height of the receiver (interpolated)";
   parameter SI.Length D_recv = MetaA[5];
+  // + opt_file_weight * (MetaB[5] - MetaA[5]) "Diameter/Width of the receiver (interpolated)";
   parameter SI.Length H_tower = MetaA[6] "Height of the tower";
   parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
   parameter SI.Area A_land = land_mult * A_field "Land area occupied by the plant";
@@ -155,8 +156,7 @@ model NaSTsCO2
   parameter SI.Efficiency eff_net_des = 1.0 "Power block net efficiency rating";
   parameter SI.Efficiency eff_blk_des = 0.51 "Power block efficiency at design point";
   parameter SI.Efficiency eff_blk_def = 0.51 "Power block efficiency at design point";
-  //parameter SI.Efficiency eff_blk_des = if engine_brand == "SES" then 0.7893 * (1.0 - (T_pb_cool_des / T_PCM_melt) ^ 0.5) else 0.75 * (1.0 - T_pb_cool_des / T_PCM_melt) "Power block efficiency at design point";
-  //parameter SI.Efficiency eff_blk_def = if engine_brand == "SES" then 0.7893 * (1.0 - (T_pb_cool_des / T_up_u) ^ 0.5) else 0.75 * (1.0 - T_pb_cool_des / T_up_u) "Power block efficiency at design point";
+
   parameter SI.Time PB_startup = 20.0 * 60.0 "Startup ramping time of striling engine is 20mins";
   // Cost data in USD (default) or AUD
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -238,17 +238,12 @@ model NaSTsCO2
   SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   //Storage
-  SolarTherm.Models.Storage.PCM.PCM_eff pCM_eff(redeclare package Medium = Medium, E_max = t_storage * 3600 * Q_flow_ref_blk) annotation(
-    Placement(visible = true, transformation(origin = {26, 38}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //Loop Breakers
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
   SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_max, T_out_ref = T_min, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
-  //Controller
-  SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk) annotation(
-    Placement(visible = true, transformation(origin = {60, -16}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
@@ -261,11 +256,17 @@ model NaSTsCO2
     Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
+  SolarTherm.Models.Storage.eNTU eNTU(redeclare package Medium = Medium, E_max = t_storage * 3600 * Q_flow_ref_blk, eff_constant = 0.95, T_max=T_max, T_0 = T_min) annotation(
+    Placement(visible = true, transformation(origin = {26, 38}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+  //Controller
+  SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk) annotation(
+    Placement(visible = true, transformation(origin = {60, -16}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
 algorithm
 
 equation
-  if pCM_eff.fluid_a.m_flow>=0 then
-    Control.h_tank_outlet = pCM_eff.h_out;
+  if eNTU.fluid_a.m_flow>=0 then
+    Control.h_tank_outlet = eNTU.h_out;
   else
     Control.h_tank_outlet= Control.h_PB_outlet;
   end if;
@@ -321,13 +322,13 @@ equation
     Line(points = {{84, 4}, {64, 4}, {64, -8}, {64, -8}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.Q_defocus, receiver.Q_defocus) annotation(
     Line(points = {{52, -24}, {-18, -24}, {-18, 16}, {-24, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(pCM_eff.fluid_b, Splitter_bot.fluid_c) annotation(
+  connect(eNTU.fluid_b, Splitter_bot.fluid_c) annotation(
     Line(points = {{26, 34}, {26, 34}, {26, 14}, {26, 14}}, color = {0, 127, 255}));
-  connect(Splitter_top.fluid_c, pCM_eff.fluid_a) annotation(
+  connect(Splitter_top.fluid_c, eNTU.fluid_a) annotation(
     Line(points = {{26, 54}, {26, 54}, {26, 42}, {26, 42}}, color = {0, 127, 255}));
-  connect(Pres_input.y, pCM_eff.p_amb) annotation(
+  connect(Pres_input.y, eNTU.p_amb) annotation(
     Line(points = {{100, 96}, {42, 96}, {42, 38}, {32, 38}, {32, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(pCM_eff.level, Control.level) annotation(
+  connect(eNTU.level, Control.level) annotation(
     Line(points = {{20, 38}, {14, 38}, {14, -16}, {52, -16}, {52, -16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(

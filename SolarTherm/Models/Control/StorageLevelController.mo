@@ -1,15 +1,15 @@
 within SolarTherm.Models.Control;
-
 model StorageLevelController
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Sodium.Sodium_pT;
   
-  parameter Real level_max= 0.99 "stop charging when the storage level is above this threshold";
-  parameter Real level_chg= 0.95 "charging is true when the storage level is below this threshold";
-  parameter Real level_dischg= 0.10 "discharging is true when the storage level is above this threshold";
-  parameter Real level_min= 0.05 "stop discharging when the storage level is below this threshold";
+  parameter Real level_max= 95.0 "stop charging when the storage level is above this threshold";
+  parameter Real level_chg= 85.0 "charging is true when the storage level is below this threshold";
+  parameter Real level_dischg= 15.0 "discharging is true when the storage level is above this threshold";
+  parameter Real level_min= 5.0 "stop discharging when the storage level is below this threshold";
   
   parameter SI.Temperature T_target = 740.0 + 273.15 "Target receiver outlet temperature";
+  
   parameter SI.MassFlowRate m_flow_PB_des = 100.0 "Reference power block mass flow rate";
   parameter SI.HeatFlowRate Q_des_blk = 200e6 "Power block design heat rate";
   parameter SI.SpecificEnthalpy h_target = HTF.specificEnthalpy(HTF.setState_pTX(101323.0, T_target)) "Target specific enthalpy of the receiver outlet";
@@ -26,10 +26,9 @@ model StorageLevelController
   parameter SI.MassFlowRate m_0 = 1e-8 "Minimum mass flow rate through any pipe";
   parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start"; //used to be 1e-7 for both
   
-  Modelica.Blocks.Interfaces.RealInput level "level of storage"
+  Modelica.Blocks.Interfaces.RealInput level "level of storage, from 0 to 100"
     annotation (Placement(visible = true, transformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0), iconTransformation(extent = {{-126, -8}, {-86, 32}}, rotation = 0)));
     
-   
   Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start=0.0) "Power block mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -4}, {130, 36}}, rotation = 0), iconTransformation(extent = {{90, -12}, {130, 28}}, rotation = 0))) ;
   
   Modelica.Blocks.Interfaces.RealOutput m_flow_recv(start=0.0) "Receiver mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -44}, {130, -4}}, rotation = 0), iconTransformation(extent = {{90, 38}, {130, 78}}, rotation = 0))) ;
@@ -76,16 +75,23 @@ equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
   m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
- 
   if m_guess < m_min then
     if Disch == true then
-      Control_State = 2;
+      if PB == true then
+        Control_State = 2;
+      else
+        Control_State = 6;
+      end if;
     else
       Control_State = 6;
     end if;
   elseif m_guess >= m_min and m_guess <= m_flow_PB_des then
     if Disch == true then
-      Control_State = 4;
+      if PB == true then
+        Control_State = 4;
+      else
+        Control_State = 6;
+      end if;
     else
       if Chg == true then
         Control_State = 1;
@@ -95,9 +101,17 @@ equation
     end if;
   else
     if Chg == true then
-      Control_State = 5;
+      if PB == true then
+        Control_State = 5;
+      else
+        Control_State = 1;
+      end if;
     else
-      Control_State = 3;
+      if PB == true then
+        Control_State = 3;
+      else
+        Control_State = 6;
+      end if;
     end if;
   end if;
    

@@ -8,7 +8,7 @@ model eNTU
   replaceable package Storage = SolarTherm.Materials.Graphite "the storage medium";   
   parameter Modelica.SIunits.Temperature T_0=500+273.15 "start temperature of the storage medium";
   parameter Modelica.SIunits.Temperature T_max=720+273.15 "the maximum temperature of the storage medium";  
-  parameter Modelica.SIunits.Temperature h_max=Storage.h_Tf(T_max,1.0) "the maximum enthalpy of the storage medium";    
+  parameter Modelica.SIunits.Temperature h_max=Storage.h_Tf(T_max*0.80,1.0) "the maximum enthalpy of the storage medium";    
   parameter Modelica.SIunits.Temperature h_0=Storage.h_Tf(T_0,0.0) "the initial enthalpy of the storage medium";     
   parameter Modelica.SIunits.Mass m_st=E_max/(h_max - h_0) "total mass of the storage medium";
   parameter Modelica.SIunits.Energy E_max;  
