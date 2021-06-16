@@ -88,7 +88,8 @@ model NaSTsCO2
   parameter Real SM_guess = 2.2;
   parameter Real HT_pct_guess = 100;
   parameter Real f_recv = 1.0;
-  parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
+  //parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
+  parameter String opt_file="/media/yewang/Data/Research/yewang/astri-storage/solartherm-astri/124%phi_100%HT_100%Arecv_optics.motab";
   //where to find the optics file
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   //declination-hourangle
