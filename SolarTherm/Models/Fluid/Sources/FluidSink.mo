@@ -7,6 +7,6 @@ model FluidSink "Infinite fluid sink"
            0), iconTransformation(extent={{-110,-12},{-90,8}})));
 equation
  port_a.h_outflow = 0; // shouldn't flow backwards anyway
- port_a.p=101325;
+ //port_a.p=101325;
  port_a.Xi_outflow=inStream(port_a.Xi_outflow);
 end FluidSink;
