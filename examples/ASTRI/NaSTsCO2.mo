@@ -59,8 +59,8 @@ model NaSTsCO2
   //To be optimised
   //--Tank
   //Concept Parameters
-  parameter SI.Temperature T_max = 740.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";
+  parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
+  parameter SI.Temperature T_min = 540.0 + 273.15 "Ideal low temperature of the storage";
   parameter SI.TemperatureDifference T_tol_recv = 60.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
   parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
@@ -68,7 +68,7 @@ model NaSTsCO2
   parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 10. "Hours of storage";
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   // replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
@@ -89,7 +89,7 @@ model NaSTsCO2
   parameter Real HT_pct_guess = 100;
   parameter Real f_recv = 1.0;
   //parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
-  parameter String opt_file="/media/yewang/Data/Research/yewang/astri-storage/solartherm-astri/124%phi_100%HT_100%Arecv_optics.motab";
+  parameter String opt_file = "/media/yewang/Data/Research/yewang/astri-storage/solartherm-astri/124%phi_100%HT_100%Arecv_optics.motab";
   //where to find the optics file
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   //declination-hourangle
@@ -107,7 +107,6 @@ model NaSTsCO2
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   //Metadata from the optical lookup table file(s)
   parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
-
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
   parameter SI.Area A_heliostat = MetaA[2] "Area of one heliostat";
   parameter Real eff_opt_des = MetaA[3];
@@ -157,7 +156,6 @@ model NaSTsCO2
   parameter SI.Efficiency eff_net_des = 1.0 "Power block net efficiency rating";
   parameter SI.Efficiency eff_blk_des = 0.51 "Power block efficiency at design point";
   parameter SI.Efficiency eff_blk_def = 0.51 "Power block efficiency at design point";
-
   parameter SI.Time PB_startup = 20.0 * 60.0 "Startup ramping time of striling engine is 20mins";
   // Cost data in USD (default) or AUD
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -250,28 +248,27 @@ model NaSTsCO2
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_bot(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {26, 13}, extent = {{-10, -9}, {10, 9}}, rotation = 180)));
+    Placement(visible = true, transformation(origin = {36, 13}, extent = {{-10, -9}, {10, 9}}, rotation = 180)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_top(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 59}, extent = {{-10, -9}, {10, 9}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-  SolarTherm.Models.Storage.eNTU eNTU(redeclare package Medium = Medium, E_max = t_storage * 3600 * Q_flow_ref_blk, eff_constant = 0.95, T_max=T_max, T_0 = T_min) annotation(
-    Placement(visible = true, transformation(origin = {26, 38}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-
   //Controller
-  SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk) annotation(
-    Placement(visible = true, transformation(origin = {60, -16}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+  SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_in_recv_max = T_recv_max, T_in_recv_start = T_recv_start, T_in_pb_min = T_PB_min, T_in_pb_start = T_PB_start) annotation(
+    Placement(visible = true, transformation(origin = {66, -40}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+  SolarTherm.Models.Storage.eNTU eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_0 = T_min, T_max = T_max, eff_constant = 0.85) annotation(
+    Placement(visible = true, transformation(origin = {32, 32}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
 
 equation
-  if eNTU.fluid_a.m_flow>=0 then
-    Control.h_tank_outlet = eNTU.h_out;
-  else
-    Control.h_tank_outlet= Control.h_PB_outlet;
-  end if;
-
+//if eNTU.fluid_a.m_flow >= 0 then
+//Control.h_tank_outlet = eNTU.h_out;
+//else
+//Control.h_tank_outlet = Control.h_PB_outlet;
+//end if;
+//Control.h_tank_outlet = eNTU.Medium.specificEnthalpy(eNTU.Medium.setState_pTX(eNTU.p_amb,eNTU.T_HTF_bot));
 //Connections from data
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-93, 70}, {-83, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
@@ -300,7 +297,7 @@ equation
 //connect(Wspd_input.y, receiver.Wspd) annotation(
 //  Line(points = {{-113, 48}, {-32, 48}, {-32, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Splitter_bot.fluid_b, pumpCold.fluid_a) annotation(
-    Line(points = {{18, 6}, {2, 6}}, color = {0, 127, 255}));
+    Line(points = {{28, 6}, {2, 6}}, color = {0, 127, 255}));
   connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
     Line(points = {{-6, 6}, {-14, 6}, {-14, 10}, {-24, 10}, {-24, 10}}, color = {0, 127, 255}));
   connect(receiver.fluid_b, Splitter_top.fluid_a) annotation(
@@ -308,29 +305,37 @@ equation
   connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
     Line(points = {{70, 68}, {82, 68}, {82, 30}, {88, 30}}, color = {0, 127, 255}));
   connect(powerBlock.fluid_b, Splitter_bot.fluid_a) annotation(
-    Line(points = {{84, 8}, {58, 8}, {58, 6}, {34, 6}}, color = {0, 127, 255}));
+    Line(points = {{84, 8}, {58, 8}, {58, 6}, {44, 6}}, color = {0, 127, 255}));
   connect(Splitter_top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{34, 68}, {62, 68}}, color = {0, 127, 255}));
   connect(receiver.Q_rcv_raw, Control.Q_rcv_raw) annotation(
-    Line(points = {{-24, 20}, {10, 20}, {10, -11}, {52, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{-24, 20}, {10, 20}, {10, -31}, {62, -31}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
-    Line(points = {{69, -11}, {70, -11}, {70, -2}, {14, -2}, {14, 14}, {-2, 14}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{75, -35}, {70, -35}, {70, -2}, {14, -2}, {14, 14}, {-2, 14}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
-    Line(points = {{69, -15}, {76, -15}, {76, 76}, {66, 76}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{75, -39}, {76, -39}, {76, 76}, {66, 76}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.defocus, receiver.defocus) annotation(
-    Line(points = {{69, -19}, {70, -19}, {70, -26}, {-38, -26}, {-38, 20}, {-34, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+    Line(points = {{75, -43}, {70, -43}, {70, -26}, {-38, -26}, {-38, 20}, {-34, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
   connect(powerBlock.h_out_signal, Control.h_PB_outlet) annotation(
-    Line(points = {{84, 4}, {64, 4}, {64, -8}, {64, -8}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{84, 4}, {84, -8.5}, {70, -8.5}, {70, -31}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.Q_defocus, receiver.Q_defocus) annotation(
-    Line(points = {{52, -24}, {-18, -24}, {-18, 16}, {-24, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(eNTU.fluid_b, Splitter_bot.fluid_c) annotation(
-    Line(points = {{26, 34}, {26, 34}, {26, 14}, {26, 14}}, color = {0, 127, 255}));
-  connect(Splitter_top.fluid_c, eNTU.fluid_a) annotation(
-    Line(points = {{26, 54}, {26, 54}, {26, 42}, {26, 42}}, color = {0, 127, 255}));
-  connect(Pres_input.y, eNTU.p_amb) annotation(
-    Line(points = {{100, 96}, {42, 96}, {42, 38}, {32, 38}, {32, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{57, -47}, {-18, -47}, {-18, 16}, {-24, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(eNTU.level, Control.level) annotation(
-    Line(points = {{20, 38}, {14, 38}, {14, -16}, {52, -16}, {52, -16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{29, 36}, {14, 36}, {14, -33}, {58, -33}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Pres_input.y, eNTU.p_amb) annotation(
+    Line(points = {{100, 96}, {38, 96}, {38, 32}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Splitter_top.fluid_c, eNTU.fluid_a) annotation(
+    Line(points = {{26, 54}, {26, 47}, {32, 47}, {32, 36}}, color = {0, 127, 255}));
+  connect(eNTU.fluid_b, Splitter_bot.fluid_c) annotation(
+    Line(points = {{32, 28}, {32, 22.5}, {36, 22.5}, {36, 13}}, color = {0, 127, 255}));
+  connect(eNTU.T_HTF_top, Control.T_HTF_top) annotation(
+    Line(points = {{25, 34}, {16, 34}, {16, -41}, {57, -41}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(eNTU.T_HTF_bot, Control.T_HTF_bot) annotation(
+    Line(points = {{25, 30}, {18, 30}, {18, -44}, {57, -44}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(eNTU.h_bot_outlet, Control.h_tank_outlet) annotation(
+    Line(points = {{28, 28}, {28, -14}, {66, -14}, {66, -31}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(eNTU.flow_dir, Control.flow_dir) annotation(
+    Line(points = {{26, 32}, {20, 32}, {20, -30}, {54, -30}, {54, -37}, {57, -37}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-42, -34}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),

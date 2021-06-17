@@ -1,80 +1,126 @@
 within SolarTherm.Models.Control;
+
 model StorageLevelController
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Sodium.Sodium_pT;
-  
-  parameter Real level_max= 95.0 "stop charging when the storage level is above this threshold";
-  parameter Real level_chg= 85.0 "charging is true when the storage level is below this threshold";
-  parameter Real level_dischg= 15.0 "discharging is true when the storage level is above this threshold";
-  parameter Real level_min= 5.0 "stop discharging when the storage level is below this threshold";
+  parameter Real level_max = 95.0 "stop charging when the storage level is above this threshold";
+  parameter Real level_chg = 90.0 "charging is true when the storage level is below this threshold";
+  parameter Real level_dischg = 10.0 "discharging is true when the storage level is above this threshold";
+  parameter Real level_min = 5.0 "stop discharging when the storage level is below this threshold";
+  parameter SI.Temperature T_in_recv_max = 550.0+273.15 "The maximal allowable temperature to the inlet of the receiver";  
+  parameter SI.Temperature T_in_recv_start = 530.0+273.15 "The receiver is working when the inlet temperature is below this threshold";    
+  parameter SI.Temperature T_in_pb_min = 680+273.15 "The minimal allowable temperature to the inlet of the PB";  
+  parameter SI.Temperature T_in_pb_start = 710.0+273.15 "The PB is working when the inlet temperature is above this threshold";   
   
   parameter SI.Temperature T_target = 740.0 + 273.15 "Target receiver outlet temperature";
-  
   parameter SI.MassFlowRate m_flow_PB_des = 100.0 "Reference power block mass flow rate";
   parameter SI.HeatFlowRate Q_des_blk = 200e6 "Power block design heat rate";
   parameter SI.SpecificEnthalpy h_target = HTF.specificEnthalpy(HTF.setState_pTX(101323.0, T_target)) "Target specific enthalpy of the receiver outlet";
-  Integer Control_State(start=6) "1-6 Determines which pumps are flowing and whether defocus is on";
-  Boolean Chg(start=true) "Can the storage be charged?";
-  Boolean Disch(start=false) "Can the storage be discharged?";
-  Boolean PB(start=true) "Can the PB be turned on?";
-
+  Integer Control_State(start = 6) "1-6 Determines which pumps are flowing and whether defocus is on";
+  Boolean Chg(start = true) "Can the storage be charged?";
+  Boolean Disch(start = false) "Can the storage be discharged?";
+  Boolean PB(start = true) "Can the PB be turned on?";
   //Timer to prevent PB from being turned on too many times
   //parameter SI.Time t_wait=1.0*3600 "Time you have to wait after shutdown before it can be turned on again";
   //SI.Time t_shutdown(start=0) "Time since it last shut down";
   //End timer
-  parameter SI.HeatFlowRate Q_rcv_min = 0.10*Q_des_blk "Minimum receiver heat-rate to start mass flow to receiver";
+  parameter SI.HeatFlowRate Q_rcv_min = 0.10 * Q_des_blk "Minimum receiver heat-rate to start mass flow to receiver";
   parameter SI.MassFlowRate m_0 = 1e-8 "Minimum mass flow rate through any pipe";
-  parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start"; //used to be 1e-7 for both
+  parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start";
+  //used to be 1e-7 for both
+ Modelica.Blocks.Interfaces.RealInput flow_dir "flow direction, 1 is charging, -1 is discharging" annotation(
+    Placement(visible = true, transformation(extent = {{-128, -28}, {-88, 12}}, rotation = 0), iconTransformation(extent = {{-128, 16}, {-88, 56}}, rotation = 0)));  
   
-  Modelica.Blocks.Interfaces.RealInput level "level of storage, from 0 to 100"
-    annotation (Placement(visible = true, transformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0), iconTransformation(extent = {{-126, -8}, {-86, 32}}, rotation = 0)));
-    
-  Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start=0.0) "Power block mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -4}, {130, 36}}, rotation = 0), iconTransformation(extent = {{90, -12}, {130, 28}}, rotation = 0))) ;
-  
-  Modelica.Blocks.Interfaces.RealOutput m_flow_recv(start=0.0) "Receiver mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -44}, {130, -4}}, rotation = 0), iconTransformation(extent = {{90, 38}, {130, 78}}, rotation = 0))) ;
-  
-  Modelica.Blocks.Interfaces.RealOutput Q_defocus(start=Q_des_blk) "Required defocus heat" annotation (Placement(visible = true, transformation(extent = {{86, 40}, {126, 80}}, rotation = 0), iconTransformation(origin = {-108, -90},extent = {{-20, -20}, {20, 20}}, rotation = 180))) ;
-  
-  Modelica.Blocks.Interfaces.BooleanOutput defocus(start=false) "defocus receiver?" annotation (Placement(visible = true, transformation(extent = {{88, -80}, {128, -40}}, rotation = 0), iconTransformation(extent = {{90, -60}, {130, -20}}, rotation = 0))) ;
-
-  Modelica.Blocks.Interfaces.RealInput Q_rcv_raw "The net receiver heat rate before curtailment"
-    annotation (Placement(visible = true, transformation(extent = {{-124, 22}, {-84, 62}}, rotation = 0), iconTransformation(extent = {{-126, 48}, {-86, 88}}, rotation = 0)));
-    
-  Modelica.Blocks.Interfaces.RealInput h_PB_outlet "Enthalpy of the HTF coming out of PB"
-    annotation (Placement(visible = true, transformation(extent = {{-124, -62}, {-84, -22}}, rotation = 0), iconTransformation(origin = {56, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-    
-  Modelica.Blocks.Interfaces.RealInput h_tank_outlet "Enthalpy of the HTF coming out of bottom of tank"
-    annotation (Placement(visible = true, transformation(extent = {{-128, -100}, {-88, -60}}, rotation = 0), iconTransformation(origin = {-40, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-
-  SI.MassFlowRate m_guess(start=0.0) "Guess required flow rate of recv";
-  parameter SI.Time t_wait = 2.0*3600 "Waiting time between turning off PB and being able to turn on";
-  SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
+  Modelica.Blocks.Interfaces.RealInput level "level of storage, from 0 to 100" annotation(
+    Placement(visible = true, transformation(extent = {{-136, -50}, {-96, -10}}, rotation = 0), iconTransformation(extent = {{-126, 66}, {-86, 106}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealInput T_HTF_bot(unit = "K") "HTF temperature at the bottom of the storage unit" annotation(
+    Placement(visible = true, transformation(extent = {{-128, 0}, {-88, 40}}, rotation = 0), iconTransformation(extent = {{-128, -76}, {-88, -36}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealInput T_HTF_top(unit = "K") "HTF temperature at the top of the storage unit" annotation(
+    Placement(visible = true, transformation(extent = {{-128, 26}, {-88, 66}}, rotation = 0), iconTransformation(extent = {{-128, -30}, {-88, 10}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start = 0.0) "Power block mass flow?" annotation(
+    Placement(visible = true, transformation(extent = {{90, -4}, {130, 36}}, rotation = 0), iconTransformation(extent = {{90, -12}, {130, 28}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput m_flow_recv(start = 0.0) "Receiver mass flow?" annotation(
+    Placement(visible = true, transformation(extent = {{90, -44}, {130, -4}}, rotation = 0), iconTransformation(extent = {{90, 38}, {130, 78}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput Q_defocus(start = Q_des_blk) "Required defocus heat" annotation(
+    Placement(visible = true, transformation(extent = {{86, 40}, {126, 80}}, rotation = 0), iconTransformation(origin = {-108, -90}, extent = {{-20, -20}, {20, 20}}, rotation = 180)));
+  Modelica.Blocks.Interfaces.BooleanOutput defocus(start = false) "defocus receiver?" annotation(
+    Placement(visible = true, transformation(extent = {{88, -80}, {128, -40}}, rotation = 0), iconTransformation(extent = {{90, -60}, {130, -20}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealInput Q_rcv_raw "The net receiver heat rate before curtailment" annotation(
+    Placement(visible = true, transformation(extent = {{-126, 60}, {-86, 100}}, rotation = 0), iconTransformation(origin = {-50, 108},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput h_PB_outlet "Enthalpy of the HTF coming out of PB" annotation(
+    Placement(visible = true, transformation(extent = {{-130, -80}, {-90, -40}}, rotation = 0), iconTransformation(origin = {56, 112}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput h_tank_outlet "Enthalpy of the HTF coming out of bottom of tank" annotation(
+    Placement(visible = true, transformation(extent = {{-128, -110}, {-88, -70}}, rotation = 0), iconTransformation(origin = {2, 110}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  SI.MassFlowRate m_guess(start = 0.0) "Guess required flow rate of recv";
+  parameter SI.Time t_wait = 2.0 * 3600 "Waiting time between turning off PB and being able to turn on";
+  SI.Time t_threshold(start = 0.0) "if time passes this value, PB := true";
 
 algorithm
-  //Changing Storage State
-  when level < level_min then 
+/*
+//Changing Storage State
+  when level < level_min then
     Disch := false;
-  elsewhen level > level_dischg then 
-    Disch := true;
-  end when;
-  
-  when level > level_max then 
-    Chg := false;
-  elsewhen level < level_chg then
-    Chg := true;
+  elsewhen level > level_dischg then
+      Disch := true;
   end when;
 
-  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
-    PB := false; //start the cooldown
+  when level > level_max then
+    Chg := false;
+  elsewhen level < level_chg then
+      Chg := true;
+  end when;
+ */   
+  
+
+  when level < level_min then
+    Disch := false;
+  end when;
+  when level > level_dischg then
+    if T_HTF_top > T_in_pb_start then //T_in_pb_min -> T_in_pb_start
+      Disch := true;
+    end if;
+  end when;
+  
+  when T_HTF_top< T_in_pb_min then
+    Disch := false;
+  end when;
+  when T_HTF_top> T_in_pb_start then //edited < -> >
+    if level > level_dischg then //level_min -> level_disch
+      Disch := true;
+    end if;
+  end when;
+  
+  when level > level_max then
+    Chg := false;
+  end when;
+  when level < level_chg then
+    if T_HTF_bot< T_in_recv_start then //T_in_recv_max -> T_in_recv_start
+      Chg := true;
+    end if;
+  end when;
+  
+  when T_HTF_bot>T_in_recv_max then
+    Chg :=false;
+  end when;
+  when T_HTF_bot<T_in_recv_start then
+    if level< level_chg then//level_max -> level_chg
+    Chg :=true;
+    end if;
+  end when;
+
+  
+  when m_flow_PB <= 2.0 * m_0 then
+    PB := false;
     t_threshold := time + t_wait;
   end when;
+//take this as shutdown
+//start the cooldown
   when time > t_threshold then
     PB := true;
   end when;
 equation
-  //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
-  m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-  
+//m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
+  m_guess = (Q_rcv_raw + m_flow_PB * (h_PB_outlet - h_tank_outlet)) / (h_target - h_tank_outlet);
   if m_guess < m_min then
     if Disch == true then
       if PB == true then
@@ -114,45 +160,44 @@ equation
       end if;
     end if;
   end if;
-   
   if Control_State == 1 then
-    m_flow_recv = Q_rcv_raw/(h_target-h_tank_outlet);
+    m_flow_recv = Q_rcv_raw / (h_target - h_tank_outlet);
     m_flow_PB = m_0;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
-    
+    Q_defocus = Q_des_blk;
+//Not used anyway
   elseif Control_State == 2 then
     m_flow_recv = m_0;
     m_flow_PB = m_flow_PB_des;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
-
+    Q_defocus = Q_des_blk;
+//Not used anyway
   elseif Control_State == 3 then
     m_flow_recv = m_flow_PB_des;
     m_flow_PB = m_flow_PB_des;
     defocus = true;
-    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
-
+    Q_defocus = m_flow_PB_des * (h_target - h_PB_outlet);
+//Not used anyway
   elseif Control_State == 4 then
-    m_flow_recv = Q_rcv_raw/(h_target-h_PB_outlet);
-    m_flow_PB = m_flow_PB_des; //whoops I switched these by mistake
+    m_flow_recv = Q_rcv_raw / (h_target - h_PB_outlet);
+    m_flow_PB = m_flow_PB_des;
+//whoops I switched these by mistake
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
-
+    Q_defocus = Q_des_blk;
+//Not used anyway
   elseif Control_State == 5 then
-    m_flow_recv = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+    m_flow_recv = (Q_rcv_raw + m_flow_PB * (h_PB_outlet - h_tank_outlet)) / (h_target - h_tank_outlet);
     m_flow_PB = m_flow_PB_des;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
-
+    Q_defocus = Q_des_blk;
+//Not used anyway
   else
     m_flow_recv = m_0;
     m_flow_PB = m_0;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = Q_des_blk;
+//Not used anyway
   end if;
- 
- 
 //Additional info about control states:
 //1 = Recv is on, only charges the storage. PB is off.
 //2 = PB is on, and only run by discharging the Storage. Recv is off.
@@ -160,11 +205,10 @@ equation
 //4 = PB is on, and run by combining receiver outlet with a Storage discharge stream.
 //5 = Receiver is on, and its outlet stream splits to charge the Storage and run the PB.
 //6 = Everything is off.
-  annotation(Documentation(revisions ="<html>
+  annotation(
+    Documentation(revisions = "<html>
 		<p> It is originally from the PBS_Controller by Zebedee Kee on 03/12/2020. Ye Wang changed the control strategy by checking the storage level </p>
-		</html>",info="<html>
+		</html>", info = "<html>
 		<p>This component determines the mass flow rates of both the receiver and power block mass flow rates. The variable m_guess calculates the required receiver mass flow to achieve target outlet temperature T_target based on inlet enthalpy from either storage bottom outlet, PB outlet or a combination of both. Depending on whether the storage is allowed to charge, discharge and relative size of m_guess wrt minimum flowrate and PB design flowrate, one of the 6 operating states is chosen.</p>
 		</html>"));
-
-
 end StorageLevelController;
