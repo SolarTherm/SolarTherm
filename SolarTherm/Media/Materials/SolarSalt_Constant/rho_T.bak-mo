@@ -1,0 +1,6 @@
+function rho_T "Density of liquid solar salt vs Temperature"
+    input SI.Temperature T;
+    output SI.SpecificEnthalpy rho;
+  algorithm
+    rho := 1733.0;
+  end rho_T;

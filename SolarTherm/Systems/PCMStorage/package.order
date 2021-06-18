@@ -1,0 +1,8 @@
+Test1_CaOSensibleStorage
+Test2_PCM635_Melting
+Test3_PCM635_Solidification
+Test4_3PCMCascade_Charge
+Test5_3PCMCascade_Discharge
+Test6_SinglePCMStorageTank
+Constant_Cycling_PCM635
+Constant_Cycling_3PCMCascade
