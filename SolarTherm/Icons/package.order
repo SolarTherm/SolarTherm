@@ -33,3 +33,6 @@ HeliostatFieldModel2
 Compressor
 HeatExchangerIcon
 Turbine
+ThermoclineModel
+PCMModel
+Cascade3PCMModel

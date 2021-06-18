@@ -13,3 +13,6 @@ Pipe
 HeatExchangerInterface
 Compressor
 Turbine
+StorageFluid_Thermocline
+HeatTransferFluid_PCM
+HeatTransferFluid_3PCMs
