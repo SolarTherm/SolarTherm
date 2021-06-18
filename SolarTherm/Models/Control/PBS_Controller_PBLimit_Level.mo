@@ -2,10 +2,10 @@ within SolarTherm.Models.Control;
 model PBS_Controller_PBLimit_Level
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Sodium.Sodium_pT;
-  parameter Real L_1 = 5.0 "Level to stop discharge";
-  parameter Real L_2 = 15.0 "Level to start discharge";
-  parameter Real L_3 = 85.0 "Level to start charge";
-  parameter Real L_4 = 95.0 "Level to stop charge";
+  parameter Real L_1 = 5.0 "Level to stop discharge, minimum PB temperature";
+  parameter Real L_2 = 15.0 "Level to start discharge, slightly above L1";
+  parameter Real L_3 = 85.0 "Level to start charge, slightly below L4";
+  parameter Real L_4 = 95.0 "Level to stop charge, maximum recv temperature";
   parameter SI.Temperature T_target = 740.0 + 273.15 "Target receiver outlet temperature";
   
   parameter SI.MassFlowRate m_flow_PB_des = 100.0 "Reference power block mass flow rate";
