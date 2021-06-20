@@ -7,8 +7,8 @@ model TestStorageENTU
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   package Filler = SolarTherm.Materials.Graphite;
   parameter Integer Correlation = 3 "Conservative";
-  parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
-  parameter SI.Temperature T_max = 700 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature";
   //parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
   //parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eff = 0.95 "Effectiveness";
