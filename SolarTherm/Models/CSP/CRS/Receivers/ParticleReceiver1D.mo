@@ -306,7 +306,7 @@ equation
   Cp_air = MedAir.DryAirNasa.specificHeatCapacityCp(state_air);
   rho_air = MedAir.DryAirNasa.density(state_air);
   if with_catch_and_release_mechanism then
-    Re = sqrt(2 * Modelica.Constants.g_n * H_drop_catch_and_release) * rho_air * H_drop_catch_and_release / miu;
+    Re = sqrt(2 * Modelica.Constants.g_n * H_drop/2) * rho_air * H_drop/2 / miu;
   else
     Re = sqrt(2 * Modelica.Constants.g_n * H_drop) * rho_air * H_drop / miu;
   end if;

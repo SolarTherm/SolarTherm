@@ -8,7 +8,7 @@ model CascadeParticleReceiver1DCalculator
   //******************************** Mediums
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   
-  //********************* Particle Receiver Design Parameters
+  //********************* Particle Receiver Design Parameters  
   parameter SI.Area A_ap_lv1 = 400 "Aperture area of the 1st receiver";
   parameter SI.Area A_ap_lv2 = 400 "Aperture area of the 2nd receiver";
   parameter SI.Area A_ap_lv3 = 400 "Aperture area of the 3rd receiver";
@@ -64,6 +64,8 @@ model CascadeParticleReceiver1DCalculator
   parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
   parameter Boolean with_iterate_mdot_outer_loop = false;
+  parameter Integer N = 30;
+  parameter Boolean with_catch_and_release_mechanism = false;
   
   //********************* Variables
   SI.MassFlowRate mdot(start=500,min=10,max=4e3,nominal=500) "Iterated mass flow to reach T_out_target";
@@ -76,7 +78,6 @@ model CascadeParticleReceiver1DCalculator
   
   //********************* Component Instantiation
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv1(
-      N = 20, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -105,11 +106,12 @@ model CascadeParticleReceiver1DCalculator
       iterate_Q_flow = iterate_Q_flow, 
       iterate_mdot = with_iterate_mdot, 
       eta_rec_determined = 1, 
-      with_pre_determined_eta = with_pre_determined_eta) annotation(
+      with_pre_determined_eta = with_pre_determined_eta,
+      N = N,
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism) annotation(
     Placement(visible = true, transformation(origin = {-19, -63}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
 
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv2(
-      N = 20, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -138,12 +140,13 @@ model CascadeParticleReceiver1DCalculator
       iterate_Q_flow = iterate_Q_flow, 
       iterate_mdot = with_iterate_mdot, 
       eta_rec_determined = 1, 
-      with_pre_determined_eta = with_pre_determined_eta)
+      with_pre_determined_eta = with_pre_determined_eta,
+      N = N,
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism)
        annotation(
     Placement(visible = true, transformation(origin = {-18, -7.10543e-15}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
   
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D_lv3(
-      N = 20, 
       fixed_cp = false, 
       test_mode = false, 
       with_isothermal_backwall = false, 
@@ -172,7 +175,9 @@ model CascadeParticleReceiver1DCalculator
       iterate_Q_flow = iterate_Q_flow, 
       iterate_mdot = with_iterate_mdot, 
       eta_rec_determined = 1, 
-      with_pre_determined_eta = with_pre_determined_eta) annotation(
+      with_pre_determined_eta = with_pre_determined_eta,
+      N = N,
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism) annotation(
     Placement(visible = true, transformation(origin = {-18, 60}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   
   Modelica.Fluid.Sources.FixedBoundary source(

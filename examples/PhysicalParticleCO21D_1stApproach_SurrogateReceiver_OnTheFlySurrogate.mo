@@ -122,6 +122,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real abs_s = 0.9 "[RCV] Particle absorptivity - based on EES code by Sandia";
   parameter Real F = 0.54 "[RCV] View Factor of the particle curtain - based on EES code by Sandia";
   parameter Real eps_w = 0.8 "[RCV] Receiver wall emmisivity - based on EES code by Sandia";
+  parameter Integer discretisations = 30 "Discretisation of the particle receiver during sizing";
   
   //****************************** NN Based Receiver Parameter
   parameter Integer inputsize_rcv = 7;
@@ -747,7 +748,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       fixed_geometry = false, 
       iterate_Q_flow = false, 
       with_iterate_mdot = false, 
-      with_pre_determined_eta = false) annotation(
+      with_pre_determined_eta = false,
+      N = discretisations,
+      with_catch_and_release_mechanism = false) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
   //********************* Defocus calculator
@@ -778,7 +781,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       with_iterate_mdot = false, 
       m_design = m_flow_blk, 
       H_drop_design = H_rcv, 
-      with_pre_determined_eta = false) annotation(
+      with_pre_determined_eta = false,
+      N = discretisations,
+      with_catch_and_release_mechanism = false) annotation(
     Placement(visible = true, transformation(origin = {12, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
   //********************* Hot tank

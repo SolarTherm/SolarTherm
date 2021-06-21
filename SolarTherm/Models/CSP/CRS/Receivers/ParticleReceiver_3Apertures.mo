@@ -323,13 +323,13 @@ equation
     if on_1 then
         if use_neural_network == true then
           eta_rcv_dummy_1  = predict(
-            session_1, 
-            raw_input_1, 
-            inputsize,
-            X_max,
-            X_min,
-            out_max,
-            out_min
+              session_1, 
+              raw_input_1, 
+              inputsize,
+              X_max,
+              X_min,
+              out_max,
+              out_min
             );
                       
         else
@@ -357,13 +357,13 @@ equation
 	if on_2 then
         if use_neural_network == true then
           eta_rcv_dummy_2  = predict(
-            session_2, 
-            raw_input_2, 
-            inputsize,
-            X_max,
-            X_min,
-            out_max,
-            out_min
+              session_2, 
+              raw_input_2, 
+              inputsize,
+              X_max,
+              X_min,
+              out_max,
+              out_min
             );
         else
           eta_rcv_dummy_2 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
@@ -390,15 +390,15 @@ equation
     
     if on_3 then
         if use_neural_network == true then
-        eta_rcv_dummy_3  = predict(
-            session_3, 
-            raw_input_3, 
-            inputsize,
-            X_max,
-            X_min,
-            out_max,
-            out_min
-            );
+          eta_rcv_dummy_3  = predict(
+                session_3, 
+                raw_input_3, 
+                inputsize,
+                X_max,
+                X_min,
+                out_max,
+                out_min
+              );
         else
           eta_rcv_dummy_3 = const_coeff + Qin_coeff * (heat.Q_flow/1e6) + Tamb_coeff * Tamb + 
                         T_in_coeff * T_in + log10Qin_coeff * Modelica.Math.log10((heat.Q_flow/1e6)) + 

@@ -49,17 +49,16 @@ model ParticleReceiver1DCalculator
   parameter Real eps_w = 0.8 "Receiver wall emmisivity";
   parameter Real phi_max = 0.6;
   parameter Real std_deviation = 0.1;
-  
+  parameter Integer N = 20;
   //********************* Simulation Set up
   parameter Boolean with_detail_h_ambient = true "using size dependent advection heat transfer coefficient";
   parameter Boolean with_wind_effect = true "using wind effect (direction and speed)";
   parameter Boolean test_mode = false;
   parameter Boolean fixed_geometry = true "true H_drop = H_drop_design, false T_out = T_out_design ";
-  parameter Boolean iterate_Q_flow = false "true T_out=T_out_design else heat.Q_flow / A_ap";
-  parameter Boolean with_iterate_mdot = true "true T_out = T_out_design, false mdot = fluid_a.m_flow";
+  parameter Boolean iterate_Q_flow = true "true T_out=T_out_design else heat.Q_flow / A_ap";
+  parameter Boolean with_iterate_mdot = false "true T_out = T_out_design, false mdot = fluid_a.m_flow";
   parameter Boolean with_pre_determined_eta = false "true eta_rec = eta_rec_determined, false eta_rec = Qnet/Qtotal";
   parameter Boolean with_catch_and_release_mechanism = false "if true, activate the catch and release mechanism as such the Re number is based on H_drop_catch_and_release and curtain thickness is reinitialise when the particles are caught";
-  
   //********************** Variables
   SI.HeatFlowRate Q_in_rcv_calculated;
   Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_in_design, nPorts = 1, p = 1e5, use_T = true, use_p = false) annotation(
@@ -74,7 +73,7 @@ model ParticleReceiver1DCalculator
     Placement(visible = true, transformation(origin = {-56, 96}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.LiftSimple liftSimple(m_flow_fixed = m_in, use_input = false) annotation(
     Placement(visible = true, transformation(origin = {22, -16}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = 30, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, H_drop_catch_and_release = H_drop_catch_and_release, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, AR=ar_rec, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta, with_catch_and_release_mechanism = with_catch_and_release_mechanism) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1D particleReceiver1D(N = N, fixed_cp = false, test_mode = false, with_isothermal_backwall = false, with_uniform_curtain_props = false, with_wall_conduction = true, Q_in = Q_in, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, H_drop_design = H_drop_design, H_drop_catch_and_release = H_drop_catch_and_release, phi_max = phi_max, T_amb = T_amb_design, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, AR = ar_rec, T_out_design = T_out_design, with_detail_h_ambient = with_detail_h_ambient, with_wind_effect = with_wind_effect, fixed_geometry = fixed_geometry, iterate_Q_flow = iterate_Q_flow, iterate_mdot = with_iterate_mdot, eta_rec_determined = eta_rec_determined, with_pre_determined_eta = with_pre_determined_eta, with_catch_and_release_mechanism = with_catch_and_release_mechanism) annotation(
     Placement(visible = true, transformation(origin = {-29, 33}, extent = {{-27, -27}, {27, 27}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression realExpression1(y = Wspd_design) annotation(
     Placement(visible = true, transformation(origin = {-56, 82}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

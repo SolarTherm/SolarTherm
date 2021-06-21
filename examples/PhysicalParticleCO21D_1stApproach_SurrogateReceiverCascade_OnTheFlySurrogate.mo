@@ -128,6 +128,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   
   //****************************** Design condition of the Particle Receiver
+  parameter Integer discretisations = 30 "[RCV] Number of discretisations when sizing the receiver";
   parameter SI.Area A_ap_lv1 = 300 "[RCV] Top receiver aperture area [m2]";
   parameter SI.Area A_ap_lv2 = 300 "[RCV] Mid receiver aperture area [m2]";
   parameter SI.Area A_ap_lv3 = 300 "[RCV] Bottom receiver aperture area [m2]";
@@ -822,7 +823,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       iterate_Q_flow = false, 
       with_iterate_mdot = false, 
       with_pre_determined_eta = false,
-      with_iterate_mdot_outer_loop = true) annotation(
+      with_iterate_mdot_outer_loop = true,
+      N = discretisations,
+      with_catch_and_release_mechanism = false) annotation(
     Placement(visible = true, transformation(origin = {150, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
   //********************* Defocus calculator
@@ -857,7 +860,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
       iterate_Q_flow = true, 
       with_iterate_mdot = false, 
       with_pre_determined_eta = false,
-      with_iterate_mdot_outer_loop = false) annotation(
+      with_iterate_mdot_outer_loop = false,
+      N = discretisations,
+      with_catch_and_release_mechanism = false) annotation(
     Placement(visible = true, transformation(origin = {12, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
   //********************* Hot tank
