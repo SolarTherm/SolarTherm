@@ -23,7 +23,7 @@ double receiver(double ab, double em, double dni, double eta_op, double Tamb, do
 	Q_abs = 0;
 	}
 
-	return Q_abs;
+	return Q_inc;
 }
 
 double energy(double H_rcv, double D_rcv, double ab, double em, const double* dni, const double* eta_op, const double* Tamb, const double* Wspd, const double* CL, const double* C4L, const double* CH, double A_h, double dt, int nsteps) {
@@ -31,7 +31,7 @@ double energy(double H_rcv, double D_rcv, double ab, double em, const double* dn
 	double E = 0;                                                                                       // Accumulated incident energy over receiver surface
 	for (size_t i = 1; i < nsteps; i++)
 	{
-		E = E + 0.5*(receiver(ab, em, dni[i], eta_op[i], Tamb[i], Wspd[i], CL, C4L, CH, A_h, H_rcv, D_rcv) + receiver(ab, em, dni[i-1], eta_op[i-1], Tamb[i-1], Wspd[i-1], CL, C4L, CH, A_h, H_rcv, D_rcv))*A_h*dt;
+		E = E + 0.5*(receiver(ab, em, dni[i], eta_op[i], Tamb[i], Wspd[i], CL, C4L, CH, A_h, H_rcv, D_rcv) + receiver(ab, em, dni[i-1], eta_op[i-1], Tamb[i-1], Wspd[i-1], CL, C4L, CH, A_h, H_rcv, D_rcv))*dt;
 	}
 	return E;
 }
