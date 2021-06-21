@@ -39,20 +39,24 @@ def run_simul(inputs={}):
 
 	pm.num_aperture=int(pm.num_aperture)
 	if pm.num_aperture>1:
+		# the sequence of the multi-aperture is (left, right, centre) or (lv1, lv2, lv3) 
 		H_rcv={}
 		W_rcv={}
 		for i in range(pm.num_aperture):
 			H_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'H_rcv_%s'%(i+1))
 			W_rcv['lv_%.0f'%(i+1)]=getattr(pm, 'W_rcv_%s'%(i+1))
 
-		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, R_tower=pm.R_tower, W_rcv=W_rcv, H_rcv=H_rcv)
+		if pm.rcv_type=='multi-aperture-parallel':
+			parallel=True
+		else:
+			parallel=False		
+		mac=MultiApertureConfiguration(n=pm.num_aperture, gamma=pm.gamma, H_tower=pm.H_tower, R_tower=pm.R_tower, W_rcv=W_rcv, H_rcv=H_rcv, parallel=parallel)
 		pm.W_rcv=mac.W_rcv
 		pm.H_rcv=mac.H_rcv
 		pm.Z_rcv=[]
 
 		for i in range(pm.num_aperture):
-			lv=int(mac.get_lv_index(i))
-			zi=mac.get_elev_height(lv)
+			xi, yi, zi=mac.get_cood_pos(i)
 			pm.Z_rcv.append(zi)
 	else:
 		mac=None
@@ -118,7 +122,7 @@ def run_simul(inputs={}):
 
 if __name__=='__main__':
 	# tests
-	case="test-single-aperture"
+	case="test-multi-aperture"
 
 	if case=='test-single-aperture':
 		num_aperture=1
@@ -144,11 +148,11 @@ if __name__=='__main__':
 		inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'num_aperture': num_aperture, 'H_helio':H_helio,'W_helio':W_helio, 'H_tower':H_tower,'R_tower':R_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': rcv_type, 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, "windy_optics":windy_optics, "n_procs": n_procs, "verbose": verbose, "gen_vtk": gen_vtk }
 
 	elif case=='test-multi-aperture':
-		verbose=True
-		gen_vtk=True
+		verbose=False
+		gen_vtk=False
 		num_aperture=3
 		angular_range=270
-		rcv_type='multi-aperture'    
+		rcv_type='multi-aperture-parallel'    
 		field_type='multi-aperture' 
 		Q_in_rcv=64227613.194 #W
 		W_helio=12.0156148407
