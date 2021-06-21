@@ -1,72 +1,7 @@
 within examples.ASTRI;
 
 model NaSTsCO2
-  /*
-  function opt_file_naming
-    input String prefix;
-    //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
-    input String phi_pct_string;
-    input Real SM_guess;
-    input Real HT_pct_guess;
-    input Real f_recv_guess;
-    output String opt_file;
-  protected
-    Integer phi;
-    Integer SM;
-    Integer HT_pct;
-    Integer f_recv;
-    String SM_string;
-    String HT_pct_string;
-    String f_recv_string;
-  algorithm
-    SM := max(14, min(38, 1 * round(SM_guess * 10)));
-//Actually SM*10"
-    HT_pct := max(70, min(130, 5 * round(HT_pct_guess * 0.2)));
-    f_recv := max(70, min(130, 5 * round(f_recv_guess * 20.0)));
-    SM_string := String(SM);
-    HT_pct_string := String(HT_pct);
-    f_recv_string := String(f_recv);
-    opt_file := Modelica.Utilities.Files.loadResource(prefix + SM_string + "dSM/isp_designpt/" + phi_pct_string + "%phi_" + HT_pct_string + "%HT_" + f_recv_string + "%Arecv_optics.motab");
-  end opt_file_naming;
 
-  function round
-    input Real number;
-    output Integer int;
-  protected
-    Integer quotient;
-    Real remainder;
-  algorithm
-    quotient := integer(number);
-    remainder := number - floor(number);
-    if remainder >= 0.5 then
-      int := 1 + quotient;
-    else
-      int := quotient;
-    end if;
-  end round;
-  
-  parameter String SM_string = String(2 * SolarTherm.Utilities.Round(SM_guess * 5)) "Solar Multiple rounded to the nearest 0.2, multiplied by 10 and converted to string";
-  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/100MWe/5000c%/893K/1000kWpm2/";
-  parameter String phi_pct_string = "124";
-  parameter Real SM_guess = 2.2;
-  parameter Real HT_pct_guess = 100;
-  parameter Real f_recv = 1.0;
-  //parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);  
-  parameter Real land_mult = 5.0 "Land area multiplier";
-  //is it polar or surround??    
-  //parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
-  //parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";  
-  //replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";  
-  //parameter SI.Efficiency eff_blk_def = 0.51 "Power block efficiency at design point";
-  //parameter SI.Time PB_startup = 20.0 * 60.0 "Startup ramping time of striling engine is 20mins"; 
-   //parameter SI.Temperature T_pb_cool_des = 323.0 "Design cooling temperature of PB";
-  //parameter SI.Efficiency eff_net_des = 1.0 "Power block net efficiency rating";      
-  //parameter SI.Energy helio_E_start = 90e3 * A_heliostat / 144.375 "Heliostat startup energy consumption";
-  //parameter SI.Power helio_W_track = 0.0553 * A_heliostat / 144.375 "Heliostat tracking power";   
-//connect(Wspd_input.y, receiver.Wspd) annotation(
-//  Line(points = {{-113, 48}, {-32, 48}, {-32, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));  
-  */
-  
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -88,24 +23,26 @@ model NaSTsCO2
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "Design point DNI value";
-  parameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";  
+  //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";  
+  parameter Real SM = 2.717882 "Real solar multiple";  
   
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround";
-  parameter String opt_file = "/media/yewang/Data/Research/yewang/astri-storage/solartherm-astri/124%phi_100%HT_100%Arecv_optics.motab" "Directory of the optical efficiency lookup table (OELT) file";
+  parameter String opt_file(fixed = false);
+  parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium");  
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter Real he_av_design = 0.99 "Helisotats availability";  
-  parameter SI.Area A_heliostat = MetaA[2] "Area of one heliostat";
-  parameter SI.Length H_tower = MetaA[6] "Height of the tower"; 
-  parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
+  parameter SI.Area A_heliostat = 148.84 "Area of one heliostat";
+  parameter SI.Length H_tower = 188.567344 "Height of the tower"; 
+  parameter Real[24] MetaA = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
   parameter Real eff_opt_des = MetaA[3];
   parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
-  parameter SI.Area A_land = 5 * A_field "Land area occupied by the plant";  
+  parameter SI.Area A_land = MetaA[24] "Land area occupied by the plant";  
   
   // Receiver [RCV]
-  parameter SI.Length H_recv = MetaA[4];
-  parameter SI.Length D_recv = MetaA[5];
+  parameter SI.Length H_recv = 19.810327;
+  parameter SI.Length D_recv = 19.012482;
   parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "Receiver area";
   parameter Integer N_pa_recv = 20 "Number of panels in receiver";
   parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
@@ -234,8 +171,28 @@ model NaSTsCO2
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Heliostat field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table_Full(angles = angles, file = opt_file), A_h = A_heliostat, Q_design = Q_flow_defocus, Wspd_max = Wspd_max, ele_min(displayUnit = "deg") = ele_min, he_av = he_av_design, lat = data.lat, lon = data.lon, n_h = n_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, nu_start = nu_start, use_defocus = false, use_on = true, use_wind = true) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField( 
+        A_h = A_heliostat, 
+        Q_design = Q_flow_defocus, 
+        Wspd_max = Wspd_max, 
+        ele_min(displayUnit = "deg") = ele_min, 
+        he_av = he_av_design, 
+        lat = data.lat, 
+        lon = data.lon, 
+        nu_defocus = nu_defocus, 
+        nu_min = nu_min_sf, 
+        nu_start = nu_start, 
+        use_defocus = false, 
+        use_on = true, 
+        use_wind = true, 
+        psave=casefolder, 
+        H_tower=H_tower, 
+        H_rcv=H_recv, 
+        W_rcv=D_recv, 
+        W_helio=sqrt(A_heliostat), 
+        H_helio=sqrt(A_heliostat)) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+ 
  // Receiver
   SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
@@ -268,6 +225,9 @@ model NaSTsCO2
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
 
+
+initial algorithm
+  opt_file := heliostatsField.optical.tablefile;
 
 equation
   P_elec = powerBlock.W_net;

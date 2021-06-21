@@ -19,7 +19,7 @@ extends OpticalEfficiency;
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-	parameter Integer argc =19 "Number of variables to be passed to the C function";
+	parameter Integer argc =27 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
@@ -37,13 +37,25 @@ extends OpticalEfficiency;
     parameter SI.Length R_tower = 0.01 "Tower diameter";
     parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
     parameter Real fb=0.7 "factor to grow the field layout";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
     parameter String tablefile(fixed=false);
+
+	// additional parameters for aiming strategy and thermal performance
+    parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
+    parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
+    parameter Real f_oversize = 1 "Field oversizing factor";
+ 	parameter Integer Nb=0 "Number of banks";
+ 	parameter Integer Nfp=0 "Number of flow paths";
+ 	parameter Real Do=0 "Tube outer diameter";
+	parameter Boolean run_aiming = false "Run aiming strategy or not";
+	parameter Boolean run_therm = false "Run receiver thermal model or not";
+	parameter Integer aimingstrategy(fixed=false) "Run aiming strategy or not? 1 is yes, 0 is no";
+	parameter Integer therm(fixed=false) "Run receiver thermal model or not? 1 is yes, 0 is no";
 
     SI.Angle angle1;
     SI.Angle angle2;
@@ -60,7 +72,17 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "aimingstrategy", "therm", "aim_pm1", "aim_pm2", "f_oversize", "Nb", "Nfp", "Do" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, aim_pm1, aim_pm2, f_oversize, Nb, Nfp, Do}); 
+
+if run_aiming then aimingstrategy:=1;
+else aimingstrategy:=0;
+end if;
+
+if run_therm then therm:=1;
+else therm:=0;
+end if;
+
+
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

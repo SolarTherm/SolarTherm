@@ -9,7 +9,7 @@ model Reference_2_solstice
 	import FI = SolarTherm.Models.Analysis.Finances;
 	import SolarTherm.Types.Solar_angles;
 	import SolarTherm.Types.Currency;
-	import metadata = SolarTherm.Utilities.Metadata_Optics;
+	import metadata = SolarTherm.Utilities.Metadata_Solstice_Optics;
 	extends Modelica.Icons.Example;
 
 	// Input Parameters
@@ -41,7 +41,7 @@ model Reference_2_solstice
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
 
-	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
 	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
 	//parameter SI.Length H_tower = 150 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
@@ -49,11 +49,11 @@ model Reference_2_solstice
 	parameter Real fb = 0.4 "factor to grow the field layout";
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
 	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+	parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-	parameter Real metadata_list[8] = metadata(opt_file);
+	parameter Real metadata_list[9] = metadata(opt_file);
 	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
 
 	// Field
@@ -191,8 +191,8 @@ model Reference_2_solstice
     parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
 
 
-	parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
-
+	//parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_land = metadata_list[9] "Land area";
 	parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
 	parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
 
@@ -342,7 +342,7 @@ model Reference_2_solstice
 		R_tower = R_tower,
 		R1 = R1,
 		fb = fb,
-		rho_helio = rho_helio,
+		helio_refl = helio_refl,
 		slope_error = slope_error,
 		n_row_oelt = n_row_oelt,
 		n_col_oelt = n_col_oelt,

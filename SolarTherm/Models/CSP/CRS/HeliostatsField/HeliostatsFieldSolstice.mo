@@ -1,7 +1,7 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice
     extends Interfaces.Models.Heliostats;
-    import metadata = SolarTherm.Utilities.Metadata_Optics;
+    import metadata = SolarTherm.Utilities.Metadata_Solstice_Optics;
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -21,7 +21,7 @@ model HeliostatsFieldSolstice
     parameter SI.Length R_tower = 0.01 "Tower diameter";
     parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
     parameter Real fb=0.7 "factor to grow the field layout";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
@@ -32,27 +32,37 @@ model HeliostatsFieldSolstice
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
+	// additional parameters for aiming strategy and thermal performance
+    parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
+    parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
+    parameter Real f_oversize = 1 "Field oversizing factor";
+ 	parameter Integer Nb=0 "Number of banks";
+ 	parameter Integer Nfp=0 "Number of flow paths";
+ 	parameter Real Do=0 "Tube outer diameter";
+	parameter Boolean run_aiming = false "Run aiming strategy or not";
+	parameter Boolean run_therm = false "Run receiver thermal model or not";
 
-    parameter Boolean use_on = false
+
+  parameter Boolean use_on = false
     "= true to display when solar field is connected"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter Boolean use_defocus = false "= true to use defocus strategy"
+  parameter Boolean use_defocus = false "= true to use defocus strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter Boolean use_wind = false "= true to use Wind-stop strategy"
+  parameter Boolean use_wind = false "= true to use Wind-stop strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-    parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
+  parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 
-    parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
-    parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
+  parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
+  parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
    parameter String opt_file(fixed=false);
-   parameter Real metadata_list[8] = metadata(opt_file);
+   parameter Real metadata_list[9] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_refl=helio_refl,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file, run_aiming=run_aiming, run_therm=run_therm, aim_pm1=aim_pm1, aim_pm2=aim_pm2, f_oversize=f_oversize, Nb=Nb, Nfp=Nfp, Do=Do);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
@@ -67,17 +77,21 @@ model HeliostatsFieldSolstice
   Modelica.Blocks.Interfaces.BooleanInput defocus if use_defocus annotation (Placement(
         transformation(extent={{-126,-88},{-86,-48}}),iconTransformation(extent={{-110,
             -72},{-86,-48}})));
+
   Modelica.Blocks.Interfaces.RealOutput Q_incident annotation(
     Placement(transformation(extent = {{94, -18}, {130, 18}})));
   Modelica.Blocks.Interfaces.RealInput Wspd if use_wind annotation (Placement(
         transformation(extent={{-126,50},{-86,90}}), iconTransformation(extent={
             {-110,50},{-86,74}})));
 
+
   SI.Angle elo;
   SI.Angle ele;
   SI.Angle zen;
   SI.Angle zen2;
   SI.Angle azi;
+  SI.Energy E_dni;
+  SI.Energy E_field;
 
   SI.Power W_loss;
   Real damping;
@@ -150,6 +164,8 @@ equation
     solar.hra,
     lat);
 
+  der(E_field) = Q_net;
+  der(E_dni) = he_av*n_h*A_h*solar.dni;
   damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;
   W_loss1=if ele>1e-2 then n_h*he_av*damping*W_track else 0;
   when ele>1e-2 then
