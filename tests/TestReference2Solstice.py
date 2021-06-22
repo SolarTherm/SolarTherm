@@ -15,6 +15,7 @@ class TestReference2Solstice(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
+		sim.update_pars(['n_row_oelt', 'n_col_oelt'],['3', '3']) # reduce oelt resolution
 		sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
@@ -24,9 +25,9 @@ class TestReference2Solstice(unittest.TestCase):
 		# version.  They are not validated against anything or independently
 		# calculated.
 		print(self.perf)
-		self.assertTrue(abs(self.perf[0]- 358949.56)/358949.56<0.01) # epy
-		self.assertTrue(abs(self.perf[1]- 175.42)/175.42<0.01) # LCOE
-		self.assertTrue(abs(self.perf[2]- 40.98)/40.98<0.01) # Capacity factor
+		self.assertTrue(abs(self.perf[0]- 393933.791)/393933.791<0.01) # epy
+		self.assertTrue(abs(self.perf[1]- 160.352)/160.352<0.01) # LCOE
+		self.assertTrue(abs(self.perf[2]- 44.969)/44.969<0.01) # Capacity factor
 		os.system('rm Reference_2_solstice*')
     		
 

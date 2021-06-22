@@ -6,7 +6,7 @@ import unittest
 from solartherm import simulation
 from solartherm import postproc
 
-class TestOptimisation(unittest.TestCase):
+class TestExternalC(unittest.TestCase):
 	def setUp(self):
 		fn = 'TestOptimisation.mo'
 		model = 'AO'
@@ -18,9 +18,9 @@ class TestOptimisation(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_optimum(self):
-		self.assertTrue(abs(self.res.interpolate('x1', 0)- 1.0)<0.01)
-		self.assertTrue(abs(self.res.interpolate('x2', 0)- 0.0)<0.01)
-		self.assertTrue(abs(self.res.interpolate('u', 1)- 5.0)/5.0<0.01)
+		self.assertAlmostEqual(self.res.interpolate('x1', 0), 1.0, 5)
+		self.assertAlmostEqual(self.res.interpolate('x2', 0), 0.0, 5)
+		self.assertAlmostEqual(self.res.interpolate('u', 1), 5.0, 5)
 		#from solartherm import plotting
 		#plotting.plot_res(self.res, ['u'])
 

@@ -6,7 +6,7 @@ import unittest
 from solartherm import simulation
 from solartherm import postproc
 
-from math import pi
+import os
 
 class TestSimpleSystem(unittest.TestCase):
 	def setUp(self):
@@ -22,10 +22,14 @@ class TestSimpleSystem(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 349.78, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 97.26, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 39.93, 2) # Capacity factor
+
+		print('index, epy (MWh/year),lcoe peaker ($/MWh),capf (%),srev ($')
 		print(self.perf);
+		self.assertTrue(abs(self.perf[0]- 352.558)/352.558<0.01) # epy
+		self.assertTrue(abs(self.perf[1]- 96.490)/96.490<0.01) # LCOE
+		self.assertTrue(abs(self.perf[2]- 40.246)/40.246<0.01) # Capacity factor
+		os.system('rm SimpleSystem*')
+
 
 if __name__ == '__main__':
 	unittest.main()
