@@ -13,3 +13,6 @@ designNRELPB
 LinProgFunc
 st_surrogate
 ReceiverStartupEnergy
+ReceiverStartupTime
+opt_eff_horizon
+horizon_function

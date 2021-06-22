@@ -18,6 +18,6 @@ function ReceiverStartupEnergy
 	external "C" E = energy(H_rcv, D_rcv, ab, em, dni, eta_op, Tamb, Wspd, CL, C4L, CH, A_field, dt, nsteps);
                                   
  annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-            Include="#include \"st_receiver_startup.c\"");
+            Include="#include \"st_receiver_startup_energy.c\"");
 
 end ReceiverStartupEnergy;
