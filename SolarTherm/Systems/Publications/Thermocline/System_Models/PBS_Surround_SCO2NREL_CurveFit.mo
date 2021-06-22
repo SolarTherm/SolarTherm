@@ -341,7 +341,7 @@ model PBS_Surround_SCO2NREL_CurveFit
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
   SolarTherm.Models.Control.PBS_Controller_PBLimit_Level pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max) annotation(
     Placement(visible = true, transformation(origin = {60, -18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Regression thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage*Q_flow_ref_blk*3600.0, T_max = T_max, T_min = T_min, L_start = L_PB_min) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Table thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage*Q_flow_ref_blk*3600.0, T_max = T_max, T_min = T_min, L_start = L_PB_min) annotation(
     Placement(visible = true, transformation(origin = {26, 38}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
