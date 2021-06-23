@@ -1,6 +1,6 @@
 within SolarTherm.Utilities.Thermocline;
 
-function Degradation_Width
+function Degradation_Width //Assumes T_max and T_min to be the max and min values of the dataset
   input Real z_data[:];
   input Real T_data[:];
   input Real f_low = 0.05;

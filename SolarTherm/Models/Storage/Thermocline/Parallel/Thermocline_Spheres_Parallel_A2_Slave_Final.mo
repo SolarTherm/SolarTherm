@@ -10,10 +10,10 @@ model Thermocline_Spheres_Parallel_A2_Slave_Final
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_A = SolarTherm.Materials.PartialMaterial;
-  replaceable package Filler_Package_B = SolarTherm.Materials.PartialMaterial;
+  replaceable package Filler_Package_B = Filler_Package_A;
   
   replaceable package Encapsulation_Package_A = Filler_Package_A; //Defaults to filler material
-  replaceable package Encapsulation_Package_B = Filler_Package_B; //Defaults to filler material
+  replaceable package Encapsulation_Package_B = Encapsulation_Package_A; //Defaults to filler material
   //Storage Parameter Settings
   parameter Integer Correlation = 3 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
     //Storage Cpacity and Fractions
@@ -43,11 +43,20 @@ model Thermocline_Spheres_Parallel_A2_Slave_Final
   parameter SI.Temperature T_min = CV.from_deg(515) "Minimum temperature (design) also starting T";
   parameter SI.Temperature T_max = CV.from_deg(715) "Maximum design temperature (design)";
     //Internal control for temperature
-  parameter SI.Temperature T_bot_high = 273.15 + 520.0 "Temperature of T_05 at which it switches to the next tank during charging";
-  parameter SI.Temperature T_top_low = 273.15 + 695.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
+  parameter SI.Temperature T_recv_max = 273.15 + 570.0 "Temperature of T_05 at which it switches to the next tank during charging";
+  parameter SI.Temperature T_PB_min = 273.15 + 680.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
 
-  Integer Active_Tank(start = 1) "Which tank is in use currently";
+  //Internal Controls
+  //Integer Active_Tank(start = 1) "Which tank is in use currently";
+  Real f_chg_guess(start=0.0) "Fraction of mass flow of secondary tank during charging";
+  Real f_disch_guess(start=0.0) "Fraction of mass flow of secondary tank during discharging";
+  Real f_chg(start=0.0) "Fraction of mass flow of secondary tank during charging";
+  Real f_disch(start=0.0) "Fraction of mass flow of secondary tank during discharging";
+  Integer Charge_State(start=1) "1 = Only A, 2 = B assists A, 3 = Only B";
+  Integer Discharge_State(start=1) "1 = Only A, 2 = B assists A, 3 = Only B";
   
+  parameter SI.SpecificEnthalpy h_recv_max = Fluid_Package.h_Tf(T_recv_max,0.0);
+  parameter SI.SpecificEnthalpy h_PB_min = Fluid_Package.h_Tf(T_PB_min,0.0);
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)" annotation(
     Placement(visible = true, transformation(extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {45, 55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
@@ -97,24 +106,77 @@ model Thermocline_Spheres_Parallel_A2_Slave_Final
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
 algorithm
-  //Internal control algorithm
-  //when T_05_A > T_bot_high then
-  when Tank_A.T_f[1] > T_bot_high then
-    if Active_Tank == 1 then//and fluid_a.m_flow > m_0 then
-      Active_Tank := 2;
-    end if;
+  when Tank_A.T_f[1] > T_recv_max then
+    Charge_State := 2;
+  elsewhen Tank_A.T_f[1] < T_recv_max - 1 then
+    Charge_State := 1;
   end when;
-  //when T_95_B < T_top_low then
-  when Tank_B.T_f[N_f_B] < T_top_low then
-    if Active_Tank == 2 then//and fluid_a.m_flow < m_0 then
-      Active_Tank := 1;
-    end if;
+  
+  when f_chg_guess > 1.0 then
+    Charge_State := 3;
+  elsewhen f_chg_guess < 0.99 then
+    Charge_State := 2;
   end when;
-  //Measured temperatures at the bottom and top
+  
+  when Tank_A.T_f[N_f_A] < T_PB_min then
+    Discharge_State := 2;
+  elsewhen Tank_A.T_f[N_f_A] > T_PB_min + 1 then
+    Discharge_State := 1;
+  end when;
+  
+  when f_disch_guess > 1.0 then
+    Discharge_State := 3;
+  elsewhen f_disch_guess < 0.99 then
+    Discharge_State := 2;
+  end when;
+  
+  
   T_bot_measured := Tank_B.T_f[1];
-  T_top_measured := Tank_B.T_f[N_f_A];
+  T_top_measured := Tank_B.T_f[N_f_B];
 
 equation
+  
+  //Figure out assisted mass fraction
+    if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] + 100.0 then
+      f_disch_guess = (h_PB_min - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]);
+    else //Cannot Assist
+      f_disch_guess = 0.0;
+    end if;
+
+    if Tank_B.h_f[1] < Tank_A.h_f[1] - 100.0 then
+      f_chg_guess = (h_recv_max - Tank_A.h_f[1]) / (Tank_B.h_f[1] - Tank_A.h_f[1] );
+    else
+      f_chg_guess = 0.0;
+    end if;
+
+  if Charge_State == 1 then
+    f_chg = 0.0;
+  elseif Charge_State == 2 then
+    f_chg = f_chg_guess;
+  else
+    f_chg = 1.0;
+  end if;
+  
+  if Discharge_State == 1 then
+    f_disch = 0.0;
+  elseif Discharge_State == 2 then
+    f_disch = f_disch_guess;
+  else
+    f_disch = 1.0;
+  end if;
+  /*
+  if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] then
+    f_disch = min(1.0, (h_PB_min - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A] ));
+  else
+    f_disch = 0.0;
+  end if;
+  
+  if Tank_B.h_f[1] < Tank_A.h_f[1] then
+    f_chg = min(1.0, (h_recv_max - Tank_A.h_f[1]) / (Tank_B.h_f[1] - Tank_A.h_f[1] ));
+  else
+    f_chg = 0.0;
+  end if;
+  */
   if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
     fluid_bot.h = fluid_b.h_outflow;
@@ -131,46 +193,27 @@ equation
   //Calculate tank energy level
   Level = (1 - frac_1) * Tank_B.Level + frac_1 * Tank_A.Level;
   //Determine tank outlet enthalpy used by external control system
-  h_bot_outlet = if Active_Tank == 1 then Tank_A.h_f[1] else Tank_B.h_f[1];
-
+  //h_bot_outlet = if Active_Tank == 1 then Tank_A.h_f[1] else Tank_B.h_f[1];
+  h_bot_outlet = (1.0 - f_chg)*Tank_A.h_f[1] + f_chg*Tank_B.h_f[1];
   //Figure out which tanks need which equations and connections
   if fluid_a.m_flow > 0.0 then //Charging
-    if Active_Tank == 1 then
-      Tank_A.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_A.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_chg);
+      Tank_B.m_flow = -1.0 * fluid_a.m_flow * f_chg;
+      
       Tank_A.h_in = inStream(fluid_a.h_outflow);
-      fluid_a.h_outflow = Tank_A.h_in;
-      fluid_b.h_outflow = Tank_A.h_out;
-      Tank_B.m_flow = 0.0;
       Tank_B.h_in = inStream(fluid_a.h_outflow);
-      //Tank_B.h_in = Tank_B.h_f[N_f_B];
-    else
-      Tank_B.m_flow = -1.0 * fluid_a.m_flow;
-      Tank_B.h_in = inStream(fluid_a.h_outflow);
-      fluid_a.h_outflow = Tank_B.h_in;
-      fluid_b.h_outflow = Tank_B.h_out;
-      Tank_A.m_flow = 0.0;
-      Tank_A.h_in = inStream(fluid_a.h_outflow);
-      //Tank_A.h_in = Tank_A.h_f[N_f_A];
-    end if;
+      
+      fluid_a.h_outflow = Tank_A.h_in * (1.0 - f_chg) + Tank_B.h_in * (f_chg);
+      fluid_b.h_outflow = Tank_A.h_out * (1.0 - f_chg) + Tank_B.h_out * (f_chg);
   else //Discharging
-    if Active_Tank == 1 then
-      Tank_A.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_A.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_disch);
+      Tank_B.m_flow = -1.0 * fluid_a.m_flow * f_disch;
+      
       Tank_A.h_in = inStream(fluid_b.h_outflow);
-      Tank_B.m_flow = 0.0;
       Tank_B.h_in = inStream(fluid_b.h_outflow);
-      //Tank_B.h_in = Tank_B.h_f[1];
-      fluid_a.h_outflow = Tank_A.h_out;
-      fluid_b.h_outflow = Tank_A.h_in;
-    else
-      Tank_B.m_flow = -1.0 * fluid_a.m_flow;
-      Tank_B.h_in = inStream(fluid_b.h_outflow);
-      Tank_A.m_flow = 0.0;
-      Tank_A.h_in = inStream(fluid_b.h_outflow);
-      //Tank_A.h_in = Tank_A.h_f[1];
-      fluid_a.h_outflow = Tank_B.h_out;
-      fluid_b.h_outflow = Tank_B.h_in;
-    end if;
-
+      
+      fluid_a.h_outflow = Tank_A.h_out * (1.0 - f_disch) + Tank_B.h_out * (f_disch);
+      fluid_b.h_outflow = Tank_A.h_in * (1.0 - f_disch) + Tank_B.h_in * (f_disch);
   end if;
   
   //Connect pressure and ambient temp

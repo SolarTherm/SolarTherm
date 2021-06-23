@@ -8,7 +8,7 @@ model Part3_Preserve_H
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   //Do not change
-  package Fluid_Package = SolarTherm.Materials.Sodium;
+  package Fluid_Package = SolarTherm.Materials.Sodium_Table;
   //Do not change
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
   //Design Parameters
@@ -22,7 +22,7 @@ model Part3_Preserve_H
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -51,7 +51,7 @@ model Part3_Preserve_H
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A2_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 1.0 / 2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_bot_high = T_Recv_max - 1, T_top_low = T_PB_min + 1, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A2_Slave_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 1.0 / 2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_max = T_Recv_max, T_PB_min = T_PB_min, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -125,13 +125,11 @@ algorithm
 equation
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
-  if abs(thermocline_Tank.fluid_a.m_flow) > 1e-3 then
+  if thermocline_Tank.fluid_a.m_flow > 1.0e-3 then //charging
 //there is mass flow
-    if thermocline_Tank.Active_Tank == 1 then
-      T_outlet_degC = thermocline_Tank.Tank_A.fluid_out.T - 273.15;
-    else
-      T_outlet_degC = thermocline_Tank.Tank_B.fluid_out.T - 273.15;
-    end if;
+    T_outlet_degC = thermocline_Tank.fluid_bot.T - 273.15;
+  elseif thermocline_Tank.fluid_a.m_flow < -1.0e-3 then
+    T_outlet_degC = thermocline_Tank.fluid_top.T - 273.15;
   else
     T_outlet_degC = 25.0;
 //reference value
@@ -216,5 +214,5 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false)));
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
 end Part3_Preserve_H;

@@ -104,7 +104,7 @@ equation
   annotation (Documentation(info="<html>
 </html>", revisions="<html>
 <ul>
-<li>Alberto de la Calle:<br>Released first version. </li>
+<li>by Zebedee Kee, Receiver used in Packed Bed Storage Annual System Model. Only Radiative Losses. </li>
 </ul>
 </html>"));
 end PBS_Receiver;

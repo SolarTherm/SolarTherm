@@ -352,7 +352,7 @@ equation
       elseif Correlation == 9 then
         Nu[i] = f_Nu*(5.5 + 0.025*((Re[i]*Pr[i])^0.8));
       else
-        Nu[i] = 28.9704 + 78.165*((Re[i]*Pr[i])^0.3194);
+        Nu[i] = 28.9704 + 78.1729*((Re[i]*Pr[i])^0.3193);
       end if;
     else
       if Correlation < 9 then

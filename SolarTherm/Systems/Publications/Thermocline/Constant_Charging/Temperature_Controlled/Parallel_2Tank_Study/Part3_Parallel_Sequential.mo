@@ -1,7 +1,7 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled.Parallel_2Tank_Study;
 
-model Part1_Baseline
-  //Part one of the baseline comparisons, this one is just the base case.
+model Part3_Parallel_Sequential
+  //Part one of the documentation studies effect of mesh refinement on output.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -21,7 +21,7 @@ model Part1_Baseline
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 50 "Number of fluid CVs in each tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -34,7 +34,7 @@ model Part1_Baseline
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
-  parameter Real ar = 2.0 "Tank aspect ratio";
+  parameter Real ar = 2.0 * (2.0 ^ 0.5) "Tank aspect ratio";
   //Derived
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
@@ -45,8 +45,12 @@ model Part1_Baseline
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
-  //Control
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
+  //Efficiency
+  parameter SI.Energy denominator = m_charge * t_charge * (h_f_max - h_f_min);
+  SI.Energy numerator(start = 0.0);
+  Real eff_storage(start = 0.0) "Storage efficiency";
+  //COntrol
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A2_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 1.0/2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_bot_high = T_Recv_max - 1, T_top_low = T_PB_min + 1, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -93,14 +97,9 @@ model Part1_Baseline
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {0, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
     
-  //Efficiency
-  parameter SI.Energy denominator = m_charge * t_charge * (h_f_max - h_f_min);
-  SI.Energy numerator(start = 0.0);
-  //Real der_numerator "rate of change of the numerator for eff_storage calculations";
-  Real eff_storage(start = 0.0) "Storage efficiency";
-  
   //Degradation Width calculation
-  Real W "Non-dimensional thermocline degradation width";
+  Real W_1 "Non-dimensional thermocline degradation width, Tank A";
+  Real W_2 "Non-dimensional thermocline degradation width, Tank B";
   
 algorithm
   when rem(time, t_cycle) > 1e-6 then
@@ -118,43 +117,50 @@ algorithm
   when thermocline_Tank.T_bot_measured > T_Recv_max then
     m_Recv_signal := 0.0;
   end when;
+//when thermocline_Tank.fluid_bot.T > T_Recv_max then
+//if rem(time, t_cycle) < t_charge then
+//end if;
   when thermocline_Tank.T_top_measured < T_PB_min then
     m_PB_signal := 0.0;
   end when;
-
-/*
-  if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
-    der_numerator := PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
-  else
-    der_numerator := 0.0;
-  end if;
-*/
+//when thermocline_Tank.fluid_top.T < T_PB_min then
+//if rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge then
+//end if;
 equation
-  //Thermocline degradation width
-  W = Utilities.Thermocline.Degradation_Width_2(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95,T_min,T_max)/thermocline_Tank.Tank_A.H_tank;
-  
-  //der(numerator) = der_numerator;
-  if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
-    der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
-  else
-    der(numerator) = 0.0;
-  end if;
+  //Degradation width
+  W_1 = Utilities.Thermocline.Degradation_Width_2(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95,T_min,T_max)/thermocline_Tank.Tank_A.H_tank;
+  W_2 = Utilities.Thermocline.Degradation_Width_2(thermocline_Tank.Tank_B.z_f,thermocline_Tank.Tank_B.T_f,0.05,0.95,T_min,T_max)/thermocline_Tank.Tank_B.H_tank;
   
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
-  if thermocline_Tank.Tank_A.m_flow > 1e-3 then
-//dicharging
-    T_outlet_degC = T_top_degC;
-  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then
-//charging
-    T_outlet_degC = T_bot_degC;
+  if abs(thermocline_Tank.fluid_a.m_flow) > 1e-3 then //there is mass flow
+    if thermocline_Tank.Active_Tank == 1 then
+      T_outlet_degC = thermocline_Tank.Tank_A.fluid_out.T - 273.15;
+    else
+      T_outlet_degC = thermocline_Tank.Tank_B.fluid_out.T - 273.15;
+    end if;
   else
     T_outlet_degC = 25.0;
 //reference value
   end if;
-  
+/*
+//controls
+  if rem(time, t_cycle) < t_charge and thermocline_Tank.T_bot_measured < T_Recv_max then
+//charging
+    m_Recv_signal = m_charge;
+    m_PB_signal = 0.0;
+  elseif rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge and thermocline_Tank.T_top_measured > T_PB_min then
+//discharging
+    m_Recv_signal = 0.0;
+    m_PB_signal = m_discharge;
+  else
+    m_Recv_signal = 0.0;
+    m_PB_signal = 0.0;
+  end if;
+*/
 //efficiency
   if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
+    der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
     if time < t_cycle * 5.0 + t_charge then
 //charging
       der(E_charged) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
@@ -166,9 +172,10 @@ equation
       der(E_charged) = 0.0;
       der(E_discharged) = 0.0;
     end if;
-    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
-    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
+    der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total;
+    der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump;
   else
+    der(numerator) = 0.0;
     der(E_charged) = 0.0;
     der(E_discharged) = 0.0;
     der(E_lost) = 0.0;
@@ -217,4 +224,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part1_Baseline;
+end Part3_Parallel_Sequential;
