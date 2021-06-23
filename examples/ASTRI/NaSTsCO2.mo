@@ -130,7 +130,15 @@ model NaSTsCO2
   parameter FI.Money C_field = pri_field * A_field "Field cost";
   parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
   parameter FI.Money C_tower = 3117043.67 * exp(0.0113 * H_tower) "Tower cost";
-  parameter FI.Money C_receiver = 72365.8 * A_recv "Receiver cost";
+  //parameter FI.Money C_receiver = 72365.8 * A_recv "Receiver cost";
+  // receiver cost in the Gen3L model  
+  parameter FI.Money_USD C_receiver = C_recv_fix + C_recv_ref * (D_recv / D_recv_ref) * (H_recv/H_recv_ref)^recv_exp "Receiver cost";
+  parameter FI.Money_USD C_recv_fix = 4780420 "Receiver fixed Cost";  
+  parameter FI.Money_USD C_recv_ref = 35400613 "Receiver reference Cost";  
+  parameter SI.Diameter D_recv_ref = 20 "Receiver reference diameter";
+  parameter SI.Height H_recv_ref = 18.4 "Receiver reference height";
+  parameter Real recv_exp = 0.6 "Receiver reference height";  
+  
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money C_storage = 0.0;
   //tankHot.C_Storage "Storage cost";
@@ -194,7 +202,7 @@ model NaSTsCO2
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
  
  // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiverASTRI receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   // Storage
   SolarTherm.Models.Storage.eNTU eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_min = T_min, T_max = T_max, L_start = L_PB_min) annotation(

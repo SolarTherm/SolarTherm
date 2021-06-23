@@ -2,20 +2,10 @@ within SolarTherm.Models.Storage;
 model eNTU
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
 
-  //parameter Medium.AbsolutePressure p_amb = 101325;
   // Storage
-  //Parameters for the effectiveness curve fits
-  parameter Real L_charge_flat = 0.568378;
-  parameter Real L_discharge_flat = 0.638798;
-  parameter Real A = 3.9309;
-  parameter Real B = -14.2881;
-  parameter Real C = 23.3269;
-  parameter Real D = -12.7636;
-  parameter Real E = 0.3518;
-  parameter Real F = 4.1959;
-  parameter Real G = -8.9110;
-  parameter Real H = 6.1972;
-
+  parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/Thermocline.motab");
+  Modelica.Blocks.Tables.CombiTable1Ds Table_Charging (tableOnFile=true, tableName="table_charging", columns=2:2, fileName=table_file);
+  Modelica.Blocks.Tables.CombiTable1Ds Table_Discharging (tableOnFile=true, tableName="table_discharging", columns=2:2, fileName=table_file);
 
   //replaceable package Storage = SolarTherm.Materials.Graphite "the storage medium";
   parameter Modelica.SIunits.Temperature T_min = 500 + 273.15 "start temperature of the storage medium";
@@ -61,13 +51,13 @@ model eNTU
     Placement(visible = true, transformation(origin = {48, 8.88178e-16}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {46, 0}, extent = {{6, -6}, {-6, 6}}, rotation = 0)));
 
 equation
-
+  //Table inputs
+  Table_Charging.u = L;
+  Table_Discharging.u = L;
+  
 //Theoretical bottom outlet effectiveness
-    if L > L_charge_flat then //curve region
-      e_bot = min(1.0, A + B*L + C*(L^2) + D*(L^3) );
-    else //flat region
-      e_bot = 1.00;
-    end if;
+  e_bot = min(1.0,Table_Charging.y[1]);
+
 //effectiveness calculations
   m_flow = -1.0*fluid_a.m_flow; 
   if m_flow > 0.0 then //flowing upwards so discharge
@@ -76,13 +66,9 @@ equation
     fluid_a.h_outflow = h_out;
     der(E_stored) = m_flow*(inStream(fluid_b.h_outflow)-fluid_a.h_outflow);
 
-    //8h discharge
-    if L < L_discharge_flat then //curve region
-      e_out = min(1.0, E + F*L + G*(L^2) + H*(L^3) );
-    else //flat region
-      e_out = 1.00;
-    end if;
+    e_out = min(1.0,Table_Discharging.y[1]);
 
+    
     T_out = T_min + e_out*(T_max-T_min);
     h_bot_outlet = h_min;
     //h_bot_outlet = Fluid_Package.h_Tf(T_max - e_bot*(T_max-T_min), 0.0);
