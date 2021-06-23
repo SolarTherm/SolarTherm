@@ -170,8 +170,8 @@ model NaSaltsCO2SystemOperation "High temperature Sodium-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-	parameter Real nu_start_sf = 0.20 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.20 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_start_sf = 0.25 "Minimum energy start-up fraction to start the receiver";
+	parameter Real nu_min_sf = 0.25 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real hot_tnk_empty_lb = 10 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 12 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 120 "Hot tank full trigger lower bound";
@@ -697,8 +697,6 @@ model NaSaltsCO2SystemOperation "High temperature Sodium-sCO2 system"
 		smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
 	// Variables
 	SI.HeatFlux dni_horizon[horizon] "DNI for the next horizon";
-	SI.Temperature Tamb_horizon[horizon] "Ambient temperature for the next horizon";
-	SI.Velocity Wspd_horizon[horizon] "Wind speed for the next horizon";
 	SI.Efficiency eta_op_horizon[horizon] "Optical efficiency for the next horizon";
 	SI.Angle dec_horizon[horizon] "Forecast declination angle";
 	SI.Angle hra_horizon[horizon] "Forecast hour angle";
@@ -744,13 +742,11 @@ equation
 		for i in 1:horizon loop
 			(dec_horizon[i],hra_horizon[i]) = SolarTherm.Models.Sources.SolarFunctions.PSA_Algorithm(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, lon, lat, t_zone, year);
 			dni_horizon[i] = horizon_function(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 3, wea_table);
-			Tamb_horizon[i] = from_degC(horizon_function(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 5, wea_table));
-			Wspd_horizon[i] = horizon_function(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 9, wea_table);
 			eta_op_horizon[i] = opt_eff_horizon(CV.to_deg(dec_horizon[i]), CV.to_deg(hra_horizon[i]), opt_table);
 		end for;	
 		reinit(counter,const_t);
 	end when;
-	t_forecast = if heliostatsField.on_hf then ReceiverStartupEnergy(horizon,dni_horizon,eta_op_horizon,A_field,dt,nu_start_sf*R_des) else 0;
+	t_forecast = if heliostatsField.on_hf then ReceiverStartupTime(horizon,dni_horizon,eta_op_horizon,A_field,dt,nu_start_sf*R_des) else 0;
 
 	//***Equation for Surrogate Power Block
 	powerBlock.raw_input[1] = powerBlock.load;
@@ -915,7 +911,7 @@ equation
 	annotation(
 		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 10, fontName = "CMU Serif"), Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 10, fontName = "CMU Serif"), Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 10, fontName = "CMU Serif"), Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 10, fontName = "CMU Serif"), Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 10, fontName = "CMU Serif"), Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 10, fontName = "CMU Serif")}),
 		Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-		experiment(StopTime = 864000, 
+		experiment(StopTime = 31536000, 
 		StartTime = 0, 
 		Tolerance = 0.0001, 
 		Interval = 300),
