@@ -4,7 +4,7 @@ import numpy as np
 
 import solsticepy
 from solsticepy.design_crs import CRS
-from solsticepy.design_crs_aimingstrategy import *
+#from solsticepy.design_crs_aimingstrategy import *
 from solsticepy.input import Parameters
 from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
 
@@ -122,7 +122,6 @@ def design_crs_aimingstrategy(pm):
     # TODO this is a place holder
     # This part will be replaced by the full model that generates the oelt
     #
-    crs=CRSAiming(latitude=pm.lat, casedir=pm.casedir)
 
     return tablefile
 

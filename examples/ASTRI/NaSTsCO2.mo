@@ -1,7 +1,6 @@
 within examples.ASTRI;
 
 model NaSTsCO2
-
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -12,7 +11,6 @@ model NaSTsCO2
   import SolarTherm.Types.Solar_angles;
   import SolarTherm.Types.Currency;
   extends Modelica.Icons.Example;
-  
   // Parameters
   // System Level [SYS]
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Working fluid of the system";
@@ -23,23 +21,21 @@ model NaSTsCO2
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "Design point DNI value";
-  //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";  
-  parameter Real SM = 2.717882 "Real solar multiple";  
-  
+  //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";
+  parameter Real SM = metadata_list[23] "Real solar multiple";
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround";
   parameter String opt_file(fixed = false);
-  parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium");  
+  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium");
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-  parameter Real he_av_design = 0.99 "Helisotats availability";  
+  parameter Real he_av_design = 0.99 "Helisotats availability";
   parameter SI.Area A_heliostat = 148.84 "Area of one heliostat";
-  parameter SI.Length H_tower = 188.567344 "Height of the tower"; 
-  parameter Real[24] MetaA = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
-  parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
-  parameter Real eff_opt_des = MetaA[3];
+  parameter SI.Length H_tower = 188.567344 "Height of the tower";
+  parameter Real[24] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
+  parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "Number of heliostats";
+  parameter Real eff_opt_des = metadata_list[3];
   parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
-  parameter SI.Area A_land = MetaA[24] "Land area occupied by the plant";  
-  
+  parameter SI.Area A_land = metadata_list[24] "Land area occupied by the plant";
   // Receiver [RCV]
   parameter SI.Length H_recv = 19.810327;
   parameter SI.Length D_recv = 19.012482;
@@ -47,23 +43,24 @@ model NaSTsCO2
   parameter Integer N_pa_recv = 20 "Number of panels in receiver";
   parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
   parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
-  parameter SI.Efficiency ab_recv = 0.961 "Receiver coating absorptance";
-  parameter SI.Efficiency em_recv = 0.92 "Receiver coating emissivity";
-  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "W/m2K";  
-  
+  //parameter SI.Efficiency ab_recv = 0.961 "Receiver coating absorptance";
+  //parameter SI.Efficiency em_recv = 0.92 "Receiver coating emissivity";
+  parameter SI.Efficiency eff_abs = metadata_list[21] "Effective absorptance";
+  parameter SI.Efficiency eff_emi = metadata_list[22] "Effective emmitance";
+  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "W/m2K";
+  parameter Real[4] CL = {metadata_list[8], metadata_list[9], metadata_list[10], metadata_list[11]};
+  parameter Real[4] C4L = {metadata_list[12], metadata_list[13], metadata_list[14], metadata_list[15]};
+  parameter Real[5] CH = {metadata_list[16], metadata_list[17], metadata_list[18], metadata_list[19], metadata_list[20]};
   // Storage [ST]
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";  
+  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
   parameter SI.Temperature T_max = 740.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";  
-  
+  parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";
   // Power Block [PB]
   parameter String engine_brand = "SES" "Power block brand {SES,75%Carnot}";
   parameter SI.Power P_gross_des = 100e6 "Power block gross rating at design point";
   parameter SI.Power P_name_des = 100e6 "Power block nameplate rating";
   parameter SI.Power P_name = P_name_des;
   parameter SI.Efficiency eff_blk_des = 0.51 "Power block efficiency at design point";
-
-   
   // Control [CTRL]
   parameter SI.TemperatureDifference T_tol_recv = 60.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
   parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
@@ -72,45 +69,44 @@ model NaSTsCO2
   parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
-  parameter Real L_recv_max = 0.874215; //L_4
-  parameter Real L_recv_start = 0.816403; //L_3
-  parameter Real L_PB_start = 0.186413; //L_2
-  parameter Real L_PB_min = 0.125861; //L_1  
+  parameter Real L_recv_max = 0.874215;
+  //L_4
+  parameter Real L_recv_start = 0.816403;
+  //L_3
+  parameter Real L_PB_start = 0.186413;
+  //L_2
+  parameter Real L_PB_min = 0.125861;
+  //L_1
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
   parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
   parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
   parameter Real nu_start = 0.4 "Minimum energy start-up fraction to start the receiver";
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
-  parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";  
-
- //Enthalpies
+  parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
+  //Enthalpies
   parameter SI.SpecificEnthalpy h_in_ref_blk = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_max)) "Specific enthalpy of sodium entering PB at design pt";
   parameter SI.SpecificEnthalpy h_out_ref_blk = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_min)) "Specific enthalpy of sodium leaving PB at design pt";
   parameter SI.SpecificEnthalpy h_in_ref_recv = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_min)) "Specific enthalpy of sodium entering receiver at design pt";
   parameter SI.SpecificEnthalpy h_out_ref_recv = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_max)) "Specific enthalpy of sodium leaving receiver at design pt";
-  
   //Heat Flow Rates
   parameter SI.HeatFlowRate Q_flow_ref_blk = P_gross_des / eff_blk_des "design heat input rate into the PB";
-  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * ((0.5 * T_max + 0.5 * T_min + 273.15) ^ 4 - 298.15 ^ 4) "Receiver design heat loss rate";
-  parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * ab_recv - Q_flow_rec_loss_des "Receiver Thermal power output at design";
-  parameter SI.HeatFlowRate Q_flow_defocus = (Q_flow_ref_blk + Q_flow_rec_loss_des) / ab_recv "Solar field thermal power at defocused state";
-  
-  
+  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * eff_emi * A_recv * ((0.5 * T_max + 0.5 * T_min + 273.15) ^ 4 - 298.15 ^ 4) "Receiver design heat loss rate";
+  parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * eff_abs - Q_flow_rec_loss_des "Receiver Thermal power output at design";
+  parameter SI.HeatFlowRate Q_flow_defocus = (Q_flow_ref_blk + Q_flow_rec_loss_des) / eff_abs "Solar field thermal power at defocused state";
   //Mass flow rates
   parameter SI.MassFlowRate m_flow_blk_des = Q_flow_ref_blk / (h_in_ref_blk - h_out_ref_blk) "Design point mass flow rate of sodium vapor condensing into the power block";
   parameter SI.MassFlowRate m_flow_recv_des = Q_flow_rec_des / (h_out_ref_recv - h_in_ref_recv) "Design mass flow rate into recv";
-  // Power block  
-  
-  
+  // Power block
   // Finance [FN]
-  // Cost data in USD (default) or AUD  
-   parameter Currency currency = Currency.USD "Currency used for cost analysis";
+  // Cost data in USD (default) or AUD
+  parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Real r_disc = 0.07 "Real discount rate";
   parameter Real r_i = 0.03 "Inflation rate";
   parameter Integer t_life = 27 "Lifetime of plant";
   parameter Integer t_cons = 3 "Years of construction";
-  parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
+  parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
+  // Valid for 2019. See https://www.rba.gov.au/
   parameter Real f_Subs = 0 "Subsidies on initial investment costs";
   parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75.00 else 75.00 / r_cur "Field cost per design aperture area";
   // SAM 2018 cost data: 177*(603.1/525.4) in USD. Note that (603.1/525.4) is CEPCI index from 2007 to 2018
@@ -131,14 +127,13 @@ model NaSTsCO2
   parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
   parameter FI.Money C_tower = 3117043.67 * exp(0.0113 * H_tower) "Tower cost";
   //parameter FI.Money C_receiver = 72365.8 * A_recv "Receiver cost";
-  // receiver cost in the Gen3L model  
-  parameter FI.Money_USD C_receiver = C_recv_fix + C_recv_ref * (D_recv / D_recv_ref) * (H_recv/H_recv_ref)^recv_exp "Receiver cost";
-  parameter FI.Money_USD C_recv_fix = 4780420 "Receiver fixed Cost";  
-  parameter FI.Money_USD C_recv_ref = 35400613 "Receiver reference Cost";  
+  // receiver cost in the Gen3L model
+  parameter FI.Money_USD C_receiver = C_recv_fix + C_recv_ref * (D_recv / D_recv_ref) * (H_recv / H_recv_ref) ^ recv_exp "Receiver cost";
+  parameter FI.Money_USD C_recv_fix = 4780420 "Receiver fixed Cost";
+  parameter FI.Money_USD C_recv_ref = 35400613 "Receiver reference Cost";
   parameter SI.Diameter D_recv_ref = 20 "Receiver reference diameter";
   parameter SI.Height H_recv_ref = 18.4 "Receiver reference height";
-  parameter Real recv_exp = 0.6 "Receiver reference height";  
-  
+  parameter Real recv_exp = 0.6 "Receiver reference height";
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money C_storage = 0.0;
   //tankHot.C_Storage "Storage cost";
@@ -153,9 +148,7 @@ model NaSTsCO2
   parameter FI.Money C_land = pri_land * A_land "Land cost";
   parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
   parameter FI.MoneyPerYear C_year = pri_om_name * P_name_des "Fixed O&M cost per year";
-  parameter Real C_prod(unit = "$/J/year") = pri_om_prod "Variable O&M cost per production per year"; 
-  
- 
+  parameter Real C_prod(unit = "$/J/year") = pri_om_prod "Variable O&M cost per production per year";
   // System component models
   // Weather data
   SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
@@ -179,47 +172,42 @@ model NaSTsCO2
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Heliostat field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField( 
-        A_h = A_heliostat, 
-        Q_design = Q_flow_defocus, 
-        Wspd_max = Wspd_max, 
-        ele_min(displayUnit = "deg") = ele_min, 
-        he_av = he_av_design, 
-        lat = data.lat, 
-        lon = data.lon, 
-        nu_defocus = nu_defocus, 
-        nu_min = nu_min_sf, 
-        nu_start = nu_start, 
-        use_defocus = false, 
-        use_on = true, 
-        use_wind = true, 
-        psave=casefolder, 
-        H_tower=H_tower, 
-        H_rcv=H_recv, 
-        W_rcv=D_recv, 
-        W_helio=sqrt(A_heliostat), 
-        H_helio=sqrt(A_heliostat)) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(A_h = A_heliostat, Q_design = Q_flow_defocus, Wspd_max = Wspd_max, ele_min(displayUnit = "deg") = ele_min, he_av = he_av_design, lat = data.lat, lon = data.lon, nu_defocus = nu_defocus, nu_min = nu_min_sf, nu_start = nu_start, use_defocus = false, use_on = true, use_wind = true, psave = casefolder, H_tower = H_tower, H_rcv = H_recv, W_rcv = D_recv, W_helio = sqrt(A_heliostat), H_helio = sqrt(A_heliostat)) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
- 
- // Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiverASTRI receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
+  // Receiver
+  SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiverASTRI receiver(
+      redeclare package Medium = Medium, 
+	  CL = CL,
+	  C4L = C4L,
+	  CH = CH,      
+      H_rcv = H_recv, 
+      D_rcv = D_recv, 
+      N_pa = N_pa_recv, 
+      D_tb = D_tb_recv, 
+      t_tb = t_tb_recv, 
+      ab = eff_abs, 
+      em = eff_emi, 
+      T_0 = T_min, 
+      Q_des_blk = Q_flow_ref_blk, 
+      T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+
   // Storage
   SolarTherm.Models.Storage.eNTU eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_min = T_min, T_max = T_max, L_start = L_PB_min) annotation(
-    Placement(visible = true, transformation(origin = {42, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));  
+    Placement(visible = true, transformation(origin = {42, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   // Power Block
   SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_max, T_out_ref = T_min, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
-    Placement(visible = true, transformation(origin = {107, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));  
+    Placement(visible = true, transformation(origin = {107, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   // Cold pump (receiver)
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));  
+    Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   // Hot Pump (power block)
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
   // Controller
   SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max) annotation(
     Placement(visible = true, transformation(origin = {48, -54}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
-  // Tee Junctions  
+  // Tee Junctions
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {42, 7}, extent = {{-10, -9}, {10, 9}}, rotation = 180)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_top(redeclare package Medium = Medium) annotation(
@@ -227,16 +215,12 @@ model NaSTsCO2
   // Market
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
     Placement(visible = true, transformation(origin = {144, 20}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
-
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-
-
 initial algorithm
   opt_file := heliostatsField.optical.tablefile;
-
 equation
   P_elec = powerBlock.W_net;
   E_elec = powerBlock.E_net;
@@ -291,7 +275,8 @@ equation
     Line(points = {{38.5, 35.5}, {38.5, -14}, {45, -14}, {45, -45}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Pres_input.y, eNTU.p_amb) annotation(
     Line(points = {{100, 96}, {47, 96}, {47, 42}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-
+  connect(Wspd_input.y, receiver.Wspd) annotation(
+    Line(points = {{-90, 48}, {-32, 48}, {-32, 36}, {-32, 36}, {-32, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-42, -34}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
