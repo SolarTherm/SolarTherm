@@ -60,7 +60,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

@@ -24,8 +24,8 @@ model HeliostatsFieldSolstice
     parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
-    parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
-    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+    parameter Real n_col_oelt = 6 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 10e6 "number of rays for the optical simulation";
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";  
     parameter String field_type = "polar" "Other options are : surround";
