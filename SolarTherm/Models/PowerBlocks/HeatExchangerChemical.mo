@@ -28,21 +28,32 @@ model HeatExchangerChemical
   
   //******************************** Parameters -- for initalisation of the OTF object
   //******************************** Uni Adelaide reactor parameters
-  parameter Boolean external_parasities = true;  
+  parameter Boolean external_parasities = true; 
+  
   parameter SI.Temperature T_cold_set = 720 + 273.15;
+  parameter SI.Temperature T_in_gas_des = 130 + 273.15;
+  parameter SI.Temperature T_out_gas_des = 750 + 273.15;
+   
   parameter Real delta_H = 1e3 "Enthalpy change expected from the gas";
+  parameter SI.HeatFlowRate Q_reactor = 61000 "Wth";
+  parameter SI.Efficiency effectiveness = 0.95;
+  parameter SI.ThermalConductance Rh(fixed=false);
   
   //************************* Results
   Integer state "1 means PB on, 0 means PB off"; 
     
   SI.SpecificEnthalpy h_in_pcl;
   SI.SpecificEnthalpy h_out_pcl;
+    
   SI.MassFlowRate mdot_pcl;
-  SI.MassFlowRate mdot_gas;
-  SI.HeatFlowRate Q_HX;
+  SI.HeatFlowRate Q_HX "off-design reactor heat";
+  
+  SI.Temperature T_out_pcl "Off-design outlet pcl temp";
+  SI.Temperature T_out_gas "Off-design outlet temp of the gas";
   
   initial equation
   state = 0;
+  Rh = Q_reactor / (T_out_gas_des - T_in_gas_des);
   
   algorithm
   when mdot_pcl > 1e-3  then
@@ -56,20 +67,23 @@ model HeatExchangerChemical
   fluid_a.m_flow + fluid_b.m_flow = 0;
   fluid_a.h_outflow = 0;  
   
+  //*************** Start off-design calc
   mdot_pcl = fluid_a.m_flow;
   
+  if state == 1 then
+    Q_HX = effectiveness * Q_reactor;
+    h_out_pcl = h_in_pcl - Q_HX/mdot_pcl;
+    T_out_gas = (Q_reactor / Rh) + T_in_gas_des;
+  else// mdot< 0.999 * m_HTF_des*nu_min then
+    Q_HX = 1e-8;
+    h_out_pcl = h_in_pcl "h_out = h_in";
+    T_out_gas = T_amb "No way to make it 0, as such use ambient temp instead";
+  end if;
+    
   h_in_pcl = inStream(fluid_a.h_outflow);
   h_out_pcl = fluid_b.h_outflow;
-  h_out_pcl = Particle_Package.h_T(T_cold_set);
+  T_out_pcl = Particle_Package.T_h(h_out_pcl);
     
-  if state == 1 then
-    Q_HX = mdot_pcl * (h_in_pcl-h_out_pcl);
-    mdot_gas =  Q_HX/ delta_H;
-  else// mdot< 0.999 * m_HTF_des*nu_min then
-    Q_HX = 0;
-    mdot_gas = 0;
-  end if;
-  
   W_net = 0;
 
   annotation(

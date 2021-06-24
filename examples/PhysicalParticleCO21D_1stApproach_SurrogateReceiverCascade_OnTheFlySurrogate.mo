@@ -42,7 +42,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
-  parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
+  parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   

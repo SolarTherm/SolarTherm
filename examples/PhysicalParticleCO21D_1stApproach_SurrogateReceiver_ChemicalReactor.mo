@@ -87,6 +87,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.HeatFlowRate Q_reactor = 221559575.9416232 "Reactor heat [Wth]";
   parameter Real delta_H = 1e3 "Delta enthalpy of the chemical gas [J/mol]";
   parameter Real SM = 2.5 "[SYS] Solar multiple";
+  parameter SI.Temperature T_in_gas_des = 130 + 273.15 "Inlet temperature of the chemical gas [K]";
+  parameter SI.Temperature T_out_gas_des = 750 + 273.15 "Outlet temperature of the chemical gas [K]";
+  parameter SI.Efficiency effectiveness = 0.95 "Effectiveness of the HX";
   parameter SI.HeatFlowRate Q_in_rcv = Q_reactor / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
   parameter String rcv_type = "particle" "[RCV] other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area is calculated during the initialisation";
@@ -492,7 +495,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SolarTherm.Models.Control.ReactorControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser, T_crit_reactor = T_critical_reactor) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   //********************* Power block
-  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H, redeclare replaceable package Particle_Package = Particle_Package) annotation(
+  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H, redeclare replaceable package Particle_Package = Particle_Package, T_in_gas_des, T_out_gas_des, Q_reactor = Q_reactor, effectiveness = effectiveness) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //*********************Power Block Calculator
   SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
@@ -508,7 +511,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   Modelica.Blocks.Types.ExternalCombiTable2D opt_eff_windy = Modelica.Blocks.Types.ExternalCombiTable2D(tableName = if set_swaying_optical_eff == true then "optics_windy" else "optics", fileName = opt_file, table = fill(0.0, 0, 2), smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
   Modelica.Blocks.Types.ExternalCombiTable1D wea_table = Modelica.Blocks.Types.ExternalCombiTable1D(tableName = "data", fileName = wea_file, table = fill(0.0, 0, 2), columns = 1:11, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
   //********************* Variables
-  SI.Mass m_gas(start = 0) "Produced gas";
   SI.Energy E_elec(start=0) "Produced heat";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   //*********************Dispatch optimiser variables
@@ -720,7 +722,6 @@ equation
 //************* Equation here is to close the power block controller models  since the component is lack of 1 equation to close optimalMassFlow variable
   controlHot.logic.optimalMassFlow = if set_dispatch_optimiser == true then min(optimalDispatch / DEmax * m_flow_blk, m_flow_blk) else 0;
   dummyRatio = optimalDispatch / DEmax;
-  der(m_gas) = chemicalReactor.mdot_gas;
   der(E_elec) = chemicalReactor.Q_HX;
   R_spot = market.profit;
   der(TOD_W) = market.price.price * chemicalReactor.W_net;

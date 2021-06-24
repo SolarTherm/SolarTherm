@@ -175,47 +175,49 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Real F = 0.54 "[RCV] View Factor of the particle curtain - based on EES code by Sandia";
   parameter Real eps_w = 0.8 "[RCV] Receiver wall emmisivity - based on EES code by Sandia";
   
-  //****************************** NN Based Cascaded Receiver Parameters
+  //****************************** NN Based Single Aperture Rcv Parameters
   parameter Integer inputsize_rcv = 7;
   
-  parameter SI.Area A_ap_max = 596.1468216938;
-  parameter Real ar_rec_max = 2.649179561;
-  parameter SI.HeatFlowRate Q_in_rcv_max = 599950032.084144;
-  parameter SI.Temperature T_amb_max_rcv = 323.1293457347;
-  parameter SI.Temperature T_in_max_rcv = 973.1350462299;
-  parameter SI.Temperature T_out_max_rcv = 2811.7641373140996;
-  parameter Real F_wind_max_rcv = 4.8919307372;
+  parameter SI.Length H_drop_max_rcv = 45 "[RCV] maximum drop height where the receiver surrogate model is still valid [m]";
+  parameter Real ar_rec_max_rcv = 3 "[RCV] maximum receiver aspect ratioto the receiver surrogate model [-]";
+  parameter SI.Temperature T_out_max_rcv = 1073.15 "[RCV] maximum particle outlet temperature [K]";
+  parameter SI.HeatFlowRate Q_in_max_rcv = 9041492610.03646 "[RCV] maximum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_max_rcv = 972.9825827048 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_max_rcv = 313.1089448632 "[RCV] maximum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_max_rcv = 6.2660812586 "[RCV] maximum wind factor to the surrogate model [-]";
   
-  parameter SI.Area A_ap_min = 200.6048838129;
-  parameter Real ar_rec_min =0.4537252344;
-  parameter SI.HeatFlowRate Q_in_rcv_min =100331245.403517;
-  parameter SI.Temperature T_amb_min_rcv =253.1670653414;
-  parameter SI.Temperature T_in_min_rcv =773.3075388557;
-  parameter SI.Temperature T_out_min_rcv =852.8923106944002;
-  parameter Real F_wind_min_rcv =1.0000008589;
-      
+  parameter SI.Length H_drop_min_rcv = 15 "[RCV] minimum drop height where the receiver surrogate model is still valid [m]";
+  parameter Real ar_rec_min_rcv = 0.25 "[RCV] minimum receiver aspect ratioto the receiver surrogate model [-]";
+  parameter SI.Temperature T_out_min_rcv = 1073.15 "[RCV] minimum particle outlet temperature [K]";
+  parameter SI.HeatFlowRate Q_in_min_rcv = 24201848.6838298 "[RCV] minimum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_min_rcv = 773.2819470034 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_min_rcv = 253.1991227209 "[RCV] minimum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_min_rcv = 1.0000006398 "[RCV] minimum wind factor to the surrogate model [-]";
+  
+  parameter SI.Efficiency eta_thermal_max_rcv = 0.9944160723 "[RCV] maximum thermal efficiency of the receiver of surrogate model";
+  parameter SI.Efficiency eta_thermal_min_rcv = 0.0055724285 "[RCV] minimum thermal efficiency of the receiver of surrogate model";
+  
   parameter Real[inputsize_rcv] X_max_rcv = {
-                                    A_ap_max,
-                                    ar_rec_max,
-                                    Q_in_rcv_max,
-                                    T_amb_max_rcv,
-                                    T_in_max_rcv,
-                                    T_out_max_rcv,
-                                    F_wind_max_rcv
-                                };
-                    
-  parameter Real[inputsize_rcv] X_min_rcv = {
-                                    A_ap_min,
-                                    ar_rec_min,
-                                    Q_in_rcv_min,
-                                    T_amb_min_rcv,
-                                    T_in_min_rcv,
-                                    T_out_min_rcv,
-                                    F_wind_min_rcv
-                                };
+                                H_drop_max_rcv, 
+                                ar_rec_max_rcv, 
+                                T_out_max_rcv, 
+                                Q_in_max_rcv, 
+                                T_in_max_rcv, 
+                                T_amb_max_rcv, 
+                                F_wind_max_rcv};
                                 
-  parameter Real y_max_rcv = 0.9573148743;
-  parameter Real y_min_rcv = 0.2329207794;
+  parameter Real[inputsize_rcv] X_min_rcv = {
+                                H_drop_min_rcv, 
+                                ar_rec_min_rcv, 
+                                T_out_min_rcv, 
+                                Q_in_min_rcv, 
+                                T_in_min_rcv, 
+                                T_amb_min_rcv, 
+                                F_wind_min_rcv};
+                                
+  parameter Real y_max_rcv = eta_thermal_max_rcv;
+  parameter Real y_min_rcv = eta_thermal_min_rcv;
+  
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
               "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_receiver_constant_T_out_800"
