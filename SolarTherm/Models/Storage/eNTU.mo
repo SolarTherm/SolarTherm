@@ -49,7 +49,6 @@ model eNTU
 
   Modelica.Blocks.Interfaces.RealInput p_amb "Ambient Pressure" annotation(
     Placement(visible = true, transformation(origin = {48, 8.88178e-16}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {46, 0}, extent = {{6, -6}, {-6, 6}}, rotation = 0)));
-
 equation
   //Table inputs
   Table_Charging.u = L;
