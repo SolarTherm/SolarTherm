@@ -193,8 +193,17 @@ model NaSTsCO2
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
 
   // Storage
-  SolarTherm.Models.Storage.eNTU eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_min = T_min, T_max = T_max, L_start = L_PB_min) annotation(
+  SolarTherm.Models.Storage.eNTU eNTU(
+		t_storage=t_storage, 
+		E_max = t_storage * 3600 * Q_flow_ref_blk, 
+		T_min = T_min, 
+		T_max = T_max,
+		psave=".", 
+		L_start = L_PB_min) annotation(
     Placement(visible = true, transformation(origin = {42, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+
+
   // Power Block
   SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_max, T_out_ref = T_min, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
     Placement(visible = true, transformation(origin = {107, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
