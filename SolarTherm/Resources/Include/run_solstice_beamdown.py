@@ -56,8 +56,6 @@ def run_simul(inputs={}):
 		num_hst = 300
 		pm.n_col_oelt=5
 		pm.n_col_oelt=5
-		pm.H_rcv=H_rcv
-		pm.W_rcv=W_rcv
 		pm.W_helio=6.1 # ASTRI helio size
 		pm.H_helio=6.1
 		pm.dependent_par()
