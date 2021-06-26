@@ -56,8 +56,8 @@ def run_simul(inputs={}):
 		num_hst = 300
 		pm.n_col_oelt=5
 		pm.n_col_oelt=5
-		pm.H_rcv=H_rcv
-		pm.W_rcv=W_rcv
+		#pm.H_rcv=H_rcv
+		#pm.W_rcv=W_rcv
 		pm.W_helio=6.1 # ASTRI helio size
 		pm.H_helio=6.1
 		pm.dependent_par()
@@ -71,7 +71,7 @@ def run_simul(inputs={}):
 		# 2D-crossed cpc with n faces
 		n_CPC_faces=4
 		rec_grid=50
-		n_Z=30
+		n_Z=30.
 		# Secondary refector 'hyperboloid'
 		refl_sec=0.95
 		slope_error=2.e-3 # radian
@@ -84,7 +84,7 @@ def run_simul(inputs={}):
 
 		bd=BD(latitude=pm.lat, casedir=casedir)
 
-		bd.receiversystem(receiver=receiver, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(rec_z), rec_grid=int(rec_grid), cpc_nfaces=int(n_CPC_faces), cpc_theta_deg=float(theta_deg), ratio_cpc_h=ratio_cpc_h, cpc_nZ=float(n_Z), field_rim_angle=float(field_rim_angle), aim_z=float(pm.H_tower), secref_fratio=secref_fratio, refl_sec=float(refl_sec), slope_error=float(slope_error),	secref_vert = secref_vert)
+		bd.receiversystem(receiver=receiver, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.rec_z), rec_grid=int(rec_grid), cpc_nfaces=int(n_CPC_faces), cpc_theta_deg=float(pm.theta_deg), ratio_cpc_h=float(pm.ratio_cpc_h), cpc_nZ=float(n_Z), field_rim_angle=float(pm.field_rim_angle), aim_z=float(pm.H_tower), secref_fratio=float(pm.secref_fratio), refl_sec=float(refl_sec), slope_error=float(slope_error),	secref_vert = secref_vert)
 
 		bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=num_hst, R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
 
