@@ -14,6 +14,21 @@ model eNTU
   parameter Modelica.SIunits.Temperature T_min = 510 + 273.15 "start temperature of the storage medium";
   parameter Modelica.SIunits.Temperature T_max = 740 + 273.15 "the maximum temperature of the storage medium";  
 
+
+  // specific storage configuration related parameters  
+  //Design Parameters
+  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
+  //Tanks
+  parameter Integer N_f = 10 "Number of fluid CVs in main tank";
+  //Study this
+  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter SI.Length d_p = 0.10 "Filler diameter";    
+ //Optimise
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
+  parameter Real ar = 2.0 "Tank aspect ratio";  
+    //Fixed
+  parameter Integer Correlation = 3 "Conservative";
+
   // Storage
   //parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/Thermocline.motab");
   parameter String table_file(fixed=false);
@@ -22,7 +37,7 @@ model eNTU
   parameter String pfunc = "get_effectiveness" "Name of the Python functiuon"; 
   parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage") "the directory for saving the results"; 
   parameter String modelicapath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Models/Storage") ;
-  parameter Integer argc =1 "Number of variables to be passed to the C function";
+  parameter Integer argc =3 "Number of variables to be passed to the C function";
 
   Modelica.Blocks.Tables.CombiTable1Ds Table_Charging (tableOnFile=true, tableName="table_charging", columns=2:2, fileName=table_file);
 
@@ -57,7 +72,7 @@ model eNTU
     Placement(visible = true, transformation(origin = {48, 8.88178e-16}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {46, 0}, extent = {{6, -6}, {-6, 6}}, rotation = 0)));
 
 initial algorithm
-table_file := GenEffectivenessPyFunc(ppath, pname, pfunc, psave, modelicapath, argc, {"t_storage"}, {t_storage}); 
+table_file := GenEffectivenessPyFunc(ppath, pname, pfunc, psave, modelicapath, argc, {"t_storage", "d_p", "ar"}, {t_storage, d_p, ar}); 
 
 equation
   //Table inputs

@@ -12,8 +12,23 @@ model EffectivenessTrainingData
   replaceable package Filler_Package = SolarTherm.Materials.MgO_Constant;
   replaceable package Encapsulation_Package = Filler_Package;
   replaceable model Storage_model=SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final;   
-  Storage_model storage_model(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, redeclare package Encapsulation_Package = Encapsulation_Package, E_max=E_max, T_max = T_max, T_min = T_min) annotation(
+  Storage_model storage_model(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, redeclare package Encapsulation_Package = Encapsulation_Package, E_max=E_max, T_max = T_max, T_min = T_min, eta=eta, N_f=N_f, N_p=N_p, d_p=d_p, U_loss_tank=U_loss_tank, ar=ar, Correlation=Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+
+
+  // specific storage configuration related parameters  
+  //Design Parameters
+  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
+  //Tanks
+  parameter Integer N_f = 10 "Number of fluid CVs in main tank";
+  //Study this
+  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter SI.Length d_p = 0.10 "Filler diameter";    
+ //Optimise
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
+  parameter Real ar = 2.0 "Tank aspect ratio";  
+    //Fixed
+  parameter Integer Correlation = 3 "Conservative";
 
   // Storage sizing
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";

@@ -15,11 +15,8 @@ def get_effectiveness(inputs):
 
 	'''
 	modelicapath=inputs['modelicapath']
-	casedir=inputs['casedir']
 	mofn=modelicapath+'/EffectivenessTrainingData.mo'
 	model='EffectivenessTrainingData'
-	if not os.path.exists(casedir):
-		os.makedirs(casedir)
 
 	var_n=[]
 	var_v=[]
@@ -35,7 +32,15 @@ def get_effectiveness(inputs):
 			var_v.append(str(v))
 			print('setting parameter %s = %s'%(k, v))
 			casename+=(k+'%.2f_'%v)
-	motabfile=casedir+'/effectiveness_%s.motab'%casename
+	casedir=inputs['casedir']+'/'+casename
+
+	if not os.path.exists(casedir):
+		os.makedirs(casedir)
+
+	motabfile=os.path.abspath(casedir)+'/effectiveness.motab'
+
+	wd=os.getcwd()
+	os.chdir(casedir)
 
 	if os.path.exists(motabfile):
 		print('')
@@ -107,7 +112,12 @@ def get_effectiveness(inputs):
 
 		f.close()
 
-
+	os.system('rm %s'%model)
+	os.system('rm %s_*'%model)
+	os.system('rm %s.c'%model)
+	os.system('rm %s.o'%model)
+	os.system('rm %s.makefile'%model)
+	os.chdir(wd)
 	return motabfile
 
 if __name__=='__main__':

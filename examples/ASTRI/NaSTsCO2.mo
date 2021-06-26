@@ -63,6 +63,8 @@ model NaSTsCO2
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
   parameter SI.Temperature T_max = 740.0 + 273.15 "Ideal high temperature of the storage";
   parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";
+  parameter SI.Length d_p = 0.10 "Filler diameter";    
+  parameter Real ar = 2.0 "Tank aspect ratio";  
 
 
   // Power Block [PB]
@@ -261,6 +263,8 @@ parameter FI.PowerPrice pri_block = 1360.00 / 1e3 "Power block cost per gross ra
 		T_min = T_min, 
 		T_max = T_max,
 		psave=".", 
+		d_p=d_p,
+		ar = ar ,
 		L_start = L_PB_min) annotation(
     Placement(visible = true, transformation(origin = {42, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
