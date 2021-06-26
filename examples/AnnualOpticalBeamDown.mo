@@ -16,14 +16,17 @@ import metadata = SolarTherm.Utilities.Metadata_Optics;
   parameter SI.Area A_h=metadata_list[2] "Heliostat's Area"; 
   parameter Real metadata_list[8] = metadata(opt_file);
   parameter String opt_file(fixed=false);
-  parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");  
+  parameter String casefolder ="test-beamdown";  
   
-  parameter SI.Length H_tower = 65 "Tower height"; 
+
   parameter nSI.Angle_deg theta_deg=20 "acceptance half angle of the CPC in degree";
-  parameter nSI.Angle_deg rim_angle=45 "rim angle of the heliostat field in the xOz plan in degree";
-  parameter SI.Length rec_w=10 "Polygon receiver width";      
-  parameter SI.Length rec_l=10 "Polygon receiver length"; 
-  parameter SI.Length rec_z=-60 "Polygon receiver z position, 0 is on the ground";    
+  parameter Real ratio_cpc_h=1 "ratio of CPC critical height [0.5,1]";
+  parameter nSI.Angle_deg field_rim_angle=45 "rim angle of the heliostat field in the xOz plan in degree";
+  parameter Real secref_fratio=0.6 "ratio of the foci distance and apex distance to the origin [0.5,1]";
+  parameter SI.Length rec_z=0 "Polygon receiver z position, 0 is on the ground";   
+  parameter SI.Length W_rcv=1.2 "Polygon receiver width";      
+  parameter SI.Length H_rcv=10 "Polygon receiver length"; 
+  parameter SI.Length H_tower = 65 "Tower height";  
       
 	//Sun
 	SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -50,12 +53,14 @@ import metadata = SolarTherm.Utilities.Metadata_Optics;
 									Placement(visible = true, transformation(extent = {{-102, 64}, {-82, 84}}, rotation = 0)));
 
 SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELTBeamdown lookuptable(
-        H_tower=H_tower,
         theta_deg=theta_deg,
-        rim_angle=rim_angle,
-        rec_w=rec_w,
-        rec_l=rec_l,
+		ratio_cpc_h=ratio_cpc_h,
+        field_rim_angle=field_rim_angle,
+		secref_fratio=secref_fratio,
         rec_z=rec_z,
+        W_rcv=W_rcv,
+        H_rcv=H_rcv,
+        H_tower=H_tower,
         psave=casefolder,
         hra=sun.solar.hra, 
         dec=sun.solar.dec, 

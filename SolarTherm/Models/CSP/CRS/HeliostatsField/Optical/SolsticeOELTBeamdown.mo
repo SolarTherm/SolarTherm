@@ -15,12 +15,14 @@ extends OpticalEfficiency;
     parameter String rcv_type = "beam_down" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-    parameter SI.Length H_tower = 65 "Tower height"; 
-    parameter nSI.Angle_deg theta_deg=20 "acceptance half angle of the CPC in degree";
-    parameter nSI.Angle_deg rim_angle=45 "rim angle of the heliostat field in the xOz plan in degree";
-    parameter SI.Length rec_w=10 "Polygon receiver width";      
-    parameter SI.Length rec_l=10 "Polygon receiver length"; 
-    parameter SI.Length rec_z=-60 "Polygon receiver z position, 0 is on the ground";  
+	parameter nSI.Angle_deg theta_deg=20 "acceptance half angle of the CPC in degree";
+	parameter Real ratio_cpc_h=1 "ratio of CPC critical height [0.5,1]";
+	parameter nSI.Angle_deg field_rim_angle=45 "rim angle of the heliostat field in the xOz plan in degree";
+	parameter Real secref_fratio=0.6 "ratio of the foci distance and apex distance to the origin [0.5,1]";
+	parameter SI.Length rec_z=0 "Polygon receiver z position, 0 is on the ground";   
+	parameter SI.Length W_rcv=1.2 "Polygon receiver width";      
+	parameter SI.Length H_rcv=10 "Polygon receiver length"; 
+	parameter SI.Length H_tower = 65 "Tower height";  
            
     /*
     parameter SI.HeatFlowRate Q_in_rcv = 40e6;          
@@ -53,7 +55,7 @@ extends OpticalEfficiency;
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results"; 
-    	parameter Integer argc =6 "Number of variables to be passed to the C function";
+    	parameter Integer argc =8 "Number of variables to be passed to the C function";
 
     parameter String tablefile(fixed=false);
 
@@ -72,7 +74,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, { "rim_angle", "H_tower", "theta_deg", "rec_z", "rec_w", "rec_l" }, {rim_angle, H_tower, theta_deg, rec_z, rec_w, rec_l}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"theta_deg", "ratio_cpc_h", "field_rim_angle", "secref_fratio", "rec_z", "W_rcv", "H_rcv", "H_tower" }, {theta_deg, ratio_cpc_h, field_rim_angle, secref_fratio, rec_z, W_rcv, H_rcv, H_tower}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
