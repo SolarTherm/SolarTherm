@@ -112,11 +112,11 @@ def get_effectiveness(inputs):
 
 		f.close()
 
-	os.system('rm %s'%model)
-	os.system('rm %s_*'%model)
-	os.system('rm %s.c'%model)
-	os.system('rm %s.o'%model)
-	os.system('rm %s.makefile'%model)
+		os.system('rm %s'%model)
+		os.system('rm %s_*'%model)
+		os.system('rm %s.c'%model)
+		os.system('rm %s.o'%model)
+		os.system('rm %s.makefile'%model)
 	os.chdir(wd)
 	return motabfile
 
