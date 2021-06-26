@@ -1,30 +1,11 @@
 within SolarTherm.Models.Storage;
 model EffectivenessTrainingData
 
-/* 
-  // specific storage configuration related parameters  
-  //Design Parameters
-  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
-  //Tanks
-  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
-  //Study this
-  parameter Integer N_p = 10 "Number of filler CVs  in main tank";
-  parameter SI.Length d_p = 0.10 "Filler diameter";    
- //Optimise
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
-  parameter Real ar = 2.0 "Tank aspect ratio";  
-    //Fixed
-  parameter Integer Correlation = 3 "Conservative";
-  replaceable SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final storage_model(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
-    Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));  
-*/
-
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
-  
-  
+    
   // Storage configuration  
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
   replaceable package Fluid_Package = SolarTherm.Materials.Sodium_Table;
@@ -115,8 +96,8 @@ model EffectivenessTrainingData
   //Real der_L "Rate of change of L";
   //Real M "nondimensional mass flow rate";
   Real e_out "outlet effectiveness";
-  Real e_bot "outlet effectiveness";
-  Real e_top "outlet effectiveness";
+  Real e_bot "charge effectiveness";
+  Real e_top "discharge effectiveness";
   Real L_recv_max(start=0.0); //L4
   Real L_recv_start(start=0.0); //L3
   Real L_PB_start(start=0.0); //L2
