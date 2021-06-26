@@ -60,6 +60,7 @@ def get_effectiveness(inputs):
 		t_stop_discharge=res.data('t_stop_discharge')[-1] 
 		
 		t=res.abscissa('L',  valuesOnly=True)
+		
 
 		level_chg=np.array([])
 		level_dischg=np.array([])
@@ -85,9 +86,15 @@ def get_effectiveness(inputs):
 		level_chg, idx = np.unique(level_chg, return_index=True)
 		eps_chg=eps_chg[idx]
 
+		C_storage=res.data('C_storage')[-1]
 
 		f=open(motabfile, 'w')
 		f.write('#1\n')
+		f.write('#Comments\n')
+		f.write('#METALABELS,C_storage\n')
+		f.write('##METAUNITS,usd\n')
+		f.write('#METADATA,%s\n'%(C_storage))
+
 		f.write('float table_charging(%s,2) #Level(-), effectiveness(-)\n'%len(eps_chg))
 		for i in range(len(eps_chg)):
 			f.write("%.5f %.5f"%(level_chg[i], eps_chg[i]))

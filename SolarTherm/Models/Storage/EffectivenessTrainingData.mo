@@ -22,6 +22,7 @@ model EffectivenessTrainingData
   parameter SI.Energy E_max = t_discharge * (P_gross / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";  
   parameter SI.Time t_charge = t_storage * 3600.0 "Charging period";
   parameter SI.Time t_discharge = t_storage * 3600.0 "Discharging period";  
+  parameter Real C_storage = storage_model.C_total;
 
   // Operation condition
   parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature"; //L6
