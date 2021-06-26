@@ -442,34 +442,48 @@ sim.update_pars(var_n, var_v)
 #sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
 sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
-if system=='TEST':
-	import DyMat
-	res=DyMat.DyMatFile(sim.res_fn)
-else:
-	if system=='FUEL':
-		resultclass = postproc.SimResultFuel(sim.res_fn)
-	else:
-		resultclass = postproc.SimResultElec(sim.res_fn)
-
-	if peaker=='True':
-		perf = resultclass.calc_perf(peaker=True)
-	else:
-		perf = resultclass.calc_perf()
-
-
-solartherm_res=[]
-
-for i in range(num_perf):
-	sign=float(params.__getitem__("sign%s"%i))
-
+try:
 	if system=='TEST':
-		name=params.__getitem__("index%s"%i)
-		solartherm_res.append(sign*res.data(name)[0])
-		print('objective %s: '%i, name, sign*res.data(name)[0])
+		import DyMat
+		res=DyMat.DyMatFile(sim.res_fn)
 	else:
+		if system=='FUEL':
+			resultclass = postproc.SimResultFuel(sim.res_fn)
+		else:
+			resultclass = postproc.SimResultElec(sim.res_fn)
+
+		if peaker=='True':
+			perf = resultclass.calc_perf(peaker=True)
+		else:
+			perf = resultclass.calc_perf()
+
+
+	solartherm_res=[]
+
+	for i in range(num_perf):
+		sign=float(params.__getitem__("sign%s"%i))
+
+		if system=='TEST':
+			name=params.__getitem__("index%s"%i)
+			solartherm_res.append(sign*res.data(name)[-1])
+			print('objective %s: '%i, name, sign*res.data(name)[-1])
+		else:
+			idx=int(params.__getitem__("index%s"%i))
+			solartherm_res.append(sign*perf[idx])
+			print('objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx])
+except:
+	solartherm_res=[]
+	for i in range(num_perf):	
+		sign=float(params.__getitem__("sign%s"%i))
+		if sign>0: #minimisation
+			error=99999
+		else: # maxmisation
+			error=0 
+
 		idx=int(params.__getitem__("index%s"%i))
-		solartherm_res.append(sign*perf[idx])
-		print('objective %s: '%i, resultclass.perf_n[idx], sign*perf[idx])
+		solartherm_res.append(sign*error)
+	print('Simulation Failed')
+
 
 print('')
 
