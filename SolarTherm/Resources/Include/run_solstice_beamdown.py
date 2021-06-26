@@ -70,7 +70,7 @@ def run_simul(inputs={}):
 		receiver='beam_down'
 		# 2D-crossed cpc with n faces
 		n_CPC_faces=4
-		rec_grid=100
+		rec_grid=50
 		n_Z=30
 		# Secondary refector 'hyperboloid'
 		refl_sec=0.95
