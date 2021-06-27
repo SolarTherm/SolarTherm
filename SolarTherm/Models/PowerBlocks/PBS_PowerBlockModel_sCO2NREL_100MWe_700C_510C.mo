@@ -18,7 +18,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C
   parameter SI.MassFlowRate m_flow_ref=966.180 "Design HTF flow rate";
   
   parameter Real W_base=0.0 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
-  parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.25 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
   SI.HeatFlowRate Q_flow( final start=0) "Cycle heat addition";
   SI.Temperature T_in;//=Medium.temperature(state_in);
   SI.Temperature T_out;//=Medium.temperature(state_out);
@@ -28,7 +28,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
-  parameter SI.Temperature T_des=from_degC(43) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
+  parameter SI.Temperature T_des=from_degC(35) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
 
   parameter Boolean external_parasities = false
     "= true enable parasities as an input"
