@@ -13,92 +13,92 @@ model NaSTsCO2
   extends Modelica.Icons.Example;
   // Parameters
   // System Level [SYS]
-  replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Working fluid of the system";
-  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
-  parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
-  parameter nSI.Angle_deg lon = 133.889 "Longitude (+ve East)";
-  parameter nSI.Angle_deg lat = -23.795 "Latitude (+ve North)";
-  parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
-  parameter Integer year = 1996 "Meteorological year";
-  parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "Design point DNI value";
+  replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "[SYS] Working fluid of the system";
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab") "[SYS] Weather file";
+  parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "[SYS] Weather file delays";
+  parameter nSI.Angle_deg lon = 133.889 "[SYS] Longitude (+ve East)";
+  parameter nSI.Angle_deg lat = -23.795 "[SYS] Latitude (+ve North)";
+  parameter nSI.Time_hour t_zone = 9.5 "[SYS] Local time zone (UCT=0)";
+  parameter Integer year = 1996 "[SYS] Meteorological year";
+  parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "[SYS] Design point DNI value";
   //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";
-  parameter Real SM = metadata_list[23] "Real solar multiple";
+  parameter Real SM = metadata_list[23] "[SYS] Real solar multiple";
 
 
   // Heliostat Field and Tower [H&T]
-  parameter String field_type = "surround";
-  parameter String opt_file(fixed = false);
-  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium");
-  parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-  parameter Real he_av_design = 0.99 "Helisotats availability";
-  parameter SI.Area A_heliostat = 148.84 "Area of one heliostat";
-  parameter SI.Length H_tower = 188.567344 "Height of the tower";
+  parameter String field_type = "surround" "[H&T] Type of the heliostat field, polar or surround";
+  parameter String opt_file(fixed = false) "[H&T]";
+  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium") "[H&T]";
+  parameter Solar_angles angles = Solar_angles.dec_hra "[H&T] Angles used in the lookup table file";
+  parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
+  parameter SI.Area A_heliostat = 148.84 "[H&T] Area of one heliostat";
+  parameter SI.Length H_tower = 188.567344 "[H&T] Height of the tower";
   parameter Real[24] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
-  parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "Number of heliostats";
+  parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "[H&T] Number of heliostats";
   parameter Real eff_opt_des = metadata_list[3];
-  parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
+  parameter SI.Area A_field = A_heliostat * n_heliostat "[H&T] Area of the entire field (reflective area)";
   //parameter SI.Area A_land = metadata_list[24] "Land area occupied by the plant";
-	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "Land area";
-	parameter Real land_mult = 6.16783860571 "Land area multiplier";
+	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "[H&T] Land area";
+	parameter Real land_mult = 6.16783860571 "[H&T] Land area multiplier";
 
   // Receiver [RCV]
-  parameter SI.Length H_recv = 19.810327;
-  parameter SI.Length D_recv = 19.012482;
-  parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "Receiver area";
-  parameter Integer N_pa_recv = 20 "Number of panels in receiver";
-  parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
-  parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
+  parameter SI.Length H_recv = 19.810327 "[RCV] Receiver height";
+  parameter SI.Length D_recv = 19.012482 "[RCV] Receiver diameter";
+  parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "[RCV] Receiver area";
+  parameter Integer N_pa_recv = 20 "[RCV] Number of panels in receiver";
+  parameter SI.Thickness t_tb_recv = 1.25e-3 "[RCV] Receiver tube wall thickness";
+  parameter SI.Diameter D_tb_recv = 40e-3 "[RCV] Receiver tube outer diameter";
   //parameter SI.Efficiency ab_recv = 0.961 "Receiver coating absorptance";
   //parameter SI.Efficiency em_recv = 0.92 "Receiver coating emissivity";
-  parameter SI.Efficiency eff_abs = metadata_list[21] "Effective absorptance";
-  parameter SI.Efficiency eff_emi = metadata_list[22] "Effective emmitance";
-  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "W/m2K";
+  parameter SI.Efficiency eff_abs = metadata_list[21] "[RCV] Effective absorptance";
+  parameter SI.Efficiency eff_emi = metadata_list[22] "[RCV] Effective emmitance";
+  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "[RCV] W/m2K";
   parameter Real[4] CL = {metadata_list[8], metadata_list[9], metadata_list[10], metadata_list[11]};
   parameter Real[4] C4L = {metadata_list[12], metadata_list[13], metadata_list[14], metadata_list[15]};
   parameter Real[5] CH = {metadata_list[16], metadata_list[17], metadata_list[18], metadata_list[19], metadata_list[20]};
-	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
+	parameter Real rec_fr = 1 - metadata_list[7] "[RCV] Receiver loss fraction of radiance at design point";
 	//parameter SI.RadiantPower Q_rec_out_des=Q_flow_defocus*(1 - rec_fr) "Input power to receiver at design point";
 
 
-  // Storage [ST]
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
-  parameter SI.Temperature T_max = 740.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";
-  parameter SI.Length d_p = 0.10 "Filler diameter";    
-  parameter Real ar = 2.0 "Tank aspect ratio";  
+  // Storage [ST] 
+  parameter Real t_storage(unit = "h") = 8.0 "[ST] Hours of storage";
+  parameter SI.Temperature T_max = 740.0 + 273.15 "[ST] Ideal high temperature of the storage";
+  parameter SI.Temperature T_min = 510.0 + 273.15 "[ST] Ideal low temperature of the storage";
+  parameter SI.Length d_p = 0.10 "[ST] Filler diameter";    
+  parameter Real ar = 2.0 "[ST] Tank aspect ratio";  
 
 
-  // Power Block [PB]
-  parameter String engine_brand = "SES" "Power block brand {SES,75%Carnot}";
-  parameter SI.Power P_gross_des = 100e6 "Power block gross rating at design point";
-  parameter SI.Power P_name_des = 100e6 "Power block nameplate rating";
-  parameter SI.Power P_name = P_name_des;
+  // Power Block [PB]  
+  parameter String engine_brand = "SES" "[PB] Power block brand {SES,75%Carnot}";
+  parameter SI.Power P_gross_des = 100e6 "[PB] Power block gross rating at design point";
+  parameter SI.Power P_name_des = 100e6 "[PB] Power block nameplate rating";
+  parameter SI.Power P_name = P_name_des "[PB] ";
   parameter SI.Power P_gross = P_gross_des / (1 - par_fr);
-  parameter SI.Efficiency eff_blk_des = 0.51 "Power block efficiency at design point";
-  parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
+  parameter SI.Efficiency eff_blk_des = 0.51 "[PB] Power block efficiency at design point";
+  parameter Real par_fr = 0.1 "[PB] Parasitics fraction of power block rating at design point";
 
-  // Control [CTRL]
-  parameter SI.TemperatureDifference T_tol_recv = 60.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
-  parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
+  // Control [CTRL] 
+  parameter SI.TemperatureDifference T_tol_recv = 60.0 "[CTRL] Temperature tolerance above design receiver input temperature before receiver is shut off";
+  parameter SI.TemperatureDifference T_tol_PB = 60.0 "[CTRL] Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
-  parameter SI.Temperature T_recv_max = T_min + T_tol_recv "Maximum temperature at bottom of tank when it can no longer be pumped into the receiver";
-  parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
-  parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
-  parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
-  parameter Real L_recv_max = 0.874215;
+  parameter SI.Temperature T_recv_max = T_min + T_tol_recv "[CTRL] Maximum temperature at bottom of tank when it can no longer be pumped into the receiver";
+  parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "[CTRL] Temperature at bottom of tank when it can start being pumped into the receiver again";
+  parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "[CTRL] Temperature at top of tank where PB can start";
+  parameter SI.Temperature T_PB_min = T_max - T_tol_PB "[CTRL] Temperature at top of tank where PB must stop";
+  parameter Real L_recv_max = 0.874215"[CTRL] Maximal storate level to run the receiver";
   //L_4
-  parameter Real L_recv_start = 0.816403;
+  parameter Real L_recv_start = 0.816403 "[CTRL] Level of storage to start the receiver";
   //L_3
-  parameter Real L_PB_start = 0.186413;
+  parameter Real L_PB_start = 0.186413 "[CTRL] Level of storage to start the PB";
   //L_2
-  parameter Real L_PB_min = 0.125861;
+  parameter Real L_PB_min = 0.125861 "[CTRL] Minimual storage level to run PB" ;
   //L_1
-  parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
-  parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
-  parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-  parameter Real nu_start = 0.4 "Minimum energy start-up fraction to start the receiver";
-  parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
-  parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
+  parameter SI.Angle ele_min = 0.13962634015955 "[CTRL] Heliostat stow deploy angle";
+  parameter Boolean use_wind = true "[CTRL] true if using wind stopping strategy in the solar field";
+  parameter SI.Velocity Wspd_max = 15 if use_wind "[CTRL] Wind stow speed";
+  parameter Real nu_start = 0.4 "[CTRL] Minimum energy start-up fraction to start the receiver";
+  parameter Real nu_min_sf = 0.3 "[CTRL] Minimum turn-down energy fraction to stop the receiver";
+  parameter Real nu_defocus = 1 "[CTRL] Energy fraction to the receiver at defocus state";
 
 
   //Enthalpies
@@ -121,11 +121,11 @@ model NaSTsCO2
  
 
 
-  // Finance [FN]
+  // Finance [FN] 
   // Cost data in USD (default) or AUD
-  parameter Currency currency = Currency.USD "Currency used for cost analysis";
-  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
-  parameter Real r_i = 0.025 "Inflation rate";
+  parameter Currency currency = Currency.USD "[FN] Currency used for cost analysis";
+  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "[FN] Electricity price file";
+  parameter Real r_i = 0.025 "[FN] Inflation rate";
   parameter Real r_disc_nom = 0.0701 "[FN] Nominal discount rate";
   parameter Real r_disc = (1 + r_disc_nom) / (1 + r_i) - 1 "[FN] Real discount rate : Calculated using Fisher equation";
   parameter Integer t_life(unit = "year") = 30 "[FN] Lifetime of plant";
@@ -134,23 +134,23 @@ model NaSTsCO2
   parameter Real r_contg = 0.1 "[FN] Contingency rate";
   parameter Real r_cons = 0.09 "[FN] Construction cost rate";
 
-  parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-  parameter FI.AreaPrice pri_site = 10.00 "Site improvements cost per area [USD/m2 of heliostat]";
+  parameter FI.Money C_site = pri_site * A_field "[FN] Site improvements cost";
+  parameter FI.AreaPrice pri_site = 10.00 "[FN] Site improvements cost per area [USD/m2 of heliostat]";
 
-  parameter FI.Money_USD C_land = pri_land * A_land  "Land cost";
-  parameter FI.AreaPrice pri_land = 10000 / 4046.86 "Land cost per area [USD/m2]";
+  parameter FI.Money_USD C_land = pri_land * A_land  "[FN] Land cost";
+  parameter FI.AreaPrice pri_land = 10000 / 4046.86 "[FN] Land cost per area [USD/m2]";
 
-  parameter FI.Money C_field = pri_field * A_field "Field cost";
-  parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
+  parameter FI.Money C_field = pri_field * A_field "[FN] Field cost";
+  parameter FI.AreaPrice pri_field = 75 "[FN] Field cost per design aperture area ($/m2)";
 
   //parameter FI.Money_USD C_tower = 16339938 "Tower cost";
-  parameter FI.Money_USD C_tower = 3000000*exp(0.0113*H_tower) "Tower cost";
-  parameter FI.Money_USD C_receiver = C_recv_fix + C_recv_ref * (D_recv / D_recv_ref) * (H_recv / H_recv_ref) ^ recv_exp "Receiver cost";
-  parameter FI.Money_USD C_recv_fix = 4780420 "Receiver fixed Cost";
-  parameter FI.Money_USD C_recv_ref = 35400613 "Receiver reference Cost";
-  parameter SI.Diameter D_recv_ref = 20 "Receiver reference diameter";
-  parameter SI.Height H_recv_ref = 18.4 "Receiver reference height";
-  parameter Real recv_exp = 0.6 "Receiver reference height";
+  parameter FI.Money_USD C_tower = 3000000*exp(0.0113*H_tower) "[FN] Tower cost";
+  parameter FI.Money_USD C_receiver = C_recv_fix + C_recv_ref * (D_recv / D_recv_ref) * (H_recv / H_recv_ref) ^ recv_exp "[FN] Receiver cost";
+  parameter FI.Money_USD C_recv_fix = 4780420 "[FN] Receiver fixed Cost";
+  parameter FI.Money_USD C_recv_ref = 35400613 "[FN] Receiver reference Cost";
+  parameter SI.Diameter D_recv_ref = 20 "[FN] Receiver reference diameter";
+  parameter SI.Height H_recv_ref = 18.4 "[FN] Receiver reference height";
+  parameter Real recv_exp = 0.6 "[FN] Receiver reference height";
 
 	//storage cost
 	//parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
@@ -162,112 +162,112 @@ model NaSTsCO2
 
   // SAM 2018 cost data: 1040
   parameter FI.Money_USD C_block = P_gross_ref/1000*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
-  parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
- parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
-  parameter Real power_block_exp = 0.7 "Power block scaling exponent";
+  parameter SI.Power P_gross_ref = 111e6 "[FN] Power block reference size";
+ parameter Real pri_block_ref(unit="$/kWe") = 600 "[FN] Power block reference unit price";
+  parameter Real power_block_exp = 0.7 "[FN] Power block scaling exponent";
 
 	
-  parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "Balance of plant cost";
-  parameter FI.PowerPrice pri_bop = 0 "Balance of plant cost per gross rated power";
+  parameter FI.Money_USD C_bop = pri_bop * P_gross / 1e3 "[FN] Balance of plant cost";
+  parameter FI.PowerPrice pri_bop = 0 "[FN] Balance of plant cost per gross rated power";
   //SAM 2018 cost data: 290
 
 	// Operation and maintenance cost
-  parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 "Fixed O&M cost per year";
-  parameter Real pri_om_name(unit = "$/kWe/year") = 40 "Fixed O&M cost per nameplate per year";
-  parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "Variable O&M cost per production per year";
-  parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "Variable O&M cost per production per year";
+  parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 "[FN] Fixed O&M cost per year";
+  parameter Real pri_om_name(unit = "$/kWe/year") = 40 "[FN] Fixed O&M cost per nameplate per year";
+  parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "[FN] Variable O&M cost per production per year";
+  parameter Real pri_om_prod(unit = "$/MWh/year") = 3 "[FN] Variable O&M cost per production per year";
 
 	// Total capital investment
-	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
-	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
-	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
-	parameter FI.Money_USD C_contingency = f_contingency * C_cap_dir_sub "Contingency costs";
-	parameter Real f_contingency = 0.1 "Contingency factor";
+	parameter FI.Money_USD C_cap = C_cap_dir_tot + C_EPC + C_land "[FN] Total capital (installed) cost";
+	parameter FI.Money_USD C_cap_dir_tot = C_cap_dir_sub + C_contingency "[FN] Direct capital cost total";
+	parameter FI.Money_USD C_EPC = 0.09 * C_cap_dir_tot "[FN] Engineering, procurement and construction(EPC) and owner costs"; //Based on Downselect Criteria, Table 2
+	parameter FI.Money_USD C_contingency = f_contingency * C_cap_dir_sub "[FN] Contingency costs";
+	parameter Real f_contingency = 0.1 "[FN] Contingency factor";
 
 
 	//parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * (C_receiver + C_tower + C_storage + C_block + C_field + C_site + C_bop) "Direct capital cost subtotal"; // i.e. purchased equipment costs
-	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping + C_salt_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "Direct capital cost subtotal"; // i.e. purchased equipment costs
-  parameter Real f_Subs = 0 "Subsidies on initial investment costs";
-	parameter Integer n_modules = 1 "Number of parallel CSP systems";
+	parameter FI.Money_USD C_cap_dir_sub = (1 - f_Subs) * n_modules*(C_receiver + C_loop_na + C_tower + C_rd + C_salt_pumps + C_salt_piping + C_salt_valves + C_hx + C_storage + C_block + C_hex_salt_co2 + C_field + C_site) "[FN] Direct capital cost subtotal"; // i.e. purchased equipment costs
+  parameter Real f_Subs = 0 "[FN] Subsidies on initial investment costs";
+	parameter Integer n_modules = 1 "[FN] Number of parallel CSP systems";
 	//
 	// C_loop_na
-	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
+	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "[FN] Sodium loop cost";
 	// C_pip_na
-	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_HX_max/Q_rec_CMI_ref)^pip_na_exp "Sodium piping cost";
-	parameter FI.Money_USD C_pip_na_ref =  2000000 "Sodium piping reference cost";
-	parameter SI.HeatFlowRate Q_HX_max = Q_rec_out_des*1.0;
-	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM;
-	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "Receiver thermal output reference size";
-	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
+	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_HX_max/Q_rec_CMI_ref)^pip_na_exp "[FN] Sodium piping cost";
+	parameter FI.Money_USD C_pip_na_ref =  2000000 "[FN] Sodium piping reference cost";
+	parameter SI.HeatFlowRate Q_HX_max = Q_rec_out_des*1.0 "[FN]";
+	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM "[FN]";
+	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "[FN] Receiver thermal output reference size";
+	parameter Real pip_na_exp = 0.7 "[FN] Sodium piping scaling exponent";
 	// C_ic_na
-	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^ic_na_exp "Valves and I&C reference cost";
-	parameter FI.Money_USD C_ic_na_ref = 417000 "Valves and I&C reference cost";
-	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "Receiver thermal output reference size";
-	parameter Real ic_na_exp = 0.5 "Valves and I&C scaling exponent";
+	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^ic_na_exp "[FN] Valves and I&C reference cost";
+	parameter FI.Money_USD C_ic_na_ref = 417000 "[FN] Valves and I&C reference cost";
+	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "[FN] Receiver thermal output reference size";
+	parameter Real ic_na_exp = 0.5 "[FN] Valves and I&C scaling exponent";
 	// C_valve_na
-	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^valve_na_exp "Sodium valves cost";
-	parameter FI.Money_USD C_valve_na_ref = 1269000 "Sodium valves reference cost";
-	parameter Real valve_na_exp = 0.7 "Sodium valves scaling exponent";
+	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^valve_na_exp "[FN] Sodium valves cost";
+	parameter FI.Money_USD C_valve_na_ref = 1269000 "[FN] Sodium valves reference cost";
+	parameter Real valve_na_exp = 0.7 "[FN] Sodium valves scaling exponent";
 	// C_tank_na
-	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_HX_max/Q_rec_CMI_ref)^tank_na_exp "Sump tank cost";
-	parameter FI.Money_USD C_tank_na_ref = 2073640 "Sump tank reference cost";
-	parameter Real tank_na_exp = 0.7 "Sump tank scaling exponent";
+	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_HX_max/Q_rec_CMI_ref)^tank_na_exp "[FN] Sump tank cost";
+	parameter FI.Money_USD C_tank_na_ref = 2073640 "[FN] Sump tank reference cost";
+	parameter Real tank_na_exp = 0.7 "[FN] Sump tank scaling exponent";
 	// C_vessel_na
-	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_HX_max/Q_rec_CMI_ref)^vessel_na_exp "Inlet vessel cost";	
-	parameter FI.Money_USD C_vessel_na_ref = 361522 "Inlet vessel reference cost";
-	parameter Real vessel_na_exp = 0.7 "Inlet vessel scaling exponent";
+	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_HX_max/Q_rec_CMI_ref)^vessel_na_exp "[FN] Inlet vessel cost";	
+	parameter FI.Money_USD C_vessel_na_ref = 361522 "[FN] Inlet vessel reference cost";
+	parameter Real vessel_na_exp = 0.7 "[FN] Inlet vessel scaling exponent";
 	// C_skid_na
-	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_HX_max/Q_rec_CMI_ref)^skid_na_exp "Purification skid cost";
-	parameter FI.Money_USD C_skid_na_ref = 494309 "Purification skid reference cost";
-	parameter Real skid_na_exp = 0.7 "Purification skid scaling exponent";
+	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_HX_max/Q_rec_CMI_ref)^skid_na_exp "[FN] Purification skid cost";
+	parameter FI.Money_USD C_skid_na_ref = 494309 "[FN] Purification skid reference cost";
+	parameter Real skid_na_exp = 0.7 "[FN] Purification skid scaling exponent";
 	// C_argon_na
-	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_HX_max/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
-	parameter FI.Money_USD C_argon_na_ref = 136210 "Argon system reference cost";
-	parameter Real argon_na_exp = 0.5 "Argon system scaling exponent";
+	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_HX_max/Q_rec_CMI_ref)^argon_na_exp "[FN] Argon system cost";
+	parameter FI.Money_USD C_argon_na_ref = 136210 "[FN] Argon system reference cost";
+	parameter Real argon_na_exp = 0.5 "[FN] Argon system scaling exponent";
 	// C_pump_na
-	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_HX_max/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
-	parameter FI.Money_USD C_pump_na_ref = 4400000 "Sodium pumps reference cost";			
-	parameter Real pump_na_exp = 0.7 "Sodium pumps scaling exponent";
-	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "Receiver thermal output reference size";
+	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_HX_max/Q_rec_NREL_ref)^pump_na_exp "[FN] Sodium pump cost";
+	parameter FI.Money_USD C_pump_na_ref = 4400000 "[FN] Sodium pumps reference cost";			
+	parameter Real pump_na_exp = 0.7 "[FN] Sodium pumps scaling exponent";
+	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "[FN] Receiver thermal output reference size";
 	//
 	// C_rd
-	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
+	parameter FI.Money_USD C_rd = C_riser + C_downcomer "[FN] Riser and downcomer cost";
 
-	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
-	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
-	parameter Real C_r_ref(unit = "$/m") = 5192 "Riser reference cost without material";
-	parameter Real C_d_ref(unit = "$/m") = 8056 "Riser reference cost without material";
-	parameter SI.Diameter D_r = 0.66 "Riser outer diameter";
-	parameter SI.Diameter D_d = 0.66 "Downcomer outer diameter";
-	parameter SI.Diameter D_r_ref = 0.7112 "Riser reference diameter";
-	parameter SI.Diameter D_d_ref = 0.7112 "Downcomer reference diameter";
-	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
-	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
-	parameter SI.Length L_horiz = 10 "Additional horizontal length of riser and downcomer to the HEX";
-	parameter Real lm_r = 1.43 "Length multiplier for expansion loops on riser";
-	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
-	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "Riser material cost per m";
-	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "Downcomer material cost per m";
-	parameter Real C_r_m(unit = "$/kg") = 8 "Riser material cost per kg";
-	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost per kg";
-	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "Riser piping mass per meter";
-	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "Downcomer piping mass per meter";
-	parameter SI.Thickness t_r = 0.007925 "Riser wall thickness";
-	parameter SI.Thickness t_d = 0.007925 "Downcomer wall thickness";
-	parameter SI.Density rho_r = 8.03 "Riser material density (g/cm3)"; //UNS S34709
-	parameter SI.Density rho_d = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
+	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "[FN] Riser cost";
+	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "[FN] Downcomer cost";
+	parameter Real C_r_ref(unit = "$/m") = 5192 "[FN] Riser reference cost without material";
+	parameter Real C_d_ref(unit = "$/m") = 8056 "[FN] Riser reference cost without material";
+	parameter SI.Diameter D_r = 0.66 "[FN] Riser outer diameter";
+	parameter SI.Diameter D_d = 0.66 "[FN] Downcomer outer diameter";
+	parameter SI.Diameter D_r_ref = 0.7112 "[FN] Riser reference diameter";
+	parameter SI.Diameter D_d_ref = 0.7112 "[FN] Downcomer reference diameter";
+	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "[FN] Riser length (including expansion loops)";
+	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "[FN] Downcomer length (including expansion loops)";
+	parameter SI.Length L_horiz = 10 "[FN] Additional horizontal length of riser and downcomer to the HEX";
+	parameter Real lm_r = 1.43 "[FN] Length multiplier for expansion loops on riser";
+	parameter Real lm_d = 1.45 "[FN] Length multiplier for expansion loops on downcomer";
+	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "[FN] Riser material cost per m";
+	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "[FN] Downcomer material cost per m";
+	parameter Real C_r_m(unit = "$/kg") = 8 "[FN] Riser material cost per kg";
+	parameter Real C_d_m(unit = "$/kg") = 80 "[FN] Downcomer material cost per kg";
+	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "[FN] Riser piping mass per meter";
+	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "[FN] Downcomer piping mass per meter";
+	parameter SI.Thickness t_r = 0.007925 "[FN] Riser wall thickness";
+	parameter SI.Thickness t_d = 0.007925 "[FN] Downcomer wall thickness";
+	parameter SI.Density rho_r = 8.03 "[FN] Riser material density (g/cm3)"; //UNS S34709
+	parameter SI.Density rho_d = 8.97 "[FN] Downcomer material density (g/cm3)"; //UNS 06230
 	//
 	// C_salt_pumps
-	parameter FI.Money_USD C_salt_pumps = 0 "No Salt";
-	parameter FI.Money_USD C_salt_piping = 0 "No Salt";
-	parameter FI.Money_USD C_salt_valves = 0 "No Salt";
+	parameter FI.Money_USD C_salt_pumps = 0 "[FN] No Salt";
+	parameter FI.Money_USD C_salt_piping = 0 "[FN] No Salt";
+	parameter FI.Money_USD C_salt_valves = 0 "[FN] No Salt";
 	// C_hx
-	parameter FI.Money_USD C_hx = 0 "No Na-salt HEX";
+	parameter FI.Money_USD C_hx = 0 "[FN] No Na-salt HEX";
 	// 
 	// C_hex_salt_co2, use Salt-CO2 HEX cost in Gen3L to approximate Na-sCO2 HEX
-	parameter FI.Money_USD C_hex_salt_co2 = (1e-3)*P_gross_ref*pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "use Salt-CO2 HEX cost in Gen3L to approximate Na-sCO2 HEX";
-	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "Salt-CO2 primary heat exchanger reference unit price";
-	parameter Real hex_salt_co2_exp = 0.7 "Salt-CO2 primary heat exchanger scaling exponent";
+	parameter FI.Money_USD C_hex_salt_co2 = (1e-3)*P_gross_ref*pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "[FN] use Salt-CO2 HEX cost in Gen3L to approximate Na-sCO2 HEX";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "[FN] Salt-CO2 primary heat exchanger reference unit price";
+	parameter Real hex_salt_co2_exp = 0.7 "[FN] Salt-CO2 primary heat exchanger scaling exponent";
 
   // System component models
   // Weather data
