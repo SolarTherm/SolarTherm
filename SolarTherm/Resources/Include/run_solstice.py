@@ -8,7 +8,6 @@ from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
 from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
 
-
 def set_param(inputs={}):
     '''
     set parameters
@@ -51,15 +50,17 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
+        start=time.time()
+
         if pm.aimingstrategy:
             tablefile=design_crs_aimingstrategy(pm)
         else:
-            start=time.time()
             tablefile=design_crs(pm)
-            end=time.time()
-            print('')
-            print('total time %.2f'%((end-start)/60.), 'min')
-            np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
+
+        end=time.time()
+        print('')
+        print('total time %.2f'%((end-start)/60.), 'min')
+        np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
     return tablefile
 
@@ -109,46 +110,85 @@ def design_crs(pm):
     
     
 def design_crs_aimingstrategy(pm):
-    '''
-    Design a central receiver system that requires a sophisticated aiming strategy, like molten salt or sodium systems
-    MDBA method
-       TBD...
+	'''
+	Design a central receiver system that requires a sophisticated aiming strategy, like molten salt or sodium systems
+	MDBA method
+	TBD...
 
-    '''
-    casedir=pm.casedir	
-    tablefile=casedir+'/OELT_Solstice.motab'
+	'''
+	casedir=pm.casedir	
+	tablefile=casedir+'/OELT_Solstice.motab'
 
-    #
-    # TODO this is a place holder
-    # This part will be replaced by the full model that generates the oelt
-    #
+	if not os.path.exists(casedir):
+		os.makedirs(casedir)
 
-    return tablefile
+	from one_key_co_optimisation import one_key_start
+	from cal_sun import SunPosition
+	from cal_layout_r import radial_stagger, aiming_cylinder
+	from Deviation_aiming_new3 import aiming
+	from Open_CSPERB import eval_v_max, Cyl_receiver
+	from Open_CSPERB_plots import tower_receiver_plots
+	from HC import Na
+	from Tube_materials import Inconel740H
+	from Flux_reader import read_data
+	from Loss_analysis import receiver_correlation
+	from output_motab import output_motab, output_matadata_motab
+	from python_postprocessing import proces_raw_results, get_heliostat_to_receiver_data
+	from SOLSTICE import SolsticeScene
 
+	Model=one_key_start(casedir=casedir, 
+		tower_h=pm.H_tower, 
+		delta_r2=pm.delta_r2,
+		delta_r3=pm.delta_r3,
+		r_diameter=pm.W_rcv,
+		r_height=pm.H_rcv,
+		SM=pm.SM,
+		oversizing=pm.f_oversize, 
+		fluxlimitpath=pm.fluxlimitpath,
+		hst_w=pm.W_helio,
+		hst_h=pm.H_helio,
+		mirror_reflectivity=pm.helio_refl,
+		slope_error=pm.slope_error,
+		num_rays=int(pm.n_rays),
+		latitude=pm.lat,
+		)
+
+	#Model.big_field_generation()
+	#Model.annual_big_field()
+	#Model.determine_field()
+	Model.flow_path()
+	Model.annual_trimmed_field()	
+
+	return tablefile
 
 
 if __name__=='__main__':
-    case="./test"
-    Q_in_rcv=553e6 #W
-    W_helio=12.015614841
-    H_helio=12.015614841
-    H_tower=183.331344997
-    n_row_oelt=3
-    n_col_oelt=5
-    R1=40.
-    fb=0.4
-    W_rcv=14.9999995285
-    H_rcv=18.6699994131
-    n_W_rcv=50
-    n_H_rcv=10
-    n_rays=10e6
-    rcv_type='cylinder'    
+	case="test-aiming"
+	fluxlimitpath='../../Data/Optics/sodium/fluxlimit'
+	wea_file='../../Data/Weather/Daggett_Ca_TMY32.motab'
+	aimingstrategy=True
+	r_diameter=19.012482 # receiver diameter
+	r_height=19.810327 # receiver height
+	tower_h=188.567344 # tower height
+	delta_r2=0.871037 # field expanding for zone2
+	delta_r3=1.992501 # field expanding for zone3
+	oversizing=1.245606 # oversizing factor
+	SM=2.717882 # Solar multiple
+	num_rays=5000
+	print r_diameter,r_height,tower_h,delta_r2,delta_r3,oversizing,SM
 
-    #field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/default-case/optics/pos_and_aiming.csv'
-    field_type='surround'
-    wea_file='/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
+	inputs={'casedir': case, 
+			'aimingstrategy':aimingstrategy, 
+			'H_tower': tower_h, 
+			'delta_r2': delta_r2,
+			'delta_r3': delta_r3,
+			'W_rcv': r_diameter,
+			'H_rcv': r_height,
+			'SM': SM,
+			'f_oversize': oversizing,
+			'fluxlimitpath': fluxlimitpath,
+			'n_rays':num_rays}
 
-    run_simul(inputs)
+	run_simul(inputs)
 
 

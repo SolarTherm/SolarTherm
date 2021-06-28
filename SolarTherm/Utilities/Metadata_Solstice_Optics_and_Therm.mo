@@ -4,7 +4,7 @@ function Metadata_Solstice_Optics_and_Therm
     import Modelica.Utilities.Streams;
     import Modelica.Utilities.Strings;
     input String file;
-    output Real[24] meta;
+    output Real[23] meta;
   protected
     String line;
     Integer i;
@@ -38,5 +38,5 @@ function Metadata_Solstice_Optics_and_Therm
     (meta[21], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file); // eff_abs
     (meta[22], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file); // eff_emi
     (meta[23], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file); // SM  
-    (meta[24], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file); // A_land            
+   //(meta[24], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file); // A_land            
 end Metadata_Solstice_Optics_and_Therm;

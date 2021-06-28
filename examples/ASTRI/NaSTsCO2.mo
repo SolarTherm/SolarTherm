@@ -22,18 +22,20 @@ model NaSTsCO2
   parameter Integer year = 1996 "[SYS] Meteorological year";
   parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "[SYS] Design point DNI value";
   //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";
-  parameter Real SM = metadata_list[23] "[SYS] Real solar multiple";
+  parameter Real SM = 2.73 "[SYS] Real solar multiple";
 
 
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround" "[H&T] Type of the heliostat field, polar or surround";
   parameter String opt_file(fixed = false) "[H&T]";
-  parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium") "[H&T]";
-  parameter Solar_angles angles = Solar_angles.dec_hra "[H&T] Angles used in the lookup table file";
+  parameter String casefolder = "test-integraton" "[H&T]";
+  parameter Solar_angles angles = Solar_angles.elo_hra "[H&T] Angles used in the lookup table file";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter SI.Area A_heliostat = 148.84 "[H&T] Area of one heliostat";
   parameter SI.Length H_tower = 188.567344 "[H&T] Height of the tower";
-  parameter Real[24] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
+    parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+  parameter Real[23] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "[H&T] Number of heliostats";
   parameter Real eff_opt_des = metadata_list[3];
   parameter SI.Area A_field = A_heliostat * n_heliostat "[H&T] Area of the entire field (reflective area)";
@@ -41,7 +43,25 @@ model NaSTsCO2
 	parameter SI.Area A_land = land_mult * A_field + 197434.207385281 "[H&T] Land area";
 	parameter Real land_mult = 6.16783860571 "[H&T] Land area multiplier";
 
+    parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+    parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+	// additional parameters for aiming strategy and thermal performance
+	parameter Real run_aiming = 1 "[H&T] Run aiming strategy or not, 1 run, 0 not run";
+	parameter Real run_therm = 1 "[H&T] Run receiver thermal model or not, 1 run, 0 not run";
+    parameter Real f_oversize = 1.245606 "[H&T] Field oversizing factor";
+	parameter Real delta_r2=0.871037 "[H&T] Field expanding for zone2";
+	parameter Real delta_r3=1.992501 "[H&T] Field expanding for zone3";
+	parameter Real num_rays=5000 "[H&T] Number of rays in the optical simulations";
+	parameter String fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium/fluxlimit") "[H&T]";
+ 	//parameter Integer Nb=0 "Number of banks";
+ 	//parameter Integer Nfp=0 "Number of flow paths";
+ 	//parameter Real Do=0 "Tube outer diameter";
+    //parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
+    //parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
+
+
   // Receiver [RCV]
+    parameter String rcv_type = "cylindrical" "other options are : flat, cylindrical, stl";  
   parameter SI.Length H_recv = 19.810327 "[RCV] Receiver height";
   parameter SI.Length D_recv = 19.012482 "[RCV] Receiver diameter";
   parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "[RCV] Receiver area";
@@ -300,26 +320,41 @@ model NaSTsCO2
 
   // Heliostat field
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
+		angles=angles,
+		lat = data.lat, 
+		lon = data.lon,
+		SM=SM,
+		H_rcv=H_recv, 
+		W_rcv=D_recv, 	
+		W_helio = sqrt(A_heliostat), 
+		H_helio = sqrt(A_heliostat),	
 		A_h = A_heliostat, 
+		H_tower = H_tower, 
+		helio_refl=helio_refl,
+		slope_error=slope_error, 
+		n_row_oelt=n_row_oelt, 
+		n_col_oelt=n_col_oelt, 
+		n_rays=num_rays, 
+		field_type=field_type, 
+		rcv_type=rcv_type, 
+		run_aiming=run_aiming, 
+		run_therm=run_therm, 
+		f_oversize=f_oversize,
+		delta_r2=delta_r2,
+		delta_r3=delta_r3, 
+		psave = casefolder, 
+		wea_file=wea_file,
+		fluxlimitpath=fluxlimitpath,
 		Q_design = Q_flow_defocus, 
 		Wspd_max = Wspd_max, 
 		ele_min(displayUnit = "deg") = ele_min, 
 		he_av = he_av_design, 
-		lat = data.lat, 
-		lon = data.lon, 
 		nu_defocus = nu_defocus, 
 		nu_min = nu_min_sf, 
 		nu_start = nu_start, 
 		use_defocus = false, 
 		use_on = true, 
-		use_wind = true, 
-		psave = casefolder, 
-		H_tower = H_tower, 
-		H_rcv = H_recv, 
-		W_rcv = D_recv, 
-		wea_file=wea_file,
-		W_helio = sqrt(A_heliostat), 
-		H_helio = sqrt(A_heliostat)) annotation(
+		use_wind = true) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
   // Receiver

@@ -4,9 +4,9 @@
 #include <python2.7/Python.h>
 #include <stdio.h>
 
-const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[]);
+const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, const char *fluxlimitpath, int argc, const char *varnames[], const double var[]);
 
-const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[])
+const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, const char *fluxlimitpath, int argc, const char *varnames[], const double var[])
 {
     // ppath: path of the Python script
     // pname: name of the Python script
@@ -43,6 +43,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
             PyDict_SetItemString(inputs, "field_type", PyString_FromString((char *)field_type));
             PyDict_SetItemString(inputs, "rcv_type", PyString_FromString((char *)rcv_type));
             PyDict_SetItemString(inputs, "wea_file", PyString_FromString((char *)wea_file));
+            PyDict_SetItemString(inputs, "fluxlimitpath", PyString_FromString((char *)fluxlimitpath));
             for (i = 0; i < argc; ++i) {
 
                 pValue = PyFloat_FromDouble(var[i]);
