@@ -122,19 +122,19 @@ def design_crs_aimingstrategy(pm):
 	if not os.path.exists(casedir):
 		os.makedirs(casedir)
 
-	from one_key_co_optimisation import one_key_start
-	from cal_sun import SunPosition
-	from cal_layout_r import radial_stagger, aiming_cylinder
-	from Deviation_aiming_new3 import aiming
-	from Open_CSPERB import eval_v_max, Cyl_receiver
-	from Open_CSPERB_plots import tower_receiver_plots
-	from HC import Na
-	from Tube_materials import Inconel740H
-	from Flux_reader import read_data
-	from Loss_analysis import receiver_correlation
-	from output_motab import output_motab, output_matadata_motab
-	from python_postprocessing import proces_raw_results, get_heliostat_to_receiver_data
-	from SOLSTICE import SolsticeScene
+	from Field_receiver_model.one_key_co_optimisation import one_key_start
+	from Field_receiver_model.cal_sun import SunPosition
+	from Field_receiver_model.cal_layout_r import radial_stagger, aiming_cylinder
+	from Field_receiver_model.Deviation_aiming_new3 import aiming
+	from Field_receiver_model.Open_CSPERB import eval_v_max, Cyl_receiver
+	from Field_receiver_model.Open_CSPERB_plots import tower_receiver_plots
+	from Field_receiver_model.HC import Na
+	from Field_receiver_model.Tube_materials import Inconel740H
+	from Field_receiver_model.Flux_reader import read_data
+	from Field_receiver_model.Loss_analysis import receiver_correlation
+	from Field_receiver_model.output_motab import output_motab, output_matadata_motab
+	from Field_receiver_model.python_postprocessing import proces_raw_results, get_heliostat_to_receiver_data
+	from Field_receiver_model.SOLSTICE import SolsticeScene
 
 	Model=one_key_start(casedir=casedir, 
 		tower_h=pm.H_tower, 
@@ -153,9 +153,9 @@ def design_crs_aimingstrategy(pm):
 		latitude=pm.lat,
 		)
 
-	#Model.big_field_generation()
-	#Model.annual_big_field()
-	#Model.determine_field()
+	Model.big_field_generation()
+	Model.annual_big_field()
+	Model.determine_field()
 	Model.flow_path()
 	Model.annual_trimmed_field()	
 
