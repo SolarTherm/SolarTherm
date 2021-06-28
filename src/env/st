@@ -45,7 +45,7 @@ def append(path,envvar):
 		path = PJ(pp,path)
 	os.environ[envvar] = path
 
-instp = CYG('/home/philgun/.local')
+instp = CYG('/home/arfontalvo/.local')
 os.environ['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 
