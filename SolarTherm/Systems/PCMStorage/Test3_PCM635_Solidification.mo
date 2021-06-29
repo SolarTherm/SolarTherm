@@ -10,10 +10,11 @@ model Test3_PCM635_Solidification
   package Wall = SolarTherm.Media.Materials.SS316L; 
   package PCM = SolarTherm.Media.Materials.PCM635_UniSA; 
 
-  parameter SI.Length L = 10 "Length of PCM tank";
+  parameter SI.Length L = 100 "Length of PCM tank";
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius";
   parameter SI.Length r_shell = 0.03 "Shell radius";
+  parameter Integer N_tube = 1 "Number of tubes";
   parameter Integer N_sec = 100 "Number of mesh elements";  
   //parameter SI.Length z_f[N_sec] = SolarTherm.Models.Storage.PCMTubeInTank_Test.Z_position(L, N_sec); 
   parameter SI.Temperature T_min = CV.from_degC(540.0) "Design cold Temperature of everything in the tank, K";
@@ -25,7 +26,7 @@ model Test3_PCM635_Solidification
   parameter SI.SpecificEnthalpy h_w_start[N_sec] = fill(Wall.h_Tf(T_max,0.0),N_sec);
   parameter SI.SpecificEnthalpy h_p_start[N_sec] = fill(PCM.h_Tf(T_max,0.0),N_sec);
 
-  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section PCMTank(redeclare package Fluid = Sodium, redeclare package Wall = Wall, redeclare package Storage = PCM, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec, T_f_start = T_f_start, T_w_start = T_w_start, T_p_start = T_p_start, h_f_start = h_f_start, h_w_start = h_w_start, h_p_start = h_p_start) annotation(Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section PCMTank(redeclare package Fluid = Sodium, redeclare package Wall = Wall, redeclare package Storage = PCM, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube, N_sec = N_sec, T_f_start = T_f_start, T_w_start = T_w_start, T_p_start = T_p_start, h_f_start = h_f_start, h_w_start = h_w_start, h_p_start = h_p_start) annotation(Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   //All tank sections have HTF type in common!
   //Fluid.State fluid[N_sec](each h_start = h_f_max) "Fluid array";
   Sodium Fluid "Fluid package";
@@ -70,7 +71,7 @@ equation
   
   //Validation set A assumes inlet discharge volumetric flow rate of 108 m3/hr
   //m_flow = (108.0/3600.0)*rho_f_avg;
-  m_flow = 0.003;
+  m_flow = 0.075;
   T_top = T_min;
   
   //Fluid inlet and outlet properties
@@ -79,11 +80,11 @@ equation
   fluid_top.T = T_top;
   fluid_bot.T = T_bot;
   
-annotation(experiment(StopTime = 108000, StartTime = 0, Tolerance = 1e-6, Interval = 10.0));
+annotation(experiment(StopTime = 18000, StartTime = 0, Tolerance = 1e-6, Interval = 10.0));
 
-annotation (Documentation(revisions ="<html>
+annotation (Documentation(info ="<html>
   		<p>By Ming Liu on 11/06/2021</p>
-  		<p>This is an isolation test case for solidifying PCM635 (a phase change material with melting temperature of 635 deg. C) contained in the shell side. Initially, the PCM is at a temperature of 750 deg. C and liquid sodium enters the tube at 540 deg.C with a mass flow rate of 0.003 kg/s. </p>
+  		<p>This is an isolation test case for solidifying PCM635 (a phase change material with melting temperature of 635 <sup>o</sup>C) contained in the shell side. Initially, the PCM is at a temperature of 750 <sup>o</sup>C and liquid sodium enters the tube at 540 <sup>o</sup>C with a mass flow rate of 0.075 kg/s. </p>
   		</html>")); 
   		
 end Test3_PCM635_Solidification;

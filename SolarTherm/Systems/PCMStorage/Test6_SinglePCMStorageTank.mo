@@ -31,9 +31,10 @@ equation
 
 annotation(experiment(StopTime = 180000, StartTime = 0, Tolerance = 1e-3, Interval = 10.0));
 
-annotation (Documentation(revisions ="<html>
-  		<p>By Ming Liu on 11/06/2021</p>
-  		<p>Similar to Test2_PCM635_Melting, this is an isolation test case for melting PCM635 (a phase change material with melting temperature of 635 deg. C) contained in the shell side. Initially, the PCM is at a temperature of 540 deg. C and liquid sodium enters the tube at 750 deg.C with a mass flow rate of 0.075 kg/s. </p>
+annotation (Documentation(info ="<html>
+
+  		<p>Similar to Test2_PCM635_Melting, this is an isolation test case for melting PCM635 (a phase change material with melting temperature of 635 <sup>o</sup>C) contained in the shell side. Initially, the PCM is at a temperature of 540 <sup>o</sup>C and liquid sodium enters the tube at 750 <sup>o</sup>C with a mass flow rate of 0.075 kg/s. </p>
+   		<p>By Ming Liu on 11/06/2021</p>
   		</html>"));  
   		
 end Test6_SinglePCMStorageTank;

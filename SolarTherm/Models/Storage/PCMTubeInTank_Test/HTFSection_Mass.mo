@@ -16,4 +16,9 @@ algorithm
   for i in 1:N_sec loop
     M_HTF[i] := Rho * A_HTF * dL;
   end for;
+  
+annotation (Documentation(info="<html>
+  		<p> This function is to calculate the mass of HTF (heat transfer fluid) node. </p>   		  		
+  		</html>"));  
+  
 end HTFSection_Mass;

@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 partial package PartialMaterial
-  import SI = Modelica.SIunits;
+import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   package Tables = Modelica.Blocks.Tables;
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
@@ -26,10 +26,37 @@ partial package PartialMaterial
   end rho_Tf;
   
   replaceable partial model State "A model which calculates state and properties"
-    	SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
+    SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
 	SI.Temperature T "Temperature (K)";
 	Real f "Liquid Mass Fraction";
 	SI.Density rho "Density (kg/m3)";
 	SI.ThermalConductivity k "Thermal conductivity (W/mK)";
+	SI.SpecificHeatCapacity cp "Specific heat capacity (J/kgK)";
+	SI.DynamicViscosity mu "Dynamic viscosity";
   end State;
+  
+  /*
+  replaceable partial function T_h "Return Temperature from h"
+    extends Modelica.Icons.Function;
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absolute temperature (K)";
+  end T_h;
+  
+  replaceable partial function f_h "Return mass liquid fraction from h"
+    extends Modelica.Icons.Function;
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output Real f "Liquid mass fraction";
+  end f_h;
+  */
+  replaceable partial function T_h "Return absolute temperature (K) from h (J/kg)"
+    extends Modelica.Icons.Function;
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absolute temperature (K)";
+  end T_h;
+  
+  replaceable partial function f_h "Return Temperature from h"
+    extends Modelica.Icons.Function;
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output Real f "Liquid mass fraction";
+  end f_h;
 end PartialMaterial;

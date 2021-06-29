@@ -14,6 +14,7 @@ model Test1_CaOSensibleStorage
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius";
   parameter SI.Length r_shell = 0.03 "Shell radius";
+  parameter Integer N_tube = 1 "Number of tubes";
   parameter Integer N_sec = 20 "Number of mesh elements";  
   parameter SI.Length z_f[N_sec] = SolarTherm.Models.Storage.PCMTubeInTank_Test.Z_position(L, N_sec); 
   parameter SI.Temperature T_min = CV.from_degC(540) "Design cold Temperature of everything in the tank, K";
@@ -25,7 +26,7 @@ model Test1_CaOSensibleStorage
   parameter SI.Temperature T_p_start[N_sec] = fill(T_min,N_sec);
   parameter SI.Temperature h_p_start[N_sec] = fill(CaO.h_Tf(T_min,0),N_sec);
 
-  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section SensibleStorageTank(redeclare package Fluid = Sodium, redeclare package Wall = Wall, redeclare package Storage = CaO, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec, T_f_start = T_f_start, T_w_start = T_w_start, T_p_start = T_p_start, h_f_start = h_f_start, h_w_start = h_w_start, h_p_start = h_p_start) annotation(Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section SensibleStorageTank(redeclare package Fluid = Sodium, redeclare package Wall = Wall, redeclare package Storage = CaO, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec, N_tube = N_tube, T_f_start = T_f_start, T_w_start = T_w_start, T_p_start = T_p_start, h_f_start = h_f_start, h_w_start = h_w_start, h_p_start = h_p_start) annotation(Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   //All tank sections have HTF type in common!
   //Fluid.State fluid[N_sec](each h_start = h_f_min) "Fluid array";
   Sodium Fluid "Fluid package";
@@ -41,7 +42,6 @@ model Test1_CaOSensibleStorage
   parameter SI.Density rho_f_avg=(rho_f_min+rho_f_max)/2;
  
   //Design parameters
-  parameter SI.Energy E_max = 144e9 "Maximum theoretical storage capacity of combined tanks";
   parameter SI.Time t_charge = 10 * 3600 "charging time";
   parameter SI.Time t_discharge = 10 * 3600 "discharging time";
 
@@ -73,9 +73,9 @@ equation
   
 annotation(experiment(StopTime = 14400, StartTime = 0, Tolerance = 1e-6, Interval = 10.0));
 
-annotation (Documentation(revisions ="<html>
-  		<p>By Ming Liu on 03/09/2020</p>
+annotation (Documentation(info ="<html>
   		<p>This is an isolation test case for using CaO as a sensible storage material in the shell side.</p>
+  		<p>By Ming Liu on 03/09/2020</p>
   		</html>"));    
 
 end Test1_CaOSensibleStorage;

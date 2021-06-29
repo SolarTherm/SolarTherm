@@ -276,7 +276,7 @@ equation
   
 //Pumping losses
     
-  annotation (Documentation(revisions ="<html>
-  		<p>By Ming Liu on 20/08/2020</p>
+  annotation (Documentation(info ="<html>
+  		<p>It is a test component. </p>
   		</html>"));    
 end Test;

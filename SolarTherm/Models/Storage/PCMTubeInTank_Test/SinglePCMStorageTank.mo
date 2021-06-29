@@ -1,7 +1,7 @@
 within SolarTherm.Models.Storage.PCMTubeInTank_Test;
 
 model SinglePCMStorageTank
-//extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
+
 extends SolarTherm.Interfaces.Models.HeatTransferFluid_PCM;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -12,14 +12,14 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_PCM;
   replaceable package Wall_Package = SolarTherm.Media.Materials.PartialMaterial;
   replaceable package PCM_Package = SolarTherm.Media.Materials.PartialMaterial;
     
-  parameter SI.Energy E_max = 144e9 "Design storage capacity";  
   parameter SI.Temperature T_min = CV.from_degC(540) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(750) "Design hot Temperature of everything in the tank (K)";
   parameter SI.Length L = 10 "Length of PCM tank";
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius";
   parameter SI.Length r_shell = 0.03 "Shell radius";
-  parameter Integer N_sec = 20 "Number of mesh elements";  
+  parameter Integer N_tube = 1 "Number of tubes";
+  parameter Integer N_sec = 20 "Number of mesh elements";   
 
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an an output signal (K)"
                                             annotation (Placement(visible = true,transformation(
@@ -47,8 +47,8 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_PCM;
           origin={46, 0},extent={{6, -6}, {-6, 6}},
           rotation=0)));
   
-  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_A(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec);
-    
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_A(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube, N_sec = N_sec);
+  
   Medium.BaseProperties fluid_top;
   Medium.BaseProperties fluid_bot;
   
@@ -87,5 +87,10 @@ equation
   
 annotation(
       Icon(coordinateSystem(initialScale = 0.1)));
-  
+
+annotation (Documentation(info ="<html>
+        <p>This model contains the 1D model detailed in the component of TubeInTank_Section2 with the addition of two fluid connectors: fluid_a and fluid_b at the top and bottom of a single PCM storage tank. Three output signals are also included: T_top_measured (temperature at the top of the tank), T_bot_measured (temperature at the bottom of the tank) and h_bot_outlet (enthaply at the bottom of the tank). </p>
+  		<p>By Ming Liu on 22/06/2021</p>
+  		</html>"));   
+  		  
 end SinglePCMStorageTank;

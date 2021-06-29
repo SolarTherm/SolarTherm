@@ -2,8 +2,9 @@ within SolarTherm.Models.Storage;
 
 package PCMTubeInTank_Test
 
-annotation (Documentation(revisions ="<html>
-  		<p>1D numerical modelling of the heat transfer between phase change material (PCM) and heat transfer fluid (HTF) in a shell-and-tube configuration. The PCM and HTF is located in the shell and tube side, respectively, with heat conduction through the tube wall in between them. Temperature variations in the flow direction are considered in domains of PCM, HTF and tube wall. </p> 
-  		<p>By Ming Liu on 18/06/2021</p>
+annotation (Documentation(info="<html>
+  		<p> This package consists of two numerical models: a single PCM model and a cascade 3 PCM model. Both are 1D numerical model to simulate the heat transfer between the phase change material (PCM) and heat transfer fluid (HTF) in a shell-and-tube configuration. </p>
+  		<p>By Ming Liu on 22/06/2021</p>
   		</html>")); 
-end PCMTubeInTank_Test;
+  		
+end PCMTubeInTank_Test; 

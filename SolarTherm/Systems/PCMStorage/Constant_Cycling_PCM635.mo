@@ -7,21 +7,22 @@ model Constant_Cycling_PCM635
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;  
   package Fluid_Package = SolarTherm.Media.Materials.Sodium; 
   package Wall_Package = SolarTherm.Media.Materials.SS316L;  
-  package PCM_Package = SolarTherm.Media.Materials.PCM635_UniSA;  //Can investigate different PCM
-
-  //Design Parameters 
+  package PCM_Package = SolarTherm.Media.Materials.PCM635_UniSA;  
+//Can investigate different PCM
+  //Design Parameters
   parameter SI.Temperature T_min = CV.from_degC(540) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(750) "Design hot Temperature of everything in the tank (K)";
-  parameter SI.Length L = 10 "Length of PCM tank";
+  parameter SI.Length L = 100 "Length of PCM tank";
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius";
   parameter SI.Length r_shell = 0.03 "Shell radius";
-  parameter Integer N_sec = 50 "Number of mesh elements";  
-  parameter SI.Energy E_max = 144e9 "Design storage capacity"; 
+  parameter Integer N_sec = 100 "Number of mesh elements";  
+  parameter Integer N_tube = 1 "Number of tubes";
+  //parameter SI.Energy E_max = rho_p_avg * CN.pi * (h_p_max - h_p_min) * (r_shell ^ 2 - r_tube_out^2) * L * N_tube "Design storage capacity, J";
   
-  parameter SI.Time t_charge = 10.0 * 3600.0 "Charging period";
+  parameter SI.Time t_charge = 15.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 5.0 * 3600.0 "Standby period between discharge and charge";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
+  parameter SI.Time t_discharge = 15.0 * 3600.0 "Discharging period";
   parameter SI.Time t_cycle = t_charge + t_standby + t_discharge;
 
   parameter SI.MassFlowRate m_charge = 0.075;
@@ -41,7 +42,7 @@ model Constant_Cycling_PCM635
   SI.MassFlowRate m_Recv_signal(start = 1.0e-6);
   SI.MassFlowRate m_PB_signal(start = 1.0e-6);
 
-  SolarTherm.Models.Storage.PCMTubeInTank_Test.SinglePCMStorageTank PCMTank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Wall_Package = Wall_Package, redeclare package PCM_Package = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec) annotation(Placement(visible = true, transformation(origin = {0, -2}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.SinglePCMStorageTank PCMTank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Wall_Package = Wall_Package, redeclare package PCM_Package = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_sec = N_sec, N_tube = N_tube) annotation(Placement(visible = true, transformation(origin = { -2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
 
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -77,8 +78,8 @@ model Constant_Cycling_PCM635
   //parameter Real C_total = PCMTank.C_total;
   
   //Energies
-  //SI.Energy E_charged(start=0);
-  //SI.Energy E_discharged(start=0);
+  SI.Energy E_charged(start=0);
+  SI.Energy E_discharged(start=0);
 equation 
 //controls
   if rem(time, t_cycle) < t_charge then
@@ -96,8 +97,20 @@ equation
 //efficiency
   if time > t_cycle*5.0 and time < t_cycle*6.0 then
     der(numer) = PB_Sink.port_a.m_flow*(inStream(PB_Sink.port_a.h_outflow)-h_f_min);
+    if time < t_cycle*5 + t_charge then //charging
+      der(E_charged) = PCMTank.fluid_a.m_flow*(inStream(PCMTank.fluid_a.h_outflow) - PCMTank.fluid_b.h_outflow);
+      der(E_discharged) = 0.0;
+    elseif time > t_cycle*5 + t_charge and time < t_cycle*5 + t_discharge + t_charge then //discharging
+      der(E_charged) = 0.0;
+      der(E_discharged) = PCMTank.fluid_b.m_flow*(PCMTank.fluid_a.h_outflow-inStream(PCMTank.fluid_b.h_outflow));
+    else
+      der(E_charged) = 0.0;
+      der(E_discharged) = 0.0;    
+    end if;    
   else
     der(numer) = 0.0;
+    der(E_charged) = 0.0;
+    der(E_discharged) = 0.0;    
   end if;
   
   if time > t_cycle*5.0 + 100.0 then
@@ -105,9 +118,8 @@ equation
   else
     eff_storage = 0.0;
   end if;
-  
   connect(PCMTank.fluid_b, PCM_Splitter2.fluid_c) annotation(
-    Line(points = {{0, -32}, {0, -46}}, color = {0, 127, 255}));
+    Line(points = {{0, -31}, {0, -46}}, color = {0, 127, 255}));
   connect(PCM_Splitter2.fluid_b, pumpSimple_EqualPressure2.fluid_a) annotation(
     Line(points = {{-12, -60}, {-34, -60}, {-34, -36}, {-46, -36}}, color = {0, 127, 255}));
   connect(m_flow_Recv.y, pumpSimple_EqualPressure2.m_flow) annotation(
@@ -115,7 +127,7 @@ equation
   connect(pumpSimple_EqualPressure3.fluid_b, PCM_Splitter2.fluid_a) annotation(
     Line(points = {{30, -60}, {12, -60}}, color = {0, 127, 255}));
   connect(PCMTank.T_amb, Tamb.y) annotation(
-    Line(points = {{-17, -2}, {-25, -2}}, color = {0, 0, 127}));
+    Line(points = {{-16, -4}, {-20.5, -4}, {-20.5, -2}, {-25, -2}}, color = {0, 0, 127}));
   connect(pumpSimple_EqualPressure.fluid_b, PCM_Splitter1.fluid_a) annotation(
     Line(points = {{-44, 48}, {-30, 48}, {-30, 92}, {-13, 92}}, color = {0, 127, 255}));
   connect(PCM_Splitter1.fluid_b, pumpSimple_EqualPressure1.fluid_a) annotation(
@@ -123,9 +135,9 @@ equation
   connect(PCM_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 78}, {0, 70}, {0, 70}}, color = {0, 127, 255}));
   connect(mass_loop_breaker.port_b, PCMTank.fluid_a) annotation(
-    Line(points = {{0, 42}, {0, 28}}, color = {0, 127, 255}));
+    Line(points = {{0, 42}, {0, 35}, {-1, 35}, {-1, 21}}, color = {0, 127, 255}));
   connect(PCMTank.p_amb, p_amb.y) annotation(
-    Line(points = {{17, -2}, {27, -2}}, color = {0, 0, 127}));
+    Line(points = {{12, -4}, {19.5, -4}, {19.5, -2}, {27, -2}}, color = {0, 0, 127}));
   connect(Recv_outlet.ports[1], pumpSimple_EqualPressure.fluid_a) annotation(
     Line(points = {{-96, 48}, {-64, 48}}, color = {0, 127, 255}));
   connect(PB_outlet.ports[1], pumpSimple_EqualPressure3.fluid_a) annotation(
@@ -141,12 +153,9 @@ equation
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
     Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 360000, StartTime = 0, Tolerance = 1.0e-6, Interval = 120));
-
-  annotation (Documentation(revisions ="<html>
-  		<p>By Ming Liu on 11/06/2021</p>
-  		<p>This is a test case for charging and discharging PCM635 (a phase change material with melting temperature of 635 deg. C) during consecutive four cycles. Each cycle consists of 10 hours of charging, 10 hours of discharging and 5 hours of standby before the next charging process begins. Initially, the PCM is at a temperature of 540 deg. C, below its solidification temperature. During charging and discharging, liquid sodium enters at 750 deg.C and 540 deg.C, respectively, with a mass flow rate of 0.075 kg/s for both processes. </p>
-  		</html>"));  
+    Documentation(info = "<html><head></head><body><p>This is a test case for charging and discharging PCM635 (a phase change material with melting temperature of 635 <sup>o</sup>C) during consecutive four cycles. Each cycle consists of 15 hours of charging, 15 hours of discharging and 5 hours of standby before the next charging process begins. Initially, the PCM is at a temperature of 540 <sup>o</sup>C, below its solidification temperature. During charging and discharging, liquid sodium enters at 750 <sup>o</sup>C and 540 <sup>o</sup>C, respectively, with a mass flow rate of 0.075 kg/s for both processes. </p>
+  		<p>By Ming Liu on 11/06/2021</p>  		
+  		</body></html>"),
+    experiment(StopTime = 360000, StartTime = 0, Tolerance = 1.0e-6, Interval = 120));  
 
 end Constant_Cycling_PCM635;
-

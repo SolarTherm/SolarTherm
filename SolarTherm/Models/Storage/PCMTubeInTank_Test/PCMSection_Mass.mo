@@ -17,4 +17,8 @@ algorithm
   for i in 1:N_sec loop
     M_PCM[i] := Rho * A_PCM * dL;
   end for;
+  
+annotation (Documentation(info="<html>
+  		<p> This function is to calculate the mass of PCM node. </p>   		  		
+  		</html>"));    
 end PCMSection_Mass;

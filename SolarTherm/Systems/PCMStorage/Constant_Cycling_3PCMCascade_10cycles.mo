@@ -1,5 +1,5 @@
 within SolarTherm.Systems.PCMStorage;
-model Constant_Cycling_3PCMCascade
+model Constant_Cycling_3PCMCascade_10cycles
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -7,9 +7,9 @@ model Constant_Cycling_3PCMCascade
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;  
   package Fluid_Package = SolarTherm.Media.Materials.Sodium; 
   package Wall_Package = SolarTherm.Media.Materials.SS316L;  
-  package PCM_Package1 = SolarTherm.Media.Materials.PCM710_UniSA;      //Can investigate different PCM
-  package PCM_Package2 = SolarTherm.Media.Materials.PCM635_UniSA;        //Can investigate different PCM_Package
-  package PCM_Package3 = SolarTherm.Media.Materials.PCM569_UniSA;        //Can investigate different PCM
+  package PCM_Package1 = SolarTherm.Media.Materials.PCM710_UniSA;        //Can investigate different PCM
+  package PCM_Package2 = SolarTherm.Media.Materials.PCM635_UniSA;          //Can investigate different PCM_Package
+  package PCM_Package3 = SolarTherm.Media.Materials.PCM569_UniSA;          //Can investigate different PCM
   //Design Parameters
   parameter SI.Temperature T_min = CV.from_degC(540) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(750) "Design hot Temperature of everything in the tank (K)";
@@ -27,9 +27,9 @@ model Constant_Cycling_3PCMCascade
   parameter Integer N_sec3 = 30 "Number of mesh elements in PCM569tank"; 
   parameter SI.Energy E_max_total = PCMTank.Tank_Top.E_max + PCMTank.Tank_Mid.E_max + PCMTank.Tank_Bot.E_max "Design storage capacity of combined storage tanks, J";   
   
-  parameter SI.Time t_charge = 40.0 * 3600.0 "Charging period";
-  parameter SI.Time t_standby = 10.0 * 3600.0 "Standby period between discharge and charge";
-  parameter SI.Time t_discharge = 50.0 * 3600.0 "Discharging period";
+  parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
+  parameter SI.Time t_standby = 8 * 3600.0 "Standby period between discharge and charge";
+  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter SI.Time t_cycle = t_charge + t_standby + t_discharge;
 
   parameter SI.MassFlowRate m_charge = 0.096735;
@@ -46,8 +46,8 @@ model Constant_Cycling_3PCMCascade
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SI.MassFlowRate m_Recv_signal(start = 1.0e-6);
-  SI.MassFlowRate m_PB_signal(start = 1.0e-6);
+  SI.MassFlowRate m_Recv_signal(start = m_charge);
+  SI.MassFlowRate m_PB_signal(start = 0.0);
 
   SolarTherm.Models.Storage.PCMTubeInTank_Test.Cascade3PCMStorageTank PCMTank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Wall_Package = Wall_Package, redeclare package PCM_Package1 = PCM_Package1, redeclare package PCM_Package2 = PCM_Package2, redeclare package PCM_Package3 = PCM_Package3, L1 = L1, L2 = L2, L3 = L3, N_sec1 = N_sec1, N_sec2 = N_sec2, N_sec3 = N_sec3, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max) annotation(Placement(visible = true, transformation(origin = {1, 11}, extent = {{-21, -21}, {21, 21}}, rotation = 0)));
     
@@ -88,9 +88,9 @@ model Constant_Cycling_3PCMCascade
   Real Level_total(start = 0.0) "Tank charging level (0-1)";
   //Real LiquidFraction(start = 0.0) "Average liquid fraction of PCM (0-1)";
   //Energies
-
-//SI.Energy E_charged(start=0);
+  //SI.Energy E_charged(start=0);
   //SI.Energy E_discharged(start=0);
+
 equation
   Level_total = E_stored_total / E_max_total;
 //controls
@@ -154,16 +154,15 @@ equation
   connect(Recv_Sink.port_a, pumpSimple_EqualPressure2.fluid_b) annotation(
     Line(points = {{-94, -36}, {-80, -36}, {-80, -66}, {-68, -66}}, color = {0, 127, 255}));
   connect(PB_Sink.port_a, pumpSimple_EqualPressure1.fluid_b) annotation(
-    Line(points = {{78, 44}, {54, 44}, {54, 44}, {54, 44}}, color = {0, 127, 255}));
-
+    Line(points = {{-94, -36}, {-80, -36}, {-80, -66}, {-68, -66}}, color = {0, 127, 255}));
   annotation(
     Documentation(info = "<html>
-    <p>This is a test case for charging and discharging a 3-PCM cascade storage system during consecutive two cycles. Each cycle consists of 40 hours of charging, 50 hours of discharging and 10 hours of standby before the next charging process begins. This cascade storage system is designed to provide a 1000 MWh<sub>th</sub> discharge capacity for a hypothetical CSP plant being investigated by ASTRI. The detail of the design and the simulation condition was described in the publication (https://doi.org/10.1016/j.renene.2019.11.115). Initially, all three PCMs have a temperature of 540<sup>o</sup>C, below their solidification temperatures. During charging and discharging, liquid sodium enters at 750<sup>o</sup>C and 540<sup>o</sup>C, respectively. </p>
+    <p>This is a test case for charging and discharging a 3-PCM cascade storage system during consecutive ten cycles. Each cycle consists of 6 hours of charging, 10 hours of discharging and 8 hours of standby before the next charging process begins. This cascade storage system is designed to provide a 1000 MWh<sub>th</sub> discharge capacity for a hypothetical CSP plant being investigated by ASTRI. The detail of the design and the simulation condition was described in the publication (https://doi.org/10.1016/j.renene.2019.11.115). Initially, all three PCMs have a temperature of 540<sup>o</sup>C, below their solidification temperatures. During charging and discharging, liquid sodium enters at 750<sup>o</sup>C and 540<sup>o</sup>C, respectively. </p>
     
   		<img src=\"modelica://SolarTherm/Resources/Images/PCMModels/3PCMCascadeCycling.png\">
   		
-  		<p>By Ming Liu on 11/06/2021</p>  		
+  		<p>By Ming Liu on 23/06/2021</p>  		
   		</html>"),
-  experiment(StopTime = 720000, StartTime = 0, Tolerance = 1.0e-6, Interval = 720));
+  experiment(StopTime = 1728000, StartTime = 0, Tolerance = 1.0e-6, Interval = 20));
 
-end Constant_Cycling_3PCMCascade;
+end Constant_Cycling_3PCMCascade_10cycles;

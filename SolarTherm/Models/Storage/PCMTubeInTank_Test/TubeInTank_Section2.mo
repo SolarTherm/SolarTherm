@@ -16,7 +16,6 @@ model TubeInTank_Section2
   Wall.State wall[N_sec] "Wall object array";
   Storage.State pcm[N_sec] "PCM object array";
   //Design parameters
-  parameter SI.Energy E_max = 144e9 "Design storage capacity, J";
   parameter SI.Time t_charge = 6 * 3600 "charging time, s";
   parameter SI.Time t_discharge = 10 * 3600 "discharging time, s";
   parameter SI.Temperature T_min = CV.from_degC(540) "Design cold Temperature of everything in the tank, K";
@@ -25,6 +24,8 @@ model TubeInTank_Section2
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius, m";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius, m";
   parameter SI.Length r_shell = 0.03 "Shell radius, m";
+  parameter Integer N_tube = 1 "Number of tubes";
+  parameter SI.Energy E_max = CN.pi * rho_p_avg * (h_p_max - h_p_min) * (r_shell ^ 2 - r_tube_out ^ 2) * L * N_tube + CN.pi * rho_w_avg * (h_w_max - h_w_min) * (r_tube_out ^ 2 - r_tube_in ^ 2) * L * N_tube + CN.pi * rho_f_avg * (h_f_max - h_f_min) * r_tube_in ^ 2 * L * N_tube "Design storage capacity, J";
   parameter Integer N_sec = 20 "Number of mesh elements in fluid, wall and Storage regions";
   parameter SI.Length dL = L / N_sec "Length step in HTF flow direction";
   parameter SI.Length z_f[N_sec] = Z_position(L, N_sec);
@@ -112,8 +113,6 @@ model TubeInTank_Section2
   //SI.HeatFlowRate Q_loss_total "Heat loss from the entire surface area";  
   //Pumping losses
     
-  // Costs
-    
 protected 
   
   // Property of Wall
@@ -137,15 +136,15 @@ algorithm
 initial equation
   for i in 1:N_sec loop
     fluid[i].h = h_f_start[i];
-    //pcm[i].h = h_p_start[i];
-    //wall[i].h = h_w_start[i];
+    pcm[i].h = h_p_start[i];
+    wall[i].h = h_w_start[i];
   end for;
 //Operational state 1=charging, 2=standby, 3=discharging
 //Operational State logic based on an imposed mass flow rate
 equation
-  if m_flow >= 1.0e-3 then
+  if m_flow >= 1.0e-6 then
     State = 1;
-  elseif m_flow <= -1.0e-3 then
+  elseif m_flow <= -1.0e-6 then
     State = 3;
   else
     State = 2;
@@ -154,10 +153,10 @@ equation
 //mass is flowing upwards so discharging
 //Standby
   
-  u_flow = m_flow / (rho_f_avg * A_HTF);
+  u_flow = m_flow / N_tube / (rho_f_avg * A_HTF);
   
 //Analyics
-  der(E_stored) = m_flow * (h_bot - h_top);
+  der(E_stored) = abs(m_flow) * (h_top - h_bot);
   Level = E_stored / E_max;
   AveTemp = sum(T_p)/N_sec;
   
@@ -192,14 +191,14 @@ equation
     end for;
 //End middle standby HTF nodes (nodes 2 - N_sec-1)
 //Bottom standby HTF node (node N_sec)
-    m_f[N_sec] * der(h_f[N_sec]) = CN.pi * dL * (T_w[N_sec] - T_f[N_sec]) / (log(r_Wall / r_tube_in) / k_w[N_sec] + 1.0 / (h_v[N_sec] * r_tube_in)) + k_f[N_sec] * A_HTF * (T_f[N_sec-1] - T_f[N_sec]) / dL;
+    m_f[N_sec] * der(h_f[N_sec]) = 2.0 * CN.pi * dL * (T_w[N_sec] - T_f[N_sec]) / (log(r_Wall / r_tube_in) / k_w[N_sec] + 1.0 / (h_v[N_sec] * r_tube_in)) + k_f[N_sec] * A_HTF * (T_f[N_sec-1] - T_f[N_sec]) / dL;
     
     h_bot = h_f[N_sec];
 //End bottom standby HTF node (node N_sec)
   else
 //Discharging: HTF is flowing upwards
 //Top discharging HTF node (node 1)
-    m_f[1] * der(h_f[1]) = abs(m_flow) * (h_f[2] - h_f[1]) + CN.pi * dL * (T_w[1] - T_f[1]) / (log(r_Wall / r_tube_in) / k_w[1] + 1.0 / (h_v[1] * r_tube_in)) + k_f[1] * A_HTF * (T_f[2] - T_f[1]) / dL;
+    m_f[1] * der(h_f[1]) = abs(m_flow) * (h_f[2] - h_f[1]) + 2.0 * CN.pi * dL * (T_w[1] - T_f[1]) / (log(r_Wall / r_tube_in) / k_w[1] + 1.0 / (h_v[1] * r_tube_in)) + k_f[1] * A_HTF * (T_f[2] - T_f[1]) / dL;
     h_top = h_f[1];
 //End top discharging HTF node (node 1)
 //Middle discharging HTF nodes (nodes 2 - N_sec-1)
@@ -208,7 +207,7 @@ equation
     end for;
 //End middle discharging HTF nodes (nodes 2 - N_sec-1)
 //Bottom discharging HTF node (node N_sec)
-    m_f[N_sec] * der(h_f[N_sec]) = 2.0 * abs(m_flow) * (h_bot - h_f[N_sec]) + 2.0 * CN.pi * dL * (T_w[N_sec] - T_f[N_sec]) / (log(r_Wall / r_tube_in) / k_w[N_sec] + 1.0 / (h_v[N_sec] * r_tube_in)) + k_f[N_sec] * A_HTF * (T_f[N_sec-1] - T_f[N_sec]) / dL;
+    m_f[N_sec] * der(h_f[N_sec]) = abs(m_flow) * (h_bot - h_f[N_sec]) + 2.0 * CN.pi * dL * (T_w[N_sec] - T_f[N_sec]) / (log(r_Wall / r_tube_in) / k_w[N_sec] + 1.0 / (h_v[N_sec] * r_tube_in)) + k_f[N_sec] * A_HTF * (T_f[N_sec-1] - T_f[N_sec]) / dL;
 //End bottom discharging HTF node (node N_sec)
   end if;
   
@@ -232,12 +231,12 @@ equation
     pcm[i].h = h_p[i];
     k_p[i] = pcm[i].k;
     T_p[i] = pcm[i].T;
-    //cp_p[i] = PCM[i].cp;
+    //cp_p[i] = pcm[i].cp;
   end for;
   //Convective heat transfer coefficient calculation
   for i in 1:N_sec loop
   
-    if abs(m_flow) > 1e-3 then
+    if abs(m_flow) > 1e-6 then
       Re[i] = rho_f_avg * 2 * r_tube_in * abs(u_flow) / mu_f[i];
       Pr[i] = cp_f[i] * mu_f[i] / k_f[i];
       Xplus[i] = z_f[i] / r_tube_in / Re[i] / Pr[i];
@@ -289,8 +288,9 @@ equation
   
 //Pumping losses
     
-  annotation (Documentation(revisions ="<html>
-  		<p>By Ming Liu on 03/09/2020</p>
+  annotation (Documentation(info ="<html>
+        <p>This component contains the same model as the component of TubeInTank_Section, but has a variable T_amb (ambient temperature). The heat losses through the surface of storage tank are included in the model, but it is currently disabled in the codes. </p>
+  		<p>By Ming Liu on 22/06/2021</p>
   		</html>"));    
 
 end TubeInTank_Section2;

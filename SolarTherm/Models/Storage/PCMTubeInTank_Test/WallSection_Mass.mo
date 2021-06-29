@@ -17,4 +17,9 @@ algorithm
   for i in 1:N_sec loop
     M_Wall[i] := Rho * A_Wall * dL;
   end for;
+
+annotation (Documentation(info="<html>
+  		<p> This function is to calculate the mass of wall node. </p>   		  		
+  		</html>"));
+  
 end WallSection_Mass;

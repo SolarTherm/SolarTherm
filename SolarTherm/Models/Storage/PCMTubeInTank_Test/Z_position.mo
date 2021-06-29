@@ -11,4 +11,9 @@ algorithm
   for i in 1:N_sec loop
     z_f[i] := (i - 0.5) * dL;
   end for;
+  
+annotation (Documentation(info="<html>
+  		<p> This function is to calculate the distance of the HTF (heat transfer fluid) node to the entrance. </p>   		  		
+  		</html>"));   
+  
 end Z_position;

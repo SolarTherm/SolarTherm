@@ -6,3 +6,6 @@ Test5_3PCMCascade_Discharge
 Test6_SinglePCMStorageTank
 Constant_Cycling_PCM635
 Constant_Cycling_3PCMCascade
+Constant_Cycling_3PCMCascade_10cycles
+TrainingData_Thermocline_MgO
+TrainingData_3PCMCascade
