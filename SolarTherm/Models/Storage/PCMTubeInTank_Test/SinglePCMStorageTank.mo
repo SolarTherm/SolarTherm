@@ -21,6 +21,9 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_PCM;
   parameter Integer N_tube = 1 "Number of tubes";
   parameter Integer N_sec = 20 "Number of mesh elements";   
 
+//Cost of Storage Tank
+  parameter Real Cost_Storage = Cost_StorageTank.TotalCost "Cost of storage tank";
+
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an an output signal (K)"
                                             annotation (Placement(visible = true,transformation(
             extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {-61, -1}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
@@ -48,6 +51,8 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_PCM;
           rotation=0)));
   
   SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_A(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube, N_sec = N_sec);
+  
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cost_PCMStorage Cost_StorageTank(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Tank = Wall_Package, redeclare replaceable package Tube = Wall_Package,redeclare replaceable package Storage = PCM_Package, L = L, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, N_tube = N_tube);
   
   Medium.BaseProperties fluid_top;
   Medium.BaseProperties fluid_bot;

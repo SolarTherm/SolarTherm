@@ -28,6 +28,9 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_3PCMs;
   parameter Integer N_sec1 = 20 "Number of mesh elements";  
   parameter Integer N_sec2 = 20 "Number of mesh elements"; 
   parameter Integer N_sec3 = 20 "Number of mesh elements"; 
+
+  //Cost of Storage Tank
+  parameter Real Cost_Storage = Cost_StorageTank_Top.TotalCost + Cost_StorageTank_Mid.TotalCost + Cost_StorageTank_Bot.TotalCost "Cost of storage tank";  
   
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an an output signal (K)"
                                             annotation (Placement(visible = true,transformation(
@@ -58,7 +61,13 @@ extends SolarTherm.Interfaces.Models.HeatTransferFluid_3PCMs;
   SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_Top(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package1, L = L1, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube1, N_sec = N_sec1);
   SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_Mid(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package2, L = L2, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube2, N_sec = N_sec2);
   SolarTherm.Models.Storage.PCMTubeInTank_Test.TubeInTank_Section2 Tank_Bot(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Wall = Wall_Package, redeclare replaceable package Storage = PCM_Package3, L = L3, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max, N_tube = N_tube3, N_sec = N_sec3);
-    
+
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cost_PCMStorage Cost_StorageTank_Top(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Tank = Wall_Package, redeclare replaceable package Tube = Wall_Package,redeclare replaceable package Storage = PCM_Package1, L = L1, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, N_tube = N_tube1);
+  
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cost_PCMStorage Cost_StorageTank_Mid(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Tank = Wall_Package, redeclare replaceable package Tube = Wall_Package,redeclare replaceable package Storage = PCM_Package2, L = L2, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, N_tube = N_tube2);   
+  
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cost_PCMStorage Cost_StorageTank_Bot(redeclare replaceable package Fluid = Fluid_Package, redeclare replaceable package Tank = Wall_Package, redeclare replaceable package Tube = Wall_Package,redeclare replaceable package Storage = PCM_Package3, L = L3, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, N_tube = N_tube3);
+       
   Medium.BaseProperties fluid_top;
   Medium.BaseProperties fluid_bot;
   

@@ -21,7 +21,7 @@ model TrainingData_3PCMCascade
   parameter SI.Temperature T_Recv_max = CV.from_degC(580) "Maximum tolerated outlet temperature to recv"; //L3 // Because the bottome PCM has a melting temperature of 569 deg. C, the cut-off temperature for charging is set to 580 deg.C, different from the thermocline system.  
   parameter SI.Temperature T_Recv_start = CV.from_degC(540) "Maximum tolerated outlet temperature to recv"; //L2
   parameter SI.Temperature T_min = CV.from_degC(510) "Minimum temperature"; //L1
-  
+    
   //Logged values
   Real L_recv_max(start=0.0); //L4
   Real L_recv_start(start=0.0); //L3
@@ -69,7 +69,7 @@ model TrainingData_3PCMCascade
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Control
   
-  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cascade3PCMStorageTank2 PCMTank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Wall_Package = Wall_Package, redeclare package PCM_Package1 = PCM_Package1, redeclare package PCM_Package2 = PCM_Package2, redeclare package PCM_Package3 = PCM_Package3, L1 = L1, L2 = L2, L3 = L3, N_sec1 = N_sec1, N_sec2 = N_sec2, N_sec3 = N_sec3, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max) annotation(Placement(visible = true, transformation(origin = {3, 5}, extent = {{-21, -21}, {21, 21}}, rotation = 0))); 
+  SolarTherm.Models.Storage.PCMTubeInTank_Test.Cascade3PCMStorageTank2 PCMTank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Wall_Package = Wall_Package, redeclare package PCM_Package1 = PCM_Package1, redeclare package PCM_Package2 = PCM_Package2, redeclare package PCM_Package3 = PCM_Package3, L1 = L1, L2 = L2, L3 = L3, N_sec1 = N_sec1, N_sec2 = N_sec2, N_sec3 = N_sec3, N_tube = N_tube, r_tube_in = r_tube_in, r_tube_out = r_tube_out, r_shell = r_shell, T_min = T_min, T_max = T_max) annotation(Placement(visible = true, transformation(origin = {3, 5}, extent = {{-21, -21}, {21, 21}}, rotation = 0))); 
   
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
@@ -99,12 +99,7 @@ model TrainingData_3PCMCascade
     Placement(visible = true, transformation(origin = {0, 56}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
 
   //Costs
-  //parameter Real C_fluid = thermocline_Tank.C_fluid;
- // parameter Real C_filler = thermocline_Tank.C_filler;
-  //parameter Real C_tank = thermocline_Tank.C_tank;
-  //parameter Real C_insulation = thermocline_Tank.C_insulation;
-  //parameter Real C_total = thermocline_Tank.C_total;
-  //parameter Real C_encapsulation = thermocline_Tank.C_encapsulation;
+  parameter Real TotalCost_Storage = PCMTank.Cost_Storage "Total cost of cascade PCM storage system, $M";
   
   //Energies
   SI.Energy E_charged(start = 0);

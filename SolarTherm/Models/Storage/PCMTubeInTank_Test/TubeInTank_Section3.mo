@@ -24,8 +24,7 @@ model TubeInTank_Section3
   parameter SI.Length r_tube_in = 0.006265 "Tube inner radius, m";
   parameter SI.Length r_tube_out = 0.008575 "Tube outer radius, m";
   parameter SI.Length r_shell = 0.03 "Shell radius, m";
-  parameter Integer N_tube = 1 "Number of tubes";
-  parameter SI.Energy E_max = CN.pi * rho_p_avg * (h_p_max - h_p_min) * (r_shell ^ 2 - r_tube_out ^ 2) * L * N_tube + CN.pi * rho_w_avg * (h_w_max - h_w_min) * (r_tube_out ^ 2 - r_tube_in ^ 2) * L * N_tube + CN.pi * rho_f_avg * (h_f_max - h_f_min) * r_tube_in ^ 2 * L * N_tube "Design storage capacity, J";
+  parameter SI.Energy E_max = CN.pi * rho_p_avg * (h_p_max - h_p_min) * (r_shell ^ 2 - r_tube_out ^ 2) * L + CN.pi * rho_w_avg * (h_w_max - h_w_min) * (r_tube_out ^ 2 - r_tube_in ^ 2) * L + CN.pi * rho_f_avg * (h_f_max - h_f_min) * r_tube_in ^ 2 * L "Design storage capacity, J";
   parameter Integer N_sec = 20 "Number of mesh elements in fluid, wall and Storage regions";
   parameter SI.Length dL = L / N_sec "Length step in HTF flow direction";
   parameter SI.Length z_f[N_sec] = Z_position(L, N_sec) "Distance of HTF node to entrance in discharging";
@@ -153,7 +152,7 @@ equation
 //mass is flowing upwards so discharging
 //Standby
   
-  u_flow = m_flow / N_tube / (rho_f_avg * A_HTF);
+  u_flow = m_flow / (rho_f_avg * A_HTF);
   
 //Analyics
   der(E_stored) = abs(m_flow) * (h_in - h_out);
