@@ -22,19 +22,19 @@ model NaSTsCO2
   parameter Integer year = 1996 "[SYS] Meteorological year";
   parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "[SYS] Design point DNI value";
   //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";
-  parameter Real SM = 2.73 "[SYS] Real solar multiple";
+  parameter Real SM = 2.717882 "[SYS] Real solar multiple";
 
 
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround" "[H&T] Type of the heliostat field, polar or surround";
   parameter String opt_file(fixed = false) "[H&T]";
-  parameter String casefolder = "test-integraton" "[H&T]";
+  parameter String casefolder = "optimal-astri" "[H&T]";
   parameter Solar_angles angles = Solar_angles.elo_hra "[H&T] Angles used in the lookup table file";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter SI.Area A_heliostat = 148.84 "[H&T] Area of one heliostat";
   parameter SI.Length H_tower = 188.567344 "[H&T] Height of the tower";
     parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
-    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+    parameter SI.Angle slope_error = 1.5e-3 "slope error of the heliostat in mrad";
   parameter Real[23] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "[H&T] Number of heliostats";
   parameter Real eff_opt_des = metadata_list[3];
@@ -51,7 +51,7 @@ model NaSTsCO2
     parameter Real f_oversize = 1.245606 "[H&T] Field oversizing factor";
 	parameter Real delta_r2=0.871037 "[H&T] Field expanding for zone2";
 	parameter Real delta_r3=1.992501 "[H&T] Field expanding for zone3";
-	parameter Real num_rays=5000 "[H&T] Number of rays in the optical simulations";
+	parameter Real num_rays=10000000 "[H&T] Number of rays in the optical simulations";
 	parameter String fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium/fluxlimit") "[H&T]";
  	//parameter Integer Nb=0 "Number of banks";
  	//parameter Integer Nfp=0 "Number of flow paths";
