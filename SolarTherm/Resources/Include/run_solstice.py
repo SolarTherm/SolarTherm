@@ -163,18 +163,18 @@ def design_crs_aimingstrategy(pm):
 
 
 if __name__=='__main__':
-	case="test-aiming"
+	case="/media/yewang/Data/Research/svn_system-modelling/modelling/optimal-astri/"
 	fluxlimitpath='../../Data/Optics/sodium/fluxlimit'
 	wea_file='../../Data/Weather/Daggett_Ca_TMY32.motab'
 	aimingstrategy=True
-	r_diameter=19.012482 # receiver diameter
-	r_height=19.810327 # receiver height
-	tower_h=188.567344 # tower height
-	delta_r2=0.871037 # field expanding for zone2
-	delta_r3=1.992501 # field expanding for zone3
+	r_diameter=17.141475# receiver diameter
+	r_height=17.9903 # receiver height
+	tower_h=179.366918 # tower height
+	delta_r2= 0.905438 # field expanding for zone2
+	delta_r3=1.911979 # field expanding for zone3
 	oversizing=1.245606 # oversizing factor
-	SM=2.717882 # Solar multiple
-	num_rays=5000
+	SM=2.433404 # Solar multiple
+	num_rays=500000
 	print r_diameter,r_height,tower_h,delta_r2,delta_r3,oversizing,SM
 
 	inputs={'casedir': case, 
@@ -187,6 +187,7 @@ if __name__=='__main__':
 			'SM': SM,
 			'f_oversize': oversizing,
 			'fluxlimitpath': fluxlimitpath,
+			'slope_error': 0.0015,
 			'n_rays':num_rays}
 
 	run_simul(inputs)
