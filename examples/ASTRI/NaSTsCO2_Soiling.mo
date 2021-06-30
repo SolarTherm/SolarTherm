@@ -159,9 +159,9 @@ model NaSTsCO2_Soiling
   parameter FI.PowerPrice pri_bop = 0 "[SYS] Balance of plant cost per gross rated power";
   //SAM 2018 cost data: 290
   // Operation and maintenance cost
-  parameter FI.MoneyPerYear pri_truck_operator = 80000 "[H&T]Truck operator wage per yea USD/year";
-  parameter FI.MoneyPerYear pri_water_fuel_truck = 0.0175 "[H&T]Truck operator wage per year USD/m.sq helio/year";
-  parameter FI.Money_USD pri_truck = 300000 "[H&T] Truck capital cost USD/unit";
+  parameter FI.MoneyPerYear pri_truck_operator = 80000 "[H&T]Truck operator wage per year AUD/year";
+  parameter FI.MoneyPerYear pri_water_fuel_truck = 0.0175 "[H&T]Truck operator wage per year AUD/m.sq-helio/year";
+  parameter FI.Money_USD pri_truck = 300000 "[H&T] Truck capital cost AUD/unit";
   parameter Real f_maintenance_truck = 0.1 "[H&T] Fraction of the truck capital cost that is for maintaining the truck";
   parameter FI.MoneyPerYear C_year_cleaning =  if set_soiling_model == true then num_trucks * pri_truck_operator + pri_water_fuel_truck * A_field * num_cleaning + f_maintenance_truck * C_truck else 0 "Total yearly cleaniing cost";
   parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 + C_year_cleaning"[SYS] Fixed O&M cost per year";
