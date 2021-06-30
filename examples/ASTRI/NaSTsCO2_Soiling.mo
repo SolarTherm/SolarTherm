@@ -127,7 +127,7 @@ model NaSTsCO2_Soiling
   parameter Real r_disc = (1 + r_disc_nom) / (1 + r_i) - 1 "[FN] Real discount rate : Calculated using Fisher equation";
   parameter Integer t_life(unit = "year") = 30 "[FN] Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 0 "[FN] Years of construction";
-  parameter Real r_cur = 0.71 "[FN] The currency rate from AUD to USD valid for 2019. See https://www.rba.gov.au/";
+  parameter Real r_cur = 0.71 "[FN] The currency rate from AUD to USD valid for 2019 See https://www.rba.gov.au/statistics/frequency/exchange-rates.html";
   parameter Real r_contg = 0.1 "[FN] Contingency rate";
   parameter Real r_cons = 0.09 "[FN] Construction cost rate";
   parameter FI.Money C_site = pri_site * A_field "[H&T] Site improvements cost";
@@ -159,9 +159,9 @@ model NaSTsCO2_Soiling
   parameter FI.PowerPrice pri_bop = 0 "[SYS] Balance of plant cost per gross rated power";
   //SAM 2018 cost data: 290
   // Operation and maintenance cost
-  parameter FI.MoneyPerYear pri_truck_operator = 80000 "[H&T]Truck operator wage per year AUD/year";
-  parameter FI.MoneyPerYear pri_water_fuel_truck = 0.0175 "[H&T]Truck operator wage per year AUD/m.sq-helio/year";
-  parameter FI.Money_USD pri_truck = 300000 "[H&T] Truck capital cost AUD/unit";
+  parameter FI.MoneyPerYear pri_truck_operator = 80000 * r_cur "[H&T]Truck operator wage per year USD/year";
+  parameter FI.MoneyPerYear pri_water_fuel_truck = 0.0175 * r_cur "[H&T]Truck operator wage per year USD/m.sq-helio/year";
+  parameter FI.Money_USD pri_truck = 300000 * r_cur "[H&T] Truck capital cost USD/unit";
   parameter Real f_maintenance_truck = 0.1 "[H&T] Fraction of the truck capital cost that is for maintaining the truck";
   parameter FI.MoneyPerYear C_year_cleaning =  if set_soiling_model == true then num_trucks * pri_truck_operator + pri_water_fuel_truck * A_field * num_cleaning + f_maintenance_truck * C_truck else 0 "Total yearly cleaniing cost";
   parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 + C_year_cleaning"[SYS] Fixed O&M cost per year";
