@@ -50,7 +50,7 @@ model NaSTsCO2_Soiling
           else
                 Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Soiling/ave_soil_factor_100tr_100cl.motab") 
           "[FN] Soiling factor table file";
-  
+  parameter Real num_cleaning = if num_trucks == 2 then 7.0 else if num_trucks == 4 then 15.0 else if num_trucks == 8 then 20.0 else 0;
   // Receiver [RCV]
   parameter SI.Length H_recv = 19.810327 "[RCV] Receiver height";
   parameter SI.Length D_recv = 19.012482 "[RCV] Receiver diameter";
@@ -163,7 +163,7 @@ model NaSTsCO2_Soiling
   parameter FI.MoneyPerYear pri_water_fuel_truck = 0.0175 "[H&T]Truck operator wage per year USD/m.sq helio/year";
   parameter FI.Money_USD pri_truck = 300000 "[H&T] Truck capital cost USD/unit";
   parameter Real f_maintenance_truck = 0.1 "[H&T] Fraction of the truck capital cost that is for maintaining the truck";
-  parameter FI.MoneyPerYear C_year_cleaning =  if set_soiling_model == true then num_trucks * pri_truck_operator + pri_water_fuel_truck * A_field + f_maintenance_truck * C_truck else 0 "Total yearly cleaniing cost";
+  parameter FI.MoneyPerYear C_year_cleaning =  if set_soiling_model == true then num_trucks * pri_truck_operator + pri_water_fuel_truck * A_field * num_cleaning + f_maintenance_truck * C_truck else 0 "Total yearly cleaniing cost";
   parameter FI.MoneyPerYear C_year = pri_om_name * P_name / 1e3 + C_year_cleaning"[SYS] Fixed O&M cost per year";
   parameter Real pri_om_name(unit = "$/kWe/year") = 40 "[SYS] Fixed O&M cost per nameplate per year";
   parameter Real C_prod(unit = "$/J/year") = pri_om_prod / (1e6 * 3600) "[SYS] Variable O&M cost per production per year";
