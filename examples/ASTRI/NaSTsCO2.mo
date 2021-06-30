@@ -76,19 +76,17 @@ model NaSTsCO2
   parameter Real[4] CL = {metadata_list[8], metadata_list[9], metadata_list[10], metadata_list[11]};
   parameter Real[4] C4L = {metadata_list[12], metadata_list[13], metadata_list[14], metadata_list[15]};
   parameter Real[5] CH = {metadata_list[16], metadata_list[17], metadata_list[18], metadata_list[19], metadata_list[20]};
-	parameter Real rec_fr = 1 - metadata_list[7] "[RCV] Receiver loss fraction of radiance at design point";
-	//parameter SI.RadiantPower Q_rec_out_des=Q_flow_defocus*(1 - rec_fr) "Input power to receiver at design point";
-
-
-  // Storage [ST] 
+  parameter Real rec_fr = 1 - metadata_list[7] "[RCV] Receiver loss fraction of radiance at design point";
+  //parameter SI.RadiantPower Q_rec_out_des=Q_flow_defocus*(1 - rec_fr) "Input power to receiver at design point";
+  // Storage [ST]
   parameter Real t_storage(unit = "h") = 8.0 "[ST] Hours of storage";
   parameter SI.Temperature T_max = 740.0 + 273.15 "[ST] Ideal high temperature of the storage";
   parameter SI.Temperature T_min = 510.0 + 273.15 "[ST] Ideal low temperature of the storage";
-  parameter SI.Length d_p = 0.10 "[ST] Filler diameter";    
-  parameter Real ar = 2.0 "[ST] Tank aspect ratio";  
+  parameter SI.Length d_p = 0.10 "[ST] Filler diameter";
+  parameter Real ar = 2.0 "[ST] Tank aspect ratio";
 
 
-  // Power Block [PB]  
+  // Power Block [PB]
   parameter String engine_brand = "SES" "[PB] Power block brand {SES,75%Carnot}";
   parameter SI.Power P_gross_des = 100e6 "[PB] Power block gross rating at design point";
   parameter SI.Power P_name_des = 100e6 "[PB] Power block nameplate rating";
@@ -97,7 +95,7 @@ model NaSTsCO2
   parameter SI.Efficiency eff_blk_des = 0.51 "[PB] Power block efficiency at design point";
   parameter Real par_fr = 0.1 "[PB] Parasitics fraction of power block rating at design point";
 
-  // Control [CTRL] 
+  // Control [CTRL
   parameter SI.TemperatureDifference T_tol_recv = 60.0 "[CTRL] Temperature tolerance above design receiver input temperature before receiver is shut off";
   parameter SI.TemperatureDifference T_tol_PB = 60.0 "[CTRL] Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
