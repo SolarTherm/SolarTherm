@@ -1,0 +1,49 @@
+method,1.0,-
+windy optics,False,-
+,,
+field,polar,-
+Q_in_rcv,1000000.0,W
+SM,0.0,W
+n_helios(pre_des if method ==1),25.1948400967,-
+W_helio,12.2,m
+H_helio,12.2,m
+helio effective reflectivity,0.9,-
+slope_error,0.002,rad
+slope_error_windy,0.002,rad
+H_tower,188.567344,m
+R_tower,0.01,m
+concret_tower,False,-
+single_field,True,-
+fb factor,0.7,-
+R1,80.0,m
+dsep,0.0,m
+delta_r2,0.0,m
+delta_r3,0.0,m
+aiming strategy,0.0,
+self.aim_pm1,0.0,
+self.aim_pm2,0.0,
+f_oversize,1.0,
+,,
+rcv_type,flat,-
+num_aperture,1,-
+aperture angular range,0.0,deg
+H_rcv,19.810327,m
+W_rcv,19.012482,m
+tilt_rcv,0.0,deg
+alpha_rcv,1.0,-
+n_H_rcv,10.0,-
+n_W_rcv,10.0,-
+X_rcv,0.0,m
+Y_rcv,0.0,m
+Z_rcv,188.567344,m
+,,
+receiver thermal pm,0.0,
+Nb,0.0,
+Nfp,0.0,
+Do,0.0,
+fluxlimitpath,,
+,,
+n_row_oelt,3.0,-
+n_col_oelt,3.0,-
+n_rays,5000000.0,-
+n_procs,0,-

@@ -2,6 +2,8 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Solstice_Optics;
+     parameter Boolean set_soiling_model = true "[H&T] Set the cleaning strategy to true or false. If true, optical efficiency is multiplied by soiling factor";
+    parameter String soiling_table =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Soiling/ave_soil_factor_2tr_7cl.motab");
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -61,6 +63,15 @@ model HeliostatsFieldSolstice
   parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[9] = metadata(opt_file);
+   
+   // Soiling factor
+  Modelica.Blocks.Sources.CombiTimeTable table(
+    tableOnFile=true,
+    tableName="soiling",
+    smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    columns=2:2,
+    fileName=soiling_table
+  );
 
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_refl=helio_refl,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file, run_aiming=run_aiming, run_therm=run_therm, aim_pm1=aim_pm1, aim_pm2=aim_pm2, f_oversize=f_oversize, Nb=Nb, Nfp=Nfp, Do=Do);
 
@@ -92,6 +103,7 @@ model HeliostatsFieldSolstice
   SI.Angle azi;
   SI.Energy E_dni;
   SI.Energy E_field;
+  SI.Efficiency soiling_factor;
 
   SI.Power W_loss;
   Real damping;
@@ -119,6 +131,7 @@ initial equation
    
 
 equation
+  soiling_factor = if set_soiling_model == true then table.y[1] else 1;
   if use_on then
     connect(on,on_internal);
   end if;
@@ -135,7 +148,7 @@ equation
 
   on_hf=(ele>ele_min) and
                      (Wspd_internal<Wspd_max);
-  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+  Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu * soiling_factor,0) else 0;
 
   when Q_raw>Q_start then
     on_internal=true;

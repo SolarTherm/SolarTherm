@@ -121,7 +121,7 @@ def get_effectiveness(inputs):
 	return motabfile
 
 if __name__=='__main__':
-	inputs={'modelicapath':'/media/yewang/Data/Research/yewang/astri-storage/solartherm-astri', 'casedir':'.', 't_storage':9}
+	inputs={'modelicapath':'/home/philgun/solartherm-astri/SolarTherm/Models/Storage', 'casedir':'.', 't_storage':9}
 	get_effectiveness(inputs)
 	
 	
