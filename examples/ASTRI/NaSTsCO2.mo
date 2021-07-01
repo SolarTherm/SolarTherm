@@ -28,7 +28,7 @@ model NaSTsCO2
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround" "[H&T] Type of the heliostat field, polar or surround";
   parameter String opt_file(fixed = false) "[H&T]";
-  parameter String casefolder = "optimal-astri" "[H&T]";
+  parameter String casefolder = "." "[H&T]";
   parameter Solar_angles angles = Solar_angles.elo_hra "[H&T] Angles used in the lookup table file";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter SI.Area A_heliostat = 148.84 "[H&T] Area of one heliostat";
@@ -88,10 +88,8 @@ model NaSTsCO2
 
   // Power Block [PB]
   parameter String engine_brand = "SES" "[PB] Power block brand {SES,75%Carnot}";
-  parameter SI.Power P_gross_des = 100e6 "[PB] Power block gross rating at design point";
-  parameter SI.Power P_name_des = 100e6 "[PB] Power block nameplate rating";
-  parameter SI.Power P_name = P_name_des "[PB] ";
-  parameter SI.Power P_gross = P_gross_des / (1 - par_fr);
+  parameter SI.Power P_name = 100e6 "[PB] Power block nameplate rating";
+  parameter SI.Power P_gross = P_name / (1 - par_fr);
   parameter SI.Efficiency eff_blk_des = 0.51 "[PB] Power block efficiency at design point";
   parameter Real par_fr = 0.1 "[PB] Parasitics fraction of power block rating at design point";
 
@@ -127,7 +125,7 @@ model NaSTsCO2
 
 
   //Heat Flow Rates
-  parameter SI.HeatFlowRate Q_flow_ref_blk = P_gross_des / eff_blk_des "design heat input rate into the PB";
+  parameter SI.HeatFlowRate Q_flow_ref_blk = P_name / eff_blk_des "design heat input rate into the PB";
   parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * eff_emi * A_recv * ((0.5 * T_max + 0.5 * T_min + 273.15) ^ 4 - 298.15 ^ 4) "Receiver design heat loss rate";
   parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * eff_abs - Q_flow_rec_loss_des "Receiver Thermal power output at design";
   parameter SI.HeatFlowRate Q_flow_defocus = (Q_flow_ref_blk + Q_flow_rec_loss_des) / eff_abs "Solar field thermal power at defocused state";
@@ -175,8 +173,8 @@ model NaSTsCO2
 
   parameter FI.Money C_storage = eNTU.C_storage/r_cur "[ST] Storage cost";
 
-	//parameter FI.Money_USD C_block = pri_block * P_gross_des;
-	//parameter FI.PowerPrice pri_block = 1360.00 / 1e3 "Power block cost per gross rated power";
+	//parameter FI.Money_USD C_block = pri_block * P_name;
+	//parameter FI.PowerPrice pri_block = 1360.00 / 1e3 "Power block cost per gross rated power";P_gross
 
   // SAM 2018 cost data: 1040
   parameter FI.Money_USD C_block = P_gross_ref/1000*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "[PB] Power block cost";
@@ -210,70 +208,75 @@ model NaSTsCO2
 	//
 	// C_loop_na
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "[SL] Sodium loop cost";
-	// C_pip_na
-	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_HX_max/Q_rec_CMI_ref)^pip_na_exp "[SL] Sodium piping cost";
-	parameter FI.Money_USD C_pip_na_ref =  2000000 "[SL] Sodium piping reference cost";
-	parameter SI.HeatFlowRate Q_HX_max = Q_rec_out_des*1.0 "[SL]";
-	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM "[SL]";
-	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "[SL] Receiver thermal output reference size";
-	parameter Real pip_na_exp = 0.7 "[SL] Sodium piping scaling exponent";
-	// C_ic_na
-	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^ic_na_exp "[SL] Valves and I&C reference cost";
-	parameter FI.Money_USD C_ic_na_ref = 417000 "[SL] Valves and I&C reference cost";
-	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "[SL] Receiver thermal output reference size";
-	parameter Real ic_na_exp = 0.5 "[SL] Valves and I&C scaling exponent";
-	// C_valve_na
-	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_HX_max/Q_rec_APOLLO_ref)^valve_na_exp "[SL] Sodium valves cost";
-	parameter FI.Money_USD C_valve_na_ref = 1269000 "[SL] Sodium valves reference cost";
-	parameter Real valve_na_exp = 0.7 "[SL] Sodium valves scaling exponent";
-	// C_tank_na
-	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_HX_max/Q_rec_CMI_ref)^tank_na_exp "[SL] Sump tank cost";
-	parameter FI.Money_USD C_tank_na_ref = 2073640 "[SL] Sump tank reference cost";
-	parameter Real tank_na_exp = 0.7 "[SL] Sump tank scaling exponent";
-	// C_vessel_na
-	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_HX_max/Q_rec_CMI_ref)^vessel_na_exp "[SL] Inlet vessel cost";	
-	parameter FI.Money_USD C_vessel_na_ref = 361522 "[SL] Inlet vessel reference cost";
-	parameter Real vessel_na_exp = 0.7 "[SL] Inlet vessel scaling exponent";
-	// C_skid_na
-	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_HX_max/Q_rec_CMI_ref)^skid_na_exp "[SL] Purification skid cost";
-	parameter FI.Money_USD C_skid_na_ref = 494309 "[SL] Purification skid reference cost";
-	parameter Real skid_na_exp = 0.7 "[SL] Purification skid scaling exponent";
-	// C_argon_na
-	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_HX_max/Q_rec_CMI_ref)^argon_na_exp "[SL] Argon system cost";
-	parameter FI.Money_USD C_argon_na_ref = 136210 "[SL] Argon system reference cost";
-	parameter Real argon_na_exp = 0.5 "[SL] Argon system scaling exponent";
-	// C_pump_na
-	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_HX_max/Q_rec_NREL_ref)^pump_na_exp "[SL] Sodium pump cost";
-	parameter FI.Money_USD C_pump_na_ref = 4400000 "[SL] Sodium pumps reference cost";			
-	parameter Real pump_na_exp = 0.7 "[SL] Sodium pumps scaling exponent";
-	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "[SL] Receiver thermal output reference size";
-	//
-	// Riser and downcomer
-	parameter FI.Money_USD C_rd = C_riser + C_downcomer "[R&D] Riser and downcomer cost";
 
-	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "[R&D] Riser cost";
-	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "[R&D] Downcomer cost";
-	parameter Real C_r_ref(unit = "$/m") = 5192 "[R&D] Riser reference cost without material";
-	parameter Real C_d_ref(unit = "$/m") = 8056 "[R&D] Riser reference cost without material";
-	parameter SI.Diameter D_r = 0.66 "[R&D] Riser outer diameter";
-	parameter SI.Diameter D_d = 0.66 "[R&D] Downcomer outer diameter";
-	parameter SI.Diameter D_r_ref = 0.7112 "[R&D] Riser reference diameter";
-	parameter SI.Diameter D_d_ref = 0.7112 "[R&D] Downcomer reference diameter";
-	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "[R&D] Riser length (including expansion loops)";
-	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "[R&D] Downcomer length (including expansion loops)";
-	parameter SI.Length L_horiz = 10 "[R&D] Additional horizontal length of riser and downcomer to the HEX";
-	parameter Real lm_r = 1.43 "[R&D] Length multiplier for expansion loops on riser";
-	parameter Real lm_d = 1.45 "[R&D] Length multiplier for expansion loops on downcomer";
-	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "[R&D] Riser material cost per m";
-	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "[R&D] Downcomer material cost per m";
-	parameter Real C_r_m(unit = "$/kg") = 8 "[R&D] Riser material cost per kg";
-	parameter Real C_d_m(unit = "$/kg") = 80 "[R&D] Downcomer material cost per kg";
-	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "[R&D] Riser piping mass per meter";
-	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "[R&D] Downcomer piping mass per meter";
-	parameter SI.Thickness t_r = 0.007925 "[R&D] Riser wall thickness";
-	parameter SI.Thickness t_d = 0.007925 "[R&D] Downcomer wall thickness";
-	parameter SI.Density rho_r = 8.03 "[R&D] Riser material density (g/cm3)"; //UNS S34709
-	parameter SI.Density rho_d = 8.97 "[R&D] Downcomer material density (g/cm3)"; //UNS 06230
+	parameter FI.Money_USD C_pip_na_ref =  2000000 "Sodium piping reference cost";
+	parameter FI.Money_USD C_ic_na_ref = 417000 "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na_ref = 1269000 "Sodium valves reference cost";
+	parameter FI.Money_USD C_tank_na_ref = 2073640 "Sump tank reference cost";
+	parameter FI.Money_USD C_vessel_na_ref = 361522 "Inlet vessel reference cost";
+	parameter FI.Money_USD C_skid_na_ref = 494309 "Purification skid reference cost";
+	parameter FI.Money_USD C_pump_na_ref = 5475248 "Sodium pumps reference cost";
+	parameter FI.Money_USD C_argon_na_ref = 136210 "Argon system reference cost";
+
+	parameter Real pip_na_exp = 0.7 "Sodium piping scaling exponent";
+	parameter Real ic_na_exp = 0.5 "Valves and I&C scaling exponent";
+	parameter Real valve_na_exp = 0.7 "Sodium valves scaling exponent";
+	parameter Real tank_na_exp = 0.7 "Sump tank scaling exponent";
+	parameter Real vessel_na_exp = 0.7 "Inlet vessel scaling exponent";
+	parameter Real skid_na_exp = 0.7 "Purification skid scaling exponent";
+	parameter Real pump_na_exp = 0.7 "Sodium pumps scaling exponent";
+	parameter Real argon_na_exp = 0.5 "Argon system scaling exponent";
+
+	parameter SI.HeatFlowRate Q_rec_ASTRI_ref = 543e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_CMI_ref = 720e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_NREL_ref = 590e6 "Receiver thermal output reference size";
+	parameter SI.HeatFlowRate Q_rec_APOLLO_ref = 565e6 "Receiver thermal output reference size";
+
+	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM "Heat from receiver at design";
+	parameter FI.Money_USD C_pip_na = C_pip_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^pip_na_exp "Sodium piping cost";
+	parameter FI.Money_USD C_ic_na = C_ic_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^ic_na_exp "Valves and I&C reference cost";
+	parameter FI.Money_USD C_valve_na = C_valve_na_ref*(Q_rec_out_des/Q_rec_APOLLO_ref)^valve_na_exp "Sodium valves cost";
+	parameter FI.Money_USD C_tank_na = C_tank_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^tank_na_exp "Sump tank cost";
+	parameter FI.Money_USD C_vessel_na = C_vessel_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^vessel_na_exp "Inlet vessel cost";
+	parameter FI.Money_USD C_skid_na = C_skid_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^skid_na_exp "Purification skid cost";
+	parameter FI.Money_USD C_pump_na = C_pump_na_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_na_exp "Sodium pump cost";
+	parameter FI.Money_USD C_argon_na = C_argon_na_ref*(Q_rec_out_des/Q_rec_CMI_ref)^argon_na_exp "Argon system cost";
+
+	//
+	// Riser and downcomer cost
+	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
+	parameter SI.Length L_horiz = 10 "Additional horizontal length of riser and downcomer to the HEX";
+	parameter Real lm_r = 1.43 "Length multiplier for expansion loops on riser";
+	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
+	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
+	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
+
+	parameter SI.Diameter D_r = 0.66 "Riser outer diameter";
+	parameter SI.Diameter D_d = 0.66 "Downcomer outer diameter";
+
+	parameter SI.Thickness t_r = 0.007925 "Riser wall thickness";
+	parameter SI.Thickness t_d = 0.007925 "Downcomer wall thickness";
+
+	parameter SI.Density rho_r = 8.03 "Riser material density (g/cm3)"; //UNS S34709
+	parameter SI.Density rho_d = 8.97 "Downcomer material density (g/cm3)"; //UNS 06230
+
+	parameter Real mass_pm_r(unit="kg/m") = (D_r^2-(D_r-2*t_r)^2)*CN.pi/4*rho_r*1000 "Riser piping mass per meter";
+	parameter Real mass_pm_d(unit="kg/m") = (D_d^2-(D_d-2*t_d)^2)*CN.pi/4*rho_d*1000 "Downcomer piping mass per meter";
+
+	parameter SI.Diameter D_r_ref = 0.7112 "Riser reference diameter";
+	parameter SI.Diameter D_d_ref = 0.7112 "Downcomer reference diameter";
+
+	parameter Real C_r_m(unit = "$/kg") = 8 "Riser material cost per kg";
+	parameter Real C_d_m(unit = "$/kg") = 80 "Downcomer material cost per kg";
+
+	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "Riser material cost per m";
+	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "Downcomer material cost per m";
+
+	parameter Real C_r_ref(unit = "$/m") = 5595 "Riser reference cost without material";
+	parameter Real C_d_ref(unit = "$/m") = 8502 "Riser reference cost without material";
+
+	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
+	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
 	//
 	// C_salt_pumps
 	parameter FI.Money_USD C_salt_pumps = 0 "No Salt";
@@ -283,9 +286,11 @@ model NaSTsCO2
 	parameter FI.Money_USD C_hx = 0 "No Na-salt HEX";
 	// 
 	// C_hex_salt_co2, use Salt-CO2 HEX cost in Gen3L to approximate Na-sCO2 HEX
-	parameter FI.Money_USD C_hex_salt_co2 = (1e-3)*P_gross_ref*pri_hex_salt_co2_ref*(P_gross/P_gross_ref)^hex_salt_co2_exp "[PB] use Salt-CO2 HEX cost in Gen3L to approximate Na-sCO2 HEX";
-	parameter Real pri_hex_salt_co2_ref(unit="$/kWe") = 300 "[PB] Salt-CO2 primary heat exchanger reference unit price";
-	parameter Real hex_salt_co2_exp = 0.7 "[PB] Salt-CO2 primary heat exchanger scaling exponent";
+	parameter FI.Money_USD C_hex_salt_co2 = Q_flow_des_ref/1000*pri_hex_salt_co2_ref*(Q_flow_des/Q_flow_des_ref)^hex_salt_co2_exp "Salt-CO2 HEX cost";
+	parameter SI.HeatFlowRate Q_flow_des_ref = 100000000 "Salt-CO2 primary heat exchanger reference size";
+	parameter Real hex_salt_co2_exp = 1.0 "Salt-CO2 primary heat exchanger scaling exponent";
+	parameter Real pri_hex_salt_co2_ref(unit="$/kWth") = 229 "Salt-CO2 primary heat exchanger reference unit price";
+
 
   // System component models
   // Weather data
@@ -388,7 +393,7 @@ model NaSTsCO2
 
 
   // Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_max, T_out_ref = T_min, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, nu_net = 1.0, W_base = 0.0055 * P_name, m_flow_ref = m_flow_blk_des, T_in_ref = T_max, T_out_ref = T_min, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
     Placement(visible = true, transformation(origin = {107, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
 
   // Cold pump (receiver)
