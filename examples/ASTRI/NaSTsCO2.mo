@@ -244,15 +244,20 @@ model NaSTsCO2
 
 	//
 	// Riser and downcomer cost
-	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
+	parameter FI.Money_USD C_rd = (C_riser + C_downcomer)*n_parallel_rd "Riser and downcomer cost";
+	parameter SI.Velocity v_treshold = 3.57 "Maximum flow velocity inside pipes for Sodium";
+	parameter Integer n_parallel_rd = integer(ceil(m_flow_recv_des/(rho_hot_set_Na*Modelica.Constants.pi*0.25*D_d^2)/v_treshold)) "Number of parallel riser and downcomer";	
+	parameter SI.Density rho_hot_set_Na=Medium.density(state_hot_set_Na) "Hot Sodium density at design";
+	parameter Medium.ThermodynamicState state_hot_set_Na = Medium.setState_pTX(101323.0, T_max) "Hot Sodium thermodynamic state at design";
+
 	parameter SI.Length L_horiz = 10 "Additional horizontal length of riser and downcomer to the HEX";
 	parameter Real lm_r = 1.43 "Length multiplier for expansion loops on riser";
 	parameter Real lm_d = 1.45 "Length multiplier for expansion loops on downcomer";
 	parameter SI.Length L_riser = lm_r*(H_tower + L_horiz) "Riser length (including expansion loops)";
 	parameter SI.Length L_downcomer = lm_d*(H_tower + L_horiz) "Downcomer length (including expansion loops)";
 
-	parameter SI.Diameter D_r = 0.66 "Riser outer diameter";
-	parameter SI.Diameter D_d = 0.66 "Downcomer outer diameter";
+	parameter SI.Diameter D_r = 0.762 "Riser outer diameter";
+	parameter SI.Diameter D_d = 0.762 "Downcomer outer diameter";
 
 	parameter SI.Thickness t_r = 0.007925 "Riser wall thickness";
 	parameter SI.Thickness t_d = 0.007925 "Downcomer wall thickness";
