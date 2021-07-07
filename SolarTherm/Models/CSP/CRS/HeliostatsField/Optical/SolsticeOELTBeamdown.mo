@@ -10,52 +10,51 @@ extends OpticalEfficiency;
     "Table angles"
         annotation (Dialog(group="Table data interpretation"));
 
-    
+
     parameter String field_type = "surround" "Other options are : surround";
-    parameter String rcv_type = "beam_down" "other options are : flat, cylinder, stl";  
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+    parameter String rcv_type = "beam_down" "other options are : flat, cylinder, stl";
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Leinster_Airport_954480_TMY.motab");
 
-	parameter nSI.Angle_deg theta_deg=20 "acceptance half angle of the CPC in degree";
-	parameter Real ratio_cpc_h=1 "ratio of CPC critical height [0.5,1]";
-	parameter nSI.Angle_deg field_rim_angle=45 "rim angle of the heliostat field in the xOz plan in degree";
-	parameter Real secref_fratio=0.6 "ratio of the foci distance and apex distance to the origin [0.5,1]";
-	parameter SI.Length rec_z=0 "Polygon receiver z position, 0 is on the ground";   
-	parameter SI.Length W_rcv=1.2 "Polygon receiver width";      
-	parameter SI.Length H_rcv=10 "Polygon receiver length"; 
-	parameter SI.Length H_tower = 65 "Tower height";  
-           
-    /*
-    parameter SI.HeatFlowRate Q_in_rcv = 40e6;          
-    // heliostat field    
-    //parameter Real n_helios=300;    
-    parameter SI.Length W_helio = 10 "width of heliostat in m";
-    parameter SI.Length H_helio = 10 "height of heliostat in m";    
+        parameter nSI.Angle_deg cpc_theta_deg=20 "CPC acceptance half angle in degree";
+        parameter Real cpc_h_ratio=1 "CPC critical height ratio [0,1]";
+        parameter nSI.Angle_deg field_rim_angle=80 "rim angle of the heliostat field in the xOz plan in degree";
+        parameter Real secref_inv_eccen=0.6 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
+        parameter SI.Length H_tower = 75 "Tower height";
+        parameter Real fb=0.7 "factor to grow the field layout";
+        parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
 
-    parameter SI.Length R_tower = 0.01 "Tower diameter";
-    parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
-    parameter Real fb=0.7 "factor to grow the field layout";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-    parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";    
-    
+    parameter SI.HeatFlowRate Q_in_rcv = 40e6;
+    parameter SI.Angle_deg lat=-27.85 "Latitude in degree";
+    // heliostat field
+    parameter SI.Length W_helio = 6.1 "width of heliostat in m";
+    parameter SI.Length H_helio = 6.1 "height of heliostat in m";
+    parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";
+
+    parameter SI.Length R1=15. "distance between the first row heliostat and the tower";
+
+    //parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max=1";
+    parameter SI.Angle slope_error = 1e-3 "slope error of all reflective surfaces  in mrad";
+
     // secondary concentrator, cpc and receiver
- 
-    parameter Real n_CPC_faces=4 "2D-crossed cpc with n faces";
-    parameter Real n_Z=30;    
-               
-    parameter SI.Efficiency refl_sec = 0.95 "reflectivity of the secondary reflector (hyperboloid)";
-    parameter SI.Length secref_z = 30;
-    
+
+    parameter SI.Length W_rcv=1.2 "Polygon receiver width";
+    parameter SI.Length H_rcv=10 "Polygon receiver length";
+
+    parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
+    parameter Real secref_vert=-1 "Polygon for the secondary reflector clipping in xOy plan, -1 = polygon defined in python functions";
+
+    parameter SI.Efficiency rho_beamdown = 0.95 "reflectivity of the secondary reflector (hyperboloid) and CPC, max=1";
+
     parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-    parameter Real n_col_oelt = 5 "number of columns of the lookup table (simulated hours per day)";
-    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
-    */
-    
+    parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 1e6 "number of rays for the optical simulation";
+
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
 	parameter String pname = "run_solstice_beamdown" "Name of the Python script";
-	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
+	parameter String pfunc = "run_simul" "Name of the Python functiuon";
 
-    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results"; 
-    	parameter Integer argc =8 "Number of variables to be passed to the C function";
+    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";
+        parameter Integer argc = 22 "Number of variables to be passed to the C function";
 
     parameter String tablefile(fixed=false);
 
@@ -74,7 +73,10 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"theta_deg", "ratio_cpc_h", "field_rim_angle", "secref_fratio", "rec_z", "W_rcv", "H_rcv", "H_tower" }, {theta_deg, ratio_cpc_h, field_rim_angle, secref_fratio, rec_z, W_rcv, H_rcv, H_tower}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "field_rim_angle", "secref_inv_eccen",
+"H_tower", "fb", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error",
+"rho_beamdown", "cpc_nfaces", "secref_vert"}}, {cpc_theta_deg, cpc_h_ratio, field_rim_angle, secref_inv_eccen, H_tower, fb, Z_rcv, W_rcv,
+H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error, rho_beamdown, cpc_nfaces, secref_vert});
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

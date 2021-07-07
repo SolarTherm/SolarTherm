@@ -17,7 +17,6 @@ def set_param(inputs={}):
         else:
             raise RuntimeError("invalid paramter '%s'"%(k,))
 
-    pm.dependent_par()
     return pm
 
 def run_simul(inputs={}):
@@ -46,57 +45,34 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
-        # fixed parameters
-        # =========
 
-        pm.Q_in_rcv=40e6
-        num_hst = 300
-        pm.n_col_oelt=5
-        pm.n_col_oelt=5
-        #pm.H_rcv=H_rcv
-        #pm.W_rcv=W_rcv
-        pm.W_helio=6.1 # ASTRI helio size
-        pm.H_helio=6.1
-        pm.n_rays=int(1e6)
-        pm.field_type = 'surround'
-        pm.dependent_par()
+		if pm.secref_vert<0.:
+			pm.secref_vert=None
 
-        pm.Z_helio = 0.
-        pm.R1 = 30.
-        pm.lat = -27.16 #degree
-        # enter the parameters for the beam-down components
-        receiver='beam_down'
-        rec_grid=20
-        # 2D-crossed cpc with n faces
-        n_CPC_faces=4
-        n_Z=30.
-        # Secondary refector 'hyperboloid'
-        # parameters recalculated (pre-optimized before optimization)
-        secref_vert=None #np.array([[-15,25],[-15,-25],[15,-25],[15,25]])
-		# CPC and secondary mirror
-        refl_sec=0.95
-        slope_error=1.e-3 # radian
+		if pm.secref_inv_eccen<0.:
+			pm.secref_inv_eccen=None
 
-        pm.saveparam(casedir)
+		pm.saveparam(casedir)
         # create the environment and scene
         # =========
 
-        bd=BD(latitude=pm.lat, casedir=casedir)
+		bd=BD(latitude=pm.lat, casedir=casedir)
 
-        bd.receiversystem(receiver=receiver, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.rec_z), rec_grid=int(rec_grid), cpc_nfaces=int(n_CPC_faces), cpc_theta_deg=float(pm.cpc_theta_deg), cpc_h_ratio=float(pm.cpc_h_ratio), cpc_nZ=float(n_Z), field_rim_angle=float(pm.field_rim_angle), aim_z=float(pm.H_tower), secref_inv_eccen=pm.secref_inv_eccen, secref_vert = secref_vert, refl_sec=float(refl_sec), slope_error=float(slope_error))
+		bd.receiversystem(receiver=pm.rcv_type, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.Z_rcv), rec_grid=int(pm.n_H_rcv), cpc_nfaces=int(pm.cpc_nfaces), cpc_theta_deg=float(pm.cpc_theta_deg), cpc_h_ratio=float(pm.cpc_h_ratio), cpc_nZ=float(pm.cpc_nZ), field_rim_angle=float(pm.field_rim_angle), aim_z=float(pm.H_tower),
+		secref_inv_eccen=pm.secref_inv_eccen, secref_vert = pm.secref_vert, rho_bd=float(pm.rho_beamdown), slope_error=float(pm.slope_error))
 
-        bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=num_hst, R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
+		bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=int(pm.n_helios), R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
 
-        bd.yaml(sunshape=pm.sunshape,csr=pm.crs,half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+		bd.yaml(sunshape=pm.sunshape,csr=pm.crs,half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
-        oelt, A_land=bd.field_design_annual(dni_des=900., num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=1, Q_in_des=pm.Q_in_rcv, n_helios=None, zipfiles=False, gen_vtk=False, plot=False)
+		oelt, A_land=bd.field_design_annual(dni_des=900., num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=1, Q_in_des=pm.Q_in_rcv, n_helios=None, zipfiles=False, gen_vtk=False, plot=False)
 
 
-        if (A_land==0):
-            tablefile=None
-        else:
-            A_helio=pm.H_helio*pm.W_helio
-            output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=bd.n_helios, A_helio=A_helio, eff_design=bd.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=bd.Q_in_rcv, A_land=A_land, savedir=tablefile)
+		if (A_land==0):
+			tablefile=None
+		else:
+			A_helio=pm.H_helio*pm.W_helio
+			output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=bd.n_helios, A_helio=A_helio, eff_design=bd.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=bd.Q_in_rcv, A_land=A_land, savedir=tablefile)
 
 
     return tablefile
@@ -104,15 +80,44 @@ def run_simul(inputs={}):
 
 
 if __name__=='__main__':
+
+    # =========
 	case="./test"
-	weafile='../../Data/Weather/example_TMY3.motab'
+	weafile='../../Data/Weather/AUS_WA_Leinster_Airport_954480_TMY.motab'
+	## Variables
 	cpc_theta_deg=20.
 	cpc_h_ratio=1.
 	field_rim_angle=80.
 	secref_inv_eccen=0.6
-	rec_z=0.
+	H_tower=75.
+	fb=0.7
+	Z_rcv=0.
+    # fixed parameters
+	## Siumulation
+	num_rays=int(1e6)
+	ndays=5
+	nhours=22
+	## Field Characteristics
+	lat=-27.85 # Leinster (WA, AUS) degree
+	Q_in_rcv=40e6
+	field_type = 'surround'
+	R1 = 15.
+	## Heliostats
+	W_helio=6.1 # ASTRI helio size
+	H_helio=6.1
+	Z_helio=0.
+	## Beam-Down components: Receiver + Secondary Mirror + CPC
+	receiver='beam_down'
+	slope_error=1.e-3 # radian
+	rho_bd=0.95
 	W_rcv=1.2
 	H_rcv=10.
-	H_tower = 75.
-	inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'field_rim_angle': field_rim_angle, 'secref_inv_eccen': secref_inv_eccen, 'rec_z': rec_z, 'W_rcv':W_rcv, 'H_rcv': H_rcv, 'H_tower': H_tower}
+	cpc_nfaces=4
+	secref_vert=-1. # np.array([[-15,25],[-15,-25],[15,-25],[15,25]])
+
+	inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'field_rim_angle': field_rim_angle, 'secref_inv_eccen': secref_inv_eccen,
+	'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'lat': lat, 'Q_in_rcv': Q_in_rcv,
+	'field_type': field_type, 'R1': R1, 'W_helio': W_helio, 'H_helio': H_helio, 'Z_helio': Z_helio, 'rcv_type': receiver, 'slope_error': slope_error,
+	'rho_beamdown': rho_bd, 'cpc_nfaces': cpc_nfaces, 'secref_vert': secref_vert}
+
 	run_simul(inputs)
