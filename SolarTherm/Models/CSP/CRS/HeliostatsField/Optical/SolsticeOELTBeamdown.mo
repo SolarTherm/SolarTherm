@@ -24,7 +24,6 @@ extends OpticalEfficiency;
         parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
 
     parameter SI.HeatFlowRate Q_in_rcv = 40e6;
-    parameter SI.Angle_deg lat=-27.85 "Latitude in degree";
     // heliostat field
     parameter SI.Length W_helio = 6.1 "width of heliostat in m";
     parameter SI.Length H_helio = 6.1 "height of heliostat in m";
@@ -75,7 +74,7 @@ extends OpticalEfficiency;
 initial algorithm
 tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "field_rim_angle", "secref_inv_eccen",
 "H_tower", "fb", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error",
-"rho_beamdown", "cpc_nfaces", "secref_vert"}}, {cpc_theta_deg, cpc_h_ratio, field_rim_angle, secref_inv_eccen, H_tower, fb, Z_rcv, W_rcv,
+"rho_beamdown", "cpc_nfaces", "secref_vert"}, {cpc_theta_deg, cpc_h_ratio, field_rim_angle, secref_inv_eccen, H_tower, fb, Z_rcv, W_rcv,
 H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error, rho_beamdown, cpc_nfaces, secref_vert});
 
 equation
