@@ -41,47 +41,55 @@ model HeatExchangerChemical
   
   //************************* Results
   Integer state "1 means PB on, 0 means PB off"; 
-    
-  SI.SpecificEnthalpy h_in_pcl;
-  SI.SpecificEnthalpy h_out_pcl;
-    
-  SI.MassFlowRate mdot_pcl;
+  
+  //************************* Off-design variables   
+  SI.SpecificEnthalpy h_in_pcl "off-design pcl inlet enthalpy";
+  SI.SpecificEnthalpy h_out_pcl "off-design pcl outlet enthalpy";
+  SI.MassFlowRate mdot_pcl "off-design mass flow rate of the pcl";
   SI.HeatFlowRate Q_HX "off-design reactor heat";
-  
-  SI.Temperature T_out_pcl "Off-design outlet pcl temp";
-  SI.Temperature T_out_gas "Off-design outlet temp of the gas";
-  
+  SI.Temperature T_in_pcl "off-design inlet pcl temp";
+  SI.Temperature T_out_pcl "off-design outlet pcl temp";
+  SI.Temperature T_out_gas "off-design outlet temp of the gas";
+  SI.HeatFlowRate Q_max "Maximum theoretical heat that can be extracted from the hot stream";
+  SI.ThermalConductance C_pcl "Particle capacity rating";
+  Real check;
   initial equation
   state = 0;
   Rh = Q_reactor / (T_out_gas_des - T_in_gas_des);
   
   algorithm
-  when mdot_pcl > 1e-3  then
+  when mdot_pcl > 1e-5  then
     state := 1;
-  elsewhen mdot_pcl < 0.99*1e-3 then
+  elsewhen mdot_pcl < 0.999*1e-5 then
     state := 0;
   end when;
   
   equation
+  //*************** Equations to close the connection
   fluid_a.p = fluid_b.p;
   fluid_a.m_flow + fluid_b.m_flow = 0;
   fluid_a.h_outflow = 0;  
+  h_out_pcl = fluid_b.h_outflow;
   
   //*************** Start off-design calc
   mdot_pcl = fluid_a.m_flow;
+  h_in_pcl = inStream(fluid_a.h_outflow);
+  T_in_pcl = Particle_Package.T_h(h_in_pcl);
+  
+  //Calculate the maximum theoretical heat rate
+  C_pcl = mdot_pcl * Particle_Package.cp_T((T_in_pcl+T_out_pcl)/2);
+  Q_max = min(C_pcl,Rh) * (T_in_pcl - T_in_gas_des);
   
   if state == 1 then
-    Q_HX = effectiveness * Q_reactor;
-    h_out_pcl = h_in_pcl - Q_HX/mdot_pcl;
-    T_out_gas = (Q_reactor / Rh) + T_in_gas_des;
+      Q_HX = effectiveness * Q_max;
+      h_out_pcl = h_in_pcl - Q_HX/mdot_pcl;
+      T_out_gas = (Q_HX / Rh) + T_in_gas_des;
   else// mdot< 0.999 * m_HTF_des*nu_min then
-    Q_HX = 1e-8;
-    h_out_pcl = h_in_pcl "h_out = h_in";
-    T_out_gas = T_amb "No way to make it 0, as such use ambient temp instead";
+      Q_HX = 0 "can't make it zero, as such use very low value";
+      h_out_pcl = 0 "h_out = h_in";
+      T_out_gas = T_amb "No way to make it 0, as such use ambient temp instead";
   end if;
-    
-  h_in_pcl = inStream(fluid_a.h_outflow);
-  h_out_pcl = fluid_b.h_outflow;
+  check = Q_HX - mdot_pcl * (h_in_pcl - h_out_pcl);
   T_out_pcl = Particle_Package.T_h(h_out_pcl);
     
   W_net = 0;

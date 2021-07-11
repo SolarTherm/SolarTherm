@@ -80,7 +80,7 @@ def run_simul(inputs={}):
 		else:
 			crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep, mac=mac)
 
-		crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+		crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
 		if pm.field_type[-3:]=='csv':
 			# simulate the oelt of an existing heliostat field
@@ -108,7 +108,7 @@ def run_simul(inputs={}):
 			crs.casedir=pm.casedir+'/windy_optics'
 			if not os.path.exists(crs.casedir):
 				os.makedirs(crs.casedir)
-			crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+			crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
 			oelt_windy, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
 			append_oelts(table=oelt_windy, identifier='windy', motabfile=tablefile, mac=mac)

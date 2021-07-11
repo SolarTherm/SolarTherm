@@ -32,8 +32,11 @@ model LiftSimple "A simple particle lift model"
 			rotation=-90)));
 
 	SI.Power W_loss "Power required to lift particles";
+	
+	SI.SpecificEnthalpy h_in;
 
 equation
+    h_in = inStream(fluid_a.h_outflow);
 	fluid_a.m_flow + fluid_b.m_flow = 0;
 
 	fluid_b.h_outflow = inStream(fluid_a.h_outflow);

@@ -50,6 +50,7 @@ model ParticleReceiver
 
 	SI.HeatFlowRate Q_loss "Total losses";
 	SI.HeatFlowRate Q_rcv "Heat flow captured by curtain";
+	SI.HeatFlowRate Q_incident "Incident heat";
 	SI.Efficiency eta_rcv;
 	SI.Efficiency eta_rcv_dummy;
 
@@ -93,10 +94,8 @@ equation
 	fluid_b.h_outflow=max(h_0,h_out);
 	fluid_a.h_outflow=0;
 	
-	h_out = SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_out);
-
 	heat.T=medium.T;
-	fluid_b.m_flow=-fluid_a.m_flow; // mass conservation
+	fluid_b.m_flow + fluid_a.m_flow = 0; // mass conservation
 	fluid_a.p=medium.p; // no pressure drops (it should all be ambient pressure)
 	fluid_b.p=medium.p;
     
@@ -257,7 +256,8 @@ equation
     end when;  
     
     //Energy Balance
-    heat.Q_flow = Q_loss + Q_rcv;
+    //heat.Q_flow = Q_loss + Q_rcv;
+    //**************** If solar field is on
     if on then
         if use_neural_network == true then
           eta_rcv_dummy  = predict(
@@ -276,17 +276,28 @@ equation
                         log10Tin_coeff * Modelica.Math.log10(T_in) + log10Tamb_coeff * Modelica.Math.log10(Tamb);
         end if;
         eta_rcv = eta_rcv_dummy;
-        Q_loss= (1-eta_rcv) * heat.Q_flow;
+                
+        h_out = SolarTherm.Media.SolidParticles.CarboHSP_utilities.h_T(T_out);
         
+        //**************** If the mass is allowed to flow then
         if logic then
+          Q_incident = heat.Q_flow;
+          Q_loss= (1-eta_rcv) * Q_incident;
+          Q_rcv = heat.Q_flow - Q_loss;
           fluid_a.m_flow = Q_rcv/(h_out-h_in);
         else
+          Q_incident = 0;
+          Q_loss = 0;
+          Q_rcv = 0;
           fluid_a.m_flow = 0;
         end if;  
 	else
       eta_rcv_dummy = 0;
       eta_rcv = 0;
+      Q_incident = 0;
+      Q_rcv = 0;
       Q_loss = 0; // when the receiver is 'off', assume no thermal losses
+      h_out = h_0;
       fluid_a.m_flow = 0;
 	end if;
 	

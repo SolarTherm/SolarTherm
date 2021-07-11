@@ -39,7 +39,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
-  
   //****************************** Importing medium and external files
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -48,7 +47,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not set_const_dispatch "Discharging schedule from a file";
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[SYS] Weather file";
   parameter String DNI_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[CTRL] Weather file for dispatch optimisation - there was a bug in Modelica s.t. when I parse wea_file to dispatch optimisation, the 
-                                          file path changes to .home/philgun..... which makes C program threw back segfault";
+                                                                                                                            file path changes to .home/philgun..... which makes C program threw back segfault";
   parameter String price_file = pri_file;
   //************************ Weather Data Properties -  based on Dagget TMY2 sent by Luis G from UP Madrid to Philipe Gunawan at 7 April 2020
   parameter nSI.Angle_deg lon = -116.783 "[SYS] Longitude (+ve East) TMY2 Dagget 1967 Location ID 23161";
@@ -84,12 +83,12 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   //****************************** General design condition of the plant
   //******************************* Reactor parameters
-  parameter SI.HeatFlowRate Q_reactor = 221559575.9416232 "Reactor heat [Wth]";
+  parameter SI.HeatFlowRate Q_reactor = 61e6 "Reactor heat [Wth]";
+  parameter SI.Efficiency effectiveness = 0.9 "Effectiveness of the HX";
   parameter Real delta_H = 1e3 "Delta enthalpy of the chemical gas [J/mol]";
-  parameter Real SM = 2.5 "[SYS] Solar multiple";
+  parameter Real SM = 2.84 "[SYS] Solar multiple";
   parameter SI.Temperature T_in_gas_des = 130 + 273.15 "Inlet temperature of the chemical gas [K]";
   parameter SI.Temperature T_out_gas_des = 750 + 273.15 "Outlet temperature of the chemical gas [K]";
-  parameter SI.Efficiency effectiveness = 0.95 "Effectiveness of the HX";
   parameter SI.HeatFlowRate Q_in_rcv = Q_reactor / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
   parameter String rcv_type = "particle" "[RCV] other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area is calculated during the initialisation";
@@ -129,9 +128,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Temperature T_out_max_rcv = 1473.04159451723 "[RCV] maximum particle outlet temperature [K]";
   parameter SI.HeatFlowRate Q_in_max_rcv = 4467488216.33793 "[RCV] maximum incident heat to the receiver [W]";
   parameter SI.Temperature T_in_max_rcv = 973.131995697475 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
-  parameter SI.Temperature T_amb_max_rcv = 313.140817490084"[RCV] maximum ambient temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_max_rcv = 313.140817490084 "[RCV] maximum ambient temperature to the surrogate model [K]";
   parameter Real F_wind_max_rcv = 6.50238549868647 "[RCV] maximum wind factor to the surrogate model [-]";
-  
   parameter SI.Length H_drop_min_rcv = 15.0 "[RCV] minimum drop height where the receiver surrogate model is still valid [m]";
   parameter Real ar_rec_min_rcv = 0.50070166621454 "[RCV] minimum AR of the receiver";
   parameter SI.Temperature T_out_min_rcv = 1073.25319682715 "[RCV] minimum particle outlet temperature [K]";
@@ -139,25 +137,24 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Temperature T_in_min_rcv = 823.208543483627 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
   parameter SI.Temperature T_amb_min_rcv = 253.166394010091 "[RCV] minimum ambient temperature to the surrogate model [K]";
   parameter Real F_wind_min_rcv = 1.0000008674615 "[RCV] minimum wind factor to the surrogate model [-]";
-  
   parameter SI.Efficiency eta_thermal_max_rcv = 0.994938075936658 "[RCV] maximum thermal efficiency of the receiver of surrogate model";
   parameter SI.Efficiency eta_thermal_min_rcv = 0.200162648750876 "[RCV] minimum thermal efficiency of the receiver of surrogate model";
   parameter Real[inputsize_rcv] X_max_rcv = {H_drop_max_rcv, ar_rec_max_rcv, T_out_max_rcv, Q_in_max_rcv, T_in_max_rcv, T_amb_max_rcv, F_wind_max_rcv};
-  parameter Real[inputsize_rcv] X_min_rcv = {H_drop_min_rcv, ar_rec_min_rcv , T_out_min_rcv, Q_in_min_rcv, T_in_min_rcv, T_amb_min_rcv, F_wind_min_rcv};
+  parameter Real[inputsize_rcv] X_min_rcv = {H_drop_min_rcv, ar_rec_min_rcv, T_out_min_rcv, Q_in_min_rcv, T_in_min_rcv, T_amb_min_rcv, F_wind_min_rcv};
   parameter Real y_max_rcv = eta_thermal_max_rcv;
   parameter Real y_min_rcv = eta_thermal_min_rcv;
   parameter String saved_model_dir_rcv = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/SingleApertureAiCHE") "[RCV] path to which the static particle receiver surrogate model is stored";
   //****************************** OnTheFlySurrogate Power Block Parameters
   /************************************************************************************************************** /
-        /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
-        /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
-        /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
-        /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
-        /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
-        /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
-        /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
-        /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
-      ***************************************************************************************************************/
+                                                                                          /       NREL PB and CEA are sizing the power block based on cycle power. In this code it is called P_gross   /
+                                                                                          /      -cycle power: W_turb_des - W_comp_des - W_recomp_des                                                  / 
+                                                                                          /      -net power : (cycle_power - W_cooling_fan) * eta_motor * (1-f_fixed_load)                             /
+                                                                                          /      All power above are before parasities_input => heliostat field, pump/lift power consumption           /
+                                                                                          /      The output of the on the fly surrogates are: eta_gross and eta Q                                      /
+                                                                                          /      eta_gross: (W_cycle-W_cooling) / Q_HX                                                                 /
+                                                                                          /      eta_Q: (Q_HX / Q_HX_des)                                                                              /
+                                                                                          /      The power block initalisation will produce Q_HX_des, regardless which PB model is used                /   
+                                                                                        ***************************************************************************************************************/
   //******************************** OnTheFlySurrogate PB Simulation Set-up
   parameter String base_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "[PB] Base path that points to which folder the C program located";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm") "[PB] Base path that points to which folder SolarTherm libs are located";
@@ -204,7 +201,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Temperature T_hot_set = 800 + 273.15 "[ST] Hot tank target temperature == HTF inlet temperature to the reactor at design point (K)";
   parameter SI.Temperature T_cold_start = T_cold_set "Cold tank starting temperature";
   parameter SI.Temperature T_hot_start = T_hot_set "Hot tank starting temperature";
-  
   /*Thermophysical of the particle*/
   parameter Real split_cold = (100 - hot_tnk_empty_ub + 1) / 100 "Starting medium fraction in cold tank, must be the function of the upper bound trigger level of the hot tank so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
   parameter SI.Density rho_cold_set = Particle_Package.rho_T(T_cold_set) "Cold particles density at design";
@@ -271,7 +267,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Length L_rcv = 1 "[RCV] Receiver length (depth) (m)";
   parameter SI.SpecificEnthalpy h_cold_set = Particle_Package.h_T(T_cold_set) "Cold particles specific enthalpy at design";
   parameter SI.SpecificEnthalpy h_hot_set = Particle_Package.h_T(T_hot_set) "Hot particles specific enthalpy at design";
-  
   parameter SI.MassFlowRate m_flow_fac(fixed = false);
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
@@ -315,17 +310,17 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter Real pri_turbine = 9923.7 "[PB] Specific cost of turbine (USD/kW^0.5886) based on Albrecht 2019 https://is.gd/3VN0O7";
   parameter Real pri_compressor = 643.15 "[PB] Specific cost of compressor (USD/kW^0.9142) based on Albrecht 2019 https://is.gd/3VN0O7";
   parameter Real pri_cooler = 2.3 "[PB] Main cooler specific cost:
-                                                       >  Based on Albrecht 2019 https://is.gd/3VN0O7 the specific cost is 76.25 (USD-K^0.8919/W^0.8919)
-                                                       >  Based on NREL sCO2 PB model used in SAM --> 2.3 USD-K/W
-                                        If we use UA_cooler from SAM Simulation Core sCO2 model and use Albrecht cost function, the cooler cost can reach up to 100 M.USD.
-                                        I believe we can just use NREL sCO2 PB model cooler cost function --> 2.3 x UA_cooler [W/K]";
+                                                                                                                                         >  Based on Albrecht 2019 https://is.gd/3VN0O7 the specific cost is 76.25 (USD-K^0.8919/W^0.8919)
+                                                                                                                                         >  Based on NREL sCO2 PB model used in SAM --> 2.3 USD-K/W
+                                                                                                                          If we use UA_cooler from SAM Simulation Core sCO2 model and use Albrecht cost function, the cooler cost can reach up to 100 M.USD.
+                                                                                                                          I believe we can just use NREL sCO2 PB model cooler cost function --> 2.3 x UA_cooler [W/K]";
   parameter Real pri_generator = 108900 "[PB] Generator cost (USD/MWe^0.5463) based on Weiland 2019 https://is.gd/uTaFkD";
   parameter Real pri_PHX_BOP_CO2 = 4753 "[PB] Primary Heat Exchanger sCO2 Line Cost (USD-s/kg) - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter Real pri_PHX_BOP_s = 9153 "[PB] Primary Heat Exchanger Particle Cost [USD-s/kg] - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter Real pri_PHX_per_area = 6594.5 "[PB] Primary Heat Exchanger Material+Manufacture Cost (USD/m2) - G3P3 conversation email by Cliff 11 Nov 2020";
   parameter FI.Money pri_exchanger = 150 "[PB] price of the primary exchanger in (USD/(kW_th). Value from v.9 EES sandia result c_hx";
   parameter FI.PowerPrice pri_bop = 290 / 1040 * 600 / 1000 "USD/We Balance of plant cost per gross rated power. 290--> Maximum BOP cost per MWe from SAM. 
-                                           1040 is the maximum power block cost per MWe at SAM. 600 is the specific cost of the power block in USD/kWe according to DOE guidline";
+                                                                                                                             1040 is the maximum power block cost per MWe at SAM. 600 is the specific cost of the power block in USD/kWe according to DOE guidline";
   parameter FI.PowerPrice pri_block = 0 "sCO2 PB cost USD per kWe net based on the G3P3 Roadmap Report";
   //******************************* O&M & Washing Heliostat Specific Cost
   // Source : Heliostat Cost Reduction Study Gregory J. Kolb, page 138 Table 1
@@ -341,9 +336,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter Real pri_washing_deluge_method = 0.0027 * 1.3 "[H&T] USD/m.sq field annually. 1.3 is a factor of conversion from USD 2007 to 2020";
   parameter Real pri_washing_twister_method = 0.0076 * 1.3 "[H&T] USD/m.sq field annually. 1.3 is a factor of conversion from USD 2007 to 2020";
   parameter Real omega_deluge = 2 * omega_twister "this approach uses KJC cleaning method (1 Twister and 2 Deluge truck in between)
-                                          Source : Heliostat Cost Reduction Study Gregory J. Kolb, page 121 Table A-8";
+                                                                                                                            Source : Heliostat Cost Reduction Study Gregory J. Kolb, page 121 Table A-8";
   parameter Real pri_om_field = 52.8815449319 * A_helio ^ (-1.0359277351) "O&M field based on number of heliostat in USD / unit. 
-                                          The price is multiplied by 1.5 to converT it to USD 2020 from USD 2000";
+                                                                                                                            The price is multiplied by 1.5 to converT it to USD 2020 from USD 2000";
   //******************************* Cost of the PB components ---> product of PB initalisation
   parameter FI.Money C_HTR(fixed = false) "cost of the high temperature heat recuperator";
   parameter FI.Money C_LTR(fixed = false) "cost of the low temperature heat recuperator";
@@ -369,19 +364,19 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter FI.Money C_tower_absolute = 83060926 "Absolute tower cost [USD]";
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
   parameter FI.Money C_tower = if set_SAM_tower_cost then C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) - 28000 * Euro_to_USD_exchange_rate * H_tower + 1573 * H_tower else C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + (0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 37204 * H_tower - 731236) * Euro_to_USD_exchange_rate + 1573 * H_tower "Cost of tower based on J.Sment (Sandia) email to G3P3 Team at Sat 05/12/2020 05:48
-                                            > Tim Harvey structure only cost model is a function of tower height [H_tower] and maximum particle mass in one storage tank [m_max]
-                                                  - Regression model for Tim Harvey cost : 
-                                                    ----> online tool https://stats.blue/Stats_Suite/multiple_linear_regression_calculator.html:
-                                                    C_harvey = 2293496.5853409-45954.7293032756*H_tower+
-                                                                      0.1048843661*m_max+256.311306896*H_tower^2+0.0015436937*m_max*H_tower-0.0000000021*m_max^2 
-                                                                       
-                                            > The Upper Boundary cost is the one with SAM cost function:
-                                                C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SAM Tower Cost [USD] - Piping Cost [Euro] * USD_to_Euro + Ducting cost [USD]
-                                                
-                                            > The Lower Boundary cost:
-                                                C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SBP Tower Cost (no pipe) [USD] - Ducting cost [USD]
-                                            
-                                            As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function";
+                                                                                                                              > Tim Harvey structure only cost model is a function of tower height [H_tower] and maximum particle mass in one storage tank [m_max]
+                                                                                                                                    - Regression model for Tim Harvey cost : 
+                                                                                                                                      ----> online tool https://stats.blue/Stats_Suite/multiple_linear_regression_calculator.html:
+                                                                                                                                      C_harvey = 2293496.5853409-45954.7293032756*H_tower+
+                                                                                                                                                        0.1048843661*m_max+256.311306896*H_tower^2+0.0015436937*m_max*H_tower-0.0000000021*m_max^2 
+                                                                                                                                                         
+                                                                                                                              > The Upper Boundary cost is the one with SAM cost function:
+                                                                                                                                  C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SAM Tower Cost [USD] - Piping Cost [Euro] * USD_to_Euro + Ducting cost [USD]
+                                                                                                                                  
+                                                                                                                              > The Lower Boundary cost:
+                                                                                                                                  C_tower = Tim Harvey cost [USD] - SBP Material Cost [USD] + SBP Tower Cost (no pipe) [USD] - Ducting cost [USD]
+                                                                                                                              
+                                                                                                                              As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function";
   //*********************************** Evaluating tower cost using SAM tower correlation - piping cost + ducting cost + extra structure cost
   //*********************************** Based on the email by J.Sment (Sandia) Wed 09/12/2020 19:35
   /*C_tower = Tim Harvey structure only cost [USD]- SBP Materials [USD]+ Sam Tower Cost [USD]- Piping Cost [in Euro] + Ducting cost [USD]*/
@@ -408,14 +403,14 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
   parameter FI.Money C_lift_hx = if set_external_storage then pri_lift * dh_liftHX * m_flow_blk else 0 "Heat exchanger lift cost";
   /******************************************************************************************************
-                                                  FIXME: There are 2 u_values now, implement it in the tuffcrete x microporous analysis
-                                                  (131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
-                                                  (873.11/U_value) - 322.202 ======> cost function insulation of Tuffcrete, Pumplite60 and Concrete
-                                                  0.03293006 / U_value + 0.01518 =====> thickness function of Pumplite60;
-                                                  0.32368 / U_value - 0.146096   =====> thickness function of Microporous;
-                                                  parameter SI.Length t_mp = 0.32368 / (U_value_hot_tank + U_value_cold_tank) - 0.146096;
-                                                  parameter SI.Length t_tuffcrete47 = 0.01;
-  ******************************************************************************************************/
+                                                                                                                                    FIXME: There are 2 u_values now, implement it in the tuffcrete x microporous analysis
+                                                                                                                                    (131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
+                                                                                                                                    (873.11/U_value) - 322.202 ======> cost function insulation of Tuffcrete, Pumplite60 and Concrete
+                                                                                                                                    0.03293006 / U_value + 0.01518 =====> thickness function of Pumplite60;
+                                                                                                                                    0.32368 / U_value - 0.146096   =====> thickness function of Microporous;
+                                                                                                                                    parameter SI.Length t_mp = 0.32368 / (U_value_hot_tank + U_value_cold_tank) - 0.146096;
+                                                                                                                                    parameter SI.Length t_tuffcrete47 = 0.01;
+                                                                                    ******************************************************************************************************/
   parameter FI.Money C_storage = if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
   //******************************* Cost of BOP
   parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
@@ -472,10 +467,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SolarTherm.Models.CSP.CRS.Receivers.ParticleReceiver1DCalculator defocuscalculator(T_out_design = T_in_ref_blk, T_in_design = T_in_rec, T_amb_design = T_amb_des_rcv, Wspd_design = 0, Wspd_dir = 0, dni_des = dni_des, h_conv_backwall = h_conv_backwall, h_conv_curtain = h_conv_curtain, phi_max = packing_factor, eps_w = eps_w, th_w = th_w, k_w = k_w, F = F, d_p = d_p, cp_s = cp_s, rho_s = rho_s, eps_s = eps_s, abs_s = abs_s, ar_rec = ar_rec, with_detail_h_ambient = true, with_wind_effect = true, fixed_geometry = true, iterate_Q_flow = true, with_iterate_mdot = false, m_design = m_flow_blk, H_drop_design = H_rcv, with_pre_determined_eta = false) annotation(
     Placement(visible = true, transformation(origin = {12, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   //********************* Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, dome_storage = set_dome_storage, Th_refractory = Th_refractory_hot_tank, H_tower = H_tower, D_tower = 2 * R_tower, m_tot = m_max, D_outlet = D_outlet, t_storage = t_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, use_p_top = set_tnk_use_p_top, enable_losses = set_tnk_enable_losses, use_L = true, W_max = 0, T_set = 0, U_value = U_value_hot_tank, packing_factor = packing_factor) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, dome_storage = set_dome_storage, Th_refractory = Th_refractory_hot_tank, H_tower = H_tower, D_tower = 2 * R_tower, m_tot = m_max, D_outlet = D_outlet, t_storage = t_storage, T_start = T_hot_start, L_start = (1 - split_cold) * 100, use_p_top = set_tnk_use_p_top, enable_losses = set_tnk_enable_losses, use_L = true, W_max = 0, T_set = 0, U_value = U_value_hot_tank, packing_factor = packing_factor, V_t = V_max) annotation(
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   //********************* Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, dome_storage = set_dome_storage, Th_refractory = Th_refractory_cold_tank, H_tower = H_tower, D_tower = 2 * R_tower, m_tot = m_max, D_outlet = D_outlet, T_start = T_cold_start, L_start = split_cold * 100, use_p_top = set_tnk_use_p_top, enable_losses = set_tnk_enable_losses, use_L = true, W_max = 0, T_set = 0, U_value = U_value_cold_tank, packing_factor = packing_factor) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, dome_storage = set_dome_storage, Th_refractory = Th_refractory_cold_tank, H_tower = H_tower, D_tower = 2 * R_tower, m_tot = m_max, D_outlet = D_outlet, T_start = T_cold_start, L_start = split_cold * 100, use_p_top = set_tnk_use_p_top, enable_losses = set_tnk_enable_losses, use_L = true, W_max = 0, T_set = 0, U_value = U_value_cold_tank, packing_factor = packing_factor, V_t = V_max) annotation(
     Placement(transformation(extent = {{64, -28}, {44, -8}})));
   //********************* Tower Inner Diameter Calculator - for integrated storage concept only
   SolarTherm.Utilities.TowerInnerDiameterCalculator_IntegratedG3P3Storage towerInnerDiameterCalculator(rho_particle = (rho_cold_set + rho_hot_set) / 2, H_tower = H_tower, m_max = m_max, Th_refractory = if Th_refractory_cold_tank == Th_refractory_hot_tank then Th_refractory_cold_tank else max(Th_refractory_cold_tank, Th_refractory_hot_tank), D_outlet = D_outlet, phi = packing_factor);
@@ -495,7 +490,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SolarTherm.Models.Control.ReactorControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser, T_crit_reactor = T_critical_reactor) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   //********************* Power block
-  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H, redeclare replaceable package Particle_Package = Particle_Package, T_in_gas_des, T_out_gas_des, Q_reactor = Q_reactor, effectiveness = effectiveness) annotation(
+  SolarTherm.Models.PowerBlocks.HeatExchangerChemical chemicalReactor(T_cold_set = T_cold_set, delta_H = delta_H, redeclare replaceable package Particle_Package = Particle_Package, T_in_gas_des = T_in_gas_des, T_out_gas_des = T_out_gas_des, Q_reactor = Q_reactor, effectiveness = effectiveness) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //*********************Power Block Calculator
   SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
@@ -511,7 +506,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   Modelica.Blocks.Types.ExternalCombiTable2D opt_eff_windy = Modelica.Blocks.Types.ExternalCombiTable2D(tableName = if set_swaying_optical_eff == true then "optics_windy" else "optics", fileName = opt_file, table = fill(0.0, 0, 2), smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
   Modelica.Blocks.Types.ExternalCombiTable1D wea_table = Modelica.Blocks.Types.ExternalCombiTable1D(tableName = "data", fileName = wea_file, table = fill(0.0, 0, 2), columns = 1:11, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
   //********************* Variables
-  SI.Energy E_elec(start=0) "Produced heat";
+  SI.Energy E_elec(start = 0) "Produced heat";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
   //*********************Dispatch optimiser variables
   Real SLinit;
@@ -530,6 +525,16 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SI.Energy E_helio_net(start = 0, fixed = true);
   SI.Energy E_recv_incident(start = 0, fixed = true);
   SI.Energy E_recv_net(start = 0, fixed = true);
+  SI.Energy E_recv_loss(start = 0, fixed = true);
+  SI.Energy E_check_rcv;
+  SI.HeatFlowRate Q_recv_net;
+  SI.HeatFlowRate Q_hot_tank_stored;
+  SI.HeatFlowRate Q_hot_tank_loss;
+  SI.HeatFlowRate Q_HX;
+  SI.HeatFlowRate Q_cold_tank_stored;
+  SI.HeatFlowRate Q_cold_tank_loss;
+  SI.Energy E_check_CV;
+  Real check_tank_level;
   Real eta_curtail_off(start = 0);
   Real eta_optical(start = 0);
   Real eta_he_av(start = 0);
@@ -545,17 +550,15 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   SI.Angle slope_error_runtime[horizon] "Slope error as a function of wind speed during runtime";
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-
 algorithm
   if time > 31449600 then
-      eta_curtail_off := E_helio_incident / E_resource;
-      eta_optical := E_resource_after_optical_eff / E_resource;
-      eta_he_av := he_av_design;
-      eta_curtail_defocus := E_helio_net / E_helio_raw;
-      eta_recv_abs := E_recv_incident / E_helio_net;
-      eta_recv_thermal := E_recv_net / E_recv_incident;
+    eta_curtail_off := E_helio_incident / E_resource;
+    eta_optical := E_resource_after_optical_eff / E_resource;
+    eta_he_av := he_av_design;
+    eta_curtail_defocus := E_helio_net / E_helio_raw;
+    eta_recv_abs := E_recv_incident / E_helio_net;
+    eta_recv_thermal := E_recv_net / E_recv_incident;
   end if;
-
 initial equation
   C_extra_structure = structureExtraCost.C_extra_structure_cost;
   if set_external_storage then
@@ -613,8 +616,8 @@ initial equation
     C_mainCompressor = 0 "No PB in this model";
     C_reCompressor = 0 "No PB in this model";
     C_cooler = 0 "No PB in this model";
-    C_exchanger =  0 "HX in this model is to make the system model runs.";
-    C_generator = 0 "No PB in this model" ;
+    C_exchanger = 0 "HX in this model is to make the system model runs.";
+    C_generator = 0 "No PB in this model";
   elseif which_PB_model == 0 then
 //************************************ Based on NREL Power Blockbased on CEA Power Block*/
     C_HTR = sCO2PBDesignPointCalculator.chemicalReactor.C_HTR;
@@ -662,8 +665,19 @@ equation
   der(E_helio_incident) = if heliostatsField.on_hf then heliostatsField.n_h * heliostatsField.A_h * max(0.0, heliostatsField.solar.dni) else 0.0;
   der(E_helio_raw) = heliostatsField.Q_raw;
   der(E_helio_net) = heliostatsField.Q_net;
-  der(E_recv_incident) = particleReceiver.heat.Q_flow;
+  der(E_recv_incident) = particleReceiver.Q_incident;
+  der(E_recv_loss) = particleReceiver.Q_loss;
   der(E_recv_net) = particleReceiver.Q_rcv;
+  Q_recv_net = particleReceiver.Q_rcv;
+  Q_hot_tank_stored = der(tankHot.E_tank);
+  Q_hot_tank_loss = tankHot.Q_losses_before_radiation + tankHot.Q_loss_radiation;
+  Q_HX = chemicalReactor.Q_HX;
+  Q_cold_tank_stored = der(tankCold.E_tank);
+  Q_cold_tank_loss = tankCold.Q_losses_before_radiation + tankCold.Q_loss_radiation;
+  E_check_rcv = E_recv_incident - E_recv_net - E_recv_loss;
+//********************** E recv net - E loss storage - EPY - dE/dt hot tank - dE/dt cold tank ==> 0
+  der(E_check_CV) = Q_recv_net - Q_hot_tank_loss - Q_cold_tank_loss - Q_HX - Q_hot_tank_stored - Q_cold_tank_stored;
+  check_tank_level = tankCold.L / 100 + tankHot.L / 100;
 //************************************ Equations below exist to close the model
   particleReceiver.raw_input[1] = H_rcv "Particle receiver drop height - input to the static receiver surrogate model";
   particleReceiver.raw_input[2] = ar_rec "Particle receiver outlet target temperature (K) - input to the static receiver surrogate model";
@@ -802,7 +816,7 @@ equation
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(origin = {-8, -20}, lineColor = {217, 67, 180}, extent = {{-58, -18}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {12, 24}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"), Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"), Text(origin = {2, 2}, extent = {{80, 12}, {128, -8}}, textString = "Chemical Reactor", fontSize = 6, fontName = "CMU Serif"), Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"), Text(origin = {8, 22}, extent = {{30, 62}, {78, 42}}, textString = "Reactor Control", fontSize = 6, fontName = "CMU Serif"), Text(origin = {-6, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif"), Text(origin = {0, -40}, extent = {{-10, 8}, {10, -8}}, textString = "Lift Receiver", fontSize = 6, fontName = "CMU Serif"), Text(origin = {80, -8}, extent = {{-14, 8}, {14, -8}}, textString = "LiftCold", fontSize = 6, fontName = "CMU Serif"), Text(origin = {85, 59}, extent = {{-19, 11}, {19, -11}}, textString = "LiftHX", fontSize = 6, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
-    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-06, Interval = 3600),
+    experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 3600),
     __Dymola_experimentSetupOutput,
     Documentation(revisions = "<html>
 	<ul>

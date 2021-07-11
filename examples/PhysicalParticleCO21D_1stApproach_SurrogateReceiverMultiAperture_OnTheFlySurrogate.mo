@@ -45,6 +45,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
+  parameter Boolean with_catch_and_release_mechanism = true ;
   
   //****************************** Importing medium and external files
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
@@ -220,7 +221,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
-              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/surrogate_receiver_constant_T_out_800"
+              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/single_aperture_MFPR_CSIRO/surrogate_model"
               )
   "[RCV] path to which the static particle receiver surrogate model is stored - Updated model MSE_test = 0.0067, old-model MSE = 0.08";
   
@@ -792,7 +793,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       with_iterate_mdot = true, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Receiver Design Condition Sizing Calculator - Mid rcv
@@ -825,7 +826,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       with_iterate_mdot = true, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Receiver Design Condition Sizing Calculator - Right rcv
@@ -858,7 +859,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       with_iterate_mdot = true, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Defocus calculator for the left receiver
@@ -891,7 +892,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       H_drop_design = H_rcv_lv1, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Defocus calculator for the middle receiver
@@ -924,7 +925,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       H_drop_design = H_rcv_lv2, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Defocus calculator for the right receiver
@@ -957,7 +958,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
       H_drop_design = H_rcv_lv3, 
       with_pre_determined_eta = false,
       N = discretisations,
-      with_catch_and_release_mechanism = false
+      with_catch_and_release_mechanism = with_catch_and_release_mechanism
   );
   
   //********************* Hot tank

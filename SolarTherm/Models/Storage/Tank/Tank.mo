@@ -11,6 +11,7 @@ model Tank
   import CN = Modelica.Constants;
   parameter SI.Length th_insul = 10e-2 "thickness of the insulation in the tank";
   parameter SI.ThermalConductance k_insul = 0.08 "W/m/K microporous insulation board', https://is.gd/5j9Gkw";
+  replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
 
   parameter SI.Emissivity em = 0.8;
   
@@ -58,8 +59,8 @@ model Tank
                 t_storage,
                 "cylinder"
                 );
-  
-  parameter SI.ThermalConductance UA_tank = 1 /(1/R_cylinder[1] + 1/R_hemisphere[1]);
+  parameter SI.ThermalResistance R_total = (R_cylinder[1] * R_hemisphere[1]) / (R_cylinder[1] + R_hemisphere[1]);
+  parameter SI.ThermalConductance UA_tank = 1 / R_total;
   parameter SI.ThermalInsulance U_value = 2;              
   parameter Boolean dome_storage = false;
   parameter Boolean external_storage = true "true = use external storage R value calculation, false use integrated";
@@ -84,12 +85,12 @@ model Tank
   parameter SI.Temperature T_set=from_degC(500) "Tank Heater Temperature Set-Point" annotation (Dialog(group="Heater"));
   parameter SI.Power W_max= 30e8 "Hot Tank Heater Capacity"
                                                            annotation (Dialog(group="Heater"));
-  parameter SI.Efficiency e_ht=0.99 "Tank Heater Efficiency"
-                                                            annotation (Dialog(group="Heater"));
-
+  parameter SI.Efficiency e_ht=0.99 "Tank Heater Efficiency";
+  
+    
   SI.Volume V;
   SI.HeatFlowRate Q_losses_before_radiation;
-  SI.HeatFlowRate Q_losses_total;
+  SI.Energy E_losses_total;
   SI.Mass m;  
   Medium.BaseProperties medium;
   
@@ -98,7 +99,10 @@ model Tank
   SI.Temperature T_hemisphere_outer_wall;
 
   SI.Area A;
-
+  SI.HeatFlowRate Q_loss_radiation;
+  SI.SpecificEnthalpy h_in;
+  
+  SI.Energy E_tank;
 
   Medium.ThermodynamicState state_i=Medium.setState_pTX(medium.p,T_start); //initialize initial state
 
@@ -136,8 +140,7 @@ model Tank
 
 initial equation
   medium.h=Medium.specificEnthalpy(state_i);
-  m=Medium.density(state_i)*(V_t*packing_factor)*L_start/100;
-
+  m=Medium.density(state_i)*V_t*packing_factor*L_start/100;
 equation
   if use_L then
       connect(L_internal,L);
@@ -153,10 +156,10 @@ equation
       connect(T_amb_internal,T_amb);
       if dome_storage == true then
           //********************** Heat losses from cylindrical and hemisphere part of the dome storage
-          Q_losses_before_radiation = UA_tank * (-1) * (medium.T-T_amb_internal);       
+          Q_losses_before_radiation = UA_tank * (medium.T-T_amb_internal);       
       else
           //********************** Heat losses from cylindrical storage
-          Q_losses_before_radiation= -U_value * A * (medium.T-T_amb_internal);
+          Q_losses_before_radiation= U_value * A * (medium.T-T_amb_internal);
       end if;
   else
       T_amb_internal=Medium.T_default;
@@ -172,14 +175,26 @@ equation
   fluid_b.p=medium.p;
   fluid_a.h_outflow=0;//medium.h;
   fluid_b.h_outflow=medium.h;
+  h_in = inStream(fluid_a.h_outflow);
+  
   der(m)=fluid_a.m_flow+fluid_b.m_flow;
-  m*der(medium.h)+der(m)*medium.h=Q_losses_before_radiation + em * Modelica.Constants.sigma * (T_cylinder_outer_wall^4 - medium.T^4) +  em * Modelica.Constants.sigma * (T_hemisphere_outer_wall^4 - medium.T^4) + W_net+fluid_a.m_flow*inStream(fluid_a.h_outflow)+fluid_b.m_flow*medium.h;
+  
+  E_tank = m * (medium.h - Particle_Package.h_T(550+273.15));
+  
+  Q_loss_radiation =  em * Modelica.Constants.sigma * (T_cylinder_outer_wall^4 - T_amb_internal^4) + em * Modelica.Constants.sigma * (T_hemisphere_outer_wall^4 - T_amb_internal^4);
+    
+  m*der(medium.h)+der(m)*medium.h= //net gain
+                  fluid_a.m_flow * inStream(fluid_a.h_outflow) +
+                      fluid_b.m_flow * medium.h - 
+                            Q_loss_radiation - 
+                                Q_losses_before_radiation + 
+                                    W_net;
   T_mea = medium.T;
   
-  der(Q_losses_total)= Q_losses_before_radiation;
-
-  V=m/medium.d;
-  L_internal=100*V/(V_t*packing_factor);
+  der(E_losses_total)= Q_losses_before_radiation  + Q_loss_radiation;
+    
+  V=(m/medium.d)/packing_factor;
+  L_internal=V / V_t * 100;
   A=2*CN.pi*(D/2)*H*(L_internal/100) + CN.pi*(D/2)^2;
 
   if medium.T<T_set then
