@@ -1,7 +1,7 @@
 #ifndef ST_STORAGE_PY_FUNC
 #define ST_STORAGE_PY_FUNC
 
-#include <python2.7/Python.h>
+#include <python3.8/Python.h>
 #include <stdio.h>
 
 const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *modelicapath, int argc, const char *varnames[], const double var[]);
@@ -22,10 +22,10 @@ const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfu
 
     // add the path of the Python function file to the system path
     PyObject *sys_path = PySys_GetObject("path");
-    PyList_Append(sys_path, PyString_FromString((char *)ppath));
+    PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
   
     // name of the Python file
-    pName = PyString_FromString(pname);
+    pName = PyUnicode_FromString(pname);
     /* Error checking of pName left out */
 
     pModule = PyImport_Import(pName);
@@ -39,8 +39,8 @@ const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfu
 
         if (pFunc && PyCallable_Check(pFunc)) {
             inputs = PyDict_New();
-            PyDict_SetItemString(inputs, "casedir", PyString_FromString((char *)psave));
-            PyDict_SetItemString(inputs, "modelicapath", PyString_FromString((char *)modelicapath));
+            PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
+            PyDict_SetItemString(inputs, "modelicapath", PyUnicode_FromString((char *)modelicapath));
             for (i = 0; i < argc; ++i) {
 
                 pValue = PyFloat_FromDouble(var[i]);
@@ -58,7 +58,7 @@ const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfu
 
             pValue = PyObject_CallObject(pFunc, pArgs);
 
-            tablefile=PyString_AsString(pValue);
+            tablefile=PyBytes_AsString(pValue);
 
 
             Py_DECREF(pArgs);

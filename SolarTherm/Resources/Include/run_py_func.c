@@ -1,7 +1,7 @@
 #ifndef ST_EXT_PY_FUNC
 #define ST_EXT_PY_FUNC
 
-#include <python2.7/Python.h>
+#include <python3.8/Python.h>
 #include <stdio.h>
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[]);
@@ -22,10 +22,10 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
 
     // add the path of the Python function file to the system path
     PyObject *sys_path = PySys_GetObject("path");
-    PyList_Append(sys_path, PyString_FromString((char *)ppath));
+    PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
   
     // name of the Python file
-    pName = PyString_FromString(pname);
+    pName = PyUnicode_FromString(pname);
     /* Error checking of pName left out */
 
     pModule = PyImport_Import(pName);
@@ -39,10 +39,10 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
 
         if (pFunc && PyCallable_Check(pFunc)) {
             inputs = PyDict_New();
-            PyDict_SetItemString(inputs, "casedir", PyString_FromString((char *)psave));
-            PyDict_SetItemString(inputs, "field_type", PyString_FromString((char *)field_type));
-            PyDict_SetItemString(inputs, "rcv_type", PyString_FromString((char *)rcv_type));
-            PyDict_SetItemString(inputs, "wea_file", PyString_FromString((char *)wea_file));
+            PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
+            PyDict_SetItemString(inputs, "field_type", PyUnicode_FromString((char *)field_type));
+            PyDict_SetItemString(inputs, "rcv_type", PyUnicode_FromString((char *)rcv_type));
+            PyDict_SetItemString(inputs, "wea_file", PyUnicode_FromString((char *)wea_file));
             for (i = 0; i < argc; ++i) {
 
                 pValue = PyFloat_FromDouble(var[i]);
@@ -60,7 +60,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
 
             pValue = PyObject_CallObject(pFunc, pArgs);
 
-            tablefile=PyString_AsString(pValue);
+            tablefile=PyBytes_AsString(pValue);
 
 
             Py_DECREF(pArgs);

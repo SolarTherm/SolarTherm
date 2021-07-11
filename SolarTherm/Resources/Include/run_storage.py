@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 from solartherm import postproc
 from solartherm import simulation
@@ -121,7 +120,10 @@ def get_effectiveness(inputs):
 	return motabfile
 
 if __name__=='__main__':
-	inputs={'modelicapath':'/home/philgun/solartherm-astri/SolarTherm/Models/Storage', 'casedir':'.', 't_storage':9}
+	import os
+	p=os.path.abspath('../../Models/Storage')
+	print('path',p)
+	inputs={'modelicapath':p, 'casedir':'.', 't_storage':9}
 	get_effectiveness(inputs)
 	
 	
