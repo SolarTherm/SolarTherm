@@ -10,7 +10,7 @@ model Thermocline_Meier_1991
   package Filler = SolarTherm.Materials.Steatite_Constant;
   package Fluid = SolarTherm.Materials.Air_Table;
 
-  parameter Integer N_f = 100; 
+  parameter Integer N_f = 320; 
   parameter Integer N_p = 10;
   parameter SI.Length H_tank = 1.20;
   parameter SI.Diameter D_tank = 0.15;
@@ -83,7 +83,7 @@ equation
   h_top = thermocline_Tank.fluid_top.h;
   T_bot = thermocline_Tank.fluid_bot.T;
   T_top = thermocline_Tank.fluid_top.T;
-  m_Recv_signal = 0.004*1.0;
+  m_Recv_signal = 0.004*0.75;
   m_PB_signal = 0.0;
   PBS_TeeJunction_LoopBreaker_Bot.fluid_b.p = 101325;
   PBS_TeeJunction_LoopBreaker_Bot.fluid_a.p = 101325;

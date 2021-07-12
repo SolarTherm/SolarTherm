@@ -62,17 +62,22 @@ algorithm
     Chg := true;
   end when;
 
-  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
-    PB := false; //start the cooldown
-    t_threshold := time + t_wait;
+  //when m_flow_PB < 0.1*m_flow_PB_des then //take this as shutdown
+  when m_flow_PB < 100.0*m_0 then
+  //when pre(Control_State) > 5 or pre(Control_State) < 2 then
+    if PB == true then
+      PB := false; //start the cooldown
+      t_threshold := time + t_wait;
+    end if;
   end when;
   when time > t_threshold then
     PB := true;
   end when;
 equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
-  m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-  
+  //m_guess =(Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+  m_guess =(Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+  //m_guess = if PB then (Q_rcv_raw + m_flow_PB_des*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet) else Q_rcv_raw/(h_target-h_tank_outlet);
   /*
   if Chg == false and Disch == false then //6 or 3
     if m_guess < m_flow_PB_des then
@@ -174,13 +179,13 @@ equation
     m_flow_recv = Q_rcv_raw/(h_target-h_tank_outlet);
     m_flow_PB = m_0;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
     
   elseif Control_State == 2 then
     m_flow_recv = m_0;
     m_flow_PB = m_flow_PB_des;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
 
   elseif Control_State == 3 then
     m_flow_recv = m_flow_PB_des;
@@ -192,19 +197,19 @@ equation
     m_flow_recv = Q_rcv_raw/(h_target-h_PB_outlet);
     m_flow_PB = m_flow_PB_des; //whoops I switched these by mistake
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
 
   elseif Control_State == 5 then
     m_flow_recv = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
     m_flow_PB = m_flow_PB_des;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
 
   else
     m_flow_recv = m_0;
     m_flow_PB = m_0;
     defocus = false;
-    Q_defocus = Q_des_blk; //Not used anyway
+    Q_defocus = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
   end if;
 //Additional info about control states:
 //1 = Recv is on, only charges the storage. PB is off.

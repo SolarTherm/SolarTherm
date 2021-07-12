@@ -137,13 +137,13 @@ algorithm
 equation
   
   //Figure out assisted mass fraction
-    if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] + 100.0 then
+    if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] + 10.0 then
       f_disch_guess = (h_PB_min - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]);
     else //Cannot Assist
       f_disch_guess = 0.0;
     end if;
 
-    if Tank_B.h_f[1] < Tank_A.h_f[1] - 100.0 then
+    if Tank_B.h_f[1] < Tank_A.h_f[1] - 10.0 then
       f_chg_guess = (h_recv_max - Tank_A.h_f[1]) / (Tank_B.h_f[1] - Tank_A.h_f[1] );
     else
       f_chg_guess = 0.0;

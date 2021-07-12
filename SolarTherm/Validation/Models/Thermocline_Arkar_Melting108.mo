@@ -9,8 +9,8 @@ model Thermocline_Arkar_Melting108
   package RT20_Paraffin = SolarTherm.Materials.RT20_Paraffin_Melting;
   package Air = SolarTherm.Materials.Air_Table;
 
-  parameter Integer N_f = 105; 
-  parameter Integer N_p = 5;
+  parameter Integer N_f = 105; //Default 105
+  parameter Integer N_p = 10; //Default 10
   parameter SI.Length H_tank = 1.52;
   parameter SI.Diameter D_tank = 0.34;
   parameter Real eta = 0.388;
@@ -22,7 +22,7 @@ model Thermocline_Arkar_Melting108
 ,0.0),N_p),N_f);
 
   //Thermocline Tank A (Bottom PCM)
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Section2 Tank_A (redeclare package Fluid_Package = Air, redeclare package Filler_Package = RT20_Paraffin, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=T_max,T_min=T_min,d_p=50.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,eta=eta,rho_p=RT20_Paraffin.rho_Tf(T_max,1.0),U_loss_tank = 0.0) "The bottom tank";
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A (redeclare package Fluid_Package = Air, redeclare package Filler_Package = RT20_Paraffin, N_f = N_f, N_p = N_p,T_f_start=T_f_start,T_p_start=T_p_start,h_f_start=h_f_start,h_p_start=h_p_start,T_max=T_max,T_min=T_min,d_p=50.0e-3,H_tank=H_tank,D_tank=D_tank,Correlation=1,eta=eta,rho_p=RT20_Paraffin.rho_Tf(T_max,1.0),U_loss_tank = 0.0) "The bottom tank";
   
   //All tank sections have HTF type in common!
   Air Fluid "Fluid package";
@@ -54,17 +54,23 @@ model Thermocline_Arkar_Melting108
   //Boundary Conditions
   SI.Temperature T_top (start=T_min) "Temperature at the top";
   SI.Temperature T_bot (start=T_min) "Temperature at the bottom";
+  
+  //Measured filler temperature
+  SI.Temperature T_16 "Temperature of the innermost shell of the 16th row sphere";
+  SI.Temperature T_16_avg "Average temperature of the 16th row sphere";
 
 equation
   //Connections
   m_flow = Tank_A.m_flow;
-  h_bot = Tank_A.h_bot;
-  h_top = Tank_A.h_top;
+  h_bot = Tank_A.h_in;
+  h_top = Tank_A.h_out;
   
   //Validation set A assumes inlet discharge volumetric flow rate of 108 m3/hr
   m_flow = (108.0/3600.0)*rho_f_avg;
   T_bot = SolarTherm.Validation.Datasets.Arkar_Melting108_Dataset.T_t(time);
   Tank_A.T_amb = 298.15;
+  T_16 = Tank_A.T_p[47,1]; //Default for Nf = 105, this is i = 47 i.e.(16*3 - 1)
+  T_16_avg = sum(Tank_A.T_p[47].*Tank_A.m_p[47])/sum(Tank_A.m_p[47]); //Default T_p[47]
   
   //Fluid inlet and outlet properties
   fluid_top.h = h_top;

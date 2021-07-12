@@ -351,8 +351,14 @@ equation
         Nu[i] = (Re[i] * Pr[i]) ^ 0.5;
       elseif Correlation == 9 then
         Nu[i] = f_Nu*(5.5 + 0.025*((Re[i]*Pr[i])^0.8));
-      else
+      elseif Correlation == 10 then
         Nu[i] = 28.9704 + 78.1729*((Re[i]*Pr[i])^0.3193);
+      else
+        if u_flow < 0 then //charging
+          Nu[i] = 28.9704 + 78.1942*((Re[i]*Pr[i])^0.3092);
+        else
+          Nu[i] = 28.9704 + 59.5880*((Re[i]*Pr[i])^0.4662);
+        end if;
       end if;
     else
       if Correlation < 9 then

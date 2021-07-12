@@ -44,17 +44,21 @@ model Thermocline_Table
   Real e_out "Nondimensional outlet temperature/effectiveness";
   //Real e_top "Nondimensional top temperature/effectiveness";
   Real e_bot "Nondimensional bot temperature/effectiveness if it were to flow out of bottom";
+  parameter Real C_total = 3.11232e7 "total cost";
+  
+  Fluid_Package.State fluid_bot;
 equation
   //Table inputs
   Table_Charging.u = L;
   Table_Discharging.u = L;
+  
   
 //Theoretical bottom outlet effectiveness
   e_bot = min(1.0,Table_Charging.y[1]);
 
 //effectiveness calculations
   m_flow = -1.0*fluid_a.m_flow; 
-  if m_flow > 0.0 then //flowing upwards so discharge
+  if m_flow >= 0.0 then //flowing upwards so discharge
     h_in = inStream(fluid_b.h_outflow);
     fluid_b.h_outflow = h_in;
     fluid_a.h_outflow = h_out;
@@ -64,7 +68,8 @@ equation
 
     
     T_out = T_min + e_out*(T_max-T_min);
-    h_bot_outlet = h_min;
+    //h_bot_outlet = h_min;//h_min;
+    //fluid_bot.T = T_min;
     //h_bot_outlet = Fluid_Package.h_Tf(T_max - e_bot*(T_max-T_min), 0.0);
   else //fluid flowing downwards so charging
     h_in = inStream(fluid_a.h_outflow);
@@ -76,11 +81,13 @@ equation
     
     T_out = T_max - e_out*(T_max-T_min);
     //h_bot_outlet = h_out;
-    h_bot_outlet = Fluid_Package.h_Tf(T_out, 0.0);
+    //h_bot_outlet = fluid_bot.h;//Fluid_Package.h_Tf(T_out, 0.0);
+    //fluid_bot.T = T_out;
   end if;
   //try constant e_out
   //e_out = 0.99;
-  
+  fluid_bot.T = T_max - e_out*(T_max-T_min);
+  h_bot_outlet = fluid_bot.h;
   
   L = E_stored/E_max;
   Level = L;

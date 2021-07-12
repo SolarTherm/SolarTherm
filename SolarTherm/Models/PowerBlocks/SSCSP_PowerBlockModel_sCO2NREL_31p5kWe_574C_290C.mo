@@ -10,8 +10,8 @@ model SSCSP_PowerBlockModel_sCO2NREL_31p5kWe_574C_290C
   
   parameter SI.HeatFlowRate W_des=31.5e3/nu_net "Design turbine gross output" annotation (Dialog(group="Design"));
   parameter Real nu_net=0.9 "Estimated gross to net conversion factor at the power block" annotation(Dialog(group="Parasities energy losses"));
-  parameter SI.Temperature T_in_ref=from_degC(700) "HTF inlet temperature (design)" annotation (Dialog(group="Design"));
-  parameter SI.Temperature T_out_ref=from_degC(510) "HTF outlet temperature (design)"
+  parameter SI.Temperature T_in_ref=from_degC(574) "HTF inlet temperature (design)" annotation (Dialog(group="Design"));
+  parameter SI.Temperature T_out_ref=from_degC(290) "HTF outlet temperature (design)"
                                                                                      annotation (Dialog(group="Design"));
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
   parameter SI.HeatFlowRate Q_flow_ref=114551.9 "Design thermal power" annotation (Dialog(group="Design"));
@@ -29,7 +29,7 @@ model SSCSP_PowerBlockModel_sCO2NREL_31p5kWe_574C_290C
   parameter Boolean enable_losses = false
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
-  parameter SI.Temperature T_des=from_degC(43) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
+  parameter SI.Temperature T_des=from_degC(35) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
 
   parameter Boolean external_parasities = false
     "= true enable parasities as an input"

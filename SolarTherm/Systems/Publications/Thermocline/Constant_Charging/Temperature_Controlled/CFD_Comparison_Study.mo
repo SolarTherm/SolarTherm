@@ -228,7 +228,7 @@ package CFD_Comparison_Study
     //MgO_Constant;  //Can investigate different filler
     //Design Parameters
     //Fixed
-    parameter Integer Correlation = 10 "Mehdi";
+    parameter Integer Correlation = 11 "Mehdi, Conditonal";
     parameter SI.Temperature T_min = 520 + 273.15 "Minimum temperature";
     parameter SI.Temperature T_max = 740 + 273.15 "Maximum temperature";
     parameter SI.Temperature T_PB_min = 700 + 273.15 "Minimum tolerated outlet temperature to PB";

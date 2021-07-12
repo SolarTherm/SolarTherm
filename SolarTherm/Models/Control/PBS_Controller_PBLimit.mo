@@ -65,7 +65,7 @@ algorithm
     Chg := true;
   end when;
 
-  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
+  when m_flow_PB <= 100.0*m_0 then //take this as shutdown
     PB := false; //start the cooldown
     t_threshold := time + t_wait;
   end when;
@@ -74,6 +74,7 @@ algorithm
   end when;
 equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
+  //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
   /*

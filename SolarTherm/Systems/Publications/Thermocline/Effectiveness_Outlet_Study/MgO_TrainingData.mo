@@ -30,6 +30,8 @@ model MgO_TrainingData
   Real L_PB_start(start=0.0); //L2
   Real L_PB_min(start=0.0); //L1
 
+  Real t_stop_charge(start = 0.0);
+  Real t_stop_discharge(start = 0.0);
 
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
   parameter SI.Power P_gross = 100.0e6 "Nameplate power block";
@@ -143,16 +145,18 @@ algorithm
     m_PB_signal := 0.0;
   end when;
   
-  when thermocline_Tank.T_bot_measured > T_Recv_max then
+  when thermocline_Tank.T_bot_measured > T_Recv_max then//stop charge
     m_Recv_signal := 0.0;
     if time > t_cycle*5.0 then //Log this level
       L_recv_max := L;
+	  t_stop_charge := time; //Log stop charge time
     end if;
   end when;
-  when thermocline_Tank.T_top_measured < T_PB_min then
+  when thermocline_Tank.T_top_measured < T_PB_min then//stop discharge
     m_PB_signal := 0.0;
     if time > t_cycle*5.0 then //Log this level
       L_PB_min := L;
+	  t_stop_discharge := time; //Log stop charge time
     end if;
   end when;
 

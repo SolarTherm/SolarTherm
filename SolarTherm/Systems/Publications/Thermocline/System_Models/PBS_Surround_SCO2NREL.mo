@@ -59,10 +59,10 @@ model PBS_Surround_SCO2NREL
   //To be optimised
   //--Tank
   //Concept Parameters
-  parameter SI.Temperature T_max = 740.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_min = 510.0 + 273.15 "Ideal low temperature of the storage";
-  parameter SI.TemperatureDifference T_tol_recv = 60.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
-  parameter SI.TemperatureDifference T_tol_PB = 60.0 "Temperature tolerance below design PB input temperature before PB is shut off";
+  parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
+  parameter SI.Temperature T_min = 500.0 + 273.15 "Ideal low temperature of the storage";
+  parameter SI.TemperatureDifference T_tol_recv = 50.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
+  parameter SI.TemperatureDifference T_tol_PB = 40.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Controls, pumps , etc
   parameter SI.Temperature T_recv_max = T_min + T_tol_recv "Maximum temperature at bottom of tank when it can no longer be pumped into the receiver";
   parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
@@ -72,7 +72,7 @@ model PBS_Surround_SCO2NREL
   //Constants
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
-  parameter Integer N_f = 200 "Number of discretizations in fluid phase";
+  parameter Integer N_f = 100 "Number of discretizations in fluid phase";
   parameter Integer N_p = 10 "Number of discretizations in filler phase";
   //Filler Properties
   replaceable package Filler_B = SolarTherm.Materials.MgO_Constant "Middle tank filler";

@@ -14,14 +14,16 @@ model Part1_Baseline
   //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
-  parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
+
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_PB_des = 700 + 273.15 "Design Power Block inlet temperature";
   parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this

@@ -3,6 +3,7 @@ model PBS_Receiver
   extends Interfaces.Models.ReceiverFluid;
   Medium.BaseProperties medium;
   Medium.BaseProperties medium_out;
+  Medium.BaseProperties medium_in; //new
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out( start=h_0);
   //SI.MassFlowRate m_flow;
@@ -21,6 +22,12 @@ model PBS_Receiver
                                                  annotation(Dialog(group="Technical data"));
   parameter SI.HeatFlowRate Q_des_blk = 200.0e6 "Power block design heat input rate, also defocus power";
   SI.HeatFlowRate Q_loss;
+  SI.HeatFlowRate Q_rad;
+  SI.HeatFlowRate Q_conv;
+  
+  //SI.Temperature T_4 "Power 4 average of inlet and outlet (K)";
+  //SI.Temperature T_avg "Linear average of inlet and outlet (K)";
+  
   SI.HeatFlowRate Q_rcv;
   SI.HeatFlowRate Q_rcv_in;
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
@@ -54,19 +61,34 @@ model PBS_Receiver
   parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
   parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
   parameter SI.Temperature T_max=from_degC(700) "Target outlet temperature";
+  parameter SI.CoefficientOfHeatTransfer h_conv=20.0 "Convective loss coefficient (W/m2K)";
   
-  SI.Temperature T_in=Medium.temperature(Medium.setState_phX(1e5,h_in));
-  SI.Temperature T_out=Medium.temperature(Medium.setState_phX(1e5,h_out));
+  //SI.Temperature T_in=Medium.temperature(Medium.setState_phX(1e5,h_in));
+  //SI.Temperature T_out=Medium.temperature(Medium.setState_phX(1e5,h_out));
+  SI.Temperature T_in;
+  SI.Temperature T_out;
+  parameter SI.SpecificEnthalpy h_out_ref = Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_max));
 equation
   
   h_in=inStream(fluid_a.h_outflow);
-  fluid_b.h_outflow=max(h_0,h_out);
-  fluid_a.h_outflow=h_0;
-
+  //fluid_b.h_outflow=max(h_0,h_out);
+  //fluid_a.h_outflow=h_in;
+  fluid_a.h_outflow = medium_in.h;
+  fluid_b.h_outflow = medium_out.h;
+  
   heat.T=medium.T;
   fluid_b.m_flow=-fluid_a.m_flow;
   fluid_a.p=medium.p;
   fluid_b.p=medium.p;
+  
+  //New
+  medium_in.h = h_in;
+  T_in = medium_in.T;
+  T_out = medium_out.T;
+  medium_in.p = fluid_a.p;
+  
+  
+  
   //if fluid_a.m_flow > 1.0e-3 then
    // 0 = ab * heat.Q_flow + Q_loss + fluid_a.m_flow * (h_in - h_out);
    // 0 = ab * heat.Q_flow + Q_loss + Q_rcv_raw;
@@ -78,11 +100,17 @@ equation
   //Q_rcv=fluid_a.m_flow*(h_out-h_in);
   //Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_des_blk) else Q_rcv_raw);
   //Q_rcv_in = ab*heat.Q_flow;
-  medium.h=(h_in+h_out)/2;
+  medium.h=0.5*(h_in+h_out);
   
-  Q_rcv_raw = ab*heat.Q_flow-A*sigma*em*((medium.T)^4-Tamb^4); //Theoretical net receiver output before curtailment
+  //T_4 = (0.20*(T_in^4 + (T_in^3)*(T_out) + (T_in^2)*(T_out^2) + (T_in)*(T_out^3) + T_out^4));
+  //T_avg = 0.5*(T_in + T_out);
+  
+  Q_rad = A*sigma*em*((medium.T^4)-(Tamb^4));
+  Q_conv = A*h_conv*(medium.T-Tamb);
+  
+  Q_rcv_raw = ab*heat.Q_flow-Q_rad-Q_conv; //Theoretical net receiver output before curtailment
   if fluid_a.m_flow > 1e-6 then
-    Q_loss = -1.0*A*sigma*em*(medium.T^4-Tamb^4);
+    Q_loss = -1.0*(Q_rad+Q_conv);
     Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_defocus) else Q_rcv_raw);
     //Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_des_blk) else Q_rcv_raw);
     //Q_rcv=fluid_a.m_flow*(h_out-h_in);
@@ -92,7 +120,7 @@ equation
   else
     Q_loss = 0.0;
     Q_rcv = 0.0;
-    h_out = h_in;
+    h_out = h_out_ref;//h_in;
     Q_rcv_in = 0.0;
     //medium.h=(Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_0))+Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_max)))/2;
   end if;

@@ -11,8 +11,8 @@ model Thermocline_Arkar_Solidification76
   package RT20_Paraffin_Slow = SolarTherm.Materials.RT20_Paraffin_Melting;
   package Air = SolarTherm.Materials.Air_Table;
 
-  parameter Integer N_f = 35;
-  parameter Integer N_p = 5;
+  parameter Integer N_f = 105;
+  parameter Integer N_p = 10;
   parameter SI.Length H_tank = 1.52;
   parameter SI.Diameter D_tank = 0.34;
   parameter Real eta = 0.388;
@@ -53,6 +53,10 @@ model Thermocline_Arkar_Solidification76
   //Boundary Conditions
   SI.Temperature T_top (start=T_min) "Temperature at the top";
   SI.Temperature T_bot (start=T_min) "Temperature at the bottom";
+  
+  //Measured filler temperature
+  SI.Temperature T_16 "Temperature of the innermost shell of the 16th row sphere";
+  SI.Temperature T_16_avg "Average temperature of the 16th row sphere";
 
 equation
   //Connections
@@ -65,6 +69,8 @@ equation
   m_flow = (76.0/3600.0)*rho_f_avg;
   T_bot =SolarTherm.Validation.Datasets.Arkar_Solidification76_Dataset.T_t(time);
   Tank_A.T_amb = 298.15;
+  T_16 = Tank_A.T_p[47,1]; //for Nf = 105, this is i = 47 i.e.(16*3 - 1)
+  T_16_avg = sum(Tank_A.T_p[47].*Tank_A.m_p[47])/sum(Tank_A.m_p[47]); //Default T_p[47]
   
   //Fluid inlet and outlet properties
   fluid_top.h = h_top;
