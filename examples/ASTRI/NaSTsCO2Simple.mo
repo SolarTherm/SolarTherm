@@ -2,49 +2,6 @@ within examples.ASTRI;
 
 model NaSTsCO2Simple
 
-  function opt_file_naming
-    input String prefix;
-    //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
-    input String phi_pct_string;
-    input Real SM_guess;
-    input Real HT_pct_guess;
-    input Real f_recv_guess;
-    output String opt_file;
-  protected
-    Integer phi;
-    Integer SM;
-    Integer HT_pct;
-    Integer f_recv;
-    String SM_string;
-    String HT_pct_string;
-    String f_recv_string;
-  algorithm
-    SM := max(14, min(38, 1 * round(SM_guess * 10)));
-//Actually SM*10"
-    HT_pct := max(70, min(130, 5 * round(HT_pct_guess * 0.2)));
-    f_recv := max(70, min(130, 5 * round(f_recv_guess * 20.0)));
-    SM_string := String(SM);
-    HT_pct_string := String(HT_pct);
-    f_recv_string := String(f_recv);
-    opt_file := Modelica.Utilities.Files.loadResource(prefix + SM_string + "dSM/isp_designpt/" + phi_pct_string + "%phi_" + HT_pct_string + "%HT_" + f_recv_string + "%Arecv_optics.motab");
-  end opt_file_naming;
-
-  function round
-    input Real number;
-    output Integer int;
-  protected
-    Integer quotient;
-    Real remainder;
-  algorithm
-    quotient := integer(number);
-    remainder := number - floor(number);
-    if remainder >= 0.5 then
-      int := 1 + quotient;
-    else
-      int := quotient;
-    end if;
-  end round;
-
   import SolarTherm.{Models,Media};
   import Modelica.SIunits.Conversions.from_degC;
   import SI = Modelica.SIunits;
@@ -90,7 +47,6 @@ model NaSTsCO2Simple
   parameter Integer year = 1996 "Meteorological year";
   // Heliostat Field
   parameter String field_type = "surround";
-  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/100MWe/5000c%/893K/1000kWpm2/";
   parameter String phi_pct_string = "124";
   parameter Real SM_guess = 2.2;
   parameter Real HT_pct_guess = 100;
@@ -265,7 +221,7 @@ model NaSTsCO2Simple
   //Controller
   SolarTherm.Models.Control.StorageLevelController Control(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max) annotation(
     Placement(visible = true, transformation(origin = {48, -54}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
-  SolarTherm.Models.Storage.eNTU eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_min = T_min, T_max = T_max, L_start = L_PB_min) annotation(
+  SolarTherm.Models.Storage.eNTUCorrelation eNTU(E_max = t_storage * 3600 * Q_flow_ref_blk, T_min = T_min, T_max = T_max, L_start = L_PB_min) annotation(
     Placement(visible = true, transformation(origin = {42, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
 
