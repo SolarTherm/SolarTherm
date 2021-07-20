@@ -169,7 +169,6 @@ if __name__=='__main__':
 				b2.append(ub)	
 				nominals.append(nominal)		
 		if dist_type=='uniform':
-			print 'uniform'
 			U.uniform(par_n, b1, b2)
 		elif dist_type=='normal':
 			U.normal(par_n, nominals, b1)

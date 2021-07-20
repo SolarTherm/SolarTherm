@@ -524,7 +524,7 @@ if __name__=='__main__':
 	n=0.00153
 	u=UncertaintyDakotaIn(None, None, None,None,None,None, None, None, None,None, None)
 	a,b=u.pert(var_names=['test'], nominals=[n], minimum=[lb], maximum=[ub]) 
-	print a, b
+	print(a, b)
 	X=N.linspace(lb, ub, 100)
 	Y=u.beta(a, b, lb, ub, X)	
 	plt.plot(X, Y)
