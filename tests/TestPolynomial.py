@@ -1,7 +1,8 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -22,6 +23,11 @@ class TestPolynomial(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('p2.y', 1), 1)
 		self.assertAlmostEqual(self.res.interpolate('p3.y', 1), 6)
 		self.assertAlmostEqual(self.res.interpolate('p4.y', 1), 76)
+		os.system('rm TestPolynomial_*')
+		os.system('rm TestPolynomial')
+		os.system('rm TestPolynomial.c')
+		os.system('rm TestPolynomial.o')
+		os.system('rm TestPolynomial.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

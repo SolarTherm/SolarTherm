@@ -1,10 +1,11 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
 
 from solartherm import simulation
 from solartherm import postproc
+import os
 
 class TestExternalC(unittest.TestCase):
 	def setUp(self):
@@ -18,6 +19,11 @@ class TestExternalC(unittest.TestCase):
 	def test_squaring(self):
 		self.assertEqual(self.res.interpolate('y', 1), 1)
 		self.assertEqual(self.res.interpolate('y', 2), 4)
+		os.system('rm TestExternalC_*')
+		os.system('rm TestExternalC')
+		os.system('rm TestExternalC.c')
+		os.system('rm TestExternalC.o')
+		os.system('rm TestExternalC.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

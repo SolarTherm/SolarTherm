@@ -47,6 +47,7 @@ class TestScheduler(unittest.TestCase):
 		print('Tower height (per module):                %4.1f  m'%(getval('H_tower')))
 		print('Number of heliostats (per module):        %i'%(getval('n_heliostat')))
 		print('Number of modules:                        %i'%(getval('n_modules')))
+		os.system('rm NaSaltSCO2System_modular*')
 
 if __name__ == '__main__':
 	unittest.main()

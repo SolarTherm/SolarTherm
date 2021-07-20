@@ -24,7 +24,6 @@ class TestReference2Solstice(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		print(self.perf)
 		self.assertTrue(abs(self.perf[0]- 393933.791)/393933.791<0.01) # epy
 		self.assertTrue(abs(self.perf[1]- 160.352)/160.352<0.01) # LCOE
 		self.assertTrue(abs(self.perf[2]- 44.969)/44.969<0.01) # Capacity factor

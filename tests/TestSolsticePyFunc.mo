@@ -21,7 +21,7 @@ block TestSolsticePyFunc
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
 	parameter String pname = "run_solstice" "Name of the Python script";
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
-    parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";    
+    parameter String psave = "Test_SolsticePyFunc";    
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 

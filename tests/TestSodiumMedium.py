@@ -1,7 +1,8 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -41,6 +42,12 @@ class TestSodiumMedium(unittest.TestCase):
 		self.assertLessEqual(self.res.interpolate('err_avg_T_p_test', 1), delta)
 		self.assertLessEqual(self.res.interpolate('err_avg_T_s_test', 1), delta)
 		self.assertLessEqual(self.res.interpolate('err_avg_vs_T_test', 1), delta) 
+
+		os.system('rm TestSodiumMedium_*')
+		os.system('rm TestSodiumMedium')
+		os.system('rm TestSodiumMedium.c')
+		os.system('rm TestSodiumMedium.o')
+		os.system('rm TestSodiumMedium.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

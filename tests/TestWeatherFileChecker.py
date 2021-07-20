@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -25,6 +25,11 @@ class TestWeatherFileChecker(unittest.TestCase):
 		self.assertTrue(self.res.closest('fn1_correct', 0))
 		self.assertTrue(self.res.closest('fn2_correct', 0))
 		self.assertTrue(os.path.isfile(self.sim.realpath('resources/tests/weatherfile2.motab')))
+		os.system('rm TestWeatherFileChecker_*')
+		os.system('rm TestWeatherFileChecker')
+		os.system('rm TestWeatherFileChecker.c')
+		os.system('rm TestWeatherFileChecker.o')
+		os.system('rm TestWeatherFileChecker.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -67,6 +67,8 @@ class TestXMLparameter(unittest.TestCase):
 
 		self.assertEqual(sm[0], self.sm)
 		self.assertEqual(st[0], self.t_storage)
+		os.system('rm Reference_2*')
+		
 
 
 if __name__ == '__main__':
