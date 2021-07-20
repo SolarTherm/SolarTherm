@@ -103,8 +103,8 @@ model Reference_1_fluid
   SI.Power P_elec "Output power of power block";
   SI.Energy E_elec(start = 0, fixed = true) "Generate electricity";
   FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
-  SolarTherm.Models.Fluid.HeatExchangers.HE_wports hE_wports1 annotation(
-    Placement(visible = true, transformation(origin = {4, -66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  //SolarTherm.Models.Fluid.HeatExchangers.HE_wports hE_wports1 annotation(
+  //  Placement(visible = true, transformation(origin = {4, -66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
   connect(sun.solar, heliostatsField.solar) annotation(
     Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));

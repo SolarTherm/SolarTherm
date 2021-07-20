@@ -29,6 +29,7 @@ class TestReference2Solstice(unittest.TestCase):
 		self.assertTrue(abs(self.perf[1]- 160.352)/160.352<0.01) # LCOE
 		self.assertTrue(abs(self.perf[2]- 44.969)/44.969<0.01) # Capacity factor
 		os.system('rm Reference_2_solstice*')
+		os.system('rm -r test')
     		
 
 if __name__ == '__main__':

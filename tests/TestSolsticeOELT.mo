@@ -7,7 +7,7 @@ parameter nSI.Angle_deg lat=34 "Latitude (+ve North)" annotation(Dialog(group="S
 parameter nSI.Angle_deg hra=0 "the solar hour angle for testing" annotation(Dialog(group="sun position"));
 parameter nSI.Angle_deg dec=0 "the declination angle for testing" annotation(Dialog(group="sun position"));
 
-SolsticeOELT lookuptable(hra=hra, dec=dec, lat=lat);
+SolsticeOELT lookuptable(hra=hra, dec=dec, lat=lat, psave="Test_SolsticeOELT" );
 
 Real opt_eff;
 
