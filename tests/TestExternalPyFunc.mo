@@ -12,7 +12,7 @@ block TestExternalPyFunc
 		input String argsv[:];
 		output Real out;
 		external out = TestExternalPy_func(argc, argsv)
-		annotation(Library="python2.7",
+		annotation(Library="python3.8",
 			//IncludeDirectory="modelica://SolarTherm/Resources/Include",
 			Include="#include \"st_test_ext_py_func.c\""
 			);

@@ -22,7 +22,7 @@ double TestExternalPy_func(int argc, const char *argv[])
 
     PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import
 
-    pName = PyString_FromString(argv[1]);
+    pName = PyUnicode_FromString(argv[1]);
     /* Error checking of pName left out */
 
     pModule = PyImport_Import(pName);
