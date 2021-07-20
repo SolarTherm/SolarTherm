@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -7,6 +7,7 @@ from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 # http://www.esrl.noaa.gov/gmd/grad/solcalc/
 # Uses calculations from Astronomical Algorithms - Jean Meeus
@@ -107,6 +108,12 @@ class TestSolarPosition(unittest.TestCase):
 					alt, delta=delta, msg='Alt of dag: ' + str(i))
 			self.assertAlmostEqual(self.res.interpolate('solp_dag.azi', t),
 					azi, delta=delta, msg='Azi of dag: ' + str(i))
+
+		os.system('rm TestSolarPosition_*')
+		os.system('rm TestSolarPosition')
+		os.system('rm TestSolarPosition.c')
+		os.system('rm TestSolarPosition.o')
+		os.system('rm TestSolarPosition.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

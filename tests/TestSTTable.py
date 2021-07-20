@@ -1,7 +1,8 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -18,6 +19,11 @@ class TestSTTable(unittest.TestCase):
 	def test_interp(self):
 		self.assertEqual(self.res.interpolate('res', 0), 0)
 		self.assertEqual(self.res.interpolate('val', 0), 3.)
+		os.system('rm TestSTTable_*')
+		os.system('rm TestSTTable')
+		os.system('rm TestSTTable.c')
+		os.system('rm TestSTTable.o')
+		os.system('rm TestSTTable.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

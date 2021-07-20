@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -24,6 +24,13 @@ class TestCommand(unittest.TestCase):
 	def test_touching(self):
 		self.assertEqual(self.res.interpolate('result', 0), 0)
 		self.assertTrue(os.path.isfile(self.sim.realpath('TestCommandTouched')))
+		os.system('rm TestCommand_*')
+		os.system('rm TestCommand')
+		os.system('rm TestCommand.c')
+		os.system('rm TestCommand.o')
+		os.system('rm TestCommand.makefile')
+
+
 
 if __name__ == '__main__':
 	unittest.main()

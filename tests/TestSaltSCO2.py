@@ -3,6 +3,7 @@
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -68,6 +69,7 @@ class TestScheduler(unittest.TestCase):
 		print('Total land cost:                          $%6.2f'%(getval('C_land')/1e6))
 		print("-----------------------------------------------------------------------")
 		print('Total capital cost:                       $%6.2f'%(getval('C_cap')/1e6))
+		os.system('rm SaltSCO2System*')
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,7 +1,8 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 import DyMat
@@ -9,6 +10,7 @@ import subprocess
 from math import pi
 import re
 import numpy as np
+import glob
 
 class TestStOptimise(unittest.TestCase):
 	'''
@@ -68,14 +70,19 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
-
+		map(os.unlink, glob.glob(outfile))
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))	
 
 	def test_cma(self):
 		
@@ -88,13 +95,20 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
+		map(os.unlink, glob.glob(outfile))	
+		os.system('rm -r outcmaes')	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_ga1(self):
 		
@@ -107,13 +121,19 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
+		map(os.unlink, glob.glob(outfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_ga2(self):
 		
@@ -126,13 +146,19 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
+		map(os.unlink, glob.glob(outfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_Nelder(self):
 		
@@ -145,14 +171,19 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
-
+		map(os.unlink, glob.glob(outfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_COBYLA(self):
 		
@@ -165,14 +196,19 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
-
+		map(os.unlink, glob.glob(outfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_SLSQP(self):
 		
@@ -185,15 +221,20 @@ class TestStOptimise(unittest.TestCase):
 		while obj>0.1 or abs(x-1.)>0.5 or abs(y-1.)>0.5:
 			subprocess.call(args, shell=True)
 			obj, x, y=self.get_res(outfile)
-			print 'Attempt ', i+1
+			print('Attempt ', i+1)
 			i+=1
-		print 'Total attempts: ', i
+		print('Total attempts: ', i)
 
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 
-
+		map(os.unlink, glob.glob(outfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 
 	def test_nsga2(self):
@@ -230,13 +271,21 @@ class TestStOptimise(unittest.TestCase):
 			f1=f_schaffer1[i]
 			f2=f_schaffer2[i]
 			self.assertTrue(abs((f2-self.get_schaffer_front(f1))/f2)< 0.1)
-
+		map(os.unlink, glob.glob(outfile))
+		map(os.unlink, glob.glob(figfile))
+		map(os.unlink, glob.glob(front))
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))			
+	
 	def test_dakota_moga(self):
 		figfile='TestStOptimise_moga_pareto_front.png'
-		args='st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
+		args='st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --wd=test_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
 		subprocess.call(args, shell=True)
 
-		f_out='finaldata1.dat'
+		f_out='./test_moga/finaldata1.dat'
 		with open(f_out) as f:
 			content= f.read().splitlines()
 		f.close()
@@ -262,7 +311,14 @@ class TestStOptimise(unittest.TestCase):
 			f2=f_schaffer2[i]
 			self.assertTrue(abs((f2-self.get_schaffer_front(f1))/f2)< 0.1)
 
-
+	
+		os.system('rm -rf test_moga')
+		map(os.unlink, glob.glob(figfile))	
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_dakota_soga(self):
 
@@ -284,13 +340,16 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 
-		#map(os.unlink, glob.glob(u'TestStOptimise_*'))		
 
+		os.system('rm -rf test_soga')
+		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
+		map(os.unlink, glob.glob(u'TestStOptimise'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
+		map(os.unlink, glob.glob(u'TestStOptimise.o'))
+		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 if __name__ == '__main__':
 	unittest.main()
-
-
 
 
 

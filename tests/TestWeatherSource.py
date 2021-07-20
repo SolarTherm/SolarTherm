@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -7,6 +7,7 @@ from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 class TestWeatherSource(unittest.TestCase):
 	def setUp(self):
@@ -31,6 +32,12 @@ class TestWeatherSource(unittest.TestCase):
 				78.8, delta=0.1)
 		self.assertAlmostEqual(self.res.interpolate('wea.wbus.azi', solar_noon),
 				360.0, delta=1.0) # very sensitive around noon
+
+		os.system('rm TestWeatherSource_*')
+		os.system('rm TestWeatherSource')
+		os.system('rm TestWeatherSource.c')
+		os.system('rm TestWeatherSource.o')
+		os.system('rm TestWeatherSource.makefile')
 
 if __name__ == '__main__':
 	unittest.main()

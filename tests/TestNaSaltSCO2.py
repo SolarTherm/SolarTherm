@@ -50,5 +50,7 @@ class TestScheduler(unittest.TestCase):
 		print('Tower height:                             %4.1f  m'%(getval('H_tower')))
 		print('Number of heliostats:                     %i'%(getval('n_heliostat')))
 
+		os.system('rm NaSaltsCO2System*')
+
 if __name__ == '__main__':
 	unittest.main()

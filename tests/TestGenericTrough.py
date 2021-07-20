@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -7,6 +7,7 @@ from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 class TestScheduler(unittest.TestCase):
 	def setUp(self):
@@ -28,6 +29,8 @@ class TestScheduler(unittest.TestCase):
 		self.assertAlmostEqual(self.perf[0], 371e3, delta=12e3) # epy
 		self.assertAlmostEqual(self.perf[1], 139.8, delta=4) # LCOE
 		self.assertAlmostEqual(self.perf[2], 42.4, delta=1.5) # Capacity factor
+		os.system('rm TroughWagner*')
+
 
 if __name__ == '__main__':
 	unittest.main()

@@ -1,7 +1,8 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
 from solartherm import simulation
 from solartherm import postproc
@@ -26,6 +27,12 @@ class TestSteeredCL(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('conc.actual', 120), 0.299)
 		self.assertAlmostEqual(self.res.interpolate('conc.actual', 130), 0.201)
 		self.assertAlmostEqual(self.res.interpolate('conc.actual', 200), 0.201)
+		os.system('rm TestSteeredCL_*')
+		os.system('rm TestSteeredCL')
+		os.system('rm TestSteeredCL.c')
+		os.system('rm TestSteeredCL.o')
+		os.system('rm TestSteeredCL.makefile')
+
 
 if __name__ == '__main__':
 	unittest.main()
