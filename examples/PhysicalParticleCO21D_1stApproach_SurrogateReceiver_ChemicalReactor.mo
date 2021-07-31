@@ -83,7 +83,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_ChemicalReactor
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   //****************************** General design condition of the plant
   //******************************* Reactor parameters
-  parameter SI.HeatFlowRate Q_reactor = 61e6 "Reactor heat [Wth]";
+  parameter SI.HeatFlowRate Q_reactor = 221.55e6 "Reactor heat [Wth]";
   parameter SI.Efficiency effectiveness = 0.9 "Effectiveness of the HX";
   parameter Real delta_H = 1e3 "Delta enthalpy of the chemical gas [J/mol]";
   parameter Real SM = 2.84 "[SYS] Solar multiple";
