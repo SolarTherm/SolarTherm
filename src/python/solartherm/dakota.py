@@ -452,6 +452,8 @@ try:
 		else:
 			resultclass = postproc.SimResultElec(sim.res_fn)
 
+		summary=resultclass.report_summary(var_n=var_n, savedir='.', suffix=suffix)
+
 		if peaker=='True':
 			perf = resultclass.calc_perf(peaker=True)
 		else:
