@@ -15,7 +15,7 @@ def set_param(inputs={}):
         if hasattr(pm, k):
             setattr(pm, k, v)
         else:
-            raise RuntimeError("invalid paramter '%s'"%(k,))
+            raise RuntimeError("invalid parameter '%s'"%(k,))
 
     return pm
 
