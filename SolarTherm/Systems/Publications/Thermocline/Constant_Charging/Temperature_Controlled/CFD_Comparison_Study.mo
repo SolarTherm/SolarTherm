@@ -373,7 +373,7 @@ package CFD_Comparison_Study
         der(E_discharged) = 0.0;
       end if;
       der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total;
-      der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump;
+      der(E_pump) = 0.0;// thermocline_Tank.Tank_A.W_loss_pump; Obtain p_drop elsewhere
     else
       der(numer) = 0.0;
       der(E_charged) = 0.0;

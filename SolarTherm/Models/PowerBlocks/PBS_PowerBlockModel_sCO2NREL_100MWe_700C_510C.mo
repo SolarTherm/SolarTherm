@@ -25,7 +25,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_700C_510C
   
   
   
-  parameter Boolean enable_losses = false
+  parameter Boolean enable_losses = true
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter SI.Temperature T_des=from_degC(43) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));

@@ -19,7 +19,7 @@ protected
   Real V_shell "volume of shell material used";
 algorithm
   p := rho_f*9.81*H;
-  t_1 := p*D*f_safety/(2.0*sigma_yield);
+  t_1 := max(t_0,p*D*f_safety/(2.0*sigma_yield)); //Cannot be smaller than t_0
   V_shell := CN.pi*(H/6)*(-2.0*t_0*t_0 +4.0*t_0*t_1+4.0*t_1*t_1 +3.0*D*(t_0+t_1)) + 0.25*CN.pi*D*D*(t_top+t_bot);
   C := rho_shell*V_shell*pri_shell;
   /*

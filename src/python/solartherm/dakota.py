@@ -434,6 +434,14 @@ results.write()
 map(os.unlink, glob.glob(sim.res_fn))
 #map(os.unlink, glob.glob(model+'_init_*.xml'))
 
+#Remove unwanted files
+Name = model + '_'+suffix
+os.system('rm -rf '+ Name)
+os.system('rm -rf '+ Name + '.c')
+os.system('rm -rf '+ Name + '.o')
+os.system('rm -rf '+ Name + '.makefile')
+os.system('rm -rf '+ Name + '_*')
+
 '''
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)

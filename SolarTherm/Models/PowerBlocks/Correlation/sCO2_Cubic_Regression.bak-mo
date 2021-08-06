@@ -1,0 +1,16 @@
+within SolarTherm.Models.PowerBlocks.Correlation;
+
+partial model sCO2_Cubic_Regression
+	extends Cycle;
+	import Modelica.SIunits.Conversions.*;
+	input SI.Temperature T_amb;
+	redeclare SI.Temperature T_in_ref = 700.0 + 273.15 "Design inlet temperature";
+	parameter SI.Temperature T_amb_ref = 35.0 + 273.15 "Design ambient temperature";
+    Real t_in "Non-dimensional inlet temperature";
+    Real t_amb "Non-dimensional ambient temperature";
+    parameter Real eta_q_des = 0.946924353 "Design HX efficiency";
+    parameter Real eta_w_des = 0.48034 "Design Cycle efficiency";
+    parameter Real eta_gross_des = 0.454845 "Design gross efficiency, product of eta_q and eta_w";
+  annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)));
+end sCO2_Cubic_Regression;

@@ -14,8 +14,8 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
   parameter SI.Temperature T_out_ref=from_degC(500) "HTF outlet temperature (design)"
                                                                                      annotation (Dialog(group="Design"));
   parameter SI.AbsolutePressure p_bo=10e5 "Boiler operating pressure" annotation (Dialog(group="Design"));
-  parameter SI.HeatFlowRate Q_flow_ref=232.1098e6 "Design thermal power" annotation (Dialog(group="Design"));
-  parameter SI.MassFlowRate m_flow_ref=842.2236 "Design HTF flow rate";
+  parameter SI.HeatFlowRate Q_flow_ref=232.109832e6 "Design thermal power" annotation (Dialog(group="Design"));
+  parameter SI.MassFlowRate m_flow_ref=842.224 "Design HTF flow rate";
   
   parameter Real W_base=0.0 "Power consumed at all times" annotation(Dialog(group="Parasities energy losses"));
   parameter Real nu_min=0.60 "Minimum turbine operation" annotation (Dialog(group="Operating strategy"));
@@ -23,7 +23,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
   SI.Temperature T_in;//=Medium.temperature(state_in);
   SI.Temperature T_out;//=Medium.temperature(state_out);
   
-  parameter Boolean enable_losses = false
+  parameter Boolean enable_losses = true
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter SI.Temperature T_des=from_degC(43) "Ambient temperature at design" annotation (Dialog(group="Assumptions",enable = enable_losses));
@@ -58,6 +58,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
   SI.Energy E_net(final start=0, fixed=true, displayUnit="MW.h");
 
   Boolean logic;
+  parameter Real C_PB_total = 143591149.0 "Total PB Cost (USD)";
 
    Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -66,7 +67,7 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
         extent={{-6,-6},{6,6}},
         rotation=-90,
         origin={20,60})));
-
+  Real eff_PB_measured = k_q*k_w;
 protected
   Modelica.Blocks.Interfaces.RealInput parasities_internal;
   Real k_q "In this case is the eta_Q of HX";

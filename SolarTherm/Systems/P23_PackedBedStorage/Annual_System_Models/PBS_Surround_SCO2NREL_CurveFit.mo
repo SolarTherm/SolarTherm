@@ -183,7 +183,8 @@ model PBS_Surround_SCO2NREL_CurveFit
   // SAM 2018 cost data: 16
   //parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 37 / (1e3 * 3600) else 37 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";
   // SAM 2018 cost data: 22 / (1e3 * 3600)
-  parameter FI.PowerPrice pri_block = if currency == Currency.USD then 1040.00 / 1e3 else 1040.00 / 1e3 / r_cur "Power block cost per gross rated power";
+  //parameter FI.PowerPrice pri_block = if currency == Currency.USD then 1040.00 / 1e3 else 1040.00 / 1e3 / r_cur "Power block cost per gross rated power";
+  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total / P_gross_des;
   // SAM 2018 cost data: 1040
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0.29 else 0.29 "Balance of plant cost per gross rated power";
   //SAM 2018 cost data: 290
@@ -199,7 +200,8 @@ model PBS_Surround_SCO2NREL_CurveFit
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money C_storage = thermocline_Regression.C_total;
   //tankHot.C_Storage "Storage cost";
-  parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
+  //parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
+  parameter FI.Money C_block = powerBlock.C_PB_total "Power block cost";
   parameter FI.Money C_bop = pri_bop * P_gross_des "Balance of plant cost";
   parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";
   // i.e. purchased equipment costs
@@ -251,7 +253,7 @@ model PBS_Surround_SCO2NREL_CurveFit
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C powerBlock(redeclare package Medium = Medium, nu_net = eff_net_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, T_in_ref = T_PB_in_des, T_out_ref = T_PB_out_des, Q_flow_ref = Q_flow_ref_blk, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, enable_losses = true, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
@@ -260,42 +262,42 @@ model PBS_Surround_SCO2NREL_CurveFit
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-                            //Analytics
-                            //Accumulated energy
-                            SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-                            SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-                            SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-                            SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-                            SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-                            SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-                            SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-                            SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-                            SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-                            Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                            Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                            Real eta_shading;
-                            Real eta_cosine;
-                            Real eta_reflection;
-                            Real eta_blocking;
-                            Real eta_attenuation;
-                            Real eta_intercept;
-                            //Annual efficiencies
-                            Real eta_curtail_off "Curtailment: Heliostat off";
-                            Real eta_he_av "Heliostat Availability";
-                            Real eta_optical "Field optical efficiency including spillage";
-                            Real eta_curtail_defocus "Curtailment: Full Storage";
-                            Real eta_recv_abs "Receiver Absorptivity";
-                            Real eta_recv_thermal "Receiver thermal efficiency";
-                            Real eta_storage "Storage thermal efficiency";
-                            Real eta_pb_gross "Power block gross efficiency";
-                            Real eta_pb_net "Power block net efficiency";
-                            Real eta_solartoelec "Solar to electric";
-                          */
+                              //Analytics
+                              //Accumulated energy
+                              SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+                              SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+                              SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+                              SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+                              SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+                              SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+                              SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+                              SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+                              SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+                              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                              Real eta_shading;
+                              Real eta_cosine;
+                              Real eta_reflection;
+                              Real eta_blocking;
+                              Real eta_attenuation;
+                              Real eta_intercept;
+                              //Annual efficiencies
+                              Real eta_curtail_off "Curtailment: Heliostat off";
+                              Real eta_he_av "Heliostat Availability";
+                              Real eta_optical "Field optical efficiency including spillage";
+                              Real eta_curtail_defocus "Curtailment: Full Storage";
+                              Real eta_recv_abs "Receiver Absorptivity";
+                              Real eta_recv_thermal "Receiver thermal efficiency";
+                              Real eta_storage "Storage thermal efficiency";
+                              Real eta_pb_gross "Power block gross efficiency";
+                              Real eta_pb_net "Power block net efficiency";
+                              Real eta_solartoelec "Solar to electric";
+                            */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
@@ -310,7 +312,7 @@ model PBS_Surround_SCO2NREL_CurveFit
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
   SolarTherm.Models.Control.PBS_Controller_PBLimit_Level pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max, t_wait = t_PB_wait) annotation(
-    Placement(visible = true, transformation(origin = {60, -18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {38, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Thermocline.Thermocline_Table_Final thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage * Q_flow_ref_blk * 3600.0, T_max = T_max, T_min = T_min, L_start = 0.0) annotation(
     Placement(visible = true, transformation(origin = {26, 38}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
 algorithm
@@ -441,8 +443,6 @@ equation
     Line(points = {{-25, 32}, {-18, 32}, {-18, 68}, {18, 68}}, color = {0, 127, 255}));
   connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
     Line(points = {{70, 68}, {82, 68}, {82, 30}, {88, 30}}, color = {0, 127, 255}));
-  connect(powerBlock.fluid_b, Splitter_bot.fluid_a) annotation(
-    Line(points = {{84, 8}, {58, 8}, {58, 6}, {34, 6}}, color = {0, 127, 255}));
   connect(Splitter_top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{34, 68}, {62, 68}}, color = {0, 127, 255}));
   connect(Splitter_top.fluid_c, thermocline_Regression.fluid_a) annotation(
@@ -452,24 +452,26 @@ equation
   connect(Pres_input.y, thermocline_Regression.p_amb) annotation(
     Line(points = {{100, 96}, {48, 96}, {48, 38}, {32, 38}, {32, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(thermocline_Regression.h_bot_outlet, pBS_Controller_PBLimit_Level.h_tank_outlet) annotation(
-    Line(points = {{22, 30}, {22, 30}, {22, 20}, {56, 20}, {56, -6}, {56, -6}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(powerBlock.h_out_signal, pBS_Controller_PBLimit_Level.h_PB_outlet) annotation(
-    Line(points = {{84, 4}, {66, 4}, {66, -6}, {66, -6}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{22, 30}, {22, 20}, {34, 20}, {34, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(receiver.Q_rcv_raw, pBS_Controller_PBLimit_Level.Q_rcv_raw) annotation(
-    Line(points = {{-26, 20}, {14, 20}, {14, -10}, {49, -10}, {49, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{-26, 20}, {14, 20}, {14, -10}, {27, -10}, {27, -15}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(thermocline_Regression.Level, pBS_Controller_PBLimit_Level.Level) annotation(
-    Line(points = {{20, 38}, {10, 38}, {10, -17}, {49, -17}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{20, 38}, {10, 38}, {10, -21}, {27, -21}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.Q_defocus, receiver.Q_defocus) annotation(
-    Line(points = {{50, -26}, {-12, -26}, {-12, 16}, {-26, 16}, {-26, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{27, -31}, {-12, -31}, {-12, 16}, {-26, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.defocus, receiver.defocus) annotation(
-    Line(points = {{72, -22}, {86, -22}, {86, -36}, {-44, -36}, {-44, 20}, {-36, 20}, {-36, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+    Line(points = {{49, -26}, {86, -26}, {86, -36}, {-44, -36}, {-44, 20}, {-36, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.m_flow_recv, pumpCold.m_flow) annotation(
-    Line(points = {{72, -12}, {92, -12}, {92, -44}, {-8, -44}, {-8, 16}, {-2, 16}, {-2, 10}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{49, -16}, {92, -16}, {92, -44}, {-8, -44}, {-8, 16}, {-2, 16}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.m_flow_PB, pumpHot.m_flow) annotation(
-    Line(points = {{72, -18}, {76, -18}, {76, 78}, {66, 78}, {66, 72}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{49, -21}, {76, -21}, {76, 78}, {66, 78}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(powerBlock.fluid_b, Splitter_bot.fluid_a) annotation(
+    Line(points = {{84, 8}, {62, 8}, {62, 6}, {34, 6}, {34, 6}}, color = {0, 127, 255}));
+  connect(pBS_Controller_PBLimit_Level.h_PB_outlet, powerBlock.h_out_signal) annotation(
+    Line(points = {{44, -10}, {66, -10}, {66, 4}, {84, 4}, {84, 4}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
-    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-42, -34}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
+    Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-66, -36}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
     experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60),
     __Dymola_experimentSetupOutput,

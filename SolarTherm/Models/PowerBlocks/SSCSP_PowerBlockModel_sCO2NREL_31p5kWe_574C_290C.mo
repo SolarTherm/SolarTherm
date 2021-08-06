@@ -61,7 +61,8 @@ model SSCSP_PowerBlockModel_sCO2NREL_31p5kWe_574C_290C
   SI.Energy E_net(final start=0, fixed=true, displayUnit="MW.h");
 
   Boolean logic;
-
+  parameter Real C_PB_total = 275049.0 "Total PB cost obtained in SAM SSC";
+  
    Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
         rotation=-90,

@@ -174,7 +174,8 @@ model PBS_Surround_SCO2NREL
   // SAM 2018 cost data: 16
   //parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 37 / (1e3 * 3600) else 37 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";
   // SAM 2018 cost data: 22 / (1e3 * 3600)
-  parameter FI.PowerPrice pri_block = if currency == Currency.USD then 1040.00 / 1e3 else 1040.00 / 1e3 / r_cur "Power block cost per gross rated power";
+  //parameter FI.PowerPrice pri_block = if currency == Currency.USD then 1040.00 / 1e3 else 1040.00 / 1e3 / r_cur "Power block cost per gross rated power";
+  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total/P_gross_des;
   // SAM 2018 cost data: 1040
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0.29 else 0.29 "Balance of plant cost per gross rated power";
   //SAM 2018 cost data: 290
@@ -190,7 +191,8 @@ model PBS_Surround_SCO2NREL
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money C_storage = Tank.C_total;
   //tankHot.C_Storage "Storage cost";
-  parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
+  //parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
+  parameter FI.Money C_block = powerBlock.C_PB_total "Power block cost";
   parameter FI.Money C_bop = pri_bop * P_gross_des "Balance of plant cost";
   parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";
   // i.e. purchased equipment costs
@@ -242,7 +244,7 @@ model PBS_Surround_SCO2NREL
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_in_ref = T_PB_in_des, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";

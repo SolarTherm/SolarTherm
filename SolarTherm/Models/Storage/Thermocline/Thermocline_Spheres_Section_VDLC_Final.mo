@@ -127,9 +127,10 @@ model Thermocline_Spheres_Section_VDLC_Final
   SI.Power W_loss_pump "losses due to pressure drop";
   
   //Cost breakdown
-  parameter Real C_fluid = min(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
+  parameter Real C_fluid = max(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation;
-  parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
+  //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
+  parameter Real C_insulation = if U_loss_tank > 1e-3 then CpA_external_insulation(T_max,U_loss_tank)*A_loss_tank else 0.0;
   parameter Real C_tank = C_shell(max(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
   
   parameter Real C_filler = rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost;
@@ -144,6 +145,8 @@ model Thermocline_Spheres_Section_VDLC_Final
   //parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
   //Filler mass-liquid fraction
   Real f_p[N_f](start=fill(0.0,N_f)) "Mass liquid fraction of filler";
+  Real der_rho_f_h_f[N_f] "Intermediate variable";
+  Real der_rho_f[N_f] "Intermediate variable";
 protected  
   //Convection Properties
   Real Re[N_f] "Reynolds";
@@ -185,7 +188,80 @@ protected
   Filler_Package.State filler[N_f] "Filler object array";
   
   //Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
-  
+algorithm
+  if State == 1 then //m_flow_in negative
+  //Charging (Mass flows top to bottom)
+  //Bottom Charging Fluid Node
+    der_rho_f_h_f[1] :=
+    (-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
+    + (rho_f[1]*u_flow[1]*h_f[1]-rho_f[2]*u_flow[2]*h_f[2])/dz
+    - h_v[1]*(T_f[1] - T_s[1])/eta
+    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
+    
+    der_rho_f[1] := (rho_f[1]*u_flow[1] - rho_f[2]*u_flow[2])/dz;
+    m_flow_out := eta*rho_f[1]*u_flow[1]*A;
+    
+    h_out := h_f[1];
+  //End Bottom Charging Fluid Node
+  //Middle Charging Fluid Nodes
+    for i in 2:N_f - 1 loop
+      der_rho_f_h_f[i] := 
+      2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
+      + (rho_f[i]*u_flow[i]*h_f[i]-rho_f[i+1]*u_flow[i+1]*h_f[i+1])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
+      
+      der_rho_f[i] := (rho_f[i]*u_flow[i] - rho_f[i+1]*u_flow[i+1])/dz;
+    end for;
+  //End Middle Charging Fluid Nodes
+  //Top Charging Fluid Node
+    der_rho_f_h_f[N_f] := 
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
+    + (rho_f[N_f]*u_flow[N_f]*h_f[N_f]-rho_in*u_in*h_in)/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
+    
+    der_rho_f[N_f] := (rho_f[N_f]*u_flow[N_f] - rho_in*u_in)/dz;
+  //End Top Charging Fluid Node
+  else
+  //Discharge (Mass flows bottom to top)
+  //Bottom Discharge Node
+    der_rho_f_h_f[1] :=
+    -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
+    + (rho_in*u_in*h_in-rho_f[1]*u_flow[1]*h_f[1])/dz
+    - h_v[1]*(T_f[1]-T_s[1])/eta
+    - U_bot*(T_f[1]-T_amb)/(eta*dz)
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
+    
+    der_rho_f[1] :=(rho_in*u_in - rho_f[1]*u_flow[1])/dz;
+  //End Bottom Discharge Node
+  //Middle Discharge Nodes
+    for i in 2:N_f - 1 loop
+      der_rho_f_h_f[i] :=
+      2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
+      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
+      + (rho_f[i-1]*u_flow[i-1]*h_f[i-1]-rho_f[i]*u_flow[i]*h_f[i])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
+    
+      der_rho_f[i] := (rho_f[i-1]*u_flow[i-1] - rho_f[i]*u_flow[i])/dz;
+    end for;
+  //End Middle Discharge Nodes
+  //Top Discharge Node
+    der_rho_f_h_f[N_f] :=
+    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
+    + (rho_f[N_f-1]*u_flow[N_f-1]*h_f[N_f-1]-rho_f[N_f]*u_flow[N_f]*h_f[N_f])/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
+    
+    der_rho_f[N_f] := (rho_f[N_f - 1] * u_flow[N_f - 1] - rho_f[N_f] * u_flow[N_f]) / dz;
+    m_flow_out := eta*rho_f[N_f]*u_flow[N_f]*A;
+    h_out := h_f[N_f];
+  end if;
 
 
 initial equation
@@ -198,6 +274,8 @@ initial equation
   end for;
 equation
   for i in 1:N_f loop
+    der(rho_f[i]) = der_rho_f[i];
+    der(rho_f[i])*h_f[i] + der(h_f[i])*rho_f[i] = der_rho_f_h_f[i];
     T_s[i] = T_p[i];
   end for;
   /*
@@ -221,79 +299,6 @@ equation
   fluid_out.T = T_out;
 
   //Fluid Equations
-  if State == 1 then //m_flow_in negative
-  //Charging (Mass flows top to bottom)
-  //Bottom Charging Fluid Node
-    der(rho_f[1]*h_f[1]) =
-    (-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
-    + (rho_f[1]*u_flow[1]*h_f[1]-rho_f[2]*u_flow[2]*h_f[2])/dz
-    - h_v[1]*(T_f[1] - T_s[1])/eta
-    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
-    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
-    
-    der(rho_f[1]) = (rho_f[1]*u_flow[1] - rho_f[2]*u_flow[2])/dz;
-    m_flow_out = eta*rho_f[1]*u_flow[1]*A;
-    
-    h_out = h_f[1];
-  //End Bottom Charging Fluid Node
-  //Middle Charging Fluid Nodes
-    for i in 2:N_f - 1 loop
-      der(rho_f[i]*h_f[i]) = 
-      2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
-      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
-      + (rho_f[i]*u_flow[i]*h_f[i]-rho_f[i+1]*u_flow[i+1]*h_f[i+1])/dz
-      - h_v[i]*(T_f[i]-T_s[i])/eta
-      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
-      
-      der(rho_f[i]) = (rho_f[i]*u_flow[i] - rho_f[i+1]*u_flow[i+1])/dz;
-    end for;
-  //End Middle Charging Fluid Nodes
-  //Top Charging Fluid Node
-    der(rho_f[N_f]*h_f[N_f]) = 
-    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
-    + (rho_f[N_f]*u_flow[N_f]*h_f[N_f]-rho_in*u_in*h_in)/dz
-    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
-    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
-    
-    der(rho_f[N_f]) = (rho_f[N_f]*u_flow[N_f] - rho_in*u_in)/dz;
-  //End Top Charging Fluid Node
-  else
-  //Discharge (Mass flows bottom to top)
-  //Bottom Discharge Node
-    der(rho_f[1]*h_f[1]) =
-    -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
-    + (rho_in*u_in*h_in-rho_f[1]*u_flow[1]*h_f[1])/dz
-    - h_v[1]*(T_f[1]-T_s[1])/eta
-    - U_bot*(T_f[1]-T_amb)/(eta*dz)
-    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
-    
-    der(rho_f[1])=(rho_in*u_in - rho_f[1]*u_flow[1])/dz;
-  //End Bottom Discharge Node
-  //Middle Discharge Nodes
-    for i in 2:N_f - 1 loop
-      der(rho_f[i]*h_f[i]) =
-      2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
-      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
-      + (rho_f[i-1]*u_flow[i-1]*h_f[i-1]-rho_f[i]*u_flow[i]*h_f[i])/dz
-      - h_v[i]*(T_f[i]-T_s[i])/eta
-      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
-    
-      der(rho_f[i]) = (rho_f[i-1]*u_flow[i-1] - rho_f[i]*u_flow[i])/dz;
-    end for;
-  //End Middle Discharge Nodes
-  //Top Discharge Node
-    der(rho_f[N_f]*h_f[N_f]) =
-    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
-    + (rho_f[N_f-1]*u_flow[N_f-1]*h_f[N_f-1]-rho_f[N_f]*u_flow[N_f]*h_f[N_f])/dz
-    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
-    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
-    
-    der(rho_f[N_f]) = (rho_f[N_f - 1] * u_flow[N_f - 1] - rho_f[N_f] * u_flow[N_f]) / dz;
-    m_flow_out = eta*rho_f[N_f]*u_flow[N_f]*A;
-    h_out = h_f[N_f];
-  end if;
   //Fluid Property evaluation SolarSalt
   for i in 1:N_f loop
     h_f[i] = fluid[i].h;

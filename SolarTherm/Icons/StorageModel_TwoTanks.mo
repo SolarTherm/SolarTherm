@@ -1,0 +1,6 @@
+within SolarTherm.Icons;
+partial class StorageModel_TwoTanks
+
+  annotation(Icon(graphics={Ellipse(origin = {35, -63}, fillColor = {100, 50, 50}, pattern = LinePattern.None, fillPattern = FillPattern.VerticalCylinder, extent = {{-87, 99}, {21, 83}}, endAngle = 360), Rectangle(origin = {48, 0}, fillColor = {100, 50, 50}, pattern = LinePattern.None, fillPattern = FillPattern.VerticalCylinder, extent = {{-100, 80}, {8, 28}}), Ellipse(origin = {18, 67}, fillColor = {100, 50, 50}, fillPattern = FillPattern.Sphere, extent = {{-70, 21}, {38, 3}}, endAngle = 360), Ellipse(origin = {35, -161}, fillColor = {50, 50, 100}, pattern = LinePattern.None, fillPattern = FillPattern.VerticalCylinder, extent = {{-87, 101}, {21, 83}}, endAngle = 360), Rectangle(origin = {48, -98}, fillColor = {50, 50, 100}, pattern = LinePattern.None, fillPattern = FillPattern.VerticalCylinder, extent = {{-100, 80}, {8, 28}}), Ellipse(origin = {18, -31}, fillColor = {50, 50, 100}, fillPattern = FillPattern.Sphere, extent = {{-70, 21}, {38, 3}}, endAngle = 360)},
+        coordinateSystem(initialScale = 0.1)));
+end StorageModel_TwoTanks;

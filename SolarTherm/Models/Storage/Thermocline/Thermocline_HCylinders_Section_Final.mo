@@ -117,9 +117,10 @@ model Thermocline_HCylinders_Section_Final
   SI.Power W_loss_pump "losses due to pressure drop";  
   
   //Cost breakdown
-  parameter Real C_fluid = min(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
+  parameter Real C_fluid = max(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank;
-  parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank+0.04269)*A_loss_tank else 0.0;
+  //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank+0.04269)*A_loss_tank else 0.0;
+  parameter Real C_insulation = if U_loss_tank > 1e-3 then CpA_external_insulation(T_max,U_loss_tank)*A_loss_tank else 0.0;
   parameter Real C_tank = C_shell(min(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15, 0.0), 4.0);
   
   parameter Real C_filler = (if abs(Filler_Package.MM - Encapsulation_Package.MM) < 1e-6  then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0) * Filler_Package.cost * (((d_p-2*t_e)/d_p)^2));
