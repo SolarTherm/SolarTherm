@@ -481,8 +481,6 @@ except:
 			error=99999
 		else: # maxmisation
 			error=0 
-
-		idx=int(params.__getitem__("index%s"%i))
 		solartherm_res.append(sign*error)
 	print('Simulation Failed')
 
@@ -496,7 +494,7 @@ for i, r in enumerate(results.responses()):
 results.write()
 
 map(os.unlink, glob.glob(sim.res_fn))
-#map(os.unlink, glob.glob(model+'_init_*.xml'))
+map(os.unlink, glob.glob(model+'_init_%s.xml'%suffix))
 
 '''
 	if not os.path.exists(savedir):

@@ -329,32 +329,33 @@ class SimResultElec(SimResult):
 		C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v=self.cost_breakdown()	
 
 		summary=np.array([
-		['Name', suffix, ''], 
-		['LCOE', lcoe, 'USD/MWh'],
-		['epy', epy, 'MWh/year'], 
-		['Capacity factor', capf, '%'],
-		['Total capital cost', self.c_cap*1e-6, 'm$'],
-		[C_cap_bd_n[0], C_cap_bd_v[0]*1e-3, 'm$' ],
-		[C_cap_bd_n[1], C_cap_bd_v[1]*1e-3, 'm$' ],
-		[C_cap_bd_n[2], C_cap_bd_v[2]*1e-3, 'm$' ],
-		[C_cap_bd_n[3], C_cap_bd_v[3]*1e-3, 'm$' ],
-		[C_cap_bd_n[4], C_cap_bd_v[4]*1e-3, 'm$' ],
-		[C_cap_bd_n[5], C_cap_bd_v[5]*1e-3, 'm$' ],
-		[C_cap_bd_n[6], C_cap_bd_v[6]*1e-3, 'm$' ],
-		[ 'Total O&M', C_ann_bd_v[1]*1e-3, 'm$/year'],
-		[C_op_bd_n[0], C_op_bd_v[0]*1e-3, 'm$/year'],
-		[C_op_bd_n[1], C_op_bd_v[1]*1e-3, 'm$/year'],
-		['Discount rate', self.r_discount, '-'],
-		['Plant life time', self.t_life, 'y'],
-		['Construction time', self.t_cons, 'y'],
-		['C_contingency (estimated)', self.C_contingency*1e-6, 'm$']])
+		['Name', suffix, 'Units', 'Description'], 
+		['lcoe', lcoe, 'USD/MWh', 'Levelised cost of electricity'],
+		['epy', epy, 'MWh/year', 'Electricity production per year'], 
+		['capf', capf, '%', 'Capacity factor'],
+		['C_cap', self.c_cap*1e-6, 'm$', 'Total captical cost'],
+		['C_field', C_cap_bd_v[0]*1e-3, 'm$', C_cap_bd_n[0]+'cost' ],
+		['C_tower', C_cap_bd_v[1]*1e-3, 'm$' , C_cap_bd_n[1]+'cost' ],
+		['C_receiver', C_cap_bd_v[2]*1e-3, 'm$',  C_cap_bd_n[2]+'cost' ],
+		['C_storage', C_cap_bd_v[3]*1e-3, 'm$' , C_cap_bd_n[3]+'cost' ],
+		['C_PB', C_cap_bd_v[4]*1e-3, 'm$' , C_cap_bd_n[4]+'cost' ],
+		['C_BOP', C_cap_bd_v[5]*1e-3, 'm$' , C_cap_bd_n[5]+'cost' ],
+		['C_land', C_cap_bd_v[6]*1e-3, 'm$' , C_cap_bd_n[6]+'cost' ],
+		[ 'OM_total', C_ann_bd_v[1]*1e-3, 'm$/year', 'Total O&M'],
+		['OM_fixed', C_op_bd_v[0]*1e-3, 'm$/year', C_op_bd_n[0]],
+		['OM_variable', C_op_bd_v[1]*1e-3, 'm$/year', C_op_bd_n[1]],
+		['r_discount', self.r_discount, '-', 'Discount rate'],
+		['t_life', self.t_life, 'y', 'Plant life time'],
+		['t_cons', self.t_cons, 'y', 'Construction time'],
+		['C_contingency', self.C_contingency*1e-6, 'm$', 'C_contingency (estimated)']])
+
 
 		if len(var_n)!=0:
 			for n in var_n:
 				v=self.mat.data(n)[0]
-				summary=np.append(summary, (n, v, ''))
+				summary=np.append(summary, (n, v, '', ''))
 
-		summary=summary.reshape(int(len(summary)/3), 3)
+		summary=summary.reshape(int(len(summary)/4), 4)
 
 		#except:
 		#	summary=np.array(["mat file fault"])
