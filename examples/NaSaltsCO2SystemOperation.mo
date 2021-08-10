@@ -27,7 +27,7 @@ model NaSaltsCO2SystemOperation "High temperature Sodium-sCO2 system"
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Weather data
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/solana_tmy_2008.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/solana_tmy_data_2008.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 	parameter nSI.Angle_deg lon = -116.78 "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat = 34.85 "Latitude (+ve North)";
@@ -914,7 +914,7 @@ equation
 		experiment(StopTime = 31536000, 
 		StartTime = 0, 
 		Tolerance = 0.0001, 
-		Interval = 300),
+		Interval = 60),
 		__Dymola_experimentSetupOutput,
 		Documentation(info = "<html>
 	<p>
