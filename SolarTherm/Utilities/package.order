@@ -14,5 +14,6 @@ LinProgFunc
 st_surrogate
 ReceiverStartupEnergy
 ReceiverStartupTime
+NASHTubeStress
 opt_eff_horizon
 horizon_function
