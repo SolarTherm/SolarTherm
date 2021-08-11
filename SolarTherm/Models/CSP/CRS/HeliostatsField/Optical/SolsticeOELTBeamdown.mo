@@ -18,7 +18,7 @@ extends OpticalEfficiency;
         parameter nSI.Angle_deg cpc_theta_deg=20 "CPC acceptance half angle in degree";
         parameter Real cpc_h_ratio=1 "CPC critical height ratio [0,1]";
         parameter nSI.Angle_deg rim_angle_x=80 "rim angle of the hyperboloid and heliostat field in the xOz plan in degree ]0,120?] ";
-        parameter nSI.Angle_deg rim_angle_y=80 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree ]0,120?] ";
+        parameter nSI.Angle_deg rim_angle_y=-1 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree ]0,120?] ";
         parameter Real secref_inv_eccen=0.6 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
         parameter SI.Length H_tower = 75 "Tower height";
         parameter Real fb=0.6 "factor to grow the field layout";
@@ -37,8 +37,8 @@ extends OpticalEfficiency;
 
     // secondary concentrator, cpc and receiver
 
-    parameter SI.Length W_rcv=1.2 "Polygon receiver width";
-    parameter SI.Length H_rcv=10 "Polygon receiver length";
+    parameter SI.Length W_rcv=2.4 "Polygon receiver width";
+    parameter SI.Length H_rcv=5 "Polygon receiver length";
 
     parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
 

@@ -45,7 +45,6 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
-
 		if pm.rim_angle_y<0.:
 			pm.rim_angle_y=None
 		else:
@@ -92,7 +91,7 @@ if __name__=='__main__':
 	cpc_theta_deg=20.
 	cpc_h_ratio=1.
 	rim_angle_x=80.
-	rim_angle_y=80.
+	rim_angle_y=-1
 	secref_inv_eccen=0.6
 	H_tower=75.
 	fb=0.7
@@ -103,6 +102,8 @@ if __name__=='__main__':
 	ndays=5
 	nhours=22
 	## Field Characteristics
+	sunshape='buie'
+	crs=0.02
 	lat=-27.85 # Leinster (WA, AUS) degree
 	Q_in_rcv=40e6
 	field_type = 'surround'
@@ -115,12 +116,12 @@ if __name__=='__main__':
 	receiver='beam_down'
 	slope_error=1.e-3 # radian
 	rho_bd=0.95
-	W_rcv=1.2
-	H_rcv=10.
+	W_rcv=2.4
+	H_rcv=5.
 	cpc_nfaces=4
 
 	inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'rim_angle_x': rim_angle_x, 'rim_angle_y': rim_angle_y, 'secref_inv_eccen': secref_inv_eccen,
-	'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'lat': lat, 'Q_in_rcv': Q_in_rcv,
+	'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'sunshape': sunshape, 'crs': crs,'lat': lat, 'Q_in_rcv': Q_in_rcv,
 	'field_type': field_type, 'R1': R1, 'W_helio': W_helio, 'H_helio': H_helio, 'Z_helio': Z_helio, 'rcv_type': receiver, 'slope_error': slope_error,
 	'rho_beamdown': rho_bd, 'cpc_nfaces': cpc_nfaces}
 
