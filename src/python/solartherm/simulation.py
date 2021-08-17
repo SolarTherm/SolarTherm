@@ -269,7 +269,7 @@ class Simulator(object):
 		else:
 			return fn
 
-	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
+	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
 		"""Compile modelica model in .mo file."""
 		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
 			+ args
