@@ -81,6 +81,7 @@ def run_simul(inputs={}):
             print('total time %.2f'%((end-start)/60.), 'min')
             np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
+    tablefile=tablefile.encode('utf-8')
     return tablefile
 
     
