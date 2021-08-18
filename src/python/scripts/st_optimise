@@ -430,7 +430,7 @@ if __name__ == '__main__':
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
