@@ -20,7 +20,12 @@ double TestExternalPy_func(int argc, const char *argv[])
 
     Py_Initialize(); /*  Initialize Interpreter  */
 
-    PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import
+    //PySys_SetPath((char *)argv[0]);  // absolute path to the module (function file) to import
+
+    // add the path of the Python function file to the system path
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Append(sys_path, PyUnicode_FromString((char *)argv[0]));
+
 
     pName = PyUnicode_FromString(argv[1]);
     /* Error checking of pName left out */
