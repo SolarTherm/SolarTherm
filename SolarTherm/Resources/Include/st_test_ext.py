@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 def testExternalPy_multiply(a,b):
 	""" Returns a multiplied by b """

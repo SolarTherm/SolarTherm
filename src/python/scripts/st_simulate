@@ -1,4 +1,5 @@
 #! /bin/env python
+from __future__ import division, print_function,unicode_literals
 import argparse
 import os
 import itertools
@@ -108,8 +109,8 @@ if __name__ == '__main__':
 			help='use text rendering With LaTeX')
 	parser.add_argument('--unicode', action='store_true',
 			help='use usetex with unicode')
-	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
-	#		help='model compilation arguments')
+	parser.add_argument('--mcargs', nargs=1, type=str, default=[],
+			help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
@@ -156,8 +157,10 @@ if __name__ == '__main__':
 	# TODO This part to temperately fix the old front end issue for omc 1.17
 	# will be revised later to work with the new front end
 	#mcargs = ['-d=nonewInst']
-	#if len(args.mcargs) == 1:
-	#	mcargs = args.mcargs[0].split(' ')
+	if len(args.mcargs) == 1:
+		mcargs = args.mcargs[0].split(' ')
+	else:
+		mcargs=args.mcargs		
 
 	sargs = []
 	if args.sargs is not None:

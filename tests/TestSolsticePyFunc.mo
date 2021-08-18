@@ -12,7 +12,7 @@ block TestSolsticePyFunc
     input Real vars[:];
 	output String result;
 	external result =RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
-		annotation(Library="python2.7",
+		annotation(Library="python3.8",
 			IncludeDirectory="modelica://SolarTherm/Resources/Include",
 			Include="#include \"run_py_func.c\""
 			);

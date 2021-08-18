@@ -21,8 +21,12 @@
 #	install(CODE "execute_process(COMMAND ${PYTHON} ${SETUP_PY} install)")
 #endif()
 
+if (FORCE_PYTHON_VERSION)
+	find_program(PYTHON "python${FORCE_PYTHON_VERSION}")
+else()
+	find_program(PYTHON "python")
+endif()
 
-find_program(PYTHON "python")
 #find_program(PIP "pip")
 
 if (PYTHON)

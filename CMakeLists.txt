@@ -22,6 +22,11 @@ else()
 	set(FORCE_PYTHON_PREFIX 1)
 endif()
 
+if (DEFINED FORCE_PYTHON_VERSION)
+else()
+	set(FORCE_PYTHON_VERSION 0)
+endif()
+
 # Used to correctly set PYTHONPATH in local enviroment setup source file.
 # Should work out how to do this more intelligently.
 

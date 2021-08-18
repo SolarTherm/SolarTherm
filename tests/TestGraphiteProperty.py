@@ -6,7 +6,7 @@ import os
 from solartherm import simulation
 from solartherm import postproc
 
-class TestWeatherTable(unittest.TestCase):
+class TestGraphiteProperty(unittest.TestCase):
 	def setUp(self):
 		fn = 'TestGraphiteProperty.mo'
 		sim = simulation.Simulator(fn)

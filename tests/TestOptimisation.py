@@ -22,7 +22,7 @@ class TestOptimisation(unittest.TestCase):
 
 		self.assertTrue(abs(self.res.interpolate('x1', 0)-1.0)/1.0<0.01)
 		self.assertTrue(abs(self.res.interpolate('x2', 0)-0.0)<0.01)
-		self.assertTrue(abs(self.res.interpolate('u', 1)-5.0)/5.0<0.01)
+		self.assertTrue(abs(self.res.interpolate('u', 1)-2.48)/2.48<0.01)
 
 		os.system('rm AO_*')
 		os.system('rm AO')
