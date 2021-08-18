@@ -344,7 +344,7 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 	#print(logbook.stream)
 
 	# Begin the generational process
-	print "Starting optimisation..."
+	print("Starting optimisation...")
 	for gen in range(ngen):
 		print("-- Generation %i --" % gen)
 		# Vary the population

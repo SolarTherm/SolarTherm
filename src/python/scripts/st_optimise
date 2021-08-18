@@ -445,7 +445,7 @@ if __name__ == '__main__':
 			f.close()		
 
 			t=len(content)
-			for i in xrange(t):
+			for i in range(t):
 				c=content[i]
 				l=c.split("\t")
 				for p in range(num_obj):

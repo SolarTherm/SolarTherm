@@ -257,7 +257,7 @@ class TestStOptimise(unittest.TestCase):
 			summary[n]=np.array([])
 
 		t=len(content)
-		for i in xrange(1,t):
+		for i in range(1,t):
 			c=content[i]
 			l=c.split(" ")
 			for j in range(len(names)):
@@ -282,7 +282,7 @@ class TestStOptimise(unittest.TestCase):
 	
 	def test_dakota_moga(self):
 		figfile='TestStOptimise_moga_pareto_front.png'
-		args='st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --wd=test_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
+		args='st_optimise --np 1 --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --wd=test_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
 		subprocess.call(args, shell=True)
 
 		f_out='./test_moga/finaldata1.dat'
@@ -296,7 +296,7 @@ class TestStOptimise(unittest.TestCase):
 			summary[obj_n[i]]=np.array([])
 
 		t=len(content)
-		for i in xrange(t):
+		for i in range(t):
 			c=content[i]
 			l=c.split("\t")
 			for p in range(2):
@@ -322,7 +322,7 @@ class TestStOptimise(unittest.TestCase):
 
 	def test_dakota_soga(self):
 
-		args='st_optimise --start 0 --stop 1 --maxiter 100 --objective f_rosen --method dakota_soga --wd=test_soga --test %s x1=-2,2,1 y1=-2,2,-1.5'%(self.fn)
+		args='st_optimise --np 1 --start 0 --stop 1 --maxiter 100 --objective f_rosen --method dakota_soga --wd=test_soga --test %s x1=-2,2,1 y1=-2,2,-1.5'%(self.fn)
 
 		subprocess.call(args, shell=True)
 
