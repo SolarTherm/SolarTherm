@@ -110,7 +110,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(u'TestStOptimise.o'))
 		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
-	'''
+
 	def test_ga1(self):
 		
 		outfile='TestStOptimise_ga1_results.txt'
@@ -135,7 +135,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
 		map(os.unlink, glob.glob(u'TestStOptimise.o'))
 		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
-	'''
+
 	def test_ga2(self):
 		
 		outfile='TestStOptimise_ga2_results.txt'
