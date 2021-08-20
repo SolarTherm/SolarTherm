@@ -1,7 +1,7 @@
 #ifndef ST_TEST_EXT_PY_FUNC
 #define ST_TEST_EXT_PY_FUNC
 
-#include <python3.8/Python.h>
+#include <Python.h>
 #include <stdio.h>
 
 double TestExternalPy_func(int argc, const char *argv[]);

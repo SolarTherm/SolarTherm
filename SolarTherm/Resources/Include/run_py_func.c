@@ -1,7 +1,7 @@
 #ifndef ST_EXT_PY_FUNC
 #define ST_EXT_PY_FUNC
 
-#include <python3.8/Python.h>
+#include <Python.h>
 #include <stdio.h>
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[]);
