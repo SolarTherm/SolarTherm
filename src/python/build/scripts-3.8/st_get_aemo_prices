@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+from __future__ import division, print_function,unicode_literals
+import argparse
+import os
+import urllib.request
+
+def dump(fn, prices):
+	nrow = len(prices)
+	ncol = 2
+	step = 30*60 # 30min
+	assert(nrow == 17520 or nrow == 17568) # 365 or 366
+	f = open(fn, 'w')
+	f.write('#1\n')
+	f.write('double prices('+str(nrow)+','+str(ncol)+')\n')
+	for i, p in enumerate(prices):
+		f.write(str(i*step)+','+p+'\n')
+	f.close()
+
+def parse_resp(resp):
+	prices = []
+	resp.readline()
+	for line in resp.readlines():
+		l = line.decode('utf-8').strip().split(',')
+		prices.append(l[3])
+	return prices
+
+def download_files(state, year):
+	prices = []
+	for i in range(1, 13):
+		url = 'http://www.nemweb.com.au/mms.GRAPHS/data/DATA'+year+('%02d'%(i,))+'_'+state+'1.csv'
+		#http://www.nemweb.com.au/mms.GRAPHS/data/DATA201401_NSW1.csv
+		resp = urllib.request.urlopen(url)
+		prices += parse_resp(resp)
+	return prices
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('state',
+			help='state (NSW, VIC, etc)')
+	parser.add_argument('year',
+			help='year')
+	args = parser.parse_args()
+
+	prices = download_files(args.state, args.year)
+	dump('aemo_'+args.state.lower()+'_'+args.year+'.motab', prices)

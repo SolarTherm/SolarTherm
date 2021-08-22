@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -26,7 +27,9 @@ class TestScheduler(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 21077831.1)/21077831.1<0.01) # fpy
 		self.assertTrue(abs(self.perf[1]- 1.52)/1.52<0.01) # LCOF
 		self.assertTrue(abs(self.perf[2]- 72.46)/72.46<0.01) # Capacity factor
-		os.system('rm SolarMethanolSystem*')
+		cleantest.clean('SolarMethanolSystem')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

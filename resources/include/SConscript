@@ -1,0 +1,31 @@
+Import('env')
+
+senv = env.Clone()
+senv.Append(CPPPATH = ['/usr/include/omc/c'])
+
+lib1 = senv.SharedLibrary('st_tables',[
+	'st_tables.c'
+	,'solinterp/interpolation.c'
+	,'solinterp/symmetries.c'
+	,'solinterp/tables.c'])
+
+penv = senv.Clone()
+penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
+
+lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
+
+genv = senv.Clone()
+genv.Append(
+	LIBS = ['glpk']
+)
+
+lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
+
+
+env.Install('$INSTALL_OM_EXT',[lib1,lib2,lib3])
+
+env.Install('$INSTALL_OM_EXT','st_test_ext.py')
+
+env.Install('$INSTALL_OM_EXT','run_solstice.py')
+
+# vim: ts=4:sw=4:noet:tw=80

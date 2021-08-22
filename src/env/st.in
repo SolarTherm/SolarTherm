@@ -1,6 +1,8 @@
-#!@PYTHON@
+#!@PYTHON_SHEBANG@
 from __future__ import print_function
 from __future__ import unicode_literals 
+
+# TODO note that distutils has the feature of correcting the shebang of installed scripts. we should used distutils to sort out this file, therefore.
 
 # SolarTherm invocation script
 # This is an alternative to the current 'st_local_env' thing, which seems to be
@@ -10,11 +12,6 @@ from __future__ import unicode_literals
 # with no underscore.
 
 import os, subprocess, sys, platform
-
-if platform.system()=="Windows":
-	PATHSEP = ";"
-else:
-	PATHSEP = ":"
 		
 def CYG(path):
 	"""Convert a MSYS path to a native Windows path, where necessary."""
@@ -27,11 +24,11 @@ def CYG(path):
 
 def PJ(*args):
 	"""Join paths in a PATH-like environment variable using this platform's separator char."""
-	return PATHSEP.join(args)
+	return os.pathsep.join(args)
 
 def PS(val):
 	"""Split a PATH-like variable into a list. FIXME possible escaping?"""
-	return val.split(PATHSEP)
+	return val.split(os.pathsep)
 
 def prepend(path,envvar):
 	pp = os.environ.get(envvar)
@@ -45,7 +42,7 @@ def append(path,envvar):
 		path = PJ(pp,path)
 	os.environ[envvar] = path
 
-instp = CYG('@CMAKE_INSTALL_PREFIX@')
+instp = CYG('@PREFIX@')
 os.environ['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 
@@ -72,7 +69,7 @@ if os.environ.get('VERBOSE'):
 	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:
 		print(v,"=",os.environ[v])
 
-cmds = ['simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
+cmds = ['env','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
 
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("'st' is a helper script for running SolarTherm tools. It should be")
@@ -86,20 +83,29 @@ if sys.argv[1] not in cmds:
 	print("Invalid sub-command '%s'. Type \"st --help`\" for a list of valid options."%(sys.argv[1]))
 	sys.exit(1)
 
-# TODO, we may be able to gradually migrate to st_simulate etc not being installed
-# in the path. 
+if sys.argv[1] == 'env':
+	shargs = []
+	if os.environ.get('SOLARTHERM_SHELL'):
+		raise RuntimeError("You are already inside a SolarTherm shell")
+	os.environ['PS1'] = r'st> '+os.environ.get('PS1',r'\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ ')
+	shargs += ['--norc']
+	os.environ['SOLARTHERM_SHELL'] = '1'
+	call = ['bash'] + shargs + sys.argv[2:]
 
-scr = 'st_%s'%(sys.argv[1])
-if platform.system() == "Windows":
-	call = ["@PYTHON@",os.path.join(instp,"bin",scr)]
 else:
-	call = [scr]
+	# TODO, we may be able to gradually migrate to st_simulate etc not being installed
+	# in the path. 
 
-if os.environ.get('VERBOSE'):
-	print("CALL =",call)
-	print("ARGS =",sys.argv[2:])
+	scr = 'st_%s'%(sys.argv[1])
+	if platform.system() == "Windows":
+		call = ["@PYTHON@",os.path.join(instp,"bin",scr)]
+	else:
+		call = [scr]
+
+	if os.environ.get('VERBOSE'):
+		print("CALL =",call)
+		print("ARGS =",sys.argv[2:])
 
 res = subprocess.call(call + sys.argv[2:])
 sys.exit(res)
 
-	

@@ -15,3 +15,5 @@ CMakeFiles
 Testing
 SolarTherm/Models/Control/reference_1.mat
 examples/*_res*.mat
+.scons*
+doc/out/*

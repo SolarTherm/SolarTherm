@@ -4,6 +4,7 @@ from __future__ import division
 import unittest
 import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -91,11 +92,9 @@ class TestTMY3WeatherFileChecker(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('l4[8]', 1), l_4[7])
 		self.assertAlmostEqual(self.res.interpolate('l4[9]', 1), l_4[8])
 
-		os.system('rm TestTMY3WeatherFileChecker_*')
-		os.system('rm TestTMY3WeatherFileChecker')
-		os.system('rm TestTMY3WeatherFileChecker.c')
-		os.system('rm TestTMY3WeatherFileChecker.o')
-		os.system('rm TestTMY3WeatherFileChecker.makefile')
+		cleantest.clean('TestTMY3WeatherFileChecker')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

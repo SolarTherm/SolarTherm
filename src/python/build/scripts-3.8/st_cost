@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+from __future__ import division, print_function,unicode_literals
+import argparse
+import os
+
+from solartherm import postproc
+from solartherm import plotting
+
+#TODO: Handle multiple _res.mat files from diffrent simulations
+#TODO: Draw stacked bar charts for the case of multiple simulations
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('file',
+			help='colon separated result mat or csv files')
+	parser.add_argument('--type', type=str, default='cap',
+			help='type of cost-related results to be plotted, e.g. cap, opr, or ann, representing capital cost breakdown, operational cost breakdown or annualised capital and operational costs')
+	parser.add_argument('-o', '--outfile',  type=str, default=None,
+			help='save figure to outfile instead of displaying')
+	parser.add_argument('--dpi', type=int, default=600,
+			help='dpi if saving figure')
+	parser.add_argument('--font', nargs=2, type=str, default=['serif', 'Times New Roman'],
+			help='font family and style, family can only be one of serif, sans-serif, cursive, fantasy, monospace')
+	parser.add_argument('--usetex', action='store_true',
+			help='use text rendering With LaTeX')
+	parser.add_argument('--unicode', action='store_true',
+			help='use usetex with unicode')
+	parser.add_argument('--fuel', action='store_true',
+			help='run post-processing calculations for levelised cost of fuel')
+	args = parser.parse_args()
+
+	if args.fuel:
+		resultclass = postproc.SimResultFuel
+	else:
+		resultclass = postproc.SimResultElec
+
+	res = resultclass(args.file)
+	cost_bd = res.cost_breakdown() # create an object of cost_breakdown method
+
+	C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v = cost_bd
+
+	if args.type == 'cap':
+		plotting.pie_chart1(vals=C_cap_bd_v, ex=None, lbs=C_cap_bd_n, title='Capital cost breakdown in ' + C_cap_bd_u, co=None, sv='both', lwv=True,
+			out=args.outfile, dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
+	elif args.type == 'opr':
+		plotting.pie_chart1(vals=C_op_bd_v, ex=None, lbs=C_op_bd_n, title='Operational cost breakdown in ' + C_op_bd_u, co=None, sv='both', lwv=True,
+			out=args.outfile, dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
+	elif args.type == 'ann':
+		plotting.pie_chart1(vals=C_ann_bd_v, ex=None, lbs=C_ann_bd_n, title='Annualised cost breakdown in ' + C_ann_bd_u, co=None, sv='both', lwv=True,
+			out=args.outfile, dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
+	else:
+		print('No plot type provided, nothing to plot.')
+
+# example call:
+# st_cost --fuel --type=opr SolarFuelSystem_res_0.mat

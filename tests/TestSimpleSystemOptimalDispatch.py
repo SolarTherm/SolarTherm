@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -27,7 +28,7 @@ class TestOptimalDispatch(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 300.757)/300.757<0.01) # epy
 		self.assertTrue(abs(self.perf[1]- 38.798)/38.798<0.01) # LCOE peaker
 		self.assertTrue(abs(self.perf[2]- 100.09)/100.09<0.01) # Capacity factor
-		os.system('rm SimpleSystemOptimalDispatch*')
+		cleantest.clean('SimpleSystemOptimalDispatch')
 
 
 if __name__ == '__main__':

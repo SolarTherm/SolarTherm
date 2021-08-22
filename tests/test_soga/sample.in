@@ -1,0 +1,57 @@
+
+# Dakota Input File: sample.in
+# Usage:
+#    dakota -i sample.in -o sample.out > sample.stdout
+# or if run in multi-level parallelism:
+#    mpirun dakota -i sample.in -o sample.out > sample.stdout
+
+environment
+    tabular_data
+    tabular_data_file = "sample.dat"
+
+model
+    single
+
+interface
+    fork
+    analysis_drivers = "/home/john/solartherm/tests/test_soga/interface_bb.py"
+    parameters_file = "params.in"
+    results_file = "results.out"
+	file_tag 
+	#file_save 
+
+responses
+	objective_functions = 1
+no_gradients
+no_hessians
+
+
+variables
+    discrete_state_set
+        string 16
+        set_values  "/home/john/solartherm/tests/TestStOptimise.mo"  "TEST"  "0"  "1"  "5m"  "None" "None" "5"  "dassl"  "homotopy"  "-LOG_SUCCESS,-stdout"  "False"  "False"  "1"  "f_rosen"  "1.0"
+        descriptors  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"  "index0"  "sign0"
+    continuous_design=2
+        initial_point 1.0 -1.5
+        lower_bounds -2.0 -2.0
+        upper_bounds 2.0 2.0
+        descriptors "x1" "y1"
+	
+method
+
+    soga
+        seed = 10983
+    max_function_evaluations = 2000
+    initialization_type unique_random
+	population_size=48
+    crossover_type
+        multi_point_parameterized_binary= 2
+        crossover_rate = 0.8
+    mutation_type replace_uniform
+        mutation_rate = 0.2
+    fitness_type merit_function
+    replacement_type elitist
+    convergence_type average_fitness_tracker
+        percent_change = 0.05 num_generations = 20
+    output silent
+

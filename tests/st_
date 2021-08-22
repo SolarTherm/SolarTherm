@@ -1,0 +1,2 @@
+
+int TestExternalPy_string(const char *code);

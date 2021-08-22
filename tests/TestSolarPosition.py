@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -109,11 +110,9 @@ class TestSolarPosition(unittest.TestCase):
 			self.assertAlmostEqual(self.res.interpolate('solp_dag.azi', t),
 					azi, delta=delta, msg='Azi of dag: ' + str(i))
 
-		os.system('rm TestSolarPosition_*')
-		os.system('rm TestSolarPosition')
-		os.system('rm TestSolarPosition.c')
-		os.system('rm TestSolarPosition.o')
-		os.system('rm TestSolarPosition.makefile')
+		cleantest.clean('TestSolarPosition')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

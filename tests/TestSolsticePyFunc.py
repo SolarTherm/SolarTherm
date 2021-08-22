@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 import os
@@ -19,12 +20,7 @@ class TestSolsticePyFunc(unittest.TestCase):
 
 	def test_touching(self):
 		self.assertTrue(abs(self.res.interpolate('nu', 0)-0.8834)/0.8834<0.01)
-		os.system('rm TestSolsticePyFunc_*')
-		os.system('rm TestSolsticePyFunc')
-		os.system('rm TestSolsticePyFunc.c')
-		os.system('rm TestSolsticePyFunc.o')
-		os.system('rm TestSolsticePyFunc.makefile')
-		os.system('rm -rf Test_SolsticePyFunc')
+		cleantest.clean('TestSolsticePyFunc')
 
 if __name__ == '__main__':
 	unittest.main()

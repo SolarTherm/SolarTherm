@@ -19,9 +19,9 @@ function LinProgFunc
                                     horison,dt,time_simul,etaC,
                                     etaG,t_stg,DEmax,SLmax,SLinit,
                                     SLminrel,Ahelio);
-                                  
- annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-            Include="#include \"st_linprog.c\"",
-            Library = "glpk");
+    annotation(Library="st_linprog");
+// annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+//            Include="#include \"st_linprog.c\"",
+//            Library = "glpk");
 
 end LinProgFunc;

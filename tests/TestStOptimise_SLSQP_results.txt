@@ -1,0 +1,2 @@
+Optimal design parameters: [0.9997021170323226, 0.9993885712047104]
+Optimal objective function: 1.1354553440762638e-07

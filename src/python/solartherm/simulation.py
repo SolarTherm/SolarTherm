@@ -380,3 +380,4 @@ class Simulator(object):
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
 
+# vim: ts=4:sw=4:noet:tw=80

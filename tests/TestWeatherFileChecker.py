@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -25,11 +26,9 @@ class TestWeatherFileChecker(unittest.TestCase):
 		self.assertTrue(self.res.closest('fn1_correct', 0))
 		self.assertTrue(self.res.closest('fn2_correct', 0))
 		self.assertTrue(os.path.isfile(self.sim.realpath('resources/tests/weatherfile2.motab')))
-		os.system('rm TestWeatherFileChecker_*')
-		os.system('rm TestWeatherFileChecker')
-		os.system('rm TestWeatherFileChecker.c')
-		os.system('rm TestWeatherFileChecker.o')
-		os.system('rm TestWeatherFileChecker.makefile')
+		cleantest.clean('TestWeatherFileChecker')
 
 if __name__ == '__main__':
 	unittest.main()
+
+# vim: ts=4:sw=4:noet:tw=80
