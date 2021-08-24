@@ -1,6 +1,21 @@
-import sys; from pathlib import Path
+import os, sys, platform, subprocess; from pathlib import Path
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
+
+if platform.system()=="Windows":
+	if os.environ.get('MSYSTEM') == "MINGW64":
+		#default_prefix = subprocess.check_output(['cygpath','-w',Path(os.environ['HOME'])/".local"],encoding='utf-8').strip()
+		default_prefix=Path(os.environ['HOME'])/'.local'
+		default_om_prefix = default_prefix
+		print("OM_PREFIX =",default_om_prefix)
+		default_om_libpath = '$OM_PREFIX/lib/omc'
+		default_om_libs = ['SimulationRuntimeC','omcgc']
+	else:
+		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
+else:
+	default_om_prefix = "/usr"
+	default_om_libpath = None
+	default_om_libs = None
 
 vars = Variables()
 vars.AddVariables(
@@ -20,10 +35,20 @@ vars.AddVariables(
 	,PathVariable(
 		'INSTALL_BIN'
 		,"Installation path for the 'st' script"
-		,'$PREFIX/bin')
+		,'$PREFIX/bin', PathVariable.PathIsDirCreate)
 	,('PYVERSION','Version of Python to use',default_pyversion)
 	,('PYTHON','Python executable','python%s'%(sys.version_info[0]))
 	,('PYTHON_SHEBANG','Python as named in the `st` shebang',"/usr/bin/env $PYTHON")
+	,PathVariable(
+		'OM_PREFIX'
+		,"Installation prefix for location where OpenModelica is installed"
+		,default_om_prefix)
+	,PathVariable(
+		'OM_CPPPATH'
+		,"Location where OM C runtime headers are located"
+		,"$OM_PREFIX/include/omc/c")
+	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
+	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 )
 
 env = Environment(variables=vars)

@@ -1,4 +1,4 @@
-import os,glob,re
+import os, glob, re, platform
 
 
 def clean(stem):
@@ -6,7 +6,10 @@ def clean(stem):
 	for i in os.listdir('.'):
 		if r1.match(i):
 			os.unlink(i)
-	os.unlink(stem)
+	if platform.system()=="Windows":
+		os.unlink(stem + '.exe')
+	else:
+		os.unlink(stem)
 	os.unlink(stem+'.c')
 	os.unlink(stem+'.o')
 	os.unlink(stem+'.makefile')

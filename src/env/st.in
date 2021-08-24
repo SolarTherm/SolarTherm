@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 # run 'through' this wrapper script. For example 'st_simulate' becomes 'st simulate'
 # with no underscore.
 
-import os, subprocess, sys, platform
+import os, subprocess, sys, platform, re
 		
 def CYG(path):
 	"""Convert a MSYS path to a native Windows path, where necessary."""
@@ -48,7 +48,7 @@ assert os.environ.get('HOME')
 
 os.environ['OPENMODELICALIBRARY']=PJ(
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
-	,CYG(os.path.join(os.path.expandvars("$INSTALL_PREFIX"),"lib","omlibrary"))
+	,CYG(os.path.join(instp,"lib","omlibrary"))
 	,CYG("/usr/lib/omlibrary")
 	,CYG("/usr/local/lib/omlibrary")
 )
@@ -87,7 +87,17 @@ if sys.argv[1] == 'env':
 	shargs = []
 	if os.environ.get('SOLARTHERM_SHELL'):
 		raise RuntimeError("You are already inside a SolarTherm shell")
-	os.environ['PS1'] = r'st> '+os.environ.get('PS1',r'\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ ')
+	default_ps1 = r'\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+	ps1 = os.environ.get('PS1',default_ps1)
+	if re.search(re.escape(r'\]\n\[\e[32m\]\u@\h'),ps1):
+		# correctly annotate the multi-line msys default prompt
+		ps1,n = re.subn(re.escape(r'\n'),'\\nst> ',ps1,count=1)
+		assert n==1
+	else:
+		# otherwise just add at the start
+		ps1 = 'st> ' + ps1
+	os.environ['PS1'] = ps1
+		
 	shargs += ['--norc']
 	os.environ['SOLARTHERM_SHELL'] = '1'
 	call = ['bash'] + shargs + sys.argv[2:]
@@ -108,4 +118,6 @@ else:
 
 res = subprocess.call(call + sys.argv[2:])
 sys.exit(res)
+
+# vim: ts=4:sw=4:tw=80:noet:syntax=python
 

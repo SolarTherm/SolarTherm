@@ -183,7 +183,7 @@ class Simulator(object):
 		self.init_et = None
 
 	def __del__(self):
-		if self.fusemount:
+		if hasattr(self,'fusemount') and self.fusemount:
 			self.leave_fuse()
 
 	@property

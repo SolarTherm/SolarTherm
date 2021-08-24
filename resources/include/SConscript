@@ -1,7 +1,11 @@
 Import('env')
 
 senv = env.Clone()
-senv.Append(CPPPATH = ['/usr/include/omc/c'])
+senv.Append(
+	CPPPATH = ['$OM_CPPPATH']
+	,LIBS = env['OM_LIBS']
+	,LIBPATH = ['$OM_LIBPATH']
+)
 
 lib1 = senv.SharedLibrary('st_tables',[
 	'st_tables.c'
