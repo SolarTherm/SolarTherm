@@ -45,10 +45,11 @@ def append(path,envvar):
 instp = CYG('@PREFIX@')
 os.environ['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
+omlibp = os.path.join(instp,"lib","omlibrary")
 
 os.environ['OPENMODELICALIBRARY']=PJ(
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
-	,CYG(os.path.join(instp,"lib","omlibrary"))
+	,CYG(omlibp)
 	,CYG("/usr/lib/omlibrary")
 	,CYG("/usr/local/lib/omlibrary")
 )
@@ -63,7 +64,12 @@ append(pyp,'PYTHONPATH')
 
 libp = os.path.join(instp,"lib")
 prepend(libp,'LD_LIBRARY_PATH')
-prepend(libp,'LIBRARY_PATH')
+#prepend(libp,'LIBRARY_PATH')
+if platform.system()=="Windows":
+	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
+	prepend(resp,'PATH')
+	prepend('/mingw64','PYTHONHOME')
+	print("PYTHONHOME=",os.environ['PYTHONHOME'])
 
 if os.environ.get('VERBOSE'):
 	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:

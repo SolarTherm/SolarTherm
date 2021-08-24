@@ -375,8 +375,8 @@ class Simulator(object):
 		if lv==None:
 			sim_args = [e for e in sim_args if e not in ('-lv', lv)]
 
-		#sp.check_call(['./'+self.model] + sim_args + args)
-		sp.call(['./'+self.model] + sim_args + args)
+		sp.check_call(['./'+self.model] + sim_args + args)
+		#sp.call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
 

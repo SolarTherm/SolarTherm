@@ -2,7 +2,8 @@ import os, sys, platform, subprocess; from pathlib import Path
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
-if platform.system()=="Windows":
+print('system',platform.system())
+if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		#default_prefix = subprocess.check_output(['cygpath','-w',Path(os.environ['HOME'])/".local"],encoding='utf-8').strip()
 		default_prefix=Path(os.environ['HOME'])/'.local'
@@ -16,6 +17,7 @@ else:
 	default_om_prefix = "/usr"
 	default_om_libpath = None
 	default_om_libs = None
+
 
 vars = Variables()
 vars.AddVariables(
@@ -50,6 +52,7 @@ vars.AddVariables(
 	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 )
+
 
 env = Environment(variables=vars)
 
