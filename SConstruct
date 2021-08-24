@@ -58,7 +58,7 @@ for root, dirs, fns in os.walk('SolarTherm'):
 	r1 = Path(root).relative_to('SolarTherm')
 	env.Install('$INSTALL_OM_ST/%s'%(r1,),list(fmatch(root,fns)))
 
-env.Alias('install','$PREFIX')
+env.Alias('install',['#','$PREFIX'])
 
 #env.SConscript('examples')
 #env.SConscript('resources')

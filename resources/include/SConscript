@@ -21,11 +21,14 @@ genv.Append(
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
+shlibs = [lib1,lib2,lib3]
+pysrcs = ['st_test_ext.py','run_solstice.py']
 
-env.Install('$INSTALL_OM_EXT',[lib1,lib2,lib3])
+# this is the location that st_simulate etc will use
+env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 
-env.Install('$INSTALL_OM_EXT','st_test_ext.py')
-
-env.Install('$INSTALL_OM_EXT','run_solstice.py')
+# this is the location that you probably want to use with OMEdit
+# TODO examine option of placing these things in ~/.openmodelica/binaries ...?
+env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs)
 
 # vim: ts=4:sw=4:noet:tw=80

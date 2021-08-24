@@ -19,4 +19,4 @@ examples/*_res*.mat
 .scons*
 doc/out/*
 src/python/wheel/*.whl
-
+SolarTherm/Resources
