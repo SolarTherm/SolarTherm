@@ -16,7 +16,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 else:
 	default_om_prefix = "/usr"
 	default_om_libpath = None
-	default_om_libs = None
+	default_om_libs = []
 
 
 vars = Variables()
