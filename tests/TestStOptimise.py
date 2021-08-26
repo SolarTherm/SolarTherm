@@ -56,7 +56,7 @@ class TestStOptimise(unittest.TestCase):
 		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 		return y
 		
-
+	'''
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
@@ -250,7 +250,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(figfile))
 		map(os.unlink, glob.glob(front))
 		cleantest.clean('TestStOptimise')
-	
+	'''
 	def test_dakota_moga(self):
 		# first check that we have 'dakota' in our PATH...
 		cmd = "where" if platform.system() == "Windows" else "which"
@@ -289,7 +289,6 @@ class TestStOptimise(unittest.TestCase):
 	
 		os.system('rm -rf test_moga')
 		map(os.unlink, glob.glob(figfile))	
-		cleantest.clean('TestStOptimise')
 
 	def test_dakota_soga(self):
 		# first check that we have 'dakota' in our PATH...
@@ -313,10 +312,8 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
-
-
+		
 		os.system('rm -rf test_soga')
-		cleantest.clean('TestStOptimise')
 		
 if __name__ == '__main__':
 	unittest.main()
