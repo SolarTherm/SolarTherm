@@ -14,6 +14,7 @@ Reference_1_fluid
 TestTMY3WeatherFileChecker
 SolarFuelSystem
 SolarMethanolSystem
+SaltCO2System
 TestExternalC
 TestExternalPyStr
 TestExternalPyFunc
@@ -21,3 +22,12 @@ TestSolsticeOELT
 optimizeInput.csv
 *.libs
 report.*
+TestStOptimise_cma_results.txt
+TestStOptimise_ga2_results.txt
+TestStOptimise_nsga2_pareto_front.png
+TestStOptimise_nsga2_pareto_front.txt
+TestStOptimise_nsga2_results.txt
+TestStOptimise_pso_results.txt
+results.txt
+.noseids
+Test_SolsticeOELT

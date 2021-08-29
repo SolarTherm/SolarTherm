@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -25,7 +26,9 @@ class TestSolarFuel(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 9786027.07)/9786027.07<0.01) # fpy
 		self.assertTrue(abs(self.perf[1]- 3.24)/3.24<0.01) # LCOF
 		self.assertTrue(abs(self.perf[2]- 72.18)/72.18<0.01) # Capacity factor
-		os.system('rm SolarFuelSystem*')
+		cleantest.clean('SolarFuelSystem')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

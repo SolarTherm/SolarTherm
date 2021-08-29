@@ -413,7 +413,8 @@ print('')
 
 print(names[:-(14+2*num_perf)])
 for n in names[:-(14+2*num_perf)]:
-	var_n.append(n.encode("UTF-8"))
+	#var_n.append(n.encode("UTF-8"))
+	var_n.append(str(n))
 	var_v.append(str(params.__getitem__(n)))
 	print('variable   : ', n, '=', params.__getitem__(n))
 

@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -33,11 +34,9 @@ class TestWeatherSource(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('wea.wbus.azi', solar_noon),
 				360.0, delta=1.0) # very sensitive around noon
 
-		os.system('rm TestWeatherSource_*')
-		os.system('rm TestWeatherSource')
-		os.system('rm TestWeatherSource.c')
-		os.system('rm TestWeatherSource.o')
-		os.system('rm TestWeatherSource.makefile')
+		cleantest.clean('TestWeatherSource')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

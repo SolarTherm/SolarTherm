@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function,unicode_literals
 import os
 import shutil
 import warnings
@@ -183,7 +183,7 @@ class Simulator(object):
 		self.init_et = None
 
 	def __del__(self):
-		if self.fusemount:
+		if hasattr(self,'fusemount') and self.fusemount:
 			self.leave_fuse()
 
 	@property
@@ -269,7 +269,7 @@ class Simulator(object):
 		else:
 			return fn
 
-	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
+	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
 		"""Compile modelica model in .mo file."""
 		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
 			+ args
@@ -375,8 +375,9 @@ class Simulator(object):
 		if lv==None:
 			sim_args = [e for e in sim_args if e not in ('-lv', lv)]
 
-		#sp.check_call(['./'+self.model] + sim_args + args)
-		sp.call(['./'+self.model] + sim_args + args)
+		sp.check_call(['./'+self.model] + sim_args + args)
+		#sp.call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
 
+# vim: ts=4:sw=4:noet:tw=80

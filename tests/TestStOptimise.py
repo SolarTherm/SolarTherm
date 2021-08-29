@@ -2,15 +2,13 @@
 
 from __future__ import division
 import unittest
-import os
+import os, platform, re, glob, subprocess
 
+import cleantest
 from solartherm import simulation
 import DyMat
-import subprocess
 from math import pi
-import re
 import numpy as np
-import glob
 
 class TestStOptimise(unittest.TestCase):
 	'''
@@ -58,7 +56,7 @@ class TestStOptimise(unittest.TestCase):
 		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 		return y
 		
-
+	'''
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
@@ -78,11 +76,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 		map(os.unlink, glob.glob(outfile))
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))	
+		cleantest.clean('TestStOptimise')
 
 	def test_cma(self):
 		
@@ -104,11 +98,8 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(y-1.) < 5e-1)
 		map(os.unlink, glob.glob(outfile))	
 		os.system('rm -r outcmaes')	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
+		cleantest.clean('TestStOptimise')
+
 
 	def test_ga1(self):
 		
@@ -154,11 +145,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 		map(os.unlink, glob.glob(outfile))	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
+		cleantest.clean('TestStOptimise')
 
 	def test_Nelder(self):
 		
@@ -179,11 +166,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 		map(os.unlink, glob.glob(outfile))	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
+		cleantest.clean('TestStOptimise')
 
 	def test_COBYLA(self):
 		
@@ -204,11 +187,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
 		map(os.unlink, glob.glob(outfile))	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
+		cleantest.clean('TestStOptimise')
 
 	def test_SLSQP(self):
 		
@@ -230,11 +209,7 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(y-1.) < 5e-1)
 
 		map(os.unlink, glob.glob(outfile))	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
+		cleantest.clean('TestStOptimise')
 
 
 	def test_nsga2(self):
@@ -257,7 +232,7 @@ class TestStOptimise(unittest.TestCase):
 			summary[n]=np.array([])
 
 		t=len(content)
-		for i in xrange(1,t):
+		for i in range(1,t):
 			c=content[i]
 			l=c.split(" ")
 			for j in range(len(names)):
@@ -274,13 +249,13 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))
 		map(os.unlink, glob.glob(figfile))
 		map(os.unlink, glob.glob(front))
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))			
-	
+		cleantest.clean('TestStOptimise')
+	'''
 	def test_dakota_moga(self):
+		# first check that we have 'dakota' in our PATH...
+		cmd = "where" if platform.system() == "Windows" else "which"
+		dakota = subprocess.check_output([cmd, 'dakota'])
+	
 		figfile='TestStOptimise_moga_pareto_front.png'
 		args='st_optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --wd=test_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, self.fn)
 		subprocess.call(args, shell=True)
@@ -296,7 +271,7 @@ class TestStOptimise(unittest.TestCase):
 			summary[obj_n[i]]=np.array([])
 
 		t=len(content)
-		for i in xrange(t):
+		for i in range(t):
 			c=content[i]
 			l=c.split("\t")
 			for p in range(2):
@@ -314,13 +289,11 @@ class TestStOptimise(unittest.TestCase):
 	
 		os.system('rm -rf test_moga')
 		map(os.unlink, glob.glob(figfile))	
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
 	def test_dakota_soga(self):
+		# first check that we have 'dakota' in our PATH...
+		cmd = "where" if platform.system() == "Windows" else "which"
+		dakota = subprocess.check_output([cmd, 'dakota'])
 
 		args='st_optimise --start 0 --stop 1 --maxiter 100 --objective f_rosen --method dakota_soga --wd=test_soga --test %s x1=-2,2,1 y1=-2,2,-1.5'%(self.fn)
 
@@ -339,17 +312,10 @@ class TestStOptimise(unittest.TestCase):
 		self.assertTrue(abs(obj)  < 1e-1)
 		self.assertTrue(abs(x-1.) < 5e-1)
 		self.assertTrue(abs(y-1.) < 5e-1)
-
-
+		
 		os.system('rm -rf test_soga')
-		map(os.unlink, glob.glob(u'TestStOptimise_*'))	
-		map(os.unlink, glob.glob(u'TestStOptimise'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.c'))	
-		map(os.unlink, glob.glob(u'TestStOptimise.o'))
-		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
-
+		
 if __name__ == '__main__':
 	unittest.main()
 
-
-
+# vim: ts=4:sw=4:noet:tw=80

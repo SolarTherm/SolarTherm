@@ -3,6 +3,7 @@
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -26,7 +27,7 @@ class TestReference(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 399743.26)/399743.26<0.01) # epy
 		self.assertTrue(abs(self.perf[1]-  158.11)/ 158.11<0.01) # LCOE
 		self.assertTrue(abs(self.perf[2]- 45.63)/45.63<0.01) # Capacity factor
-		os.system('rm Reference_2*')
+		cleantest.clean('Reference_2')
 
 
 

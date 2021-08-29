@@ -44,3 +44,4 @@ SolarTherm_*.libs
 Modelica_Utilities_*
 resources
 results*
+*.exe

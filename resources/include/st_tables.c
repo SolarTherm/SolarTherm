@@ -10,9 +10,9 @@
 #include "solinterp/symmetries.h"
 #include "solinterp/interpolation.h"
 
-#include "solinterp/symmetries.c"
-#include "solinterp/tables.c"
-#include "solinterp/interpolation.c"
+//#include "solinterp/symmetries.c"
+//#include "solinterp/tables.c"
+//#include "solinterp/interpolation.c"
 
 void *st_table_init(size_t nr, size_t nc);
 void *st_table_init_csv(const char *fn, const char *delim);

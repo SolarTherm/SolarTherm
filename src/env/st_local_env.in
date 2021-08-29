@@ -45,7 +45,12 @@ st_deactivate () {
 	fi
 }
 
-PYTHON_LIBRARY_VERSION=`@PYTHON@ -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
+
+if ((@FORCE_PYTHON_VERSION@==0)); then
+	PYTHON_LIBRARY_VERSION=`python -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
+else
+	PYTHON_LIBRARY_VERSION=`python@FORCE_PYTHON_VERSION@ -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
+fi
 
 export _OPENMODELICALIBRARY="$OPENMODELICALIBRARY"
 export OPENMODELICALIBRARY="$HOME/.openmodelica/libraries:$INSTALL_PREFIX/lib/omlibrary:/usr/lib/omlibrary:/usr/local/lib/omlibrary"

@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
-import unittest
+import unittest, warnings
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -25,6 +26,7 @@ class TestScheduler(unittest.TestCase):
 		def getval(n):
 			return self.res.interpolate(n,1)
 
+		warnings.warn("Test evaluation has been disabled")
 #		self.assertAlmostEqual(self.perf[0], 569076.05, 2) # epy
 #		self.assertAlmostEqual(self.perf[1], 75.17, 2) # LCOE
 #		self.assertAlmostEqual(self.perf[2], 64.96, 2) # Capacity factor
@@ -47,7 +49,9 @@ class TestScheduler(unittest.TestCase):
 		print('Tower height (per module):                %4.1f  m'%(getval('H_tower')))
 		print('Number of heliostats (per module):        %i'%(getval('n_heliostat')))
 		print('Number of modules:                        %i'%(getval('n_modules')))
-		os.system('rm NaSaltSCO2System_modular*')
+		cleantest.clean('NaSaltSCO2System_modular')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

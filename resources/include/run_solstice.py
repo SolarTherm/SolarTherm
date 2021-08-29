@@ -14,7 +14,7 @@ def set_param(inputs={}):
     '''
 
     pm=Parameters()
-    for k, v in inputs.iteritems():
+    for k, v in inputs.items():
 
         if hasattr(pm, k):
             setattr(pm, k, v)
@@ -34,10 +34,10 @@ def run_simul(inputs={}):
 
     print('')
     print('Test inputs')
-    for k, v in inputs.iteritems():
+    for k, v in inputs.items():
         print(k, '=', getattr(pm, k))
-    print ''
-    print ''
+    print('')
+    print('')
 
     TIME=np.array([])
     print('')
@@ -48,8 +48,8 @@ def run_simul(inputs={}):
     pm.saveparam(casedir)
     tablefile=casedir+'/OELT_Solstice.motab'
     if os.path.exists(tablefile):    
-		print('')
-		print('Load exsiting OELT')
+        print('')
+        print('Load exsiting OELT')
 
     else:
 
@@ -81,6 +81,7 @@ def run_simul(inputs={}):
             print('total time %.2f'%((end-start)/60.), 'min')
             np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
+    tablefile=tablefile.encode('utf-8')
     return tablefile
 
     

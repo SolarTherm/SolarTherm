@@ -74,3 +74,4 @@ equation
  wspd_l = max(wtab.y[8], 0);
  connect(wspd_l, wbus.wspd);
 end WeatherSource;
+

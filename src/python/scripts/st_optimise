@@ -1,5 +1,5 @@
 #! /bin/env python
-from __future__ import division, print_function
+from __future__ import division, print_function,unicode_literals
 import argparse
 import os
 import functools
@@ -430,7 +430,7 @@ if __name__ == '__main__':
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
@@ -445,7 +445,7 @@ if __name__ == '__main__':
 			f.close()		
 
 			t=len(content)
-			for i in xrange(t):
+			for i in range(t):
 				c=content[i]
 				l=c.split("\t")
 				for p in range(num_obj):

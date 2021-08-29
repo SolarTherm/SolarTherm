@@ -4,6 +4,7 @@ from __future__ import division
 import unittest
 import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -19,20 +20,18 @@ class TestSteeredCL(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_steering(self):
-		self.assertAlmostEqual(self.res.interpolate('conc.R_foc[1]', 0), 0)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 1), 0)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 11), 0.1)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 51), 0.499)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 100), 0.499)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 120), 0.299)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 130), 0.201)
-		self.assertAlmostEqual(self.res.interpolate('conc.actual', 200), 0.201)
-		os.system('rm TestSteeredCL_*')
-		os.system('rm TestSteeredCL')
-		os.system('rm TestSteeredCL.c')
-		os.system('rm TestSteeredCL.o')
-		os.system('rm TestSteeredCL.makefile')
+		self.assertAlmostEqual(float(self.res.interpolate('conc.R_foc[1]', 0)), 0)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 1)), 0)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 11)), 0.1)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 51)), 0.499)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 100)), 0.499)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 120)), 0.299)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 130)), 0.201)
+		self.assertAlmostEqual(float(self.res.interpolate('conc.actual', 200)), 0.201)
+		cleantest.clean('TestSteeredCL')
 
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

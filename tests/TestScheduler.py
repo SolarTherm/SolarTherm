@@ -4,6 +4,7 @@ from __future__ import division
 import unittest
 import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -27,11 +28,9 @@ class TestScheduler(unittest.TestCase):
 		self.assertAlmostEqual(self.res.closest('sch1.v', 42*3600), 3)
 		self.assertAlmostEqual(self.res.closest('sch2.v', 15*24*3600), 10)
 		self.assertAlmostEqual(self.res.closest('sch2.v', 45*24*3600), 20)
-		os.system('rm TestScheduler_*')
-		os.system('rm TestScheduler')
-		os.system('rm TestScheduler.c')
-		os.system('rm TestScheduler.o')
-		os.system('rm TestScheduler.makefile')		
+		cleantest.clean('TestScheduler')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

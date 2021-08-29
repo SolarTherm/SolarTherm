@@ -10,7 +10,7 @@ extends OpticalEfficiency;
     "Table angles"
         annotation (Dialog(group="Table data interpretation"));
 
-	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
+	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
 	parameter String pname = "run_solstice" "Name of the Python script";
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
@@ -84,3 +84,4 @@ equation
 
 
 end SolsticeOELT;
+// vim: ts=2:sw=2:et 
