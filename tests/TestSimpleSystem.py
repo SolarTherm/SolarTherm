@@ -1,8 +1,9 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -28,13 +29,10 @@ class TestSimpleSystem(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 352.558)/352.558<0.01) # epy
 		self.assertTrue(abs(self.perf[1]- 96.490)/96.490<0.01) # LCOE
 		self.assertTrue(abs(self.perf[2]- 40.246)/40.246<0.01) # Capacity factor
-		os.system('rm SimpleSystem*')
+		cleantest.clean('SimpleSystem')
 
 
 if __name__ == '__main__':
 	unittest.main()
 
-
-
-
-
+# vim: ts=4:sw=4:noet:tw=80

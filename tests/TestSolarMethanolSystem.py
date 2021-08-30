@@ -1,12 +1,14 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 class TestScheduler(unittest.TestCase):
 	def setUp(self):
@@ -22,10 +24,12 @@ class TestScheduler(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 21059615.28, 2) # fpy
-		self.assertAlmostEqual(self.perf[1], 1.52, 2) # LCOF
-		self.assertAlmostEqual(self.perf[2], 72.40, 2) # Capacity factor
-		print(self.perf);
+		self.assertTrue(abs(self.perf[0]- 21077831.1)/21077831.1<0.01) # fpy
+		self.assertTrue(abs(self.perf[1]- 1.52)/1.52<0.01) # LCOF
+		self.assertTrue(abs(self.perf[2]- 72.46)/72.46<0.01) # Capacity factor
+		cleantest.clean('SolarMethanolSystem')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

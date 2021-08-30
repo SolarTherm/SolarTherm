@@ -1,0 +1,23 @@
+Import('env')
+
+senv = env.Clone()
+senv.Append(
+	CPPPATH = ['$OM_CPPPATH']
+	,LIBS = env['OM_LIBS']
+	,LIBPATH = ['$OM_LIBPATH']
+)
+
+lib1 = senv.SharedLibrary('st_test_ext',['st_test_ext.c'])
+
+# environment for libraries which link to Python
+penv = senv.Clone()
+penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
+
+lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
+lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
+
+
+# the file needs to be in tests/Resources/Library for OM to find it
+env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
+
+# vim: ts=4:sw=4:noet:tw=80

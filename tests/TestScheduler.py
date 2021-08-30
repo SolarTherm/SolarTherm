@@ -1,8 +1,10 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
+import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -26,6 +28,9 @@ class TestScheduler(unittest.TestCase):
 		self.assertAlmostEqual(self.res.closest('sch1.v', 42*3600), 3)
 		self.assertAlmostEqual(self.res.closest('sch2.v', 15*24*3600), 10)
 		self.assertAlmostEqual(self.res.closest('sch2.v', 45*24*3600), 20)
+		cleantest.clean('TestScheduler')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

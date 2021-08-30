@@ -1,7 +1,9 @@
-#! /bin/env python2
+#! /bin/env python
 
 import unittest
+import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -27,5 +29,9 @@ class TestWeatherTable(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('cseg.y[1]', 1.5), 2)
 		self.assertAlmostEqual(self.res.interpolate('cseg.y[1]', 2.5), 2)
 
+		cleantest.clean('TestWeatherTable')
+
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80

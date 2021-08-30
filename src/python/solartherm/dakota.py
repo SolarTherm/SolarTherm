@@ -413,7 +413,9 @@ print('')
 
 print(names[:-(14+2*num_perf)])
 for n in names[:-(14+2*num_perf)]:
-	var_n.append(n.encode("UTF-8"))
+	#var_n.append(n.encode("UTF-8"))
+	var_n.append(str(n))
+
 	var_v.append(str(params.__getitem__(n)))
 	print('variable   : ', n, '=', params.__getitem__(n))
 
@@ -465,8 +467,9 @@ try:
 
 		if system=='TEST':
 			name=params.__getitem__("index%s"%i)
-			solartherm_res.append(sign*res.data(name)[-1])
-			print('objective %s: '%i, name, sign*res.data(name)[-1])
+			solartherm_res.append(sign*res.data(name)[0])
+			print('objective %s: '%i, name, sign*res.data(name)[0])
+
 		else:
 			idx=int(params.__getitem__("index%s"%i))
 			solartherm_res.append(sign*perf[idx])
@@ -524,7 +527,7 @@ if __name__=='__main__':
 	n=0.00153
 	u=UncertaintyDakotaIn(None, None, None,None,None,None, None, None, None,None, None)
 	a,b=u.pert(var_names=['test'], nominals=[n], minimum=[lb], maximum=[ub]) 
-	print a, b
+	print(a, b)
 	X=N.linspace(lb, ub, 100)
 	Y=u.beta(a, b, lb, ub, X)	
 	plt.plot(X, Y)

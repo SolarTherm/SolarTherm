@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -7,6 +7,7 @@ from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 class TestReference1Fluid(unittest.TestCase):
 	def setUp(self):
@@ -22,9 +23,12 @@ class TestReference1Fluid(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 430302.76, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 147.28, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 49.12, 2) # Capacity factor
-		print(self.perf);
+			
+		self.assertTrue(abs(self.perf[0]- 400120.41)/400120.41<0.1) # epy
+		self.assertTrue(abs(self.perf[1]- 157.96)/157.96<0.1) # LCOE
+		self.assertTrue(abs(self.perf[2]- 45.67)/45.67<0.1) # Capacity factor
+		os.system('rm Reference_1_fluid*')		
+
+
 if __name__ == '__main__':
 	unittest.main()

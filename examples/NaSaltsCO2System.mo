@@ -442,6 +442,7 @@ equation
     experiment(StopTime = 3.1536e+7, StartTime = 0, Tolerance = 0.0001, Interval = 300),
     __Dymola_experimentSetupOutput,
     Documentation(info = "<html>
+
 	<p>
 		<b>NaSaltsCO2System</b> models the system-level interactions of a CSP System using a Sodium Receiver and two-tank storage system using Chloride Salt.
 	</p>
@@ -453,5 +454,7 @@ equation
 		Power block model updated to a sCO2 cycle using SAM/NREL data.</li>
 	</ul>
 	</html>"),
+
     __OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
 end NaSaltsCO2System;
+

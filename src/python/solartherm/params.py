@@ -314,12 +314,14 @@ class Tree(object):
 		elif '[FN]' in description:
 			c='Finance'
 			description=description.replace('[FN]','')
+
 		elif '[R&D]' in description:
 			c='Riser and downcomer'
 			description=description.replace('[R&D]','')
 		elif '[SL]' in description:
 			c='Sodium loop'
 			description=description.replace('[SL]','')
+
 		else:
 			c='NEC' # not elsewhere classified
 

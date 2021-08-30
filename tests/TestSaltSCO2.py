@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
-import unittest
+import unittest, warnings
+import os
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
@@ -23,6 +25,7 @@ class TestScheduler(unittest.TestCase):
 		def getval(n):
 			return self.res.interpolate(n,1)
 
+		warnings.warn("Test evaluation has been disabled")
 #		self.assertAlmostEqual(self.perf[0], 560675.35, 2) # epy
 #		self.assertAlmostEqual(self.perf[1], 78.32, 2) # LCOE
 #		self.assertAlmostEqual(self.perf[2], 64.00, 2) # Capacity factor
@@ -68,6 +71,9 @@ class TestScheduler(unittest.TestCase):
 		print('Total land cost:                          $%6.2f'%(getval('C_land')/1e6))
 		print("-----------------------------------------------------------------------")
 		print('Total capital cost:                       $%6.2f'%(getval('C_cap')/1e6))
+		cleantest.clean('SaltSCO2System')
 
 if __name__ == '__main__':
-    unittest.main()
+	unittest.main()
+
+# vim: ts=4:sw=4:noet:tw=80

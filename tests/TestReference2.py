@@ -1,14 +1,16 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
 
+import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
-class TestScheduler(unittest.TestCase):
+class TestReference(unittest.TestCase):
 	def setUp(self):
 		fn = '../examples/Reference_2.mo'
 		sim = simulation.Simulator(fn)
@@ -22,10 +24,13 @@ class TestScheduler(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		self.assertAlmostEqual(self.perf[0], 429989.69, 2) # epy
-		self.assertAlmostEqual(self.perf[1], 147.39, 2) # LCOE
-		self.assertAlmostEqual(self.perf[2], 49.09, 2) # Capacity factor
-		print(self.perf);
+		self.assertTrue(abs(self.perf[0]- 399743.26)/399743.26<0.01) # epy
+		self.assertTrue(abs(self.perf[1]-  158.11)/ 158.11<0.01) # LCOE
+		self.assertTrue(abs(self.perf[2]- 45.63)/45.63<0.01) # Capacity factor
+		cleantest.clean('Reference_2')
+
+
+
 
 if __name__ == '__main__':
 	unittest.main()

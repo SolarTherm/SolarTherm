@@ -1,9 +1,5 @@
 #ifndef LINPROG_H
-#define LINPROG_H
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+# define LINPROG_H
 
 #define limitSize 1000000
 
@@ -31,6 +27,5 @@ typedef struct price_data
 
 void getPriceMotabData(const char* , double* , double* , int );
 void getDNIMotabData(const char* , double* , double* , int );
-void printSpace();
 
 #endif

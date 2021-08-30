@@ -61,6 +61,7 @@ def run_simul(inputs={}):
             print('total time %.2f'%((end-start)/60.), 'min')
             np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
+    tablefile=tablefile.encode('utf-8')
     return tablefile
 
 def design_crs(pm):
@@ -146,7 +147,7 @@ if __name__=='__main__':
 
     #field_type='/media/yewang/Data/data-gen3p3-particle/study-uncertainty/model/SamplingDakota/default-case/optics/pos_and_aiming.csv'
     field_type='surround'
-    wea_file='/home/philgun/solartherm-particle/SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
+    wea_file='../../Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
     inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
 
     run_simul(inputs)

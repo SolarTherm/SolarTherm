@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 import unittest
 import os
@@ -6,7 +6,7 @@ import os
 from solartherm import simulation
 from solartherm import postproc
 
-class TestWeatherTable(unittest.TestCase):
+class TestGraphiteProperty(unittest.TestCase):
 	def setUp(self):
 		fn = 'TestGraphiteProperty.mo'
 		sim = simulation.Simulator(fn)
@@ -16,9 +16,10 @@ class TestWeatherTable(unittest.TestCase):
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_table(self):
-		self.assertEqual(round(self.res.interpolate('T_p', 0),0), 575)
-		self.assertEqual(round(self.res.interpolate('k_p', 0),0), 106)
-		self.assertEqual(round(self.res.interpolate('rho_p', 0),0), 1880)
+
+		self.assertEqual(self.res.interpolate('T_p', 0).round(), 575)
+		self.assertEqual(self.res.interpolate('k_p', 0).round(), 106)
+		self.assertEqual(self.res.interpolate('rho_p', 0).round(), 1880)
 		os.system('rm TestGraphiteProperty_*')
 		os.system('rm TestGraphiteProperty')
 		os.system('rm TestGraphiteProperty.c')

@@ -1,4 +1,4 @@
-#! /bin/env python2
+#! /bin/env python
 
 from __future__ import division
 import unittest
@@ -7,6 +7,7 @@ from solartherm import simulation
 from solartherm import postproc
 
 from math import pi
+import os
 
 class TestFileOE(unittest.TestCase):
 	def setUp(self):
@@ -33,6 +34,12 @@ class TestFileOE(unittest.TestCase):
 		self.assertAlmostEqual(self.res.interpolate('oeff.eff[2]', 2.1), 25)
 		self.assertAlmostEqual(self.res.interpolate('oeff.eff[2]', 3.1), 35)
 		self.assertAlmostEqual(self.res.interpolate('oeff.eff[2]', 4.1), 45)
+
+		os.system('rm TestFileOE_*')
+		os.system('rm TestFileOE')
+		os.system('rm TestFileOE.c')
+		os.system('rm TestFileOE.o')
+		os.system('rm TestFileOE.makefile')
 
 if __name__ == '__main__':
 	unittest.main()
