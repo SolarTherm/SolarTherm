@@ -12,8 +12,5 @@ function GenEffectivenessPyFunc
     input Real vars[:];
 	output String result;
 	external result =RunStorageFunc(ppath, pname, pfunc, psave, modelicapath, argc, varnames, vars)
-	annotation(Library="python3.8",
-		IncludeDirectory="modelica://SolarTherm/Resources/Include",
-		Include="#include \"run_storage_py.c\""
-		);
+	annotation(Library="st_storage");
 end GenEffectivenessPyFunc;

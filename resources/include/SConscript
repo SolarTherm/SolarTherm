@@ -17,6 +17,7 @@ penv = senv.Clone()
 penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
+lib4 = penv.SharedLibrary('st_storage', ['run_storage_py.c'])
 
 genv = senv.Clone()
 genv.Append(
@@ -25,8 +26,9 @@ genv.Append(
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
-shlibs = [lib1,lib2,lib3]
-pysrcs = ['st_test_ext.py','run_solstice.py']
+
+shlibs = [lib1,lib2,lib3,lib4]
+pysrcs = ['st_test_ext.py','run_solstice.py', 'run_storage.py']
 
 # this is the location that st_simulate etc will use
 env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)

@@ -117,6 +117,7 @@ def get_effectiveness(inputs):
 		os.system('rm %s.o'%model)
 		os.system('rm %s.makefile'%model)
 	os.chdir(wd)
+	motabfile=motabfile.encode('utf-8')
 	return motabfile
 
 if __name__=='__main__':

@@ -1,17 +1,14 @@
-#ifndef ST_STORAGE_PY_FUNC
-#define ST_STORAGE_PY_FUNC
-
-#include <python3.8/Python.h>
+#include <Python.h>
 #include <stdio.h>
 
-const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *modelicapath, int argc, const char *varnames[], const double var[]);
-
-const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *modelicapath, int argc, const char *varnames[], const double var[])
+const char* RunStorageFunc(const char *ppath, const char *pname
+	, const char *pfunc, const char *psave, const char *modelicapath
+	, int argc, const char *varnames[], const double var[])
 {
     // ppath: path of the Python script
     // pname: name of the Python script
     // pfunc: name of the Python function
-    // psave: directory of saving the results from mcrt
+    // psave: directory of output file
 
     const char *tablefile; //the file of the lookup table
     PyObject *pName, *pModule, *pFunc;
@@ -91,4 +88,3 @@ const char* RunStorageFunc(const char *ppath, const char *pname, const char *pfu
     Py_Finalize();
 }
 
-#endif

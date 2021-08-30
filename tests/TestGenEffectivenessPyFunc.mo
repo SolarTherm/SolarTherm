@@ -12,14 +12,14 @@ function GenEffectivenessPyFunc
     input Real vars[:];
 	output String result;
 	external result =RunStorageFunc(ppath, pname, pfunc, psave, modelicapath, argc, varnames, vars)
-	annotation(Library="python2.7",
-		IncludeDirectory="modelica://SolarTherm/Resources/Include",
-		Include="#include \"run_storage_py.c\""
-		);
+	annotation(
+		Library="st_storage"
+	        ,LibraryDirectory="modelica://SolarTherm/Resources/Library"
+      );
 end GenEffectivenessPyFunc;
 
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
-  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
+  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
   parameter String pname = "run_storage" "Name of the Python script";
   parameter String pfunc = "get_effectiveness" "Name of the Python functiuon"; 
   parameter String psave = "effectiveness_test" "the directory for saving the results"; 

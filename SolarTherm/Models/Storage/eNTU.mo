@@ -32,7 +32,7 @@ model eNTU
   // Storage
   //parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/Thermocline.motab");
   parameter String table_file(fixed=false);
-  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
+  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
   parameter String pname = "run_storage" "Name of the Python script";
   parameter String pfunc = "get_effectiveness" "Name of the Python functiuon"; 
   parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage") "the directory for saving the results"; 
