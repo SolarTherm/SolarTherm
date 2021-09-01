@@ -37,7 +37,8 @@ extends OpticalEfficiency;
     parameter SI.Length R_tower = 0.01 "Tower diameter";
     parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
     parameter Real fb=0.7 "factor to grow the field layout";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+
+    parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
@@ -60,7 +61,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "rho_helio","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

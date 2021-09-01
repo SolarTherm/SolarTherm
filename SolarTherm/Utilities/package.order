@@ -4,5 +4,6 @@ Transition
 ToleranceTest
 ReadHelNum
 Metadata_Optics
+Metadata_Solstice_Optics
 CoolProp
 LinProgFunc

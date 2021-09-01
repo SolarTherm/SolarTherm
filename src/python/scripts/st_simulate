@@ -109,8 +109,8 @@ if __name__ == '__main__':
 			help='use text rendering With LaTeX')
 	parser.add_argument('--unicode', action='store_true',
 			help='use usetex with unicode')
-	parser.add_argument('--mcargs', nargs=1, type=str, default=[],
-			help='model compilation arguments')
+	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
+	#		help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
