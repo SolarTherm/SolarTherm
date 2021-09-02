@@ -167,14 +167,14 @@ class Tree(object):
 				#note: some of the variable does not have a 'start' value
 				if start!=None:
 					value=start.attrib['start']
-					if par.attrib.has_key("description"):
+					if "description" in par.attrib:
 						description=par.attrib["description"]
 						classification, description=self.get_classification(description)
 					else:
 						description='-'
 						classification='-'
 
-					if start.attrib.has_key('unit'):
+					if 'unit' in start.attrib:
 						unit=start.attrib['unit']
 					else:
 						unit='-'
