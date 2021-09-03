@@ -5,6 +5,7 @@ import re
 import solartherm.finances as fin
 import matplotlib.pyplot as plt
 from scipy import interpolate
+import DyMat
 
 class Contingency:
 
@@ -16,10 +17,9 @@ class Contingency:
 		self.var_n_perf=var_n_perf
 		self.var_n_cost=var_n_cost
 		self.get_sample(samplefile)
-		#exself.get_lcoe()
-		#self.get_capital()
-		#self.get_epy()
+		self.get_lcoe_contingency(fn=self.casedir+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
 		self.plot_sensitivity()
+		self.plot_cdfs()
 		
 	def get_sample(self, samplefile):
 		try:
@@ -70,61 +70,169 @@ class Contingency:
 			if n in self.sample.keys():
 				self.var_v_cost.append(self.sample[n])	
 
-	def get_lcoe(self):
+	
+	def get_cdf(self, x, num_bins, name, unit, plot=True, savename=None, color='b', base=None):
 		'''
-		Get the statistics of lcoe
+		x: numpy array, the data sample to be analysed/plotted
+		num_bins: int, number of bins of the histogram
+		xlabel: str, x label on the plot
+		color: str, color of the histogram
+		savename: str, directory and name of the figure to be saved
+		base: float, a specific value that is plotted on the figure to observe the probability
+			  or None, if no value is specified
 		'''
-		n=len(self.lcoe)
-		m=np.mean(self.lcoe)
-		sd=np.sqrt(1/(n-1.)*np.sum((self.lcoe-m)**2))	
-		lmin=np.min(self.lcoe)
-		lmax=np.max(self.lcoe)
+
+		n=len(x)
+		m=np.mean(x)
+		sd=np.sqrt(1/(n-1.)*np.sum((x-m)**2))	
+		xmin=np.min(x)
+		xmax=np.max(x)
+		
+		print('')
+		print(name)
+		print("min", xmin, unit)
+		print("max", xmax, unit)
+		print("mean", m, unit)
+		print("sd", sd, unit)
+
+		bins=np.linspace(xmin, xmax, num_bins)	
+		hist, edges=np.histogram(x, bins)
+		cdf=np.cumsum(hist)/float(np.sum(hist))
+
+		dx=bins[1]-bins[0]
+		xs=np.linspace(xmin+dx/2., xmax-dx/2., num_bins-1)
+		
+		f_cdf=interpolate.interp1d(xs, cdf)
+		# report p30, p50, p90	
+		f_xs=interpolate.interp1d(cdf, xs)
+		p30=f_xs(0.3)
+		p50=f_xs(0.5)
+		p90=f_xs(0.9)	
+		print('P30', p30, unit)
+		print('p50', p50, unit)
+		print('p90', p90, unit)		
+		
+		if plot:
+			fts=20
+			fig, ax1=plt.subplots()
+			ax2=ax1.twinx()
+			ax1.hist(x, bins, color=color)
+			ax2.plot(xs, cdf, 'r')
+			
+			print('')
+			if base!=None:
+				# plot the probability of a specified value	
+				p_base=f_cdf(base)
+				print(' Base value', base, unit)
+				print(' Probability:', p_base)
+
+				# the vertical dash line
+				vx=np.ones(100)*base
+				vy=np.linspace(0., p_base, 100) 
+				# the horizontal dash line
+				hx=np.linspace(base, xmax, 100)
+				hy=np.ones(100)*p_base
+
+				ax2.plot(vx, vy, 'r--')
+				ax2.plot(hx, hy, 'r--')
+					
+			ax1.tick_params(labelsize=fts)
+			ax2.tick_params(labelsize=fts)
+			ax1.set_xlabel(str(name+' '+ unit), fontsize=fts)
+			ax1.set_xlim([xmin,xmax])
+			ax1.set_ylim([0,max(hist)])
+			ax1.set_ylabel('Frequency', fontsize=fts)
+			ax2.set_ylabel('CDF', fontsize=fts)
+			plt.savefig(open(savename, 'wb'), dpi=200, bbox_inches='tight')
+			plt.close()
+		
+		return f_cdf, f_xs
+		
+
+	def get_lcoe_contingency(self, fn, target_lcoe=None, likelihood=None):
+		'''
+		Obtain the rate of contingency with a given targeted LCOE or likelihood
+		Arguments:
+		fn: str, directory of thethe .mat result file of the reference case 
+		    (e.g. the best design with the deterministic parameters)	
+		** specify one of the target_lcoe and likelihood, and keep the other as None
+		     
+		target_lcoe: float, the targeted LCOE (USD/MWhe)
+		likelihood: float, the targeted likelihood, (0-1)
+
+		Returns:
+		r_contingency: float, rate of the contingency budget over the total equipment cost (0-1)
+		C_contingency: float, the amount of contingency budget (MUSD)
+		'''
+		
+		f_cdf, f_xs=self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', plot=False)			
+		
+		mat = DyMat.DyMatFile(fn)
+		
+		eng_v = mat.data('E_elec') # Cumulative electricity generated [J]		
+		eng_t = mat.abscissa('E_elec', valuesOnly=True) # Time [s]
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]				
+		cap_v = mat.data('C_cap') # Capital costs [$]		
+		om_y_v = mat.data('C_year') # O&M costs per year [$/year]
+		om_p_v = mat.data('C_prod') # O&M costs per production per year [$/J/year]
+		disc_v = mat.data('r_disc') # Discount rate [-]
+		life_v = mat.data('t_life') # Plant lifetime [year]
+		cons_v = mat.data('t_cons') # Construction time [year]
+
+		#TODO
+		# need to make an agreement of the name of the cost/finacial parameters
+		# between all the SolarTherm models
+		C_equipment=mat.data('C_cap_dir_tot')[0] # total equipment cost
+		#C_equipment=mat.data('C_cap_total')[0] # total equipment cost
+		
+		#r_contingency_0=mat.data('r_contg')[0]
+		#C_contingency_0=r_contingency_0 * C_equipment
+		C_contingency_0=mat.data('C_contingency')[0]
+		C_cap_0 =cap_v[0]-C_contingency_0
+
+		
+		# LCOE of the best case without contingency budget
+		#lcoe = fin.lcoe_r(C_cap_0, om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+		#					int(life_v[0]), int(cons_v[0]), epy)
+
+		
+		if target_lcoe!=None and likelihood==None:
+			likelihood=f_cdf(target_lcoe) 
+		elif likelihood!=None and target_lcoe==None:	
+			target_lcoe=f_xs(likelihood)
+		else:
+			raise Exception("\n\n  Conflict between 'target_lcoe' and 'likelihood'\n  They cannot be specified simultaneously\n  Select one and keep the other as 'None'\n")
 
 		print('')
-		print("LCOE min", lmin)
-		print("LCOE max", lmax)
-		print("LCOE mean", m)
-		print("LCOE sd", sd)
+		print('Target LCOE ', target_lcoe, ',with likelihood ', likelihood)
 
-		plot_cdf(x=self.lcoe, num_bins=25, xlabel='LCOE (USD/MWh$\mathrm{_e}$)', color='green', savename=self.casedir+'/CDF_lcoe.png', base=112)
+		lcoe_update=0.
 
-	def get_capital(self):
-		'''
-		Get the statistics of total captial cost (without contingency)
-		'''
-		n=len(self.C_cap)
-		m=np.mean(self.C_cap)
-		sd=np.sqrt(1/(n-1.)*np.sum((self.C_cap-m)**2))	
-		lmin=np.min(self.C_cap)
-		lmax=np.max(self.C_cap)
+		i=0
+		r_contingency=0.
+		#while abs(lcoe-target_lcoe)>1e-2 and r_contingency<=1: 
+		while abs(lcoe_update-target_lcoe)>1e-2: 
+			C_contingency=C_equipment*r_contingency
+			#print target_lcoe, lcoe, c_cap/1e6, r_contingency, f_contg(c_cap/1e6)
+			lcoe_update=fin.lcoe_r(
+				c_cap=C_cap_0+C_contingency, 
+				c_year=om_y_v[0] + om_p_v[0]*epy, 
+				r=disc_v[0], 
+				t_life=int(life_v[0]), 
+				t_cons=int(cons_v[0]), 
+				epy=epy)
 
-		print('')
-		print("C_cap min", lmin)
-		print("C_cap max", lmax)
-		print("C_cap mean", m)
-		print("C_cap sd", sd)
+			lcoe_update=lcoe_update*1e6*3600.
+			r_contingency+=0.000001
+			
+		print('')		
+		print('r_contingency,', r_contingency)
+		print('C_contingency,', C_contingency)
 
-		plot_cdf(x=self.C_cap, num_bins=25, xlabel='Total capital cost (M$\cdot$USD)', color='blue', savename=self.casedir+'/CDF_capital.png')
-
-	def get_epy(self):
-		'''
-		Get the statistics of the electricity production per year
-		'''
-		n=len(self.epy)
-		m=np.mean(self.epy)
-		sd=np.sqrt(1/(n-1.)*np.sum((self.epy-m)**2))	
-		lmin=np.min(self.epy)
-		lmax=np.max(self.epy)
-
-		print('')
-		print("epy min", lmin)
-		print("epy max", lmax)
-		print("epy mean", m)
-		print("epy sd", sd)
-
-		plot_cdf(x=self.epy, num_bins=25, xlabel='Energy production per year (MWh/year)', color='orange', savename=self.casedir+'/CDF_epy.png')
-
-
+		return r_contingency, C_contingency/1e6
+		
+		
 	def plot_sensitivity(self):
 		'''
 		Rank of impact
@@ -156,8 +264,8 @@ class Contingency:
 		regr.fit(V_sd, self.lcoe)
 		regr_coef=regr.coef_
 		
-		print('Intercept: \n', regr.intercept_)
-		print('Coefficients: \n', regr.coef_)
+		#print('Intercept: \n', regr.intercept_)
+		#print('Coefficients: \n', regr.coef_)
 
 		idx=abs(regr_coef).argsort()
 		idx=idx[::-1]
@@ -236,134 +344,21 @@ class Contingency:
 		#plt.ylim(-1, len(key))
 		plt.savefig(open(self.casedir+'/sensitivity.png', 'wb'), dpi=300, bbox_inches='tight')
 		#plt.show()
-		plt.close()		
-
-
-	def get_lcoe_contingency(self):
-		'''
-		Rate of contingency and likelihood of lcoe
+		plt.close()	
 		
-		in development
-		'''
-		fn='.mat' #TODO the best case result .mat file
-		mat = DyMat.DyMatFile(fn)
-		eng_t = mat.abscissa('E_elec', valuesOnly=True) # Time [s]
-		eng_v = mat.data('E_elec') # Cumulative electricity generated [J]
-		cap_v = mat.data('C_cap') # Capital costs [$]
-		om_y_v = mat.data('C_year') # O&M costs per year [$/year]
-		om_p_v = mat.data('C_prod') # O&M costs per production per year [$/J/year]
-		disc_v = mat.data('r_disc') # Discount rate [-]
-		life_v = mat.data('t_life') # Plant lifetime [year]
-		cons_v = mat.data('t_cons') # Construction time [year]
-		dur = eng_t[-1] - eng_t[0] # Time duration [s]
-		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
-		lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-							int(life_v[0]), int(cons_v[0]), epy)
-
-		C_equipment=mat.data('C_cap_total')[0]# total equipment cost
-		C_land=mat.data('C_land')[0]
-		r_cons=mat.data('r_cons')[0]
-		r_contingency=mat.data('r_contg')[0]
-		C_direct = (1 + r_contingency) * C_equipment
-		C_indirect = r_cons * C_direct + C_land
-		C_cap = C_direct + C_indirect # total captical cost
-		C_contingency=C_direct-C_equipment
-
-
-		if target_lcoe!=None:
-			likelihood=f_lcoe1(target_lcoe) 
-		elif likelihood!=None:	
-			target_lcoe=f_lcoe2(likelihood)
-
-		print('')
-		print('Target LCOE ', target_lcoe, ',with likelihood ', likelihood)
-
-		lcoe=0.
-
-		i=0
-		r_contingency=0.
-		#while abs(lcoe-target_lcoe)>1e-2 and r_contingency<=1: 
-		while abs(lcoe-target_lcoe)>1e-2: 
-			#print target_lcoe, lcoe, c_cap/1e6, r_contingency, f_contg(c_cap/1e6)
-			lcoe=finances.lcoe_r(capital*1e6+C_equipment*r_contingency, om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-							int(life_v[0]), int(cons_v[0]), epy)
-			lcoe=lcoe*1e6*3600.
-			r_contingency+=0.000001
-
-		print('')		
-		print('r_contingency,', r_contingency)
-		#print 'Capital prob,', c_cap/1e6, f_contg(c_cap/1e6)
-
-		return r_contingency
-
-
-
-
-def plot_cdf(x, num_bins, xlabel, color, savename, base=None):
-	'''
-	x: numpy array, the data sample to be plotted
-	num_bins: int, number of bins of the histogram
-	xlabel: str, x label on the plot
-	color: str, color of the histogram
-	savename: str, directory and name of the figure to be saved
-	base: float, a specific value that is plotted on the figure to observe the probability
-		  or None, if no value is specified
-	'''
-
-	xmin=np.min(x)
-	xmax=np.max(x)
-	bins=np.linspace(xmin, xmax, num_bins)	
-	hist, edges=np.histogram(x, bins)
-	cdf=np.cumsum(hist)/float(np.sum(hist))
-
-	dx=bins[1]-bins[0]
-	xs=np.linspace(xmin+dx/2., xmax-dx/2., num_bins-1)
+	def plot_cdfs(self):
 	
-	fts=20
-	fig, ax1=plt.subplots()
-	ax2=ax1.twinx()
-	ax1.hist(x, bins, color=color)
-	ax2.plot(xs, cdf, 'r')
-	
-	print('')
-	print('CDF', xlabel)
-	if base!=None:
-		# plot the probability of a specified value	
-		f=interpolate.interp1d(xs, cdf)
-		p_base=f(base)
-		print('Base value  :', base)
-		print(' Probability:', p_base )
+		self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', savename=self.casedir+'/CDF_lcoe.png', color='green', base=112)		
+		
+		self.get_cdf(x=self.C_cap, num_bins=25, name='Total capital cost', unit='(M$\cdot$USD)', savename=self.casedir+'/CDF_capital.png', color='blue')
 
-		# the vertical dash line
-		vx=np.ones(100)*base
-		vy=np.linspace(0., p_base, 100) 
-		# the horizontal dash line
-		hx=np.linspace(base, xmax, 100)
-		hy=np.ones(100)*p_base
+		self.get_cdf(x=self.epy, num_bins=25, name='Energy production per year', unit='(MWh/year)', savename=self.casedir+'/CDF_epy.png', color='orange')	
 
-		ax2.plot(vx, vy, 'r--')
-		ax2.plot(hx, hy, 'r--')
-
-	# report p30, p50, p90	
-	f1=interpolate.interp1d(cdf, xs)
-	p30=f1(0.3)
-	p50=f1(0.5)
-	p90=f1(0.9)	
-	print('P30', p30)
-	print('p50', p50)
-	print('p90', p90)
-			
-	ax1.tick_params(labelsize=fts)
-	ax2.tick_params(labelsize=fts)
-	ax1.set_xlabel(str(xlabel), fontsize=fts)
-	ax1.set_xlim([xmin,xmax])
-	ax1.set_ylim([0,max(hist)])
-	ax1.set_ylabel('Frequency', fontsize=fts)
-	ax2.set_ylabel('CDF', fontsize=fts)
-	plt.savefig(open(savename, 'wb'), dpi=200, bbox_inches='tight')
-	plt.close()				
 
 
 if __name__=="__main__":
 	casedir="../../../examples/demo_sensitivity"
 	ct=Contingency(casedir, var_n_des=[], var_n_perf=['eff_blk', 'he_av_design', 'ab_rec', 'rec_fr'], var_n_cost=[])
+
+	
+	
