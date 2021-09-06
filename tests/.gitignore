@@ -32,3 +32,4 @@ results.txt
 .noseids
 Test_SolsticeOELT
 Test_SolsticePyFunc
+__pycache__

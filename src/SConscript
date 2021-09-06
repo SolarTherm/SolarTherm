@@ -1,6 +1,6 @@
 Import('env')
 env.SConscript(
-	['python/SConscript','env/SConscript']
+	['python/SConscript','env/SConscript','modelica/SConscript']
 	,exports='env'
 )
 

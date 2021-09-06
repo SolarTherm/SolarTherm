@@ -66,7 +66,7 @@ env['SUBST_DICT'] = {
 
 # TODO use 'SConscript(...variant_dir...)
 env.SConscript(
-	['src/SConscript','tests/SConscript','resources/SConscript']
+	['src/SConscript','tests/SConscript']
 	, exports='env'
 )
 
