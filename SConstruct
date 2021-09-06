@@ -11,13 +11,14 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		print("OM_PREFIX =",default_om_prefix)
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
+		default_install_omlibrary = '$PREFIX/lib/omlibrary'
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
 	default_om_prefix = "/usr"
 	default_om_libpath = None
 	default_om_libs = []
-
+	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
 
 vars = Variables()
 vars.AddVariables(
@@ -25,7 +26,7 @@ vars.AddVariables(
 	,PathVariable(
 		'INSTALL_OMLIBRARY'
 		,'Installation path for Modelica code'
-		,'$PREFIX/lib/omlibrary',PathVariable.PathIsDirCreate)
+		,default_install_omlibrary,PathVariable.PathIsDirCreate)
 	,PathVariable(
 		'INSTALL_OM_ST'
 		,'Installation path for Modelica SolarTherm library'
@@ -86,12 +87,11 @@ for root, dirs, fns in os.walk('SolarTherm'):
 	r1 = Path(root).relative_to('SolarTherm')
 	env.Install('$INSTALL_OM_ST/%s'%(r1,),list(fmatch(root,fns)))
 
-env.Alias('install',['#','$PREFIX'])
+env.Alias('install',['#','$PREFIX','$INSTALL_OMLIBRARY'])
 
 #env.SConscript('examples')
 #env.SConscript('resources')
 
 # TODO install SolarTherm directory
 
-# vim: ts=4:noet:sw=4:tw=80
-
+# vim: ts=4:noet:sw=4:tw=80:syntax=python
