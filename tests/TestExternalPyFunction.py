@@ -14,7 +14,7 @@ class TestExternalC(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop=4, step=0.01)
+		sim.simulate(start=0, stop=3, step=1)
 		self.res = postproc.SimResult(sim.model + '_res.mat')
 
 	def test_squaring(self):

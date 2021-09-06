@@ -1,4 +1,4 @@
-from __future__ import division, print_function,unicode_literals
+from __future__ import division, print_function, unicode_literals
 import os
 import shutil
 import warnings
@@ -13,71 +13,72 @@ import sysconfig
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
 
-var_re = re.compile('([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(\S+)')
+var_re = re.compile(r'([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(\S+)')
 # Assuming all linear relations between units (factor, offset)
 unit_conv = {
-		's': {
-				's': (1,0),
-			},
-		'm': {
-				's': (60,0),
-			},
-		'h': {
-				's': (60*60,0),
-				'm': (60,0),
-			},
-		'd': {
-				's': (24*60*60,0),
-				'm': (24*60,0),
-				'h': (24,0),
-			},
-		'y': {
-				's': (365*24*60*60,0),
-				'm': (365*24*60,0),
-				'h': (365*24,0),
-				'd': (365,0),
-			},
-		'W': {
-				'W': (1,0),
-			},
-		'kW': {
-				'W': (1000,0),
-			},
-		'MW': {
-				'W': (1e6,0),
-				'kW': (1000,0),
-			},
-		'GW': {
-				'W': (1e9,0),
-				'kW': (1e6,0),
-				'MW': (1000,0),
-			},
-		'J': {
-				'J': (1,0),
-			},
-		'kWh': {
-				'J': (3.6e6,0),
-			},
-		'MWh': {
-				'J': (3.6e9,0),
-				'kWh': (1000,0),
-			},
-		'GWh': {
-				'J': (3.6e12,0),
-				'MWh': (1000,0),
-				'kWh': (1e6,0),
-			},
-		'$': {
-				'$': (1,0),
-			},
-		'k$': {
-				'$': (1000,0),
-			},
-		'M$': {
-				'$': (1e6,0),
-				'k$': (1000,0),
-			},
-		}
+	's': {
+		's': (1,0),
+	},
+	'm': {
+		's': (60,0),
+	},
+	'h': {
+		's': (60*60,0),
+		'm': (60,0),
+	},
+	'd': {
+		's': (24*60*60,0),
+		'm': (24*60,0),
+		'h': (24,0),
+	},
+	'y': {
+		's': (365*24*60*60,0),
+		'm': (365*24*60,0),
+		'h': (365*24,0),
+		'd': (365,0),
+	},
+	'W': {
+		'W': (1,0),
+	},
+	'kW': {
+		'W': (1000,0),
+	},
+	'MW': {
+		'W': (1e6,0),
+		'kW': (1000,0),
+	},
+	'GW': {
+		'W': (1e9,0),
+		'kW': (1e6,0),
+		'MW': (1000,0),
+	},
+	'J': {
+		'J': (1,0),
+	},
+	'kWh': {
+		'J': (3.6e6,0),
+	},
+	'MWh': {
+		'J': (3.6e9,0),
+		'kWh': (1000,0),
+	},
+	'GWh': {
+		'J': (3.6e12,0),
+		'MWh': (1000,0),
+		'kWh': (1e6,0),
+	},
+	'$': {
+		'$': (1,0),
+	},
+	'k$': {
+		'$': (1000,0),
+	},
+	'M$': {
+		'$': (1e6,0),
+		'k$': (1000,0),
+	},
+}
+
 
 def convert_val(v1, u1, u2):
 	try:
@@ -86,6 +87,7 @@ def convert_val(v1, u1, u2):
 	except KeyError:
 		fac, off = unit_conv[u2][u1]
 		return (v1 - off)/fac
+
 
 def move_overwrite(src,dst):
 	"""If `src` exists and is a normal file, move it to `dst`, overwiting a file
@@ -99,16 +101,17 @@ def move_overwrite(src,dst):
 	if os.path.exists(dst):
 		assert os.access(dst,os.W_OK) and not os.path.isdir(dst)
 		os.unlink(dst)
-	#print("Moving '%s' to '%s'"%(src,dst))
+	# print("Moving '%s' to '%s'"%(src,dst))
 	shutil.move(src,dst)
+
 
 def parse_var_val(vstr, unit):
 	"""Convert variable value from string with unit to target unit.
 
 	The string valstr must be a number which has an optional suffix:
-	
+
 		'<number>[unit]'
-	
+
 	Raises an exception if not in the correct format or if there is no known
 	conversion between the unit types.
 	"""
@@ -123,8 +126,8 @@ def parse_var_val(vstr, unit):
 	if res is None:
 		raise ValueError('Cannot parse variable value ' + vstr)
 
-	unit_old = res.group(2) # original unit
-	val_old = float(res.group(1)) # original value
+	unit_old = res.group(2)  # original unit
+	val_old = float(res.group(1))  # original value
 
 	if unit == unit_old:
 		return val_old
@@ -134,8 +137,10 @@ def parse_var_val(vstr, unit):
 	except KeyError:
 		raise ValueError('Can\'t convert from unit ' + unit_old + ' to ' + unit)
 
+
 UNIONFS = "/usr/bin/unionfs-fuse"
 FUSERMOUNT = "/bin/fusermount"
+
 
 class Simulator(object):
 	"""Compilation and simulation of a modelica model."""
@@ -149,16 +154,16 @@ class Simulator(object):
 		simulator.  This can be changed after construction and thereafter
 		changes	calls to `write_init`, `update_pars` and `simulate`.
 
-		`fusemount` instructs Simulator to run its operations inside a 
-		unionfs-fuse filesystem, which enables us to segregate and remove all 
+		`fusemount` instructs Simulator to run its operations inside a
+		unionfs-fuse filesystem, which enables us to segregate and remove all
 		of the temporary files created by OMC. Set False if you want to disable
-		this feature. 
+		this feature.
 
 		`reuse` instructs Simulator to re-use an earlier-created mount. If
 		passes, it should be the tuple returned by Simulator::get_fuse_dirs()
 
 		During cleanup, Simulator will keep the init_out_fn and res_fn (if they
-		exist) which are assumed to be the only two important output files from 
+		exist) which are assumed to be the only two important output files from
 		the calculation.
 		"""
 		self.fn = os.path.abspath(fn)
@@ -167,7 +172,9 @@ class Simulator(object):
 
 		if fusemount and not reuse:
 			if not os.access(UNIONFS,os.X_OK) or not os.access(FUSERMOUNT,os.X_OK):
-				warnings.warn("'%s' or '%s are not executable (try st_simulate --nofuse, or sudo apt install unionfs-fuse)"%(UNIONFS,FUSERMOUNT))
+				warnings.warn(
+					"'%s' or '%s are not executable (try st_simulate --nofuse, or sudo apt install unionfs-fuse)"
+						%(UNIONFS,FUSERMOUNT))
 				fusemount = 0
 
 		if model is None:
@@ -192,14 +199,14 @@ class Simulator(object):
 			return self.init_in_fn
 		else:
 			return self.model + '_init_' + self.suffix + '.xml'
-	
+
 	@property
 	def res_fn(self):
 		if self.suffix is None:
 			return self.model + '_res.mat'
 		else:
 			return self.model + '_res_' + self.suffix + '.mat'
-	
+
 	def enter_fuse(self,reuse=False):
 		assert not getattr(self,'entered_fuse',0)
 		if reuse:
@@ -225,7 +232,7 @@ class Simulator(object):
 		if self.fusemount:
 			if not self.reuse:		
 				assert getattr(self,'entered_fuse')
-				#print("REMOVING FUSE MOUNTPOINT")
+				# print("REMOVING FUSE MOUNTPOINT")
 				try:
 					sp.check_call([FUSERMOUNT,'-uz',self.mountdir])
 				except sp.CalledProcessError as e:
@@ -347,7 +354,7 @@ class Simulator(object):
 		stop = str(parse_var_val(stop, 's'))
 		step = str(parse_var_val(step, 's'))
 		tolerance = str(tolerance)
-
+		
 		if initStep!=None:
 			initStep = str(parse_var_val(initStep, 's'))
 		if maxStep!=None:
