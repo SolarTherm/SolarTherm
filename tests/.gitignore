@@ -31,3 +31,4 @@ TestStOptimise_pso_results.txt
 results.txt
 .noseids
 Test_SolsticeOELT
+Test_SolsticePyFunc
