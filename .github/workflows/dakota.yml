@@ -17,13 +17,16 @@ jobs:
 
     - name: Build DAKOTA
       run: |
-        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.14.0-release-public-linux.x86_64-gui.tar.gz
-        tar zxf dakota-6.14.0-release-public-linux.x86_64-gui.tar.gz
-        cd dakota-6.14.0.src
+        export DAKVER=6.14.0
+        export DAKFILE=dakota-$DAKVER-release-public-src-cli.tar.gz
+        export DAKDIR=dakota-$DAKVER.src
+        export DAKOTA_PKGN=dakota-$DAKVER-linux-x64_64-jp
+        wget -q https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
+        tar zxf $DAKFILE
+        cd $DAKDIR
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
-        export DAKOTA_PKGN=dakota-6.14.0-linux-x64_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
         tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
