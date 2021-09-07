@@ -7,6 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      
+    env:
+      DAKVER: 6.14.0
+      DAKDIR: dakota-${{ env.DAKVER }}.src
+      DAKPKG: dakota-${{ env.DAKVER }}-linux-x86_64-jp
 
     steps:
     - uses: actions/checkout@v2
@@ -15,26 +20,27 @@ jobs:
       run: |
         sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python perl libhdf5-dev
 
-    - name: Build DAKOTA
+    - name: Download DAKOTA
       run: |
-        export DAKVER=6.14.0
         export DAKFILE=dakota-$DAKVER-release-public-src-cli.tar.gz
-        export DAKDIR=dakota-$DAKVER.src
-        export DAKOTA_PKGN=dakota-$DAKVER-linux-x64_64-jp
         wget --no-verbose https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
         tar zxf $DAKFILE
+
+    - name: Build DAKOTA ${{ env.DAKVER }}
         cd $DAKDIR
-        cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         mkdir build 
+        cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
-        make DESTDIR=$HOME/$DAKOTA_PKGN install
+    - name: Tar ${{ env.DAKPKG }}
+        cd $DAKDIR/build
+        make DESTDIR=$HOME/$DAKPKG install
         cd $HOME
-        tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
+        tar zcf $DAKPKG.tar.gz $DAKPKG/*
 
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-6.14.0-linux-x64_64-jp
-        path: $HOME/$DAKOTA_PKGN.tar.gz
+        name: ${{ env.DAKPKG }}
+        path: $HOME/$DAKPKG.tar.gz
 
