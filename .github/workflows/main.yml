@@ -49,6 +49,7 @@ jobs:
       run: |
         wget https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz
         tar zxf Solstice-0.9.0-GNU-Linux64.tar.gz
+        mkdir -p ~/.local
         cp -R Solstice-0.9.0-GNU-Linux64/* ~/.local
     - name: Build SolarTherm
       run: |
