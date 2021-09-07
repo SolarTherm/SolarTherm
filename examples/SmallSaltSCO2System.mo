@@ -37,7 +37,7 @@ model SmallSaltSCO2System "High temperature salt-sCO2 system"
 
 	// Solstice related parameters
 	parameter String opt_file(fixed = false);
-	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo_sm"+String(SM));
+	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo_sm"+String(SM));
 	parameter String field_type = "surround" "Other options are : surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
