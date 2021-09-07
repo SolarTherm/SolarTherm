@@ -64,5 +64,5 @@ jobs:
         st env
         env
         cd tests
-        python3 TestSolsticePyFunc.py
-        #nosetests
+        #python3 TestSolsticePyFunc.py
+        nosetests
