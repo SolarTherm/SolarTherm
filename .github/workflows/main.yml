@@ -31,7 +31,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install scons flake8 scipy matplotlib dymat pyswarm cma deap scoop
+        python -m pip install scons flake8 scipy matplotlib dymat pyswarm cma deap scoop nose
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -56,4 +56,4 @@ jobs:
         export PATH=$PATH:~/.local
         st env
         cd tests
-        python3 TestCatromOE.py
+        nosetests3
