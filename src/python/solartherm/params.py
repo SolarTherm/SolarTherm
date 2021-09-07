@@ -118,7 +118,8 @@ class Tree(object):
 		if sys.version_info[0] >= 3:
 			tp= str
 		else:
-			tp= unicode
+			# https://stackoverflow.com/questions/19877306/nameerror-global-name-unicode-is-not-defined-in-python-3
+			tp= u''.__class__
 
 		if isinstance(ref,str) or isinstance(ref,tp):
 			ref = ref.split(".")

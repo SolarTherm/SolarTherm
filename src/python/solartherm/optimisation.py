@@ -100,9 +100,9 @@ def st_ga1(objfunc, par_b, par_n, scale, offset):
 
 
 def st_ga2(objfunc, par_b, par_n, scale, offset):
-
+	import multiprocessing
+	import random
 	try:
-		import random
 		import deap
 		from deap import algorithms, base, creator, tools
 	except ImportError:
@@ -165,9 +165,9 @@ def st_ga2(objfunc, par_b, par_n, scale, offset):
 
 	# Parallel evaluation by running the computation multicore
 	if paral_eval:
-		#pool = multiprocessing.Pool(processes=n_cores)
-		#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
-		toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+		pool = multiprocessing.Pool(processes=n_cores)
+		toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+		#toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
 
 	pop = toolbox.population(n=pop_size) # Set the size of population (individuals)
 
@@ -251,8 +251,9 @@ def st_sciopt(objfunc, op_meth, par_b, par_0, maxiter, scale, offset):
 def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmaker):
 	
 	import random
-	import scoop
-	from scoop import futures
+	import multiprocessing
+	#import scoop
+	#from scoop import futures
 	t_start=time.time()
 	try:
 		import deap
@@ -313,9 +314,10 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 
 	# Parallel evaluation by running the computation multicore
 	if paral_eval:
-		#pool = multiprocessing.Pool(processes=n_cores)
-		#toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
-		toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+		# removed scoop dependency...
+		pool = multiprocessing.Pool(processes=n_cores)
+		toolbox.register("map", pool.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
+		#toolbox.register("map", futures.map) # Change the map functions everywhere to toolbox.map to make the algorithm use a multicored map
 
 	stats = tools.Statistics(lambda ind: ind.fitness.values) # Set the optimisation statistics
 	stats.register("avg", np.mean, axis=0)
