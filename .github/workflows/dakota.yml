@@ -32,17 +32,26 @@ jobs:
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE ..
         make
 
+    - name: Install DAKOTA
+      run: |
+        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
+        mkdir -p dakota-inst/$DAKPKG
+        cd dakota-$DAKVER.src/build
+        make DESTDIR=../../dakota-inst/$DAKPKG install
+
     - name: Tar DAKOTA
       run: |
         export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
-        cd dakota-$DAKVER.src/build
-        make DESTDIR=$HOME/$DAKPKG install
-        cd $HOME
-        tar zcf $DAKPKG.tar.gz $DAKPKG/*
+        mkdir dakota-dist
+        cd dakota-inst
+        echo "DAKOTA-INST contains DAKPKG=$DAKPKG ...?"
+        ls -l
+        tar -zcvf ../dakota-dist/$DAKPKG.tar.gz $DAKPKG
 
-    - name: Upload DAKOTA binary
+    - name: Upload DAKOTA binary tarball
       uses: actions/upload-artifact@v2
       with:
         name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
-        path: $HOME/dakota-${{ env.DAKVER }}-linux-x86_64-jp.tar.gz
+        path: dakota-dist
 
+# vim: ts=2:sw=2:et
