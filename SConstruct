@@ -22,7 +22,10 @@ else:
 
 vars = Variables()
 vars.AddVariables(
-	PathVariable('PREFIX','File installation prefix',default_prefix)
+	PathVariable('PREFIX'
+		,'File installation prefix'
+		,default_prefix
+		,PathVariable.PathIsDirCreate)
 	,PathVariable(
 		'INSTALL_OMLIBRARY'
 		,'Installation path for Modelica code'
