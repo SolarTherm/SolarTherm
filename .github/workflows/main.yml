@@ -7,7 +7,7 @@ on:
   push:
     branches: [ $default-branch ]
   pull_request:
-    branches:  [ master-m ]
+    branches:  [ $default-branch, master-m ]
     #[ $default-branch, master-m ]
 
 jobs:
