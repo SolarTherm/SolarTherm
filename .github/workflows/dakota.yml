@@ -22,10 +22,10 @@ jobs:
         export DAKDIR=dakota-$DAKVER.src
         export DAKOTA_PKGN=dakota-$DAKVER-linux-x64_64-jp
         wget --no-verbose https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
-        tar zxvf $DAKFILE
-        ls -l
+        tar zxf $DAKFILE
         cd $DAKDIR
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
+        mkdir build 
         cd build
         make
         make DESTDIR=$HOME/$DAKOTA_PKGN install
