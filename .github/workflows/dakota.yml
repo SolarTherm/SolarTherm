@@ -21,7 +21,7 @@ jobs:
         export DAKFILE=dakota-$DAKVER-release-public-src-cli.tar.gz
         export DAKDIR=dakota-$DAKVER.src
         export DAKOTA_PKGN=dakota-$DAKVER-linux-x64_64-jp
-        wget --quiet https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
+        wget --no-verbose https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
         tar zxvf $DAKFILE
         ls -l
         cd $DAKDIR
