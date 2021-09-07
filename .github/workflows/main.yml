@@ -48,8 +48,12 @@ jobs:
     - name: Build SolarTherm
       run: |
         scons
+    - name: Install SolarTherm
+      run: |
+        scons install
     - name: Run SolarTherm tests
       run: |
+        export PATH=$PATH:~/.local
         st env
         cd tests
         python3 TestCatromOE.py
