@@ -62,5 +62,7 @@ jobs:
         export PATH=$PATH:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH=~/.local/lib
         st env
+        env
         cd tests
-        nosetests
+        python3 TestSolsticePyFunc.py
+        #nosetests
