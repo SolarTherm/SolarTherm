@@ -10,8 +10,6 @@ jobs:
       
     env:
       DAKVER: 6.14.0
-      DAKDIR: dakota-${{ env.DAKVER }}.src
-      DAKPKG: dakota-${{ env.DAKVER }}-linux-x86_64-jp
 
     steps:
     - uses: actions/checkout@v2
@@ -26,17 +24,18 @@ jobs:
         wget --no-verbose https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
         tar zxf $DAKFILE
 
-    - name: Build DAKOTA ${{ env.DAKVER }}
+    - name: Build DAKOTA
       run: |
-        cd $DAKDIR
+        cd dakota-$DAKVER.src
         mkdir build 
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
 
-    - name: Tar ${{ env.DAKPKG }}
+    - name: Tar DAKOTA
       run: |
-        cd $DAKDIR/build
+        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
+        cd dakota-$DAKVER.src/build
         make DESTDIR=$HOME/$DAKPKG install
         cd $HOME
         tar zcf $DAKPKG.tar.gz $DAKPKG/*
@@ -44,6 +43,6 @@ jobs:
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.DAKPKG }}
-        path: $HOME/$DAKPKG.tar.gz
+        name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
+        path: $HOME/dakota-${{ env.DAKVER }}-linux-x86_64-jp.tar.gz
 
