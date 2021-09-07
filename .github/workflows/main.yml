@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     #
   push:
-    branches: [ $default-branch ]
+    branches: [ $default-branch, master-m ]
   pull_request:
     branches:  [ $default-branch, master-m ]
     #[ $default-branch, master-m ]
@@ -56,4 +56,4 @@ jobs:
         export PATH=$PATH:~/.local
         st env
         cd tests
-        nosetests3
+        nosetests
