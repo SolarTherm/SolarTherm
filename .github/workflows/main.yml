@@ -59,7 +59,8 @@ jobs:
         scons install
     - name: Run SolarTherm tests
       run: |
-        export PATH=$PATH:~/.local
+        export PATH=$PATH:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH=~/.local/lib
         st env
         cd tests
         nosetests
