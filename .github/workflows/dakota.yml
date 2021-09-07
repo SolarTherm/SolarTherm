@@ -27,12 +27,15 @@ jobs:
         tar zxf $DAKFILE
 
     - name: Build DAKOTA ${{ env.DAKVER }}
+      run: |
         cd $DAKDIR
         mkdir build 
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
+
     - name: Tar ${{ env.DAKPKG }}
+      run: |
         cd $DAKDIR/build
         make DESTDIR=$HOME/$DAKPKG install
         cd $HOME
