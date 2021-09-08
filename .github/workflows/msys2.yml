@@ -75,6 +75,7 @@ jobs:
 
     - name: Run SolarTherm tests
       run: |
+        export PATH=$PATH:~/.local/bin
         st env
         cd tests
         python3 TestCatromOE.py
