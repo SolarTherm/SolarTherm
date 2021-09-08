@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     branches: [ $default-branch, master-m ]
   push:
-    branches: [ $default-branch ]
+    branches: [ $default-branch, master-m ]
   pull_request:
     branches:  [ $default-branch, master-m ]
 
@@ -39,6 +39,7 @@ jobs:
           mingw-w64-x86_64-python
           mingw-w64-x86_64-python-pip
           mingw-w64-x86_64-python-wheel
+          mingw-w64-x86_64-python-pyzmq
           mingw-w64-x86_64-python-numpy
           mingw-w64-x86_64-python-scipy
           mingw-w64-x86_64-python-matplotlib
@@ -46,7 +47,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        python -m pip install scons flake8 DyMat pyswarm cma deap scoop
+        python -m pip install scons DyMat pyswarm cma deap scoop
 
     - name: Install OpenModelica
       run: |
