@@ -60,10 +60,16 @@ vars.AddVariables(
 
 env = Environment(variables=vars)
 
+print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
+print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
+
 # copy some needed environment variables from the environment
 for v in ['PKG_CONFIG_PATH']:
 	if v in os.environ:
 		env['ENV'][v] = os.environ[v]
+
+print("again, env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
+
 
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {
