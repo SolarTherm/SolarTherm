@@ -5,7 +5,7 @@ setuppy = env.Substfile('setup.py.in')
 pipwheel = env.Command('mytouch','setup.py',[
 		Delete('wheel')
 		,Mkdir('wheel')
-		,'$PYTHON -m pip wheel  --use-feature=in-tree-build --wheel-dir=wheel .'
+		,'$PYTHON -m pip wheel --wheel-dir=wheel .'
 		,'touch ../mytouch'
 	],chdir=True
 )
