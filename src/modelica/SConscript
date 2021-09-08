@@ -17,6 +17,8 @@ penv = senv.Clone()
 
 print("WHEREIS PKGCONFIG?",penv.WhereIs('pkg-config'))
 
+print("PKG_CONFIG_PATH =",penv['ENV'].get('PKF_CONFIG_PATH',"[--empty--]"))
+
 penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])

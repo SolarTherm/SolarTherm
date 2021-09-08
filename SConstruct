@@ -60,6 +60,11 @@ vars.AddVariables(
 
 env = Environment(variables=vars)
 
+# copy some needed environment variables from the environment
+for v in ['PKG_CONFIG_PATH']:
+	if v in os.environ:
+		env['ENV'][v] = os.environ[v]
+
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {
 	'@VERSION@' : '$VERSION'
