@@ -38,6 +38,7 @@ jobs:
           mingw-w64-x86_64-hdf5
           mingw-w64-x86_64-python
           mingw-w64-x86_64-python-pip
+          mingw-w64-x86_64-python-wheel
           mingw-w64-x86_64-python-numpy
           mingw-w64-x86_64-python-scipy
           mingw-w64-x86_64-python-matplotlib
