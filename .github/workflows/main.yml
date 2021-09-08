@@ -59,17 +59,17 @@ jobs:
         mkdir -p ~/.local
         cp -R Solstice-0.9.0-GNU-Linux64/* ~/.local
         
-    - name: Download DAKOTA
-      uses: actions/download-artifact@v2
-      with:
-        name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
-
-    - name: Install DAKOTA
-      run: |
-        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
-        unzip $DAKPKG.zip
-        tar zxf $DAKPKG.tar.gz
-        sudo cp -R $DAKPKG/usr/local/* /usr/local
+#    - name: Download DAKOTA
+#      uses: actions/download-artifact@v2
+#      with:
+#        name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
+#
+#    - name: Install DAKOTA
+#      run: |
+#        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
+#        unzip $DAKPKG.zip
+#        tar zxf $DAKPKG.tar.gz
+#        sudo cp -R $DAKPKG/usr/local/* /usr/local
 
     - name: Build SolarTherm
       run: |
