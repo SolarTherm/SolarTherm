@@ -45,7 +45,8 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        mingw-w64-x86_64-python -m pip install scons DyMat pyswarm cma deap scoop
+        echo "WHICH PYTHON =" `which python`
+        python -m pip install scons DyMat pyswarm cma deap scoop
 
     - name: Install OpenModelica
       run: |
@@ -57,8 +58,8 @@ jobs:
         export PATH=~/.local/bin:$PATH
         echo "PKGCONFIG PACKAGES"
         pkg-config --list-all
-        echo "WHICH PKG-CONFIG?"
-        which pkg-config
+        echo "WHICH PKG-CONFIG?" `which pkg-config`
+        echo "WHICH PKGCONF?" `which pkgconf`
         echo "-----------------------------------------"
         echo "currently, PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
         echo "currently, PATH=$PATH"
