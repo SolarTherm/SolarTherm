@@ -63,6 +63,10 @@ jobs:
         echo "-----------------------------------------"
         echo "currently, PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
         echo "currently, PATH=$PATH"
+        echo "-----------------------------------------"
+        echo "PKG-CONFIG FOR python..."
+        pkg-config python-3.9-embed --libs --cflags
+        echo "-----------------------------------------"
         scons
 
     - name: Run SolarTherm tests
