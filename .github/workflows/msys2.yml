@@ -41,6 +41,7 @@ jobs:
           mingw-w64-x86_64-python-numpy
           mingw-w64-x86_64-python-scipy
           mingw-w64-x86_64-python-matplotlib
+          mingw-w64-x86_64-glpk
     - uses: actions/checkout@v2
 
     - name: Install Python dependencies
