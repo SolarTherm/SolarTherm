@@ -55,6 +55,9 @@ jobs:
     - name: Build SolarTherm
       run: |
         export PATH=~/.local/bin:$PATH
+        echo "PKGCONFIG PACKAGES"
+        pkg-config --list-all
+        echo "-----------------------------------------"
         echo "currently, PATH=$PATH"
         scons
 
