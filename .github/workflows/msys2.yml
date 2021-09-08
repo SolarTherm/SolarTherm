@@ -57,7 +57,10 @@ jobs:
         export PATH=~/.local/bin:$PATH
         echo "PKGCONFIG PACKAGES"
         pkg-config --list-all
+        echo "WHICH PKG-CONFIG?"
+        which pkg-config
         echo "-----------------------------------------"
+        echo "currently, PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
         echo "currently, PATH=$PATH"
         scons
 
