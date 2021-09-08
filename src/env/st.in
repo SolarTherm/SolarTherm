@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 # run 'through' this wrapper script. For example 'st_simulate' becomes 'st simulate'
 # with no underscore.
 
-import os, subprocess, sys, platform, re
+import os, subprocess, sys, platform, re, shutil
 		
 def CYG(path):
 	"""Convert a MSYS path to a native Windows path, where necessary."""
@@ -47,6 +47,8 @@ os.environ['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 omlibp = os.path.join(instp,"lib","omlibrary")
 
+PYEXE = CYG(os.path.normpath(shutil.which('@PYTHON@')))
+
 os.environ['OPENMODELICALIBRARY']=PJ(
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
 	,CYG(omlibp)
@@ -68,14 +70,14 @@ prepend(libp,'LD_LIBRARY_PATH')
 if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
 	prepend(resp,'PATH')
-	prepend('/mingw64','PYTHONHOME')
-	print("PYTHONHOME=",os.environ['PYTHONHOME'])
+	#prepend(CYG('/mingw64'),'PYTHONHOME')
+	print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
 	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:
-		print(v,"=",os.environ[v])
+		print(v,"=",os.environ.get(v))
 
-cmds = ['env','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
+cmds = ['env','python','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
 
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("'st' is a helper script for running SolarTherm tools. It should be")
@@ -106,21 +108,23 @@ if sys.argv[1] == 'env':
 		
 	shargs += ['--norc']
 	os.environ['SOLARTHERM_SHELL'] = '1'
-	call = ['bash'] + shargs + sys.argv[2:]
+	call = ['bash'] + shargs
 
 else:
 	# TODO, we may be able to gradually migrate to st_simulate etc not being installed
 	# in the path. 
-
-	scr = 'st_%s'%(sys.argv[1])
-	if platform.system() == "Windows":
-		call = ["@PYTHON@",os.path.join(instp,"bin",scr)]
+	if sys.argv[1] == 'python':
+		call = [PYEXE]
 	else:
-		call = [scr]
+		scr = 'st_%s'%(sys.argv[1])
+		if platform.system() == "Windows":
+			call = [PYEXE,os.path.join(instp,"bin",scr)]
+		else:
+			call = [scr]
 
-	if os.environ.get('VERBOSE'):
-		print("CALL =",call)
-		print("ARGS =",sys.argv[2:])
+if os.environ.get('VERBOSE'):
+	print("CALL =",call)
+	print("ARGS =",sys.argv[2:])
 
 res = subprocess.call(call + sys.argv[2:])
 sys.exit(res)

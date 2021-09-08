@@ -33,3 +33,4 @@ results.txt
 Test_SolsticeOELT
 Test_SolsticePyFunc
 __pycache__
+*.exe
