@@ -65,10 +65,10 @@ if platform.system()=="Windows":
 else:
 	env = Environment(variables=vars)
 
-print("os.environ['PATH']=",os.environ.get('PATH'))
-print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
-print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
-print("env['ENV']['PATH']=",env['ENV'].get('PATH'))
+#print("os.environ['PATH']=",os.environ.get('PATH'))
+#print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
+#print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
+#print("env['ENV']['PATH']=",env['ENV'].get('PATH'))
 
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {

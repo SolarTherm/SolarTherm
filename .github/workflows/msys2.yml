@@ -57,27 +57,18 @@ jobs:
     - name: Build SolarTherm
       run: |
         export PATH=$PATH:~/.local/bin
-        echo "PKGCONFIG PACKAGES"
-        pkg-config --list-all
-        echo "WHICH PKG-CONFIG?" `which pkg-config`
-        echo "WHICH PKGCONF?" `which pkgconf`
-        echo "-----------------------------------------"
-        echo "~/.LOCAL/BIN"
-        ls -la ~/.local/bin
-        echo "-----------------------------------------"
-        echo "currently, PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-        echo "currently, PATH=$PATH"
-        echo "-----------------------------------------"
-        echo "PKG-CONFIG FOR python..."
-        pkg-config python-3.9-embed --libs --cflags
-        echo "-----------------------------------------"
         scons
 
+    - name: Install SolarTherm
+      run: |
+        export PATH=$PATH:~/.local/bin
+        scons install
+        
     - name: Run SolarTherm tests
       run: |
         export PATH=$PATH:~/.local/bin
         st env
         cd tests
-        python3 TestCatromOE.py
+        python TestCatromOE.py
         
 # vim: ts=2:sw=2:et

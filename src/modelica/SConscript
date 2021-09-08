@@ -15,9 +15,8 @@ lib1 = senv.SharedLibrary('st_tables',[
 
 penv = senv.Clone()
 
-print("WHEREIS PKGCONFIG?",penv.WhereIs('pkg-config'))
-
-print("PKG_CONFIG_PATH =",penv['ENV'].get('PKF_CONFIG_PATH',"[--empty--]"))
+#print("WHEREIS PKGCONFIG?",penv.WhereIs('pkg-config'))
+#print("PKG_CONFIG_PATH =",penv['ENV'].get('PKF_CONFIG_PATH',"[--empty--]"))
 
 penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
 
