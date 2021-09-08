@@ -57,22 +57,18 @@ vars.AddVariables(
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 )
 
-
-env = Environment(variables=vars)
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['mingw'])
+	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+		if v in os.environ:
+			env['ENV'][v] = os.environ[v]
+else:
+	env = Environment(variables=vars)
 
 print("os.environ['PATH']=",os.environ.get('PATH'))
 print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
 print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
-
-# copy some needed environment variables from the environment
-if platform.system() == "Windows":
-	for v in ['PKG_CONFIG_PATH','PATH']:
-		if v in os.environ:
-			env['ENV'][v] = os.environ[v]
-
-
-print("again, env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
-
+print("env['ENV']['PATH']=",env['ENV'].get('PATH'))
 
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {
