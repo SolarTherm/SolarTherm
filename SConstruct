@@ -58,7 +58,7 @@ vars.AddVariables(
 )
 
 if platform.system()=="Windows":
-	env = Environment(variables=vars,tools=['mingw'])
+	env = Environment(variables=vars,tools=['mingw','default'])
 	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
 		if v in os.environ:
 			env['ENV'][v] = os.environ[v]
