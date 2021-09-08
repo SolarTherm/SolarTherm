@@ -16,9 +16,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        python-version: [3.8] 
-        #[3.7, 3.8, 3.9]
 
     defaults:
       run:
@@ -36,6 +33,7 @@ jobs:
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-binutils
           mingw-w64-x86_64-hdf5
+          mingw-w64-x86_64-pkgconf
           mingw-w64-x86_64-python
           mingw-w64-x86_64-python-pip
           mingw-w64-x86_64-python-wheel
@@ -56,6 +54,7 @@ jobs:
 
     - name: Build SolarTherm
       run: |
+        export PATH=~/.local/bin:$PATH
         echo "currently, PATH=$PATH"
         scons
 
