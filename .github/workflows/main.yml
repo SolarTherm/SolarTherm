@@ -84,12 +84,12 @@ jobs:
         export PATH=~/.local/bin:$PATH
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         echo "-------DYMAT-----"
-        python3 -c "import DyMat; print(DyMat.__version__)"
+        python -c "import DyMat; print(DyMat.__version__)"
         echo "-------st env-----"
         st env
         env
         echo "-------DYMAT-----"
-        python3 -c "import DyMat; print(DyMat.__version__)"
+        python -c "import DyMat; print(DyMat.__version__)"
         echo "-------testing...-----"
         cd tests
         python TestXMLParameter_st_simulate.py
