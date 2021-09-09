@@ -86,7 +86,7 @@ jobs:
         st env
         env
         cd tests
-        #python3 TestSolsticePyFunc.py
-        nosetests
+        python3 TestXMLParameter_st_simulate.py
+        #nosetests
         
 # vim: ts=2:sw=2:et
