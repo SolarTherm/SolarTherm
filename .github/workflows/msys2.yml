@@ -66,9 +66,13 @@ jobs:
         
     - name: Run SolarTherm tests
       run: |
+        echo "--------------setting path----------"
         export PATH=$PATH:~/.local/bin
+        echo "--------------starting st env shell----------"
         VERBOSE=1 st env
+        echo "--------------cd tests----------"
         cd tests
+        echo "--------------python TestCatromOE.py----------"
         python TestCatromOE.py
         
 # vim: ts=2:sw=2:et
