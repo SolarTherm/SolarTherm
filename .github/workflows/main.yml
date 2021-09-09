@@ -34,10 +34,10 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        sudo python -m pip install --upgrade pip
-        sudo python -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop nose solsticepy
+        python -m pip install --upgrade pip
+        python -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop nose solsticepy
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
+        python -c "import DyMat; print(DyMat.__version__)"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -83,6 +83,11 @@ jobs:
       run: |
         export PATH=~/.local/bin:$PATH
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+        echo "---- PATHS ----"
+        echo "PATH=$PATH"
+        echo "PYTHONPATH=$PYTHONPATH"
+        echo "---- env ----"
+        env
         echo "-------DYMAT-----"
         python -c "import DyMat; print(DyMat.__version__)"
         echo "-------st env-----"
