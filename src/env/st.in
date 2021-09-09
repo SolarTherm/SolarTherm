@@ -110,7 +110,7 @@ if sys.argv[1] == 'env':
 		print("Entering st env")
 		print("PATH=",os.environ.get('PATH'))
 		print("LD_LIBBRAY_PATH=",os.environ.get('LD_LIBRARY_PATH'))
-
+		print("which bash?",shutil.which('bash'))
 	shargs += ['--norc']
 	os.environ['SOLARTHERM_SHELL'] = '1'
 	call = ['bash'] + shargs
