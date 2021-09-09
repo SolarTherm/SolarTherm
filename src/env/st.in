@@ -105,7 +105,12 @@ if sys.argv[1] == 'env':
 		# otherwise just add at the start
 		ps1 = 'st> ' + ps1
 	os.environ['PS1'] = ps1
-		
+	
+	if os.environ.get('VERBOSE'):
+		print("Entering st env")
+		print("PATH=",os.environ.get('PATH'))
+		print("LD_LIBBRAY_PATH=",os.environ.get('LD_LIBRARY_PATH'))
+
 	shargs += ['--norc']
 	os.environ['SOLARTHERM_SHELL'] = '1'
 	call = ['bash'] + shargs
