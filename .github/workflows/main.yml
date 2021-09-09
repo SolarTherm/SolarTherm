@@ -79,6 +79,18 @@ jobs:
       run: |
         scons install
 
+    - name: Run SolarTherm test 0
+      run: |
+        export PATH=~/.local/bin:$PATH
+        cd tests
+        VERBOSE=1 st python TestSteeredCL.py
+
+    - name: Run SolarTherm TestStEnv
+      run: |
+        export PATH=~/.local/bin:$PATH
+        cd tests
+        nosetests TestStEnv
+
     - name: Run SolarTherm test 1
       run: |
         export PATH=~/.local/bin:$PATH

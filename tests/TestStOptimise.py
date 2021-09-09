@@ -251,6 +251,8 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(front))
 		cleantest.clean('TestStOptimise')
 	'''
+
+        @unittest.skip
 	def test_dakota_moga(self):
 		# first check that we have 'dakota' in our PATH...
 		cmd = "where" if platform.system() == "Windows" else "which"
@@ -290,6 +292,7 @@ class TestStOptimise(unittest.TestCase):
 		os.system('rm -rf test_moga')
 		map(os.unlink, glob.glob(figfile))	
 
+        @unittest.skip
 	def test_dakota_soga(self):
 		# first check that we have 'dakota' in our PATH...
 		cmd = "where" if platform.system() == "Windows" else "which"
