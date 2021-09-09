@@ -86,15 +86,17 @@ jobs:
         echo "---- PATHS ----"
         echo "PATH=$PATH"
         echo "PYTHONPATH=$PYTHONPATH"
-        echo "---- env ----"
-        env
-        echo "-------DYMAT-----"
-        python -c "import DyMat; print(DyMat.__version__)"
+        #echo "---- env ----"
+        #env
+        #echo "-------DYMAT-----"
+        #python -c "import DyMat; print(DyMat.__version__)"
         echo "-------st env-----"
         VERBOSE=1 st env
-        env
+        #env
         echo "-------DYMAT-----"
         python -c "import DyMat; print(DyMat.__version__)"
+        echo "------- sys.path -----"
+        python -c "import sys; print(sys.path)"
         echo "-------testing...-----"
         cd tests
         VERBOSE=1 python TestXMLParameter_st_simulate.py
