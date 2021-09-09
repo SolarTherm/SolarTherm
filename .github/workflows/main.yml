@@ -79,6 +79,25 @@ jobs:
       run: |
         scons install
 
+    - name: Run SolarTherm test 1
+      run: |
+        export PATH=~/.local/bin:$PATH
+        cd tests
+        VERBOSE=1 st python TestXMLParameter.py
+
+    - name: Run SolarTherm test 2
+      run: |
+        export PATH=~/.local/bin:$PATH
+        cd tests
+        VERBOSE=1 st python TestXMLParameter_st_simulate.py
+
+    - name: Run SolarTherm test 3
+      run: |
+        export PATH=~/.local/bin:$PATH
+        cd tests
+        VERBOSE=1 st env
+        python TestXMLParameter_st_simulate.py
+
     - name: Run SolarTherm tests
       run: |
         export PATH=~/.local/bin:$PATH
