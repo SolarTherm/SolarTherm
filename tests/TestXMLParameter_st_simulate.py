@@ -5,7 +5,7 @@ import unittest
 
 from solartherm import simulation
 from solartherm import postproc
-import os
+import os, subprocess
 import DyMat
 import xml.etree.ElementTree as ET
 import xml
@@ -42,7 +42,7 @@ class TestXMLparameter(unittest.TestCase):
 		#xml_fn2='./Reference_2_init.xml'
 		self.sm=2.8
 		self.t_storage=9
-		os.system('st_simulate %s SM=%s t_storage=%s'%(fn,self.sm, self.t_storage))
+		subprocess.check_call(['st_simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)])
 		self.mat=DyMat.DyMatFile(res_fn)
 		self.pxml=ProcesXML(xml_fn)
 		#self.pxml2=ProcesXML(xml_fn2)
