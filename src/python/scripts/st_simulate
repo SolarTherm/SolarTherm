@@ -1,7 +1,10 @@
 #! /bin/env python
 from __future__ import division, print_function,unicode_literals
+import os, sys
+if os.environ.get('VERBOSE'):
+	print("***in st_simulate, SYS.PATH =",sys.path)
+
 import argparse
-import os
 import itertools
 import multiprocessing as mp
 from functools import partial
