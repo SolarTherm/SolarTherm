@@ -89,7 +89,7 @@ jobs:
       run: |
         export PATH=~/.local/bin:$PATH
         cd tests
-        nosetests TestStEnv
+        nosetests TestStEnv TestXMLParameter
 
     - name: Run SolarTherm test 1
       run: |
@@ -97,40 +97,47 @@ jobs:
         cd tests
         VERBOSE=1 st python TestXMLParameter.py
 
-    - name: Run SolarTherm test 2
-      run: |
-        export PATH=~/.local/bin:$PATH
-        cd tests
-        VERBOSE=1 st python TestXMLParameter_st_simulate.py
-
     - name: Run SolarTherm test 3
       run: |
         export PATH=~/.local/bin:$PATH
         cd tests
         VERBOSE=1 st env
-        python TestXMLParameter_st_simulate.py
+        python -m nose
 
-    - name: Run SolarTherm tests
-      run: |
-        export PATH=~/.local/bin:$PATH
-        export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
-        echo "---- PATHS ----"
-        echo "PATH=$PATH"
-        echo "PYTHONPATH=$PYTHONPATH"
-        #echo "---- env ----"
-        #env
-        #echo "-------DYMAT-----"
-        #python -c "import DyMat; print(DyMat.__version__)"
-        echo "-------st env-----"
-        STBASHRC=1 VERBOSE=1 st env
-        #env
-        echo "-------DYMAT-----"
-        python -c "import DyMat; print(DyMat.__version__)"
-        echo "------- sys.path -----"
-        python -c "import sys; print(sys.path)"
-        echo "-------testing...-----"
-        cd tests
-        VERBOSE=1 python TestXMLParameter_st_simulate.py
-        #nosetests
+#    - name: Run SolarTherm test 2
+#      run: |
+#        export PATH=~/.local/bin:$PATH
+#        cd tests
+#        VERBOSE=1 st python TestXMLParameter_st_simulate.py
+#
+#    - name: Run SolarTherm test 3
+#      run: |
+#        export PATH=~/.local/bin:$PATH
+#        cd tests
+#        VERBOSE=1 st env
+#        python TestXMLParameter_st_simulate.py
+#
+#    - name: Run SolarTherm tests
+#      run: |
+#        export PATH=~/.local/bin:$PATH
+#        export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+#        echo "---- PATHS ----"
+#        echo "PATH=$PATH"
+#        echo "PYTHONPATH=$PYTHONPATH"
+#        #echo "---- env ----"
+#        #env
+#        #echo "-------DYMAT-----"
+#        #python -c "import DyMat; print(DyMat.__version__)"
+#        echo "-------st env-----"
+#        STBASHRC=1 VERBOSE=1 st env
+#        #env
+#        echo "-------DYMAT-----"
+#        python -c "import DyMat; print(DyMat.__version__)"
+#        echo "------- sys.path -----"
+#        python -c "import sys; print(sys.path)"
+#        echo "-------testing...-----"
+#        cd tests
+#        VERBOSE=1 python TestXMLParameter_st_simulate.py
+#        #nosetests
         
 # vim: ts=2:sw=2:et
