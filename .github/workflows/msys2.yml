@@ -63,8 +63,15 @@ jobs:
       run: |
         export PATH=$PATH:~/.local/bin
         scons install
+
+    - name: Run SolarTherm tests 1
+      run: |
+        echo "--------------setting path----------"
+        export PATH=$PATH:~/.local/bin
+        cd tests
+        st python -m nose
         
-    - name: Run SolarTherm tests
+    - name: Run SolarTherm tests 2
       run: |
         echo "--------------setting path----------"
         export PATH=$PATH:~/.local/bin
