@@ -97,7 +97,7 @@ jobs:
         python -c "import DyMat; print(DyMat.__version__)"
         echo "-------testing...-----"
         cd tests
-        python TestXMLParameter_st_simulate.py
+        VERBOSE=1 python TestXMLParameter_st_simulate.py
         #nosetests
         
 # vim: ts=2:sw=2:et
