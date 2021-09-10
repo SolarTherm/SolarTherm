@@ -70,7 +70,7 @@ jobs:
         echo "--------------setting path----------"
         export PATH=$PATH:~/.local/bin
         cd tests
-        st python -m pytest
+        st python -m pytest --color=yes
 
 #    - name: Run SolarTherm tests 2
 #      run: |
