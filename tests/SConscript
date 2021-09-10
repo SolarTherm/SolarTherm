@@ -1,5 +1,13 @@
 Import('env')
 
+tenv = env.Clone()
+tenv.Append(
+	CPPPATH = ['#/src/modelica/']
+	,LIBPATH = ['#/src/modelica/']
+)
+
+tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
+
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])
 
@@ -11,7 +19,6 @@ penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
 lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
 
 lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
-
 
 # the file needs to be in tests/Resources/Library for OM to find it
 env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
