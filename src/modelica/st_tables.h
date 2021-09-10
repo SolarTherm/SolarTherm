@@ -9,7 +9,6 @@
 # define ST_EXPORT __declspec(dllimport)
 #endif
 
-
 ST_EXPORT void *st_table_init(size_t nr, size_t nc);
 ST_EXPORT void *st_table_init_csv(const char *fn, const char *delim);
 //void *st_table_init_sym(const char *fn, const char *delim, size_t n, size_t m,

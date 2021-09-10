@@ -1,12 +1,21 @@
 #! /bin/env python
 
 from __future__ import division
-import unittest, os, glob
+import unittest, os, glob, platform
 
 import cleantest
 
 from solartherm import simulation
 from solartherm import postproc
+
+class TestTrySTTable(unittest.TestCase):
+	def test_run(self):
+		import subprocess, shutil
+		exe = shutil.which('trysttable')
+		env = None
+		if platform.system()=="Linux":
+			env = dict(os.environ,{LD_LIBRARY_PATH:'../src/modelica'})
+		subprocess.run([exe],check=True,env=env)
 
 class TestSTTable(unittest.TestCase):
 	def setUp(self):

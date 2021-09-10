@@ -70,7 +70,7 @@ prepend(libp,'LD_LIBRARY_PATH')
 if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
 	prepend(resp,'PATH')
-	#prepend(CYG('/mingw64'),'PYTHONHOME')
+	prepend(CYG('/mingw64'),'PYTHONHOME')
 	print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
