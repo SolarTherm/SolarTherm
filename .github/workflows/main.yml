@@ -83,7 +83,7 @@ jobs:
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         cd tests
         VERBOSE=1 st env
-        python -m pytest
+        python -m pytest --color=yes
 
 #    - name: Run SolarTherm test 2
 #      run: |
