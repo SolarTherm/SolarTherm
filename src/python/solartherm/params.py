@@ -452,9 +452,9 @@ def export_values_to_excel(filename, tree, inputxml=None):
 	sheet['K2']='Source'
 		
 	names=tree.children.keys()
-	length=len(names)
-
-	for i in range(length):
+	i=0
+	
+	for name in names:
 
 		name=names[i]
 		value=tree.get(name+'.nominal')
@@ -473,7 +473,8 @@ def export_values_to_excel(filename, tree, inputxml=None):
 		sheet[value_cell]=value
 		sheet[unit_cell]=unit
 		sheet[description_cell]=description
-		sheet[info_cell]='exported from xml file : %s'%inputxml	
+		sheet[info_cell]='exported from xml file : %s'%inputxml
+		i+=1	
 
 	book.save(filename)
 
