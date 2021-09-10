@@ -42,7 +42,7 @@ class TestXMLparameter(unittest.TestCase):
 		#xml_fn2='./Reference_2_init.xml'
 		self.sm=2.8
 		self.t_storage=9
-		subprocess.check_call(['st_simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)])
+		subprocess.run(['st','simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)],shell=True,check=True)
 		self.mat=DyMat.DyMatFile(res_fn)
 		self.pxml=ProcesXML(xml_fn)
 		#self.pxml2=ProcesXML(xml_fn2)
