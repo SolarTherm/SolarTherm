@@ -3,10 +3,14 @@
 
 #include <stddef.h>
 
-#ifdef ST_ISDLL
-# define ST_EXPORT __declspec(dllexport)
-#else
-# define ST_EXPORT __declspec(dllimport)
+#ifdef __linux__
+# define ST_EXPORT
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
+# ifdef ST_ISDLL
+#  define ST_EXPORT __declspec(dllexport)
+# else
+#  define ST_EXPORT __declspec(dllimport)
+# endif
 #endif
 
 ST_EXPORT void *st_table_init(size_t nr, size_t nc);

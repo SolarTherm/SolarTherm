@@ -11,10 +11,11 @@ from solartherm import postproc
 class TestTrySTTable(unittest.TestCase):
 	def test_run(self):
 		import subprocess, shutil
-		exe = shutil.which('trysttable')
+		exe = './trysttable'
 		env = None
 		if platform.system()=="Linux":
-			env = dict(os.environ,{LD_LIBRARY_PATH:'../src/modelica'})
+			env = os.environ
+			env['LD_LIBRARY_PATH']='../src/modelica'
 		subprocess.run([exe],check=True,env=env)
 
 class TestSTTable(unittest.TestCase):

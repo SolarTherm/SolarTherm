@@ -3,8 +3,8 @@ Import('env')
 senv = env.Clone()
 senv.Append(
 	CPPPATH = ['$OM_CPPPATH']
-	,LIBS = env['OM_LIBS']
 	,LIBPATH = ['$OM_LIBPATH']
+	,LIBS = ['m'] + env['OM_LIBS']
 )
 
 lib1 = senv.SharedLibrary('st_tables',[

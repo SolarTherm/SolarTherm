@@ -8,6 +8,13 @@
 
 #define ST_ISDLL
 #include "st_tables.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+void ModelicaError(const char *str){
+	fprintf(stderr,"ERROR: %s\n",str);
+	exit(1);
+}
 
 void *st_table_init(size_t nr, size_t nc)
 {
