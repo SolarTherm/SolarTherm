@@ -43,8 +43,8 @@ class TestStOptimise(unittest.TestCase):
 			content= f.read().splitlines()
 		f.close()
 
-		params=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", content[0])
-		objs=re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", content[1])
+		params=re.findall(r"[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", content[0])
+		objs=re.findall(r"[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", content[1])
 		obj=float(objs[0])
 		x=float(params[0])
 		y=float(params[1])
@@ -56,7 +56,8 @@ class TestStOptimise(unittest.TestCase):
 		y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 		return y
 		
-	'''
+
+	@unittest.skip
 	def test_pso(self):
 		
 		outfile='TestStOptimise_pso_results.txt'
@@ -78,6 +79,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))
 		cleantest.clean('TestStOptimise')
 
+	@unittest.skip
 	def test_cma(self):
 		
 		outfile='TestStOptimise_cma_results.txt'
@@ -100,7 +102,7 @@ class TestStOptimise(unittest.TestCase):
 		os.system('rm -r outcmaes')	
 		cleantest.clean('TestStOptimise')
 
-
+	@unittest.skip
 	def test_ga1(self):
 		
 		outfile='TestStOptimise_ga1_results.txt'
@@ -126,6 +128,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(u'TestStOptimise.o'))
 		map(os.unlink, glob.glob(u'TestStOptimise.makefile'))
 
+	@unittest.skip
 	def test_ga2(self):
 		
 		outfile='TestStOptimise_ga2_results.txt'
@@ -147,6 +150,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))	
 		cleantest.clean('TestStOptimise')
 
+	@unittest.skip
 	def test_Nelder(self):
 		
 		outfile='TestStOptimise_Nelder-Mead_results.txt'
@@ -168,6 +172,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))	
 		cleantest.clean('TestStOptimise')
 
+	@unittest.skip
 	def test_COBYLA(self):
 		
 		outfile='TestStOptimise_Nelder-Mead_results.txt'
@@ -189,6 +194,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))	
 		cleantest.clean('TestStOptimise')
 
+	@unittest.skip
 	def test_SLSQP(self):
 		
 		outfile='TestStOptimise_SLSQP_results.txt'
@@ -211,7 +217,7 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(outfile))	
 		cleantest.clean('TestStOptimise')
 
-
+	@unittest.skip
 	def test_nsga2(self):
 		
 		outfile='TestStOptimise_nsga2_results.txt'
@@ -250,7 +256,6 @@ class TestStOptimise(unittest.TestCase):
 		map(os.unlink, glob.glob(figfile))
 		map(os.unlink, glob.glob(front))
 		cleantest.clean('TestStOptimise')
-	'''
 
 	@unittest.skip
 	def test_dakota_moga(self):
