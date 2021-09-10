@@ -54,11 +54,9 @@ jobs:
 
     - name: Install Solstice
       run: |
-        wget https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz
-        tar zxf Solstice-0.9.0-GNU-Linux64.tar.gz
         mkdir -p ~/.local
-        cp -R Solstice-0.9.0-GNU-Linux64/* ~/.local
-        
+        tar zxv --strip-components=1 -C ~/.local < <(wget "https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz" -q -O-)
+
 #    - name: Download DAKOTA
 #      uses: actions/download-artifact@v2
 #      with:
@@ -82,6 +80,7 @@ jobs:
     - name: Run SolarTherm pytest
       run: |
         export PATH=~/.local/bin:$PATH
+        export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         cd tests
         VERBOSE=1 st env
         python -m pytest
