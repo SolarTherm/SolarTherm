@@ -47,7 +47,7 @@ os.environ['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 omlibp = os.path.join(instp,"lib","omlibrary")
 
-PYEXE = CYG(os.path.normpath(shutil.which('@PYTHON@')))
+#PYEXE = CYG(os.path.normpath(shutil.which('@PYTHON@')))
 
 os.environ['OPENMODELICALIBRARY']=PJ(
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
@@ -118,17 +118,11 @@ if sys.argv[1] == 'env':
 	os.environ['SOLARTHERM_SHELL'] = '1'
 	call = ['bash'] + shargs
 
+elif sys.argv[1] == 'python':
+	call = [sys.executable]
 else:
-	# TODO, we may be able to gradually migrate to st_simulate etc not being installed
-	# in the path. 
-	if sys.argv[1] == 'python':
-		call = [PYEXE]
-	else:
-		scr = 'st_%s'%(sys.argv[1])
-		if platform.system() == "Windows":
-			call = [PYEXE,os.path.join(instp,"bin",scr)]
-		else:
-			call = [scr]
+	scr = 'st_%s'%(sys.argv[1])
+	call = [sys.executable,os.path.join(instp,"bin",scr)]
 
 if os.environ.get('VERBOSE'):
 	print("CALL =",call)

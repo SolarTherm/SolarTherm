@@ -64,6 +64,11 @@ class TestStEnv(unittest.TestCase):
 		res = subprocess.run(['st','python'],input="print(undefinedxxx)\n",capture_output=True,encoding="utf-8")
 		assert res.returncode != 0
 
+	def test_st_python_add(self):
+		res = subprocess.run(['st','python','-c','print(2+2)'],capture_output=True,encoding="utf-8")
+		assert res.returncode == 0
+		assert int(res.stdout.strip()) == 4
+
 	def test_DyMat(self):
 		import DyMat
 
@@ -90,13 +95,12 @@ class TestStEnv(unittest.TestCase):
 		out = subprocess.check_output(['st','python','-c','import DyMat;print(DyMat.__version__)'],encoding="utf-8")
 		assert v == out.strip()
 
-	@unittest.skip("this test is still a mystery")
 	def test_st_python(self):
 		import sys, os
 		print("sys.path=",sys.path)
 		l = len(sys.path)
 		print("l=",l)
-		res = subprocess.run(['python3','-c','import sys;print(sys.path)'],capture_output=True,encoding="utf-8",env=os.environ.copy())
+		res = subprocess.run([sys.executable,'-c','import sys;print(len(sys.path))'],capture_output=True,encoding="utf-8",env=os.environ.copy())
 		print("OUTPUT=",res.stdout)
 		assert l == int(res.stdout)
 		assert res.returncode == 0
