@@ -83,6 +83,7 @@ jobs:
         export PATH=~/.local/bin:$PATH
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         cd tests
+        #st python -m pytest test_python_env.py test_stenv.py test_solstice.py
         st python -m pytest test_python_env.py test_stenv.py test_solstice.py
 
 #    - name: Run SolarTherm test 2
