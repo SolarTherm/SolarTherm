@@ -103,15 +103,19 @@ class TestStEnv(unittest.TestCase):
 		assert v == out.strip()
 
 	def test_st_python(self):
-		"""Check that our sys.path is the same as the sys.path of Python in a subprocess."""
+		"""Check that our sys.path is 'the same as' the sys.path of Python in a subprocess."""
 		import sys, os
+		from pathlib import Path
+		def pr(p):
+			return Path(p).resolve()
 		print("sys.path=",sys.path)
-		l = len(sys.path)
-		print("l=",l)
-		res = subprocess.run([sys.executable,'-c','import sys;print(len(sys.path))'],capture_output=True,encoding="utf-8",env=os.environ.copy())
+		l = sys.path
+		p = set(map(pr,l))
+		res = subprocess.run([sys.executable,'-c','import sys;print(sys.path)'],capture_output=True,encoding="utf-8",env=os.environ.copy())
 		assert res.returncode == 0
 		l1 = eval(res.stdout.strip())
-		assert l == l1
+		p1 = set(map(pr,l1))
+		assert p1 == p
 		#assert l == int(res.stdout)
 
 
