@@ -62,7 +62,10 @@ class TestStEnv(unittest.TestCase):
 
 	@unittest.skipIf(os.environ.get('SOLARTHERM_SHELL'),"already inside 'st env'")
 	def test_st_env_basherror(self):
-		res = subprocess.run(self.st+['env'],input="exit 25",capture_output=True,encoding="utf-8")
+		print("PATH =",os.environ.get('PATH'))
+		call = self.st+['env']
+		print("CALL =",call)
+		res = subprocess.run(call,input="exit 25",capture_output=True,encoding="utf-8")
 		print("stdout=",res.stdout)
 		print("stderr=",res.stderr)
 		assert res.returncode == 25
