@@ -1,8 +1,9 @@
 import unittest, os
 from pathlib import Path
-import subprocess, platform, shutil
+import subprocess, platform, shutil, sys
 
 def test_solstice_version():
+	print("SYS.PATH =",sys.path)
 	import solsticepy
 	s = solsticepy.find_prog('solstice')
 	assert s
