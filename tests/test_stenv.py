@@ -55,24 +55,20 @@ class TestStEnv(unittest.TestCase):
 		
 	@unittest.skipIf(os.environ.get('SOLARTHERM_SHELL'),"already inside 'st env'")
 	def test_st_env_exit(self):
-		res = subprocess.run(self.st+['env'],input="exit\n",capture_output=True,encoding="utf-8")
+		res = subprocess.run(self.st+['env'],input="exit",capture_output=True,encoding="utf-8")
 		print("stdout=",res.stdout)
 		print("stderr=",res.stderr)
 		assert res.returncode == 0
 
 	@unittest.skipIf(os.environ.get('SOLARTHERM_SHELL'),"already inside 'st env'")
 	def test_st_env_basherror(self):
-		res = subprocess.run(self.st+['env'],input="exit 25\n",capture_output=True,encoding="utf-8")
+		res = subprocess.run(self.st+['env'],input="exit 25",capture_output=True,encoding="utf-8")
 		print("stdout=",res.stdout)
 		print("stderr=",res.stderr)
 		assert res.returncode == 25
 
-	def test_st_python_exit(self):
-		res = subprocess.run(['st','python'],input="exit\n",capture_output=True,encoding="utf-8")
-		assert res.returncode == 0
-
-	def test_st_python_exit(self):
-		res = subprocess.run(self.st + ['python'],input="print(undefinedxxx)\n",capture_output=True,encoding="utf-8")
+	def test_st_python_undef(self):
+		res = subprocess.run(self.st + ['python'],input="print(undefinedxxx)",capture_output=True,encoding="utf-8")
 		assert res.returncode != 0
 
 	def test_st_python_add(self):
@@ -87,13 +83,13 @@ class TestStEnv(unittest.TestCase):
 		import DyMat,sys
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit\n",encoding="utf-8")
+		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
 
 	def test_st_DyMat(self):
 		import DyMat,sys
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit\n",encoding="utf-8")
+		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
 		#print("stdout=",res.stdout)
 		#print("stderr=",res.stderr)
 		#print("ret=",res.returncode)
@@ -107,14 +103,16 @@ class TestStEnv(unittest.TestCase):
 		assert v == out.strip()
 
 	def test_st_python(self):
+		"""Check that our sys.path is the same as the sys.path of Python in a subprocess."""
 		import sys, os
 		print("sys.path=",sys.path)
 		l = len(sys.path)
 		print("l=",l)
 		res = subprocess.run([sys.executable,'-c','import sys;print(len(sys.path))'],capture_output=True,encoding="utf-8",env=os.environ.copy())
-		print("OUTPUT=",res.stdout)
-		#assert l == int(res.stdout)
 		assert res.returncode == 0
+		l1 = eval(res.stdout.strip())
+		assert l == l1
+		#assert l == int(res.stdout)
 
 
 
