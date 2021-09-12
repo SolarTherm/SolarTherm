@@ -23,7 +23,7 @@ jobs:
 
     env:
       DAKVER: 6.14.0
-      PY_FORCE_COLOR: 1
+      PYTEST_ADDOPTS: --color=yes
 
     steps:
     - uses: actions/checkout@v2
