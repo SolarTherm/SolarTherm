@@ -71,7 +71,7 @@ if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
 	prepend(resp,'PATH')
 	prepend(CYG('/mingw64'),'PYTHONHOME')
-	print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
+	#print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
 	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:
@@ -128,7 +128,11 @@ if os.environ.get('VERBOSE'):
 	print("CALL =",call)
 	print("ARGS =",sys.argv[2:])
 
-res = subprocess.call(call + sys.argv[2:])
+try:
+	res = subprocess.call(call + sys.argv[2:])
+except FilenotFoundError as e:
+	raise RuntimeError("File not found running \"%s\""%(" ".join(call+sys.argv[2:]),))
+	
 sys.exit(res)
 
 # vim: ts=4:sw=4:tw=80:noet:syntax=python
