@@ -23,6 +23,7 @@ jobs:
 
     env:
       DAKVER: 6.14.0
+      PY_FORCE_COLOR: 1
 
     steps:
     - uses: actions/checkout@v2
@@ -83,7 +84,7 @@ jobs:
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         cd tests
         VERBOSE=1 st env
-        python -m pytest --color=yes
+        python -m pytest test_python_env.py
 
 #    - name: Run SolarTherm test 2
 #      run: |
