@@ -2,8 +2,8 @@ Solar thermal power station performance simulation and optimisation.
 
 [![Join the chat at https://gitter.im/solartherm/solartherm](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/solartherm/solartherm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![Linux](https://github.com/SolarTherm/solartherm/actions/workflows/main.yaml/badge.svg?branch=master-m)
-![Windows](https://github.com/SolarTherm/solartherm/actions/workflows/msys2.yaml/badge.svg?branch=master-m)
+[![Linux build status](https://github.com/solartherm/solartherm/actions/workflows/main.yml/badge.svg)](https://github.com/SolarTherm/SolarTherm/actions/workflows/main.yml)
+[![Windows build status](https://github.com/solartherm/solartherm/actions/workflows/msys2.yml/badge.svg)](https://github.com/SolarTherm/SolarTherm/actions/workflows/msys2.yml)
 
 [Documentation](http://solartherm.readthedocs.org/en/latest/)
 
