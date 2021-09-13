@@ -22,7 +22,6 @@ jobs:
         include:
           - os: ubuntu-20.04
             python-version: 3.8
-        include:
           - os: ubuntu-18.04
             python-version: 3.6
 
