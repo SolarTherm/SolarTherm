@@ -11,7 +11,16 @@ from __future__ import unicode_literals
 # run 'through' this wrapper script. For example 'st_simulate' becomes 'st simulate'
 # with no underscore.
 
+# A complication with 'st' is that on Windows, we don't recognise the SHEBANG
+# comment at the top of our scripts as a way of telling the shell that this
+# is Python script. For that case, this script sets env var SOLARTHERM_SHELL as 
+# the command that must be used to run this script again in a nested process. We 
+# need that in order to be able to run tools like st_wea_to_mo from inside
+# OpenModelica.
+
 import os, subprocess, sys, platform, re, shutil
+
+NEWENV = dict(os.environ)
 		
 def CYG(path):
 	"""Convert a MSYS path to a native Windows path, where necessary."""
@@ -30,26 +39,26 @@ def PS(val):
 	"""Split a PATH-like variable into a list. FIXME possible escaping?"""
 	return val.split(os.pathsep)
 
-def prepend(path,envvar):
-	pp = os.environ.get(envvar)
+def prepend(newenv,path,envvar):
+	pp = newenv.get(envvar)
 	if pp is not None:
 		path = PJ(path,pp)
-	os.environ[envvar] = path
+	newenv[envvar] = path
 
-def append(path,envvar):
-	pp = os.environ.get(envvar)
+def append(newenv,path,envvar):
+	pp = newenv.get(envvar)
 	if pp is not None:
 		path = PJ(pp,path)
-	os.environ[envvar] = path
+	newenv[envvar] = path
 
 instp = CYG('@PREFIX@')
-os.environ['INSTALL_PREFIX'] = instp
+NEWENV['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 omlibp = os.path.join(instp,"lib","omlibrary")
 
 #PYEXE = CYG(os.path.normpath(shutil.which('@PYTHON@')))
 
-os.environ['OPENMODELICALIBRARY']=PJ(
+NEWENV['OPENMODELICALIBRARY']=PJ(
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
 	,CYG(omlibp)
 	,CYG("/usr/lib/omlibrary")
@@ -62,20 +71,20 @@ os.environ['OPENMODELICALIBRARY']=PJ(
 
 version=sys.version_info[:2]
 pyp = os.path.join(instp,"lib","python{0}.{1}/site-packages".format(*version))
-append(pyp,'PYTHONPATH')
+append(NEWENV,pyp,'PYTHONPATH')
 
 libp = os.path.join(instp,"lib")
-prepend(libp,'LD_LIBRARY_PATH')
+prepend(NEWENV,libp,'LD_LIBRARY_PATH')
 #prepend(libp,'LIBRARY_PATH')
 if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
-	prepend(resp,'PATH')
-	prepend(CYG('/mingw64'),'PYTHONHOME')
+	prepend(NEWENV,resp,'PATH')
+	prepend(NEWENV,CYG('/mingw64'),'PYTHONHOME')
 	#print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
 	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:
-		print(v,"=",os.environ.get(v))
+		print(v,"=",NEWENV.get(v))
 
 cmds = ['env','python','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
 
@@ -91,6 +100,8 @@ if sys.argv[1] not in cmds:
 	print("Invalid sub-command '%s'. Type \"st --help`\" for a list of valid options."%(sys.argv[1]))
 	sys.exit(1)
 
+NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
+
 if sys.argv[1] == 'env':
 	shargs = []
 	if os.environ.get('SOLARTHERM_SHELL'):
@@ -104,18 +115,17 @@ if sys.argv[1] == 'env':
 	else:
 		# otherwise just add at the start
 		ps1 = 'st> ' + ps1
-	os.environ['PS1'] = ps1
+	NEWENV['PS1'] = ps1
 	
 	if os.environ.get('VERBOSE'):
 		print("Entering st env")
-		print("PATH=",os.environ.get('PATH'))
-		print("LD_LIBBRAY_PATH=",os.environ.get('LD_LIBRARY_PATH'))
+		print("PATH=",NEWENV.get('PATH'))
+		print("LD_LIBBRAY_PATH=",NEWENV.get('LD_LIBRARY_PATH'))
 		print("which bash?",shutil.which('bash'))
 
 	if 'STBASHRC' not in os.environ:
 		shargs += ['--norc']
 
-	os.environ['SOLARTHERM_SHELL'] = '1'
 	call = ['bash'] + shargs
 
 elif sys.argv[1] == 'python':
@@ -129,7 +139,7 @@ if os.environ.get('VERBOSE'):
 	print("ARGS =",sys.argv[2:])
 
 try:
-	res = subprocess.call(call + sys.argv[2:])
+	res = subprocess.call(call + sys.argv[2:],env=NEWENV)
 except FilenotFoundError as e:
 	raise RuntimeError("File not found running \"%s\""%(" ".join(call+sys.argv[2:]),))
 	

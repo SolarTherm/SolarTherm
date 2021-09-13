@@ -10,9 +10,28 @@ import DyMat
 import xml.etree.ElementTree as ET
 import xml
 
-class ProcesXML:
-    def __init__(self, xmlfile):
+def ST():
+	# follow the same pattern as in weatherFileChecker.mo..\
+	ST = os.environ.get('SOLARTHERM_SHELL')
+	assert ST
+	import shlex, sys
+	from pathlib import Path
+	st1 = shlex.split(ST)
+	# let's make sure we have what we expect...
+	assert Path(st1[0]) == Path(sys.executable)
+	assert Path(st1[1]) == Path(os.environ.get('HOME'))/".local"/"bin"/"st"
+	return st1
+#	import platform, shutil,sys, os
+#	from pathlib import Path
+#	if platform.system()=="Windows":
+#		st1 = Path(os.environ.get('HOME'))/".local"/"bin"/"st"
+#		assert st1.exists()
+#		return [sys.executable,st1]
+#	else:
+#		return ['st']
 
+class ProcessXML:
+    def __init__(self, xmlfile):
         self.xmlfile=xmlfile
         self.init_et=ET.parse(self.xmlfile) 
         self.root=self.init_et.getroot() 
@@ -22,15 +41,12 @@ class ProcesXML:
         return val
 
     def write_par(self, par_n, par_v, one=True):
-        
         if one:
             self.root.find('*ScalarVariable[@name=\''+par_n+'\']/*[@start]').attrib['start']=par_v
-
         else:
             for i, n in enumerate(par_n):
                 print(i, n, par_v[i])
                 self.root.find('*ScalarVariable[@name=\''+n+'\']/*[@start]').attrib['start']=par_v[i]
-
         self.init_et.write(self.xmlfile)      
 
 
@@ -43,7 +59,8 @@ class TestXMLparameter(unittest.TestCase):
 		self.sm=2.8
 		self.t_storage=9
 		
-		cmd = ['st','simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)]
+		
+		cmd = ST() + ['simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)]
 		print("CMD =",cmd)
 		shell = False
 		if platform.system()=="Windows":
@@ -51,12 +68,10 @@ class TestXMLparameter(unittest.TestCase):
 		subprocess.run(cmd,shell=shell,check=True)
 		
 		self.mat=DyMat.DyMatFile(res_fn)
-		self.pxml=ProcesXML(xml_fn)
-		#self.pxml2=ProcesXML(xml_fn2)
-		
+		self.pxml=ProcessXML(xml_fn)
+		#self.pxml2=ProcessXML(xml_fn2)
 
 	def test_sched(self):
-
 		sm=self.mat.data("SM")
 		st=self.mat.data("t_storage")
 		print('')
