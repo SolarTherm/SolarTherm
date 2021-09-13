@@ -1,15 +1,13 @@
 #! /bin/env python
-
 from __future__ import division
-import unittest
-import cleantest
+import os, platform
+import pytest
 
-from solartherm import simulation
-from solartherm import postproc
-import os
-
+@pytest.mark.skipif(platform.system()=="Windows", reason="strange behaviour with Optimica on MSYS2")
 def test_optimum():
-
+	from solartherm import simulation
+	from solartherm import postproc
+	import cleantest
 	fn = 'TestOptimisation.mo'
 	model = 'AO'
 	sim = simulation.Simulator(fn, model=model)

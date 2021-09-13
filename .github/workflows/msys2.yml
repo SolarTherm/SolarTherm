@@ -52,7 +52,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl
+        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl
 
     - name: Install OpenModelica
       run: |
@@ -91,6 +91,6 @@ jobs:
 #        echo "--------------cd tests----------"
 #        cd tests
 #        echo "--------------python TestCatromOE.py----------"
-#        python TestCatromOE.py
+#        python3 TestCatromOE.py
         
 # vim: ts=2:sw=2:et
