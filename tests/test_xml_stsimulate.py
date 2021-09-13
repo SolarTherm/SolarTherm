@@ -17,7 +17,10 @@ def ST():
 	import shlex, sys
 	from pathlib import Path
 	print("ST =",ST)
-	st1 = shlex.split(ST)
+	if platform.syste()=="Windows":
+		st1 = ST.split(" ")
+	else:
+		st1 = shlex.split(ST)
 	print("st1 =",st1)
 	# let's make sure we have what we expect...
 	assert Path(st1[0]) == Path(sys.executable)
