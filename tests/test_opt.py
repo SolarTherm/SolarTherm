@@ -1,6 +1,6 @@
 #! /bin/env python
 from __future__ import division
-import os
+import os, platform
 import pytest
 
 @pytest.mark.skipif(platform.system()=="Windows", reason="strange behaviour with Optimica on MSYS2")
