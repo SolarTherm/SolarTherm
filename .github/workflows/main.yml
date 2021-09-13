@@ -82,11 +82,11 @@ jobs:
 
     - name: Build SolarTherm
       run: |
+        python3 -c "import setuptools;print('SETUPTOOLS =',setuptools.__version__)"
         scons
 
     - name: Install SolarTherm
       run: |
-        python3 -c "import setuptools;print('SETUPTOOLS =',setuptools.__version__)"
         scons install
 
     - name: Run SolarTherm pytest
