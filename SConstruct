@@ -69,8 +69,8 @@ else:
 import platform
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
-    dist,ver,name = platform.linux_distribution()
-    if dist == 'Ubuntu' and ver == '18.04':
+    import distro
+    if distro.id() == 'ubuntu' and distro.version() == '18.04':
         configcmd = 'python$PYVERSION-config --libs --cflags'
 env['PKGCONFIGPYTHON'] = configcmd
 
