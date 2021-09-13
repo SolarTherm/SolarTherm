@@ -17,7 +17,7 @@ def ST():
 	import shlex, sys
 	from pathlib import Path
 	print("ST =",ST)
-	if platform.syste()=="Windows":
+	if platform.system()=="Windows":
 		st1 = ST.split(" ")
 	else:
 		st1 = shlex.split(ST)
