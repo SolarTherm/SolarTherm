@@ -47,7 +47,7 @@ jobs:
 
     - name: Show Python context
       run: |
-        python3 -m pip freeze
+        python3 -m pip list
 
     - name: Lint with flake8
       run: |
@@ -86,6 +86,7 @@ jobs:
 
     - name: Install SolarTherm
       run: |
+        python3 -c "import setuptools;print('SETUPTOOLS =',setuptools.__version__)"
         scons install
 
     - name: Run SolarTherm pytest
