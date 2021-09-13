@@ -1,11 +1,12 @@
 Import('env')
+import sys
 
 setuppy = env.Substfile('setup.py.in')
 
 pipwheel = env.Command('mytouch','setup.py',[
 		Delete('wheel')
 		,Mkdir('wheel')
-		,'$PYTHON -m pip wheel --wheel-dir=wheel .'
+		,'%s -m pip wheel --wheel-dir=wheel .' % (sys.executable,)
 		,'touch ../mytouch'
 	],chdir=True
 )
@@ -17,7 +18,7 @@ env.Depends(wheel,'solartherm')
 pipinst = env.Command(
 	target = '$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py'
 	,source = wheel
-	,action = ['$PYTHON -m pip install --prefix=$PREFIX --upgrade $SOURCE']
+	,action = ['%s -m pip install --prefix=$PREFIX --upgrade $SOURCE'%(sys.executable,)]
 )
 
 # vim: ts=4:sw=4:noet:tw=80
