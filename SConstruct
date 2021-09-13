@@ -65,6 +65,16 @@ if platform.system()=="Windows":
 else:
 	env = Environment(variables=vars)
 
+# some tricks required for Ubuntu 18.04...
+import platform
+configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
+if platform.system()=="Linux":
+    dist,ver,name = platform.linux_distribution()
+    if dist == 'Ubuntu' and ver == '18.04':
+        configcmd = 'python$PYVERSION-config --libs --cflags'
+env['PKGCONFIGPYTHON'] = configcmd
+
+
 #print("os.environ['PATH']=",os.environ.get('PATH'))
 #print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
 #print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))

@@ -15,10 +15,7 @@ lib1 = senv.SharedLibrary('st_tables',[
 
 penv = senv.Clone()
 
-#print("WHEREIS PKGCONFIG?",penv.WhereIs('pkg-config'))
-#print("PKG_CONFIG_PATH =",penv['ENV'].get('PKF_CONFIG_PATH',"[--empty--]"))
-
-penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
+penv.ParseConfig('$PKGCONFIGPYTHON')
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
@@ -39,4 +36,4 @@ env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 # TODO examine option of placing these things in ~/.openmodelica/binaries ...?
 env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs)
 
-# vim: ts=4:sw=4:noet:tw=80
+# vim: ts=4:sw=4:noet:tw=80:syntax=python
