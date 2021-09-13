@@ -43,6 +43,11 @@ jobs:
         python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
+
+    - name: Show Python context
+      run: |
+        python3 -m pip freeze
+
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
