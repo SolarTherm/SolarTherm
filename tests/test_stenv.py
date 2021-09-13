@@ -44,12 +44,12 @@ class TestStEnv(unittest.TestCase):
 			self.st = ['st']
 
 	def test_st_help(self):
-		res = sp.run(self.st+['--help'],check=True,capture_output=True)
+		res = sp.run(self.st+['--help'],check=True,stdout=sp.PIPE,stderr=sp.PIPE)
 		print("stdout=",res.stdout)
 	
 	def test_st_invalidx(self):
 		try:
-			sp.run(self.st+['invalidx'],check=True,capture_output=True)
+			sp.run(self.st+['invalidx'],check=True,stdout=sp.PIPE,stderr=sp.PIPE)
 		except sp.CalledProcessError as e:
 			return
 		self.fail("Invalid st command was note caught")
