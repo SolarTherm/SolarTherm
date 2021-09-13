@@ -19,7 +19,7 @@ class Contingency:
 		self.var_n_perf=var_n_perf
 		self.var_n_cost=var_n_cost
 		self.get_sample(samplefile, summaryfile=self.casedir+'/summary_all.csv')
-		self.get_front()
+	
 		#self.get_lcoe_contingency(fn='/media/yewang/Software/program/solartherm-contingency/examples/demo_sensitivity'+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
 		#self.plot_cdfs()
 		#self.plot_sensitivity()
@@ -121,8 +121,7 @@ class Contingency:
 			points=np.array([])
 			for i in range(num_par):
 				v=values[i]
-				points=np.append(points, (v-np.min(v))/(np.max(v)-np.min(v)))	
-				
+				points=np.append(points, (v-np.min(v))/(np.max(v)-np.min(v)))		
 			points=np.append(points,  (self.lcoe-np.min(self.lcoe))/(np.max(self.lcoe)-np.min(self.lcoe)))
 			points=points.reshape(num_par+1, self.num_sample) # (3,n)
 			points=points.T # (n, 3)
@@ -171,31 +170,118 @@ class Contingency:
 			raise('\nNot yet available for number of uncertain parameters is larger than 2\nComing in the next stage\n')
 				
 		
-		return indices
+		return indices, f_lcoe
+		
+	def get_assessment(self, indices, f_lcoe, newsample, plot=False):
+		'''
+		Arguments:
+		(1) indices: (n, 3) array, the indices of triangular mesh elements on the convex hull
+		(2) f_lcoe: (n, 1) array, the average lcoe value of each triangular mesh element (center point color)
+		(3) newsample: (n, num_par) array, the new sample of uncertain parameters
+			    n is the number of samples for each parameter
+			    num_par is the number of uncertain parameters
+		Return:
+		(1) the optimal lcoe for each corresponding uncertain parameter
+		(2) the optimal design parameters for each corresponding uncertain parameter
+		'''
+		# the training sample
+		names=self.var_n_perf+self.var_n_cost
+		values=self.var_v_perf+self.var_v_cost
+		num_par=len(names)						
+		points=np.vstack((values[0], values[1])) #(2, n)
+		points=points.T #(n, 2)		
 	
+		# the new sample
+		num_des=len(self.var_n_des)
+		num_ns=len(newsample)
+		ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
+		ns_des={} # design of the new sample
+		for i in range(num_des):
+			ns_des[self.var_n_des[i]]=np.zeros(num_ns)
+
+		num_tri=len(indices)
+		for i in range(num_tri):
+
+			A=points[indices[i,0]]
+			B=points[indices[i,1]]
+			C=points[indices[i,2]]
+			
+			idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
+			if np.sum(idx)!=0:
+				ns_lcoe[idx]=(ka*self.lcoe[indices[i,0]]+kb*self.lcoe[indices[i,1]]+kc*self.lcoe[indices[i,2]])/k
+				for i in range(num_des):
+					name=self.var_n_des[i]
+					value=self.var_v_des[i]
+					ns_des[name][idx]=(ka*value[indices[i,0]]+kb*value[indices[i,1]]+kc*value[indices[i,2]])/k
+			#print('tri ', i, np.sum(idx))	
+			
+		idx=(ns_lcoe!=0)
+		if plot:
+			fts=14
+			plt2,ax=plt.subplots()
+			cm = plt.cm.get_cmap('jet')
+			vmax=np.max(self.lcoe[indices])
+			vmin=np.min(self.lcoe[indices])
+			#plt.triplot(values[0], values[1], indices) 
+			plt.tripcolor(values[0], values[1], indices, facecolors=f_lcoe, cmap=cm, vmax=160, vmin=140)  	
+			cs=ax.scatter(values[0][indices], values[1][indices], c=self.lcoe[indices] , cmap=cm,s=60, marker='o',edgecolors='black', vmax=160, vmin=140)			
+			cs=ax.scatter(newsample[idx, 0], newsample[idx, 1], c=ns_lcoe[idx] , cmap=cm,s=80, marker='o',edgecolors='red', vmax=160, vmin=140)	
+
+				
+			clb=plt.colorbar(cs)
+			clb.ax.set_title(' LCOE \n USD/MWh$_\mathrm{e}$',y=1.,fontsize=fts)
+			plt.xlabel(names[0],fontsize=fts)
+			plt.ylabel(names[1],fontsize=fts)
+			plt.xticks(fontsize=fts)
+			plt.yticks(fontsize=fts)
+			clb.ax.tick_params(labelsize=fts)
+			#plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+			#plt.legend(loc='lower left',fontsize=fts)
+			#plt.savefig(open(self.casedir+'/front_lcoe.png','wb'), bbox_inches='tight', dpi=300)
+			plt.show()
+			plt.close()
+	
+		return ns_lcoe, ns_des
+
+			
+					
 	def interp_tri_2d(self, A, B, C, P):
 		'''
-		A, B, C: each is a (3,1) array, e.g. (x, y, z),  they are the verticies of the triangle element
+		Arguments:
+		A, B, C: each is a (2,1) array, e.g. (x, y),  they are the verticies of the triangle element
 		P: P(x, y) the position to be interpolated
-		return zp
+		
+		Return:
+		(1) idx, The idx of point P that is inside this triangle element ABC
+		(2) The coefficients of the interpolation:
+			zp=(ka*za+kb*zb+kc*zc)/k  
 		
 		Method
 		# interpolation by area (simplex interpolation method)
 		# ref: https://www.hpl.hp.com/techreports/2002/HPL-2002-320.pdf
 		'''
+
+		ABC=cal_area_2d(A[:2],B[:2],C[:2])
+		ABP=cal_area_2d(A[:2],B[:2],P)
+		ACP=cal_area_2d(A[:2],C[:2],P)
+		BCP=cal_area_2d(B[:2],C[:2],P)				
+
+		AREA=abs(ABP+ACP+BCP-ABC)
+
+		idx=(AREA<1e-9)
 		
-		ABC=cal_area(A[:2],B[:2],C[:2])
-		ABP=cal_area(A[:2],B[:2],P)
-		ACP=cal_area(A[:2],C[:2],P)
-		BCP=cal_area(B[:2],C[:2],P)
+		'''
+		if np.sum(idx)==0:
+			zp=None
+		else:
+			zp=(A[2]*BCP[idx]+B[2]*ACP[idx]+C[2]*ABP[idx])/ABC
+		'''
+		ka=BCP[idx]
+		kb=ACP[idx]
+		kc=ABP[idx]
+		k=ABC
 		
-		print(ABC==ABP+ACP+BCP)
-		print(ABC)
-		print(ABP+ACP+BCP)
-		
-		zp=(A[2]*BCP+B[2]*ACP+C[2]*ABP)/ABC
-		
-		return zp
+		return idx, ka, kb, kc, k
 		
 	
 	def get_cdf(self, x, num_bins, name, unit, plot=True, savename=None, color='b', base=None):
@@ -548,35 +634,19 @@ def get_bottom_hull(points, indicies):
 
 				if n_low>0:
 					for j in range(num_tri):
-						a=P1[j]
-						b=P2[j]
-						c=P3[j]
+						A=P1[j]
+						B=P2[j]
+						C=P3[j]
 
-						if not (np.array_equal(a,p) or np.array_equal(b,p) or np.array_equal(c,p)):
-						
-							A=np.ones((n_low, 3))
-							A[:,0]=a[0]
-							A[:,1]=a[1]				
-							A[:,2]=a[2]
-							
-							B=np.ones((n_low, 3))
-							B[:,0]=b[0]
-							B[:,1]=b[1]				
-							B[:,2]=b[2]
-							
-							C=np.ones((n_low, 3))
-							C[:,0]=c[0]
-							C[:,1]=c[1]				
-							C[:,2]=c[2]				
-											
+						if not (np.array_equal(A,p) or np.array_equal(B,p) or np.array_equal(C,p)):
+										
 							#if a point P is inside a triangle ABC on the plane of ABC
-							#then APB+APC+BPC=360 deg				
-							area1=cal_area(A, B, pi)
-							area2=cal_area(A, C, pi)
-							area3=cal_area(B, C, pi)
+							#then are APB+APC+BPC=ABC				
+							area1=cal_area_3d(A, B, pi)
+							area2=cal_area_3d(A, C, pi)
+							area3=cal_area_3d(B, C, pi)
 							area=area1+area2+area3
-							area_0=cal_area(A, B, C)
-							
+							area_0=cal_area_3d(A, B, C)
 							#print(np.min(abs(area-area_0)), np.max(abs(area-area_0)))
 							if np.min(abs(area-area_0))<1e-5:
 								#print("point %s/%s is on the plane of tri %s"%(i, t, j))			
@@ -589,24 +659,56 @@ def get_bottom_hull(points, indicies):
 					
 	return norms, idx
     
-def cal_area(A, B, P):
+def cal_area_3d(A, B, C):
 	'''
-	if point P is inside a triangle ABC on the plane of ABC
-	then the area APB+APC+BPC=ABC
-	
-	this is a function to return the area of any three points
+	A, B, C are three points in a 3D coordinate system
+	This function returns the area of the triangle ABC
 	
 	'''  
-	V_PA=A-P
-	V_PB=B-P
-	
-	norm=np.cross(V_PA, V_PB)
-	if norm.ndim==1 :	
-		ln=np.linalg.norm(norm, axis=1)
-	else:
+
+	V_CA=A-C
+	V_CB=B-C
+	norm=np.cross(V_CA, V_CB)
+	if V_CA.ndim==1:
 		ln=np.linalg.norm(norm)
-	area=0.5*ln					
+	else:	
+		ln=np.linalg.norm(norm, axis=1)
+	area=0.5*ln
+						
 	return area
+	
+def cal_area_2d(A, B, C):
+	'''
+	A, B, C are three points in a 2D coordinate system
+	This function returns the area of the triangle ABC
+	
+	'''  
+	if A.ndim==1:
+		xa=A[0]
+		ya=A[1]
+	else:
+		xa=A[:,0]
+		ya=A[:,1]
+		
+
+	if B.ndim==1:
+		xb=B[0]
+		yb=B[1]
+	else:
+		xb=B[:,0]
+		yb=B[:,1]
+		
+	if C.ndim==1:
+		xc=C[0]
+		yc=C[1]
+	else:
+		xc=C[:,0]
+		yc=C[:,1]
+
+	area=abs(0.5*(xa*(yb - yc) + xb*(yc - ya) + xc*(ya - yb)))
+						
+	return area
+		
 	
 def gen_vtk(savedir, points, indices, norms, colormap=True, num=np.r_[1], DATA=None):
     '''
@@ -683,13 +785,35 @@ def plot_3dmesh(points, tri, centers, norms):
     plt.show()  	
         
 if __name__=="__main__":
-	t0=time.time()
-	#casedir="../../../examples/demo_sensitivity"
-	#casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/moga-2var/nci'
-	casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/uniform_1000'
-	#ct=Contingency(casedir, var_n_des=[], var_n_perf=['eff_blk', 'he_av_design', 'ab_rec', 'rec_fr'], var_n_cost=[])
-	ct=Contingency(casedir, var_n_des=['t_storage', 'tank_ar'], var_n_perf=['ab_rec', 'alpha'], var_n_cost=[])
+		
+	var1=np.linspace(0.885, 0.9525, 10)
+	var2=np.linspace(2.6, 3.41, 10)
+	v1,v2=np.meshgrid(var1, var2)		
+	P=np.append(v1, v2) #(2, n)
+	P=P.reshape(2, int(len(P)/2))
+	P=P.T	
+	num_ns=int(len(P))
 
-	t1=time.time()
-	print('Time (total) %.2f s'%(t1-t0))
+	sample=np.r_[1000, 3000, 5000, 8000, 10000]	
+	var_n_des=['t_storage', 'tank_ar']
+	var_n_perf=['ab_rec', 'alpha']
 	
+	for i in range(len(sample)):
+		print('')
+		print('Sample', sample[i])
+		t0=time.time()
+
+		casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/uniform_%.0f'%sample[i]
+		ct=Contingency(casedir, var_n_des=var_n_des, var_n_perf=var_n_perf, var_n_cost=[])
+		indices, f_lcoe=ct.get_front()
+		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, plot=True)
+		
+		title=np.array(['perf1 '+var_n_perf[0], 'perf2 '+var_n_perf[1], 'des1 '+var_n_des[0], 'des2 '+var_n_des[1], 'sample lcoe'])
+		data=np.append(P[:,0], (P[:, 1], ns_des[var_n_des[0]], ns_des[var_n_des[1]], ns_lcoe))
+		data=data.reshape(5, num_ns)
+		res=np.hstack((title.reshape(5,1), data))
+		np.savetxt(casedir+'/newsample.csv', res.T, fmt='%s', delimiter=',')
+		t1=time.time()
+		print('Time (total) %.2f s'%(t1-t0))
+
+
