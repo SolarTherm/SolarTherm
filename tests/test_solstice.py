@@ -1,6 +1,7 @@
 import unittest, os
 from pathlib import Path
-import subprocess, platform, shutil, sys
+import subprocess as sp
+import platform, shutil, sys
 
 def test_solstice_version():
 	print("SYS.PATH =",sys.path)
@@ -17,7 +18,7 @@ def test_solstice_version():
 	
 	call = [s,'--version']
 	print("CALL =",call)
-	ret = subprocess.run(call,capture_output=True,encoding="utf-8")
+	ret = sp.run(call,stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 	print("RETURNCODE =",ret.returncode)
 	print("STDERR =",ret.stderr)
 	
