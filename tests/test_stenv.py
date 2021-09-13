@@ -1,6 +1,7 @@
 from __future__ import division
 import unittest
-import subprocess, os
+import subprocess as sp
+import os
 
 # this test is for probing sys.path issues with Python and 'locally installed' packages on GHA
 
@@ -9,7 +10,7 @@ class TestSubPython(unittest.TestCase):
 		import DyMat
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		out = subprocess.check_output(["python3","-c","import DyMat;print(DyMat.__version__)"],encoding="utf-8")
+		out = sp.check_output(["python3","-c","import DyMat;print(DyMat.__version__)"],encoding="utf-8")
 		print("out=",out)
 		assert out.strip() == v
 
@@ -17,7 +18,7 @@ class TestSubPython(unittest.TestCase):
 		import DyMat
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		out = subprocess.check_output(["python3"],input="import DyMat;print(DyMat.__version__)",encoding="utf-8")
+		out = sp.check_output(["python3"],input="import DyMat;print(DyMat.__version__)",encoding="utf-8")
 		print("out=",out)
 		assert out.strip() == v
 
@@ -25,7 +26,7 @@ class TestSubPython(unittest.TestCase):
 		import DyMat
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		res = subprocess.run(['python3'],input="import DyMat;print(DyMat.__version__);exit",capture_output=True,encoding="utf-8")
+		res = sp.run(['python3'],input="import DyMat;print(DyMat.__version__);exit",stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		print("out = '%s'"%(res.stdout.strip(),))
 		print("stderr=",res.stderr)
 		assert res.stdout.strip() == v
@@ -43,19 +44,19 @@ class TestStEnv(unittest.TestCase):
 			self.st = ['st']
 
 	def test_st_help(self):
-		res = subprocess.run(self.st+['--help'],check=True,capture_output=True)
+		res = sp.run(self.st+['--help'],check=True,capture_output=True)
 		print("stdout=",res.stdout)
 	
 	def test_st_invalidx(self):
 		try:
-			subprocess.run(self.st+['invalidx'],check=True,capture_output=True)
-		except subprocess.CalledProcessError as e:
+			sp.run(self.st+['invalidx'],check=True,capture_output=True)
+		except sp.CalledProcessError as e:
 			return
 		self.fail("Invalid st command was note caught")
 		
 	@unittest.skipIf(os.environ.get('SOLARTHERM_SHELL'),"already inside 'st env'")
 	def test_st_env_exit(self):
-		res = subprocess.run(self.st+['env'],input="exit",capture_output=True,encoding="utf-8")
+		res = sp.run(self.st+['env'],input="exit",stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		print("stdout=",res.stdout)
 		print("stderr=",res.stderr)
 		assert res.returncode == 0
@@ -65,17 +66,17 @@ class TestStEnv(unittest.TestCase):
 		print("PATH =",os.environ.get('PATH'))
 		call = self.st+['env']
 		print("CALL =",call)
-		res = subprocess.run(call,input="exit 25",capture_output=True,encoding="utf-8")
+		res = sp.run(call,input="exit 25",stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		print("stdout=",res.stdout)
 		print("stderr=",res.stderr)
 		assert res.returncode == 25
 
 	def test_st_python_undef(self):
-		res = subprocess.run(self.st + ['python'],input="print(undefinedxxx)",capture_output=True,encoding="utf-8")
+		res = sp.run(self.st + ['python'],input="print(undefinedxxx)",stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		assert res.returncode != 0
 
 	def test_st_python_add(self):
-		res = subprocess.run(self.st+['python','-c','print(2+2)'],capture_output=True,encoding="utf-8")
+		res = sp.run(self.st+['python','-c','print(2+2)'],stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		assert res.returncode == 0
 		assert int(res.stdout.strip()) == 4
 
@@ -86,13 +87,13 @@ class TestStEnv(unittest.TestCase):
 		import DyMat,sys
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
+		res = sp.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
 
 	def test_st_DyMat(self):
 		import DyMat,sys
 		v = DyMat.__version__
 		print("version = '%s'"%(v,))
-		res = subprocess.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
+		res = sp.check_output([sys.executable],input="import DyMat;print(DyMat.__version__);exit",encoding="utf-8")
 		#print("stdout=",res.stdout)
 		#print("stderr=",res.stderr)
 		#print("ret=",res.returncode)
@@ -102,7 +103,7 @@ class TestStEnv(unittest.TestCase):
 	def test_st_python_DyMat(self):
 		import DyMat
 		v = DyMat.__version__
-		out = subprocess.check_output(self.st+['python','-c','import DyMat;print(DyMat.__version__)'],encoding="utf-8")
+		out = sp.check_output(self.st+['python','-c','import DyMat;print(DyMat.__version__)'],encoding="utf-8")
 		assert v == out.strip()
 
 	def test_st_python(self):
@@ -114,7 +115,7 @@ class TestStEnv(unittest.TestCase):
 		print("sys.path=",sys.path)
 		l = sys.path
 		p = set(map(pr,l))
-		res = subprocess.run([sys.executable,'-c','import sys;print(sys.path)'],capture_output=True,encoding="utf-8",env=os.environ.copy())
+		res = sp.run([sys.executable,'-c','import sys;print(sys.path)'],stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8",env=os.environ.copy())
 		assert res.returncode == 0
 		l1 = eval(res.stdout.strip())
 		p1 = set(map(pr,l1))

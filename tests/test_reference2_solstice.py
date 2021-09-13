@@ -2,6 +2,7 @@
 
 from __future__ import division
 import unittest
+import cleantest
 
 from solartherm import simulation
 from solartherm import postproc
@@ -28,8 +29,9 @@ class TestReference2Solstice(unittest.TestCase):
 		self.assertTrue(abs(self.perf[0]- 393933.791)/393933.791<0.1) # epy
 		self.assertTrue(abs(self.perf[1]- 160.352)/160.352<0.1) # LCOE
 		self.assertTrue(abs(self.perf[2]- 44.969)/44.969<0.1) # Capacity factor
-		os.system('rm Reference_2_solstice*')
-    		
+		cleantest.clean('Reference_2_solstice')
 
 if __name__ == '__main__':
 	unittest.main()
+	
+# vim: ts=4:sw=4:noet:tw=80
