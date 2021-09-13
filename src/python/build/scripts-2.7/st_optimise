@@ -17,7 +17,7 @@ import time
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
-def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, peaker, test_mode, par_val):
+def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, peaker, IRR, test_mode, par_val):
 
 	par_v = [str(v*scale[i] + offset[i]) for i, v in enumerate(par_val)]
 	sim.update_pars(par_n, par_v)
@@ -34,7 +34,7 @@ def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver
 			objs.append(sign*res.data(name)[0])
 	else:
 		res = resultclass(mat_fn)
-		perfs=res.calc_perf(peaker)
+		perfs=res.calc_perf(peaker, IRR)
 		constr, distance = res.constrained_optimisation() # constr is true if optimisattion is constrained. distance to be added to a constant penalty offset	
 		objs=[]
 		for i in range(num_obj):
@@ -82,6 +82,8 @@ if __name__ == '__main__':
 			help='no compilation at all (--nomc and --nosc)')
 	parser.add_argument('--peaker', action='store_true',
 			help='peaker configuration')
+	parser.add_argument('--IRR', action='store_true',
+			help='IRR calculation')
 	parser.add_argument('--runsolstice', action='store_true',
 			help='run solstice mcrt')
 	parser.add_argument('--start', type=str, default='0',
@@ -296,7 +298,7 @@ if __name__ == '__main__':
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
-			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.peaker, args.test)
+			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.peaker, args.IRR, args.test)
 
 
 	if args.method == 'pso':
@@ -418,7 +420,7 @@ if __name__ == '__main__':
 			maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
 			perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
 			step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-			integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker)
+			integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker, IRR=args.IRR)
 
 			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 			gen_interface_bb(savedir)

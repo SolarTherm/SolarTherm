@@ -85,16 +85,16 @@ class UncertaintyDakotaIn:
 	'''
 	description and architecture
 	'''
-	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, runsolstice=False, peaker=False, perf_num=1, perf_i=[1]):
+	def __init__(self, mofn, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, system, runsolstice=False, peaker=False, IRR=False, perf_num=1, perf_i=[1]):
 
 
 		if perf_num!=len(perf_i):
 			perf_num=len(perf_i)
 
 		self.variables='	discrete_state_set\n'
-		self.variables+='        string %s\n'%(14+perf_num*2)
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
+		self.variables+='        string %s\n'%(15+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "IRR" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, IRR, perf_num)
 
 
 		for i in range(perf_num):
@@ -306,14 +306,14 @@ class OptimisationDakotaIn:
 '''%(seed, max_eval, init_type, pop_size, crossover, mutation_type , mutation_rate, fitness_type, percent_change, num_generations)
 
 
-	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice=False, peaker=False):
+	def variables(self, var_names, nominals, maximum, minimum, mofn, perf_i, perf_name, perf_sign, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice=False, peaker=False, IRR=False):
 
 		perf_num=len(perf_sign)
 
 		v='    discrete_state_set\n'
-		v+='        string %s\n'%(14+perf_num*2)
-		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "num_perf"'
-		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, perf_num)
+		v+='        string %s\n'%(15+perf_num*2)
+		set_n='  "fn"  "system"  "start"  "stop"  "step"  "initStep"  "maxStep"  "integOrder"  "solver"  "nls"  "lv"  "runsolstice" "peaker" "IRR" "num_perf"'
+		set_v='  "%s"  "%s"  "%s"  "%s"  "%s"  "%s" "%s" "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"  "%s"'%(mofn, system, start, stop, step, initStep, maxStep, integOrder, solver, nls, lv, runsolstice, peaker, IRR, perf_num)
 
 
 		for i in range(perf_num):
@@ -401,6 +401,7 @@ lv=str(params.__getitem__("lv"))
 
 runsolstice=params.__getitem__("runsolstice")
 peaker=params.__getitem__("peaker")
+IRR=params.__getitem__("IRR")
 
 
 initStep = None if initStep == 'None' else str(initStep)
@@ -411,8 +412,8 @@ var_v=[] # variable values
 
 print('')
 
-print(names[:-(14+2*num_perf)])
-for n in names[:-(14+2*num_perf)]:
+print(names[:-(15+2*num_perf)])
+for n in names[:-(15+2*num_perf)]:
 	var_n.append(n.encode("UTF-8"))
 	var_v.append(str(params.__getitem__(n)))
 	print('variable   : ', n, '=', params.__getitem__(n))
@@ -455,7 +456,10 @@ try:
 		if peaker=='True':
 			perf = resultclass.calc_perf(peaker=True)
 		else:
-			perf = resultclass.calc_perf()
+			if IRR == 'True':
+				perf = resultclass.calc_perf(peaker=False, IRR=True)
+			else:
+				perf = resultclass.calc_perf()
 
 
 	solartherm_res=[]

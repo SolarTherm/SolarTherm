@@ -1,12 +1,14 @@
 within SolarTherm.Utilities;
 
 function LinProgFunc
- input String filepathDNI;
- input String filepathPrice;
- input Integer horison;
+ //input String filepathDNI;
+ //input String filepathPrice;
+ input Integer horizon;
  input Real dt;
  input Real time_simul;
  input Real etaC[:];
+ input Real DNI[:];
+ input Real pri[:];
  input Real etaG;
  input Real t_stg;
  input Real DEmax;
@@ -15,8 +17,8 @@ function LinProgFunc
  input Real SLminrel;
  input Real Ahelio;
  output Real Dispatch;
- external "C" Dispatch = st_linprog(filepathDNI,filepathPrice,
-                                    horison,dt,time_simul,etaC,
+ external "C" Dispatch = st_linprog(//filepathDNI,filepathPrice,
+                                    horizon,dt,time_simul,etaC,DNI,pri,
                                     etaG,t_stg,DEmax,SLmax,SLinit,
                                     SLminrel,Ahelio);
                                   

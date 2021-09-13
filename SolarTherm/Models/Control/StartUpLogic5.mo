@@ -1,5 +1,7 @@
 within SolarTherm.Models.Control;
 model StartUpLogic5
+  /*This controller has 1 extra variable called optimalMassFlow. The variable will be closed by the full system model. If dispatch optimiser is on, then this variable
+  value will follow the output of the dispatch optimiser algorithm. Else, optimalMassFlow will always be equal to the full-load mass flow*/
   //power block startup+ time of standby
   Modelica.Blocks.Interfaces.RealInput level
     annotation (Placement(transformation(extent={{-128,-20},{-88,20}})));
@@ -26,6 +28,21 @@ model StartUpLogic5
 
   discrete Modelica.SIunits.Time t_off;
   discrete Modelica.SIunits.Time t_on;
+  
+  /*This part is only active when scheduler is on*/
+  parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/sch_PG.motab");
+  parameter Boolean set_scheduler = false;
+  
+  Modelica.Blocks.Types.ExternalCombiTable1D schedule_table = Modelica.Blocks.Types.ExternalCombiTable1D(
+    tableName = "schedule", 
+    fileName = schedule_file, 
+    table = fill(0.0, 0, 2), 
+    columns = 1:2, 
+    smoothness = Modelica.Blocks.Types.Smoothness.ConstantSegments);
+  
+  Real schedule(start=0);
+  Real idx(start =0);
+    
 public
   Modelica.Blocks.Interfaces.RealInput m_flow_in annotation (Placement(
         transformation(
@@ -42,6 +59,13 @@ initial equation
 equation
 //
   
+   der(idx) = 1;
+   
+   if set_scheduler == true then
+      schedule = SolarTherm.Utilities.pri_horizon(idx,schedule_table);
+   else
+      schedule = 1;
+   end if;
    on_charge= m_flow_in>0;
 
    when level>level_on then
@@ -76,9 +100,9 @@ equation
       m_flow= m_flow_startup;
     else
       if on_discharge then
-        m_flow= if dispatch_optimiser == true then optimalMassFlow else m_flow_max;
+        m_flow= if dispatch_optimiser == true then optimalMassFlow else m_flow_max*schedule;
       else /*if on_charge*/
-        m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max);
+        m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max*schedule);
       end if;
     end if;
   elseif standby then

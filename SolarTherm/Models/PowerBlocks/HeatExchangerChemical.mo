@@ -82,7 +82,7 @@ model HeatExchangerChemical
   
   if state == 1 then
       Q_HX = effectiveness * Q_max;
-      h_out_pcl = h_in_pcl - Q_HX/mdot_pcl;
+      h_out_pcl = Particle_Package.h_T(T_cold_set);//h_in_pcl - Q_HX/mdot_pcl;
       T_out_gas = (Q_HX / Rh) + T_in_gas_des;
   else// mdot< 0.999 * m_HTF_des*nu_min then
       Q_HX = 0 "can't make it zero, as such use very low value";

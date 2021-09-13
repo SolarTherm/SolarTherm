@@ -195,12 +195,13 @@ class SimResult(object):
 		return constr, distance
 
 class SimResultElec(SimResult):
-	def calc_perf(self, peaker=False):
+	def calc_perf(self, peaker=False, IRR=False):
 		"""Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
 
 		peaker: bool, True: to calculate performance of a peaker plant
+		IRR: bool, True: to calculate performance of a peaker plant using IRR. peaker bool must be false
 		"""
 		var_names = self.get_names()
 		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
@@ -215,6 +216,7 @@ class SimResultElec(SimResult):
 		cons_v = self.mat.data('t_cons') # Construction time [year]
 		name_v = self.mat.data('P_name') # Generator nameplate [W]
 		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+		t_life = self.mat.data('t_life') # Year of lifetime
 
 		dur = eng_t[-1] - eng_t[0] # Time duration [s]
 		years = dur/31536000 # number of years of simulation [year]
@@ -232,6 +234,33 @@ class SimResultElec(SimResult):
 				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
 						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
 				capf = fin.capacity_factor(name_v[0], tod_v[-1])
+			elif IRR:
+				CAPEX = self.mat.data("C_cap")[-1]
+				FixedCost = self.mat.data('C_year')[-1]
+				VariableCost = self.mat.data('pri_om_prod')[-1] * epy
+				EBITDA = srev - FixedCost - VariableCost
+				CF = []
+				t_cons = int(cons_v[-1])
+
+				if t_cons == 0:
+					for _ in range(t_cons+1):
+						CF.append(CAPEX * -1)
+				
+					for _ in range(int(t_life[0])):
+						CF.append(EBITDA)
+				else:
+					for _ in range(t_cons):
+						CF.append(CAPEX/t_cons * -1)
+				
+					for _ in range(int(t_life[0]) - t_cons):
+						CF.append(EBITDA)
+				
+
+				CF = np.array(CF)
+				
+				lcoe = np.irr(CF)
+				capf = fin.capacity_factor(name_v[0], epy)
+
 
 			else:
 				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
@@ -241,7 +270,8 @@ class SimResultElec(SimResult):
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year: 
-			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
+			if not IRR:
+				lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 		'''
 		#dump param

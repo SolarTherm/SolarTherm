@@ -40,13 +40,16 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
-  parameter Boolean get_optics_breakdown = true "if true, the breakdown of the optical performance will be processed";
+  parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
+  parameter Boolean set_scheduler = true "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
   
   //****************************** Importing medium and external files
+
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
   replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph "Medium props for sCO2";
-  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity or Time-of-day factor file";
+  //parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/g3p3_TOD.motab") "[FN] Electricity or Time-of-day factor file";
+  parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "[FN] Electricity or Time-of-day factor file";
   parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not set_const_dispatch "Discharging schedule from a file";
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[SYS] Weather file";
   parameter String DNI_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") "[CTRL] Weather file for dispatch optimisation - there was a bug in Modelica s.t. when I parse wea_file to dispatch optimisation, the 
@@ -317,8 +320,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Real cold_tnk_crit_ub = 30 "[CTRL] Cold tank critically empty trigger upper bound";
   
   //****************************** Dispatch Optimiser Parameters
-  parameter Integer horizon = 48 "[CTRL] Forecast horizon of the dispatch optimisation algoriuthm in GLPK";
-  parameter Real dt = 1 "[CTRL] delta t of the optimisation. For each how many hour the dispatch optimiser is gonna be called";
+  parameter Integer horizon = 24 "[CTRL] Forecast horizon of the dispatch optimisation algoriuthm in GLPK";
+  parameter Real dt = 0.5 "[CTRL] delta t of the optimisation. For each how many hour the dispatch optimiser is gonna be called";
   parameter Real etaG(fixed = false) "By product of power block intialisation";
   parameter Real etaC = metadata_list[3];
   parameter Real SLminrel = hot_tnk_empty_lb / 100 "hot tank empt trigger point";
@@ -362,7 +365,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter FI.AreaPrice pri_land = 10000 / 4046.86 "Land cost per area [USD/m2]";
   parameter Real pri_tower_fix_SAM = 3e6 "[H&T] Fix tower cost according to SAM cost function v2020.2.29";
   parameter Real pri_tower_scalar_exp_SAM = 0.0113 "[H&T] Scaler for tower cost according to SAM v2020.2.29";
-  parameter Real pri_lift = 58.37 "Lift cost per rated mass flow per height Kevin Albrect, 2019 https://is.gd/3VN0O7";
+  parameter Real pri_lift = 58.37 "Lift cost per rated mass flow per height Kevin Albrecht, 2019 https://is.gd/3VN0O7";
   parameter FI.AreaPrice pri_receiver = 37400 "Falling particle receiver cost per design aperture area Kevin Albrect, 2019 https://is.gd/3VN0O7";
   
   //******************************** Specific cost for the storage system
@@ -861,7 +864,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     Placement(visible = true, transformation(origin = {-6, 68}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
   
   //********************* PowerBlockControl
-  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser) annotation(
+  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser, logic.set_scheduler = set_scheduler) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   
   //********************* Power block
@@ -941,7 +944,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     D_inner_tower = R_tower * 2
   );
   
-  //********************* Instantiate the optical and weather table, for looping for the next forecast horizon
+  //********************* Instantiate the optical, price and weather table, for looping for the next forecast horizon
   Modelica.Blocks.Types.ExternalCombiTable2D opt_eff_calm = Modelica.Blocks.Types.ExternalCombiTable2D(
     tableName = "optics", 
     fileName = opt_file, 
@@ -960,6 +963,13 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     table = fill(0.0, 0, 2), 
     columns = 1:11, 
     smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
+    
+  Modelica.Blocks.Types.ExternalCombiTable1D pri_table = Modelica.Blocks.Types.ExternalCombiTable1D(
+    tableName = "prices", 
+    fileName = pri_file, 
+    table = fill(0.0, 0, 2), 
+    columns = 1:2, 
+    smoothness = Modelica.Blocks.Types.Smoothness.ConstantSegments);
     
   //********************* Variables
   SI.Power P_elec "Net output power of power block";
@@ -1034,13 +1044,21 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   Real dummyRatio;
   Real accumulated_m;
   Real TOD_W(start = 0, fixed = true) "Product of Time-of-day factor and instant of electric power";
-  SI.Angle dec_horizon[horizon] "Solar declination angle for the next forecast horizon";
-  SI.Angle hra_horizon[horizon] "Solar hour angle for the next forecast horizon";
-  SI.Efficiency eta_opt_horizon_calm[horizon] "Optical efficiency for calm condition for the next horizon"; 
-  SI.Efficiency eta_opt_horizon_windy[horizon] "Optical efficiency for windy  condition for the next horizon"; 
-  SI.Efficiency eta_opt_horizon[horizon] "Optical efficiency for the next horizon"; 
-  SI.Velocity Wspd_horizon[horizon] "Wind speed for the next horizon";
-  SI.Angle slope_error_runtime[horizon] "Slope error as a function of wind speed during runtime";
+  
+  //********************** Instantiate arrays (double *) to store foresights
+  SI.Angle dec_horizon[integer(horizon/dt)] "Solar declination angle for the next forecast horizon";
+  SI.Angle hra_horizon[integer(horizon/dt)] "Solar hour angle for the next forecast horizon";
+  SI.Efficiency eta_opt_horizon_calm[integer(horizon/dt)] "Optical efficiency for calm condition for the next horizon"; 
+  SI.Efficiency eta_opt_horizon_windy[integer(horizon/dt)] "Optical efficiency for windy  condition for the next horizon"; 
+  SI.Efficiency eta_opt_horizon[integer(horizon/dt)] "Optical efficiency for the next horizon"; 
+  
+  SI.Velocity Wspd_horizon[integer(horizon/dt)] "Wind speed for the next horizon";
+  
+  SI.Angle slope_error_runtime[integer(horizon/dt)] "Slope error as a function of wind speed during runtime";
+  
+  Real pri_horizon[integer(horizon/dt)] "Price for the next horizon";
+  Real DNI_horizon[integer(horizon/dt)] "DNI for the next horizon";
+  
   Modelica.Blocks.Sources.BooleanExpression booleanExpression(y = false) annotation(
     Placement(visible = true, transformation(origin = {-128, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
@@ -1222,11 +1240,11 @@ equation
                           else
                                                   0;
   
-  der(E_incident_rcv) = particleReceiver.heat.Q_flow;
-  der(E_loss_rcvs) =  (1 - particleReceiver.eta_rcv) * particleReceiver.heat.Q_flow;
-  der(E_absorbed_rcv) =  (particleReceiver.eta_rcv) * particleReceiver.heat.Q_flow;
+  der(E_incident_rcv) = particleReceiver.Q_incident;
+  der(E_loss_rcvs) =  particleReceiver.Q_loss;
+  der(E_absorbed_rcv) =  particleReceiver.Q_rcv;
   
-  der(E_loss_tank) =  abs(tankCold.Q_losses_total) + abs(tankHot.Q_losses_total);
+  E_loss_tank =  abs(tankCold.E_losses_total) + abs(tankHot.E_losses_total);
   
   der(E_PB_input) = powerBlock.Q_HX;
   der(E_PB_loss_thermal_to_electric) = powerBlock.Q_HX - powerBlock.W_gross;
@@ -1255,9 +1273,12 @@ equation
   der(accumulated_m) = particleReceiver.fluid_a.m_flow;
 
   //************************************ Dispatch optimiser variables
-  SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
-  DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
-  SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Maximum storage level in MWhth";
+  //SLinit = tankHot.L / 100 * m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Thermal energy left in the hot tank [MWh_th]";
+  //DEmax = m_flow_blk * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 1e-6 "Maximum dispatchable heat [MWth]";
+  //SLmax = m_max * (Utils.h_T(tankHot.medium.T) - Utils.h_T(tankCold.medium.T)) * 2.7778e-10 "Maximum storage level in MWhth";
+  SLmax = E_max * 2.77778e-10;
+  DEmax = Q_flow_des / 1e6;
+  SLinit = tankHot.L / 100 * SLmax;
   if set_dispatch_optimiser == true then
     der(counter) = 1;
   else
@@ -1267,28 +1288,51 @@ equation
   when counter > 0 then
     time_simul = floor(time) "Rounding down the time";
       if set_dispatch_optimiser then
-          for i in 1:horizon loop
-            (dec_horizon[i],hra_horizon[i]) = SolarTherm.Models.Sources.SolarFunctions.PSA_Algorithm(
-                                                      if time_simul + i * dt* 3600 < 3.1536e7 then
-                                                           time_simul + i * dt* 3600 
-                                                      else
-                                                           time_simul + i * dt* 3600 - 3.1536e7,
-                                                      lon,
-                                                      lat,
-                                                      t_zone,
-                                                      year
-                                              );
-            eta_opt_horizon_calm[i] = SolarTherm.Utilities.opt_eff_horizon(CV.to_deg(dec_horizon[i]), CV.to_deg(hra_horizon[i]), opt_eff_calm);
-            eta_opt_horizon_windy[i] = SolarTherm.Utilities.opt_eff_horizon(CV.to_deg(dec_horizon[i]), CV.to_deg(hra_horizon[i]), opt_eff_windy);
+          //******************** If dispatch optimiser is on then populate the array
+          for i in 1:integer(horizon/dt) loop
+              //******************** Obtain the declination and solar hour angle to interpolate optical eff for the next horizon
+              (dec_horizon[i],hra_horizon[i]) = SolarTherm.Models.Sources.SolarFunctions.PSA_Algorithm(
+                                                        if time_simul + (i-1) * dt* 3600 < 3.1536e7 then
+                                                             time_simul + (i-1) * dt* 3600 
+                                                        else
+                                                             time_simul + (i-1) * dt* 3600 - 3.1536e7,
+                                                        lon,
+                                                        lat,
+                                                        t_zone,
+                                                        year
+                                                );
+              eta_opt_horizon_calm[i] = SolarTherm.Utilities.opt_eff_horizon(CV.to_deg(dec_horizon[i]), CV.to_deg(hra_horizon[i]), opt_eff_calm);
+              eta_opt_horizon_windy[i] = SolarTherm.Utilities.opt_eff_horizon(CV.to_deg(dec_horizon[i]), CV.to_deg(hra_horizon[i]), opt_eff_windy);
+              
+              //******************** Obtain the wind speed for the next horizon 
+              Wspd_horizon[i] = SolarTherm.Utilities.wind_speed_horizon(
+                  if time_simul + (i-1) * dt* 3600 < 3.1536e7 then
+                      time_simul + (i-1) * dt* 3600 
+                  else
+                      time_simul + (i-1) * dt* 3600 - 3.1536e7,
+                  wea_table
+                  );
+                  
+              //******************** Obtain the DNI for the next horizon 
+              DNI_horizon[i] = SolarTherm.Utilities.DNI_horizon(
+                  if time_simul + (i-1) * dt* 3600 < 3.1536e7 then
+                      time_simul + (i-1) * dt* 3600 
+                  else
+                      time_simul + (i-1) * dt* 3600 - 3.1536e7,
+                  wea_table
+                  );
+                  
+              //******************** Obtain the price for the next horizon 
+              pri_horizon[i] = SolarTherm.Utilities.pri_horizon(
+                  if time_simul + (i-1) * dt* 3600 < 3.1536e7 then
+                      time_simul + (i-1) * dt* 3600 
+                  else
+                      time_simul + (i-1) * dt* 3600 - 3.1536e7,
+                  pri_table
+                  );
+                
             
-            Wspd_horizon[i] = SolarTherm.Utilities.wind_speed_horizon(
-                if time_simul + i * dt* 3600 < 3.1536e7 then
-                    time_simul + i * dt* 3600 
-                else
-                    time_simul + i * dt* 3600 - 3.1536e7,
-                wea_table
-                );
-            
+            //******************** Obtain the optical efficiency for the next horizon
             if set_swaying_optical_eff == true then
                 slope_error_runtime[i] = slope_error + (slope_error_windy-slope_error)/(Wspd_max) * max(Wspd_horizon[i],0);
             
@@ -1307,12 +1351,14 @@ equation
           end for;
           
           optimalDispatch = SolarTherm.Utilities.LinProgFunc(
-              DNI_file, 
-              price_file, 
+              //DNI_file, 
+              //price_file, 
               horizon, 
               dt, 
               time_simul, 
               eta_opt_horizon, 
+              DNI_horizon,
+              pri_horizon,
               etaG, 
               t_storage, 
               DEmax, 
@@ -1322,8 +1368,9 @@ equation
               A_field
           );
       else
+        //******************** If dispatch optimiser is OFF then populate the array with non-sense values
         optimalDispatch = DEmax "If dispatch optimiser is unused, the dispatched energy is always at maximum whenever possible";
-        for i in 1:horizon loop
+        for i in 1:integer(horizon/dt) loop
             dec_horizon[i] = 0;
             hra_horizon[i] = 0;
             eta_opt_horizon_calm[i] = -1;
@@ -1331,6 +1378,8 @@ equation
             eta_opt_horizon[i] = -1;
             slope_error_runtime[i] = -1;
             Wspd_horizon[i] = -1;
+            DNI_horizon[i] = -1;
+            pri_horizon[i] = -1;
         end for;
       
     end if;
