@@ -40,7 +40,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro
+        python3 -m pip install setuptools scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
     - name: Lint with flake8
