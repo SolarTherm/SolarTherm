@@ -23,7 +23,8 @@ jobs:
       run: |
         wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
         tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
-        cd dakota-$DAKVER.src
+        ls -l
+        cd dakota-${DAKVER}.src
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
