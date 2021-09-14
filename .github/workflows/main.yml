@@ -68,17 +68,11 @@ jobs:
         mkdir -p ~/.local
         tar zxv --strip-components=1 -C ~/.local < <(wget "https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz" -q -O-)
 
-#    - name: Download DAKOTA
-#      uses: actions/download-artifact@v2
-#      with:
-#        name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
-#
-#    - name: Install DAKOTA
-#      run: |
-#        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
-#        unzip $DAKPKG.zip
-#        tar zxf $DAKPKG.tar.gz
-#        sudo cp -R $DAKPKG/usr/local/* /usr/local
+    - name: Install DAKOTA
+      run: |
+        export DAKSTEM=dakota-$DAKVER-linux-x86_64-jp
+        export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$DAKSTEM.tar.gz"
+        sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
 
     - name: Build SolarTherm
       run: |

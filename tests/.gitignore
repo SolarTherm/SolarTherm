@@ -35,3 +35,6 @@ Test_SolsticePyFunc
 __pycache__
 *.exe
 trysttable
+test_soga
+test_moga
+TestStOptimise_*.txt

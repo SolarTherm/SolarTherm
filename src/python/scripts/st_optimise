@@ -379,14 +379,15 @@ if __name__ == '__main__':
 		try:
 			subprocess.call(["dakota", "--version"])
 		except:
-			print('')
-			print('ERROR:')
-			print('"dakota" is not found!')
-			print('You need to install DAKOTA to run this optimisation algorithm')
-			print('* An instruction is available here: ')
-			print('    https://github.com/shuangw1012/Dakota')
-			print('* More info here: ')
-			print('    https://dakota.sandia.gov \n')
+			print("""ERROR: 'dakota' is not found!
+
+You need to install DAKOTA to run this optimisation algorithm
+* Instructions are available here:
+    https://github.com/shuangw1012/Dakota
+* More info here:
+    https://dakota.sandia.gov/
+
+""")
 		
 		if args.restart!=None:
 			os.chdir(args.restart)
@@ -398,13 +399,10 @@ if __name__ == '__main__':
 				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
-
-
 		else:
-
 			opt=OptimisationDakotaIn()
-			# TODO at the moment, all the setting are default
-			# need to implement parameters to change the settings
+			# at the moment, all the setting are default
+			# TODO FIXME implement parameters to change the settings
 		
 			if args.method=='dakota_moga':
 				opt.moga()
@@ -423,6 +421,7 @@ if __name__ == '__main__':
 			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 			gen_interface_bb(savedir)
 
+			# FIXME this will not work on Windows
 			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
 			if args.np!=0:
