@@ -34,6 +34,7 @@ jobs:
         make
         
     - name: Install DAKOTA
+      run: |
         export DAKOTA_PKGN=dakota-$DAKVER-${{ matrix.os }}-x86_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
