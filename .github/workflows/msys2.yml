@@ -45,14 +45,13 @@ jobs:
           mingw-w64-x86_64-python-numpy
           mingw-w64-x86_64-python-scipy
           mingw-w64-x86_64-python-matplotlib
-          mingw-w64-x86_64-python-pytest
           mingw-w64-x86_64-glpk
     - uses: actions/checkout@v2
 
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl
+        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl colorama pytest
 
     - name: Install OpenModelica
       run: |

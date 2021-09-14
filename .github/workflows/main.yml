@@ -41,7 +41,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro colorama
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
 
@@ -70,6 +70,10 @@ jobs:
 
     - name: Install DAKOTA
       run: |
+        sudo apt install openmpi-bin gsl-bin libquadmath0 libevent-pthreads-2.1-7 liblapack3 \
+          libstdc++6 libboost-filesystem1.71.0 libboost-regex1.71.0 libboost-serialization1.71.0 \
+          libgsl23 libgfortran5 libblas3 libopenmpi3 libhwloc15 libicu66 libgslcblas0 libquadmath0 \
+          libevent-2.1-7 libevent-pthreads-2.1-7 libltdl7 libicu66
         export DAKSTEM=dakota-$DAKVER-linux-x86_64-jp
         export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$DAKSTEM.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
