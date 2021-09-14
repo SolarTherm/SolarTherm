@@ -27,7 +27,7 @@ jobs:
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
-        export DAKOTA_PKGN=dakota-$DAKVER-${{ jobs.build.runs-on }}-x86_64-jp
+        export DAKOTA_PKGN=dakota-$DAKVER-${{ matrix.os }}-x86_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
         tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
@@ -35,7 +35,7 @@ jobs:
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-${{ env.DAKVER }}-${{jobs.build.runs-on}}-x86_64-jp
+        name: dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
         path: $HOME/$DAKOTA_PKGN.tar.gz
 
 # vim: ts=2:sw=2:et
