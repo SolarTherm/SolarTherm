@@ -69,7 +69,7 @@ jobs:
         tar zxv --strip-components=1 -C ~/.local < <(wget "https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz" -q -O-)
 
     - name: Install DAKOTA 20.04
-      if: ${{ jobs.build.runs-on == 'ubuntu-20.04' }}
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
         sudo apt install openmpi-bin gsl-bin libquadmath0 libevent-pthreads-2.1-7 liblapack3 \
           libstdc++6 libboost-filesystem1.71.0 libboost-regex1.71.0 libboost-serialization1.71.0 \
