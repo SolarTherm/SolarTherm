@@ -19,16 +19,21 @@ jobs:
       run: |
         sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python perl libhdf5-dev
 
-    - name: Build DAKOTA
+    - name: Download DAKOTA
       run: |
         wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
         tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
         ls -l
         cd dakota-${DAKVER}.src
-        mkdir build
-        cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
-        cd build
+        
+    - name: Build DAKOTA
+      run: |
+        cd dakota-${DAKVER}.src
+        mkdir build && cd build
+        cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE ..
         make
+        
+    - name: Install DAKOTA
         export DAKOTA_PKGN=dakota-$DAKVER-${{ matrix.os }}-x86_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
