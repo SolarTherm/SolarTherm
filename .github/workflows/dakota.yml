@@ -4,9 +4,13 @@ on: [workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+    env:
+      DAKVER: 6.14.0
 
     steps:
     - uses: actions/checkout@v2
@@ -17,13 +21,13 @@ jobs:
 
     - name: Build DAKOTA
       run: |
-        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.14.0-release-public-linux.x86_64-gui.tar.gz
-        tar zxf dakota-6.14.0-release-public-linux.x86_64-gui.tar.gz
-        cd dakota-6.14.0.src
+        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
+        tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
+        cd dakota-$DAKVER.src
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE build 
         cd build
         make
-        export DAKOTA_PKGN=dakota-6.14.0-linux-x64_64-jp
+        export DAKOTA_PKGN=dakota-$DAKVER-${{ jobs.build.runs-on }}-x86_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
         tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
@@ -31,6 +35,7 @@ jobs:
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-6.14.0-linux-x64_64-jp
+        name: dakota-${{ env.DAKVER }}-${{jobs.build.runs-on}}-x86_64-jp
         path: $HOME/$DAKOTA_PKGN.tar.gz
 
+# vim: ts=2:sw=2:et
