@@ -123,8 +123,11 @@ class Contingency:
 			points=np.array([])
 			for i in range(num_par):
 				v=values[i]
-				points=np.append(points, (v-np.min(v))/(np.max(v)-np.min(v)))		
-			points=np.append(points,  (self.lcoe-np.min(self.lcoe))/(np.max(self.lcoe)-np.min(self.lcoe)))
+				#points=np.append(points, (v-np.min(v))/(np.max(v)-np.min(v)))		
+				points=np.append(points, v)						
+			#points=np.append(points,  (self.lcoe-np.min(self.lcoe))/(np.max(self.lcoe)-np.min(self.lcoe)))
+			points=np.append(points, self.lcoe)
+			
 			points=points.reshape(num_par+1, self.num_sample) # (3,n)
 			points=points.T # (n, 3)
 			hull = ConvexHull(points)
@@ -201,8 +204,8 @@ class Contingency:
 		points=points.reshape(num_par, int(len(points)/num_par)) # (2,n)
 		points=points.T # (n, 2)
 		
-		points[:,0]=(points[:,0]-np.min(points[:,0]))/(np.max(points[:,0])-np.min(points[:,0]))
-		points[:,1]=(points[:,1]-np.min(points[:,1]))/(np.max(points[:,1])-np.min(points[:,1]))
+		#points[:,0]=(points[:,0]-np.min(points[:,0]))/(np.max(points[:,0])-np.min(points[:,0]))
+		#points[:,1]=(points[:,1]-np.min(points[:,1]))/(np.max(points[:,1])-np.min(points[:,1]))
 		
 		tri = Delaunay(points)
 		tri_idx=tri.simplices
@@ -671,7 +674,7 @@ def get_bottom_hull(points, indicies):
 	P1=triangle[:,:,0].T # (n, 3)
 	P2=triangle[:,:,1].T
 	P3=triangle[:,:,2].T
-	#center=(P1+P2+P3)/3. # (n, 3) : (n-triangles, xyz) center of each mesh element
+	center=(P1+P2+P3)/3. # (n, 3) : (n-triangles, xyz) center of each mesh element
 
 	# Normal vector of each element
 	V12=P2-P1
@@ -698,50 +701,51 @@ def get_bottom_hull(points, indicies):
 			xp=P[i,0]
 			yp=P[i,1]
 			zp=P[i,2]
-			
-			if zp>0.5:
-				idx0=False
-			else:
-			
-				# draw a vertical line through point p (xp, yp, zp)
-				# the intersection points of the line with the triangle planes are
-				# (xp, yp, Z)
-				# where Z is obtained below
-				Z=(D-norms[:,0]*xp-norms[:,1]*yp)/norms[:,2]
-				#
-				#
-				# if there is any intersection point below zp is inside a triangle element
-				# then p is not on the bottom hull, idx0=False
-				# else, idx0=True 	
-				#
-				# 
-				id_low=(Z<zp)*(Z>0)
-				n_low=np.sum(id_low)
-				
-				pi=np.ones((n_low, 3)) 
-				pi[:, 0]=xp
-				pi[:, 1]=yp
-				pi[:, 2]=Z[id_low]
 
-				if n_low>0:
-					for j in range(num_tri):
-						A=P1[j]
-						B=P2[j]
-						C=P3[j]
+			#if zp>160.:
+			#if zp>np.max(self.lcoe)-np.min(self.lcoe)
+			#	idx0=False
+			#else:
+			
+			# draw a vertical line through point p (xp, yp, zp)
+			# the intersection points of the line with the triangle planes are
+			# (xp, yp, Z)
+			# where Z is obtained below
+			Z=(D-norms[:,0]*xp-norms[:,1]*yp)/norms[:,2]
+			#
+			#
+			# if there is any intersection point below zp is inside a triangle element
+			# then p is not on the bottom hull, idx0=False
+			# else, idx0=True 	
+			#
+			# 
+			id_low=(Z<zp)*(Z>0)
+			n_low=np.sum(id_low)
+			
+			pi=np.ones((n_low, 3)) 
+			pi[:, 0]=xp
+			pi[:, 1]=yp
+			pi[:, 2]=Z[id_low]
+			
+			if n_low>0:
+				for j in range(num_tri):
+					A=P1[j]
+					B=P2[j]
+					C=P3[j]
 
-						if not (np.array_equal(A,p) or np.array_equal(B,p) or np.array_equal(C,p)):
-										
-							#if a point P is inside a triangle ABC on the plane of ABC
-							#then are APB+APC+BPC=ABC				
-							area1=cal_area_3d(A, B, pi)
-							area2=cal_area_3d(A, C, pi)
-							area3=cal_area_3d(B, C, pi)
-							area=area1+area2+area3
-							area_0=cal_area_3d(A, B, C)
-							#print(np.min(abs(area-area_0)), np.max(abs(area-area_0)))
-							if np.min(abs(area-area_0))<1e-5:
-								#print("point %s/%s is on the plane of tri %s"%(i, t, j))			
-								idx0=False
+					if not (np.array_equal(A,p) or np.array_equal(B,p) or np.array_equal(C,p)):
+									
+						#if a point P is inside a triangle ABC on the plane of ABC
+						#then are APB+APC+BPC=ABC				
+						area1=cal_area_3d(A, B, pi)
+						area2=cal_area_3d(A, C, pi)
+						area3=cal_area_3d(B, C, pi)
+						area=area1+area2+area3
+						area_0=cal_area_3d(A, B, C)
+						#print(np.min(abs(area-area_0)), np.max(abs(area-area_0)))
+						if np.min(abs(area-area_0))<1e-5:
+							#print("point %s/%s is on the plane of tri %s"%(i, t, j))			
+							idx0=False
 
 		idx=np.append(idx, idx0)
 		
@@ -864,7 +868,7 @@ def plot_3dmesh(points, tri, centers, norms):
     '''
     points - (3, n) array
     tri - (n,3) array, the indices of the triangle mesh
-    centers - (n,3), he center of each mesh element
+    centers - (n,3), the center of each mesh element
     norms - (n, 3), normal vector of each mesh element
     '''
     import pylab as pl
@@ -888,27 +892,30 @@ if __name__=="__main__":
 	sample=np.r_[1000, 3000, 5000, 8000, 10000]	
 	var_n_des=['t_storage', 'tank_ar']
 	var_n_perf=['ab_rec', 'alpha']
-	method='front' #'front' or 'hull'
-	for i in range(len(sample)):
-		print('')
-		print('Sample', sample[i])
-		t0=time.time()
+	mm1=['moga', 'moga', 'uniform'] 
+	mm2=['front', 'hull', 'hull']
 
-		casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/moga_%.0f'%sample[i]
-		ct=Contingency(casedir, var_n_des=var_n_des, var_n_perf=var_n_perf, var_n_cost=[])
-		if method=='hull':
-			indices, f_lcoe=ct.get_front()
-			tri_idx=None
-		elif method=='front':
-			indices, tri_idx, f_lcoe=ct.front_tri()
+	for j in range(1,3):
+		for i in range(len(sample)):
+			print('')
+			print('Method', mm1[j], mm2[j], 'Sample', sample[i])
+			t0=time.time()
+
+			casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/%s_%.0f'%(mm1[j], sample[i])
+			ct=Contingency(casedir, var_n_des=var_n_des, var_n_perf=var_n_perf, var_n_cost=[])
+			if mm2[j]=='hull':
+				indices, f_lcoe=ct.get_front(plot=False)
+				tri_idx=None
+			elif mm2[j]=='front':
+				indices, tri_idx, f_lcoe=ct.front_tri()
+				
+			ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, tri_idx=tri_idx, plot=False)
 			
-		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, tri_idx=tri_idx, plot=False)
-		
-		title=np.array([var_n_perf[0], var_n_perf[1], var_n_des[0], var_n_des[1], 'sample lcoe'])
-		data=np.append(P[:,0], (P[:, 1], ns_des[var_n_des[0]], ns_des[var_n_des[1]], ns_lcoe))
-		data=data.reshape(5, num_ns)
-		res=np.hstack((title.reshape(5,1), data))
-		np.savetxt(casedir+'/newsample-%s.csv'%method, res.T, fmt='%s', delimiter=',')
-		t1=time.time()
-		print('Time (total) %.2f s'%(t1-t0))
-		
+			title=np.array([var_n_perf[0], var_n_perf[1], var_n_des[0], var_n_des[1], 'sample lcoe'])
+			data=np.append(P[:,0], (P[:, 1], ns_des[var_n_des[0]], ns_des[var_n_des[1]], ns_lcoe))
+			data=data.reshape(5, num_ns)
+			res=np.hstack((title.reshape(5,1), data))
+			np.savetxt('/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/newsample-%s_%s_%.0f.csv'%(mm1[j], mm2[j], sample[i]), res.T, fmt='%s', delimiter=',')
+			t1=time.time()
+			print('Time (total) %.2f s'%(t1-t0))
+			stop
