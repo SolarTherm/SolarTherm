@@ -6,7 +6,7 @@ import solartherm.finances as fin
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import DyMat
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 import time
 
 class Contingency:
@@ -25,7 +25,7 @@ class Contingency:
 		#self.plot_sensitivity()
 
 		
-	def get_sample(self, samplefile, summaryfile=None):
+	def get_sample(self, samplefile, summaryfile=None, proces_lcoe=False):
 		try:
 			with open(samplefile) as f:
 				content= f.read().splitlines()
@@ -66,25 +66,27 @@ class Contingency:
 
 		
 		self.num_sample = len(self.sample['lcoe'])
+		if proces_lcoe:
+			# update LCOE to be 
+			# LCOE without the pre-estimated contingency in the system model
+			self.epy=self.sample['epy'].astype(float) #MWh/year
+			self.C_cap=self.sample['C_cap'].astype(float)-self.sample['C_contingency'].astype(float) #mUSD
+			self.C_contingency=self.sample['C_contingency'].astype(float) # mUSD, the initially estimated contingency in the system model, e.g. ~10% capital
+			self.OM_tot=self.sample['OM_total'].astype(float) #mUSD
+			self.r_discount=self.sample['r_discount'].astype(float)
+			self.t_life=self.sample['t_life'].astype(int)
+			self.t_cons=self.sample['t_cons'].astype(int)
 
-		self.epy=self.sample['epy'].astype(float) #MWh/year
-		self.C_cap=self.sample['C_cap'].astype(float)-self.sample['C_contingency'].astype(float) #mUSD
-		self.C_contingency=self.sample['C_contingency'].astype(float) # mUSD, the initially estimated contingency in the system model, e.g. ~10% capital
-		self.OM_tot=self.sample['OM_total'].astype(float) #mUSD
-		self.r_discount=self.sample['r_discount'].astype(float)
-		self.t_life=self.sample['t_life'].astype(int)
-		self.t_cons=self.sample['t_cons'].astype(int)
-
-		# update LCOE to be 
-		# LCOE without the pre-estimated contingency in the system model
-		self.lcoe = fin.lcoe_r(
-				c_cap=self.C_cap*1.e6, 
-				c_year=self.OM_tot*1.e6, 
-				r=self.r_discount, 
-				t_life=self.t_life[0], 
-				t_cons=self.t_cons[0], 
-				epy=self.epy)
-
+			self.lcoe = fin.lcoe_r(
+					c_cap=self.C_cap*1.e6, 
+					c_year=self.OM_tot*1.e6, 
+					r=self.r_discount, 
+					t_life=self.t_life[0], 
+					t_cons=self.t_cons[0], 
+					epy=self.epy)
+		else:
+			self.lcoe=self.sample['lcoe']
+			
 		self.var_v_des=[]
 		self.var_v_perf=[]
 		self.var_v_cost=[]		
@@ -171,8 +173,41 @@ class Contingency:
 				
 		
 		return indices, f_lcoe
+	
+	def front_tri(self):
+
+		names=self.var_n_perf+self.var_n_cost
+		values=self.var_v_perf+self.var_v_cost
+		num_par=len(names)	
+	
+		fn=self.casedir+'/front.csv'
+		front=np.loadtxt(fn, dtype=str, delimiter=',')
+		lcoe=front[1:,0].astype(float)
+		num_front=len(lcoe)
+		idx=np.zeros(self.num_sample)
+		for i in range(num_front):
+			fl=lcoe[i]
+			for j in range(self.num_sample):
+				l=self.lcoe[j]
+				if abs(l-fl)<1e-9:
+					#idx=np.append(idx, j)
+					idx[j]=1
+		indices=idx.astype(bool)
 		
-	def get_assessment(self, indices, f_lcoe, newsample, plot=False):
+		points=np.array([])
+		for i in range(num_par):
+			v=values[i]
+			points=np.append(points, v[indices])		
+		points=points.reshape(num_par, int(len(points)/num_par)) # (2,n)
+		points=points.T # (n, 2)
+		tri = Delaunay(points)
+		tri_idx=tri.simplices
+
+		f_lcoe=np.sum(self.lcoe[indices][tri_idx], axis=1)/3. # front lcoe in each triangle
+		
+		return indices, tri_idx, f_lcoe
+		
+	def get_assessment(self, indices, f_lcoe, newsample, tri_idx=None,  plot=False):
 		'''
 		Arguments:
 		(1) indices: (n, 3) array, the indices of triangular mesh elements on the convex hull
@@ -190,56 +225,108 @@ class Contingency:
 		num_par=len(names)						
 		points=np.vstack((values[0], values[1])) #(2, n)
 		points=points.T #(n, 2)		
-	
-		# the new sample
-		num_des=len(self.var_n_des)
-		num_ns=len(newsample)
-		ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
-		ns_des={} # design of the new sample
-		for i in range(num_des):
-			ns_des[self.var_n_des[i]]=np.zeros(num_ns)
+		
+		if tri_idx is None:
+			# the new sample
+			num_des=len(self.var_n_des)
+			num_ns=len(newsample)
+			ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
+			ns_des={} # design of the new sample
+			for i in range(num_des):
+				ns_des[self.var_n_des[i]]=np.zeros(num_ns)
 
-		num_tri=len(indices)
-		for i in range(num_tri):
+			num_tri=len(indices)
+			for i in range(num_tri):
 
-			A=points[indices[i,0]]
-			B=points[indices[i,1]]
-			C=points[indices[i,2]]
-			
-			idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
-			if np.sum(idx)!=0:
-				ns_lcoe[idx]=(ka*self.lcoe[indices[i,0]]+kb*self.lcoe[indices[i,1]]+kc*self.lcoe[indices[i,2]])/k
-				for i in range(num_des):
-					name=self.var_n_des[i]
-					value=self.var_v_des[i]
-					ns_des[name][idx]=(ka*value[indices[i,0]]+kb*value[indices[i,1]]+kc*value[indices[i,2]])/k
-			#print('tri ', i, np.sum(idx))	
-			
-		idx=(ns_lcoe!=0)
-		if plot:
-			fts=14
-			plt2,ax=plt.subplots()
-			cm = plt.cm.get_cmap('jet')
-			vmax=np.max(self.lcoe[indices])
-			vmin=np.min(self.lcoe[indices])
-			#plt.triplot(values[0], values[1], indices) 
-			plt.tripcolor(values[0], values[1], indices, facecolors=f_lcoe, cmap=cm, vmax=160, vmin=140)  	
-			cs=ax.scatter(values[0][indices], values[1][indices], c=self.lcoe[indices] , cmap=cm,s=60, marker='o',edgecolors='black', vmax=160, vmin=140)			
-			cs=ax.scatter(newsample[idx, 0], newsample[idx, 1], c=ns_lcoe[idx] , cmap=cm,s=80, marker='o',edgecolors='red', vmax=160, vmin=140)	
-
+				A=points[indices[i,0]]
+				B=points[indices[i,1]]
+				C=points[indices[i,2]]
 				
-			clb=plt.colorbar(cs)
-			clb.ax.set_title(' LCOE \n USD/MWh$_\mathrm{e}$',y=1.,fontsize=fts)
-			plt.xlabel(names[0],fontsize=fts)
-			plt.ylabel(names[1],fontsize=fts)
-			plt.xticks(fontsize=fts)
-			plt.yticks(fontsize=fts)
-			clb.ax.tick_params(labelsize=fts)
-			#plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-			#plt.legend(loc='lower left',fontsize=fts)
-			#plt.savefig(open(self.casedir+'/front_lcoe.png','wb'), bbox_inches='tight', dpi=300)
-			plt.show()
-			plt.close()
+				idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
+				if np.sum(idx)!=0:
+					ns_lcoe[idx]=(ka*self.lcoe[indices[i,0]]+kb*self.lcoe[indices[i,1]]+kc*self.lcoe[indices[i,2]])/k
+					for i in range(num_des):
+						name=self.var_n_des[i]
+						value=self.var_v_des[i]
+						ns_des[name][idx]=(ka*value[indices[i,0]]+kb*value[indices[i,1]]+kc*value[indices[i,2]])/k
+				#print('tri ', i, np.sum(idx))	
+				
+			idx=(ns_lcoe!=0)
+			
+			if plot:
+				fts=14
+				plt2,ax=plt.subplots()
+				cm = plt.cm.get_cmap('jet')
+				vmax=np.max(self.lcoe[indices])
+				vmin=np.min(self.lcoe[indices])
+				#plt.triplot(values[0], values[1], indices) 
+				plt.tripcolor(values[0], values[1], indices, facecolors=f_lcoe, cmap=cm, vmax=160, vmin=140)  	
+				cs=ax.scatter(values[0][indices], values[1][indices], c=self.lcoe[indices] , cmap=cm,s=60, marker='o',edgecolors='black', vmax=160, vmin=140)			
+				cs=ax.scatter(newsample[idx, 0], newsample[idx, 1], c=ns_lcoe[idx] , cmap=cm,s=80, marker='o',edgecolors='red', vmax=160, vmin=140)	
+
+					
+				clb=plt.colorbar(cs)
+				clb.ax.set_title(' LCOE \n USD/MWh$_\mathrm{e}$',y=1.,fontsize=fts)
+				plt.xlabel(names[0],fontsize=fts)
+				plt.ylabel(names[1],fontsize=fts)
+				plt.xticks(fontsize=fts)
+				plt.yticks(fontsize=fts)
+				clb.ax.tick_params(labelsize=fts)
+				#plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+				#plt.legend(loc='lower left',fontsize=fts)
+				#plt.savefig(open(self.casedir+'/front_lcoe.png','wb'), bbox_inches='tight', dpi=300)
+				plt.show()
+				plt.close()
+		else:
+			# the new sample
+			num_des=len(self.var_n_des)
+			num_ns=len(newsample)
+			ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
+			ns_des={} # design of the new sample
+			for i in range(num_des):
+				ns_des[self.var_n_des[i]]=np.zeros(num_ns)
+
+			num_tri=len(tri_idx)
+			for i in range(num_tri):
+
+				A=points[indices][tri_idx[i,0]]
+				B=points[indices][tri_idx[i,1]]
+				C=points[indices][tri_idx[i,2]]
+				
+				idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
+				if np.sum(idx)!=0:
+					ns_lcoe[idx]=(ka*self.lcoe[indices][tri_idx[i,0]]+kb*self.lcoe[indices][tri_idx[i,1]]+kc*self.lcoe[indices][tri_idx[i,2]])/k
+					for i in range(num_des):
+						name=self.var_n_des[i]
+						value=self.var_v_des[i]
+						ns_des[name][idx]=(ka*value[indices][tri_idx[i,0]]+kb*value[indices][tri_idx[i,1]]+kc*value[indices][tri_idx[i,2]])/k
+				#print('tri ', i, np.sum(idx))	
+				
+			idx=(ns_lcoe!=0)
+			if plot:
+				fts=14
+				plt2,ax=plt.subplots()
+				cm = plt.cm.get_cmap('jet')
+				vmax=np.max(self.lcoe[indices][tri_idx])
+				vmin=np.min(self.lcoe[indices][tri_idx])
+				#plt.triplot(values[0], values[1], indices) 
+				plt.tripcolor(values[0][indices], values[1][indices], tri_idx, facecolors=f_lcoe, cmap=cm, vmax=160, vmin=140)  	
+				cs=ax.scatter(values[0][indices][tri_idx], values[1][indices][tri_idx], c=self.lcoe[indices][tri_idx], cmap=cm,s=60, marker='o',edgecolors='black', vmax=160, vmin=140)			
+				cs=ax.scatter(newsample[idx, 0], newsample[idx, 1], c=ns_lcoe[idx] , cmap=cm,s=80, marker='o',edgecolors='red', vmax=160, vmin=140)	
+
+					
+				clb=plt.colorbar(cs)
+				clb.ax.set_title(' LCOE \n USD/MWh$_\mathrm{e}$',y=1.,fontsize=fts)
+				plt.xlabel(names[0],fontsize=fts)
+				plt.ylabel(names[1],fontsize=fts)
+				plt.xticks(fontsize=fts)
+				plt.yticks(fontsize=fts)
+				clb.ax.tick_params(labelsize=fts)
+				#plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+				#plt.legend(loc='lower left',fontsize=fts)
+				#plt.savefig(open(self.casedir+'/front_lcoe.png','wb'), bbox_inches='tight', dpi=300)
+				plt.show()
+				plt.close()				
 	
 		return ns_lcoe, ns_des
 
@@ -797,23 +884,27 @@ if __name__=="__main__":
 	sample=np.r_[1000, 3000, 5000, 8000, 10000]	
 	var_n_des=['t_storage', 'tank_ar']
 	var_n_perf=['ab_rec', 'alpha']
-	
+	method='front' #'front' or 'hull'
 	for i in range(len(sample)):
 		print('')
 		print('Sample', sample[i])
 		t0=time.time()
 
-		casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/uniform_%.0f'%sample[i]
+		casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/moga_%.0f'%sample[i]
 		ct=Contingency(casedir, var_n_des=var_n_des, var_n_perf=var_n_perf, var_n_cost=[])
-		indices, f_lcoe=ct.get_front()
-		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, plot=True)
+		if method=='hull':
+			indices, f_lcoe=ct.get_front()
+			tri_idx=None
+		elif method=='front':
+			indices, tri_idx, f_lcoe=ct.front_tri()
+			
+		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, tri_idx=tri_idx, plot=False)
 		
-		title=np.array(['perf1 '+var_n_perf[0], 'perf2 '+var_n_perf[1], 'des1 '+var_n_des[0], 'des2 '+var_n_des[1], 'sample lcoe'])
+		title=np.array([var_n_perf[0], var_n_perf[1], var_n_des[0], var_n_des[1], 'sample lcoe'])
 		data=np.append(P[:,0], (P[:, 1], ns_des[var_n_des[0]], ns_des[var_n_des[1]], ns_lcoe))
 		data=data.reshape(5, num_ns)
 		res=np.hstack((title.reshape(5,1), data))
-		np.savetxt(casedir+'/newsample.csv', res.T, fmt='%s', delimiter=',')
+		np.savetxt(casedir+'/newsample-%s.csv'%method, res.T, fmt='%s', delimiter=',')
 		t1=time.time()
 		print('Time (total) %.2f s'%(t1-t0))
-
-
+		stop
