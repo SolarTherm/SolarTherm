@@ -193,13 +193,17 @@ class Contingency:
 					#idx=np.append(idx, j)
 					idx[j]=1
 		indices=idx.astype(bool)
-		
+
 		points=np.array([])
 		for i in range(num_par):
 			v=values[i]
-			points=np.append(points, v[indices])		
+			points=np.append(points, v[indices])
 		points=points.reshape(num_par, int(len(points)/num_par)) # (2,n)
 		points=points.T # (n, 2)
+		
+		points[:,0]=(points[:,0]-np.min(points[:,0]))/(np.max(points[:,0])-np.min(points[:,0]))
+		points[:,1]=(points[:,1]-np.min(points[:,1]))/(np.max(points[:,1])-np.min(points[:,1]))
+		
 		tri = Delaunay(points)
 		tri_idx=tri.simplices
 
@@ -907,4 +911,4 @@ if __name__=="__main__":
 		np.savetxt(casedir+'/newsample-%s.csv'%method, res.T, fmt='%s', delimiter=',')
 		t1=time.time()
 		print('Time (total) %.2f s'%(t1-t0))
-		stop
+		
