@@ -13,7 +13,7 @@ lib1 = senv.SharedLibrary('st_tables',[
 	,'solinterp/symmetries.c'
 	,'solinterp/tables.c'])
 
-lib1 = senv.SharedLibrary('st_motab',[
+lib4 = senv.SharedLibrary('st_motab',[
 	'st_motab.c'
 	,'parse.c'])
 
@@ -30,7 +30,7 @@ genv.Append(
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
-shlibs = [lib1,lib2,lib3]
+shlibs = [lib1,lib4,lib2,lib3]
 pysrcs = ['st_test_ext.py','run_solstice.py']
 
 # this is the location that st_simulate etc will use

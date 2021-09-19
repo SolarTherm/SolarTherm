@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
