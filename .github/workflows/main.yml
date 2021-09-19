@@ -95,6 +95,11 @@ jobs:
         export PATH=~/.local/bin:$PATH
         export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        echo "CHECK SOLSTICE DEPS"
+        ldd `which solstice`
+        echo "LS LIBS"
+        ls ~/.local/lib
+        echo "-----"
         cd tests
         #st python -m pytest test_python_env.py test_stenv.py test_solstice.py
         st python -m pytest
