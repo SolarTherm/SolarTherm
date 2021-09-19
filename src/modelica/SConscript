@@ -13,6 +13,10 @@ lib1 = senv.SharedLibrary('st_tables',[
 	,'solinterp/symmetries.c'
 	,'solinterp/tables.c'])
 
+lib1 = senv.SharedLibrary('st_motab',[
+	'st_motab.c'
+	,'parse.c'])
+
 penv = senv.Clone()
 
 penv.ParseConfig('$PKGCONFIGPYTHON')

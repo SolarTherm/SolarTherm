@@ -20,6 +20,10 @@ else:
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
 
+default_colors='auto'
+if sys.stdout.isatty():
+	default_colors = 'yes'
+
 vars = Variables()
 vars.AddVariables(
 	PathVariable('PREFIX'
@@ -55,6 +59,8 @@ vars.AddVariables(
 		,"$OM_PREFIX/include/omc/c")
 	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
+	,EnumVariable('COLORS',"Whether to use colour in output",default_colors,['yes','no','auto'])
+	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
 
 if platform.system()=="Windows":
@@ -87,6 +93,20 @@ env['SUBST_DICT'] = {
 	,'@PREFIX@' : '$PREFIX'
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
 }
+
+if env['COLORS'] == 'yes':
+	env['CPPFLAGS'] = ['-fdiagnostics-color=always']
+	env['LINKFLAGS'] = ['-fdiagnostics-color=always']
+elif env['COLORS'] == 'no':
+	env['CPPFLAGS'] = ['-fdiagnostics-color=never']
+	env['LINKFLAGS'] = ['-fdiagnostics-color=never']
+
+if env['DEBUG']:
+	env.Append(
+		CPPFLAGS = "-g"
+		,LDFLAGS = "-g"
+	)
+
 
 # TODO use 'SConscript(...variant_dir...)
 env.SConscript(

@@ -13,7 +13,7 @@ pipwheel = env.Command('mytouch','setup.py',[
 
 wheel = env.Glob('wheel/*.whl')
 
-env.Depends(wheel,'solartherm')
+env.Depends(wheel,pipwheel)
 
 pipinst = env.Command(
 	target = '$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py'

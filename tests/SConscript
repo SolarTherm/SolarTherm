@@ -1,12 +1,19 @@
 Import('env')
 
 tenv = env.Clone()
+#tenv['OM_MSL_RES_INC'] = '/usr/lib/omlibrary/Modelica 3.2.3/Resources/C-Sources'
+#tenv['OM_MSL_RES_LIBPATH'] = '/usr/lib/x86_64-linux-gnu/omc/'
+#tenv.Command("ModelicaExternalTables.c","$OM_MSL_RES_INC/ModelicaExternalTables.c",Copy("$TARGET","$SOURCE"))
+
 tenv.Append(
 	CPPPATH = ['#/src/modelica/']
 	,LIBPATH = ['#/src/modelica/']
 )
-
 tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
+
+tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
+
+tenv.Program('testdispatch',['testdispatch.c'],LIBS=['st_linprog','st_motab'])
 
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])
