@@ -99,10 +99,13 @@ jobs:
         ldd `which solstice`
         echo "LS LIBS"
         ls ~/.local/lib
+        echo "RUNNING st env"
+        st env
+        check "CHECKING SOLSTICE RUNS...
+        solstice --version
         echo "-----"
         cd tests
-        #st python -m pytest test_python_env.py test_stenv.py test_solstice.py
-        st python -m pytest
+        python3 -m pytest
 
 #    - name: Run SolarTherm test 2
 #      run: |
