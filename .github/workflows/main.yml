@@ -101,7 +101,7 @@ jobs:
         ls ~/.local/lib
         echo "RUNNING st env"
         st env
-        check "CHECKING SOLSTICE RUNS...
+        check "CHECKING SOLSTICE RUNS..."
         solstice --version
         echo "-----"
         cd tests
