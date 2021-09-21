@@ -13,8 +13,10 @@ def test_solstice_version():
 	else:
 		# on Linux, we just get 'solstice' which should be in our PATH:
 		p = shutil.which(s)
-		print("PATH=",p)
+		print("SHUTIL.WHICH('%s') = ",s,p)
 		assert p
+		print("LD_LIBRARY_PATH =",os.environ.get('LD_LIBRARY_PATH'))
+		print("PATH =",os.environ.get('PATH'))
 	
 	call = [s,'--version']
 	print("CALL =",call)
