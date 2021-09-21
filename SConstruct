@@ -12,6 +12,12 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
+		try:
+			import solsticepy
+			default_solstice=Path(solsticepy.find_prog('solstice'))
+		except:
+			default_solstice=default_prefix=Path(os.environ['HOME'])/'.local'/'bin'/'solstice.exe'
+
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
@@ -59,7 +65,7 @@ vars.AddVariables(
 	,PathVariable(
 		'SOLSTICE'
 		,"Location of the solstice executable"
-		,default_solstice)
+		,default_solstice, PathVariable.PathAccept)
 	,PathVariable(
 		'OM_CPPPATH'
 		,"Location where OM C runtime headers are located"
