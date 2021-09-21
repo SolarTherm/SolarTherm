@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-18.04]
     env:
       DAKVER: 6.14.0
-      DAKOTA_PKGN: dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
+      DAKOTA_PKGN: dakota-6.14.0-${{ matrix.os }}-x86_64-jp
     steps:
     - uses: actions/checkout@v2
 
