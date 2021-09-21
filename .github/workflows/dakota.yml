@@ -38,12 +38,12 @@ jobs:
         cd dakota-${DAKVER}.src/build
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
-        tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
+        tar zcf ${DAKOTA_PKGN}.tar.gz $DAKOTA_PKGN/*
 
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
         name: $DAKOTA_PKGN
-        path: $HOME/$DAKOTA_PKGN.tar.gz
+        path: $HOME/${DAKOTA_PKGN}.tar.gz
 
 # vim: ts=2:sw=2:et
