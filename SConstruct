@@ -95,11 +95,15 @@ env['SUBST_DICT'] = {
 }
 
 if env['COLORS'] == 'yes':
-	env['CPPFLAGS'] = ['-fdiagnostics-color=always']
-	env['LINKFLAGS'] = ['-fdiagnostics-color=always']
+	env.Append(
+		CPPFLAGS=['-fdiagnostics-color=always']
+		,LINKFLAGS=['-fdiagnostics-color=always']
+	)
 elif env['COLORS'] == 'no':
-	env['CPPFLAGS'] = ['-fdiagnostics-color=never']
-	env['LINKFLAGS'] = ['-fdiagnostics-color=never']
+	env.Append(
+		CPPFLAGS=['-fdiagnostics-color=never']
+		,LINKFLAGS=['-fdiagnostics-color=never']
+	)
 
 if env['DEBUG']:
 	env.Append(
