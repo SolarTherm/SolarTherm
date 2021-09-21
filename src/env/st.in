@@ -51,6 +51,18 @@ def append(newenv,path,envvar):
 		path = PJ(pp,path)
 	newenv[envvar] = path
 
+def inpath(env,path,envvar):
+	vals = PS(env.get(envvar))
+	p = os.path.normpath(path)
+	for v in vals:
+		if os.path.normpath(v) == p:
+			return True
+	return False
+
+def append_if_missing(env,path,var):
+	if not inpath(env,path,var):
+		append(env,path,var)
+
 instp = CYG('@PREFIX@')
 NEWENV['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
@@ -75,6 +87,10 @@ append(NEWENV,pyp,'PYTHONPATH')
 
 libp = os.path.join(instp,"lib")
 prepend(NEWENV,libp,'LD_LIBRARY_PATH')
+
+if platform.system()=="Linux":
+	append_if_missing(NEWENV,'/usr/local/lib','LD_LIBRARY_PATH')
+
 #prepend(libp,'LIBRARY_PATH')
 if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
@@ -101,11 +117,15 @@ NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","
 if len(sys.argv) == 2 and sys.argv[1] == '--version':
 	import solartherm
 	print("SolarTherm",solartherm.__version__)
+	print("-- original environment --")
 	showvars = ['PATH','PYTHONPATH']
 	if platform.system()=="Linux":
 		showvars += ['LD_LIBRARY_PATH']
 	for v in showvars:
 		print(v,"=",os.environ.get(v))
+	print("-- new environment --")
+	for v in showvars:
+		print(v,"=",NEWENV.get(v))
 	sys.exit(0)
 
 if sys.argv[1] not in cmds:
@@ -130,7 +150,7 @@ if sys.argv[1] == 'env':
 	if os.environ.get('VERBOSE'):
 		print("Entering st env")
 		print("PATH=",NEWENV.get('PATH'))
-		print("LD_LIBBRAY_PATH=",NEWENV.get('LD_LIBRARY_PATH'))
+		print("LD_LIBRARY_PATH=",NEWENV.get('LD_LIBRARY_PATH'))
 		print("which bash?",shutil.which('bash'))
 
 	if 'STBASHRC' not in os.environ:
