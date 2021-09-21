@@ -90,6 +90,7 @@ jobs:
         export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$DAKSTEM.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"
 
     - name: Build SolarTherm
       run: |
@@ -106,11 +107,12 @@ jobs:
         export PATH=~/.local/bin:$PATH     # needed for 'st'
         export PATH=$PATH:/usr/local/bin   # needed for solstice, dakota on 18.04
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
-
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         which st
         st --version
         solstice --version
         dakota --version
+        python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"
         st python -m pytest
 
 #    - name: Run SolarTherm test 2
