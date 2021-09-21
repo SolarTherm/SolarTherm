@@ -6,7 +6,7 @@
 #include "solinterp/symmetries.h"
 #include "solinterp/interpolation.h"
 
-#define ST_ISDLL
+#define ST_TABLES_DLL
 #include "st_tables.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -25,10 +25,13 @@ lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
 genv = senv.Clone()
 genv.Append(
-	LIBS = ['glpk']
+	LIBS = ['glpk','st_motab']
+	,LIBPATH=['.']
 )
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
+
+genv.Depends(lib3,lib4)
 
 shlibs = [lib1,lib4,lib2,lib3]
 pysrcs = ['st_test_ext.py','run_solstice.py']

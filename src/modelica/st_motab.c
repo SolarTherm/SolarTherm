@@ -1,5 +1,6 @@
 #include "parse.h"
 
+#define ST_MOTAB_DLL
 #include "st_motab.h"
 
 #include <stdio.h>

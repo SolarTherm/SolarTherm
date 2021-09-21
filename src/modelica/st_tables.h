@@ -6,7 +6,7 @@
 #ifdef __linux__
 # define ST_EXPORT
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
-# ifdef ST_ISDLL
+# ifdef ST_TABLES_DLL
 #  define ST_EXPORT __declspec(dllexport)
 # else
 #  define ST_EXPORT __declspec(dllimport)

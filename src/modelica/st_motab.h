@@ -1,5 +1,16 @@
 #ifndef ST_MOTAB_H
 #define ST_MOTAB_H
+
+#ifdef __linux__
+# define ST_EXPORT
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
+# ifdef ST_MOTAB_DLL
+#  define ST_EXPORT __declspec(dllexport)
+# else
+#  define ST_EXPORT __declspec(dllimport)
+# endif
+#endif
+
 /* generic motab reader in C */
 
 /* we're looking for header data of the following kind, as documented
@@ -62,7 +73,7 @@ typedef struct{
 	Load the motab file, return NULL if anything is wrong. File-reading error \
 	messages are output to stderr.
 */
-MotabData *motab_load(const char *filepath);
+ST_EXPORT MotabData *motab_load(const char *filepath);
 
 /**
 	Get the metadata row corresponding to `tag`, eg TABLEUNITS below.
@@ -74,20 +85,20 @@ MotabData *motab_load(const char *filepath);
 	The returned string is NOT a copy, so you don't need to (and must not!) 
 	free it.
 */
-const char *motab_find_meta_row(MotabData *tab, const char *tag);
+ST_EXPORT const char *motab_find_meta_row(MotabData *tab, const char *tag);
 
 /**
 	Look up a column by label, and return its index. 
 	Return -1 if label is not found.
 	Labels are case sensitive.
 */
-int motab_find_col_by_label(MotabData *tab, const char *label);
+ST_EXPORT int motab_find_col_by_label(MotabData *tab, const char *label);
 
 /**
 	Free memory allocated for this MotabData. It is assumed
 	that all strings are owned here, and are all freed.
 */
-void motab_free(MotabData *tab);
+ST_EXPORT void motab_free(MotabData *tab);
 
 /**
 	Check that the file has regular timesteps, and return the value 
@@ -98,7 +109,7 @@ void motab_free(MotabData *tab);
 	This function checks the metadata to make sure the step column is labelled
 	to be in seconds, and the timestep is returned in units of seconds.
 */
-int motab_check_timestep(MotabData *tab, double *step);
+ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
 
 /**
 	Look up the units of measurement specified for a column in the file.
@@ -107,7 +118,7 @@ int motab_check_timestep(MotabData *tab, double *step);
 	You must free the string returned by this function.
 
 */
-char *motab_get_col_units(MotabData *tab, const char *label);
+ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
 
 #endif
 /* vim: ts=4:sw=4:noet:tw=80 */
