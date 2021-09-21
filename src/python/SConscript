@@ -3,6 +3,9 @@ import sys
 
 setuppy = env.Substfile('setup.py.in')
 
+initpy = env.Substfile('solartherm/__init__.py.in')
+
+
 pipwheel = env.Command('mytouch','setup.py',[
 		Delete('wheel')
 		,Mkdir('wheel')
@@ -10,6 +13,7 @@ pipwheel = env.Command('mytouch','setup.py',[
 		,'touch ../mytouch'
 	],chdir=True
 )
+env.Depends(pipwheel,initpy)
 
 wheel = env.Glob('wheel/*.whl')
 

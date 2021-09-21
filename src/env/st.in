@@ -96,11 +96,21 @@ if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("For help with sub-commands, type eg \"st simulate --help\"")
 	sys.exit(0)
 
+NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
+
+if len(sys.argv) == 2 and sys.argv[1] == '--version':
+	import solartherm
+	print("SolarTherm",solartherm.__version__)
+	showvars = ['PATH','PYTHONPATH']
+	if platform.system()=="Linux":
+		showvars += ['LD_LIBRARY_PATH']
+	for v in showvars:
+		print(v,"=",os.environ.get(v))
+	sys.exit(0)
+
 if sys.argv[1] not in cmds:
 	print("Invalid sub-command '%s'. Type \"st --help`\" for a list of valid options."%(sys.argv[1]))
 	sys.exit(1)
-
-NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
 
 if sys.argv[1] == 'env':
 	shargs = []

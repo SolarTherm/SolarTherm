@@ -1,4 +1,4 @@
-import os, sys, platform, subprocess; from pathlib import Path
+import os, sys, platform, subprocess, shutil; from pathlib import Path
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
@@ -19,6 +19,9 @@ else:
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
+	default_solstice = shutil.which('solstice')
+	if not default_solstice:
+		default_solstice = Path(os.environ['HOME'])/'.local'/'bin'/'solstice'
 
 default_colors='auto'
 if sys.stdout.isatty():
@@ -53,6 +56,10 @@ vars.AddVariables(
 		'OM_PREFIX'
 		,"Installation prefix for location where OpenModelica is installed"
 		,default_om_prefix)
+	,PathVariable(
+		'SOLSTICE'
+		,"Location of the solstice executable"
+		,default_solstice)
 	,PathVariable(
 		'OM_CPPPATH'
 		,"Location where OM C runtime headers are located"

@@ -65,8 +65,19 @@ jobs:
 
     - name: Install Solstice
       run: |
-        mkdir -p ~/.local
-        tar zxv --strip-components=1 -C ~/.local < <(wget "https://www.meso-star.com/projects/solstice/downloads/Solstice-0.9.0-GNU-Linux64.tar.gz" -q -O-)
+        sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
+        export UBVER=`lsb_release -cs`
+        export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9-x86_64-$UBVER.tar.gz"
+        sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$SOLSTICEURL" -q -O-)
+        echo "CHECK SOLSTICE DEPS"
+        export PATH=$PATH:/usr/local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        ldd `which solstice`
+        echo "CHECKING SOLSTICE RUNS..."
+        solstice --version
+        echo "-----"
+        echo "SOLSTICE VERSION:"
+        solstice --version
 
     - name: Install DAKOTA 20.04
       if: ${{ matrix.os == 'ubuntu-20.04' }}
@@ -78,11 +89,10 @@ jobs:
         export DAKSTEM=dakota-$DAKVER-linux-x86_64-jp
         export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$DAKSTEM.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
 
     - name: Build SolarTherm
       run: |
-        python3 -c "import setuptools;print('SETUPTOOLS =',setuptools.__version__)"
-        # scons
         python3 -m SCons
 
     - name: Install SolarTherm
@@ -92,20 +102,13 @@ jobs:
 
     - name: Run SolarTherm pytest
       run: |
-        export PATH=~/.local/bin:$PATH
-        export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
-        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        echo "CHECK SOLSTICE DEPS"
-        ldd `which solstice`
-        echo "LS LIBS"
-        ls ~/.local/lib
-        echo "RUNNING st env"
-        st env
-        echo "CHECKING SOLSTICE RUNS..."
-        solstice --version
-        echo "-----"
         cd tests
-        python3 -m pytest
+        export PATH=~/.local/bin:$PATH
+        which st
+        st --version
+        solstice --version
+        dakota --version
+        st python -m pytest
 
 #    - name: Run SolarTherm test 2
 #      run: |
