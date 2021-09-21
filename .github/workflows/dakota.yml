@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-20.04, ubuntu-18.04]
     env:
       DAKVER: 6.14.0
-
+      DAKOTA_PKGN: dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
     steps:
     - uses: actions/checkout@v2
 
@@ -36,7 +36,6 @@ jobs:
     - name: Install DAKOTA
       run: |
         cd dakota-${DAKVER}.src/build
-        export DAKOTA_PKGN=dakota-$DAKVER-${{ matrix.os }}-x86_64-jp
         make DESTDIR=$HOME/$DAKOTA_PKGN install
         cd $HOME
         tar zcf $DAKOTA_PKGN.tar.gz $DAKOTA_PKGN/*
@@ -44,7 +43,7 @@ jobs:
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
+        name: $DAKOTA_PKGN
         path: $HOME/$DAKOTA_PKGN.tar.gz
 
 # vim: ts=2:sw=2:et
