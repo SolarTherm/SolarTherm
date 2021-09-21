@@ -103,11 +103,9 @@ jobs:
     - name: Run SolarTherm pytest
       run: |
         cd tests
-# for the 'st' script:
-        export PATH=~/.local/bin:$PATH
-# for dakota and solstice, on 18.04
-        export PATH=$PATH:/usr/local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export PATH=~/.local/bin:$PATH     # needed for 'st'
+        export PATH=$PATH:/usr/local/bin   # needed for solstice, dakota on 18.04
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
 
         which st
         st --version
