@@ -11,7 +11,7 @@ def test_run():
 	exe = './testmotab'
 	env = None
 	if platform.system()=="Linux":
-		env = os.environ
+		env = os.environ.copy()
 		env['LD_LIBRARY_PATH']='../src/modelica'
 	proc = sp.run([exe],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
 	assert(proc.returncode==0)

@@ -14,7 +14,7 @@ class TestTrySTTable(unittest.TestCase):
 		exe = './trysttable'
 		env = None
 		if platform.system()=="Linux":
-			env = os.environ
+			env = os.environ.copy()
 			env['LD_LIBRARY_PATH']='../src/modelica'
 		subprocess.run([exe],check=True,env=env)
 

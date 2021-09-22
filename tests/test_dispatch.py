@@ -7,7 +7,7 @@ def test_run():
 	exe = './testdispatch'
 	env = None
 	if platform.system()=="Linux":
-		env = os.environ
+		env = os.environ.copy()
 		env['LD_LIBRARY_PATH']='../src/modelica'
 	fdni = Path("../SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab")
 	fprice = Path("../SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab")
