@@ -23,6 +23,10 @@ def test_solstice_version():
 		sp.run(['/usr/bin/systemd-path'])
 		print("\nLDD")
 		sp.run(['/usr/bin/ldd',p])
+		env1 = os.environ.copy()
+		env1['LD_LIBRARY_PATH']='/usr/local/lib'
+		print("\nLDD (EXPLICIT ENV)")
+		sp.run(['/usr/bin/ldd',p],env=env1)
 		print()
 	
 	call = [s,'--version']

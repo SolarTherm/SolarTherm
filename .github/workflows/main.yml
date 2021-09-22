@@ -104,7 +104,19 @@ jobs:
         # scons install
         python3 -m SCons install
 
-    - name: Run SolarTherm pytest
+    - name: Test 'test_solstice.py'
+      run: |
+        cd tests
+        export PATH=~/.local/bin:$PATH     # needed for 'st'
+        export PATH=$PATH:/usr/local/bin   # needed for solstice on 18.04
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        which st
+        st --version
+        solstice --version
+        st python -m pytest test_solstice.py
+
+    - name: Test SolarTherm all tests
       run: |
         cd tests
         export PATH=~/.local/bin:$PATH     # needed for 'st'
