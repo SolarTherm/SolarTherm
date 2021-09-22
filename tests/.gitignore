@@ -38,3 +38,7 @@ trysttable
 test_soga
 test_moga
 TestStOptimise_*.txt
+testdispatch
+testmotab
+SimpleSystemOptimalDispatch*.c
+SimpleSystemOptimalDispatch
