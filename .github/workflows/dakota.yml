@@ -45,6 +45,6 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: dakota-${{ matrix.os }}
-        path: ~/install/
+        path: ~/install/dakota-*.tar.gz
 
 # vim: ts=2:sw=2:et
