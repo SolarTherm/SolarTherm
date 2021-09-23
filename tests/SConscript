@@ -7,13 +7,13 @@ tenv = env.Clone()
 
 tenv.Append(
 	CPPPATH = ['#/src/modelica/']
-	,LIBPATH = ['#/src/modelica/']
+	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH']
 )
 tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
 
 tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
-tenv.Program('testdispatch',['testdispatch.c'],LIBS=['st_linprog','st_motab'])
+tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])

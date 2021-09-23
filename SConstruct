@@ -8,6 +8,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		#default_prefix = subprocess.check_output(['cygpath','-w',Path(os.environ['HOME'])/".local"],encoding='utf-8').strip()
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_om_prefix = default_prefix
+		default_glpk_prefix = default_prefix
 		print("OM_PREFIX =",default_om_prefix)
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
@@ -22,6 +23,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
 	default_om_prefix = "/usr"
+	default_glpk_prefix = "/usr"
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
@@ -67,6 +69,12 @@ vars.AddVariables(
 		,"Location of the solstice executable"
 		,default_solstice, PathVariable.PathAccept)
 	,PathVariable(
+		'GLPK_PREFIX'
+		,"Installation prefix for GLPK"
+		,default_glpk_prefix)
+	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
+	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
+	,PathVariable(
 		'OM_CPPPATH'
 		,"Location where OM C runtime headers are located"
 		,"$OM_PREFIX/include/omc/c")
@@ -81,8 +89,16 @@ if platform.system()=="Windows":
 	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
 		if v in os.environ:
 			env['ENV'][v] = os.environ[v]
-else:
+elif platform.system()=="Linux":
+	import distro
 	env = Environment(variables=vars)
+	if distro.id()=="centos":
+		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
+		# for pkg-config to work correctly.
+		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
+			if v in os.environ:
+				env['ENV'][v] = os.environ[v]
+
 
 # some tricks required for Ubuntu 18.04...
 import platform
