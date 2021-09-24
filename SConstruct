@@ -158,7 +158,12 @@ def check_dakota_python(ct):
 		assert dpy.exists()
 		call = [sys.executable,'-c','"import dakota.interfacing;print dakota.interfacing.__file__"']
 		env1 = os.environ.copy()
-		env1['PYTHONPATH']=env1['PYTHONPATH'] + os.pathsep + str(dpy)
+		p1 = env1.get('PYTHONPATH')
+		if p1 is None:
+			env1['PYTHONPATH'] = str(dpy)
+		else:
+			env1['PYTHONPATH'] = os.pathsep.join([p1,str(dpy)])
+		#print("PYTHONPATH =",env1['PYTHONPATH'])
 		sp.run(call,env=env1,check=True)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
