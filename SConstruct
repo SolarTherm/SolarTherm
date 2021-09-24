@@ -1,24 +1,28 @@
-import os, sys, platform, subprocess, shutil; from pathlib import Path
+import os, sys, platform, shutil; from pathlib import Path
+import subprocess as sp
+
+# build script for SolarTherm -- use 'scons' to run it.
+# philopsophy here is:
+#    - Needed tools like 'solstice' etc should be in the PATH at build-time
+#    - We will provide a script called 'st' that makes all required environment var settings
+#      at run-time, to try to avoid any challenges for configuration for the end user.
+#    - We assume that Solstice is installed on Windows using our Windows installer.
+#    - Ultimately we are aiming for a setup process that can be completely automated using
+#      standard package managers like apt-get and pacman, but we're not there yet.
+
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
 print('system',platform.system())
 if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
-		#default_prefix = subprocess.check_output(['cygpath','-w',Path(os.environ['HOME'])/".local"],encoding='utf-8').strip()
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_om_prefix = default_prefix
 		default_glpk_prefix = default_prefix
-		print("OM_PREFIX =",default_om_prefix)
 		default_om_libpath = '$OM_PREFIX/lib/omc'
+		default_om_bin = '$OM_PREFIX/bin'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
-		try:
-			import solsticepy
-			default_solstice=Path(solsticepy.find_prog('solstice'))
-		except:
-			default_solstice=default_prefix=Path(os.environ['HOME'])/'.local'/'bin'/'solstice.exe'
-
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
@@ -26,10 +30,13 @@ else:
 	default_glpk_prefix = "/usr"
 	default_om_libpath = None
 	default_om_libs = []
+	default_om_bin = '$OM_PREFIX/bin'
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
-	default_solstice = shutil.which('solstice')
-	if not default_solstice:
-		default_solstice = Path(os.environ['HOME'])/'.local'/'bin'/'solstice'
+
+if shutil.which('dakota'):
+	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
+else:
+	default_dakota_prefix = Path(os.environ['HOME'])/'.local'
 
 default_colors='auto'
 if sys.stdout.isatty():
@@ -65,9 +72,12 @@ vars.AddVariables(
 		,"Installation prefix for location where OpenModelica is installed"
 		,default_om_prefix)
 	,PathVariable(
-		'SOLSTICE'
-		,"Location of the solstice executable"
-		,default_solstice, PathVariable.PathAccept)
+		'OM_CPPPATH'
+		,"Location where OM C runtime headers are located"
+		,"$OM_PREFIX/include/omc/c")
+	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
+	,('OM_BIN',"Libraries to link when building external functions",default_om_bin)
+	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 	,PathVariable(
 		'GLPK_PREFIX'
 		,"Installation prefix for GLPK"
@@ -75,11 +85,13 @@ vars.AddVariables(
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
 	,PathVariable(
-		'OM_CPPPATH'
-		,"Location where OM C runtime headers are located"
-		,"$OM_PREFIX/include/omc/c")
-	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
-	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
+		'DAKOTA_PREFIX'
+		,"Installation prefix for GLPK"
+		,default_dakota_prefix,PathVariable.PathAccept)	
+	,PathVariable('DAKOTA_BIN' ,"Location where DAKOTA executable is located" ,"$DAKOTA_PREFIX/bin",PathVariable.PathAccept)
+	,PathVariable('DAKOTA_PYTHON'
+		,"Location where DAKOTA python module is located"
+		,"$DAKOTA_PREFIX/share/dakota/Python",PathVariable.PathAccept)
 	,EnumVariable('COLORS',"Whether to use colour in output",default_colors,['yes','no','auto'])
 	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
@@ -99,6 +111,96 @@ elif platform.system()=="Linux":
 			if v in os.environ:
 				env['ENV'][v] = os.environ[v]
 
+#---------------------------------------------------------------------------------------------------
+# CHECK FOR DAKOTA, SOLSTICE
+
+def check_solstice(ct):
+	ct.Message('Checking for solstice...')
+	try:
+		import solsticepy
+		solstice = solsticepy.find_prog('solstice')
+		if not solstice:
+			raise RuntimeError("Solstice not found by solsticepy")
+		sp.run([solstice,'--version'],check=True,stdout=sp.PIPE,stderr=sp.PIPE)
+		if platform.system()=='Linux' and solstice == 'solstice':
+			solstice = shutil.which('solstice')
+	except Exception as e:
+		ct.Result(str(e))
+		return False
+	ct.Result(solstice)
+	if platform.system()=="Linux":
+		ct.env.AppendUnique(
+			ST_PATH= os.path.dirname(solstice)
+		)
+	return True
+def check_dakota(ct):
+	ct.Message('Checking for DAKOTA...')
+	try:
+		dakota = 'dakota'+('.exe' if platform.system()=="Windows" else '')
+		dpath = Path(env.subst('$DAKOTA_BIN'))/dakota
+		call = [dpath,'--version']
+		sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE)
+	except Exception as e:
+		ct.Result(str(e))
+		ct.env['HAVE_DAKOTA'] = False
+		return False
+	ct.Result(str(dpath))
+	ct.env['DAKOTA'] = dpath
+	ct.env['HAVE_DAKOTA'] = True
+	ct.env.AppendUnique(
+		ST_PATH = [env.subst('$DAKOTA_BIN')]
+	)
+	return True
+def check_dakota_python(ct):
+	ct.Message("Checking for 'dakota.interfacing' Python module...")
+	dpy = Path(env.subst('$DAKOTA_PYTHON'))
+	try:
+		assert dpy.exists()
+		call = [sys.executable,'-c','"import dakota.interfacing;print dakota.interfacing.__file__"']
+		env1 = os.environ.copy()
+		env1['PYTHONPATH']=env1['PYTHONPATH'] + os.pathsep + str(dpy)
+		sp.run(call,env=env1,check=True)
+	except Exception as e:
+		ct.Result("Not found (%s)"%(str(e),))
+		ct.env['HAVE_DAKOTA']=False
+		return False
+	ct.Result('OK')
+	return True
+def check_omc(ct):
+	ct.Message("Checking for 'omc'...")
+	omc = Path(shutil.which('omc'))
+	try:
+		assert omc.exists()
+		call = [omc,'--version']
+		sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE) # TODO check the version is OK
+	except Exception as e:
+		ct.Result("Not found (%s)"%(str(e),))
+		return False
+	ct.Result('OK')
+	if str(omc.parent) != '/usr/bin':
+		ct.env.AppendUnique(
+			ST_PATH = [str(omc.parent)]
+#			,ST_LIBPATH = [str(omc.parent.parent/'lib')]
+		)
+	return True
+conf = env.Configure(custom_tests={
+	'CS':check_solstice
+	, 'DAK':check_dakota
+	,'DAKPY':check_dakota_python
+	,'OMC':check_omc}
+)
+if not conf.CS():
+	print("Unable to locate 'solstice'")
+	Exit(1)
+conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
+conf.DAKPY()
+if not conf.OMC():
+	print("Unable to locate OpenModelica compiler 'omc'. Unable to continue.")
+	Exit(1)
+
+env = conf.Finish()
+
+#---------------------------------------------------------------------------------------------------
 
 # some tricks required for Ubuntu 18.04...
 import platform
@@ -120,6 +222,7 @@ env['SUBST_DICT'] = {
 	,'@PYTHON@' : '$PYTHON'
 	,'@PREFIX@' : '$PREFIX'
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
+	,'@ST_PATH@' : os.pathsep.join('$ST_PATH')
 }
 
 if env['COLORS'] == 'yes':
@@ -146,8 +249,15 @@ env.SConscript(
 	, exports='env'
 )
 
-#-------------------------------------------------------------------------------
+env.AppendUnique(
+	ST_PATH=[env.subst('$INSTALL_BIN')]
+)
+
+print("Runtime PATHs:",env.get('ST_PATH'))
+
+#---------------------------------------------------------------------------------------------------
 # Install (nearly) all files in 'SolarTherm' folder
+
 import re, os, sys
 
 stfiles = []
@@ -169,4 +279,4 @@ env.Alias('install',['#','$PREFIX','$INSTALL_OMLIBRARY'])
 
 # TODO install SolarTherm directory
 
-# vim: ts=4:noet:sw=4:tw=123:syntax=python
+# vim: ts=4:noet:sw=4:tw=100:syntax=python
