@@ -109,7 +109,6 @@ if platform.system()=="Linux":
         configcmd = 'python$PYVERSION-config --libs --cflags'
 env['PKGCONFIGPYTHON'] = configcmd
 
-
 #print("os.environ['PATH']=",os.environ.get('PATH'))
 #print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
 #print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
@@ -170,4 +169,4 @@ env.Alias('install',['#','$PREFIX','$INSTALL_OMLIBRARY'])
 
 # TODO install SolarTherm directory
 
-# vim: ts=4:noet:sw=4:tw=80:syntax=python
+# vim: ts=4:noet:sw=4:tw=123:syntax=python

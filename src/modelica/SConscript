@@ -6,6 +6,9 @@ senv.Append(
 	,LIBPATH = ['$OM_LIBPATH']
 	,LIBS = ['m'] + env['OM_LIBS']
 )
+conf = senv.Configure()
+conf.CheckHeader('openmodelica.h')
+senv = conf.Finish()
 
 lib1 = senv.SharedLibrary('st_tables',[
 	'st_tables.c'
@@ -20,6 +23,14 @@ lib4 = senv.SharedLibrary('st_motab',[
 penv = senv.Clone()
 
 penv.ParseConfig('$PKGCONFIGPYTHON')
+conf = penv.Configure()
+if not conf.CheckHeader('Python.h'):
+	print("Python.h is needed for building solartherm. Unable to continue.")
+	Exit(1)
+if not conf.CheckLib(penv.subst('python$PYVERSION'),"Py_Initialize",'#include <Python.h>',autoadd=False):
+	print("Unable to link to Python library. Unable to continue.")
+	Exit(1)
+penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
@@ -30,6 +41,11 @@ genv.Append(
 	,LIBS = ['glpk','st_motab']
 	,LIBPATH=['.','$GLPK_LIBPATH']
 )
+conf= genv.Configure()
+if not conf.CheckHeader('glpk.h'):
+	print("Unable to link to GLPK (required for optimal dispatch routines)")
+	Exit(1)
+genv = conf.Finish()
 
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
@@ -46,4 +62,4 @@ env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 # TODO examine option of placing these things in ~/.openmodelica/binaries ...?
 env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs)
 
-# vim: ts=4:sw=4:noet:tw=80:syntax=python
+# vim: ts=4:sw=4:noet:tw=123:syntax=python
