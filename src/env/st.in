@@ -2,6 +2,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals 
 
+import os, subprocess, sys, platform, re, shutil
+
 # TODO note that distutils has the feature of correcting the shebang of installed scripts. we should used distutils to sort out this file, therefore.
 
 # SolarTherm invocation script
@@ -18,9 +20,10 @@ from __future__ import unicode_literals
 # need that in order to be able to run tools like st_wea_to_mo from inside
 # OpenModelica.
 
-import os, subprocess, sys, platform, re, shutil
+#-------------------------------------------------------------------------------
+# utility routines for handling paths, special treatment require for MSYS2.
 
-NEWENV = dict(os.environ)
+NEWENV = os.environ.copy()
 		
 def CYG(path):
 	"""Convert a MSYS path to a native Windows path, where necessary."""
@@ -31,76 +34,79 @@ def CYG(path):
 		sys.exit(2)
 	return subprocess.check_output(['cygpath','-w',path],encoding='utf-8').strip()
 
-def PJ(*args):
-	"""Join paths in a PATH-like environment variable using this platform's separator char."""
-	return os.pathsep.join(args)
-
-def PS(val):
-	"""Split a PATH-like variable into a list. FIXME possible escaping?"""
-	return val.split(os.pathsep)
-
-def prepend(newenv,path,envvar):
-	pp = newenv.get(envvar)
+def prepend(path,envvar):
+	pp = NEWENV.get(envvar)
+	if os.environ.get('VERBOSE'):
+		print("Prepending '%s' to %s=%s" %(path,envvar,pp))
 	if pp is not None:
-		path = PJ(path,pp)
-	newenv[envvar] = path
+		path = os.pathsep.join([path,pp])
+	NEWENV[envvar] = path
 
-def append(newenv,path,envvar):
-	pp = newenv.get(envvar)
+def append(path,envvar):
+	pp = NEWENV.get(envvar)
+	if os.environ.get('VERBOSE'):
+		print("Appending '%s' to %s=%s" %(path,envvar,pp))
 	if pp is not None:
-		path = PJ(pp,path)
-	newenv[envvar] = path
+		path = os.pathsep.join([pp,path])
+	NEWENV[envvar] = path
 
-def inpath(env,path,envvar):
-	vals = PS(env.get(envvar))
+def inpath(path,envvar):
+	vals = NEWENV.get(envvar,"").split(os.pathsep)
 	p = os.path.normpath(path)
 	for v in vals:
 		if os.path.normpath(v) == p:
+			#print("Found '%s' in %s"%(p,envvar))
 			return True
 	return False
 
-def append_if_missing(env,path,var):
-	if not inpath(env,path,var):
-		append(env,path,var)
+def append_if_missing(path,var):
+	if not inpath(path,var):
+		append(path,var)
+
+#-------------------------------------------------------------------------------
+# setting env vars
 
 instp = CYG('@PREFIX@')
+
 NEWENV['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 omlibp = os.path.join(instp,"lib","omlibrary")
 
-#PYEXE = CYG(os.path.normpath(shutil.which('@PYTHON@')))
-
-NEWENV['OPENMODELICALIBRARY']=PJ(
+NEWENV['OPENMODELICALIBRARY']=os.pathsep.join([
 	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
 	,CYG(omlibp)
 	,CYG("/usr/lib/omlibrary")
 	,CYG("/usr/local/lib/omlibrary")
-)
+])
 
-# TODO: later, we may put st_simulate etc someone OFF the path, and in that case
-# we will have to chage the invocation.
-#prepend(os.path.expandvars("$INSTALL_PREFIX/bin"),"PATH")
+NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
 
-version=sys.version_info[:2]
-pyp = os.path.join(instp,"lib","python{0}.{1}/site-packages".format(*version))
-append(NEWENV,pyp,'PYTHONPATH')
+#-------------------------------------------------------------------------------
+# adding path components if required
 
-libp = os.path.join(instp,"lib")
-prepend(NEWENV,libp,'LD_LIBRARY_PATH')
+# needed paths as identified by SCons at installation time:
+st_paths = {
+	'PATH':"@ST_PATH@"
+	, 'PYTHONPATH':"@ST_PYTHONPATH@"
+}
+for k in st_paths:
+	for p in st_paths[k].split(os.pathsep):
+		append_if_missing(p,k)
 
-if platform.system()=="Linux":
-	append_if_missing(NEWENV,'/usr/local/lib','LD_LIBRARY_PATH')
-
-#prepend(libp,'LIBRARY_PATH')
 if platform.system()=="Windows":
 	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
-	prepend(NEWENV,resp,'PATH')
-	prepend(NEWENV,CYG('/mingw64'),'PYTHONHOME')
+	prepend(resp,'PATH')
+	prepend(CYG('/mingw64'),'PYTHONHOME')
 	#print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
-	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH']:
-		print(v,"=",NEWENV.get(v))
+	print("Updated environment:")
+	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH','PYTHONPATH','PYTHONHOME']:
+		print("   ",v,"=",NEWENV.get(v))
+	print("which bash?",shutil.which('bash'))
+
+#-------------------------------------------------------------------------------
+# run the requested action...
 
 cmds = ['env','python','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
 
@@ -112,20 +118,9 @@ if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("For help with sub-commands, type eg \"st simulate --help\"")
 	sys.exit(0)
 
-NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
-
 if len(sys.argv) == 2 and sys.argv[1] == '--version':
 	import solartherm
 	print("SolarTherm",solartherm.__version__)
-	print("-- original environment --")
-	showvars = ['PATH','PYTHONPATH']
-	if platform.system()=="Linux":
-		showvars += ['LD_LIBRARY_PATH']
-	for v in showvars:
-		print(v,"=",os.environ.get(v))
-	print("-- new environment --")
-	for v in showvars:
-		print(v,"=",NEWENV.get(v))
 	sys.exit(0)
 
 if sys.argv[1] not in cmds:
@@ -148,10 +143,7 @@ if sys.argv[1] == 'env':
 	NEWENV['PS1'] = ps1
 	
 	if os.environ.get('VERBOSE'):
-		print("Entering st env")
-		print("PATH=",NEWENV.get('PATH'))
-		print("LD_LIBRARY_PATH=",NEWENV.get('LD_LIBRARY_PATH'))
-		print("which bash?",shutil.which('bash'))
+		print("Entering st env...")
 
 	if 'STBASHRC' not in os.environ:
 		shargs += ['--norc']

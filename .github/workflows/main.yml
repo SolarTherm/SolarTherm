@@ -79,50 +79,42 @@ jobs:
         echo "SOLSTICE VERSION:"
         solstice --version
 
-    - name: Install DAKOTA 20.04
-      if: ${{ matrix.os == 'ubuntu-20.04' }}
+    - name: Install DAKOTA
       run: |
         sudo apt install openmpi-bin gsl-bin libquadmath0 libevent-pthreads-2.1-7 liblapack3 \
           libstdc++6 libboost-filesystem1.71.0 libboost-regex1.71.0 libboost-serialization1.71.0 \
           libgsl23 libgfortran5 libblas3 libopenmpi3 libhwloc15 libicu66 libgslcblas0 libquadmath0 \
           libevent-2.1-7 libevent-pthreads-2.1-7 libltdl7 libicu66
-        export DAKSTEM=dakota-$DAKVER-linux-x86_64-jp
-        export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$DAKSTEM.tar.gz"
+        export PKGN=dakota-${{ env.DAKVAR }}-${{ matrix.os }}-x86_64-jp
+        export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$PKGN.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
-        export PATH=$PATH:/usr/local/bin   # needed for solstice on 18.04
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
+        export PATH=$PATH:/usr/local/bin    # needed for Ubuntu 18.04
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # needed for 18.04
         dakota --version
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"
 
     - name: Build SolarTherm
       run: |
-        python3 -m SCons
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        scons
 
     - name: Install SolarTherm
       run: |
         # scons install
-        python3 -m SCons install
-
-    - name: Test 'test_solstice.py'
-      run: |
-        cd tests
-        export PATH=~/.local/bin:$PATH     # needed for 'st'
-        export PATH=$PATH:/usr/local/bin   # needed for solstice on 18.04
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        which st
-        st --version
-        solstice --version
-        st python -m pytest test_solstice.py
+        scons install
 
-    - name: Test SolarTherm all tests
+    - name: Test SolarTherm
       run: |
-        cd tests
-        export PATH=~/.local/bin:$PATH     # needed for 'st'
-        export PATH=$PATH:/usr/local/bin   # needed for solstice on 18.04
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # also needed for 18.04
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        cd tests
         which st
         st --version
         solstice --version

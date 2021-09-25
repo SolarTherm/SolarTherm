@@ -130,7 +130,7 @@ def check_solstice(ct):
 	ct.Result(solstice)
 	if platform.system()=="Linux":
 		ct.env.AppendUnique(
-			ST_PATH= os.path.dirname(solstice)
+			ST_PATH=[os.path.dirname(solstice)]
 		)
 	return True
 def check_dakota(ct):
@@ -170,6 +170,9 @@ def check_dakota_python(ct):
 		ct.env['HAVE_DAKOTA']=False
 		return False
 	ct.Result('OK')
+	ct.env.AppendUnique(
+		ST_PYTHONPATH=[str(dpy)]
+	)
 	return True
 def check_omc(ct):
 	ct.Message("Checking for 'omc'...")
@@ -221,13 +224,19 @@ env['PKGCONFIGPYTHON'] = configcmd
 #print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
 #print("env['ENV']['PATH']=",env['ENV'].get('PATH'))
 
+env.AppendUnique(
+	ST_PATH=[env.subst('$INSTALL_BIN')]
+	,ST_PYTHONPATH=[env.subst('$PREFIX/lib/python$PYVERSION/site-packages')]	
+)
+
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {
 	'@VERSION@' : '$VERSION'
 	,'@PYTHON@' : '$PYTHON'
 	,'@PREFIX@' : '$PREFIX'
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
-	,'@ST_PATH@' : os.pathsep.join('$ST_PATH')
+	,'@ST_PATH@' : os.pathsep.join(env['ST_PATH'])
+	,'@ST_PYTHONPATH@' : os.pathsep.join(env['ST_PYTHONPATH'])
 }
 
 if env['COLORS'] == 'yes':
@@ -252,10 +261,6 @@ if env['DEBUG']:
 env.SConscript(
 	['src/SConscript','tests/SConscript']
 	, exports='env'
-)
-
-env.AppendUnique(
-	ST_PATH=[env.subst('$INSTALL_BIN')]
 )
 
 print("Runtime PATHs:",env.get('ST_PATH'))

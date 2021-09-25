@@ -10,6 +10,17 @@ import re
 import tempfile
 import sysconfig
 
+if os.environ.get('ST_DEBUG'):
+	import colorama
+	colorama.init()
+	def bright(str1):
+		return colorama.Style.BRIGHT+colorama.Fore.GREEN  + str1 + colorama.Style.RESET_ALL 
+	def sp_run(call):
+		print(bright(" ".join(call)))
+		sp.check_call(call)
+else:
+	sp_run = sp.check_call	
+
 # TODO: Add in option for different result file output
 # TODO: Need to add in error checking for calls (possibly use in tests)
 
@@ -278,10 +289,8 @@ class Simulator(object):
 
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
 		"""Compile modelica model in .mo file."""
-		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
-			+ args
-			+ ['-i='+self.model, self.fn]
-			+ libs)
+		call = ['omc', '-s', '-q', '-n='+str(n_proc)] + args + ['-i='+self.model, self.fn] + libs
+		sp_run(call)
 			
 		#TODO solve the issue of linker flags in the latest msys2 (v20210228), ASLR enabled by default
 		# Ref: 
@@ -305,8 +314,8 @@ class Simulator(object):
 
 	def compile_sim(self, n_jobs=(1 + mp.cpu_count()//2), args=[]):
 		"""Compile model source code into a simulation executable."""
-		sp.check_call(['make', '-j', str(n_jobs), '-f', self.makefile_fn] 
-			+ args)
+		call = ['make', '-j', str(n_jobs), '-f', self.makefile_fn] + args
+		sp_run(call)
 
 	def load_init(self):
 		"""Load in init XML."""
@@ -382,7 +391,8 @@ class Simulator(object):
 		if lv==None:
 			sim_args = [e for e in sim_args if e not in ('-lv', lv)]
 
-		sp.check_call(['./'+self.model] + sim_args + args)
+		call = ['./'+self.model] + sim_args + args
+		sp_run(call)
 		#sp.call(['./'+self.model] + sim_args + args)
 		# assert also that there must be a result file
 		assert os.access(self.res_fn,os.R_OK)
