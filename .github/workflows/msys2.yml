@@ -23,6 +23,7 @@ jobs:
 
     env:
       PYTEST_ADDOPTS: --color=yes
+      DAKVER: 6.14.0
 
     steps:
     - uses: msys2/setup-msys2@v2
@@ -76,13 +77,15 @@ jobs:
         
     - name: Install DAKOTA
       run: |
-        export PKGN=dakota-6.14.0-release-public-Windows.x64-cli
+        export DAKPLAT=Windows.x64
+        export PKGN=dakota-${DAKVER}-release-public-${DAKPLAT}-cli
+        export DIRN=dakota-${DAKVER}.${DAKPLAT}
         cd
         mkdir -p dakota-tmp
-        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip
+        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
         cd dakota-tmp
         unzip ~/$PKGN
-        mv -nv ~/$PKGN/* ~/.local/
+        cp -R $DIRN/* ~/.local/
         export PATH=$PATH:~/.local/bin
         dakota --version
 
