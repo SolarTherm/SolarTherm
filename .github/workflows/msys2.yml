@@ -65,6 +65,13 @@ jobs:
         cmd /C "start solstice-0.9.0.exe /S"
         python3 -c "import solsticepy;print(solsticepy.find_prog('solstice'))"
 
+    - name: Install MPIEXEC
+      run: |
+        wget wget "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
+        cmd /C "start msmpisetup.exe -unattend -force"
+        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+        mpiexec
+        
     - name: Install DAKOTA
       run: |
         export DAKPLAT=Windows.x64
@@ -89,16 +96,18 @@ jobs:
         export PATH=$PATH:~/.local/bin
         scons install
 
-    - name: Run SolarTherm dakota
+    - name: Test SolarTherm dakota
       run: |
         export PATH=$PATH:~/.local/bin
+        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
         echo "WHICH ST? [" `which st` "]"
         cd tests
         st python -m pytest test_stopt.py
 
-    - name: Run SolarTherm tests
+    - name: Test SolarTherm
       run: |
         export PATH=$PATH:~/.local/bin
+        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
         cd tests
         st python -m pytest
 
