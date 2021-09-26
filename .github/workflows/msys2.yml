@@ -92,6 +92,7 @@ jobs:
     - name: Run SolarTherm dakota
       run: |
         export PATH=$PATH:~/.local/bin
+        echo "WHICH ST? [" `which st` "]"
         cd tests
         st python -m pytest test_stopt.py
 
