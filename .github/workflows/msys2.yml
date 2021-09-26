@@ -64,17 +64,7 @@ jobs:
         wget https://github.com/anustg/solstice-scripts/releases/download/v0.9.0-3/solstice-0.9.0.exe
         cmd /C "start solstice-0.9.0.exe /S"
         python3 -c "import solsticepy;print(solsticepy.find_prog('solstice'))"
-    
-    - name: Build SolarTherm
-      run: |
-        export PATH=$PATH:~/.local/bin
-        scons
 
-    - name: Install SolarTherm
-      run: |
-        export PATH=$PATH:~/.local/bin
-        scons install
-        
     - name: Install DAKOTA
       run: |
         export DAKPLAT=Windows.x64
@@ -88,6 +78,16 @@ jobs:
         cp -R $DIRN/* ~/.local/
         export PATH=$PATH:~/.local/bin
         dakota --version
+
+    - name: Build SolarTherm
+      run: |
+        export PATH=$PATH:~/.local/bin
+        scons
+
+    - name: Install SolarTherm
+      run: |
+        export PATH=$PATH:~/.local/bin
+        scons install
 
     - name: Run SolarTherm dakota
       run: |
