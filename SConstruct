@@ -203,12 +203,16 @@ def check_omlibrary(ct):
 	try:
 		p = Path(env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
-		assert (p/'Modelica 3.2.3').exists()
-		assert (p/'Modelica 3.2.3'/'SIunits.mo').exists()
+		if (p/'Modelica 3.2.3').exists():
+			assert (p/'Modelica 3.2.3'/'SIunits.mo').exists()
+			ct.Result('3.2.3')
+		else:
+			# allow 3.2.2 as fallback, for now
+			assert (p/'Modelica 3.2.2'/'SIunits.mo').exists()
+			ct.Result('3.2.2')
 	except Exception as e:
 		ct.Result("Failed (%s)"%(str(e),))
 		return False
-	ct.Result('OK')
 	return True
 		
 def check_mpi(ct):
