@@ -143,12 +143,13 @@ def check_solstice(ct):
 def check_dakota(ct):
 	ct.Message('Checking for DAKOTA...')
 	try:
+		# we already searched the path for DAKOTA, don't need to do it again
 		dakota = 'dakota'+('.exe' if platform.system()=="Windows" else '')
 		dpath = Path(env.subst('$DAKOTA_BIN'))/dakota
 		call = [dpath,'--version']
 		sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE)
 	except Exception as e:
-		ct.Result(str(e))
+		ct.Result("Not found")
 		ct.env['HAVE_DAKOTA'] = False
 		return False
 	ct.Result(str(dpath))
@@ -160,7 +161,7 @@ def check_dakota(ct):
 	return True
 def check_dakota_python(ct):
 	ct.Message("Checking for 'dakota.interfacing' Python module...")
-	dpy = Path(env.subst('$DAKOTA_PYTHON'))
+	dpy = Path(ct.env.subst('$DAKOTA_PYTHON'))
 	try:
 		assert dpy.exists()
 		call = [sys.executable,'-c','"import dakota.interfacing;print dakota.interfacing.__file__"']
@@ -183,9 +184,13 @@ def check_dakota_python(ct):
 	return True
 def check_omc(ct):
 	ct.Message("Checking for 'omc'...")
-	omc = Path(shutil.which('omc'))
+	# if our OM_PREFIX is correct, then OMC must be here:
+	omcp = 'omc'+('.exe' if platform.system()=="Windows" else '')
+	omc = Path(ct.env.subst('$OM_BIN'))/omcp
+	if not omc.exists():
+		ct.Result('Not found')
+		return False
 	try:
-		assert omc.exists()
 		call = [omc,'--version']
 		sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE) # TODO check the version is OK
 	except Exception as e:
@@ -201,7 +206,7 @@ def check_omc(ct):
 def check_omlibrary(ct):
 	ct.Message("Checking for Modelica Standard Library...")
 	try:
-		p = Path(env.subst('$OM_MODELICAPATH'))
+		p = Path(ct.env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
 		if (p/'Modelica 3.2.3').exists():
 			assert (p/'Modelica 3.2.3'/'SIunits.mo').exists()
@@ -219,7 +224,7 @@ def check_mpi(ct):
 	ct.Message("Checking for mpirun/mpiexec...")
 	mpirun = shutil.which(ct.env['MPIRUN'])
 	if not mpirun:
-		ct.Result('Not found in PATH.')
+		ct.Result('Not found')
 		return False
 	try:
 		assert Path(mpirun).exists()
@@ -239,12 +244,12 @@ conf = env.Configure(custom_tests={
 	,'MPI':check_mpi
 })
 if not conf.CS():
-	print("Unable to locate 'solstice'")
+	print(REDWARN("Unable to locate 'solstice'"))
 	Exit(1)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
 if not conf.OMC() or not conf.OMLib():
-	print("Unable to locate OpenModelica. Unable to continue.")
+	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
