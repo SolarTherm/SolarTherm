@@ -1,5 +1,6 @@
-import os, sys, platform, shutil; from pathlib import Path
+import os, sys, platform, shutil, colorama; from pathlib import Path
 import subprocess as sp
+colorama.init()
 
 # build script for SolarTherm -- use 'scons' to run it.
 # philopsophy here is:
@@ -13,34 +14,40 @@ import subprocess as sp
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
-print('system',platform.system())
+#print('system',platform.system())
 if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
-		default_om_prefix = default_prefix
 		default_glpk_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
-		default_om_bin = '$OM_PREFIX/bin'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
+		default_mpirun = 'mpiexec'
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
-	default_om_prefix = "/usr"
 	default_glpk_prefix = "/usr"
 	default_om_libpath = None
 	default_om_libs = []
-	default_om_bin = '$OM_PREFIX/bin'
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
+	default_mpirun = 'mpirun'
 
 if shutil.which('dakota'):
 	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
 else:
-	default_dakota_prefix = Path(os.environ['HOME'])/'.local'
+	default_dakota_prefix = default_prefix
+
+if shutil.which('omc'):
+	default_om_prefix = Path(shutil.which('omc')).parent.parent
+else:
+	default_om_prefix = default_prefix
+default_om_modelicapath = '$OM_PREFIX/lib/omlibrary' # location of MSL, eg Modelica 3.2.3 etc.
 
 default_colors='auto'
 if sys.stdout.isatty():
 	default_colors = 'yes'
+def REDWARN(msg):
+	return(colorama.Fore.RED+colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)
 
 vars = Variables()
 vars.AddVariables(
@@ -70,14 +77,12 @@ vars.AddVariables(
 	,PathVariable(
 		'OM_PREFIX'
 		,"Installation prefix for location where OpenModelica is installed"
-		,default_om_prefix)
-	,PathVariable(
-		'OM_CPPPATH'
-		,"Location where OM C runtime headers are located"
-		,"$OM_PREFIX/include/omc/c")
+		,default_om_prefix,PathVariable.PathAccept)
+	,PathVariable( 'OM_CPPPATH' ,"Location where OM C runtime headers are located","$OM_PREFIX/include/omc/c",PathVariable.PathAccept)
 	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
-	,('OM_BIN',"Libraries to link when building external functions",default_om_bin)
+	,('OM_BIN',"Libraries to link when building external functions",'$OM_PREFIX/bin')
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
+	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries',default_om_modelicapath,PathVariable.PathAccept)
 	,PathVariable(
 		'GLPK_PREFIX'
 		,"Installation prefix for GLPK"
@@ -92,6 +97,7 @@ vars.AddVariables(
 	,PathVariable('DAKOTA_PYTHON'
 		,"Location where DAKOTA python module is located"
 		,"$DAKOTA_PREFIX/share/dakota/Python",PathVariable.PathAccept)
+	,('MPIRUN',"Program to run MPI parallel tasks",default_mpirun)
 	,EnumVariable('COLORS',"Whether to use colour in output",default_colors,['yes','no','auto'])
 	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
@@ -110,6 +116,7 @@ elif platform.system()=="Linux":
 		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
 			if v in os.environ:
 				env['ENV'][v] = os.environ[v]
+Help(vars.GenerateHelpText(env))
 
 #---------------------------------------------------------------------------------------------------
 # CHECK FOR DAKOTA, SOLSTICE
@@ -184,27 +191,59 @@ def check_omc(ct):
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
 		return False
-	ct.Result('OK')
+	ct.Result(str(omc))
 	if str(omc.parent) != '/usr/bin':
 		ct.env.AppendUnique(
 			ST_PATH = [str(omc.parent)]
 #			,ST_LIBPATH = [str(omc.parent.parent/'lib')]
 		)
 	return True
+def check_omlibrary(ct):
+	ct.Message("Checking for Modelica Standard Library...")
+	try:
+		p = Path(env.subst('$OM_MODELICAPATH'))
+		assert p.exists()
+		assert (p/'Modelica 3.2.3').exists()
+		assert (p/'Modelica 3.2.3'/'SIunits.mo').exists()
+	except Exception as e:
+		ct.Result("Failed (%s)"%(str(e),))
+		return False
+	ct.Result('OK')
+	return True
+		
+def check_mpi(ct):
+	ct.Message("Checking for mpirun/mpiexec...")
+	mpirun = shutil.which(ct.env['MPIRUN'])
+	if not mpirun:
+		ct.Result('Not found in PATH.')
+		return False
+	try:
+		assert Path(mpirun).exists()
+		sp.run([mpirun,'--version'],stdout=sp.PIPE,stderr=sp.PIPE,check=True)
+	except Exception as e:
+		ct.Result('Unable to run. (%s)'%(str(e),))
+		return False
+	ct.env['MPIRUN']=mpirun
+	ct.Result(mpirun)
+	return True
 conf = env.Configure(custom_tests={
 	'CS':check_solstice
 	, 'DAK':check_dakota
 	,'DAKPY':check_dakota_python
-	,'OMC':check_omc}
-)
+	,'OMC':check_omc
+	,'OMLib':check_omlibrary
+	,'MPI':check_mpi
+})
 if not conf.CS():
 	print("Unable to locate 'solstice'")
 	Exit(1)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
-if not conf.OMC():
-	print("Unable to locate OpenModelica compiler 'omc'. Unable to continue.")
+if not conf.OMC() or not conf.OMLib():
+	print("Unable to locate OpenModelica. Unable to continue.")
 	Exit(1)
+if not conf.MPI():
+	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
 
 env = conf.Finish()
 
@@ -227,6 +266,7 @@ env['PKGCONFIGPYTHON'] = configcmd
 env.AppendUnique(
 	ST_PATH=[env.subst('$INSTALL_BIN')]
 	,ST_PYTHONPATH=[env.subst('$PREFIX/lib/python$PYVERSION/site-packages')]	
+	,ST_MODELICAPATH=[env.subst('$OM_MODELICAPATH'),env.subst('$INSTALL_OMLIBRARY')]
 )
 
 env['VERSION'] = '0.2'
@@ -237,6 +277,7 @@ env['SUBST_DICT'] = {
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
 	,'@ST_PATH@' : os.pathsep.join(env['ST_PATH'])
 	,'@ST_PYTHONPATH@' : os.pathsep.join(env['ST_PYTHONPATH'])
+	,'@ST_MODELICAPATH@' : os.pathsep.join(env['ST_MODELICAPATH'])
 }
 
 if env['COLORS'] == 'yes':
@@ -263,7 +304,7 @@ env.SConscript(
 	, exports='env'
 )
 
-print("Runtime PATHs:",env.get('ST_PATH'))
+#print("Runtime PATHs:",env.get('ST_PATH'))
 
 #---------------------------------------------------------------------------------------------------
 # Install (nearly) all files in 'SolarTherm' folder

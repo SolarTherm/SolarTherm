@@ -88,6 +88,7 @@ NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","
 st_paths = {
 	'PATH':"@ST_PATH@"
 	, 'PYTHONPATH':"@ST_PYTHONPATH@"
+	, 'OPENMODELICALIBRARY':"@ST_MODELICAPATH@"
 }
 for k in st_paths:
 	for p in st_paths[k].split(os.pathsep):
