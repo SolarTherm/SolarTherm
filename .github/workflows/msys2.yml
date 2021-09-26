@@ -73,23 +73,29 @@ jobs:
       run: |
         export PATH=$PATH:~/.local/bin
         scons install
+        
+    - name: Install DAKOTA
+      run: |
+        export PKGN=dakota-6.14.0-release-public-Windows.x64-cli
+        cd
+        mkdir -p dakota-tmp
+        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip
+        cd dakota-tmp
+        unzip ~/$PKGN
+        mv -nv ~/$PKGN/* ~/.local/
+        export PATH=$PATH:~/.local/bin
+        dakota --version
 
-    - name: Run SolarTherm tests 1
+    - name: Run SolarTherm dakota
       run: |
         export PATH=$PATH:~/.local/bin
         cd tests
-        #st python -m pytest test_python_env.py test_stenv.py test_solstice.py
+        st python -m pytest test_stopt.py
+
+    - name: Run SolarTherm tests
+      run: |
+        export PATH=$PATH:~/.local/bin
+        cd tests
         st python -m pytest
 
-#    - name: Run SolarTherm tests 2
-#      run: |
-#        echo "--------------setting path----------"
-#        export PATH=$PATH:~/.local/bin
-#        echo "--------------starting st env shell----------"
-#        VERBOSE=1 st env
-#        echo "--------------cd tests----------"
-#        cd tests
-#        echo "--------------python TestCatromOE.py----------"
-#        python3 TestCatromOE.py
-        
 # vim: ts=2:sw=2:et
