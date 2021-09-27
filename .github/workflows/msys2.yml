@@ -67,7 +67,7 @@ jobs:
 
     - name: Install MPIEXEC
       run: |
-        wget wget "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
+        wget "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
         cmd /C "start msmpisetup.exe -unattend -force"
         export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
         mpiexec
