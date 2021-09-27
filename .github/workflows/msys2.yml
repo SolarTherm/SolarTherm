@@ -102,13 +102,13 @@ jobs:
         cd tests
         st python -m pytest test_stenv.py
 
-    - name: Test SolarTherm dakota
-      run: |
-        export PATH=$PATH:~/.local/bin
-        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
-        echo "WHICH ST? [" `which st` "]"
-        cd tests
-        st python -m pytest test_stopt.py
+#    - name: Test SolarTherm dakota
+#      run: |
+#        export PATH=$PATH:~/.local/bin
+#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+#        echo "WHICH ST? [" `which st` "]"
+#        cd tests
+#        st python -m pytest test_stopt.py
 
     - name: Test SolarTherm
       run: |
