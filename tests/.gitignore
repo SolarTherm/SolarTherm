@@ -42,3 +42,5 @@ testdispatch
 testmotab
 SimpleSystemOptimalDispatch*.c
 SimpleSystemOptimalDispatch
+AO.c
+AO_*.c

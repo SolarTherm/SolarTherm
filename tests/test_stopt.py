@@ -262,6 +262,7 @@ def test_nsga2():
 
 @pytest.mark.skipif(not shutil.which('dakota'),reason="Dakota not found in the PATH")
 def test_dakota_moga():
+	print("\n\nTESTING DAKOTA_MOGA")
 	# first check that we have 'dakota' in our PATH...
 	cmd = "where" if platform.system() == "Windows" else "which"
 	dakota = subprocess.check_output([cmd, 'dakota'])
@@ -313,6 +314,7 @@ def test_dakota_moga():
 @pytest.mark.skipif(not shutil.which('dakota'),reason="Dakota not found in the PATH")
 def test_dakota_soga():
 	# first check that we have 'dakota' in our PATH...
+	print("\n\nTESTING DAKOTA_SOGA")
 	cmd = "where" if platform.system() == "Windows" else "which"
 	dakota = subprocess.check_output([cmd, 'dakota'])
 
