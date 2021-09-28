@@ -274,13 +274,13 @@ def test_dakota_moga():
 		,'--stop','1'
 		,'--objective','f_schaffer1,f_schaffer2'
 		,'--method','dakota_moga'
-		,'--wd=test_moga'
+		,'--wd','test_moga'
 		,'--outfig',figfile
 		,'--test'
 		,MODELICAFILE
 		,'x2=-1,1,0.1'
 	]
-	subprocess.call(args)
+	subprocess.run(args,check=1)
 
 	f_out='./test_moga/finaldata1.dat'
 	with open(f_out) as f:

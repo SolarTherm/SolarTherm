@@ -388,15 +388,13 @@ You need to install DAKOTA to run this optimisation algorithm
 """)
 
 		mpi_call = []
-		dakota_opts = []
 		if args.np!=0:
 			mpirun = os.environ.get('ST_MPIRUN','mpirun')
 			if platform.system()=='Windows':
 				mpi_call = [mpirun,'-n',str(args.np)]
 			else:
-				mpi_call = [mpirun,'--np',str(args.np)]
-				dakota_opts = ['--use-hwthread-cpus']
-		dakota_call = ['dakota','-i','sample.in','-o','sample.out'] + dakota_opts
+				mpi_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
+		dakota_call = ['dakota','-i','sample.in','-o','sample.out']
 		restart_args = ['-read_restart','dakota.rst']
 
 		if not os.path.exists(mn):
