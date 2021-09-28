@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import os, subprocess, sys, platform, re, shutil
 from pathlib import Path,PurePath
 
-# TODO note that distutils has the feature of correcting the shebang of installed scripts. we should used distutils to sort out this file, therefore.
+# TODO note that distutils has the feature of correcting the shebang of installed
+# scripts. we should used distutils to sort out this file, therefore.
 
 # SolarTherm invocation script
 # This is an alternative to the current 'st_local_env' thing, which seems to be
@@ -106,14 +107,16 @@ if platform.system()=="Windows":
 
 if os.environ.get('VERBOSE'):
 	print("Updated environment:")
-	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH','PYTHONPATH','PYTHONHOME','ST_MPIRUN']:
+	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH'
+			,'PYTHONPATH','PYTHONHOME','ST_MPIRUN']:
 		print("   ",v,"=",NEWENV.get(v))
 	print("which bash?",shutil.which('bash'))
 
 #-------------------------------------------------------------------------------
 # run the requested action...
 
-cmds = ['env','python','simulate','optimise','inspect','plotmat','cost','conv_sam_ourly','wea_to_mo']
+cmds = ['env','python','simulate','optimise','inspect','plotmat'
+		,'cost','conv_sam_ourly','wea_to_mo']
 
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("'st' is a helper script for running SolarTherm tools. It should be")

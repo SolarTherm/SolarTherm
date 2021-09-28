@@ -46,6 +46,19 @@ def get_schaffer_front(x):
 	y=-0.035968*x**7+0.53225728*x**6-3.17046223*x**5+9.74784352*x**4-16.55293478*x**3+15.71627806*x**2-8.88661535*x+3.68759935
 	return y
 
+def st(scriptname):
+	"""
+	On Windows, we can't so easily run our 'st' script from Python, because
+	the script doesn't have a .py suffix, and Windows doesn't know how to run it.
+	Hence, we explicitly run it using the right version of Python (=sys.executable).
+	"""
+	if platform.system()=="Windows":
+		st1 = Path(os.environ.get('HOME'))/".local"/"bin"/"st"
+		assert st1.exists()
+		return [sys.executable,st1,scriptname]
+	else:
+		return ['st',scriptname]
+
 #------------------ TESTS ------------------
 
 # TODO each optimisation is running well at the moment, 
@@ -253,8 +266,19 @@ def test_dakota_moga():
 	dakota = subprocess.check_output([cmd, 'dakota'])
 
 	figfile='TestStOptimise_moga_pareto_front.png'
-	args='st optimise --start 0 --stop 1 --objective f_schaffer1,f_schaffer2 --method dakota_moga --wd=test_moga --outfig %s --test %s x2=-1,1,0.1'%(figfile, MODELICAFILE)
-	subprocess.call(args, shell=True)
+	
+	args=st('optimise') + [
+		'--start','0'
+		,'--stop','1'
+		,'--objective','f_schaffer1,f_schaffer2'
+		,'--method','dakota_moga'
+		,'--wd=test_moga'
+		,'--outfig',figfile
+		,'--test'
+		,MODELICAFILE
+		,'x2=-1,1,0.1'
+	]
+	subprocess.call(args)
 
 	f_out='./test_moga/finaldata1.dat'
 	with open(f_out) as f:
@@ -291,9 +315,19 @@ def test_dakota_soga():
 	cmd = "where" if platform.system() == "Windows" else "which"
 	dakota = subprocess.check_output([cmd, 'dakota'])
 
-	args='st optimise --start 0 --stop 1 --maxiter 100 --objective f_rosen --method dakota_soga --wd=test_soga --test %s x1=-2,2,1 y1=-2,2,-1.5'%(MODELICAFILE)
+	args=st('optimise') + [
+		'--start','0'
+		,'--stop','1'
+		,'--maxiter','100'
+		,'--objective','f_rosen'
+		,'--method','dakota_soga'
+		,'--wd=test_soga'
+		,'--test',MODELICAFILE
+		,'x1=-2,2,1'
+		,'y1=-2,2,-1.5'
+	]
 
-	subprocess.call(args, shell=True)
+	subprocess.run(args, check=1)
 
 	f_out='./test_soga/finaldata1.dat'
 	with open(f_out) as f:
