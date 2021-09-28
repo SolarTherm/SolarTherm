@@ -235,6 +235,16 @@ def check_mpi(ct):
 	ct.env['MPIRUN']=mpirun
 	ct.Result(mpirun)
 	return True
+def check_path(ct):
+	ct.Message('Checking PATH...')
+	pp = os.environ.get('PATH','').split(os.pathsep)
+	ib = ct.env.subst('$INSTALL_BIN')
+	for p in pp:
+		if os.path.normpath(p) == ib:
+			ct.Result('OK')
+			return True
+	ct.Result('Does not contain $INSTALL_BIN')
+	return False
 conf = env.Configure(custom_tests={
 	'CS':check_solstice
 	, 'DAK':check_dakota
@@ -242,6 +252,7 @@ conf = env.Configure(custom_tests={
 	,'OMC':check_omc
 	,'OMLib':check_omlibrary
 	,'MPI':check_mpi
+	,'PATH':check_path
 })
 if not conf.CS():
 	print(REDWARN("Unable to locate 'solstice'"))
@@ -253,7 +264,8 @@ if not conf.OMC() or not conf.OMLib():
 	Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
-
+if not conf.PATH():
+	print(REDWARN("Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),)))
 env = conf.Finish()
 
 #---------------------------------------------------------------------------------------------------

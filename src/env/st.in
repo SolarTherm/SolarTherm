@@ -149,7 +149,12 @@ if sys.argv[1] == 'env':
 	if 'STBASHRC' not in os.environ:
 		shargs += ['--norc']
 
-	call = ['bash'] + shargs
+	# FIXME we should use CYG(os.environ['SHELL']) instead of just 'bash'.
+	bash = 'bash'
+	if platform.system()=="Windows":
+		# essential because Windows doesn't respect $PATH https://is.gd/dbpTSB
+		bash = shutil.which(bash)
+	call = [bash] + shargs
 
 elif sys.argv[1] == 'python':
 	call = [sys.executable]
