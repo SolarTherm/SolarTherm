@@ -9,6 +9,7 @@ from solartherm import simulation
 import DyMat
 from math import pi
 import numpy as np
+from pathlib import Path
 
 MODELICAFILE = 'TestStOptimise.mo'
 """
