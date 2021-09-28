@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals 
 
 import os, subprocess, sys, platform, re, shutil
+from pathlib import Path,PurePath
 
 # TODO note that distutils has the feature of correcting the shebang of installed scripts. we should used distutils to sort out this file, therefore.
 
@@ -36,6 +37,7 @@ def CYG(path):
 
 def prepend(path,envvar):
 	pp = NEWENV.get(envvar)
+	path = CYG(path)
 	if os.environ.get('VERBOSE'):
 		print("Prepending '%s' to %s=%s" %(path,envvar,pp))
 	if pp is not None:
@@ -60,8 +62,10 @@ def inpath(path,envvar):
 	return False
 
 def append_if_missing(path,var):
-	if not inpath(path,var):
-		append(path,var)
+	for p in path.split(os.pathsep):
+		p1 = CYG(p)
+		if not inpath(p,var):
+			append(p,var)
 
 #-------------------------------------------------------------------------------
 # setting env vars
@@ -72,15 +76,16 @@ NEWENV['INSTALL_PREFIX'] = instp
 assert os.environ.get('HOME')
 omlibp = os.path.join(instp,"lib","omlibrary")
 
-NEWENV['OPENMODELICALIBRARY']=os.pathsep.join([
-	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
-	,CYG(omlibp)
-	,CYG("/usr/lib/omlibrary")
-	,CYG("/usr/local/lib/omlibrary")
-])
+#NEWENV['OPENMODELICALIBRARY']=os.pathsep.join([
+#	CYG(os.path.join(os.path.expandvars("$HOME"),".openmodelica","libraries"))
+#	,CYG(omlibp)
+#	,CYG("/usr/lib/omlibrary")
+#	,CYG("/usr/local/lib/omlibrary")
+#])
 
 NEWENV['SOLARTHERM_SHELL'] = " ".join([sys.executable,os.path.join(instp,"bin","st")])
 
+NEWENV['ST_MPIRUN'] = CYG('@ST_MPIRUN@')
 #-------------------------------------------------------------------------------
 # adding path components if required
 
@@ -91,18 +96,17 @@ st_paths = {
 	, 'OPENMODELICALIBRARY':"@ST_MODELICAPATH@"
 }
 for k in st_paths:
-	for p in st_paths[k].split(os.pathsep):
-		append_if_missing(p,k)
+	append_if_missing(st_paths[k],k)
 
 if platform.system()=="Windows":
-	resp = os.path.join(omlibp,"SolarTherm","Resources","Library")
+	resp = PurePath(omlibp)/'SolarTherm'/'Resources'/'Library'
 	prepend(resp,'PATH')
 	prepend(CYG('/mingw64'),'PYTHONHOME')
 	#print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
 
 if os.environ.get('VERBOSE'):
 	print("Updated environment:")
-	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH','PYTHONPATH','PYTHONHOME']:
+	for v in ['OPENMODELICALIBRARY','PATH','LD_LIBRARY_PATH','LIBRARY_PATH','PYTHONPATH','PYTHONHOME','ST_MPIRUN']:
 		print("   ",v,"=",NEWENV.get(v))
 	print("which bash?",shutil.which('bash'))
 
@@ -165,13 +169,14 @@ else:
 if os.environ.get('VERBOSE'):
 	print("CALL =",call)
 	print("ARGS =",sys.argv[2:])
+	print("PATH =",NEWENV.get('PATH'))
 
 try:
-	res = subprocess.call(call + sys.argv[2:],env=NEWENV)
-except FilenotFoundError as e:
+	res = subprocess.run(call + sys.argv[2:],env=NEWENV)
+except FileNotFoundError as e:
 	raise RuntimeError("File not found running \"%s\""%(" ".join(call+sys.argv[2:]),))
 	
-sys.exit(res)
+sys.exit(res.returncode)
 
 # vim: ts=4:sw=4:tw=80:noet:syntax=python
 

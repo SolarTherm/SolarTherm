@@ -76,8 +76,12 @@ class TestStEnv(unittest.TestCase):
 		assert res.returncode != 0
 
 	def test_st_python_add(self):
-		res = sp.run(self.st+['python','-c','print(2+2)'],stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
+		call = self.st+['python','-c','print(2+2)']
+		print("CALL",call)
+		print("ENV PATH",os.environ.get('PATH'))
+		res = sp.run(call,stdout=sp.PIPE,stderr=sp.PIPE,encoding="utf-8")
 		assert res.returncode == 0
+		print("STDOUT =",res.stdout)
 		assert int(res.stdout.strip()) == 4
 
 	def test_DyMat(self):

@@ -1,4 +1,4 @@
-import os, sys, platform, shutil, colorama; from pathlib import Path
+import os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
 import subprocess as sp
 colorama.init()
 
@@ -119,7 +119,7 @@ elif platform.system()=="Linux":
 Help(vars.GenerateHelpText(env))
 
 #---------------------------------------------------------------------------------------------------
-# CHECK FOR DAKOTA, SOLSTICE
+# CHECK FOR DAKOTA, SOLSTICE, OPENMODELICA, OPENMPI/MSMPI, correct PATH.
 
 def check_solstice(ct):
 	ct.Message('Checking for solstice...')
@@ -223,28 +223,54 @@ def check_omlibrary(ct):
 def check_mpi(ct):
 	ct.Message("Checking for mpirun/mpiexec...")
 	mpirun = shutil.which(ct.env['MPIRUN'])
-	if not mpirun:
-		ct.Result('Not found')
-		return False
+	args = ['--version']
+	if platform.system()=="Linux":
+		if not mpirun:
+			ct.Result('Not found in PATH'); return False
+		mpirun=Path(mpirun).resolve()
+	elif platform.system()=="Windows":
+		args = []
+		if not mpirun:
+			import winreg as wr
+			mpiregpath = None
+			for inst_type in wr.HKEY_CURRENT_USER, wr.HKEY_LOCAL_MACHINE:
+				try:
+					#print("Trying",inst_type)
+					rk = wr.OpenKey(inst_type,r'SOFTWARE\Microsoft\MPI')
+					mpiregpath,valtype = wr.QueryValueEx(rk,'InstallRoot')
+					#print("GOT mpiregpath=",mpiregpath)
+					rk.Close()
+					if Path(mpiregpath).exists():
+						break
+				except WindowsError:
+					pass
+			if mpiregpath is None:
+				ct.Result('Not found in Windows registry'); return False
+			mpirun = PurePath(mpiregpath)/'Bin'/'mpiexec.exe'
+	else:
+		ct.Result('Unsupported platform'); return False
 	try:
-		assert Path(mpirun).exists()
-		sp.run([mpirun,'--version'],stdout=sp.PIPE,stderr=sp.PIPE,check=True)
+		call = [str(mpirun)]+args
+		sp.run(call,stdout=sp.PIPE,stderr=sp.PIPE,check=True)
 	except Exception as e:
-		ct.Result('Unable to run. (%s)'%(str(e),))
+		ct.Result('Unable to run. %s'%(str(e),))
 		return False
-	ct.env['MPIRUN']=mpirun
-	ct.Result(mpirun)
+	ct.env['MPIRUN']=str(mpirun)
+	#print('MPIRUN =',ct.env['MPIRUN'])
+	ct.Result(str(mpirun))
 	return True
+
 def check_path(ct):
 	ct.Message('Checking PATH...')
 	pp = os.environ.get('PATH','').split(os.pathsep)
-	ib = ct.env.subst('$INSTALL_BIN')
+	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
 		if os.path.normpath(p) == ib:
 			ct.Result('OK')
 			return True
 	ct.Result('Does not contain $INSTALL_BIN')
 	return False
+
 conf = env.Configure(custom_tests={
 	'CS':check_solstice
 	, 'DAK':check_dakota
@@ -299,6 +325,7 @@ env['SUBST_DICT'] = {
 	,'@ST_PATH@' : os.pathsep.join(env['ST_PATH'])
 	,'@ST_PYTHONPATH@' : os.pathsep.join(env['ST_PYTHONPATH'])
 	,'@ST_MODELICAPATH@' : os.pathsep.join(env['ST_MODELICAPATH'])
+	,'@ST_MPIRUN@' : env.subst('$MPIRUN')
 }
 
 if env['COLORS'] == 'yes':
