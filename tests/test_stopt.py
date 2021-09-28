@@ -2,14 +2,14 @@
 from __future__ import division
 
 import pytest
-import os, platform, re, glob, subprocess, shutil
+import os, platform, re, glob, subprocess, shutil, sys
+from math import pi
+import DyMat
+import numpy as np
+from pathlib import Path
 
 import cleantest
 from solartherm import simulation
-import DyMat
-from math import pi
-import numpy as np
-from pathlib import Path
 
 MODELICAFILE = 'TestStOptimise.mo'
 """
