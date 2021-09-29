@@ -124,7 +124,7 @@ if __name__ == '__main__':
 	parser.add_argument('--wd', type=str, default=os.getcwd(),
 			help='the working directory')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
-			help='number of processes (set to 0 for serial mode)')	
+			help='number of processes (for DAKOTA) (set to 0 for serial mode)')	
 	parser.add_argument('--restart', type=str, default=None,
 			help='restart an optimisation by continuing the last simulation (available now only via dakota), given the directory of the optimisation')
 
@@ -135,13 +135,6 @@ if __name__ == '__main__':
 	fn=os.path.abspath(args.file)
 	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
 	input_xml=mn+'_init.xml'
-
-	if args.np:
-		mpirun = os.environ.get('ST_MPIRUN','mpirun')
-		if platform.system()=='Windows':
-			mpirun_call = [mpirun,'-n',str(args.np)]
-		else:
-			mpirun_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
 
 	if not os.path.isabs(args.wd):
 		savedir=os.path.join(os.getcwd(),args.wd)
@@ -389,6 +382,16 @@ You need to install DAKOTA to run this optimisation algorithm
     https://dakota.sandia.gov/
 
 """)
+
+		if args.np:
+			mpirun = os.environ.get('ST_MPIRUN','mpirun')
+			if platform.system()=='Windows':
+				mpirun_call = [mpirun,'-n',str(args.np)]
+			else:
+				mpirun_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
+		
+		dakota_call = ['dakota','-i','sample.in','-o','sample.out']
+		restart_args = ['-read_restart','dakota.rst']
 		
 		if args.restart!=None:
 			os.chdir(args.restart)
@@ -398,11 +401,13 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
 				subprocess.call(
-					'%s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'
-					% (" ".join(mpirun_call),), shell=True
+					mpirun_call + dakota_call + restart_args, shell=True
 				)
 			else:
-				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
+				subprocess.call(
+					dakota_call + restart_args
+					, shell=True
+				)
 		else:
 			opt=OptimisationDakotaIn()
 			# at the moment, all the setting are default
@@ -434,12 +439,14 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
 				subprocess.call(
-					'%s dakota -i sample.in -o sample.out > sample.stdout'
-						%(" ".join(mpirun_call),)
+					mpirun_call + dakota_call
 					, shell=True
 				)
 			else:
-				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+				subprocess.call(
+					dakota_call
+					, shell=True
+				)
 
 		if args.method=='dakota_moga':
 			summary={}
