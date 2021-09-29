@@ -1,17 +1,19 @@
 #! /bin/env python
 from __future__ import division, print_function,unicode_literals
+import argparse
+import os
+import functools
 from solartherm import postproc
 from solartherm import simulation
 from solartherm import params
 from solartherm.optimisation import *
 from solartherm.dakota import gen_dakota_in, gen_interface_bb, OptimisationDakotaIn
 
-import argparse, os, functools, platform
 import DyMat
 import numpy as np
-import subprocess as sp
+import subprocess
 import time
-from pathlib import PurePath, Path
+
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
@@ -375,7 +377,7 @@ if __name__ == '__main__':
 
 	elif args.method[:6]=='dakota':
 		try:
-			sp.run(["dakota", "--version"])
+			subprocess.call(["dakota", "--version"])
 		except:
 			print("""ERROR: 'dakota' is not found!
 
@@ -386,32 +388,17 @@ You need to install DAKOTA to run this optimisation algorithm
     https://dakota.sandia.gov/
 
 """)
-
-		mpi_call = []
-		if args.np!=0:
-			mpirun = os.environ.get('ST_MPIRUN','mpirun')
-			if platform.system()=='Windows':
-				mpi_call = [mpirun,'-n',str(args.np)]
-			else:
-				mpi_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
-		dakota_call = ['dakota','-i','sample.in','-o','sample.out']
-		restart_args = ['-read_restart','dakota.rst']
-
-		if not os.path.exists(mn):
-			sim = simulation.Simulator(fn=fn, fusemount=False)
-			sim.compile_model()
-			sim.compile_sim(args=['-s'])
-							
+		
 		if args.restart!=None:
-			# FIXME is it OK that we're compiling the model before changing dir?
 			os.chdir(args.restart)
-
-			# FIXME if we are restarting, shouldn't it be an error if the model
-			# isn't here already?
-							
-			# NOTE: not capturing output to 'sample.stdout any more
-			
-			sp.run(mpi_call + dakota_call + restart_args,check=True)
+			if args.np!=0:
+				if not os.path.exists(mn):
+					sim = simulation.Simulator(fn=fn, fusemount=False)
+					sim.compile_model()
+					sim.compile_sim(args=['-s'])
+				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+			else:
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 		else:
 			opt=OptimisationDakotaIn()
 			# at the moment, all the setting are default
@@ -434,11 +421,17 @@ You need to install DAKOTA to run this optimisation algorithm
 			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
 			gen_interface_bb(savedir)
 
-			# FIXME this will not work on Windows!
-			sp.run('chmod a+x %s/interface_bb.py'%savedir, shell=True)
-		
-			# NOTE: not capturing output to 'sample.stdout any more
-			sp.run(mpi_call + dakota_call,check=True)
+			# FIXME this will not work on Windows
+			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
+
+			if args.np!=0:
+				if not os.path.exists(mn):
+					sim = simulation.Simulator(fn=fn, fusemount=False)
+					sim.compile_model()
+					sim.compile_sim(args=['-s'])
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+			else:
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
 		if args.method=='dakota_moga':
 			summary={}
