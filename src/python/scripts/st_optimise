@@ -6,11 +6,16 @@ from solartherm import params
 from solartherm.optimisation import *
 from solartherm.dakota import gen_dakota_in, gen_interface_bb, OptimisationDakotaIn
 
-import argparse, platform, os, functools, time, subprocess
+import argparse, platform, os, functools, time, subprocess, colorama
 import DyMat
 import numpy as np
 import multiprocessing as mp
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+colorama.init()
+def BLUE(msg):
+	return colorama.Fore.CYAN + colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL
 
 def objective_function(sim, mat_fn, stime, initStep, maxStep, integOrder, solver, nls, lv, verb, scale, offset, perf_i, par_n, resultclass, op_meth, obj_n, obj_sign, peaker, test_mode, par_val):
 
@@ -193,7 +198,7 @@ if __name__ == '__main__':
 		i+=1
 	num_obj=len(obj_n)
 
-	perf_i = [] # perfromance index
+	perf_i = [] # performance index
 	if not args.test:
 		try:
 			for n in obj_n:
@@ -203,6 +208,7 @@ if __name__ == '__main__':
 					+ str(resultclass.perf_n))		
 			
 
+	# FIXME this should be in src/python/solartherm...
 	if args.excel!=None:
 
 		tree=params.Tree()
@@ -240,7 +246,6 @@ if __name__ == '__main__':
 			par_b.append([0, 1])
 			par_0.append((p0 - lb)/(ub - lb))
 
-
 	else:
 		sim.load_init()
 		par_n = [] # names
@@ -253,7 +258,6 @@ if __name__ == '__main__':
 		offset = []
 		scale = []
 
-        
 		for pp in args.par:
 			k, v = pp.split('=')
 			par_n.append(k)
@@ -280,18 +284,18 @@ if __name__ == '__main__':
 			par_b.append([0, 1])
 			par_0.append((p0 - lb)/(ub - lb))
 
+	# FIXME check that some independent variables have been selected by the user
+
 	if args.restart!=None:
 		print("Restart the previous DAKOTA optimisation in the working direcotry:")
 		print("   ", args.restart, '\n')
 	else:
 		print("Optimisation parameter(s): ", par_n, "\n")
 
-
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
 			args.maxStep, args.integOrder, args.solver, args.nls, args.lv,
 			args.v, scale, offset, perf_i, par_n, resultclass, args.method, obj_n, obj_sign, args.peaker, args.test)
-
 
 	if args.method == 'pso':
 		res, cand=st_pso(objfunc, par_b, args.maxiter, scale, offset)
@@ -370,6 +374,7 @@ if __name__ == '__main__':
 
 
 	elif args.method[:6]=='dakota':
+		print("OPTIMISING WITH DAKOTA")
 		try:
 			subprocess.call(["dakota", "--version"])
 		except:
@@ -388,9 +393,10 @@ You need to install DAKOTA to run this optimisation algorithm
 			if platform.system()=='Windows':
 				mpirun_call = [mpirun,'-n',str(args.np)]
 			else:
-				mpirun_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
+				mpirun_call = [mpirun,'-np',str(args.np),'--use-hwthread-cpus']
 		
-		dakota_call = ['dakota','-i','sample.in','-o','sample.out']
+		dakota_input = 'sample.in'
+		dakota_call = ['dakota','-input',dakota_input,'-output','sample.out']
 		restart_args = ['-read_restart','dakota.rst']
 		
 		if args.restart!=None:
@@ -400,14 +406,9 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call(
-					mpirun_call + dakota_call + restart_args, shell=True
-				)
+				call = mpirun_call + dakota_call + restart_args
 			else:
-				subprocess.call(
-					dakota_call + restart_args
-					, shell=True
-				)
+				call = dakota_call + restart_args
 		else:
 			opt=OptimisationDakotaIn()
 			# at the moment, all the setting are default
@@ -438,15 +439,18 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call(
-					mpirun_call + dakota_call
-					, shell=True
-				)
+				call = mpirun_call + dakota_call
 			else:
-				subprocess.call(
-					dakota_call
-					, shell=True
-				)
+				call = dakota_call
+
+		print("CWD =",os.getcwd())
+		print(BLUE(" ".join(call)))
+		assert (Path(savedir)/dakota_input).exists()
+		subprocess.run(
+			call
+#			, shell=True
+			, check = True
+		)
 
 		if args.method=='dakota_moga':
 			summary={}
