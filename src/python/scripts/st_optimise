@@ -1,19 +1,14 @@
 #! /bin/env python
 from __future__ import division, print_function,unicode_literals
-import argparse
-import os
-import functools
 from solartherm import postproc
 from solartherm import simulation
 from solartherm import params
 from solartherm.optimisation import *
 from solartherm.dakota import gen_dakota_in, gen_interface_bb, OptimisationDakotaIn
 
+import argparse, platform, os, functools, time, subprocess
 import DyMat
 import numpy as np
-import subprocess
-import time
-
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 
@@ -141,6 +136,12 @@ if __name__ == '__main__':
 	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
 	input_xml=mn+'_init.xml'
 
+	if args.np:
+		mpirun = os.environ.get('ST_MPIRUN','mpirun')
+		if platform.system()=='Windows':
+			mpirun_call = [mpirun,'-n',str(args.np)]
+		else:
+			mpirun_call = [mpirun,'--np',str(args.np),'--use-hwthread-cpus']
 
 	if not os.path.isabs(args.wd):
 		savedir=os.path.join(os.getcwd(),args.wd)
@@ -396,7 +397,10 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+				subprocess.call(
+					'%s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'
+					% (" ".join(mpirun_call),), shell=True
+				)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 		else:
@@ -429,7 +433,11 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+				subprocess.call(
+					'%s dakota -i sample.in -o sample.out > sample.stdout'
+						%(" ".join(mpirun_call),)
+					, shell=True
+				)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
