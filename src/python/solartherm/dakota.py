@@ -453,6 +453,9 @@ sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxSt
 
 try:
 	if system=='TEST':
+		import sys
+		print("SYS.EXECUTABLE =",sys.executable)
+		print("SYS.PATH =",sys.path)
 		import DyMat
 		res=DyMat.DyMatFile(sim.res_fn)
 	else:
