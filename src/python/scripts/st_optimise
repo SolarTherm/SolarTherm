@@ -388,16 +388,16 @@ You need to install DAKOTA to run this optimisation algorithm
 
 """)
 
-		if args.np:
-			mpirun = os.environ.get('ST_MPIRUN','mpirun')
-			if platform.system()=='Windows':
-				mpirun_call = [mpirun,'-n',str(args.np)]
-			else:
-				mpirun_call = [mpirun,'-np',str(args.np),'--use-hwthread-cpus']
-		
-		dakota_input = 'sample.in'
-		dakota_call = ['dakota','-input',dakota_input,'-output','sample.out']
-		restart_args = ['-read_restart','dakota.rst']
+#		if args.np:
+#			mpirun = os.environ.get('ST_MPIRUN','mpirun')
+#			if platform.system()=='Windows':
+#				mpirun_call = [mpirun,'-n',str(args.np)]
+#			else:
+#				mpirun_call = [mpirun,'-np',str(args.np),'--use-hwthread-cpus']
+#		
+#		dakota_input = 'sample.in'3
+#		dakota_call = ['dakota','-input',dakota_input,'-output','sample.out']
+#		restart_args = ['-read_restart','dakota.rst']
 		
 		if args.restart!=None:
 			os.chdir(args.restart)
@@ -406,9 +406,11 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				call = mpirun_call + dakota_call + restart_args
+				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+#				call = mpirun_call + dakota_call + restart_args
 			else:
-				call = dakota_call + restart_args
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
+#				call = dakota_call + restart_args
 		else:
 			opt=OptimisationDakotaIn()
 			# at the moment, all the setting are default
@@ -439,19 +441,20 @@ You need to install DAKOTA to run this optimisation algorithm
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				call = mpirun_call + dakota_call
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+#				call = mpirun_call + dakota_call
 			else:
-				call = dakota_call
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
-		print("CWD =",os.getcwd())
-		print(BLUE(" ".join(call)))
-		assert (Path(savedir)/dakota_input).exists()
-		subprocess.run(
-			call
-#			, shell=True
-			, check = True
-		)
-
+#				call = dakota_call
+#		print("CWD =",os.getcwd())
+#		print(BLUE(" ".join(call)))
+#		assert (Path(savedir)/dakota_input).exists()
+#		subprocess.run(
+#			call
+##			, shell=True
+#			, check = True
+#		)
 		if args.method=='dakota_moga':
 			summary={}
 			for i in range(num_obj):

@@ -260,7 +260,7 @@ def test_nsga2():
 	map(os.unlink, glob.glob(front))
 	cleantest.clean('TestStOptimise')
 
-@pytest.mark.skipif(not shutil.which('dakota'),reason="Dakota not found in the PATH")
+@pytest.mark.skipif(platform.system=="Windows",reason="MSYS2 support is still incomplete")
 def test_dakota_moga():
 	print("\n\nTESTING DAKOTA_MOGA")
 	# first check that we have 'dakota' in our PATH...
@@ -311,7 +311,7 @@ def test_dakota_moga():
 	os.system('rm -rf test_moga')
 	map(os.unlink, glob.glob(figfile))	
 
-@pytest.mark.skipif(not shutil.which('dakota'),reason="Dakota not found in the PATH")
+@pytest.mark.skipif(platform.system=="Windows",reason="MSYS2 support is still incomplete")
 def test_dakota_soga():
 	# first check that we have 'dakota' in our PATH...
 	print("\n\nTESTING DAKOTA_SOGA")
