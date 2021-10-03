@@ -98,6 +98,9 @@ jobs:
       run: |
         export PATH=$PATH:~/.local/bin
         export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+        echo $PATH
+        export PATH="~/.local/bin;/c/Program Files/Microsoft MPI/Bin"
+        echo $PATH
         cd tests
         python3 -m pytest test_stenv.py
 
@@ -111,8 +114,9 @@ jobs:
 
     - name: Test SolarTherm
       run: |
-        export PATH=$PATH:~/.local/bin
-        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+#        export PATH=$PATH:~/.local/bin
+#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+        export PATH="$HOME/.local/bin;/c/Program Files/Microsoft MPI/Bin"
         cd tests
         st python -m pytest
 
