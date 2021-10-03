@@ -23,8 +23,8 @@ def ST():
 		st1 = shlex.split(ST)
 	print("st1 =",st1)
 	# let's make sure we have what we expect...
-	assert Path(st1[0]) == Path(sys.executable)
-	assert Path(st1[1]) == Path(os.environ.get('HOME'))/".local"/"bin"/"st"
+	#assert Path(st1[0]) == Path(sys.executable)
+	#assert Path(st1[1]) == Path(os.environ.get('HOME'))/".local"/"bin"/"st"
 	return st1
 #	import platform, shutil,sys, os
 #	from pathlib import Path
