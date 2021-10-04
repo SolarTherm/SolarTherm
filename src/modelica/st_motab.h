@@ -1,6 +1,13 @@
 #ifndef ST_MOTAB_H
 #define ST_MOTAB_H
 
+/**
+	Define the following macro to enable the feature of 'exporting' a loaded
+	table to the 'usertab' function, so that it can be interpolated
+	using ExternalCombiTable1D.
+*/
+//#define ST_EXPORT_USERTAB
+
 #ifdef __linux__
 # define ST_EXPORT
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
@@ -218,6 +225,48 @@ ST_EXPORT int motab_get_meta_int(MotabData *tab, const char *name, int *err);
 */
 ST_EXPORT char *motab_get_meta_str(MotabData *tab, const char *name, int *err);
 
+/*------------------------------------------------------------------------------
+  functions relating to the metadata for weather files
+*/
+
+/**
+	Read the latitude (in degrees North) from st_motab metadata. If there is a
+	real-valued metadata field called 'lat', with units of 'deg', then return 
+	its value. If not, return the value MOTAB_NO_REAL instead.
+*/
+ST_EXPORT double motab_get_meta_lat(MotabData *tab);
+
+/**
+	Read the longitude (in degrees East) from st_motab metadata. See
+	`motab_get_meta_lat`.
+*/
+ST_EXPORT double motab_get_meta_lon(MotabData *tab);
+
+/**
+	Read the elevation (in metres) from st_motab metadata. See
+	`motab_get_meta_lat`.
+*/
+ST_EXPORT double motab_get_meta_elev(MotabData *tab);
+
+/**
+	Read the timezone (in hours ahead of GMT/UTC) from st_motab metadata. See
+	`motab_get_meta_lat`.
+*/
+ST_EXPORT double motab_get_meta_tzone(MotabData *tab);
+
+
+/**
+	Read the location from st_motab metadata. Return NULL if not such
+	metadata is found. Note that the returned string must be freed.
+	
+	FIXME when returning a string to Modelica, we are supposed to have
+	allocated it using ModelicaAllocateString.
+*/
+ST_EXPORT char *motab_get_meta_loc(MotabData *tab);
+
+#ifdef ST_EXPORT_USERTAB
+ST_EXPORT int motab_set_usertab(MotabData *tab);
+#endif
 
 #endif
 /* vim: ts=4:sw=4:noet:tw=80 */

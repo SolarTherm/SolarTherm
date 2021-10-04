@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#define TESTMOTAB_DEBUG
+//#define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -105,6 +105,14 @@ int main(void){
 	MSG("lon = %f %s",mlon,units);
 	assert(fabs(mlon - (142.087)) < 5e-4);
 	free(units);
+	
+	assert(mlon == motab_get_meta_lon(tab));
+	
+	assert(mlat == motab_get_meta_lat(tab));
+	
+	assert(fabs(motab_get_meta_elev(tab) - 50.) < 1e-9);
+
+	assert(fabs(motab_get_meta_tzone(tab) - 10.) < 1e-9);
 	
 	MSG("Freeing memory...");
 	motab_free(tab);

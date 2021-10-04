@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define MOTAB_DEBUG
+//#define MOTAB_DEBUG
 #ifdef MOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -570,5 +570,72 @@ int motab_get_meta_int(MotabData *tab, const char *name, int *err){
 	return val;
 }
 
+double motab_get_meta_lat(MotabData *tab){
+	int err;
+	char *units;
+	double val = motab_get_meta_real(tab, "lat", &units, &err);
+	assert(units);
+	int cmp = strcmp(units,"deg");
+	free(units);
+	if(err || cmp)return MOTAB_NO_REAL;
+	return val;
+}
 
-// vim: ts=4:sw=4:noet:tw=
+double motab_get_meta_lon(MotabData *tab){
+	int err;
+	char *units;
+	double val = motab_get_meta_real(tab, "lon", &units, &err);
+	assert(units);
+	int cmp = strcmp(units,"deg");
+	free(units);
+	if(err || cmp)return MOTAB_NO_REAL;
+	return val;
+}
+
+
+double motab_get_meta_tzone(MotabData *tab){
+	int err;
+	char *units;
+	double val = motab_get_meta_real(tab, "tzone", &units, &err);
+	assert(units);
+	int cmp = strcmp(units,"h");
+	free(units);
+	if(err || cmp)return MOTAB_NO_REAL;
+	return val;
+}
+
+
+double motab_get_meta_elev(MotabData *tab){
+	int err;
+	char *units;
+	double val = motab_get_meta_real(tab, "elev", &units, &err);
+	assert(units);
+	int cmp = strcmp(units,"m");
+	free(units);
+	if(err || cmp)return MOTAB_NO_REAL;
+	return val;
+}
+
+
+char *motab_get_meta_loc(MotabData *tab){
+	int err;
+	char *loc = motab_get_meta_str(tab, "name", &err);
+	if(err){
+		if(loc)free(loc);
+		return NULL;
+	}
+	return loc;
+}
+
+#ifdef ST_EXPORT_USERTAB
+int motab_set_usertab(MotabData *tab){
+
+}
+#endif
+
+
+
+
+
+// vim: ts=4:sw=4:noet:tw=80
+

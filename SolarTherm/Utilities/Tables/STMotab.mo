@@ -37,14 +37,37 @@ package STMotab
         external "C" val = motab_get_value(table, indep, col) annotation(Library="st_motab");
     end getValue;
     
-    function getMetaReal
+    // functions specifically intended for weather files (TODO place in a different package?)
+    
+    function getMetaLat
         input STMotab table;
-        input String name;
-        output Real val;
-        output String units;
-        output Integer err;
-        external "C" val = motab_get_meta_double(table, name, units, err) annotation(Library="st_motab");
-    end getMetaReal;
+        output Real lat;
+        external "C" lat = motab_get_meta_lat(table) annotation(Library="st_motab");
+    end getMetaLat;
+
+    function getMetaLon
+        input STMotab table;
+        output Real lon;
+        external "C" lon = motab_get_meta_lon(table) annotation(Library="st_motab");
+    end getMetaLon;
+
+    function getMetaElev
+        input STMotab table;
+        output Real elev;
+        external "C" elev = motab_get_meta_elev(table) annotation(Library="st_motab");
+    end getMetaElev;
+
+    function getMetaTimezone
+        input STMotab table;
+        output Real tz;
+        external "C" tz = motab_get_meta_tzone(table) annotation(Library="st_motab");
+    end getMetaTimezone;
+
+    function getMetaLoc
+        input STMotab table;
+        output String loc;
+        external "C" loc = motab_get_meta_loc(table) annotation(Library="st_motab");
+    end getMetaLoc;
     
 end STMotab;
 
