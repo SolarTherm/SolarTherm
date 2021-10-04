@@ -102,7 +102,7 @@ jobs:
         export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
         echo $PATH
         mpiexec
-        mpicc 
+        mpicc --version
         cd tests
         python3 -m pytest test_stenv.py
 
