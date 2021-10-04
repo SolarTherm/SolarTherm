@@ -97,9 +97,9 @@ jobs:
     - name: Test SolarTherm st env
       run: |
         export PATH=$PATH:~/.local/bin
-        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+        export PATH="$PATH:/c/Program\ Files/Microsoft\ MPI/Bin"
         echo $PATH
-        mpiexec --version
+        mpiexec
         cd tests
         python3 -m pytest test_stenv.py
 
@@ -115,6 +115,7 @@ jobs:
       run: |
         export PATH=$PATH:~/.local/bin
         export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
+        mpiexec
         cd tests
         st python -m pytest
 
