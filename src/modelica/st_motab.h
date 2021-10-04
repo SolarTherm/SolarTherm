@@ -69,7 +69,7 @@ that feature is in fact supported by Modelica.
 #define MOTAB_NO_REAL (DBL_MAX*0.17)
 #define MOTAB_NO_INT (INT_MAX-17)
 
-typedef void MotabErrorCallback(const char *fmt,...);
+//typedef void MotabErrorCallback(const char *fmt,...);
 
 typedef enum{
 	MOTAB_STR
@@ -86,7 +86,7 @@ typedef struct MotabMetaItem_struct {
 		int ival;
 		double dval;
 	} u;
-	MotabErrorCallback *err_callback;
+	//MotabErrorCallback *err_callback;
 } MotabMetaItem;
 
 void motab_meta_free(MotabMetaItem *item);
@@ -199,14 +199,14 @@ ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 	of the units of measurement for this value. You must free `units` when
 	you're done.
 */
-double motab_get_meta_real(MotabData *tab, const char *name, char **units, int *err);
+ST_EXPORT double motab_get_meta_real(MotabData *tab, const char *name, char **units, int *err);
 
 /**
 	Get the integer value of metadata item `name`. It should be tagged in 
 	METAUNITS as 'int', or else an error will be returned. In case of any error,
 	the returned value will be MOTAB_NO_INT. See `motab_get_meta_double`.
 */
-int motab_get_meta_int(MotabData *tab, const char *name, int *err);
+ST_EXPORT int motab_get_meta_int(MotabData *tab, const char *name, int *err);
 
 /**
 	Get the string value of metadata item `name`. It should be tagged in 
@@ -216,7 +216,7 @@ int motab_get_meta_int(MotabData *tab, const char *name, int *err);
 	Note that you will 'own' the returned string, and should `free` it when
 	you don't need it any more.
 */
-char *motab_get_meta_str(MotabData *tab, const char *name, int *err);
+ST_EXPORT char *motab_get_meta_str(MotabData *tab, const char *name, int *err);
 
 
 #endif
