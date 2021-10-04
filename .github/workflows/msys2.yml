@@ -97,7 +97,7 @@ jobs:
     - name: Test SolarTherm st env
       run: |
         export PATH=$PATH:~/.local/bin
-        export PATH="$PATH:/c/Program\ Files/Microsoft\ MPI/Bin"
+        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
         echo $PATH
         mpiexec
         cd tests

@@ -123,6 +123,7 @@ jobs:
         scons install
 
     - name: Test MPI
+      run: |    
         mpirun --version
             
     - name: Test SolarTherm
