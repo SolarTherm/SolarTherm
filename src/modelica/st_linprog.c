@@ -268,8 +268,6 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	/*Free all the memory used in this script*/
 
 	glp_free_env();
-	motab_free(wd);
-	motab_free(pd);
 
 	/*end of the code*/
 

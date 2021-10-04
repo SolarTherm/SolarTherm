@@ -26,9 +26,9 @@ class TestSimpleSystem(unittest.TestCase):
 
 		print('index, epy (MWh/year),lcoe peaker ($/MWh),capf (%),srev ($')
 		print(self.perf);
-		self.assertTrue(abs(self.perf[0]- 352.558)/352.558<0.01) # epy
-		self.assertTrue(abs(self.perf[1]- 96.490)/96.490<0.01) # LCOE
-		self.assertTrue(abs(self.perf[2]- 40.246)/40.246<0.01) # Capacity factor
+		self.assertTrue(abs(self.perf[0]- 352.558)/352.558<0.0005) # epy
+		self.assertTrue(abs(self.perf[1]- 96.490)/96.490<0.0005) # LCOE
+		self.assertTrue(abs(self.perf[2]- 40.246)/40.246<0.0005) # Capacity factor
 		cleantest.clean('SimpleSystem')
 
 

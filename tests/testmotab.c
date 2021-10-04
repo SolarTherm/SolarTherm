@@ -10,14 +10,14 @@
 #include <string.h>
 #include <math.h>
 
-//#define TESTMOTAB_DEBUG
+#define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
 # define MSG(...) ((void)0)
 #endif
 
-int main(void){
+int test_mildura(){
 	const char *filepath = "../SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab";
 	MotabData *tab = motab_load(filepath);
 	
@@ -119,3 +119,32 @@ int main(void){
 	
 	return 0;
 }
+
+
+int test_daggett(){
+	const char *filepath = "../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab";
+	MotabData *tab = motab_load(filepath);
+	
+	char *loc = motab_get_meta_loc(tab);
+	assert(loc);
+	MSG("Location = '%s'",loc);
+	free(loc);
+
+	double lat = motab_get_meta_lat(tab);
+	assert(lat == 34.85);
+	MSG("Lat = %lf",lat);
+	double lon = motab_get_meta_lon(tab);
+	assert(lon == -116.78);
+	MSG("Lon = %lf",lon);
+	
+	return 0;
+}
+
+
+int main(void){
+	test_mildura();
+	test_daggett();
+}
+
+
+

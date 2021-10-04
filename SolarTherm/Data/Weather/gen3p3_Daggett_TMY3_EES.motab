@@ -1,5 +1,10 @@
 #1
 double data(8760,11)
+#METALABELS,name,lat,lon,elev,tzone,tstart
+#METAUNITS,str,deg,deg,m,h,s
+#TABLELABELS,time, dni, ghi, dhi, dry, dew, rhum, p, wspd, wdir, albedo
+#TABLEUNITS,s, W/m2, W/m2, W/m2, degC, degC, %, mbar, m/s, deg, N/A
+#METADATA,91486-"Daggett - Ca",34.85,-116.78,561,-8.0,3600.0
 0,0,0,0,2.8,-9.4,40,954,3.6,260,-9900
 3600,0,0,0,2.4,-8.5,41,954,3.8,270,-9900
 7200,0,0,0,2.1,-8.2,43,954,3.9,290,-9900
