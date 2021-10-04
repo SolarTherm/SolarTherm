@@ -12,7 +12,7 @@
 # define MSG(FMT,...) fprintf(stdout,"%s:%d:" FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 # define MSG1(FMT,...) fprintf(stdout,"%s:%d:" FMT,__FILE__,__LINE__,##__VA_ARGS__)
 # define MSG2(FMT,...) fprintf(stdout,FMT,##__VA_ARGS__)
-# define MSGL fprintf(stderr,"\n")
+# define MSGL fprintf(stdout,"\n")
 #else
 # define MSG(...) ((void)0)
 # define MSG1(...) ((void)0)
@@ -86,6 +86,9 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	assert(wd->nrows == 8760);
 	
 	int price_col = motab_find_col_by_label(pd,"price");
+	if(price_col == -1){
+		price_col = motab_find_col_by_label(pd,"tod");
+	}
 	assert(price_col != -1);
 
 	int dni_col = motab_find_col_by_label(wd,"dni");
@@ -236,27 +239,27 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	// Get the value of the optimal obj. function
 	MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
-	MSG1("DNI [W/m.sq] :");
+	MSG1("DNI [W/m.sq]: ");
 	for(int i=1;i <= N; i++){
-		MSG2("[%.1f] ", DNI(i));      
+		MSG2("%s%.1f", (i==1?"":", "), DNI(i));
 	}
 	MSGL;
 
-	MSG1("Optical efficiency :");
+	MSG1("Optical efficiency: ");
 	for(int i=1;i<= N; i++){
-		MSG2("[%.4f] ", ETAC(i));      
+		MSG2("%s%.4f", (i==1?"":", "), ETAC(i));
 	}
 	MSGL;
 
-	MSG1("Optimal Dispatch Energy DE [MWth] :");
+	MSG1("Optimal Dispatch Energy DE [MWth]: ");
 	for(int i=1;i<= N; i++){
-		MSG2("[%.2f]", glp_get_col_prim(P,DE(i)));
+		MSG2("%s%.2f", (i==1?"":", "), glp_get_col_prim(P,DE(i)));
 	}
 	MSGL;
 	
-	MSG1("Price [USD/MWh] :");
+	MSG1("Price [USD/MWh]: ");
 	for(int i=1;i<= N; i++){
-		MSG2("[%.2f]", MP(i));
+		MSG2("%s%.2f", (i==1?"":", "), MP(i));
 	}
 	MSGL;
 #endif
