@@ -22,6 +22,8 @@
 
 #define MAXCHARS 4192
 
+extern void ModelicaFormatError(const char* string, ...);
+
 static char *newcopy(const char *s){
 	size_t l = (1+strlen(s))*sizeof(char);
 	char *c = malloc(l);
@@ -56,6 +58,8 @@ MotabData *motab_load(const char *filepath){
 	MotabData *tab = NEW(MotabData);if(!tab)return NULL;
 	tab->meta = NULL;
 	tab->vals = NULL;
+	tab->timecol = MOTAB_NO_COL;
+	tab->timestep = 0;
 
 	Parser *P = parseCreateFile(fp);
 	
@@ -324,15 +328,21 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 int motab_check_timestep(MotabData *tab, double *step_return){
 	assert(tab);
 	int time_col = motab_find_col_by_label(tab,"time");
+	if(time_col == -1){
+		ERR("No 'time' column found in Motab");
+		tab->timecol = MOTAB_NO_COL;
+		return 1;
+	}
+	tab->timecol = time_col;
 	char *units = motab_get_col_units(tab,"time");
 	if(strcmp(units,"s") != 0){
 		ERR("Units for column 'time' are not 's' as expected. Got '%s' instead.",units);
 		free(units);
-		return 1;
+		return 2;
 	}
 	if(tab->nrows < 2){
 		ERR("Table does not have two or more rows");
-		return 2;
+		return 3;
 	}
 	double delta = MOTAB_VAL(tab,1,time_col) - MOTAB_VAL(tab,0,time_col);
 	double t;
@@ -341,12 +351,54 @@ int motab_check_timestep(MotabData *tab, double *step_return){
 		MSG("t = %lf",t);
 		if(delta != t - MOTAB_VAL(tab,r-1,time_col)){
 			ERR("Incorrect time increment at t = %lf",t);
-			return 3;
+			return 4;
 		}
 	}
+	tab->timestep = delta;
 	if(step_return)*step_return = delta;
 	return 0;
 }
 
+
+double motab_get_value(MotabData *tab, double time, int col){
+	assert(tab);
+	int err;
+	MSG("Evaluating at t=%f, col=%d",time,col);
+	if(tab->timecol == MOTAB_NO_COL){
+		if(err = motab_check_timestep(tab,NULL)){
+			ERR("Error %d in motab timestep.",err);
+			return -9999.;
+		}
+	}
+	MSG("Timestep = %f",tab->timestep);
+	double rowrat = time/tab->timestep;
+	int row = (int)rowrat;
+	double frac = rowrat - row;
+	if(row < 0){
+			ERR("Time is below range of Motab");
+			return -9999.;
+	}
+	if(row >= tab->nrows){
+			ERR("Time is above range of Motab");
+			return -9999.;
+	}
+	if(col < 0 || col >= tab->ncols){
+			ERR("Column is out of range of Motab");
+			return -9999.;
+	}
+	
+	MSG("row = %d, col = %d", row, col);
+	double val = MOTAB_VAL(tab,row,col);
+	if(frac > 0){
+		if(row == tab->nrows - 1){
+			ERR("Value %f is beyond the last row.",time);
+			return -9999.;
+		}
+		val = val * (1-frac) + MOTAB_VAL(tab,row + 1,col) * frac;
+	}
+		
+	MSG("val = %f",val);
+	return val;
+}
 
 // vim: ts=4:sw=4:noet:tw=

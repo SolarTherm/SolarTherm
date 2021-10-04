@@ -13,8 +13,18 @@
 
 /* generic motab reader in C */
 
-/* we're looking for header data of the following kind, as documented
+/* the starting point is MSL 'Tables' data files as described in the
+MSL documentation, for example at
 https://doc.modelica.org/Modelica%203.2.3/Resources/helpMapleSim/Blocks/Tables/index.html
+
+Our motab format includes extra structured comment rows that are also parsed and
+accessible through functions below. This allows column labels and measurement
+units to be accessible, as well as metadata relation to the each table. We use
+this in SolarTherm to store weather file metadata, for example the location
+and latitude and longitude for a weather file. Our .motab weather files are
+generated on-the-fly from standard TMY3 files using the tool st_wea_to_mo but
+that can also be done manually the user. This approach allow support for other
+on-the-fly data file translation to be implemented.
 
 #1
 double weather(8760,9)
@@ -27,13 +37,13 @@ double weather(8760,9)
 3600,0,0,12.2,10.0,86,1009,70,4.1
 7200,0,0,11.7,9.4,86,1008,70,2.1
 
-This class supersedes the linprog.c routines for loading specific files used
-in the optimal dispatch routines.
+(This class supersedes the linprog.c routines for loading specific files used
+in the earlier optimal dispatch routines.)
 
 The internal data structure is simpler than the one in st_tables, because it 
 makes use of the .motab file header to allocate memory using a single malloc.
-On the other hand, it's more complex because provides access to the metadata
-fields.
+On the other hand, this new code is more complex because provides access to the
+metadata fields.
 
 In principle, it should be possible to link these routines with the 
 'userdata' feature of ExternalCombiTable1D from the Modelica Standard Library
@@ -46,6 +56,12 @@ limit where a memory-mapped file may become preferable.
 */
 
 #define MOTAB_VAL(TABLE,ROW,COL) (TABLE)->vals[(COL) + (ROW)*(TABLE->ncols)]
+
+#include <limits.h>
+/**
+	Special value that indicates the column number is not yet known.
+*/
+#define MOTAB_NO_COL (UINT_MAX-17)
 
 /**
 	Data structure for storing metadata rows from the start of the file
@@ -67,6 +83,8 @@ typedef struct{
 	unsigned nrows;
 	unsigned ncols;
 	MotabMetaData *meta;
+	unsigned timecol;
+	double timestep; //< will be initialised to MOTAB_NO_COL
 } MotabData;
 
 /**
@@ -101,13 +119,18 @@ ST_EXPORT int motab_find_col_by_label(MotabData *tab, const char *label);
 ST_EXPORT void motab_free(MotabData *tab);
 
 /**
-	Check that the file has regular timesteps, and return the value 
-	of that step. Return non-zero if there is any error in the timesteps, or
-	else zero if everything is fine. If `step` is not NULL, the step size 
-	will be returned there.
+	Check that the loaded MotabData has (1) a column named 'time', (2) with
+	units of seconds ('s'), (3) has at least two rows of data, and (4) that
+	the timestep between all subsequent rows is equal to that between the first
+	and second row. The timestep is returned as `step` (assuming a non-NULL
+	pointer is provided by the user).
 	
-	This function checks the metadata to make sure the step column is labelled
-	to be in seconds, and the timestep is returned in units of seconds.
+	The function returns an error value if any of the conditions are not met.
+	The error code equals the number of the failing condition as above.
+	
+	This function doesn't check that the 'time' column is the first column. That
+	shouldn't matter, hopefully. Actually it might, because motab_get_value
+	will have to interpolate on a first column.
 */
 ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
 
@@ -119,6 +142,12 @@ ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
 
 */
 ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
+
+/**
+	Get value, with linear interpololate. First scratch test function, not
+	for serious use.
+*/
+ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 
 #endif
 /* vim: ts=4:sw=4:noet:tw=80 */
