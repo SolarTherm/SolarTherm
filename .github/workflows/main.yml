@@ -127,6 +127,7 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        mpirun --version
         cd tests
         which st
         st --version
