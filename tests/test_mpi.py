@@ -30,7 +30,8 @@ class TestMPI(unittest.TestCase):
 		n_mpi=len(lines)	
 		n_cpu=mp.cpu_count()		
 		print('number of cpus', n_cpu)
-		print('number of pros run by mpi', n_mpi)	
+		print('number of pros run by mpi', n_mpi)
+		print(lines)	
 		self.assertTrue(n_mpi==n_cpu)
 		if platform.system()=='Windows':
 			os.unlink('hello_world.exe')
