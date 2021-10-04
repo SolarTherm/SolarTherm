@@ -125,6 +125,7 @@ jobs:
     - name: Test MPI
       run: |    
         mpirun --version
+        mpicc --version
             
     - name: Test SolarTherm
       run: |
