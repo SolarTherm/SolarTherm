@@ -15,7 +15,12 @@ tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
-tenv2 = Environment(CC='mpicc')
+import platform
+if platform.system()=="Windows":
+	tenv2 = Environment(CC='mpicc', tools=['default','mingw'])
+else:
+	tenv2 = Environment(CC='mpicc')
+	
 tenv2.Program('testmpi',['testmpi.c'])
 
 senv = env.Clone()
