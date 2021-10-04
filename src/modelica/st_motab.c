@@ -308,7 +308,7 @@ char *motab_get_col_units(MotabData *tab, const char *label){
 	found, return -1.
 */
 static int find_item_in_commastring(const char *metarow,const char *label){
-	MSG("Got row '%s'",metarow);
+	MSG("Got row '%s', looking for '%s'",metarow,label);
 	char s[MAXCHARS] = "";
 	const char *c = &(metarow[0]);
 	char *d = &(s[0]);
@@ -324,7 +324,12 @@ static int find_item_in_commastring(const char *metarow,const char *label){
 				return i;
 			}
 			d = &(s[0]);
-			if(*c != '\0')c++;
+			if(*c != '\0'){
+				MSG("Moving past '%c'",*c);
+				while(*(++c) == ' '){
+					MSG("Moving past '%c'",*c);
+				}
+			}
 			i++;
 		}
 	}
