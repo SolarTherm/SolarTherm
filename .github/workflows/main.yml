@@ -85,7 +85,7 @@ jobs:
         sudo apt install libicu60 libboost-serialization1.65.1 libstdc++6 \
           libboost-filesystem1.65.1 libgcc1 libquadmath0 liblapack3 \
           libboost-regex1.65.1 libboost-system1.65.1 libblas3 libc6 \
-          libgfortran4 openmpi-bin
+          libgfortran4 openmpi-bin libopenmpi-dev
 
     - name: Prepare for DAKOTA 20.04
       if: ${{ matrix.os == 'ubuntu-20.04' }}
