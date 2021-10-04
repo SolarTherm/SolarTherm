@@ -53,36 +53,71 @@ st_motab is not going to be a good choice with very large data sets -- our
 typical use is with files having 8,760 rows and ~10 cols (hourly data for one
 year), but up to larger is probably fine too OK (1 minute data), up to some 
 limit where a memory-mapped file may become preferable.
+
+FIXME: st_motab doesn't yet handle multiple tables in a single text file, although
+that feature is in fact supported by Modelica.
 */
 
 #define MOTAB_VAL(TABLE,ROW,COL) (TABLE)->vals[(COL) + (ROW)*(TABLE->ncols)]
 
 #include <limits.h>
+#include <float.h>
 /**
 	Special value that indicates the column number is not yet known.
 */
 #define MOTAB_NO_COL (UINT_MAX-17)
+#define MOTAB_NO_REAL (DBL_MAX*0.17)
+#define MOTAB_NO_INT (INT_MAX-17)
+
+typedef void MotabErrorCallback(const char *fmt,...);
+
+typedef enum{
+	MOTAB_STR
+	, MOTAB_INT
+	, MOTAB_REAL
+} MotabMetaType;
+
+typedef struct MotabMetaItem_struct {
+	const char *name; // don't own this string, don't free it at the end.
+	char *units; // we do own this string, and must free if if needed.
+	MotabMetaType type;
+	union{
+		char *str; // we do own this string.
+		int ival;
+		double dval;
+	} u;
+	MotabErrorCallback *err_callback;
+} MotabMetaItem;
+
+void motab_meta_free(MotabMetaItem *item);
 
 /**
 	Data structure for storing metadata rows from the start of the file
 	(except for the first two lines, which define the format version and
 	table name, type and number of rows and columns.
+	
+	NOTE: although we have a data structure for MotabMetaItem, we don't yet
+	store parsed metadata in the MotabData object. We just store the comments
+	that fulfil the criteria of being a metadata row -- namely as many 
+	rows starting with '#' as desired, after the '#1' and table description
+	row.
 */
 typedef struct MotabMetaData_struct {
 	char *row;
 	struct MotabMetaData_struct *next;
 } MotabMetaData;
 
+
 /**
 	Data structure for storing everything from a loaded .motab file.
 	Note that this version only supports tables with data of type `double`.
 */
 typedef struct{
-	char *name;
-	double *vals;
+	char *name; // owned by us, must be freed using motab_free(tab)
+	double *vals; // owned by us
 	unsigned nrows;
 	unsigned ncols;
-	MotabMetaData *meta;
+	MotabMetaData *meta; // owned by use
 	unsigned timecol;
 	double timestep; //< will be initialised to MOTAB_NO_COL
 } MotabData;
@@ -148,6 +183,41 @@ ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
 	for serious use.
 */
 ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
+
+
+/**
+	Get the double value of a metadata item `name`. If any error occurs then 
+	the value returned will be MOTAB_NO_REAL, and, providing a pointer `err`
+	has been provided, an error code will be returned in `err`. You should
+	better check the value of `err`, rather than checking for MOTAB_NO_REAL.
+	
+	Possible errors are that there is no `tab`, no metadata fields, a value 
+	could not be parsed, or the value is flagged (in METAUNITS) 
+	as being a string rather than a double.
+	
+	If `units` is supplied, then *units will be set to a pointer to a new copy 
+	of the units of measurement for this value. You must free `units` when
+	you're done.
+*/
+double motab_get_meta_real(MotabData *tab, const char *name, char **units, int *err);
+
+/**
+	Get the integer value of metadata item `name`. It should be tagged in 
+	METAUNITS as 'int', or else an error will be returned. In case of any error,
+	the returned value will be MOTAB_NO_INT. See `motab_get_meta_double`.
+*/
+int motab_get_meta_int(MotabData *tab, const char *name, int *err);
+
+/**
+	Get the string value of metadata item `name`. It should be tagged in 
+	METAUNITS as 'str', or else an error will be returned. In case of any error,
+	the returned value will be MOTAB_NO_INT. See `motab_get_meta_double`.
+	
+	Note that you will 'own' the returned string, and should `free` it when
+	you don't need it any more.
+*/
+char *motab_get_meta_str(MotabData *tab, const char *name, int *err);
+
 
 #endif
 /* vim: ts=4:sw=4:noet:tw=80 */

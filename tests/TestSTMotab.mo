@@ -7,10 +7,15 @@ block TestSTMotab
     parameter String dniunits(fixed=false);
     parameter Real dnival(fixed=false);
     parameter Real t1(fixed=true) = 31500000.;
+    //parameter Real lat(fixed=false);
+    //parameter Real lon(fixed=false);
+    
 initial algorithm
     dnicol := STMotab.findColByLabel(table, "dni");
     dniunits := STMotab.getColUnits(table,"dni");
     dnival := STMotab.getValue(table,t1,dnicol); // should equal 976.
+   // lat, lon := STMotab.getMetaLatLon(table);
+    
     annotation(experiment(StartTime=0.0, StopTime=4.0, Interval=0.01, Tolerance=1e-06));
 end TestSTMotab;
 

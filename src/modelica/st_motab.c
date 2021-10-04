@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <string.h>
 
-//#define MOTAB_DEBUG
+#define MOTAB_DEBUG
 #ifdef MOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -18,16 +18,17 @@
 #define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 
 #define NEW(TYPE) (TYPE *)malloc(sizeof(TYPE))
-#define NEW_ARRAY(TYPE,N) (TYPE *)malloc(N*sizeof(TYPE))
+#define NEW_ARRAY(TYPE,N) (assert(N!=0), (TYPE *)malloc(N*sizeof(TYPE)))
 
 #define MAXCHARS 4192
 
 extern void ModelicaFormatError(const char* string, ...);
 
 static char *newcopy(const char *s){
+	MSG("Copying s = '%s', len = %lu",s,strlen(s));
 	size_t l = (1+strlen(s))*sizeof(char);
 	char *c = malloc(l);
-	memcpy(c,s,l+1);
+	memcpy(c,s,l);
 	return c;
 }
 
@@ -194,6 +195,9 @@ void motab_free(MotabData *tab){
 				M = N;
 			}
 		}
+		if(tab->name){
+			free(tab->name);
+		}
 		free(tab);
 	}
 }
@@ -226,7 +230,7 @@ const char *motab_find_meta_row(MotabData *tab, const char *tag){
 			}
 			*d = '\0';
 			MSG("Found tag '%s'",s);
-			if(strcmp(s,tag)==0){
+			if(0==strcmp(s,tag)){
 				if(*c == '\0')return motab_empty;
 				else{
 					++c;
@@ -240,8 +244,12 @@ const char *motab_find_meta_row(MotabData *tab, const char *tag){
 	return NULL;
 }
 
-/* you must free the string returned by this function */
-static char *get_field(const char *row,int ind){
+/*
+	For comma-separated string of items `row`, parse and return the item in position
+	`ind`, counting from zero. Return NULL if not found. If a string returned, you
+	own it and must free it when you're done.
+*/
+static char *get_item_in_commastring(const char *row,int ind){
 	assert(ind >= 0);
 	assert(row);
 	char s[MAXCHARS] = "";
@@ -249,7 +257,7 @@ static char *get_field(const char *row,int ind){
 	char *d = &(s[0]);
 	int i = 0;
 	while(*c != '\0'){
-		MSG("Copying '%c'",*c);
+		//MSG("Copying '%c'",*c);
 		*d++ = *c++;
 		if(*c == ',' || *c == '\0'){
 			*d = '\0';
@@ -284,7 +292,7 @@ char *motab_get_col_units(MotabData *tab, const char *label){
 		return NULL;
 	}
 	MSG("Getting field %d in row '%s'",col,row);
-	char *field = get_field(row,col);
+	char *field = get_item_in_commastring(row,col);
 	MSG("Field is '%s'",field);
 	if(NULL == field){
 		ERR("Field %d not found in '%s'",col,row);
@@ -294,15 +302,15 @@ char *motab_get_col_units(MotabData *tab, const char *label){
 	return field;
 }
 
-int motab_find_col_by_label(MotabData *tab, const char *label){
-	const char *row;
-	row = motab_find_meta_row(tab,"TABLELABELS");
-	if(row == NULL){
-		return -1;
-	}
-	//MSG("Got row '%s'",row);
+/*
+	Search `metarow` as a comma-separated list, looking for string `label`.
+	If found, return its position in the list, counting from 0. If it is not
+	found, return -1.
+*/
+static int find_item_in_commastring(const char *metarow,const char *label){
+	MSG("Got row '%s'",metarow);
 	char s[MAXCHARS] = "";
-	const char *c = &(row[0]);
+	const char *c = &(metarow[0]);
 	char *d = &(s[0]);
 	int i = 0;
 	while(*c != '\0'){
@@ -311,7 +319,7 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 		if(*c == ',' || *c == '\0'){
 			*d = '\0';
 			MSG("Found label %d '%s'",i,s);
-			if(strcmp(s,label)==0){
+			if(0==strcmp(s,label)){
 				MSG("Match!");
 				return i;
 			}
@@ -325,6 +333,16 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 }
 
 
+int motab_find_col_by_label(MotabData *tab, const char *label){
+	const char *row;
+	row = motab_find_meta_row(tab,"TABLELABELS");
+	if(row == NULL){
+		return -1;
+	}
+	return find_item_in_commastring(row,label);
+}
+
+
 int motab_check_timestep(MotabData *tab, double *step_return){
 	assert(tab);
 	int time_col = motab_find_col_by_label(tab,"time");
@@ -335,11 +353,12 @@ int motab_check_timestep(MotabData *tab, double *step_return){
 	}
 	tab->timecol = time_col;
 	char *units = motab_get_col_units(tab,"time");
-	if(strcmp(units,"s") != 0){
+	if(0 != strcmp(units,"s")){
 		ERR("Units for column 'time' are not 's' as expected. Got '%s' instead.",units);
 		free(units);
 		return 2;
 	}
+	free(units);
 	if(tab->nrows < 2){
 		ERR("Table does not have two or more rows");
 		return 3;
@@ -348,7 +367,7 @@ int motab_check_timestep(MotabData *tab, double *step_return){
 	double t;
 	for(int r=2;r < tab->nrows; ++r){
 		t = MOTAB_VAL(tab,r,time_col);
-		MSG("t = %lf",t);
+		//MSG("t = %lf",t);
 		if(delta != t - MOTAB_VAL(tab,r-1,time_col)){
 			ERR("Incorrect time increment at t = %lf",t);
 			return 4;
@@ -400,5 +419,156 @@ double motab_get_value(MotabData *tab, double time, int col){
 	MSG("val = %f",val);
 	return val;
 }
+
+
+MotabMetaItem *get_meta_item(MotabData *tab, const char *name,int *err){
+	MotabMetaItem *item = NEW(MotabMetaItem);
+	item->name = name;
+	item->units = NULL;
+	if(err)*err=0;
+#define RETERR(ERRN){if(err)*err=ERRN;motab_meta_free(item);return NULL;};
+	if(!tab)RETERR(1);
+	const char *metalabels = motab_find_meta_row(tab,"METALABELS");
+	if(NULL == metalabels)RETERR(2);
+	int pos = find_item_in_commastring(metalabels,name);
+	if(-1 == pos)RETERR(3);
+	const char *metaunits = motab_find_meta_row(tab,"METAUNITS");
+	if(NULL == metaunits)RETERR(4);
+	const char *metadata = motab_find_meta_row(tab,"METADATA");
+	if(NULL == metadata)RETERR(5);
+	
+	char *units = get_item_in_commastring(metaunits,pos);
+	if(NULL == units)RETERR(6);
+	MSG("units = '%s'",units);
+
+	char *val = get_item_in_commastring(metadata,pos);
+	if(NULL == val){
+		free(units);
+		RETERR(7);
+	}
+	MSG("raw val = '%s'",val);
+
+	if(0==strcmp(units,"str")){
+		item->type = MOTAB_STR;
+		item->u.str = val;
+		MSG("Got meta str '%s', value '%s'",name,val);
+		if(err)*err=0;
+		free(units);
+		return item;
+	}
+	
+	Parser *P = parseCreateString(val);	
+	if(0==strcmp(units,"int")){
+		item->type = MOTAB_INT;
+		if(parseSignedNumber(P,&(item->u.ival))){
+			parseDispose(P);
+			free(val);
+			free(units);
+			MSG("Got meta int '%s', value '%d'",name,item->u.ival);
+			return item;
+		}
+		parseDispose(P);
+		free(val);
+		free(units);
+		RETERR(8);
+	}else{
+		item->type = MOTAB_REAL;
+		item->units = units; // not a copy, it's owned by `item` now.
+		if(parseDouble(P,&(item->u.dval))){
+			parseDispose(P);
+			free(val);
+			MSG("Got meta value '%s', value '%f'",name,item->u.dval);
+			return item;
+		}
+		item->units = NULL; // to avoid double free in RETERR below.
+	}
+	parseDispose(P);
+	free(val);
+	free(units);
+	RETERR(9);
+#undef RETERR
+}
+
+void motab_meta_free(MotabMetaItem *item){
+	if(!item)return;
+	if(item->type == MOTAB_STR){
+		assert(item->units == NULL);
+		if(item->u.str)free(item->u.str);
+	}else if(item->type == MOTAB_REAL){
+		if(item->units)free(item->units);
+	}else if(item->type == MOTAB_INT){
+		assert(item->units == NULL);
+	}
+	free(item);
+}
+
+double motab_get_meta_real(MotabData *tab, const char *name, char **units, int *err){
+	int myerr = 0;
+	MotabMetaItem *item = get_meta_item(tab, name, &myerr);
+	if(item == NULL){
+		ERR("Error %d when loading meta item '%s'",myerr,name);
+		if(err)*err = 1;
+		return MOTAB_NO_REAL;
+	}
+	if(item->type != MOTAB_REAL){
+		ERR("Error %d when loading meta item '%s'",myerr,name);
+		motab_meta_free(item);
+		if(err)*err = 2;
+		return MOTAB_NO_REAL;
+	}
+	if(units){
+		assert(item->units); // has to be something, can't be empty.
+		*units = newcopy(item->units);
+	}
+	if(err)*err = 0;
+	double val = item->u.dval;
+	motab_meta_free(item);
+	return val;
+}
+
+
+char *motab_get_meta_str(MotabData *tab, const char *name, int *err){
+	int myerr = 0;
+	MotabMetaItem *item = get_meta_item(tab, name, &myerr);
+	if(item == NULL){
+		ERR("Error %d when loading meta item '%s'",myerr,name);
+		if(err)*err = 1;
+		return NULL;
+	}
+	if(item->type != MOTAB_STR){
+		ERR("Metadata item '%s' is not of type 'str'",name);
+		motab_meta_free(item);
+		if(err)*err = 2;
+		return NULL;
+	}
+	if(err)*err = 0;
+	char *str = item->u.str;
+	assert(item->units == NULL);
+	free(item);
+	return str;
+}
+
+
+
+int motab_get_meta_int(MotabData *tab, const char *name, int *err){
+	int myerr = 0;
+	MotabMetaItem *item = get_meta_item(tab, name, &myerr);
+	if(item == NULL){
+		ERR("Error %d when loading meta item '%s'",myerr,name);
+		if(err)*err = 1;
+		return MOTAB_NO_INT;
+	}
+	if(item->type != MOTAB_INT){
+		ERR("Metadata item '%s' is not of type 'int'",name);
+		motab_meta_free(item);
+		if(err)*err = 2;
+		return MOTAB_NO_INT;
+	}
+	if(err)*err = 0;
+	int val = item->u.ival;
+	motab_meta_free(item);
+	return val;
+}
+
 
 // vim: ts=4:sw=4:noet:tw=

@@ -37,6 +37,15 @@ package STMotab
         external "C" val = motab_get_value(table, indep, col) annotation(Library="st_motab");
     end getValue;
     
+    function getMetaReal
+        input STMotab table;
+        input String name;
+        output Real val;
+        output String units;
+        output Integer err;
+        external "C" val = motab_get_meta_double(table, name, units, err) annotation(Library="st_motab");
+    end getMetaReal;
+    
 end STMotab;
 
 // vim: ts=4:sw=4:et:tw=80

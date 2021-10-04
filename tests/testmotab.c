@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-//#define TESTMOTAB_DEBUG
+#define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -82,7 +82,31 @@ int main(void){
 	MSG("t = %f, val = %f",t, val);
 	assert(fabs(25.2 - val) < 1e-7);
 	
-	MSG("Freeing memory...");		
+	MSG("Testing metadata read...");
+	int err = 0;
+	char *mname = motab_get_meta_str(tab,"name",&err);
+	assert(mname != NULL);
+	assert(err == 0);
+	MSG("meta = %s",mname);
+	assert(strcmp(mname,"76031-\"MILDURA AIRPORT\"")==0);
+	free(mname);
+	
+	double mlat, mlon;
+	mlat = motab_get_meta_real(tab,"lat",&units,&err);
+	assert(err == 0);
+	MSG("lat = %f %s",mlat,units);
+	assert(fabs(mlat - (-34.236)) < 5e-4);
+	assert(strcmp(units,"deg") == 0);
+	free(units);
+
+	mlon = motab_get_meta_real(tab,"lon",&units,&err);
+	assert(err == 0);
+	assert(strcmp(units,"deg") == 0);
+	MSG("lon = %f %s",mlon,units);
+	assert(fabs(mlon - (142.087)) < 5e-4);
+	free(units);
+	
+	MSG("Freeing memory...");
 	motab_free(tab);
 	
 	return 0;
