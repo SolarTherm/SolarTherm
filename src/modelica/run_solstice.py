@@ -104,7 +104,7 @@ if __name__=='__main__':
     rcv_type='cylinder'    
 
     field_type='surround'
-    wea_file='../../Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
+    wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
     inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
 
     run_simul(inputs)

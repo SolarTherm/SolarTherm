@@ -122,6 +122,11 @@ jobs:
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         scons install
 
+    - name: Test MPI
+      run: |    
+        mpirun --version
+        mpicc --version
+            
     - name: Test SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
