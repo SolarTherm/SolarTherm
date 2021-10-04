@@ -15,6 +15,14 @@ tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
+import platform
+if platform.system()=="Windows":
+	tenv2 = Environment(CC='mpicc', tools=['default','mingw'])
+else:
+	tenv2 = Environment(CC='mpicc')
+	
+tenv2.Program('testmpi',['testmpi.c'])
+
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])
 
