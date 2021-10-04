@@ -22,12 +22,16 @@ class TestMPI(unittest.TestCase):
 			if system[1]=='20.04':
 				os.system(mpirun+' --use-hwthread-cpus ./hello_world >hello_world.txt')
 			else:
-				os.system(mpirun+' ./hello_world >hello_world.txt')
+				os.system(mpirun+' --use-hwthread-cpus ./hello_world >hello_world.txt')
 	def test_mpi(self):
 		with open('hello_world.txt') as f:
 		    lines = f.readlines()
 		f.close()
-		n_mpi=len(lines)	
+		i=0
+		for l in lines:
+			if 'Hello world' in l:
+				i+=1
+		n_mpi=i	
 		n_cpu=mp.cpu_count()		
 		print('number of cpus', n_cpu)
 		print('number of pros run by mpi', n_mpi)
