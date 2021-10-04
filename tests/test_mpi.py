@@ -17,14 +17,20 @@ class TestMPI(unittest.TestCase):
 			subprocess.call(mpirun_call, shell=True)			
 		
 		else:
-			os.system(mpirun+' --use-hwthread-cpus ./hello_world >hello_world.txt')
-
+			import distro
+			system=distro.linux_distribution()
+			if system[1]=='20.04':
+				os.system(mpirun+' --use-hwthread-cpus ./hello_world >hello_world.txt')
+			else:
+				os.system(mpirun+' ./hello_world >hello_world.txt')
 	def test_mpi(self):
 		with open('hello_world.txt') as f:
 		    lines = f.readlines()
 		f.close()
 		n_mpi=len(lines)	
-		n_cpu=mp.cpu_count()			
+		n_cpu=mp.cpu_count()		
+		print('number of cpus', n_cpu)
+		print('number of pros run by mpi', n_mpi)	
 		self.assertTrue(n_mpi==n_cpu)
 		if platform.system()=='Windows':
 			os.unlink('hello_world.exe')
