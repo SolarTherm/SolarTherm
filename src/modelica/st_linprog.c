@@ -6,7 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
-#define ST_LINPROG_DEBUG
+//#define ST_LINPROG_DEBUG
 
 #ifdef ST_LINPROG_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d:" FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
@@ -82,6 +82,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 		,double DEmax, double SLmax, double SLinit
 		,double SLmin, double A
 ){
+	ERR("t = %f",t0);
 
 	double wdstep, pdstep;
 	assert(0 == motab_check_timestep(wd,&wdstep));
@@ -89,10 +90,17 @@ double st_linprog(MotabData *wd, MotabData *pd
 	assert(0 == motab_check_timestep(pd,&pdstep));
 	//assert(pdstep == 3600.);
 	
-	if(wdstep != dt)ERR("Warning: weather file timestep is %fs, different"
-		" from forecasting timestep %fs",wdstep, dt);
-	if(pdstep != dt)ERR("Warning: price file timestep is %fs, different"
-		" from forecasting timestep %fs",pdstep, dt);
+	static MotabData *wdcache, *pdcache;
+	if(wdcache != wd){
+		wdcache = wd;
+		if(wdstep != dt)ERR("Warning: weather file timestep is %fs, different"
+			" from forecasting timestep %fs (message is only shown once)",wdstep, dt);
+	}
+	if(pdcache != pd){
+		pdcache = pd;
+		if(pdstep != dt)ERR("Warning: price file timestep is %fs, different"
+			" from forecasting timestep %fs (message is only shown once)",pdstep, dt);
+	}
 
 	//const int time_index = time_simul / 3600;
 	
