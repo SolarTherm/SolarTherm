@@ -20,6 +20,8 @@
 # define MSGL ((void)0)
 #endif
 
+#define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+
 #define ST_ERRVAL (-999999.)
 /**
 	Calculate an optimal dispatch strategy
@@ -28,8 +30,27 @@
 	varying spot-market selling price for electricity. This function
 	implements a linearised model of the CSP system.
 	
-	@param wd            pointer to WeatherData, loaded from a .motab file.
-	@param pd            pointer to PriceData, as loaded from a .motab file.
+	@param wd            Weather data, loaded from a .motab file.
+	                     According to the TMY3 standard, DNI reported at each
+	                     timestep is the mean DNI for the preceding hour.
+	                     Hence, if we want to calculate the energy collected
+	                     for the ith interval (hour), we should read the value
+	                     from the data file at t = t0 + i*dt.
+	                     http://www.nrel.gov/docs/fy07osti/41364.pdf
+	@param pd            Price data, as loaded from a .motab file.
+	                     The PriceData should contain columns 'time' and either
+	                     'price' or 'tod' (=time-of-day factor).
+	                     NOTE: PriceData is being interpreted as values in 
+	                     advance, so that if we want to know the price for
+	                     the ith hour (see `i`, below) we will read the value of
+	                     PriceData at t = t0 + (i-1)*dt, which will be the 
+	                     selling price for any electricity sold in the interval 
+	                     from t = t0 + (i-1)*dt to t = t0 + i*dt.
+	                     Hence, we should have pd spanning the time interval
+	                     [t0, t0+horizon*dt).
+	                     NOTE: if forecasting timestep is greater than the
+	                     `wd` or `pd` timestep, we currently ignore the 
+	                     intervening values.
 	@param horizon       forecast horizon (hours)
 	@param dt            forecasting timestep (hours)
 	@param time_simul    current simulation timestep (seconds)
@@ -39,7 +60,6 @@
 	                     should be the value for the first hour, etaC[1] for the
 	                     second hour, etc, up to horizon-1.
 	@param etaG          power block (generator) efficiency (constant value)
-	@param t_stg         storage capacity, rel to PB nameplate output (hours)
 	@param DEmax         max dispatched THERMAL energy in an hour (MWhth)
 	@param SLmax         maximum storage level (MWhth)
 	@param SLinit        initial storage level, at time_simul (MWhth?)
@@ -56,34 +76,41 @@
 	
 	FIXME end-of-year wraparound is not yet implemented, will need checking.
 */
-double st_linprog(MotabData *wd, MotabData *pd, 
-		int horizon, double dt, double time_simul,
-		double etaC[], double etaG, double t_stg,
-		double DEmax, double SLmax, double SLinit, 
-		double SLmin, double A
+double st_linprog(MotabData *wd, MotabData *pd
+		,int horizon, double dt, double t0
+		,double etaC[], double etaG
+		,double DEmax, double SLmax, double SLinit
+		,double SLmin, double A
 ){
 
 	double wdstep, pdstep;
 	assert(0 == motab_check_timestep(wd,&wdstep));
-	assert(wdstep == 3600.);
+	//assert(wdstep == 3600.);
 	assert(0 == motab_check_timestep(pd,&pdstep));
-	assert(pdstep == 3600.);
+	//assert(pdstep == 3600.);
+	
+	if(wdstep != dt)ERR("Warning: weather file timestep is %fs, different"
+		" from forecasting timestep %fs",wdstep, dt);
+	if(pdstep != dt)ERR("Warning: price file timestep is %fs, different"
+		" from forecasting timestep %fs",pdstep, dt);
 
-	const int time_index = time_simul / 3600;
+	//const int time_index = time_simul / 3600;
+	
+	// check that wd and pd can cover the required time range
 
-	MSG("time_simul [s], time_index: %f, %d",time_simul,time_index);
-	MSG("DEmax [MWth]: %f",DEmax);
-	MSG("SLmax [MWh_th]: %f",SLmax);
-	MSG("SLinit [MWh_th]: %f",SLinit);
-	MSG("SLmin [MWh_th]: %f",SLmin);
+	MSG("t = %f s, dt = %f s:",t0,dt);
+	MSG("DEmax = %f MWth",DEmax);
+	MSG("SLmax = %f MWhth",SLmax);
+	MSG("SLinit = %f MWhth",SLinit);
+	MSG("SLmin = %f MWhth",SLmin);
 
 	if(NULL==wd)return ST_ERRVAL;
 	if(NULL==pd)return ST_ERRVAL;
 
 	MSG("nrows wd = %d",wd->nrows);
 	
-	assert(pd->nrows == 8760);
-	assert(wd->nrows == 8760);
+	//assert(pd->nrows == 8760);
+	//assert(wd->nrows == 8760);
 	
 	int price_col = motab_find_col_by_label(pd,"price");
 	if(price_col == -1){
@@ -94,21 +121,39 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	int dni_col = motab_find_col_by_label(wd,"dni");
 	assert(dni_col != -1);
 
-#define MP(I) MOTAB_VAL(pd,time_index+I-1,price_col)
+#define MP(I) (\
+	/*MSG("MP(%d) at t=%f",I,t0+((I)-1)*dt),*/\
+	motab_get_value(pd,    t0+((I)-1)*dt,price_col)\
+	)
+/** as noted above, DNI for the ith period (counting from 1) is at t0+i*dt */
+#define DNI(I) (\
+	/*MSG("DNI(%d) at t=%f",(I),t0+(I)*dt),*/\
+	motab_get_value(wd,       t0+(I)*dt,dni_col)\
+	)
+
+/** efficiency in each hour will be taken from the supplied array. FIXME we 
+	should be intpolating those values as-needed now, or ahead of time */
 #define ETAC(I) etaC[i-1]
-#define DNI(I) MOTAB_VAL(wd,time_index + I - 1,dni_col)
 
 	// Initialise problem object lp
 	glp_prob *P = glp_create_prob();
 
 	/* VARIABLES IN THE PROBLEM
 	
-	SLi (Storage Level) : Energy stored in the tank at end of ith hour [MWh_th]
-	DEi (Dispatch Energy) : Sold energy rate [MW_th]
-	SEi (Storage Energy) : The input energy in the tank from the sun [MW_th]
-	XEi (Dumped Energy) : Lost energy [MW_th]
+	SL(i) (Storage Level) : Energy stored in the tank at end of ith hour [MWh_th]
+	      Note: `SLinit` is the energy stored in the tank at the start of the 1st
+	      hour, which is a supplied constant.
+	DE(i) (Dispatch Energy) : Sold energy rate [MW_th], during the ith hour
+	SE(i) (Storage Energy) : The input energy in the tank from the sun [MW_th], during the ith hour
+	XE(i) (Dumped Energy) : Lost energy [MW_th], during the ith hour
 	
-	NOTE that in GLPK, the indices count from, so: I=1...N inclusive.
+	Note that these symbols SL(i) are not actually 'variables' but rather
+	column numbers in the GLPK problem, and resolve into values from 1..4·N.
+	
+	`i`=1 means the first hour, i=2 means the second hour, etc.
+
+	NOTE!! in GLPK, the indices count from 1, not 0!! This is very odd behaviour
+	suggesting that possibly that a Fortran programmer might has lost their way.
 	*/
 	// These 4·N equations are organised with column indices as follows:
 #define N (horizon)
@@ -120,7 +165,6 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	glp_add_cols(P, XE(N));
 	
 	MSG("Number of cols = %d",XE(N));
-
 	
 #define NAMEMAX 255
 	char sss[NAMEMAX];
@@ -131,6 +175,11 @@ double st_linprog(MotabData *wd, MotabData *pd,
 		snprintf(sss,NAMEMAX,"XE%02d",i); glp_set_col_name(P,XE(i),sss);
 	}
 
+	MSG("COLUMN NAMES");
+	for(int i=1;i<XE(N);++i){
+		MSG("%3d: %s",i,glp_get_col_name(P,i));
+	}
+
 	/* OBJECTIVE FUNCTION
 	
 		max ∑(DEi·MPi·ηG)                      Maximise the revenue over the
@@ -138,7 +187,10 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	*/
 	glp_set_obj_dir(P, GLP_MAX);
 	for(int i=1; i<= N; ++i){
-		glp_set_obj_coef(P,DE(i),MP(i)*etaG);
+		//MSG("i = %d",i);
+		double mp_i = MP(i);
+		assert(mp_i != MOTAB_NO_REAL);
+		glp_set_obj_coef(P,DE(i),mp_i*etaG);
 	}
 	
 	/* VARIABLE BOUNDS
@@ -149,10 +201,19 @@ double st_linprog(MotabData *wd, MotabData *pd,
 		0 ≤ XEi ≤ A · ηC · DNIi
 	*/
 	for(int i=1; i<= N; ++i){
+		double dni_i = DNI(i);
+		double etac_i = ETAC(i);
+		assert(dni_i != MOTAB_NO_REAL);
+		
 		glp_set_col_bnds(P, SL(i), GLP_DB, SLmin, SLmax             );
 		glp_set_col_bnds(P, DE(i), GLP_DB, 0    , DEmax             );
-		glp_set_col_bnds(P, SE(i), GLP_DB, 0    , A * ETAC(I) * DNI(i) );
-		glp_set_col_bnds(P, XE(i), GLP_DB, 0    , A * ETAC(I) * DNI(i) );
+		if(dni_i == 0 || etac_i == 0){
+			glp_set_col_bnds(P, SE(i), GLP_FX,0.,0.);
+			glp_set_col_bnds(P, XE(i), GLP_FX,0.,0.);
+		}else{
+			glp_set_col_bnds(P, SE(i), GLP_DB, 0, A * etac_i * dni_i );
+			glp_set_col_bnds(P, XE(i), GLP_DB, 0, A * etac_i * dni_i );
+		}
 	}
 		
 	/* CONSTRAINTS */
@@ -174,6 +235,8 @@ double st_linprog(MotabData *wd, MotabData *pd,
 		Terms on the left hand side are positive, right hand side negative.
 	*/
 	for(unsigned i=1;i<=N;++i){
+		double dni_i = DNI(i);
+		double etac_i = ETAC(i);	
 		if(i == 1){
 			//MSG("SL(%d) = %d, SE(%i) = %d, DE(%d) = %d", i,SL(i),i,SE(i),i,DE(i));
 			glp_set_mat_row(P, SEB(i), 3
@@ -199,7 +262,7 @@ double st_linprog(MotabData *wd, MotabData *pd,
 			,   (int[]){0, SE(i),  XE(i)}
 			,(double[]){0,  +1. ,    +1.}
 		);
-		glp_set_row_bnds(P,EDX(i),GLP_FX,A*ETAC(I)*DNI(i),99999);
+		glp_set_row_bnds(P,EDX(i),GLP_FX,A*etac_i*dni_i,99999);
 		snprintf(sss,NAMEMAX,"EDX%02d",i); glp_set_row_name(P,EDX(i),sss);
 	}
 	/*
@@ -230,7 +293,8 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	if(res == 0){
 		MSG("LP successfully solved");
 	}else{
-		MSG("glp_simplex returned error code %d",res);
+		ERR("glp_simplex returned error code %d",res);
+		return 0;
 	}
 	
 	glp_print_sol(P,"glpksolution.txt");
@@ -239,29 +303,29 @@ double st_linprog(MotabData *wd, MotabData *pd,
 	// Get the value of the optimal obj. function
 	MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
-	MSG1("DNI [W/m.sq]: ");
-	for(int i=1;i <= N; i++){
-		MSG2("%s%.1f", (i==1?"":", "), DNI(i));
+#define PRVEC(FN,UNITS) {\
+		MSG1("%10s %-7s:",#FN,"(" UNITS ")"); \
+		for(int i=1;i <= N; i++){ \
+			MSG2("%s%10.1f", (i==1?"":", "), FN(i)); \
+		} \
+		MSGL; \
 	}
-	MSGL;
 
-	MSG1("Optical efficiency: ");
-	for(int i=1;i<= N; i++){
-		MSG2("%s%.4f", (i==1?"":", "), ETAC(i));
+#define PRVEC1(FN,UNITS) {\
+		MSG1("%10s %-7s:",#FN,"(" UNITS ")"); \
+		for(int i=1;i <= N; i++){ \
+			MSG2("%s%10.1f", (i==1?"":", "), glp_get_col_prim(P,FN(i))); \
+		} \
+		MSGL; \
 	}
-	MSGL;
-
-	MSG1("Optimal Dispatch Energy DE [MWth]: ");
-	for(int i=1;i<= N; i++){
-		MSG2("%s%.2f", (i==1?"":", "), glp_get_col_prim(P,DE(i)));
-	}
-	MSGL;
 	
-	MSG1("Price [USD/MWh]: ");
-	for(int i=1;i<= N; i++){
-		MSG2("%s%.2f", (i==1?"":", "), MP(i));
-	}
-	MSGL;
+	
+	PRVEC(DNI,"W/m2");
+	PRVEC(ETAC,"1");
+	PRVEC(MP,"USD");
+	PRVEC1(DE,"MWth");
+	PRVEC1(XE,"MWth");
+	PRVEC1(SE,"MWth");
 #endif
 
 	double optimalDispatch = glp_get_col_prim(P,DE(1));

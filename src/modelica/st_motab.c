@@ -22,7 +22,7 @@
 
 #define MAXCHARS 4192
 
-extern void ModelicaFormatError(const char* string, ...);
+//extern void ModelicaFormatError(const char* string, ...);
 
 static char *newcopy(const char *s){
 	MSG("Copying s = '%s', len = %lu",s,strlen(s));
@@ -177,6 +177,47 @@ static cbool parseMetaRow(Parser *P,MotabData *tab){
 */
 cbool parseMetaDataHeaders(Parser *P,MotabData *tab){
 	return many(parseMetaRow(P,tab));
+}
+
+
+MotabData *motab_new(unsigned nrows, unsigned ncols, const char *name
+		, const char *collabels
+		, const char *colunits
+){
+	MotabData *data = NEW(MotabData);
+	assert(data);
+	const char *noname = "(unnamed)";
+	if(name)data->name = newcopy(name);
+	else data->name = newcopy(noname);
+	assert(data->name);
+	data->vals = NEW_ARRAY(double,nrows*ncols);
+	assert(data->vals);
+	data->nrows = nrows;
+	data->ncols = ncols;
+	data->meta = NULL;
+	data->timecol = MOTAB_NO_COL;
+	data->timestep = 0;
+
+	char line[MAXCHARS] = "";
+	if(collabels){
+		snprintf(line,MAXCHARS-1,"TABLELABELS,%s",collabels);
+		MotabMetaData *row1 = NEW(MotabMetaData);
+		assert(row1);
+		row1->next = NULL;
+		row1->row = newcopy(line);
+		data->meta = row1;
+	}
+	if(colunits){
+		snprintf(line,MAXCHARS-1,"TABLEUNITS,%s",colunits);
+		MotabMetaData *row1 = NEW(MotabMetaData);
+		assert(row1);
+		MotabMetaData *first = data->meta;
+		row1->next = first;
+		row1->row = newcopy(line);
+		data->meta = row1;
+	}
+	
+	return data;
 }
 
 
@@ -350,6 +391,8 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 
 int motab_check_timestep(MotabData *tab, double *step_return){
 	assert(tab);
+	/* FIXME -- perhaps check if the value has already been stored in `tab`? */
+
 	int time_col = motab_find_col_by_label(tab,"time");
 	if(time_col == -1){
 		ERR("No 'time' column found in Motab");
@@ -391,24 +434,26 @@ double motab_get_value(MotabData *tab, double time, int col){
 	if(tab->timecol == MOTAB_NO_COL){
 		if(err = motab_check_timestep(tab,NULL)){
 			ERR("Error %d in motab timestep.",err);
-			return -9999.;
+			return MOTAB_NO_REAL;
 		}
 	}
 	MSG("Timestep = %f",tab->timestep);
-	double rowrat = time/tab->timestep;
+	assert(tab->nrows >= 1);
+	double t0 = MOTAB_VAL(tab,0,tab->timecol);
+	double rowrat = (time - t0)/tab->timestep;
 	int row = (int)rowrat;
 	double frac = rowrat - row;
 	if(row < 0){
-			ERR("Time is below range of Motab");
-			return -9999.;
+			ERR("Time t = %f (row %d) is below table range (t_min = %f)",time,row,MOTAB_VAL(tab,0,tab->timecol));
+			return MOTAB_NO_REAL;
 	}
 	if(row >= tab->nrows){
-			ERR("Time is above range of Motab");
-			return -9999.;
+			ERR("Time t = %f (row %d) is above table range (t_max = %f)",time,row,MOTAB_VAL(tab,tab->nrows-1,tab->timecol));
+			return MOTAB_NO_REAL;
 	}
 	if(col < 0 || col >= tab->ncols){
 			ERR("Column is out of range of Motab");
-			return -9999.;
+			return MOTAB_NO_REAL;
 	}
 	
 	MSG("row = %d, col = %d", row, col);
@@ -416,7 +461,7 @@ double motab_get_value(MotabData *tab, double time, int col){
 	if(frac > 0){
 		if(row == tab->nrows - 1){
 			ERR("Value %f is beyond the last row.",time);
-			return -9999.;
+			return MOTAB_NO_REAL;
 		}
 		val = val * (1-frac) + MOTAB_VAL(tab,row + 1,col) * frac;
 	}

@@ -64,13 +64,14 @@ int main(int argc, char *argv[] ){
 	assert(motab_find_col_by_label(wd,"dni")!=-1);
 	assert(motab_find_col_by_label(pd,"price")!=-1);
 
-	double DE = st_linprog(wd,pd, 
-		horizon, dt, t,
-		etaC, etaG, t_stg,
-		DEmax, SLmax, SLinit, 
-		SLmin, Ahelio
+	double DE = st_linprog(wd, pd
+		,horizon, dt, t
+		,etaC, etaG
+		,DEmax, SLmax, SLinit
+		,SLmin, Ahelio
 	);
 
 	fprintf(stderr,"DE = %f\n",DE);
 }
+
 

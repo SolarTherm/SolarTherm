@@ -65,6 +65,15 @@ FIXME: st_motab doesn't yet handle multiple tables in a single text file, althou
 that feature is in fact supported by Modelica.
 */
 
+/**
+	Macro to directly access data in the stored table, either for reading or
+	writing. `TABLE` is a MotabData pointer, `ROW` and `COL` are row and column
+	indices starting from zero.
+	
+	NOTE: if you want interpolation, see `motab_get_value`.
+	
+	TODO Possibly we should avoid using this macro outside st_motab.c...?
+*/
 #define MOTAB_VAL(TABLE,ROW,COL) (TABLE)->vals[(COL) + (ROW)*(TABLE->ncols)]
 
 #include <limits.h>
@@ -120,13 +129,13 @@ typedef struct MotabMetaData_struct {
 	Note that this version only supports tables with data of type `double`.
 */
 typedef struct{
-	char *name; // owned by us, must be freed using motab_free(tab)
-	double *vals; // owned by us
+	char *name; ///< owned by us, must be freed using motab_free(tab)
+	double *vals; ///< owned by us
 	unsigned nrows;
 	unsigned ncols;
-	MotabMetaData *meta; // owned by use
-	unsigned timecol;
-	double timestep; //< will be initialised to MOTAB_NO_COL
+	MotabMetaData *meta; ///< owned by us
+	unsigned timecol;  ///< will be initialised to MOTAB_NO_COL
+	double timestep; ///< will be intitialise to zero (0)
 } MotabData;
 
 /**
@@ -134,6 +143,18 @@ typedef struct{
 	messages are output to stderr.
 */
 ST_EXPORT MotabData *motab_load(const char *filepath);
+
+/**
+	Create a new empty table (used for example with synthetic datasets used for
+	testing the code).
+	
+	`nrows` and `ncols` are the number of required rows and columns in the table.
+	`name` is the label that will be stored (copied) with the table, and hopefully
+	used later for accessing the table by name via the Modelica 'usertab' feature.
+	`collabels` and `colunits` are the column labels and units of measurement,
+	comma-separated (see `motab_find_meta_row`).
+*/
+ST_EXPORT MotabData *motab_new(unsigned nrows, unsigned ncols, const char *name, const char *collabels, const char *colunits);
 
 /**
 	Get the metadata row corresponding to `tag`, eg TABLEUNITS below.
@@ -186,8 +207,12 @@ ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
 ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
 
 /**
-	Get value, with linear interpololate. First scratch test function, not
+	Get value, with linear interpolation. First scratch test function, not
 	for serious use.
+	
+	TODO For more serious use, we propose to integrate st_motab with the MSL
+	ModelicaStandardTables, namely ExternalCombiTable1D, via the 'usertab'
+	feature. More to come on that...
 */
 ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 

@@ -15,6 +15,8 @@ tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
+tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
+
 import platform
 if platform.system()=="Windows":
 	tenv2 = Environment(CC='mpicc', tools=['default','mingw'])

@@ -40,6 +40,8 @@ test_moga
 TestStOptimise_*.txt
 testdispatch
 testmotab
+testdispatch2
+testmpi
 SimpleSystemOptimalDispatch*.c
 SimpleSystemOptimalDispatch
 AO.c
