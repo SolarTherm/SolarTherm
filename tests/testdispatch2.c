@@ -18,12 +18,12 @@ int main(int argc, char *argv[] ){
 		etac[i] = 1;
 	}
 	
-	double t_stg = 3.;
+	double t_stg = 2.;
 	double DEmax = 100; // MW
 	double SLmax = 100*t_stg; // MWh. FIXME why do I need this AS WELL AS t_stg??
-	double SLinit = 0; // MWh
+	double SLinit = 20; // MWh
 	double SLmin = 0;
-	double Ahelio = 100000; // m²
+	double Ahelio = 0.2; // m²
 	
 	double etag = 1;
 
@@ -37,7 +37,7 @@ int main(int argc, char *argv[] ){
 	
 	for(int i=0;i<nsteps;++i){
 		MOTAB_VAL(wd,i,0) = (i+1)*dt;
-		MOTAB_VAL(wd,i,dni_col) = 1000;
+		MOTAB_VAL(wd,i,dni_col) = 1000.;
 		MOTAB_VAL(pd,i,0) = i*dt;
 		MOTAB_VAL(pd,i,tod_col) = 1;
 	}

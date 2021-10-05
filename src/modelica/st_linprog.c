@@ -276,7 +276,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 		,   (int[]){0, SL(N)}
 		,(double[]){0,  +1. }
 	);
-	glp_set_row_bnds(P,LEB,GLP_FX,0.,99999);
+	glp_set_row_bnds(P,LEB,GLP_FX,SLinit,99999);
 	glp_set_row_name(P,LEB,"LEB");
 
 	// Message attribute
@@ -326,6 +326,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 	PRVEC1(DE,"MWth");
 	PRVEC1(XE,"MWth");
 	PRVEC1(SE,"MWth");
+	PRVEC1(SL,"MWth");
 #endif
 
 	double optimalDispatch = glp_get_col_prim(P,DE(1));
