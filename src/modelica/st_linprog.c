@@ -303,30 +303,50 @@ double st_linprog(MotabData *wd, MotabData *pd
 	// Get the value of the optimal obj. function
 	MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
-#define PRVEC(FN,UNITS) {\
-		MSG1("%10s %-7s:",#FN,"(" UNITS ")"); \
+#define PRVEC(FN,LABEL,UNITS) {\
+		MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
 		for(int i=1;i <= N; i++){ \
 			MSG2("%s%10.1f", (i==1?"":", "), FN(i)); \
 		} \
 		MSGL; \
 	}
 
-#define PRVEC1(FN,UNITS) {\
-		MSG1("%10s %-7s:",#FN,"(" UNITS ")"); \
+#define PRVEC1(FN,LABEL,UNITS) {\
+		MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
 		for(int i=1;i <= N; i++){ \
 			MSG2("%s%10.1f", (i==1?"":", "), glp_get_col_prim(P,FN(i))); \
 		} \
 		MSGL; \
 	}
+
+#define PRCE(LABEL,UNITS) {\
+		MSG1("%-20s%10s %-7s:",LABEL,"CE","(" UNITS ")"); \
+		for(int i=1;i <= N; i++){ \
+			double ce = ETAC(i)*DNI(i)*A;\
+			MSG2("%s%10.1f", (i==1?"":", "),ce); \
+		} \
+		MSGL; \
+	}
+
+#define PRREV(LABEL,UNITS) {\
+		MSG1("%-20s%10s %-7s:",LABEL,"REV","(" UNITS ")"); \
+		for(int i=1;i <= N; i++){ \
+			double rev = etaG*MP(i)*glp_get_col_prim(P,DE(i));\
+			MSG2("%s%10.1f", (i==1?"":", "),rev); \
+		} \
+		MSGL; \
+	}
 	
-	
-	PRVEC(DNI,"W/m2");
-	PRVEC(ETAC,"1");
-	PRVEC(MP,"USD");
-	PRVEC1(DE,"MWth");
-	PRVEC1(XE,"MWth");
-	PRVEC1(SE,"MWth");
-	PRVEC1(SL,"MWth");
+	PRVEC(DNI,"DNI","W/m2");
+	PRVEC(ETAC,"eta_C","1");
+	PRVEC(MP,"Market price","USD");
+	PRCE("Collected heat","MWth");
+	PRVEC1(XE,"Dumped heat","MWth");
+	PRVEC1(SE,"Stored heat","MWth");
+	PRVEC1(DE,"Dispatched heat","MWth");
+	MSG("%-20s%10s %-7s: %10.1f","Initial storage lev","SLinit","(MWth)",SLinit);
+	PRVEC1(SL,"Storage level","MWth");
+	PRREV("Revenue","USD");
 #endif
 
 	double optimalDispatch = glp_get_col_prim(P,DE(1));
