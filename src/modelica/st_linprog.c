@@ -98,14 +98,15 @@ double st_linprog(MotabData *wd, MotabData *pd
 		,double DEmax, double SLmax, double SLinit
 		,double SLmin, double A
 ){
-	ErrorCallback *errcallback = st_linprog_errcallback;
+/*	ErrorCallback *errcallback = st_linprog_errcallback;
 #ifdef ST_HAVE_MODELICA
 	if(use_modelicaerror){
 		errcallback = &ModelicaFormatError;
 	}
 #endif
+*/
 	
-	ERR("t = %f",t0);
+	MSG("t = %f",t0);
 
 	double wdstep, pdstep;
 	assert(0 == motab_check_timestep(wd,&wdstep));
