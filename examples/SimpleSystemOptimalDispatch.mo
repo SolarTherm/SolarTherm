@@ -10,6 +10,8 @@ model SimpleSystemOptimalDispatch
 
     extends Modelica.Icons.Example;
 
+    constant Real MWh_per_J = 1 / (3600. * 1e6);
+    
     // Parameters
     parameter String wea_file = Modelica.Utilities.Files.loadResource(
         "modelica://SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab") 
@@ -139,7 +141,7 @@ model SimpleSystemOptimalDispatch
     Real optimalDispatch "optimal disopatch";
     Real SLinit "Current capacity the tank MWh";
     Real SLmax "Max capacity MWhth";
-    Real SLminrel "Minimum level of the tank [-]";
+    Real SLmin "Minimum level of the tank MWhth";
     Real eta_opt_horizon[horizon] "The forecasted optical efficiency";
 
     Real TOD_W(start=0);
@@ -308,9 +310,9 @@ equation
     end if;
 
     der(counter) = 1;
-    SLinit = E * 2.77778e-10 "Initial stored energy at TES"; 	
-    SLmax = E_max * 2.77778e-10 "Maximum stored energy at TES";	
-    SLminrel = E_low_l/E_max "Lowest energy fraction in the tank";
+    SLinit = E * MWh_per_J "Initial stored energy at TES";
+    SLmax = E_max * MWh_per_J "Maximum stored energy at TES";
+    SLmin = E_low_l * MWh_per_J "Lowest energy level in the tank";
     
     for i in 1: horizon loop
         eta_opt_horizon[i] = 0.65 * eff_rec;
@@ -319,18 +321,10 @@ equation
     when counter > 0 then
         time_simul = floor(time);
         optimalDispatch = SolarTherm.Utilities.LinProgFunc(
-            wea_motab, 
-            pri_motab,
-            horizon, 
-            dt, 
-            time_simul, 
-            eta_opt_horizon, 
-            eff_blk, 
-            t_storage, 
-            DEmax, 
-            SLmax, 
-            SLinit, 
-            SLminrel, 
+            wea_motab, pri_motab,
+            horizon, dt, time_simul,
+            eta_opt_horizon, eff_blk,
+            DEmax, SLmax, SLinit, SLmin,
             A_col
           );
           reinit(counter, -dt * 3600);  

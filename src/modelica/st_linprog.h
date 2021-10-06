@@ -4,10 +4,10 @@
 #include "st_motab.h"
 
 double st_linprog(MotabData *wd, MotabData *pd
-		,int horizon, double dt, double time_simul
+		,int horizon, double dt, double t0
 		,double etaC[], double etaG
 		,double DEmax, double SLmax, double SLinit
-		,double SLminrel, double Ahelio
+		,double SLmin, double A
 );
 
 #endif

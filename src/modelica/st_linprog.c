@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
+
 //#define ST_LINPROG_DEBUG
 
 #ifdef ST_LINPROG_DEBUG
@@ -20,6 +21,21 @@
 # define MSGL ((void)0)
 #endif
 
+#if 0
+#include <ModelicaUtilities.h>
+typedef int ErrorCallback(const char *fmt,...);
+
+ErrorCallback st_linprog_errcallback;
+
+int st_linprog_errcallback(const char *fmt,...){
+	va_list args;
+	vfprintf(stderr,fmt,args);
+	va_end(args);
+}
+
+//#define ERR(FMT,...) (*errcallback)("%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+//#define ERR(FMT,...) (*errcallback)(FMT "\n",##__VA_ARGS__)
+#endif
 #define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 
 #define ST_ERRVAL (-999999.)
@@ -82,6 +98,13 @@ double st_linprog(MotabData *wd, MotabData *pd
 		,double DEmax, double SLmax, double SLinit
 		,double SLmin, double A
 ){
+	ErrorCallback *errcallback = st_linprog_errcallback;
+#ifdef ST_HAVE_MODELICA
+	if(use_modelicaerror){
+		errcallback = &ModelicaFormatError;
+	}
+#endif
+	
 	ERR("t = %f",t0);
 
 	double wdstep, pdstep;
@@ -93,8 +116,8 @@ double st_linprog(MotabData *wd, MotabData *pd
 	static MotabData *wdcache, *pdcache;
 	if(wdcache != wd){
 		wdcache = wd;
-		if(wdstep != dt)ERR("Warning: weather file timestep is %fs, different"
-			" from forecasting timestep %fs (message is only shown once)",wdstep, dt);
+		if(wdstep != dt)ERR("Warning: weather file timestep is %f s, different"
+			" from forecasting timestep %f s (message is only shown once)",wdstep, dt);
 	}
 	if(pdcache != pd){
 		pdcache = pd;
@@ -298,75 +321,91 @@ double st_linprog(MotabData *wd, MotabData *pd
 
 	// Solve the lp
 	int res = glp_simplex(P,&parm);
+	int printres = 0;
+	char *msg;
 	if(res == 0){
 		MSG("LP successfully solved");
 	}else{
-		ERR("glp_simplex returned error code %d",res);
-		return 0;
+		switch(res){
+		case GLP_EBADB: msg = "Invalid initial basis";break;
+		case GLP_ESING: msg = "Singular matrix";break;
+		case GLP_ECOND: msg = "Ill-conditioned matrix";break;
+		case GLP_EBOUND:msg = "Incorrect bounds";break;
+		case GLP_EFAIL: msg = "Solver failure";break;
+		default: msg = "unrecognised error code";
+		}
+
+		//ERR("glp_simplex returned error code %d (%s)",res,msg);
+		printres = 1;
+		//return 0;
 	}
 	
-	glp_print_sol(P,"glpksolution.txt");
+	if(printres){
+		//glp_print_sol(P,"glpksolution.txt");
 
-#ifdef ST_LINPROG_DEBUG
-	// Get the value of the optimal obj. function
-	MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
+		// Get the value of the optimal obj. function
+		MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
 #define PRVEC(FN,LABEL,UNITS) {\
-		MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
-		for(int i=1;i <= N; i++){ \
-			MSG2("%s%10.1f", (i==1?"":", "), FN(i)); \
-		} \
-		MSGL; \
-	}
+			MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
+			for(int i=1;i <= N; i++){ \
+				MSG2("%s%10.1f", (i==1?"":", "), FN(i)); \
+			} \
+			MSGL; \
+		}
 
 #define PRVEC1(FN,LABEL,UNITS) {\
-		MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
-		for(int i=1;i <= N; i++){ \
-			MSG2("%s%10.1f", (i==1?"":", "), glp_get_col_prim(P,FN(i))); \
-		} \
-		MSGL; \
-	}
+			MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
+			for(int i=1;i <= N; i++){ \
+				MSG2("%s%10.1f", (i==1?"":", "), glp_get_col_prim(P,FN(i))); \
+			} \
+			MSGL; \
+		}
 
 #define PRCE(LABEL,UNITS) {\
-		MSG1("%-20s%10s %-7s:",LABEL,"CE","(" UNITS ")"); \
-		for(int i=1;i <= N; i++){ \
-			double ce = ETAC(i)*DNI(i)*A;\
-			MSG2("%s%10.1f", (i==1?"":", "),ce); \
-		} \
-		MSGL; \
-	}
+			MSG1("%-20s%10s %-7s:",LABEL,"CE","(" UNITS ")"); \
+			for(int i=1;i <= N; i++){ \
+				double ce = ETAC(i)*DNI(i)*A;\
+				MSG2("%s%10.1f", (i==1?"":", "),ce); \
+			} \
+			MSGL; \
+		}
 
 #define PRREV(LABEL,UNITS) {\
-		MSG1("%-20s%10s %-7s:",LABEL,"REV","(" UNITS ")"); \
-		for(int i=1;i <= N; i++){ \
-			double rev = etaG*MP(i)*glp_get_col_prim(P,DE(i));\
-			MSG2("%s%10.1f", (i==1?"":", "),rev); \
-		} \
-		MSGL; \
+			MSG1("%-20s%10s %-7s:",LABEL,"REV","(" UNITS ")"); \
+			for(int i=1;i <= N; i++){ \
+				double rev = etaG*MP(i)*glp_get_col_prim(P,DE(i));\
+				MSG2("%s%10.1f", (i==1?"":", "),rev); \
+			} \
+			MSGL; \
+		}
+		
+		PRVEC(DNI,"DNI","W/m2");
+		PRVEC(ETAC,"eta_C","1");
+		PRVEC(MP,"Market price","USD");
+		PRCE("Collected heat","MWth");
+		PRVEC1(XE,"Dumped heat","MWth");
+		PRVEC1(SE,"Stored heat","MWth");
+		PRVEC1(DE,"Dispatched heat","MWth");
+		MSG("%-20s%10s %-7s: %10.1f","Initial storage lev","SLinit","(MWth)",SLinit);
+		PRVEC1(SL,"Storage level","MWth");
+		PRREV("Revenue","USD");
+
 	}
 	
-	PRVEC(DNI,"DNI","W/m2");
-	PRVEC(ETAC,"eta_C","1");
-	PRVEC(MP,"Market price","USD");
-	PRCE("Collected heat","MWth");
-	PRVEC1(XE,"Dumped heat","MWth");
-	PRVEC1(SE,"Stored heat","MWth");
-	PRVEC1(DE,"Dispatched heat","MWth");
-	MSG("%-20s%10s %-7s: %10.1f","Initial storage lev","SLinit","(MWth)",SLinit);
-	PRVEC1(SL,"Storage level","MWth");
-	PRREV("Revenue","USD");
-#endif
-
 	double optimalDispatch = glp_get_col_prim(P,DE(1));
 
 	MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f",optimalDispatch);
 
 	/*Free all the memory used in this script*/
-
 	glp_free_env();
 
-	/*end of the code*/
+	if(res){
+		ERR("GLPK error %d: %s",res,msg);
+		return -987654321;
+	}
 
+	/*end of the code*/
 	return optimalDispatch;
 }
 

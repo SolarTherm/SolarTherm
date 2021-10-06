@@ -391,38 +391,39 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 
 int motab_check_timestep(MotabData *tab, double *step_return){
 	assert(tab);
-	/* FIXME -- perhaps check if the value has already been stored in `tab`? */
-
-	int time_col = motab_find_col_by_label(tab,"time");
-	if(time_col == -1){
-		ERR("No 'time' column found in Motab");
-		tab->timecol = MOTAB_NO_COL;
-		return 1;
-	}
-	tab->timecol = time_col;
-	char *units = motab_get_col_units(tab,"time");
-	if(0 != strcmp(units,"s")){
-		ERR("Units for column 'time' are not 's' as expected. Got '%s' instead.",units);
-		free(units);
-		return 2;
-	}
-	free(units);
-	if(tab->nrows < 2){
-		ERR("Table does not have two or more rows");
-		return 3;
-	}
-	double delta = MOTAB_VAL(tab,1,time_col) - MOTAB_VAL(tab,0,time_col);
-	double t;
-	for(int r=2;r < tab->nrows; ++r){
-		t = MOTAB_VAL(tab,r,time_col);
-		//MSG("t = %lf",t);
-		if(delta != t - MOTAB_VAL(tab,r-1,time_col)){
-			ERR("Incorrect time increment at t = %lf",t);
-			return 4;
+	// only run the check if it hasn't already been done and a result stored
+	if(tab->timecol == MOTAB_NO_COL || tab->timestep != 0){
+		int time_col = motab_find_col_by_label(tab,"time");
+		if(time_col == -1){
+			ERR("No 'time' column found in Motab");
+			tab->timecol = MOTAB_NO_COL;
+			return 1;
 		}
+		tab->timecol = time_col;
+		char *units = motab_get_col_units(tab,"time");
+		if(0 != strcmp(units,"s")){
+			ERR("Units for column 'time' are not 's' as expected. Got '%s' instead.",units);
+			free(units);
+			return 2;
+		}
+		free(units);
+		if(tab->nrows < 2){
+			ERR("Table does not have two or more rows");
+			return 3;
+		}
+		double delta = MOTAB_VAL(tab,1,time_col) - MOTAB_VAL(tab,0,time_col);
+		double t;
+		for(int r=2;r < tab->nrows; ++r){
+			t = MOTAB_VAL(tab,r,time_col);
+			//MSG("t = %lf",t);
+			if(delta != t - MOTAB_VAL(tab,r-1,time_col)){
+				ERR("Incorrect time increment at t = %lf",t);
+				return 4;
+			}
+		}
+		tab->timestep = delta;
 	}
-	tab->timestep = delta;
-	if(step_return)*step_return = delta;
+	if(step_return)*step_return = tab->timestep;
 	return 0;
 }
 
