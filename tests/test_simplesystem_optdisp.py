@@ -27,5 +27,5 @@ def test_system():
 	assert abs(perf[0]- 300.757)/300.757<0.01 # epy
 	assert abs(perf[1]- 38.798)/38.798<0.01 # LCOE peaker
 	assert abs(perf[2]- 100.09)/100.09<0.01 # Capacity factor
-	cleantest.clean('SimpleSystemOptimalDispatch')git s
+	cleantest.clean('SimpleSystemOptimalDispatch')
 
