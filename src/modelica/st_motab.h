@@ -226,7 +226,7 @@ ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 	This function is useful in st_linprog, when attempting to run forecasts
 	for the last nsteps time-periods of the year.
 */
-ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
+ST_EXPORT double motab_get_value_wraparound(MotabData *tab, double t, int col);
 
 
 /**
