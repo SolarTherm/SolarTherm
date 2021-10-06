@@ -131,12 +131,11 @@ model SimpleSystemOptimalDispatch
 
     /*Dispatch optimisation*/
     parameter Real DEmax = P_name / eff_blk * 1e-6 "Thermal rating of the power block ==> maximum dispatched thermal power to the PB (MWth)";
-    parameter Real const_t = -3600;
-    parameter Real dt =1 "delta t";
-    parameter Integer horizon = 24;
+    parameter SI.Time dt(displayUnit="h") = 3600 "delta t";
+    parameter Integer horizon = 48;
     parameter Boolean dispatch_optimiser = true;
 
-    Real counter(start = const_t);
+    Real counter(start = -dt);
     Real time_simul "time of the optimisation";
     Real optimalDispatch "optimal disopatch";
     Real SLinit "Current capacity the tank MWh";
@@ -327,7 +326,7 @@ equation
             DEmax, SLmax, SLinit, SLmin,
             A_col
           );
-          reinit(counter, -dt * 3600);  
+          reinit(counter, -dt);  
     end when;
                          
  

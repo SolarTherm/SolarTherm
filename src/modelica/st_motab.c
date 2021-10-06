@@ -471,6 +471,57 @@ double motab_get_value(MotabData *tab, double time, int col){
 	return val;
 }
 
+double motab_get_value_wraparound(MotabData *tab, double time, int col){
+	assert(tab);
+	int err;
+	MSG("Evaluating at t=%f, col=%d",time,col);
+	if(tab->timecol == MOTAB_NO_COL){
+		if(err = motab_check_timestep(tab,NULL)){
+			ERR("Error %d in motab timestep.",err);
+			return MOTAB_NO_REAL;
+		}
+	}
+	MSG("Timestep = %f",tab->timestep);
+	assert(tab->nrows >= 1);
+	double t0 = MOTAB_VAL(tab,0,tab->timecol);
+	double tmax = t0 + tab->ncols * tab->timestep;
+	MSG("t0 = %f, tmax = %f",t0,tmax);
+	double rowrat = (time - t0)/tab->timestep;
+	int rowratint = (int)rowrat;
+	int row = rowratint % tab->nrows;
+	double frac = rowrat - row;
+	MSG("rowrat = %f, rowratint = %d, row = %d",rowrat,rowratint,row);
+	if(row < 0){
+			ERR("Time t = %f (row %d) is below table range (t_min = %f)",time,row,MOTAB_VAL(tab,0,tab->timecol));
+			return MOTAB_NO_REAL;
+	}
+	if(row >= tab->nrows){
+			ERR("Time t = %f (row %d) is above table range (t_max = %f)",time,row,MOTAB_VAL(tab,tab->nrows-1,tab->timecol));
+			return MOTAB_NO_REAL;
+	}
+	if(col < 0 || col >= tab->ncols){
+			ERR("Column is out of range of Motab");
+			return MOTAB_NO_REAL;
+	}
+	
+	MSG("row = %d, col = %d", row, col);
+	double val1 = MOTAB_VAL(tab,row,col);
+	if(frac > 0){
+		double val2;
+		if(row == tab->nrows - 1){
+			MSG("val2 = first row");
+			val2 = MOTAB_VAL(tab,0,col);
+		}else{
+			val2 = MOTAB_VAL(tab,row+1,col);
+		}
+		val1 = val1 * (1-frac) + val2 * frac;
+	}
+		
+	MSG("val = %f",val1);
+	return val1;
+}
+
+
 
 MotabMetaItem *get_meta_item(MotabData *tab, const char *name,int *err){
 	MotabMetaItem *item = NEW(MotabMetaItem);

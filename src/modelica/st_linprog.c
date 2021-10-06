@@ -155,12 +155,12 @@ double st_linprog(MotabData *wd, MotabData *pd
 
 #define MP(I) (\
 	/*MSG("MP(%d) at t=%f",I,t0+((I)-1)*dt),*/\
-	motab_get_value(pd,    t0+((I)-1)*dt,price_col)\
+	motab_get_value_wraparound(pd,    t0+((I)-1)*dt,price_col)\
 	)
 /** as noted above, DNI for the ith period (counting from 1) is at t0+i*dt */
 #define DNI(I) (\
 	/*MSG("DNI(%d) at t=%f",(I),t0+(I)*dt),*/\
-	motab_get_value(wd,       t0+(I)*dt,dni_col)\
+	motab_get_value_wraparound(wd,       t0+(I)*dt,dni_col)\
 	)
 
 /** efficiency in each hour will be taken from the supplied array. FIXME we 

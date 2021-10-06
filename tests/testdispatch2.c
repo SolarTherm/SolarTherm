@@ -18,9 +18,8 @@ int main(int argc, char *argv[] ){
 		etac[i] = 1;
 	}
 	
-	double t_stg = 3.;
 	double DEmax = 100; // MW
-	double SLmax = 100*t_stg; // MWh. FIXME why do I need this AS WELL AS t_stg??
+	double SLmax = 300; // MWh. FIXME why do I need this AS WELL AS t_stg??
 	double SLinit = 20; // MWh
 	double SLmin = 0;
 	double Ahelio = 0.2; // m²

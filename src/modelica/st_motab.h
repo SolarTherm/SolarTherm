@@ -206,6 +206,7 @@ ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
 */
 ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
 
+
 /**
 	Get value, with linear interpolation. First scratch test function, not
 	for serious use.
@@ -213,6 +214,17 @@ ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
 	TODO For more serious use, we propose to integrate st_motab with the MSL
 	ModelicaStandardTables, namely ExternalCombiTable1D, via the 'usertab'
 	feature. More to come on that...
+*/
+ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
+
+
+/**
+	Get value, with wraparound. The table is assumed to be circular, such that
+	the last value in the table comes one timestep before the first value in the
+	table. See `motab_get_value`.
+	
+	This function is useful in st_linprog, when attempting to run forecasts
+	for the last nsteps time-periods of the year.
 */
 ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 
