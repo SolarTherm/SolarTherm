@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-//#define TESTMOTAB_DEBUG
+#define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -176,13 +176,16 @@ int test_wrap(){
 	motab_write_hrt_stdout(wd);
 #endif
 
+	MSG("Testing dni_col...");
 	assert(motab_get_value_wraparound(wd,1,dni_col) == 1000.);
 	assert(motab_get_value_wraparound(wd,2,dni_col) == 1000.);
 	assert(motab_get_value_wraparound(wd,3,dni_col) == 1000.);
 	assert(motab_get_value_wraparound(wd,4,dni_col) == 0.);
 	assert(motab_get_value_wraparound(wd,5,dni_col) == 0.);
 	assert(motab_get_value_wraparound(wd,6,dni_col) == 0.);
+	MSG("Testing t=7 dni_col...");
 	assert(motab_get_value_wraparound(wd,7,dni_col) == 1000.);
+	MSG("Testing t=8 dni_col...");
 	assert(motab_get_value_wraparound(wd,8,dni_col) == 1000.);
 	assert(motab_get_value_wraparound(wd,9,dni_col) == 1000.);
 	assert(motab_get_value_wraparound(wd,10,dni_col) == 0.);
@@ -190,21 +193,26 @@ int test_wrap(){
 	assert(motab_get_value_wraparound(wd,12,dni_col) == 0.);
 	assert(motab_get_value_wraparound(wd,13,dni_col) == 1000.);
 
+	MSG("Testing bb_col...");
 	assert(motab_get_value_wraparound(wd,1,bb_col) == 100.);
 	assert(motab_get_value_wraparound(wd,2,bb_col) == 100.);
 	assert(motab_get_value_wraparound(wd,3,bb_col) == 100.);
+	MSG("Testing t=3.25 bb_col...");
 	assert(motab_get_value_wraparound(wd,3.25,bb_col) == 75.);
 	assert(motab_get_value_wraparound(wd,3.5,bb_col) == 50.);
 	assert(motab_get_value_wraparound(wd,3.75,bb_col) == 25.);
 	assert(motab_get_value_wraparound(wd,4,bb_col) == 0.);
 	assert(motab_get_value_wraparound(wd,4.5,bb_col) == 0.);
 	assert(motab_get_value_wraparound(wd,5,bb_col) == 0.);
+	MSG("Testing t=5.5 bb_col...");
 	assert(motab_get_value_wraparound(wd,5.5,bb_col) == 25.);
 	assert(motab_get_value_wraparound(wd,6,bb_col) == 50.);
 	assert(motab_get_value_wraparound(wd,6.5,bb_col) == 75.);
 	assert(motab_get_value_wraparound(wd,7,bb_col) == 100.);
 	assert(motab_get_value_wraparound(wd,8,bb_col) == 100.);
-	assert(motab_get_value_wraparound(wd,10,bb_col) == 0.);	
+	assert(motab_get_value_wraparound(wd,10,bb_col) == 0.);
+	MSG("Completed ...");
+	return 0;
 }
 
 typedef int (TestFunction)(void);
@@ -235,6 +243,8 @@ int main(int argc, const char **argv){
 		return(1);
 	}
 	MSG("\nTesting motab '%s'...\n",argv[1]);
-	return (*fn)();
+	int res = (*fn)();
+	MSG("res = %d",res);
+	return res;
 }
 
