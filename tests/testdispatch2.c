@@ -45,7 +45,10 @@ int main(int argc, char *argv[] ){
 		MOTAB_VAL(pd,i,tod_col) = 3;
 	}
 	
-	double t = 0;
+	motab_write_hrt_stdout(wd);
+	motab_write_hrt_stdout(pd);
+
+	double t = 4;
 	
 	double DE = st_linprog(wd, pd
 		,nsteps, dt, t

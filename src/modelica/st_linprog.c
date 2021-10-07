@@ -6,12 +6,11 @@
 #include <string.h>
 #include <assert.h>
 
-
 //#define ST_LINPROG_DEBUG
 
 #ifdef ST_LINPROG_DEBUG
-# define MSG(FMT,...) fprintf(stdout,"%s:%d:" FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
-# define MSG1(FMT,...) fprintf(stdout,"%s:%d:" FMT,__FILE__,__LINE__,##__VA_ARGS__)
+# define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+# define MSG1(FMT,...) fprintf(stdout,"%s:%d: " FMT,__FILE__,__LINE__,##__VA_ARGS__)
 # define MSG2(FMT,...) fprintf(stdout,FMT,##__VA_ARGS__)
 # define MSGL fprintf(stdout,"\n")
 #else

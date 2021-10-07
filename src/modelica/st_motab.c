@@ -38,6 +38,8 @@ static cbool parseMetaDataHeaders(Parser *P,MotabData *tab);
 
 static unsigned motab_get_nmeta(MotabData *tab);
 
+/* INPUT/OUTPUT FUNCTIONS */
+
 /**
 	Selectively read just the time and DNI from a weather data file.
 	
@@ -180,6 +182,67 @@ cbool parseMetaDataHeaders(Parser *P,MotabData *tab){
 }
 
 
+void motab_write_hrt_stdout(MotabData *tab){
+	motab_write_hrt(tab,stdout);
+}
+
+
+static int fputcn(char c, int n,FILE *f){
+	for(int i=0;i<n;++i){
+		fputc(c,f);
+		if(feof(f))return 1;
+	}
+	return 0;
+}
+
+
+void motab_write_hrt(MotabData *tab, FILE *fp){
+	assert(tab);
+	int floatwidth = 10;
+	assert(tab->ncols >= 1);
+	int *colwidth = NEW_ARRAY(int,tab->ncols);
+	char **collabel = NEW_ARRAY(char *,tab->ncols);
+	for(int c=0; c<tab->ncols; ++c){
+		char *label;
+		label = motab_get_label_col(tab,c);
+		if(!label){
+			char label1[MAXCHARS];
+			snprintf(label1,MAXCHARS,"Col %d",c);
+			label = newcopy(label1);
+		}
+		int len = strlen(label);
+		if(len > floatwidth){
+			colwidth[c] = len;
+		}else{
+			colwidth[c] = floatwidth;
+		}
+		collabel[c] = label;
+	}
+	for(int c=0; c<tab->ncols; ++c){
+		fprintf(fp,"%-*s",colwidth[c]+1,collabel[c]);
+	}
+	fprintf(fp,"\n");
+	for(int c=0; c<tab->ncols; ++c){
+		fputcn('-',colwidth[c],fp);
+		fputc(' ',fp);
+	}
+	fprintf(fp,"\n");
+	for(int r=0; r<tab->nrows; ++r){
+		for(int c=0; c<tab->ncols; ++c){
+			fprintf(fp,"%s%*.2f",(c?" ":""),floatwidth,MOTAB_VAL(tab,r,c));
+		}
+		fprintf(fp,"\n");
+	}
+	for(int c=0; c<tab->ncols; ++c){
+		free(collabel[c]);
+	}
+	free(collabel);
+	free(colwidth);
+}
+
+
+/* CONSTRUCTOR/DESTRUCTOR FUNCTIONS */
+
 MotabData *motab_new(unsigned nrows, unsigned ncols, const char *name
 		, const char *collabels
 		, const char *colunits
@@ -242,6 +305,8 @@ void motab_free(MotabData *tab){
 		free(tab);
 	}
 }
+
+/* METADATA HANDLING FUNCTIONS */
 
 unsigned motab_get_nmeta(MotabData *tab){
 	unsigned nmeta = 0;
@@ -318,7 +383,7 @@ static char *get_item_in_commastring(const char *row,int ind){
 }
 
 
-char *motab_get_col_units(MotabData *tab, const char *label){
+char *motab_get_units_label(MotabData *tab, const char *label){
 	assert(tab);
 	MSG("Searching for units of col '%s'",label);
 	const char tag[] = "TABLEUNITS";
@@ -342,6 +407,46 @@ char *motab_get_col_units(MotabData *tab, const char *label){
 	}
 	return field;
 }
+
+char *motab_get_units_col(MotabData *tab, int col){
+	assert(tab);
+	MSG("Searching for units for col %d",col);
+	const char tag[] = "TABLEUNITS";
+	const char *row = motab_find_meta_row(tab,tag);
+	if(!row){
+		ERR("Invalid tag '%s'",tag);
+		return NULL;
+	}
+	MSG("Getting field %d in row '%s'",col,row);
+	char *field = get_item_in_commastring(row,col);
+	MSG("Field is '%s'",field);
+	if(NULL == field){
+		ERR("Field %d not found in '%s'",col,row);
+		free(field);
+		return NULL;
+	}
+	return field;
+}
+
+char *motab_get_label_col(MotabData *tab, int col){
+	assert(tab);
+	assert(tab->ncols >= 1);
+	assert(col >= 0);
+	assert(col < tab->ncols);
+	const char tag[] = "TABLELABELS";
+	const char *row = motab_find_meta_row(tab,tag);
+	if(!row){
+		ERR("Missing metadata tag '%s'",tag);
+		return NULL;
+	}
+	char *field = get_item_in_commastring(row,col);
+	if(!field){
+		ERR("Missing field number %d in commastring '%s'",col, row);
+		return NULL;
+	}
+	return field;
+}
+
 
 /*
 	Search `metarow` as a comma-separated list, looking for string `label`.
@@ -388,6 +493,7 @@ int motab_find_col_by_label(MotabData *tab, const char *label){
 	return find_item_in_commastring(row,label);
 }
 
+/* DATA FUNCTIONS */
 
 int motab_check_timestep(MotabData *tab, double *step_return){
 	assert(tab);
@@ -484,13 +590,14 @@ double motab_get_value_wraparound(MotabData *tab, double time, int col){
 	MSG("Timestep = %f",tab->timestep);
 	assert(tab->nrows >= 1);
 	double t0 = MOTAB_VAL(tab,0,tab->timecol);
-	double tmax = t0 + tab->ncols * tab->timestep;
-	MSG("t0 = %f, tmax = %f",t0,tmax);
+	double tmax = t0 + tab->nrows * tab->timestep;
+	double offset = time - t0;
+	MSG("time = %f, t0 = %f, offset = %f, tmax = %f", time,t0,offset,tmax);
 	double rowrat = (time - t0)/tab->timestep;
 	int rowratint = (int)rowrat;
 	int row = rowratint % tab->nrows;
-	double frac = rowrat - row;
-	MSG("rowrat = %f, rowratint = %d, row = %d",rowrat,rowratint,row);
+	double frac = rowrat - rowratint;
+	MSG("rowrat = %f, rowratint = %d, row = %d, frac = %f",rowrat,rowratint,row,frac);
 	if(row < 0){
 			ERR("Time t = %f (row %d) is below table range (t_min = %f)",time,row,MOTAB_VAL(tab,0,tab->timecol));
 			return MOTAB_NO_REAL;
@@ -506,6 +613,7 @@ double motab_get_value_wraparound(MotabData *tab, double time, int col){
 	
 	MSG("row = %d, col = %d", row, col);
 	double val1 = MOTAB_VAL(tab,row,col);
+	MSG("val1 = %f",val1);
 	if(frac > 0){
 		double val2;
 		if(row == tab->nrows - 1){
@@ -521,7 +629,7 @@ double motab_get_value_wraparound(MotabData *tab, double time, int col){
 	return val1;
 }
 
-
+/* METADATA ITEM FUNCTIONS */
 
 MotabMetaItem *get_meta_item(MotabData *tab, const char *name,int *err){
 	MotabMetaItem *item = NEW(MotabMetaItem);
@@ -672,6 +780,8 @@ int motab_get_meta_int(MotabData *tab, const char *name, int *err){
 	return val;
 }
 
+/* FUNCTIONS SPECIFIC TO WEATHER FILE METADATA */
+
 double motab_get_meta_lat(MotabData *tab){
 	int err;
 	char *units;
@@ -728,6 +838,8 @@ char *motab_get_meta_loc(MotabData *tab){
 	}
 	return loc;
 }
+
+/* TODO FUNCTIONS SPECIFICALY RELATING TO MODELICA INTEGRATION */
 
 #ifdef ST_EXPORT_USERTAB
 int motab_set_usertab(MotabData *tab){

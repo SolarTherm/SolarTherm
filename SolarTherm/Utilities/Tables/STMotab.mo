@@ -19,7 +19,7 @@ package STMotab
         input STMotab table;
         input String label;
         output String units;
-        external "C" units = motab_get_col_units(table, label) annotation(Library="st_motab");
+        external "C" units = motab_get_units_label(table, label) annotation(Library="st_motab");
     end getColUnits;
     
     function findColByLabel

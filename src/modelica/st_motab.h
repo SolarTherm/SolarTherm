@@ -1,23 +1,6 @@
 #ifndef ST_MOTAB_H
 #define ST_MOTAB_H
 
-/**
-	Define the following macro to enable the feature of 'exporting' a loaded
-	table to the 'usertab' function, so that it can be interpolated
-	using ExternalCombiTable1D.
-*/
-//#define ST_EXPORT_USERTAB
-
-#ifdef __linux__
-# define ST_EXPORT
-#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
-# ifdef ST_MOTAB_DLL
-#  define ST_EXPORT __declspec(dllexport)
-# else
-#  define ST_EXPORT __declspec(dllimport)
-# endif
-#endif
-
 /* generic motab reader in C */
 
 /* the starting point is MSL 'Tables' data files as described in the
@@ -65,19 +48,31 @@ FIXME: st_motab doesn't yet handle multiple tables in a single text file, althou
 that feature is in fact supported by Modelica.
 */
 
-/**
-	Macro to directly access data in the stored table, either for reading or
-	writing. `TABLE` is a MotabData pointer, `ROW` and `COL` are row and column
-	indices starting from zero.
-	
-	NOTE: if you want interpolation, see `motab_get_value`.
-	
-	TODO Possibly we should avoid using this macro outside st_motab.c...?
-*/
-#define MOTAB_VAL(TABLE,ROW,COL) (TABLE)->vals[(COL) + (ROW)*(TABLE->ncols)]
-
 #include <limits.h>
 #include <float.h>
+#include <stdio.h>
+
+
+/**
+	Define the following macro to enable the feature of 'exporting' a loaded
+	table to the 'usertab' function, so that it can be interpolated
+	using ExternalCombiTable1D.
+*/
+//#define ST_EXPORT_USERTAB
+
+#ifdef __linux__
+# define ST_EXPORT
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
+# ifdef ST_MOTAB_DLL
+#  define ST_EXPORT __declspec(dllexport)
+# else
+#  define ST_EXPORT __declspec(dllimport)
+# endif
+#endif
+
+
+/* DATA TYPES AND CONSTANTS --------------------------------------------------*/
+
 /**
 	Special value that indicates the column number is not yet known.
 */
@@ -138,11 +133,30 @@ typedef struct{
 	double timestep; ///< will be intitialise to zero (0)
 } MotabData;
 
+
+/* INPUT/OUTPUT FUNCTIONS ----------------------------------------------------*/
+
 /**
 	Load the motab file, return NULL if anything is wrong. File-reading error \
 	messages are output to stderr.
 */
 ST_EXPORT MotabData *motab_load(const char *filepath);
+
+/**
+	Write out the table in human-readable text (TTY) to `fp`.
+	
+	Any errors will be output rather than being returned.
+*/
+ST_EXPORT void motab_write_hrt(MotabData *tab, FILE *fp);
+
+/**
+	Write out the table in human-readable text (TTY) to stdout. Implemented
+	as a direct call to `motab_write_hrt`.
+*/
+ST_EXPORT void motab_write_hrt_stdout(MotabData *tab);
+
+
+/* INITIALISATION/DESTRUCTION FUNCTIONS --------------------------------------*/
 
 /**
 	Create a new empty table (used for example with synthetic datasets used for
@@ -157,55 +171,24 @@ ST_EXPORT MotabData *motab_load(const char *filepath);
 ST_EXPORT MotabData *motab_new(unsigned nrows, unsigned ncols, const char *name, const char *collabels, const char *colunits);
 
 /**
-	Get the metadata row corresponding to `tag`, eg TABLEUNITS below.
-	The string returned everything after the first comma, so "s,W/m2,..."
-	Return NULL if not found.
-	
-	#TABLEUNITS,s,W/m2,W/m2,degC,degC,%,mbar,deg,m/s
-	
-	The returned string is NOT a copy, so you don't need to (and must not!) 
-	free it.
-*/
-ST_EXPORT const char *motab_find_meta_row(MotabData *tab, const char *tag);
-
-/**
-	Look up a column by label, and return its index. 
-	Return -1 if label is not found.
-	Labels are case sensitive.
-*/
-ST_EXPORT int motab_find_col_by_label(MotabData *tab, const char *label);
-
-/**
 	Free memory allocated for this MotabData. It is assumed
 	that all strings are owned here, and are all freed.
 */
 ST_EXPORT void motab_free(MotabData *tab);
 
-/**
-	Check that the loaded MotabData has (1) a column named 'time', (2) with
-	units of seconds ('s'), (3) has at least two rows of data, and (4) that
-	the timestep between all subsequent rows is equal to that between the first
-	and second row. The timestep is returned as `step` (assuming a non-NULL
-	pointer is provided by the user).
-	
-	The function returns an error value if any of the conditions are not met.
-	The error code equals the number of the failing condition as above.
-	
-	This function doesn't check that the 'time' column is the first column. That
-	shouldn't matter, hopefully. Actually it might, because motab_get_value
-	will have to interpolate on a first column.
-*/
-ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
+
+/* DATA FUNCTIONS ------------------------------------------------------------*/
 
 /**
-	Look up the units of measurement specified for a column in the file.
-	Return NULL if not found.
+	Macro to directly access data in the stored table, either for reading or
+	writing. `TABLE` is a MotabData pointer, `ROW` and `COL` are row and column
+	indices starting from zero.
 	
-	You must free the string returned by this function.
-
+	NOTE: if you want interpolation, see `motab_get_value`.
+	
+	TODO Possibly we should avoid exposing this macro outside st_motab.c...?
 */
-ST_EXPORT char *motab_get_col_units(MotabData *tab, const char *label);
-
+#define MOTAB_VAL(TABLE,ROW,COL) (TABLE)->vals[(COL) + (ROW)*(TABLE->ncols)]
 
 /**
 	Get value, with linear interpolation. First scratch test function, not
@@ -227,6 +210,72 @@ ST_EXPORT double motab_get_value(MotabData *tab, double t, int col);
 	for the last nsteps time-periods of the year.
 */
 ST_EXPORT double motab_get_value_wraparound(MotabData *tab, double t, int col);
+
+/**
+	Check that the loaded MotabData has (1) a column named 'time', (2) with
+	units of seconds ('s'), (3) has at least two rows of data, and (4) that
+	the timestep between all subsequent rows is equal to that between the first
+	and second row. The timestep is returned as `step` (assuming a non-NULL
+	pointer is provided by the user).
+	
+	The function returns an error value if any of the conditions are not met.
+	The error code equals the number of the failing condition as above.
+	
+	This function doesn't check that the 'time' column is the first column. That
+	shouldn't matter, hopefully. Actually it might, because motab_get_value
+	will have to interpolate on a first column.
+*/
+ST_EXPORT int motab_check_timestep(MotabData *tab, double *step);
+
+
+/* METADATA FUNCTIONS --------------------------------------------------------*/
+
+/**
+	Get the metadata row corresponding to `tag`, eg TABLEUNITS below.
+	The string returned everything after the first comma, so "s,W/m2,..."
+	Return NULL if not found.
+	
+	#TABLEUNITS,s,W/m2,W/m2,degC,degC,%,mbar,deg,m/s
+	
+	The returned string is NOT a copy, so you don't need to (and must not!) 
+	free it.
+*/
+ST_EXPORT const char *motab_find_meta_row(MotabData *tab, const char *tag);
+
+/**
+	Look up a column by label, and return its index. 
+	Return -1 if label is not found.
+	Labels are case sensitive.
+*/
+ST_EXPORT int motab_find_col_by_label(MotabData *tab, const char *label);
+
+/**
+	Look up a column label by its column number. Return NULL if no label
+	is found, eg because TABLELABELS is too short or is missing.
+	
+	You must free the string returned by this function.
+*/
+ST_EXPORT char *motab_get_label_col(MotabData *tab, int col);
+
+
+/**
+	Look up the units of measurement specified for column `label` in the table.
+	Return NULL if not found.
+	
+	You must free the string returned by this function.
+*/
+ST_EXPORT char *motab_get_units_label(MotabData *tab, const char *label);
+
+/* previous name for this function: */
+#define motab_get_col_units motab_get_units_label
+
+/**
+	Look up the units of measurement specified for a column in the file.
+	Return NULL if not found.
+	
+	You must free the string returned by this function.
+*/
+ST_EXPORT char *motab_get_units_col(MotabData *tab, int col);
 
 
 /**
@@ -262,9 +311,8 @@ ST_EXPORT int motab_get_meta_int(MotabData *tab, const char *name, int *err);
 */
 ST_EXPORT char *motab_get_meta_str(MotabData *tab, const char *name, int *err);
 
-/*------------------------------------------------------------------------------
-  functions relating to the metadata for weather files
-*/
+
+/* FUNCTIONS SPECIFIC TO WEATHER FILE METADATA -------------------------------*/
 
 /**
 	Read the latitude (in degrees North) from st_motab metadata. If there is a
@@ -300,6 +348,9 @@ ST_EXPORT double motab_get_meta_tzone(MotabData *tab);
 	allocated it using ModelicaAllocateString.
 */
 ST_EXPORT char *motab_get_meta_loc(MotabData *tab);
+
+
+/* TODO FUNCTIONS SPECIFIC TO MODELICA INTEGRATION ---------------------------*/
 
 #ifdef ST_EXPORT_USERTAB
 ST_EXPORT int motab_set_usertab(MotabData *tab);

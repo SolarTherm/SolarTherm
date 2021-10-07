@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#define TESTMOTAB_DEBUG
+//#define TESTMOTAB_DEBUG
 #ifdef TESTMOTAB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -43,7 +43,14 @@ int test_mildura(){
 	int time_col = motab_find_col_by_label(tab, "time"); assert(time_col == 0);
 	int Tdry_col = motab_find_col_by_label(tab, "dry"); assert(Tdry_col != -1);
 	int wspd_col = motab_find_col_by_label(tab, "wspd"); assert(wspd_col == 8);
-	
+
+	MSG("Testing reading labels by number...");	
+	char *label;
+	label = motab_get_label_col(tab,2); assert(strcmp(label,"dni")==0);free(label);
+	label = motab_get_label_col(tab,0); assert(strcmp(label,"time")==0);free(label);
+	label = motab_get_label_col(tab,8); assert(strcmp(label,"wspd")==0);free(label);
+	//label = motab_get_label_col(tab,392); assert(label == NULL); // causes crash, due to embedded assertion
+
 	MSG("Testing values from names columns...");	
 	assert(MOTAB_VAL(tab,9,dni_col) == 678.);
 	assert(MOTAB_VAL(tab,8759,dni_col) == 0.0);
@@ -113,7 +120,11 @@ int test_mildura(){
 	assert(fabs(motab_get_meta_elev(tab) - 50.) < 1e-9);
 
 	assert(fabs(motab_get_meta_tzone(tab) - 10.) < 1e-9);
-	
+
+#ifdef TESTMOTAB_DEBUG
+	motab_write_hrt_stdout(tab);
+#endif
+
 	MSG("Freeing memory...");
 	motab_free(tab);
 	
@@ -141,10 +152,89 @@ int test_daggett(){
 }
 
 
-int main(void){
-	test_mildura();
-	test_daggett();
+int test_wrap(){
+	int nsteps = 6;
+	double dt = 1;
+	MotabData *wd = motab_new(nsteps,3,"weather","time,dni,bb","s,W/m2,kg");
+	
+	int t_col = motab_find_col_by_label(wd,"time"); assert(t_col == 0);
+	int dni_col = motab_find_col_by_label(wd,"dni"); assert(dni_col == 1);
+	int bb_col = motab_find_col_by_label(wd,"bb"); assert(bb_col == 2);
+	
+	for(int i=0;i<nsteps;++i){
+		MOTAB_VAL(wd,i,0) = (i+1)*dt;
+		MOTAB_VAL(wd,i,dni_col) = 1000.;
+		MOTAB_VAL(wd,i,bb_col) = 100.;
+	}
+	for(int i=nsteps/2;i<nsteps;++i){
+		MOTAB_VAL(wd,i,dni_col) = 0;
+		MOTAB_VAL(wd,i,bb_col) = 0;
+	}
+	MOTAB_VAL(wd,5,bb_col) = 50;
+
+#ifdef TESTMOTAB_DEBUG	
+	motab_write_hrt_stdout(wd);
+#endif
+
+	assert(motab_get_value_wraparound(wd,1,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,2,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,3,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,4,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,5,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,6,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,7,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,8,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,9,dni_col) == 1000.);
+	assert(motab_get_value_wraparound(wd,10,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,11,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,12,dni_col) == 0.);
+	assert(motab_get_value_wraparound(wd,13,dni_col) == 1000.);
+
+	assert(motab_get_value_wraparound(wd,1,bb_col) == 100.);
+	assert(motab_get_value_wraparound(wd,2,bb_col) == 100.);
+	assert(motab_get_value_wraparound(wd,3,bb_col) == 100.);
+	assert(motab_get_value_wraparound(wd,3.25,bb_col) == 75.);
+	assert(motab_get_value_wraparound(wd,3.5,bb_col) == 50.);
+	assert(motab_get_value_wraparound(wd,3.75,bb_col) == 25.);
+	assert(motab_get_value_wraparound(wd,4,bb_col) == 0.);
+	assert(motab_get_value_wraparound(wd,4.5,bb_col) == 0.);
+	assert(motab_get_value_wraparound(wd,5,bb_col) == 0.);
+	assert(motab_get_value_wraparound(wd,5.5,bb_col) == 25.);
+	assert(motab_get_value_wraparound(wd,6,bb_col) == 50.);
+	assert(motab_get_value_wraparound(wd,6.5,bb_col) == 75.);
+	assert(motab_get_value_wraparound(wd,7,bb_col) == 100.);
+	assert(motab_get_value_wraparound(wd,8,bb_col) == 100.);
+	assert(motab_get_value_wraparound(wd,10,bb_col) == 0.);	
 }
 
+typedef int (TestFunction)(void);
+typedef struct{
+	TestFunction *fn;
+	char *name;
+} NamedFunction;
+#define FN(N) {test_##N, #N}
+const NamedFunction tests[] = {
+	FN(mildura), FN(daggett), FN(wrap), {NULL,NULL}
+};	
 
+int main(int argc, const char **argv){
+	TestFunction *fn = NULL;
+	if(argc>1){
+		for(const NamedFunction *i = &(tests[0]); i->name != NULL; ++i){
+			if(strcmp(argv[1],i->name)==0)fn = i->fn;
+		}
+	}
+	if(!fn){
+		const char *pname = "testmotab";
+		if(argc > 0)pname = argv[0];
+		fprintf(stderr,"%s NAME\n",pname);
+		fprintf(stderr,"Run test routine, return 0 on success. Available NAMEs are:\n");
+		for(const NamedFunction *i = &(tests[0]); i->name != NULL; ++i){
+			fprintf(stderr,"\t%s\n",i->name);
+		}
+		return(1);
+	}
+	MSG("\nTesting motab '%s'...\n",argv[1]);
+	return (*fn)();
+}
 

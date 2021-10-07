@@ -8,7 +8,7 @@ import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
-def test_ctest():
+def run_ctest(name):
 	"""
 	This simply runs the C-langage tests in testmotab.c, which is checking out little routines for loading
 	a .motab file in C.
@@ -18,8 +18,17 @@ def test_ctest():
 	if platform.system()=="Linux":
 		env = os.environ.copy()
 		env['LD_LIBRARY_PATH']='../src/modelica'
-	proc = sp.run([exe],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
-	assert(proc.returncode==0)
+	proc = sp.run([exe,str(name)],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
+	assert proc.returncode == 0
+
+def test_mildura():
+	run_ctest('mildura')
+
+def test_daggett():
+	run_ctest('daggett')
+
+def test_wrap():
+	run_ctest('wrap')
 
 def test_modelica():
 	"""
