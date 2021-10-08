@@ -3,290 +3,150 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "linprog/linprog.h"
-#include "linprog/linprog.c"
-
-/*METRIC OF THE INPUTS
-horison = hour
-dt = hour
-time_simul = second
-etaC = scalar
-etaG = scalar
-t_stg = hour
-DEmax = MW
-SLmax = MWh
-SL0rel = scalar
-SLminrel = scalar
-Ahelio = m.sq
-*/
-
-double st_linprog(char* filepathDNI, char* filepathPrice, 
-                  int horison, double dt, double time_simul,
-                  double etaC[], double etaG, double t_stg,
-                  double DEmax, double SLmax, double SLinit, 
-                  double SLminrel, double Ahelio)
+double st_linprog(const double * price, int horizon, double dt, double time_simul,
+						const double * DNI, const double * etaC, const double * etaR, double etaG, 
+						double DEmax, double SLmax, double SLinit, double SLminrel, double A_field)
 {
-    const int vars = 4; // variables in this problem SLn, SEn, DEn, XE
-    const int time_index = time_simul / 3600;
-    //const float SLinit = SL0rel * SLmax;
-    const double SLmin = SLminrel * SLmax;
+	int time_index = time_simul / 3600;
+	double SLmin = SLminrel * SLmax;
+	double Qraw;
 
-    // Get the DNI data 
-    double* DNI_yearly  = malloc(sizeof(double*)*8760);
-    double* time = malloc(sizeof(double*)*8760);
-    getDNIMotabData(filepathDNI,DNI_yearly,time,8760);
-    int lengthDNI = 8760 + 2*horison;
-    double* DNI = malloc(sizeof(double*)*lengthDNI);
+	printf("time_simul [s], time_index: %f, %d\n",time_simul,time_index);
+	printf("DEmax [MWth]: %f\n",DEmax);
+	printf("SLmax [MWh_th]: %f\n",SLmax);
+	printf("SLinit [MWh_th]: %f\n",SLinit);
+	printf("SLmin [MWh_th]: %f\n",SLmin);
 
-    printf("time_simul [s], time_index: %f, %d\n",time_simul,time_index);
-    printf("DEmax [MWth]: %f\n",DEmax);
-    printf("SLmax [MWh_th]: %f\n",SLmax);
-    printf("SLinit [MWh_th]: %f\n",SLinit);
-    printf("SLmin [MWh_th]: %f\n",SLmin);
-    for(size_t i=0;i<8760;i++)
-    {
-        DNI[i] = DNI_yearly[i];
-    }
+	// ************ MATRICES AND VECTORS ********************
+	int i, j, var = 4;                                        //SL,DE,DE,XE
+	int rows = 2*horizon+1, cols = var*horizon;
+	double coefs[rows][cols];
+	int ia[1+rows*cols], ja[1+rows*cols];
+	double ar[1+rows*cols], z;
 
-    for(size_t i=8760;i<lengthDNI;i++)
-    {
-        DNI[i] = DNI_yearly[i-8760];
-    }
+	// ************ COEFFICIENTS ****************************
+	for (i=0; i<rows; i++){
+		for (j=0; j<cols; j++){
+			coefs[i][j] = 0.0;
+		}
+	}
 
-    // Get the price data
-    double* price_yearly  = malloc(sizeof(double*)*8760);
-    double* time_price = malloc(sizeof(double*)*8760);
-    getPriceMotabData(filepathPrice,price_yearly,time_price,8760);
-    double* price = malloc(sizeof(double*)*lengthDNI);
+	// ************ CONSTRAINTS *****************************
+	for (i=0; i<horizon; i++){
+		//SL(i)-SL(i-1)-SE(i)*Δt+DE(i)*Δt=0
+		if (i>0){
+			coefs[i][i-1] = -1;							// SL(i-1)
+		}
+		coefs[i][i] = 1;									// SL(i)
+		coefs[i][i+1*horizon] =  dt;					// DE(i)
+		coefs[i][i+2*horizon] = -dt;					// SE(i)
+		//SE(i)Δt+XE(i)Δt=A ηC DNI(i)Δt
+		coefs[i+horizon][i+2*horizon] = dt;			// SE(i)
+		coefs[i+horizon][i+3*horizon] = dt;			// XE(i)
+		//∑[SE(i) - DE(i)] = 0
+		coefs[rows-1][i+1*horizon] =  1;				// DE(i)
+		coefs[rows-1][i+2*horizon] = -1;				// SE(i)
+	}
 
+	// Initialise problem object lp
+	glp_prob* lp;
+	lp = glp_create_prob();
 
-    for(size_t i=0;i<8760;i++)
-    {
-        price[i] = price_yearly[i];
-    }
+	// Initialise the type of the problem, MAXIMISATION
+	glp_set_obj_dir(lp, GLP_MAX);
 
-    for(size_t i=8760;i<lengthDNI;i++)
-    {
-        price[i] = price_yearly[i-8760];
-    }
+	// ************ ADDING AUXILIARY VARIABLES **************
+	glp_add_rows(lp, rows);
+	for(i=1; i<horizon+1; i++){
+		if(i==1){
+			//-SL0 + SL1 + SE1.Δt - DE1.Δt = 0
+			glp_set_row_bnds(lp, i, GLP_FX, SLinit, SLinit);
+		}
+		else{
+			//-SLn + SL(n-1) + SEn.Δt - DEn.Δt = 0
+			glp_set_row_bnds(lp, i, GLP_FX, 0.0, 0.0);
+		}
+		//SEn.Δt + XEn.Δt = A * ηC * DNIn.Δt
+		Qraw = A_field*etaC[i-1]*etaR[i-1]*DNI[i-1]*dt/1e6;
+		glp_set_row_bnds(lp, i+horizon, GLP_FX, Qraw, Qraw);
+	}
+	//∑(DEn-SEn) = 0
+	glp_set_row_bnds(lp, rows-1, GLP_FX, 0.0, 0.0);
 
-    /*Free unused address*/
-    free(price_yearly);
-    free(DNI_yearly);
-    free(time_price);
-    free(time);
+	// ************ ADDING STRUCTURAL VARIABLES *************
+	glp_add_cols(lp, cols);
+	for(i=1; i<horizon+1; i++){
+		//************************** BOUNDARIES *****************************************************************
+		glp_set_col_bnds(lp, i, GLP_DB, SLmin, SLmax);                                // SL(i)
+		glp_set_col_bnds(lp, i+horizon, GLP_DB, 0.0, DEmax);                          // DE(i)
+		Qraw = A_field*etaC[i-1]*etaR[i-1]*DNI[i-1];
+		if (Qraw > 0){
+			glp_set_col_bnds(lp, i+2*horizon, GLP_DB,0.0,Qraw);                        // SE(i) is above zero
+			glp_set_col_bnds(lp, i+3*horizon, GLP_DB,0.0,Qraw);                        // XE(i) is above zero
+		}
+		else{
+			glp_set_col_bnds(lp, i+2*horizon, GLP_FX, 0.0, 0.0);                       // SE(i) when DNI is zero
+			glp_set_col_bnds(lp, i+3*horizon, GLP_FX, 0.0, 0.0);                       // XE(i) when DNI is zero
+		}
+		glp_set_obj_coef(lp, i, 0);                                                   // SL(i) objective function
+		glp_set_obj_coef(lp, i+horizon, etaG*price[i-1]);                             // DE(i) objective function
+		glp_set_obj_coef(lp, i+2*horizon, 0);                                         // SE(i) objective function
+		glp_set_obj_coef(lp, i+3*horizon, 0);                                         // XE(i) objective function
+	}
 
-    // Initialise variable for GLPK
-    int var = 4; //SL,DE,DE,XE
-    int row = 5 * horison;
-    int col = var * horison;
-    int ia[1+row*col], ja[1+row*col];
-    double ar[1+row*col], z, x[horison];
+	// Populating coefficients in the coefficient matrix
+	int k = 1;
+	for (i=0; i<rows; i++){
+		for (j=0; j<cols; j++){
+			ia[k] = i+1, ja[k] = j+1, ar[k] = coefs[i][j];
+			k += 1;
+		}
+	}
 
-    // Create dummy matrix A
-    double dummyA[row][col];
+	// ************ SOLVING THE PROBLEM *********************
+	// Load the matrix to lp
+	glp_load_matrix(lp,rows*cols,ia,ja,ar);
 
-    for(size_t i=0;i<row;i++)
-    {
-        for(size_t j=0;j<col;j++)
-        {
-            dummyA[i][j]=0;
-        }
-    }
+	// Message attribute
+	glp_smcp parm;
+	glp_init_smcp(&parm);
+	parm.msg_lev = GLP_MSG_ERR;
 
-    for(size_t i=0;i<horison;i++)
-    {
-        //-SLn + SL n-1 + SEn.Δt - DEn.Δt = 0
-        if(i>0)
-        {
-            dummyA[i][i-1] = 1;
-        }
-        dummyA[i][i] = -1;
-        dummyA[i][i+horison] = -dt;
-        dummyA[i][i+2*horison] = dt;
+	glp_simplex(lp,NULL);
 
-        //SLn - SL n-1 - SEn.Δt + DEn.Δt = 0
-        if(i>0)
-        {
-            dummyA[i+horison][i-1] = -1;
-        }
-        dummyA[i+horison][i] = 1;
-        dummyA[i+horison][i+horison] = dt;
-        dummyA[i+horison][i+2*horison] = -dt;
+	// Get the value of the optimal obj. function
+	z = glp_get_obj_val(lp);
+	printf("OPTIMAL OBJ FUNCTION = %f USD\n",z);
 
-        //-SEn.Δt - XEn.Δt = -A * ηC * DNIn.Δt
-        dummyA[i+2*horison][i+2*horison] = -dt;
-        dummyA[i+2*horison][i+3*horison] = -dt;
+	printf("DNI [W/m.sq] :\n");
+	for(size_t i=1;i<=horizon;i++){
+		printf("[%.1f] ", DNI[i-1]);
+	}
 
-        //SEn.Δt + XEn.Δt = A * ηC * DNIn.Δt
-        dummyA[i+3*horison][i+2*horison] = dt;
-        dummyA[i+3*horison][i+3*horison] = dt;
-    }
-    
-    for(size_t i=0;i<horison;i++)
-    {
-        for(size_t j=0;j<horison;j++)
-        {
-            //∑(DEn-SEn) = 0
-            dummyA[i+4*horison][j+horison]=1;
-            dummyA[i+4*horison][j+2*horison]=-1;
-        }
-    }
-
-    // Initialise problem object lp
-    glp_prob* lp;
-    lp = glp_create_prob();
-
-    // Initialise the type of the problem, MAXIMISATION
-    glp_set_obj_dir(lp,GLP_MAX);
-
-    // Populate the Right Hand Side of equalities
-    glp_add_rows(lp,row);
-    for(size_t i=1;i<horison+1;i++)
-    {
-        if(i==1) 
-        {   
-            //-SL0 + SE0.Δt - DE0.Δt ≤ -SLinit  --> Upper bound
-            glp_set_row_bnds(lp,(int)i,GLP_UP,0.0,-SLinit);
-            //SL0 - SE0.Δt + DE0.Δt ≤ SLinit  --> Upper bound
-            glp_set_row_bnds(lp,(int)i+horison,GLP_UP,0,SLinit);           
-        }
-        else
-        {   //-SLn + SL n-1 + SEn.Δt - DEn.Δt ≤ 0 --> Upper bound
-            glp_set_row_bnds(lp,(int)i,GLP_UP,0,0);
-            //SLn - SL n-1 - SEn.Δt + DEn.Δt ≤ 0 --> Upper bound
-            glp_set_row_bnds(lp,(int)i+horison,GLP_UP,0,0);
-        }
-        //-SEn.Δt - XEn.Δt ≤ -A * ηC * DNIn.Δt --> Upper bound
-        glp_set_row_bnds(lp,(int)i+2*horison,GLP_UP,0.0,-Ahelio*etaC[i]*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
-
-        //SEn.Δt + XEn.Δt ≤ A * ηC * DNIn.Δt --> Upper bound
-        glp_set_row_bnds(lp,(int)i+3*horison,GLP_UP,0.0,Ahelio*etaC[i]*DNI[time_index+i-1]*dt/1e6) /*converting from Wh to MWh*/;
-
-        //∑(DEn-SEn) ≤ 0 --> Upper bound
-        glp_set_row_bnds(lp,(int)i+4*horison,GLP_UP,0.0,0.0);
-    }
-
-    // Populate the column (variables) in respect to each boundaries
-    glp_add_cols(lp,col);
-
-    for(size_t i=1;i<horison+1;i++)
-    {
-        /*SLn ==> SLmin ≤ SLn ≤ SLmax n = 1 -> horison*/
-        glp_set_col_bnds(lp,(int)i,GLP_DB,SLmin,SLmax);
-        glp_set_obj_coef(lp,(int)i,0); //==> coefficient of objective function
-
-        /*DEn ==> 0 ≤ DEn ≤ DEmax n = horison + 1 -> 2 * horison*/
-        glp_set_col_bnds(lp,(int)i+horison,GLP_DB,0.0,DEmax);
-        glp_set_obj_coef(lp,(int)i+horison,etaG*price[time_index+i-1]); //==> coefficient of objective function
-
-        /*SEn ==> 0 ≤ SEn ≤ A * ηC * DNIn n = 2 * horison + 1 -> 3 horison*/
-        double cons = Ahelio*etaC[i]*DNI[time_index+i-1];
-        if (cons != 0)
-        {
-            glp_set_col_bnds(lp,(int)i+2*horison,GLP_DB,0.0,cons);
-            glp_set_col_bnds(lp,(int)i+3*horison,GLP_DB,0.0,cons);
-        }
-        else
-        {
-            glp_set_col_bnds(lp,(int)i+2*horison,GLP_FX,0.0,0.0);
-            glp_set_col_bnds(lp,(int)i+3*horison,GLP_FX,0.0,0.0);
-        }
-        
-        /*SEn ==> 0 ≤ SEn ≤ A * ηC * DNIn*/
-        glp_set_obj_coef(lp,(int)i+2*horison,0); //==> objective function
-
-        /*XEn ==> 0 ≤ XEn ≤ A * ηC * DNIn*/
-        glp_set_obj_coef(lp,(int)i+3*horison,0); //==> objective function
-    }
-
-    // Populate the array
-    for (size_t i = 1; i < row+1; i++)
-    {
-        size_t iterator = 1;
-        while(iterator<col+1)
-        {
-            ia[(i-1)*col+iterator]=(int)i;
-            iterator++;
-        }
-    }
-
-    for (size_t i = 1; i < row+1; i++)
-    {
-        size_t iterator = 1;
-        while(iterator<col+1)
-        {
-            ja[(i-1)*col+iterator]=(int)iterator;
-            iterator++;
-        }
-    }
-
-    for(size_t i=0;i<row;i++)
-    {
-        for(size_t j=0;j<col;j++)
-        {
-            ar[i*col+j+1]= dummyA[i][j];
-        }
-    }
-    
-    // Load the matrix to lp
-    glp_load_matrix(lp,row*col,ia,ja,ar);
-
-    // Message attribute
-    glp_smcp parm;
-    glp_init_smcp(&parm);
-    parm.msg_lev = GLP_MSG_ERR;
-
-    // Solve the lp
-    glp_simplex(lp,NULL);
-
-    // Get the value of the optimal obj. function
-    z = glp_get_obj_val(lp);
-    printf("OPTIMAL OBJ FUNCTION = %f USD\n",z);
-	
-    printf("DNI [W/m.sq] :\n");
-    for(size_t i=1;i<horison+1;i++)
-    {
-        x[i-1] = DNI[time_index+i-1];
-        printf("[%.1f] ", x[i-1]);      
-    }
-
-    printSpace();
-	
+	printf("\n");
 	printf("Optical efficiency :\n");
-    for(size_t i=1;i<horison+1;i++)
-    {
-        printf("[%.4f] ", etaC[i]);      
-    }
-	
-	printSpace();
+	for(size_t i=1;i<horizon+1;i++){
+		printf("[%.4f] ", etaC[i]);
+	}
 
-    printf("Optimal Dispatch Energy DE [MWth] :\n");
-    for(size_t i=1;i<horison+1;i++)
-    {
-        x[i-1] = glp_get_col_prim(lp,(int)i+horison);
-        printf("[%.2f]", x[i-1]);      
-    }
+	printf("\n");
+	printf("Optimal Dispatch Energy DE [MWth] :\n");
+	for(size_t i=1;i<horizon+1;i++){
+		printf("[%.2f]", glp_get_col_prim(lp,i+horizon));
+	}
 
-    printSpace();
-    printf("Price [USD/MWh] :\n");
-    for(size_t i=1;i<horison+1;i++)
-    {
-        printf("[%.2f]", price[time_index+i-1]);      
-    }
+	printf("\n");
+	printf("Price [USD/MWh] :\n");
+	for(size_t i=1;i<horizon+1;i++){
+		printf("[%.2f]", price[i-1]);
+	}
 
-    printSpace();
-    double optimalDispatch = x[0];
+	double optimalDispatch = glp_get_col_prim(lp,1+horizon);
 
 	printf("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f\n\n",optimalDispatch);
 
-    /*Free all the memory used in this script*/
+	// ************ FREE MEMORY *****************************
+	glp_delete_prob(lp);
 
-    glp_free_env();
-    free(DNI);
-    free(price);
-
-    /*end of the code*/
-
-    return optimalDispatch;
+	return optimalDispatch;
 }
