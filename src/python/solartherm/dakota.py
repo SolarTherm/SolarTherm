@@ -53,7 +53,7 @@ class DakotaSampleIn:
 		* `casedir` (str): directory to save the sample.in file	
 
 		* `fn` (str): the full path of the openmodelica (SolarTherm) model
-		* `system` (str): 'ELECTRICITY' or 'FUEL' or 'TEST'
+		* `system` (str): 'ELECTRICITY' or 'FUEL' or 'TEST' or 'CONTINGENCY'
 		* `method` (str): name of the method
 				'uq': uncertainty quantification
 				'soga': single objective genetic algorithm for optimisation
@@ -121,8 +121,12 @@ class DakotaSampleIn:
 		
 		with open(self.casedir+'/sample.in', 'w') as f:
 			f.write(dktin)		
-			
-		gen_interface_bb(self.casedir)
+		
+		if self.system=='CONTINGENCY':
+			contingency=True
+		else:
+			contingency=False
+		gen_interface_bb(self.casedir, contingency)
 				
 	def dakota_environment(self):
 		dktin='''
@@ -706,146 +710,34 @@ class DakotaVariables(DakotaSampleIn):
 		return m
 
 	
-
-def gen_interface_bb(savedir):
+def gen_interface_bb(casedir, contingency=False):
 	'''
-	This function generate the interface_bb.py script 
-	which will be excuted by DAKOTA
-
-	* `savedir` (str): directory to save the interface_bb.py file	
-	* `perf_n` (list of str): a list of the names of the resulting performance, e.g. lcoe, capf, epy, srev	
-	* `perf_sign` (list of float): a list of signs for the optimisation, e.g. 1 is to minimise, -1 is to maximise; 
-								   perf_sign=None if it is a study other than optiisation		
+	This function generate the interface_bb.py file in the casedir
+	which will be excuted by DAKOTA	
 	'''
 	
+	if contingency:
+		bb='''#!/usr/bin/env python
+# Dakota will execute this python script
+# The command line arguments will be extracted by the interface automatically.
 
-	bb='''#!/usr/bin/env python
-
-# Dakota will execute this script
-# The command line arguments will be extracted by dakota.interfacing automatically.
-
-# load the necessary Python modeuls
-import dakota.interfacing as di
-import os
-import glob
-
-# Parse Dakota parameters file
-params, results = di.read_parameters_file()
-
-# obtain the modelica file name
-# variable names and values
-# index of the case (suffix for output)
-names=params.descriptors
-
-fn=params.__getitem__("fn") #the modelica file
-system=params.__getitem__("system") # fuel system or power system
-start=str(params.__getitem__("start")) 
-stop=str(params.__getitem__("stop")) 
-step=str(params.__getitem__("step"))
-initStep=params.__getitem__("initStep")
-maxStep=params.__getitem__("maxStep") 
-integOrder=str(params.__getitem__("integOrder"))
-tolerance=str(params.__getitem__("tolerance"))
-solver=str(params.__getitem__("solver"))
-nls=str(params.__getitem__("nls"))
-lv=str(params.__getitem__("lv"))
-runsolstice=float(params.__getitem__("runsolstice"))
-peaker=float(params.__getitem__("peaker"))
-num_res=int(params.__getitem__("num_res"))
-
-initStep = None if initStep == 'None' else str(initStep)
-maxStep = None if maxStep == 'None' else str(maxStep)
-model=os.path.splitext(os.path.split(fn)[1])[0] # model name
-
-var_n=[] # variable names
-var_v=[] # variable values
-print('')
-print(names[:-(15+2*num_res)])
-for n in names[:-(15+2*num_res)]:
-	#var_n.append(n.encode("UTF-8"))
-	var_n.append(str(n))
-	var_v.append(str(params.__getitem__(n)))
-	print('variable   : ', n, '=', params.__getitem__(n))
-
-# case suffix
-suffix=results.results_file.split(".")[-1]
-
-if runsolstice:
-	optic_folder='optic_case_%s'%suffix
-	var_n.append('casefolder')
-	var_v.append(optic_folder)
-	print('casefolder = '+ optic_folder)
-
-# run solartherm
-from solartherm import postproc
-from solartherm import simulation
-sim = simulation.Simulator(fn=fn, suffix=suffix, fusemount=False)
-if not os.path.exists(model):
-	sim.compile_model()
-	sim.compile_sim(args=['-s'])
-
-sim.update_pars(var_n, var_v)
-sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
-
-try:
-
-	import DyMat
-	res_fn=DyMat.DyMatFile(sim.res_fn)
-	
-	if system=='FUEL':
-		resultclass = postproc.SimResultFuel(sim.res_fn)
-	else:
-		resultclass = postproc.SimResultElec(sim.res_fn)
-	if peaker:
-		perf = resultclass.calc_perf(perker=bool(peaker))
-	else:	
-		perf = resultclass.calc_perf()
-		
-	summary=resultclass.report_summary(var_n=var_n, savedir='.', suffix=suffix)
-
-	solartherm_res=[]
-	for i in range(num_res):
-		sign=float(params.__getitem__("sign_%s"%(i+1)))
-		name=params.__getitem__("res_%s"%(i+1))
-		if name=='epy':
-			res=sign*perf[0]
-		elif name=='lcoe':
-			res=sign*perf[1]
-		elif name=='capf':
-			res=sign*perf[2]
-		elif name=='srev':
-			res=sign*perf[3]
-		else:
-			res=sign*res_fn.data(name)[0]					
-		solartherm_res.append(res)
-		print('objective %s: '%i, name, res)
-		
-except:
-	solartherm_res=[]
-	for i in range(num_res):	
-		sign=float(params.__getitem__("sign_%s"%(i+1)))
-		if sign>0: #minimisation
-			error=99999
-		else: # maxmisation
-			error=0 
-		solartherm_res.append(sign*error)
-	print('Simulation Failed')
-
-
-print('')
-# Return the results to Dakota
-for i, r in enumerate(results.responses()):
-    if r.asv.function:
-        r.function = solartherm_res[i]
-results.write()
-
-map(os.unlink, glob.glob(sim.res_fn))
-map(os.unlink, glob.glob(model+'_init_%s.xml'%suffix))
+from solartherm.dakota_st_interface import run_contingency
+run_contingency()
 
 '''
-	if not os.path.exists(savedir):
-		os.makedirs(savedir)
-	with open(savedir+'/interface_bb.py', 'w') as f:
+	else:
+		bb='''#!/usr/bin/env python
+# Dakota will execute this python script
+# The command line arguments will be extracted by the interface automatically.
+
+from solartherm.dakota_st_interface import run
+run()
+
+'''
+
+	if not os.path.exists(casedir):
+		os.makedirs(casedir)
+	with open(casedir+'/interface_bb.py', 'w') as f:
 		f.write(bb)
 
 
@@ -853,7 +745,7 @@ map(os.unlink, glob.glob(model+'_init_%s.xml'%suffix))
 if __name__=='__main__':
 	casedir='test-dakota'
 	fn='../../../examples/SimpleSystem.mo'
-	system='ELECTRICITY'
+	system='ELECTRICITY' # 'ELECTRICITY', 'FUEL', 'TEST', 'CONTINGENCY'
 		
 	method='soga' # soga, moga, uq, moga-hybrid
 	
