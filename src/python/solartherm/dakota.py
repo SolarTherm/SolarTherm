@@ -53,14 +53,26 @@ class DakotaSampleIn:
 		* `casedir` (str): directory to save the sample.in file	
 
 		* `fn` (str): the full path of the openmodelica (SolarTherm) model
-		* `system` (str): 'ELECTRICITY' or 'FUEL' or 'TEST' or 'CONTINGENCY'
+		* `analysis_type` (str): 'ELECTRICITY' or 'FUEL' or 'TEST' or 'CONTINGENCY'
 		* `method` (str): name of the method
 				'uq': uncertainty quantification
 				'soga': single objective genetic algorithm for optimisation
 				'moga': multi-objective genetic algorithm for optimisation
-				'moga-hybrid': a combination of moga and random sampling 
-					approach for contingency analysis	
-
+		* `args` (dict): arguments for the corresponding method
+		* `var_names` (list): a list of strings about the variable names
+				 it is a nested list if the dists are not 1
+		* `nominals` (list or None): a list of nominal values of the variables (could be nested)
+				 it is None if a uniform distribution is specified
+		* `lbs` (list or None): a list of lower bounds of the variables (could be nested)
+				 it is None if a normal distribution is specified		
+		* `ubs` (list or None): a list of upper bounds of the variables (could be nested)
+				 it is None if a normal distribution is specified		
+		* `stdevs` (list or None): a list of standard deviations of the variables 
+				 it is None if it is not a Normal distribution			
+		* `dists` (list or None): a list of distributions of the variables  
+				 it is for specifying different distributions for different variables
+				 the options are 'uniform', 'normal', 'pert'
+				 it is None if the method is not 'uq'
 		* `start` (str): simulation start time: <number>[,y,d,m,s]
 		* `stop` (str): simulation stop time: <number>[,y,d,m,s] 
 		* `step` (str): simulation time step: <number>[,y,d,m,s]
@@ -71,14 +83,16 @@ class DakotaSampleIn:
 		* `solver` (str): solver choice for OpenModelica
 		* `nls` (str): non-linear solver choice for OpenModelica e.g. newton, hybrid, kinsol, mixed, and homotopy
 		* `lv` (str): a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc
-		* `runsolstice` (bool): the model runs Solstice optical simulations or not
-		* `peaker` (bool): the model evaluate lcoe_peaker (for peaker plant) or not	
+		* `runsolstice` (0 or 1): the model runs Solstice optical simulations or not
+		* `peaker` (0 or 1): the model evaluate lcoe_peaker (for peaker plant) or not	
 		* `res_names (list): a list of strings that define the names of variables/results of interests 
 		* `signs` (list): a list of 1 or -1 that identifies the corresponding 'res_name' to be minimised (1) or maximsed (-1)
 		
 		'''
 						
-	def __init__(self, casedir, fn, system, method, args, var_names, nominals=None, lbs=None, ubs=None, stdevs=None, dists=None, optimisation=False, start='0', stop='86400', step='5m', initStep=None, maxStep=None, integOrder='5', tolerance='1e-04', solver='dassl', nls='homotopy', lv='-LOG_SUCCESS,-stdout', runsolstice=0, peaker=0, res_names=["lcoe"], signs=[1]):
+	def __init__(self, casedir, fn, analysis_type, method, args, var_names, nominals=None, lbs=None, ubs=None, stdevs=None, dists=None, start='0', stop='86400', step='5m', initStep=None, maxStep=None, integOrder='5', tolerance='1e-04', solver='dassl', nls='homotopy', lv='-LOG_SUCCESS,-stdout', runsolstice=0, peaker=0, res_names=["lcoe"], signs=[1]):
+	
+
 		dktin='''
 		# Dakota Input File: sample.in
 		# Usage:
@@ -94,7 +108,7 @@ class DakotaSampleIn:
 			os.makedirs(self.casedir)
 
 		self.fn=os.path.abspath(fn)
-		self.system=system
+		self.analysis_type=analysis_type
 		self.start=start
 		self.stop=stop
 		self.step=step
@@ -109,8 +123,10 @@ class DakotaSampleIn:
 		self.peaker=peaker
 		self.res_names=res_names
 		self.signs=signs
-		
 		self.method=method
+		self.num_var=len(var_names)
+		self.lbs=lbs
+		self.ubs=ubs
 		self.set_omsim()
 		dktin+=self.dakota_environment()
 		dktin+=self.dakota_model()
@@ -122,7 +138,7 @@ class DakotaSampleIn:
 		with open(self.casedir+'/sample.in', 'w') as f:
 			f.write(dktin)		
 		
-		if self.system=='CONTINGENCY':
+		if self.analysis_type=='CONTINGENCY':
 			contingency=True
 		else:
 			contingency=False
@@ -163,7 +179,7 @@ class DakotaSampleIn:
 	def dakota_responses(self):
 	
 		num_res=len(self.res_names)
-		if self.method=='uq' or self.method=='moga-hybrid':
+		if self.method=='uq':
 			optimisation=False
 		else:
 			optimisation=True
@@ -262,10 +278,7 @@ class DakotaSampleIn:
 													
 			m=mthd.moga(final_solutions=final_solutions, max_eval=max_eval, pop_size=pop_size, num_generations = num_generations, seed=seed)		
 			
-				
-		elif self.method =='moga-hybrid':
-			pass
-		
+					
 		dktin='''
 		method
 		%s			
@@ -290,7 +303,7 @@ class DakotaSampleIn:
 		* `dists` (list or None): a list of distributions of the variables  
 				 it is for specifying different distributions for different variables
 				 the options are 'uniform', 'normal', 'pert'
-				 it is None if the method is not 'uq' or 'moga-hybrid'
+				 it is None if the method is not 'uq'
 		'''
 	
 		dktvar=DakotaVariables()		
@@ -338,8 +351,6 @@ class DakotaSampleIn:
 			else:
 				raise Exception("'dists' must be a list for uncertainty samples ")					
 		
-		elif self.method=='moga-hybrid':
-			pass
 		
 		else: #optimisations
 			m=dktvar.continuous_design(var_names, nominals, lbs, ubs)
@@ -357,16 +368,23 @@ class DakotaSampleIn:
 			raise Exception("The number of signs and objectives are not equal")	
 		num_res=len(self.res_names)
 						
-		n=["fn", "system", "start", "stop", "step", "initStep", "maxStep",  "integOrder", "tolerance", "solver", "nls" ,"lv" , "runsolstice", "peaker", "num_res"]
-		v=[self.fn, self.system, self.start, self.stop, self.step, self.initStep, self.maxStep, self.integOrder, self.tolerance, self.solver, self.nls, self.lv, self.runsolstice, self.peaker, num_res]
+		n=["fn", "analysis_type", "start", "stop", "step", "initStep", "maxStep",  "integOrder", "tolerance", "solver", "nls" ,"lv" , "runsolstice", "peaker", "num_res"]
+		v=[self.fn, self.analysis_type, self.start, self.stop, self.step, self.initStep, self.maxStep, self.integOrder, self.tolerance, self.solver, self.nls, self.lv, self.runsolstice, self.peaker, num_res]
 		
 		for i in range(num_res):
 			n.append('res_%s'%(i+1))
 			v.append(self.res_names[i])
 		for i in range(num_res):
 			n.append('sign_%s'%(i+1))
-			v.append(self.signs[i])			
-
+			v.append(self.signs[i])		
+		if self.analysis_type=='CONTINGENCY':
+			for i in range(1, num_res):
+				n.append('lb_%s'%(i+1))
+				v.append(self.lbs[i-1+self.num_var])
+			for i in range(1, num_res):
+				n.append('ub_%s'%(i+1))
+				v.append(self.ubs[i-1+self.num_var])
+				
 		num=len(n)	
 		self.omsim=''
 		self.omsim+='    discrete_state_set\n'
@@ -391,7 +409,7 @@ class DakotaMethod(DakotaSampleIn):
 		-- uqsample is for uncertainty quantification, including LHS or MC random sample
 		-- moga is multi-objective genetic algorithm
 		-- soga is single-objective genetic algorithm
-		-- moga-hybrid: a combination of moga and random sampling approach for contingency analysis		
+		
 		There are more available from DAKOTA but not yet implemented.
 		'''	
 		pass
@@ -716,17 +734,7 @@ def gen_interface_bb(casedir, contingency=False):
 	which will be excuted by DAKOTA	
 	'''
 	
-	if contingency:
-		bb='''#!/usr/bin/env python
-# Dakota will execute this python script
-# The command line arguments will be extracted by the interface automatically.
-
-from solartherm.dakota_st_interface import run_contingency
-run_contingency()
-
-'''
-	else:
-		bb='''#!/usr/bin/env python
+	bb='''#!/usr/bin/env python
 # Dakota will execute this python script
 # The command line arguments will be extracted by the interface automatically.
 
@@ -744,11 +752,10 @@ run()
 
 if __name__=='__main__':
 	casedir='test-dakota'
-	fn='../../../examples/SimpleSystem.mo'
-	system='ELECTRICITY' # 'ELECTRICITY', 'FUEL', 'TEST', 'CONTINGENCY'
-		
-	method='soga' # soga, moga, uq, moga-hybrid
+	fn='../../../examples/Reference_2.mo'
+	analysis_type='ELECTRICITY' # 'ELECTRICITY', 'FUEL', 'TEST', 'CONTINGENCY'
 	
+	method='uq' # soga, moga, uq
 	args={}	 
 	var_names=['t_storage']	
 	nominals=[12]
@@ -756,30 +763,42 @@ if __name__=='__main__':
 	ubs=[15]	
 	dists=None	
 	stdevs=None
+	res_names=["lcoe"]	
+	signs=[1]				
 	if method=='soga':
 		args['max_eval']=999
 		args['pop_size']=999
 		args['num_generations']=99
-		num_res=1
-		optimisation=True
 
 	elif method == 'moga':
+		res_names=["lcoe", "epy"]	
+		signs=[1, -1]		
 		args['max_eval']=999
 		args['pop_size']=999
-		args['num_generations']=99
-		args['final_solutions']=9
-		num_res=2
-		optimisation=True
-	
+		args['num_generations']=99			
 	elif method == 'uq':
-		dists=['uniform'] # uniform, normal, pert
-		args['sample_type']='random'
+		dists=['uniform', 'normal'] # uniform, normal, pert
+		args['sample_type']='lhs'
 		args['num_sample']=9999	
-		num_res=1
-		optimisation=False
 		if 'normal' in dists:
 			stdevs=[1]
-
-				
-	dkt=DakotaSampleIn(casedir, fn, system, method, args, var_names, nominals, lbs, ubs, stdevs, dists, optimisation, start='0', stop='1y', step='5m', initStep=None, maxStep=None, integOrder='5', tolerance='1e-04', solver='dassl', nls='homotopy', lv='-LOG_SUCCESS,-stdout', runsolstice=0, peaker=0, res_names=["lcoe"], signs=[1])
+			
+		var_names=['t_storage']	
+		nominals=[12]
+		lbs=[5]
+		ubs=[15]			
+	
+	if analysis_type=='CONTINGENCY':
+		method='moga'
+		var_names=['t_storage']	
+		nominals=[12]
+		lbs=[5, 2.0, 0.8]
+		ubs=[15, 4.0, 0.95]					
+		res_names=["lcoe", "alpha", "ab_rec"]
+		signs=[1, -1, 1]		
+		args['max_eval']=999
+		args['pop_size']=999
+		args['num_generations']=99	
+						
+	dkt=DakotaSampleIn(casedir, fn, analysis_type, method, args, var_names, nominals, lbs, ubs, stdevs, dists, start='0', stop='1y', step='5m', initStep=None, maxStep=None, integOrder='5', tolerance='1e-04', solver='dassl', nls='homotopy', lv='-LOG_SUCCESS,-stdout', runsolstice=0, peaker=0, res_names=res_names, signs=signs)
 
