@@ -73,6 +73,7 @@ class DakotaSampleIn:
 				 it is for specifying different distributions for different variables
 				 the options are 'uniform', 'normal', 'pert'
 				 it is None if the method is not 'uq'
+				 'normal' dist should be specified in the last position if there are multiple distributions
 		* `start` (str): simulation start time: <number>[,y,d,m,s]
 		* `stop` (str): simulation stop time: <number>[,y,d,m,s] 
 		* `step` (str): simulation time step: <number>[,y,d,m,s]
@@ -240,7 +241,7 @@ class DakotaSampleIn:
 			if 'num_generations' in args:
 				num_generations=args['num_generations']
 			else:
-				num_generations=40
+				num_generations=100
 				
 			if 'seed' in args:
 				seed=args['seed']
@@ -264,7 +265,7 @@ class DakotaSampleIn:
 			if 'num_generations' in args:
 				num_generations=args['num_generations']
 			else:
-				num_generations=40
+				num_generations=100
 				
 			if 'seed' in args:
 				seed=args['seed']
@@ -333,7 +334,7 @@ class DakotaSampleIn:
 						else:
 							name=var_names[i]
 							nominal=nominals[i]
-							stdev=stdevs[i]						
+							stdev=stdevs					
 						m+=dktvar.normal_sample(var_names=name, nominals=nominal, stdevs=stdev)					
 					elif dist=='pert':	
 						if num==1:
@@ -433,7 +434,7 @@ class DakotaMethod(DakotaSampleIn):
 		m+='        		samples = %s\n'%num_sample
 		return m
 	
-	def moga(self,seed=10983, max_eval=2500, init_type='unique_random', pop_size=48, crossover_type='shuffle_random', num_offspring=2, num_parents=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.1, fitness_type='domination_count', percent_change = 0.05, num_generations = 40, final_solutions = 3):
+	def moga(self,seed=10983, max_eval=2500, init_type='unique_random', pop_size=48, crossover_type='shuffle_random', num_offspring=2, num_parents=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.1, fitness_type='domination_count', percent_change = 0.05, num_generations = 100, final_solutions = 3):
 
 		'''
 		This is method calls moga (multi-objective genetic algorithm) in DAKOTA for optimisation
@@ -479,7 +480,7 @@ class DakotaMethod(DakotaSampleIn):
 		return m
 
 
-	def soga(self,seed=10983, max_eval=2000, init_type='unique_random', pop_size=48, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 20):
+	def soga(self,seed=10983, max_eval=2000, init_type='unique_random', pop_size=48, crossover_type=None,  num_offspring=2, num_parents=2, crossover_multip=2, crossover_rate=0.8, mutation_type='replace_uniform', mutation_rate=0.2, fitness_type='merit_function', percent_change = 0.05, num_generations = 100):
 
 		'''
 		This is method calls soga (single-objective genetic algorithm) in DAKOTA for optimisation
@@ -775,18 +776,15 @@ if __name__=='__main__':
 		signs=[1, -1]		
 		args['max_eval']=999
 		args['pop_size']=999
-		args['num_generations']=99			
+		args['num_generations']=99	
+				
 	elif method == 'uq':
-		dists=['uniform', 'normal'] # uniform, normal, pert
+		dists=['uniform'] # uniform, normal, pert
 		args['sample_type']='lhs'
 		args['num_sample']=9999	
 		if 'normal' in dists:
 			stdevs=[1]
-			
-		var_names=['t_storage']	
-		nominals=[12]
-		lbs=[5]
-		ubs=[15]			
+								
 	
 	if analysis_type=='CONTINGENCY':
 		method='moga'

@@ -192,7 +192,8 @@ class Interface:
 		self.results.write()
 	
 	def cleanup(self):
-		map(os.unlink, glob.glob(self.sim.res_fn))
-		map(os.unlink, glob.glob(self.model+'_init_%s.xml'%self.suffix))
-		
+
+		os.unlink(self.sim.res_fn)
+		os.unlink(self.model+'_init_%s.xml'%self.suffix)
+
 		

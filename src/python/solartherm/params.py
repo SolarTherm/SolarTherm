@@ -260,6 +260,26 @@ class Tree(object):
 
 		return pmlist
 
+	def filter_category(self, categ):
+		"""
+		Filter the specific type of parameters
+
+		Argument:
+		categ: str, 
+				p-performance parameters
+				c-cost parameters
+
+		Return:
+		pmlist: list, a list of parameters that are in the category categ
+		"""
+		pmlist=[]
+		for n in self.children.keys():
+			t=self.get(n+'.category')
+			if t==categ:
+				pmlist.append(n)
+
+		return pmlist		
+
 	def filter_dist(self, dist, inlist):
 		"""
 		Filter a specific distribution
@@ -332,20 +352,25 @@ class ValueNode(object):
 def load_values_from_excel(filename,tree):
 	"""
 	Load allowable values from an Excel spreadsheet. 
-	The template of the Excel spreadsheet is in the examples folder.
-		Column A: classification
-		Column B: symbol, should correspond to the names in Modelica
-		Column C: nominal value
-		Column D: unit
-		Column E: name (description)
-		Column F: type (0-certain constant, 1-uncertain constant, 2-variable)
-				  type 1 is for uncertainty analysis
-				  type 2 is for optimisation or parametric study 
-		Column G: distribution of sampling, e.g. normal, uniform, pert-beta
-		Column H: boundary1 (lower boundary or standard deviation)
-		Column I: boundary2 (upper boundary if needed)
-		Column J: description
-		Column K: source or reference
+	See a template of the Excel spreadsheet in the examples folder
+		Column A: Classification
+		Column B: Symbol, should be the same as it is in the SolarTherm model
+		Column C: Nominal value
+		Column D: Unit	
+		Column E: Type (0-certain constant, 1-uncertain parameter, 2-design variables)
+				  Type 0 is certain constaints
+				  Type 1 is uncertain parameters for uncertainty and contingency analysis
+				  Type 2 is design parameters for optimisation or parametric study
+		Column F: Category (cost or performance parameter if it is Type 1) 
+				  c for cost parameters
+				  p for performance parameters	
+		Column G: Signs, this gives an indication that minimising this parameter will 
+				  increase LCOE (1) or decrease LCOE (-1)				  			   
+		Column H: Distribution of sampling, e.g. uniform, pert, normal
+		Column I: Boundary1 (lower boundary or standard deviation)
+		Column J: Boundary2 (upper boundary if needed)
+		Column K: Description
+		Column L: Source or reference
 
 	>>> T = Tree()
 	>>> T.insert('SM.nominal',None)
@@ -391,7 +416,7 @@ def load_values_from_excel(filename,tree):
 			#print("col =",col)
 			for c in col:
 				if c.value is not None: # name is there
-					study = ws.cell(c.row,6).value
+					study = ws.cell(c.row,5).value
 					if study in [0,1,2]:
 						r=tree.add_child(c.value,replace=True)
 						v = ws.cell(c.row,3).value
@@ -399,9 +424,11 @@ def load_values_from_excel(filename,tree):
 						r.add_value('type', study,replace=True)
 						r.add_value('nominal', v,replace=True)
 						#r.add_value('unit', ws.cell(c.row,4).value,replace=True)
-						r.add_value('distribution', ws.cell(c.row,7).value,replace=True)
-						r.add_value('boundary1', ws.cell(c.row,8).value,replace=True)	
-						r.add_value('boundary2', ws.cell(c.row,9).value,replace=True)	
+						r.add_value('category', ws.cell(c.row,6).value,replace=True)
+						r.add_value('sign', ws.cell(c.row,7).value,replace=True)												
+						r.add_value('distribution', ws.cell(c.row,8).value,replace=True)
+						r.add_value('boundary1', ws.cell(c.row,9).value,replace=True)	
+						r.add_value('boundary2', ws.cell(c.row,10).value,replace=True)	
 						#r.add_value('description', ws.cell(c.row,10).value,replace=True)						
 
 	return tree
@@ -410,19 +437,25 @@ def load_values_from_excel(filename,tree):
 def export_values_to_excel(filename, tree, inputxml=None):
 	"""
 	Export the parameters in the Tree to an excel spreadsheet (SolarTherm template)
-		Column A: classification
-		Column B: symbol, should correspond to the names in Modelica
-		Column C: nominal value
-		Column D: unit
-		Column E: name (description)
-		Column F: type (0-certain constant, 1-uncertain constant, 2-variable)
-				  type 1 is for uncertainty analysis
-				  type 2 is for optimisation or parametric study 
-		Column G: distribution of sampling, e.g. normal, uniform, pert-beta
-		Column H: boundary1 (lower boundary or standard deviation)
-		Column I: boundary2 (upper boundary if needed)
-		Column J: description
-		Column K: source or reference
+
+		Column A: Classification
+		Column B: Symbol, should be the same as it is in the SolarTherm model
+		Column C: Nominal value
+		Column D: Unit	
+		Column E: Type (0-certain constant, 1-uncertain parameter, 2-design variables)
+				  Type 0 is certain constaints
+				  Type 1 is uncertain parameters for uncertainty and contingency analysis
+				  Type 2 is design parameters for optimisation or parametric study
+		Column F: Category (cost or performance parameter if it is Type 1) 
+				  c for cost parameters
+				  p for performance parameters	
+		Column G: Signs, this gives an indication that minimising this parameter will 
+				  increase LCOE (1) or decrease LCOE (-1)				  			   
+		Column H: Distribution of sampling, e.g. uniform, pert, normal
+		Column I: Boundary1 (lower boundary or standard deviation)
+		Column J: Boundary2 (upper boundary if needed)
+		Column K: Description
+		Column L: Source or reference
 
 	Arguments:
 		filename (str): the name and directory of the excel spreadsheet
@@ -443,13 +476,14 @@ def export_values_to_excel(filename, tree, inputxml=None):
 	sheet['B2']='Symbol'
 	sheet['C2']='Nominal'
 	sheet['D2']='Unit'
-	sheet['E2']='Name'
-	sheet['F2']='Type'
-	sheet['G2']='Distribution'
-	sheet['H2']='B1(LB or SD)'
-	sheet['I2']='B2 (UB)'
-	sheet['J2']='Description'
-	sheet['K2']='Source'
+	sheet['E2']='Type'
+	sheet['F2']='Category'
+	sheet['G2']='Signs'	
+	sheet['H2']='Distribution'
+	sheet['I2']='B1(LB or SD)'
+	sheet['J2']='B2 (UB)'
+	sheet['K2']='Description'
+	sheet['L2']='Source'
 		
 	names=tree.children.keys()
 	i=0
@@ -466,14 +500,15 @@ def export_values_to_excel(filename, tree, inputxml=None):
 		symbol_cell='B%s'%(i+3)
 		value_cell='C%s'%(i+3)		
 		unit_cell='D%s'%(i+3)
-		info_cell='K%s'%(i+3)
-		description_cell='J%s'%(i+3)
+		description_cell='K%s'%(i+3)		
+		info_cell='L%s'%(i+3) # source
+
 		sheet[class_cell]=classification
 		sheet[symbol_cell]=name
 		sheet[value_cell]=value
 		sheet[unit_cell]=unit
 		sheet[description_cell]=description
-		sheet[info_cell]='exported from xml file : %s'%inputxml
+		sheet[info_cell]='exported from: %s'%inputxml
 		i+=1	
 
 	book.save(filename)
