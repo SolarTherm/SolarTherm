@@ -166,7 +166,8 @@ if __name__ == '__main__':
 	if not args.noc:
 		if not args.nomc:
 			print('Compiling model')
-			sim.compile_model(args=mcargs)
+			#sim.compile_model(args=mcargs)
+			sim.compile_model(args=["-d=nonewInst"])
 		if not args.nosc:
 			print('Compiling simulator')
 			sim.compile_sim(args=([] if args.v else ['-s']))

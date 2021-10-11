@@ -171,7 +171,8 @@ if __name__ == '__main__':
 
 	if not os.path.exists(mn) or not os.path.exists(input_xml):
 		print('Compiling model')
-		sim.compile_model()
+		#sim.compile_model()
+		sim.compile_model(args=["-d=nonewInst"])
 		print('Compiling simulator')
 		sim.compile_sim(args=([] if args.v else ['-s']))
 
