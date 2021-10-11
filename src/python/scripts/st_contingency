@@ -50,7 +50,9 @@ if __name__=='__main__':
 	parser.add_argument('--wd', type=str, default='.',
 			help='the working directory')	
 	parser.add_argument('--restart', action='store_true',
-			help='restart by continuing the last simulation (available now only via dakota), the restart file (dakota.rst) must be in the working directory')							
+			help='restart by continuing the last simulation (available now only via dakota), the restart file (dakota.rst) must be in the working directory')
+	parser.add_argument('--plot', action='store_true',
+			help='plot the results')										
 	parser.add_argument('--excel', type=str, default=None,
 			help='the directry of the input excel data sheet')			
 	parser.add_argument('--sample', type=str, default='moga-hybrid',
@@ -181,6 +183,9 @@ if __name__=='__main__':
 					nominals=None
 					stdevs=None					
 				elif 'pert' in dists:
+					# FIXME an issue has been found
+					# in dakota to sample a pert distribution
+					# need investigation
 					var_name=par_pert
 					nominals=nominal_pert
 					lbs=lb_pert
@@ -230,10 +235,51 @@ if __name__=='__main__':
 
 
 		subprocess.call('chmod a+x %s/interface_bb.py'%casedir, shell=True)
-
+	
 		if args.np>1:
 			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+				
+		# postprocessing contingency
+		# TODO now works up to 2D, need to develop to higher dimensions
+		# TODO in the current examples, no cost parameters are involved
+		# TO BE ADDED
+		summaryfile=casedir+'/summary_all.csv'
+		ct=Contingency(casedir=casedir, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
+		if args.sample=='moga-hybrid':
+			indices, tri_idx, f_lcoe=ct.front_tri()
+		elif args.sample=='lhs':				
+			indices, f_lcoe=ct.get_front(plot=args.plot)
+			
+		# new sample of uncertain parameters
+		num_ns=1000 # number of new samples
+		num_perf=len(par_n_perf)
+		num_des=len(par_n_des)				
+		new_sample=np.array([])
+		for n in par_n_perf:	
+			lb=tree.get(n+'.boundary1')
+			ub=tree.get(n+'.boundary2')
+			v=np.random.uniform(low=lb*1.01, high=ub*0.99, size=num_ns)
+			new_sample=np.append(new_sample, v)	
+			
+		new_sample=new_sample.reshape(num_perf, num_ns)
+		new_sample=new_sample.T			
+		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, new_sample, tri_idx=tri_idx, plot=args.plot)
 		
-		#TODO postprocessing contingency
+		title=np.array([])
+		data=np.array([])
+		for i in range(num_perf):
+			title=np.append(title, par_n_perf[i])
+			data=np.append(data, new_sample[:,i])
+		for n in par_n_des:
+			title=np.append(title, n)
+			data=np.append(data, ns_des[n])
+		title=np.append(title, 'sample lcoe')
+		data=np.append(data, ns_lcoe)
+		
+		data=data.reshape(num_perf+num_des+1, num_ns)
+		res=np.hstack((title.reshape(num_perf+num_des+1,1), data))
+		np.savetxt(casedir+'/res_contingency.csv', res.T, fmt='%s', delimiter=',')	
+		
+

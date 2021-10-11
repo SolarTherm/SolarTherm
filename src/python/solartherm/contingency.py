@@ -11,14 +11,14 @@ import time
 
 class Contingency:
 
-	def __init__(self, casedir, var_n_des=[], var_n_perf=[], var_n_cost=[]):
+	def __init__(self, casedir, var_n_des=[], var_n_perf=[], var_n_cost=[], summaryfile=None):
 
 		self.casedir=casedir
 		samplefile=self.casedir+'/sample.dat'
 		self.var_n_des=var_n_des
 		self.var_n_perf=var_n_perf
 		self.var_n_cost=var_n_cost
-		self.get_sample(samplefile, summaryfile=self.casedir+'/summary_all.csv')
+		self.get_sample(samplefile, summaryfile)
 	
 		#self.get_lcoe_contingency(fn='/media/yewang/Software/program/solartherm-contingency/examples/demo_sensitivity'+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
 		#self.plot_cdfs()
@@ -39,18 +39,18 @@ class Contingency:
 		if summaryfile==None:
 		
 			for i in range(1, num_total_sample+1):
-				try:
-					data=np.loadtxt(casedir+'/summary_report_%s.csv'%i, delimiter=',', dtype=str, skiprows=1)
-					for i in range(len(data)):
-						for j in range(len(data[0])):
-							data[i,j]=data[i,j].replace('"','')						
-					for l in data:
-						if l[0] in self.sample.keys():
-							self.sample[l[0]]=np.append(self.sample[l[0]], float(l[1]))
-						else:
-							self.sample[l[0]]=np.array([l[1]]).astype(float)
-				except:
-					print("summary_report_%s.csv not available"%i)
+				#try:
+				data=np.loadtxt(self.casedir+'/summary_report_%s.csv'%i, delimiter=',', dtype=str, skiprows=1)
+				for i in range(len(data)):
+					for j in range(len(data[0])):
+						data[i,j]=data[i,j].replace('"','')						
+				for l in data:
+					if l[0] in self.sample.keys():
+						self.sample[l[0]]=np.append(self.sample[l[0]], float(l[1]))
+					else:
+						self.sample[l[0]]=np.array([l[1]]).astype(float)
+			#except:
+			#	print("summary_report_%s.csv not available"%i)
 
 		else:
 			data=np.loadtxt(summaryfile, delimiter=',', dtype=str)
