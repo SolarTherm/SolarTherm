@@ -291,3 +291,10 @@ if __name__=='__main__':
 	np.savetxt(casedir+'/res_contingency.csv', res.T, fmt='%s', delimiter=',')	
 	print('Results saved in the case directory:\n	%s'%casedir)		
 
+	ct.get_lcoe_contingency(fn='../Reference_2_res_0.mat', target_lcoe=None, likelihood=0.7)
+	ct.plot_cdfs()
+	ct.plot_sensitivity()
+	
+	
+	
+	

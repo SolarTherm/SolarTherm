@@ -11,21 +11,21 @@ import time
 
 class Contingency:
 
-	def __init__(self, casedir, var_n_des=[], var_n_perf=[], var_n_cost=[], summaryfile=None):
+	def __init__(self, casedir, var_n_des=[], var_n_perf=[], var_n_cost=[], summaryfile=None, process_lcoe=False):
 
 		self.casedir=casedir
 		samplefile=self.casedir+'/sample.dat'
 		self.var_n_des=var_n_des
 		self.var_n_perf=var_n_perf
 		self.var_n_cost=var_n_cost
-		self.get_sample(samplefile, summaryfile)
+		self.get_sample(samplefile, summaryfile, process_lcoe)
 	
 		#self.get_lcoe_contingency(fn='/media/yewang/Software/program/solartherm-contingency/examples/demo_sensitivity'+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
 		#self.plot_cdfs()
 		#self.plot_sensitivity()
 
 		
-	def get_sample(self, samplefile, summaryfile=None, proces_lcoe=False):
+	def get_sample(self, samplefile, summaryfile=None, process_lcoe=False):
 		try:
 			with open(samplefile) as f:
 				content= f.read().splitlines()
@@ -66,17 +66,18 @@ class Contingency:
 
 		
 		self.num_sample = len(self.sample['lcoe'])
-		if proces_lcoe:
+		self.epy=self.sample['epy'].astype(float) #MWh/year
+		self.C_cap=self.sample['C_cap'].astype(float)-self.sample['C_contingency'].astype(float) #mUSD
+		self.OM_tot=self.sample['OM_total'].astype(float) #mUSD
+		self.r_discount=self.sample['r_discount'].astype(float)
+		self.t_life=self.sample['t_life'].astype(int)
+		self.t_cons=self.sample['t_cons'].astype(int)
+					
+		if process_lcoe:
 			# update LCOE to be 
 			# LCOE without the pre-estimated contingency in the system model
-			self.epy=self.sample['epy'].astype(float) #MWh/year
-			self.C_cap=self.sample['C_cap'].astype(float)-self.sample['C_contingency'].astype(float) #mUSD
 			self.C_contingency=self.sample['C_contingency'].astype(float) # mUSD, the initially estimated contingency in the system model, e.g. ~10% capital
-			self.OM_tot=self.sample['OM_total'].astype(float) #mUSD
-			self.r_discount=self.sample['r_discount'].astype(float)
-			self.t_life=self.sample['t_life'].astype(int)
-			self.t_cons=self.sample['t_cons'].astype(int)
-
+			
 			self.lcoe = fin.lcoe_r(
 					c_cap=self.C_cap*1.e6, 
 					c_year=self.OM_tot*1.e6, 
@@ -378,7 +379,7 @@ class Contingency:
 		return idx, ka, kb, kc, k
 		
 	
-	def get_cdf(self, x, num_bins, name, unit, plot=True, savename=None, color='b', base=None):
+	def get_cdf(self, x, num_bins, name, unit, plot=True, savename=None, color='b', base=None, verbose=False):
 		'''
 		x: numpy array, the data sample to be analysed/plotted
 		num_bins: int, number of bins of the histogram
@@ -395,13 +396,6 @@ class Contingency:
 		xmin=np.min(x)
 		xmax=np.max(x)
 		
-		print('')
-		print(name)
-		print("min", xmin, unit)
-		print("max", xmax, unit)
-		print("mean", m, unit)
-		print("sd", sd, unit)
-
 		bins=np.linspace(xmin, xmax, num_bins)	
 		hist, edges=np.histogram(x, bins)
 		cdf=np.cumsum(hist)/float(np.sum(hist))
@@ -415,9 +409,17 @@ class Contingency:
 		p30=f_xs(0.3)
 		p50=f_xs(0.5)
 		p90=f_xs(0.9)	
-		print('P30', p30, unit)
-		print('p50', p50, unit)
-		print('p90', p90, unit)		
+	
+		if verbose:
+			print('')
+			print(name, '(%s)'%unit)
+			print("	min %.4f"%xmin)
+			print("	max %.4f"%xmax)
+			print("	mean %.4f"%m)
+			print("	sd %.4f"%sd)		
+			print('	P30 %.4f'%p30)
+			print('	p50 %.4f'%p50)
+			print('	p90 %.4f'%p90)		
 		
 		if plot:
 			fts=20
@@ -451,6 +453,7 @@ class Contingency:
 			ax1.set_ylabel('Frequency', fontsize=fts)
 			ax2.set_ylabel('CDF', fontsize=fts)
 			plt.savefig(open(savename, 'wb'), dpi=200, bbox_inches='tight')
+			plt.show()
 			plt.close()
 		
 		return f_cdf, f_xs
@@ -512,7 +515,7 @@ class Contingency:
 			raise Exception("\n\n  Conflict between 'target_lcoe' and 'likelihood'\n  They cannot be specified simultaneously\n  Select one and keep the other as 'None'\n")
 
 		print('')
-		print('Target LCOE ', target_lcoe, ',with likelihood ', likelihood)
+		print('Target LCOE %.4f'%target_lcoe, ',likelihood %.2f%%'%(likelihood*100.))
 
 		lcoe_update=0.
 
@@ -532,11 +535,10 @@ class Contingency:
 
 			lcoe_update=lcoe_update*1e6*3600.
 			r_contingency+=0.000001
-			
-		print('')		
-		print('r_contingency,', r_contingency)
-		print('C_contingency,', C_contingency)
-
+				
+		print('	Contingency cost %.4f MUSD'%(C_contingency/1e6))
+		print('	Rate of contingency over total capital %.2f%%'%(r_contingency*100))
+		
 		return r_contingency, C_contingency/1e6
 		
 		
@@ -650,16 +652,17 @@ class Contingency:
 		#plt.xlim(base - 1000, base + 1000)
 		#plt.ylim(-1, len(key))
 		plt.savefig(open(self.casedir+'/sensitivity.png', 'wb'), dpi=300, bbox_inches='tight')
-		#plt.show()
+		plt.show()
 		plt.close()	
 		
 	def plot_cdfs(self):
-	
-		self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', savename=self.casedir+'/CDF_lcoe.png', color='green')		#base=112
+		print('')
+		print('Some Statistics')
+		self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', savename=self.casedir+'/CDF_lcoe.png', color='green', verbose=True)		#base=112
 		
-		self.get_cdf(x=self.C_cap, num_bins=25, name='Total capital cost', unit='(M$\cdot$USD)', savename=self.casedir+'/CDF_capital.png', color='blue')
+		self.get_cdf(x=self.C_cap, num_bins=25, name='Total capital cost', unit='(M$\cdot$USD)', savename=self.casedir+'/CDF_capital.png', color='blue', verbose=True)
 
-		self.get_cdf(x=self.epy, num_bins=25, name='Energy production per year', unit='(MWh/year)', savename=self.casedir+'/CDF_epy.png', color='orange')	
+		self.get_cdf(x=self.epy, num_bins=25, name='Energy production per year', unit='(MWh/year)', savename=self.casedir+'/CDF_epy.png', color='orange', verbose=True)	
 
 
         
