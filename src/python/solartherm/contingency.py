@@ -92,15 +92,15 @@ class Contingency:
 		self.var_v_cost=[]		
 		for n in self.var_n_des:
 			if n in self.sample.keys():
-				print('Design parameter:', n)
+				print('	Design parameter:', n)
 				self.var_v_des.append(self.sample[n])
 		for n in self.var_n_perf:
 			if n in self.sample.keys():
-				print('Performance parameter:', n)
+				print('	Performance parameter:', n)
 				self.var_v_perf.append(self.sample[n])
 		for n in self.var_n_cost:
 			if n in self.sample.keys():
-				print('Cost parameter:', n)
+				print('	Cost parameter:', n)
 				self.var_v_cost.append(self.sample[n])
 					
 	def get_front(self, plot=False):

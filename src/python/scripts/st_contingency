@@ -59,14 +59,11 @@ if __name__=='__main__':
 			help='sampling method, e.g. lhs or moga')			
 	parser.add_argument('--ns', type=int, default=10,
 			help='number of samples')
+	parser.add_argument('--samplefile', type=str, default=None,
+			help='directory of a csv file that has the summary of sample data for processing contingency analysis')			
 
 
 	args = parser.parse_args()
-	fn=os.path.abspath(args.file)	
-	if args.excel ==None:
-		raise Exception("\n\nNo excel spreasheet found\nAn excel spreadsheet must be given as the input\n\n")	
-	else:
-		excel_file=os.path.abspath(args.excel)
 	
 	if not os.path.exists(args.wd):
 		os.makedirs(args.wd)	
@@ -74,212 +71,223 @@ if __name__=='__main__':
 		casedir=os.path.join(os.getcwd(),args.wd)
 	else:
 		casedir=args.wd
-	os.chdir(casedir)
-	
-	
-	if args.restart:
-	
-		if args.np>1:
-			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
-		else:
-			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
-	
-	else:	
+	if args.excel ==None:
+		raise Exception("\n\nNo excel spreasheet found\nAn excel spreadsheet must be given as the input\n\n")	
+	else:
+		excel_file=os.path.abspath(args.excel)
 
-		mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
-		sim = simulation.Simulator(fn=fn, fusemount=False)
-		# compile the model		
-		sim.compile_model()
-		sim.compile_sim(args=['-s'])
-		
-		
-		if args.fuel:
-			analysis_type='FUEL' # LCOF
-		else:
-			analysis_type='CONTINGENCY' # LCOE, electricity
-
-					
-		# load parameters from the spreadsheet	
-		input_xml=mn+'_init.xml'
-		tree=params.Tree()
-		tree.load_xml(input_xml)
-		params.load_values_from_excel(excel_file, tree)
-		tree.write_xml(input_xml)
-		par_n=tree.filter_type(1) # 1 is for uncertainty analysis
-		par_n_perf=tree.filter_category('p') # 'p' are the performance uncertainty parameters
-		par_n_cost=tree.filter_category('c') # 'c' are the cost uncertainty parameters		
-		par_n_des=tree.filter_type(2) # 2 are the design parameters				
-
-
-		method_args={}	
-		if args.sample=='moga-hybrid':
-			method='moga'
-			method_args['max_eval']=args.ns
-			method_args['pop_size']=args.np			
-			var_names=par_n_des
-			nominals=[]
-			lbs=[]
-			ubs=[]
-			signs=[1]
-			for n in par_n_des:
-				nominals.append(tree.get(n+'.nominal'))	
-				lbs.append(tree.get(n+'.boundary1'))
-				ubs.append(tree.get(n+'.boundary2'))
-			for n in par_n_perf:	
-				lbs.append(tree.get(n+'.boundary1'))
-				ubs.append(tree.get(n+'.boundary2'))	
-				signs.append(tree.get(n+'.sign'))						
-			res_names=['lcoe']+par_n_perf
-			stdevs=None
-			dists=None
-			
-		else:
-			method='uq'
-			method_args['sample_type']='lhs'
-			method_args['num_sample']=args.ns
-			var_names=par_n
-			par_uniform=tree.filter_dist('uniform',var_names)
-			par_pert=tree.filter_dist('pert', var_names)			
-			par_normal=tree.filter_dist('normal', var_names)
-
-			dists=[]			
-			if len(par_uniform)>0:
-				dists.append('uniform')
-				lb_uniform=[]
-				ub_uniform=[]
-				for n in par_uniform:
-					b1=tree.get(n+'.boundary1')
-					b2=tree.get(n+'.boundary2')
-					lb_uniform.append(b1)
-					ub_uniform.append(b2)
-			if len(par_pert)>0:
-				dists.append('pert')
-				lb_pert=[]
-				ub_pert=[]
-				nominal_pert=[]
-				for n in par_pert:
-					nominal=tree.get(n+'.nominal')					
-					b1=tree.get(n+'.boundary1')
-					b2=tree.get(n+'.boundary2')
-					nominal_pert.append(nominal)
-					lb_pert.append(b1)
-					ub_pert.append(b2)				
-			if len(par_normal)>0:
-				dists.append('normal')
-				mean=[]
-				stdev=[]
-				for n in par_normal:
-					m=tree.get(n+'.nominal')
-					sd=tree.get(n+'.boundary1')
-					mean.append(m)
-					stdev.append(sd)
-			
-			if len(dists)==1:
-				if 'uniform' in dists:
-					var_names=par_uniform
-					lbs=lb_uniform
-					ubs=ub_uniform
-					nominals=None
-					stdevs=None					
-				elif 'pert' in dists:
-					# FIXME an issue has been found
-					# in dakota to sample a pert distribution
-					# need investigation
-					var_name=par_pert
-					nominals=nominal_pert
-					lbs=lb_pert
-					ubs=ub_pert
-					stdevs=None
-				elif 'normal' in dists:
-					var_name=par_normal
-					nominals=mean
-					stdevs=stdev
-					lbs=None
-					ubs=None
-					
-			elif len(dists)==2:
-				if 'normal' not in dists:
-					# uniform and pert distributions
-					var_names=[par_uniform, par_pert]
-					lbs=[lb_uniform, lb_pert]
-					ubs=[ub_uniform, ub_pert]
-					nominals=[[], nominal_pert]
-					stdevs=None
-				elif 'pert' not in dists:
-					# uniform and normal distributions
-					var_names=[par_uniform, par_normal]
-					lbs=[lb_uniform]
-					ubs=[ub_uniform]
-					nominals=None
-					stdevs=stdev			
-				elif 'uniform' not in dists:
-					# pert and normal distributions
-					var_names=[par_pert, par_normal]
-					lbs=[lb_pert]
-					ubs=[ub_pert]
-					nominals=[nominal_pert, mean]
-					stdevs=stdev					
-								
-			elif len(dists)==3:
-					var_names=[par_pert, par_normal]
-					lbs=[lb_uniform, lb_pert]
-					ubs=[ub_uniform, ub_pert]
-					nominals=[[], nominal_pert, mean]
-					stdevs=stdev					
-			res_names=['lcoe']
-			signs=[1]
-
-	
-		dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
-
-
-		subprocess.call('chmod a+x %s/interface_bb.py'%casedir, shell=True)
-	
-		if args.np>1:
-			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
-		else:
-			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+	if args.fuel:
+		analysis_type='FUEL' # LCOF # TODO hasn't been developed yet
+		raise Exception("\nFUEL system has not been developed/tested in the contingency analysis yet\n") 
+	else:
+		analysis_type='CONTINGENCY' # LCOE, electricity
 				
-		# postprocessing contingency
-		# TODO now works up to 2D, need to develop to higher dimensions
-		# TODO in the current examples, no cost parameters are involved
-		# TO BE ADDED
-		summaryfile=casedir+'/summary_all.csv'
-		ct=Contingency(casedir=casedir, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
-		if args.sample=='moga-hybrid':
-			indices, tri_idx, f_lcoe=ct.front_tri()
-		elif args.sample=='lhs':				
-			indices, f_lcoe=ct.get_front(plot=args.plot)
-			
-		# new sample of uncertain parameters
-		num_ns=1000 # number of new samples
-		num_perf=len(par_n_perf)
-		num_des=len(par_n_des)				
-		new_sample=np.array([])
-		for n in par_n_perf:	
-			lb=tree.get(n+'.boundary1')
-			ub=tree.get(n+'.boundary2')
-			v=np.random.uniform(low=lb*1.01, high=ub*0.99, size=num_ns)
-			new_sample=np.append(new_sample, v)	
-			
-		new_sample=new_sample.reshape(num_perf, num_ns)
-		new_sample=new_sample.T			
-		ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, new_sample, tri_idx=tri_idx, plot=args.plot)
 		
-		title=np.array([])
-		data=np.array([])
-		for i in range(num_perf):
-			title=np.append(title, par_n_perf[i])
-			data=np.append(data, new_sample[:,i])
+	fn=os.path.abspath(args.file)	
+	mn=os.path.splitext(os.path.split(fn)[1])[0] # model name
+	
+	os.chdir(casedir)		
+	sim = simulation.Simulator(fn=fn, fusemount=False)
+	# compile the model		
+	sim.compile_model()
+	sim.compile_sim(args=['-s'])
+					
+	# load parameters from the spreadsheet	
+	input_xml=mn+'_init.xml'
+	tree=params.Tree()
+	tree.load_xml(input_xml)
+	params.load_values_from_excel(excel_file, tree)
+	tree.write_xml(input_xml)
+	par_n=tree.filter_type(1) # 1 is for uncertainty analysis
+	par_n_perf=tree.filter_category('p') # 'p' are the performance uncertainty parameters
+	par_n_cost=tree.filter_category('c') # 'c' are the cost uncertainty parameters		
+	par_n_des=tree.filter_type(2) # 2 are the design parameters				
+
+	method_args={}	
+	if args.sample=='moga-hybrid':
+		method='moga'
+		method_args['max_eval']=args.ns
+		method_args['pop_size']=args.np			
+		var_names=par_n_des
+		nominals=[]
+		lbs=[]
+		ubs=[]
+		signs=[1]
 		for n in par_n_des:
-			title=np.append(title, n)
-			data=np.append(data, ns_des[n])
-		title=np.append(title, 'sample lcoe')
-		data=np.append(data, ns_lcoe)
+			nominals.append(tree.get(n+'.nominal'))	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))
+		for n in par_n_perf:	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))	
+			signs.append(tree.get(n+'.sign'))						
+		res_names=['lcoe']+par_n_perf
+		stdevs=None
+		dists=None
 		
-		data=data.reshape(num_perf+num_des+1, num_ns)
-		res=np.hstack((title.reshape(num_perf+num_des+1,1), data))
-		np.savetxt(casedir+'/res_contingency.csv', res.T, fmt='%s', delimiter=',')	
+	else:
+		method='uq'
+		method_args['sample_type']='lhs'
+		method_args['num_sample']=args.ns
+		var_names=par_n
+		par_uniform=tree.filter_dist('uniform',var_names)
+		par_pert=tree.filter_dist('pert', var_names)			
+		par_normal=tree.filter_dist('normal', var_names)
+
+		dists=[]			
+		if len(par_uniform)>0:
+			dists.append('uniform')
+			lb_uniform=[]
+			ub_uniform=[]
+			for n in par_uniform:
+				b1=tree.get(n+'.boundary1')
+				b2=tree.get(n+'.boundary2')
+				lb_uniform.append(b1)
+				ub_uniform.append(b2)
+		if len(par_pert)>0:
+			dists.append('pert')
+			lb_pert=[]
+			ub_pert=[]
+			nominal_pert=[]
+			for n in par_pert:
+				nominal=tree.get(n+'.nominal')					
+				b1=tree.get(n+'.boundary1')
+				b2=tree.get(n+'.boundary2')
+				nominal_pert.append(nominal)
+				lb_pert.append(b1)
+				ub_pert.append(b2)				
+		if len(par_normal)>0:
+			dists.append('normal')
+			mean=[]
+			stdev=[]
+			for n in par_normal:
+				m=tree.get(n+'.nominal')
+				sd=tree.get(n+'.boundary1')
+				mean.append(m)
+				stdev.append(sd)
 		
+		if len(dists)==1:
+			if 'uniform' in dists:
+				var_names=par_uniform
+				lbs=lb_uniform
+				ubs=ub_uniform
+				nominals=None
+				stdevs=None					
+			elif 'pert' in dists:
+				# FIXME an issue has been found
+				# in dakota to sample a pert distribution
+				# need investigation
+				var_name=par_pert
+				nominals=nominal_pert
+				lbs=lb_pert
+				ubs=ub_pert
+				stdevs=None
+			elif 'normal' in dists:
+				var_name=par_normal
+				nominals=mean
+				stdevs=stdev
+				lbs=None
+				ubs=None
+				
+		elif len(dists)==2:
+			if 'normal' not in dists:
+				# uniform and pert distributions
+				var_names=[par_uniform, par_pert]
+				lbs=[lb_uniform, lb_pert]
+				ubs=[ub_uniform, ub_pert]
+				nominals=[[], nominal_pert]
+				stdevs=None
+			elif 'pert' not in dists:
+				# uniform and normal distributions
+				var_names=[par_uniform, par_normal]
+				lbs=[lb_uniform]
+				ubs=[ub_uniform]
+				nominals=None
+				stdevs=stdev			
+			elif 'uniform' not in dists:
+				# pert and normal distributions
+				var_names=[par_pert, par_normal]
+				lbs=[lb_pert]
+				ubs=[ub_pert]
+				nominals=[nominal_pert, mean]
+				stdevs=stdev					
+							
+		elif len(dists)==3:
+				var_names=[par_pert, par_normal]
+				lbs=[lb_uniform, lb_pert]
+				ubs=[ub_uniform, ub_pert]
+				nominals=[[], nominal_pert, mean]
+				stdevs=stdev					
+		res_names=['lcoe']
+		signs=[1]
+
+
+	if args.samplefile==None:
+		# call dakota to sample the data
+		if args.restart:	
+			print('Continue generating data sample by restart (dakota.rst)')
+			if args.np>1:
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+			else:			
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
+		
+		else:
+			print('Generating data sample by Dakota')		
+			dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
+
+			subprocess.call('chmod a+x %s/interface_bb.py'%casedir, shell=True)
+	
+			if args.np>1:
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+			else:
+				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
+		print('	%s sample generated'%args.ns)									
+		summaryfile=casedir+'/summary_all.csv'
+	else:
+		print('Load data sample from file: %s'%args.samplefile)			
+		summaryfile=args.samplefile
+
+	
+	# postprocessing contingency
+	# TODO now works up to 2D, need to develop to higher dimensions
+	# TODO in the current examples, no cost parameters are involved
+	# TO BE ADDED	
+	print('Postprocessing contingency')				
+	ct=Contingency(casedir=casedir, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
+	if args.sample=='moga-hybrid':
+		indices, tri_idx, f_lcoe=ct.front_tri()
+	elif args.sample=='lhs':				
+		indices, f_lcoe=ct.get_front(plot=args.plot)
+		
+	# new sample of uncertain parameters
+	num_ns=1000 # number of new samples
+	num_perf=len(par_n_perf)
+	num_des=len(par_n_des)				
+	new_sample=np.array([])
+	for n in par_n_perf:	
+		lb=tree.get(n+'.boundary1')
+		ub=tree.get(n+'.boundary2')
+		v=np.random.uniform(low=lb*1.01, high=ub*0.99, size=num_ns)
+		new_sample=np.append(new_sample, v)	
+		
+	new_sample=new_sample.reshape(num_perf, num_ns)
+	new_sample=new_sample.T			
+	ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, new_sample, tri_idx=tri_idx, plot=args.plot)
+	
+	title=np.array([])
+	data=np.array([])
+	for i in range(num_perf):
+		title=np.append(title, par_n_perf[i])
+		data=np.append(data, new_sample[:,i])
+	for n in par_n_des:
+		title=np.append(title, n)
+		data=np.append(data, ns_des[n])
+	title=np.append(title, 'sample lcoe')
+	data=np.append(data, ns_lcoe)
+	
+	data=data.reshape(num_perf+num_des+1, num_ns)
+	res=np.hstack((title.reshape(num_perf+num_des+1,1), data))
+	np.savetxt(casedir+'/res_contingency.csv', res.T, fmt='%s', delimiter=',')	
+	print('Results saved in the case directory:\n	%s'%casedir)		
 
