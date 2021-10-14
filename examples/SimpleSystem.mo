@@ -69,9 +69,9 @@ model SimpleSystem
 	parameter FI.Money C_cap = C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop + C_land "Capital costs";
 
 	parameter FI.MoneyPerYear C_year =
-			10*A_col // field cleaning/maintenance
-			"Cost per year";
-	parameter Real C_prod(unit="$/J/year") = 0 "Cost per production per year";
+			10*A_col "Cost per year";
+	// field cleaning/maintenance
+  parameter Real C_prod(unit="$/J/year") = 0 "Cost per production per year";
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
@@ -303,5 +303,5 @@ equation
 
 	der(E_elec) = P_elec;
 	der(R_spot) = P_elec*pri.price;
-	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=60, Tolerance=1e-06));
+	annotation(experiment(StartTime= 0, StopTime=31536000.0, Interval= 3600, Tolerance=1e-06));
 end SimpleSystem;

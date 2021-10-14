@@ -97,7 +97,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.Angle slope_error_windy = windy_slope_error_factor * slope_error "A larger optical error of heliostats under windy conditions, in radiance";
   parameter SI.Length H_tower = 200 "[H&T] Tower height";
   parameter SI.Length R_tower(fixed=false) "Tower inner radius (from the center of the tower until before structural concrete [m]";
-  parameter SI.Length R1 = 100 "[H&T] distance between the first row heliostat and the tower";
+  parameter SI.Length R1 = 80 "[H&T] distance between the first row heliostat and the tower";
   parameter Real fb = 0.6 "[H&T] factor to grow the field layout";
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter Real angular_range = 180 "[H&T] angular range of the multi-aperture configuration";
@@ -117,7 +117,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter SI.HeatFlowRate Q_in_rcv = P_gross / eff_blk / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
   parameter String rcv_type = "multi-aperture" "[RCV] other options are : flat, cylindrical, stl";
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
-  parameter Real SM = 1.5 "[SYS] Solar multiple";
+  parameter Real SM = 1 "[SYS] Solar multiple";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
@@ -313,7 +313,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   //****************************** Storage Parameters
   parameter SI.ThermalInsulance U_value_hot_tank = 0.25 "[ST] Desired U_value for the tanks";
   parameter SI.ThermalInsulance U_value_cold_tank = 0.25 "[ST] Desired U value for the tanks";
-  parameter Real t_storage(unit = "h") = 14 "[ST] Storage capacity";
+  parameter Real t_storage(unit = "h") = 13 "[ST] Storage capacity";
   parameter Real NS_particle = 0.05 "[ST] Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set = 550 + 273.15 "[ST] Cold tank target temperature ==  HTF outlet temperature from PB at design point (K)";
   parameter SI.Temperature T_hot_set = 1073.15 "[ST] Hot tank target temperature == HTF inlet temperature to the PB at design point (K)";
@@ -349,8 +349,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   
   
   
-  parameter SI.Length Th_refractory_hot_tank = 1.0 "[ST] Thickness of the refractory of the hot tank [m] - Dome Storage only";
-  parameter SI.Length Th_refractory_cold_tank = 0.5 "[ST] Thickness of the refractory of the cold tank [m] - Dome Storage only";
+  parameter SI.Length Th_refractory_hot_tank = 0.6 "[ST] Thickness of the refractory of the hot tank [m] - Dome Storage only";
+  parameter SI.Length Th_refractory_cold_tank = 0.6 "[ST] Thickness of the refractory of the cold tank [m] - Dome Storage only";
   
   //****************************** Power Block Technical Parameters - CEA Power Block
   /*Heat Exchanger Parameters*/
