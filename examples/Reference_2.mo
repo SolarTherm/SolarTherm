@@ -23,7 +23,6 @@ model Reference_2
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
-	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Weather data
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");

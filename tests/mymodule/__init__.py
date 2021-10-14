@@ -1,0 +1,2 @@
+from .thing import *
+

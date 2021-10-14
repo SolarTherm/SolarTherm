@@ -82,6 +82,5 @@ equation
   end if;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
-        coordinateSystem(preserveAspectRatio=false)),
-    uses(Modelica(version="3.2.2")));
+        coordinateSystem(preserveAspectRatio=false)));
 end StartUpLogic5;

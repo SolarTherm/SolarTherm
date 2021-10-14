@@ -1,6 +1,6 @@
 block TestScheduler
 	import SolarTherm.Models.Sources.Schedule.Scheduler;
-	parameter String file = "resources/tests/daily_schedule.motab";
+	parameter String file = "Resources/tests/daily_schedule.motab";
 	SolarTherm.Interfaces.Connectors.WeatherBus wbus;
 	SolarTherm.Models.Sources.Date.SimpleDate date;
 	Scheduler sch1(

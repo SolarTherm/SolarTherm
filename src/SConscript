@@ -1,0 +1,7 @@
+Import('env')
+env.SConscript(
+	['python/SConscript','env/SConscript','modelica/SConscript']
+	,exports='env'
+)
+
+# vim: ts=4:sw=4:noet:tw=80

@@ -4,10 +4,11 @@ on: [workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
     env:
       DAKVER: 6.14.0
 
@@ -20,38 +21,32 @@ jobs:
 
     - name: Download DAKOTA
       run: |
-        export DAKFILE=dakota-$DAKVER-release-public-src-cli.tar.gz
-        wget --no-verbose https://dakota.sandia.gov/sites/default/files/distributions/public/$DAKFILE
-        tar zxf $DAKFILE
-
+        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
+        tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
+        ls -l
+        cd dakota-${DAKVER}.src
+        
     - name: Build DAKOTA
       run: |
-        cd dakota-$DAKVER.src
-        mkdir build
-        cd build
+        cd dakota-${DAKVER}.src
+        mkdir build && cd build
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE ..
         make
-
+        
     - name: Install DAKOTA
       run: |
-        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
-        mkdir -p dakota-inst/$DAKPKG
-        cd dakota-$DAKVER.src/build
-        make DESTDIR=../../dakota-inst/$DAKPKG install
+        cd dakota-${DAKVER}.src/build
+        export PKGN=dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
+        mkdir -p $HOME/install/$PKGN
+        make DESTDIR=$HOME/install/$PKGN install
+        cd $HOME/install
+        tar zcf ${PKGN}.tar.gz $PKGN/*
 
-    - name: Tar DAKOTA
-      run: |
-        export DAKPKG=dakota-$DAKVER-linux-x86_64-jp
-        mkdir dakota-dist
-        cd dakota-inst
-        echo "DAKOTA-INST contains DAKPKG=$DAKPKG ...?"
-        ls -l
-        tar -zcvf ../dakota-dist/$DAKPKG.tar.gz $DAKPKG
-
-    - name: Upload DAKOTA binary tarball
+    - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-${{ env.DAKVER }}-linux-x86_64-jp
-        path: dakota-dist
+        name: dakota-${{ matrix.os }}
+        path: ~/install/dakota-*.tar.gz
+
 
 # vim: ts=2:sw=2:et

@@ -1,0 +1,8 @@
+Import('env')
+
+st = env.Substfile('st.in')
+
+stx = env.Install("$INSTALL_BIN",[st])
+env.AddPostAction(stx, Chmod(stx, 0o755)) 	 
+
+# vim: ts=4:sw=4:noet:tw=80

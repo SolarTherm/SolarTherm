@@ -1,0 +1,43 @@
+Import('env')
+
+tenv = env.Clone()
+#tenv['OM_MSL_RES_INC'] = '/usr/lib/omlibrary/Modelica 3.2.3/Resources/C-Sources'
+#tenv['OM_MSL_RES_LIBPATH'] = '/usr/lib/x86_64-linux-gnu/omc/'
+#tenv.Command("ModelicaExternalTables.c","$OM_MSL_RES_INC/ModelicaExternalTables.c",Copy("$TARGET","$SOURCE"))
+
+tenv.Append(
+	CPPPATH = ['#/src/modelica/']
+	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH']
+)
+tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
+
+tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
+
+tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
+
+tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
+
+import platform
+if platform.system()=="Windows":
+	tenv2 = Environment(CC='mpicc', tools=['default','mingw'])
+else:
+	tenv2 = Environment(CC='mpicc')
+	
+tenv2.Program('testmpi',['testmpi.c'])
+
+senv = env.Clone()
+senv.Append(CPPPATH = ['/usr/include/omc/c'])
+
+lib1 = senv.SharedLibrary('st_test_ext',['st_test_ext.c'])
+
+# environment for libraries which link to Python
+penv = senv.Clone()
+penv.ParseConfig('$PKGCONFIGPYTHON')
+lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
+
+lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
+
+# the file needs to be in tests/Resources/Library for OM to find it
+env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
+
+# vim: ts=4:sw=4:noet:tw=80:syntax=python
