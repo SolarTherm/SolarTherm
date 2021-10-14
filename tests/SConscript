@@ -15,8 +15,6 @@ tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
-tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
-
 import platform
 if platform.system()=="Windows":
 	tenv2 = Environment(CC='mpicc', tools=['default','mingw'])
@@ -41,3 +39,4 @@ lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
 env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
 
 # vim: ts=4:sw=4:noet:tw=80:syntax=python
+
