@@ -7,7 +7,7 @@ PowerBlockControl
 StartUpLogic5
 SimpleReceiverControl
 IdealMassflowBlockCalculation
-PID_AW_reset3_voriginal
+PID_AW_reset3
 Interpolation3D
 TestLinprog
 StartUpLogic6

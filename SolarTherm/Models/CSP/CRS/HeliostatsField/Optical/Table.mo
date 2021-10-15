@@ -13,7 +13,6 @@ model Table "From table"
   SI.Angle angle2;
   Modelica.Blocks.Tables.CombiTable2D nu_table(
     tableOnFile=true,
-    //tableName="optical_efficiency",
     tableName="optics",
     smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
     fileName=file)

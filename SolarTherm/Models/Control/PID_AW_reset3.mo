@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-block PID_AW_reset3_voriginal "PI-with anti-windup and reset"
+block PID_AW_reset3 "PI-with anti-windup and reset"
   import Modelica.Blocks.Types.InitPID;
   import Modelica.Blocks.Types.Init;
   extends Modelica.Blocks.Interfaces.SISO;
@@ -210,4 +210,4 @@ to compute u by an algebraic equation.
     Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,
             100}})),
   experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
-end PID_AW_reset3_voriginal;
+end PID_AW_reset3;
