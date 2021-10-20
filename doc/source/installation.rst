@@ -4,7 +4,7 @@ This section goes through the installation process for SolarTherm. The required 
 
 
 Overview
-------------
+---------
 The SolarTherm package contains a series of CSP related Modelica models to perform dynamic performance analysis. It is also integrated with several software package to expand its simulation capability, for example, Solstice for Monte-Carlo ray tracing simulations, GLPK for linear programming optimisation, Tenserflow, SAM SSC (SAM simulation core) for surrogate modelling, etc. The Modelica models can be run by either OMEdit or a terminal command. `OMEdit <https://openmodelica.org/?id=78:omconnectioneditoromedit&catid=10:main-category>`_ is a graphical user interface that enables the users to easily create models, edit connections, run simulations and plot results.
 
 The SolarTherm package also contains a series of additional functions that perform financial calculations (e.g. LCOE, LCOF), parametric sweep, system optimisation and sensitivity analysis. It also itegrates with excel spreasheets and Dakota software package for expanding data sampling and optimisation capabilities. These functions are handled externally from Modelica, and must be run from a terminal command. It is recommonded that using OMEdit for Modelica model development and inspection, and using terminal commands to perform techno-economic analysis, system optimisation and sensitivity analysis.  
@@ -23,7 +23,7 @@ A working version of OpenModelica is required.  Instructions for installing Open
 
 Dependencies
 ^^^^^^^^^^^^
-SolarTherm requires a number of Python packages (some optional)::
+SolarTherm requires a number of Python packages (some optional):
 
 * `scons <https://scons.org/>`_ prerequisite 
 * `distro <https://pypi.org/project/distro/>`_ prerequisite
@@ -40,8 +40,9 @@ SolarTherm requires a number of Python packages (some optional)::
 * `cma <https://www.lri.fr/~hansen/cmaes_inmatlab.html>`_ optimisation (optimal)
 
 Integrated software packages
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 SolarTherm integrates with a number of software packages to expand its applications:
+
 * `Solstice <https://www.meso-star.com/projects/solstice/solstice.html>`_ for Monte-Carlo ray tracing simulations
 * `Dakota <https://dakota.sandia.gov/>`_ for optimisation and uncertainty quantification
 * `glpk <https://www.gnu.org/software/glpk/>`_ for linear programming
@@ -62,12 +63,12 @@ Clone the SolarTherm source code, change to the SolarTherm source directory and 
 The default installation prefix is ``~/.local``. A user defined prefix can be given to the 'PREFIX' variable to change the installation prefix, for example::
 
     scons PREFIX=/the/user/defined/directory
-	scons install PREFIX=/the/user/defined/directory
+    scons install PREFIX=/the/user/defined/directory
 
 The default SolarTherm modelica library prefix is ``~/.openmodelica/libraries`` on Linux and ``~/.local/lib/omlibrary`` on Windows (MSYS2). If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``INSTALL_OMLIBRARY`` variable. For example::
 
-    scons PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/is/installed
-	scons install PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/is/installed
+    scons PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
+    scons install PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
 
 The last step is to set up the correct environment variables for the command line to find SolarTherm.  A tool (``st``) has been created by the ``scons`` to automatically set the correct environment for the current terminal. By default, ``st`` is located in ``~/.local/bin/`` and can be called directly. The Solartherm environment can be activated by::
     
@@ -82,24 +83,30 @@ Once the environment is correctly set up,  tests can be run from the tests direc
 
 
 Installation Instruction (Ubuntu)
------------------
+---------------------------------
 This installation instruction is for Ubuntu 20.04 and Ubuntu 18.04
 
-OpenModelica::
-^^^^^^^^^^^^^^^^^   
+OpenModelica
+^^^^^^^^^^^^
+::
+
     for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
     wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
     sudo apt update
     sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev
 
-SolarTherm dependencies::
-^^^^^^^^^^^^^^^^^   
+SolarTherm dependencies
+^^^^^^^^^^^^^^^^^^^^^^^  
+::
+ 
     python3 -m pip install --upgrade pip 
     python3 -m pip install --upgrade setuptools wheel
     python3 -m pip install scons scipy matplotlib DyMat pyswarm cma pytest solsticepy openpyxl distro colorama
 
-Solstice::
-^^^^^^^^^^^^^^^^^
+Solstice
+^^^^^^^^
+::
+
     sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
     export UBVER=`lsb_release -cs`
     export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9-x86_64-$UBVER.tar.gz"
@@ -108,27 +115,30 @@ Solstice::
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
     solstice --version
 	
-Dakota::
-^^^^^^^^^^^^^^^^^
+Dakota
+^^^^^^
 Prerequisite for Ubuntu 20.04::
+
     sudo apt install openmpi-bin libltdl7 liblapack3 libhwloc15 \
       libgslcblas0 libquadmath0 libboost-regex1.71.0 libgsl23 \
       libevent-2.1-7 libgfortran5 libboost-filesystem1.71.0 libopenmpi3 \
       libicu66 libblas3 libstdc++6 libevent-pthreads-2.1-7 \
       libboost-serialization1.71.0
-	OS=ubuntu-20.04
-	mpirun --version
+    OS=ubuntu-20.04
+    mpirun --version
 	      
-Prerequisite for Ubuntu 18.04::      
-     sudo apt install libicu60 libboost-serialization1.65.1 libstdc++6 \
+Prerequisite for Ubuntu 18.04::     
+ 
+    sudo apt install libicu60 libboost-serialization1.65.1 libstdc++6 \
           libboost-filesystem1.65.1 libgcc1 libquadmath0 liblapack3 \
           libboost-regex1.65.1 libboost-system1.65.1 libblas3 libc6 \
           libgfortran4 openmpi-bin libopenmpi-dev
-	OS=ubuntu-18.04
-	mpirun --version
+    OS=ubuntu-18.04
+    mpirun --version
 
 Install Dakota::
-	DAKOTA_VERSION=6.14.0
+
+    DAKOTA_VERSION=6.14.0
     export PKGN=dakota-${DAKOTA_VERSION}-${OS}-x86_64-jp
     export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$PKGN.tar.gz"
     sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
@@ -139,8 +149,10 @@ Install Dakota::
     python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"                    
 
 
-Build and install SolarTherm::
-^^^^^^^^^^^^^^^^^
+Build and install SolarTherm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+
     export PATH=$PATH:/usr/local/bin:~/.local/bin
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
     export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
@@ -151,16 +163,16 @@ More about build and install SolarTherm :ref:`build-section`.
 
 
 Installation Instruction (Windows)
------------------
+----------------------------------
 
 On Windows platforms, the SolarTherm terminal commands are run from MSYS2. The installation includes MSYS2 system and OMEdit.
 
 The full instruction is available on SolarTherm Wiki `here <https://github.com/SolarTherm/SolarTherm/wiki/Running-SolarTherm-on-Windows-%28MSYS2%29>`_.
 
 
-Archlinux Source
------------------
-This section will be added to show how to build openmodelica from source, e.g. for supercomputer applications.
+Build omc from Source
+---------------------
+This section will be added to show how to build openmodelica (omc) from source, e.g. for supercomputer applications.
 
 
 
