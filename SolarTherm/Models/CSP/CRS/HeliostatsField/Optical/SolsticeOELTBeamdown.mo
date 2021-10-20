@@ -18,13 +18,14 @@ extends OpticalEfficiency;
         parameter nSI.Angle_deg cpc_theta_deg=20 "CPC acceptance half angle in degree";
         parameter Real cpc_h_ratio=1 "CPC critical height ratio [0,1]";
         parameter nSI.Angle_deg rim_angle_x=80 "rim angle of the hyperboloid and heliostat field in the xOz plan in degree ]0,120?] ";
-        parameter nSI.Angle_deg rim_angle_y=-1 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree ]0,120?] ";
+        parameter nSI.Angle_deg rim_angle_y=80 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree ]0,120?] ";
         parameter Real secref_inv_eccen=0.6 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
         parameter SI.Length H_tower = 75 "Tower height";
         parameter Real fb=0.6 "factor to grow the field layout";
         parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
+        parameter nSI.Angle_deg secref_angle_deg=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
 
-    parameter SI.HeatFlowRate Q_in_rcv = 40e6;
+    parameter SI.HeatFlowRate Q_in_rcv = 50e6;
     // heliostat field
     parameter SI.Length W_helio = 6.1 "width of heliostat in m";
     parameter SI.Length H_helio = 6.1 "height of heliostat in m";
@@ -33,16 +34,19 @@ extends OpticalEfficiency;
     parameter SI.Length R1=15. "distance between the first row heliostat and the tower";
 
     //parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max=1";
-    parameter SI.Angle slope_error = 1e-3 "slope error of all reflective surfaces  in mrad";
+    parameter SI.Angle slope_error_bd = 1e-3 "slope error of all reflective surfaces  in mrad";
 
     // secondary concentrator, cpc and receiver
 
-    parameter SI.Length W_rcv=2.4 "Polygon receiver width";
-    parameter SI.Length H_rcv=5 "Polygon receiver length";
+    parameter SI.Length W_rcv=8 "Polygon receiver width";
+    parameter SI.Length H_rcv=8 "Polygon receiver length";
 
     parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
+    parameter Real n_H_rcv=40 "rendering of flux map on receiver";
 
-    parameter SI.Efficiency rho_beamdown = 0.95 "reflectivity of the secondary reflector (hyperboloid) and CPC, max=1";
+
+    parameter SI.Efficiency rho_secref = 0.95 "reflectivity of the secondary reflector (hyperboloid), max=1";
+    parameter SI.Efficiency rho_cpc = 0.95 "reflectivity of the CPC, max=1";
 
     parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
@@ -53,7 +57,7 @@ extends OpticalEfficiency;
 	parameter String pfunc = "run_simul" "Name of the Python functiuon";
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";
-        parameter Integer argc = 22 "Number of variables to be passed to the C function";
+        parameter Integer argc = 25 "Number of variables to be passed to the C function";
 
     parameter String tablefile(fixed=false);
 
@@ -73,9 +77,9 @@ extends OpticalEfficiency;
 
 initial algorithm
 tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "rim_angle_x", "rim_angle_y", "secref_inv_eccen",
-"H_tower", "fb", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error",
-"rho_beamdown", "cpc_nfaces"}, {cpc_theta_deg, cpc_h_ratio, rim_angle_x, rim_angle_y, secref_inv_eccen, H_tower, fb, Z_rcv, W_rcv,
-H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error, rho_beamdown, cpc_nfaces});
+"H_tower", "fb", "secref_angle_deg", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error_bd",
+"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv"}, {cpc_theta_deg, cpc_h_ratio, rim_angle_x, rim_angle_y, secref_inv_eccen, H_tower, fb, secref_angle_deg, Z_rcv, W_rcv,
+H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error_bd, rho_secref, rho_cpc, cpc_nfaces, n_H_rcv});
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

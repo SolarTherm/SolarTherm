@@ -45,15 +45,10 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
-		if pm.rim_angle_y<0.:
+                if pm.rim_angle_y is 0.:
 			pm.rim_angle_y=None
 		else:
 			pm.rim_angle_y=float(pm.rim_angle_y)
-
-		if pm.secref_inv_eccen<0.:
-			pm.secref_inv_eccen=None
-		else:
-			pm.secref_inv_eccen=float(pm.secref_inv_eccen)
 
 		pm.saveparam(casedir)
         # create the environment and scene
@@ -62,7 +57,7 @@ def run_simul(inputs={}):
 		bd=BD(latitude=pm.lat, casedir=casedir)
 
 		bd.receiversystem(receiver=pm.rcv_type, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.Z_rcv), rec_grid=int(pm.n_H_rcv), cpc_nfaces=int(pm.cpc_nfaces), cpc_theta_deg=float(pm.cpc_theta_deg), cpc_h_ratio=float(pm.cpc_h_ratio), cpc_nZ=float(pm.cpc_nZ),
-		rim_angle_x=float(pm.rim_angle_x), rim_angle_y = pm.rim_angle_y, aim_z=float(pm.H_tower), secref_inv_eccen=pm.secref_inv_eccen, rho_bd=float(pm.rho_beamdown), slope_error=float(pm.slope_error))
+                rim_angle_x=float(pm.rim_angle_x), rim_angle_y=pm.rim_angle_y, aim_z=float(pm.H_tower), secref_inv_eccen=float(pm.secref_inv_eccen), secref_angle_deg=float(pm.secref_angle_deg), rho_secref=float(pm.rho_secref), rho_cpc=float(pm.rho_cpc), slope_error=float(pm.slope_error_bd))
 
 		bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=int(pm.n_helios), R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
 
@@ -91,11 +86,12 @@ if __name__=='__main__':
 	cpc_theta_deg=20.
 	cpc_h_ratio=1.
 	rim_angle_x=80.
-	rim_angle_y=-1
+        rim_angle_y=80.
 	secref_inv_eccen=0.6
 	H_tower=75.
 	fb=0.7
 	Z_rcv=0.
+        secref_angle_deg=0.
     # fixed parameters
 	## Siumulation
 	num_rays=int(5e6)
@@ -105,7 +101,7 @@ if __name__=='__main__':
 	sunshape='buie'
 	crs=0.02
 	lat=-27.85 # Leinster (WA, AUS) degree
-	Q_in_rcv=40e6
+        Q_in_rcv=50e6
 	field_type = 'surround'
 	R1 = 15.
 	## Heliostats
@@ -114,15 +110,17 @@ if __name__=='__main__':
 	Z_helio=0.
 	## Beam-Down components: Receiver + Secondary Mirror + CPC
 	receiver='beam_down'
-	slope_error=1.e-3 # radian
-	rho_bd=0.95
-	W_rcv=2.4
-	H_rcv=5.
+        slope_error=1.e-3 # radian
+        rho_secref=0.95
+        rho_cpc=0.95
+        W_rcv=8.
+        H_rcv=8.
 	cpc_nfaces=4
+        n_H_rcv=40
 
 	inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'rim_angle_x': rim_angle_x, 'rim_angle_y': rim_angle_y, 'secref_inv_eccen': secref_inv_eccen,
-	'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'sunshape': sunshape, 'crs': crs,'lat': lat, 'Q_in_rcv': Q_in_rcv,
-	'field_type': field_type, 'R1': R1, 'W_helio': W_helio, 'H_helio': H_helio, 'Z_helio': Z_helio, 'rcv_type': receiver, 'slope_error': slope_error,
-	'rho_beamdown': rho_bd, 'cpc_nfaces': cpc_nfaces}
+        'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'secref_angle_deg': secref_angle_deg, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'sunshape': sunshape, 'crs': crs,'lat': lat, 'Q_in_rcv': Q_in_rcv,
+        'field_type': field_type, 'R1': R1, 'W_helio': W_helio, 'H_helio': H_helio, 'Z_helio': Z_helio, 'rcv_type': receiver, 'slope_error': slope_error, 'slope_error_bd': slope_error, 'n_H_rcv': n_H_rcv,
+        'rho_secref': rho_secref, 'rho_cpc': rho_cpc, 'cpc_nfaces': cpc_nfaces}
 
 	run_simul(inputs)
