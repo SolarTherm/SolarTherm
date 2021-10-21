@@ -17,12 +17,12 @@ pipwheel = env.Command('mytouch','setup.py',[
 env.Depends(pipwheel,initpy)
 env.Depends(pipwheel,otherpy)
 
-wheel = env.Glob('wheel/*.whl')
+wheel = env.Glob('wheel/solartherm-*.whl')
 
 env.Depends(wheel,pipwheel)
 
 pipinst = env.Command(
-	target = '$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py'
+	target = env.subst('$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py')
 	,source = wheel
 	,action = ['%s -m pip install --prefix=$PREFIX --upgrade $SOURCE'%(sys.executable,)]
 )

@@ -287,37 +287,45 @@ def check_tensorflow(ct):
 	ct.env.Append(CPPPATH=['$TF_CPPPATH'],LIBPATH=['$TF_LIBPATH'],LIBS=['tensorflow'])
 	runpath = 'PATH' if platform.system()=="Windows" else 'LD_LIBRARY_PATH'
 	ct.env['ENV'][runpath] = ct.env['ENV'].get(runpath,'') + os.pathsep + ct.env.subst('$TF_LIBPATH')
-	res, tfversion = ct.TryRun('''
+	src = '''
 #include <tensorflow/c/c_api.h>
 #include <stdio.h>
 int main() {
 	fprintf(stdout,"TensorFlow %s\\n",TF_Version());
 	return 0; 
 }
-	''', '.c')
-	for v in cv:
-		if cv[v] is None:
-			del ct.env[v]
-		else:
-			ct.env[v] = cv[v]
-	msg = 'no'
-	ct.env['HAVE_TF'] = False
-	if res:
-		versre = re.compile(r"^TensorFlow ([0-9]+)\.([0-9]+)\.(.*)$")
-		tfversion = tfversion.strip()
-		match = versre.match(tfversion)
-		if match:
-			tfmajor = int(match.group(1))
-			tfminor = int(match.group(2))
-			if tfmajor == 2 and tfminor >= 1:
-				ct.Result('%d.%d'%(tfmajor,tfminor))
-				ct.env['HAVE_TF'] = True
-				return True
-			msg = "bad version '%s'"%(tfversion)
-		else:
-			msg = "unrecognised version '%s'"%(tfversion)
-	ct.Result(msg)
-	return False
+	'''
+	if platform.system()=="Windows":
+		# bug in SCons, can't yet check version using TryRun on MSYS2.
+		res = ct.TryCompile(src,'.c')
+		ct.env['HAVE_TF'] = bool(res)
+		ct.Result(res)
+		return res
+	else:
+		res, tfversion = ct.TryRun(src,'.c')
+		for v in cv:
+			if cv[v] is None:
+				del ct.env[v]
+			else:
+				ct.env[v] = cv[v]
+		msg = 'no'
+		ct.env['HAVE_TF'] = False
+		if res:
+			versre = re.compile(r"^TensorFlow ([0-9]+)\.([0-9]+)\.(.*)$")
+			tfversion = tfversion.strip()
+			match = versre.match(tfversion)
+			if match:
+				tfmajor = int(match.group(1))
+				tfminor = int(match.group(2))
+				if tfmajor == 2 and tfminor >= 1:
+					ct.Result('%d.%d'%(tfmajor,tfminor))
+					ct.env['HAVE_TF'] = True
+					return True
+				msg = "bad version '%s'"%(tfversion)
+			else:
+				msg = "unrecognised version '%s'"%(tfversion)
+		ct.Result(msg)
+		return False
 
 conf = env.Configure(custom_tests={
 	'CS':check_solstice
