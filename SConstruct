@@ -87,16 +87,13 @@ vars.AddVariables(
 	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries',default_om_modelicapath,PathVariable.PathAccept)
 	,PathVariable(
 		'GLPK_PREFIX'
-		,"Installation prefix for GLPK"
-		,default_glpk_prefix)
+		,"Installation prefix for GLPK",default_glpk_prefix,PathVariable.PathAccept)
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
-	,PathVariable(
-		'TF_PREFIX'
-		,"Installation prefix for TensorFlow"
-		,default_tf_prefix)
-	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include")
-	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib")
+	,PathVariable('TF_PREFIX'
+		,"Installation prefix for TensorFlow",default_tf_prefix,,PathVariable.PathAccept)
+	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include",PathVariable.PathAccept)
+	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib",PathVariable.PathAccept)
 	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
