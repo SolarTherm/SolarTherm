@@ -1,4 +1,4 @@
-import os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
+import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
 import subprocess as sp
 colorama.init()
 
@@ -19,6 +19,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_glpk_prefix = default_prefix
+		default_tf_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
@@ -27,6 +28,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
 	default_glpk_prefix = "/usr"
+	default_tf_prefix = default_prefix
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
@@ -90,6 +92,12 @@ vars.AddVariables(
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
 	,PathVariable(
+		'TF_PREFIX'
+		,"Installation prefix for TensorFlow"
+		,default_glpk_prefix)
+	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include")
+	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib")
+	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
 		,default_dakota_prefix,PathVariable.PathAccept)	
@@ -122,7 +130,7 @@ Help(vars.GenerateHelpText(env))
 # CHECK FOR DAKOTA, SOLSTICE, OPENMODELICA, OPENMPI/MSMPI, correct PATH.
 
 def check_solstice(ct):
-	ct.Message('Checking for solstice...')
+	ct.Message('Checking for solstice... ')
 	try:
 		import solsticepy
 		solstice = solsticepy.find_prog('solstice')
@@ -141,7 +149,7 @@ def check_solstice(ct):
 		)
 	return True
 def check_dakota(ct):
-	ct.Message('Checking for DAKOTA...')
+	ct.Message('Checking for DAKOTA... ')
 	try:
 		# we already searched the path for DAKOTA, don't need to do it again
 		dakota = 'dakota'+('.exe' if platform.system()=="Windows" else '')
@@ -160,7 +168,7 @@ def check_dakota(ct):
 	)
 	return True
 def check_dakota_python(ct):
-	ct.Message("Checking for 'dakota.interfacing' Python module...")
+	ct.Message("Checking for 'dakota.interfacing' Python module... ")
 	dpy = Path(ct.env.subst('$DAKOTA_PYTHON'))
 	try:
 		assert dpy.exists()
@@ -183,7 +191,7 @@ def check_dakota_python(ct):
 	)
 	return True
 def check_omc(ct):
-	ct.Message("Checking for 'omc'...")
+	ct.Message("Checking for 'omc'... ")
 	# if our OM_PREFIX is correct, then OMC must be here:
 	omcp = 'omc'+('.exe' if platform.system()=="Windows" else '')
 	omc = Path(ct.env.subst('$OM_BIN'))/omcp
@@ -219,9 +227,9 @@ def check_omlibrary(ct):
 		ct.Result("Failed (%s)"%(str(e),))
 		return False
 	return True
-		
+
 def check_mpi(ct):
-	ct.Message("Checking for mpirun/mpiexec...")
+	ct.Message("Checking for mpirun/mpiexec... ")
 	mpirun = shutil.which(ct.env['MPIRUN'])
 	args = ['--version']
 	if platform.system()=="Linux":
@@ -271,6 +279,46 @@ def check_path(ct):
 	ct.Result('Does not contain $INSTALL_BIN')
 	return False
 
+def check_tensorflow(ct):
+	ct.Message('Checking Tensorflow... ')
+	cv = {}
+	for v in ['CPPPATH','LIBPATH','LIBS','ENV']:
+		cv[v] = ct.env.get(v)
+	ct.env.Append(CPPPATH=['$TF_CPPPATH'],LIBPATH=['$TF_LIBPATH'],LIBS=['tensorflow'])
+	runpath = 'PATH' if platform.system()=="Windows" else 'LD_LIBRARY_PATH'
+	ct.env['ENV'][runpath] = ct.env['ENV'].get(runpath,'') + os.pathsep + ct.env.subst('$TF_LIBPATH')
+	res, tfversion = ct.TryRun('''
+#include <tensorflow/c/c_api.h>
+#include <stdio.h>
+int main() {
+	fprintf(stdout,"TensorFlow %s\\n",TF_Version());
+	return 0; 
+}
+	''', '.c')
+	for v in cv:
+		if cv[v] is None:
+			del ct.env[v]
+		else:
+			ct.env[v] = cv[v]
+	msg = 'no'
+	ct.env['HAVE_TF'] = False
+	if res:
+		versre = re.compile(r"^TensorFlow ([0-9]+)\.([0-9]+)\.(.*)$")
+		tfversion = tfversion.strip()
+		match = versre.match(tfversion)
+		if match:
+			tfmajor = int(match.group(1))
+			tfminor = int(match.group(2))
+			if tfmajor == 2 and tfminor >= 1:
+				ct.Result('%d.%d'%(tfmajor,tfminor))
+				ct.env['HAVE_TF'] = True
+				return True
+			msg = "bad version '%s'"%(tfversion)
+		else:
+			msg = "unrecognised version '%s'"%(tfversion)
+	ct.Result(msg)
+	return False
+
 conf = env.Configure(custom_tests={
 	'CS':check_solstice
 	, 'DAK':check_dakota
@@ -279,12 +327,14 @@ conf = env.Configure(custom_tests={
 	,'OMLib':check_omlibrary
 	,'MPI':check_mpi
 	,'PATH':check_path
+	,'TF':check_tensorflow
 })
 if not conf.CS():
 	print(REDWARN("Unable to locate 'solstice'"))
 	Exit(1)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
+conf.TF()
 if not conf.OMC() or not conf.OMLib():
 	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
@@ -297,12 +347,11 @@ env = conf.Finish()
 #---------------------------------------------------------------------------------------------------
 
 # some tricks required for Ubuntu 18.04...
-import platform
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
-    import distro
-    if distro.id() == 'ubuntu' and distro.version() == '18.04':
-        configcmd = 'python$PYVERSION-config --libs --cflags'
+	import distro
+	if distro.id() == 'ubuntu' and distro.version() == '18.04':
+		configcmd = 'python$PYVERSION-config --libs --cflags'
 env['PKGCONFIGPYTHON'] = configcmd
 
 #print("os.environ['PATH']=",os.environ.get('PATH'))
@@ -356,8 +405,6 @@ env.SConscript(
 
 #---------------------------------------------------------------------------------------------------
 # Install (nearly) all files in 'SolarTherm' folder
-
-import re, os, sys
 
 stfiles = []
 fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order)$')

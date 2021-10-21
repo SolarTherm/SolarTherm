@@ -4,16 +4,18 @@ import sys
 setuppy = env.Substfile('setup.py.in')
 
 initpy = env.Substfile('solartherm/__init__.py.in')
+otherpy = Glob('scripts/*') + Glob('solartherm/*.py')
 
-
+# run 'pip' to build the SolarTherm package. we install it as a separate step.
 pipwheel = env.Command('mytouch','setup.py',[
 		Delete('wheel')
 		,Mkdir('wheel')
 		,'%s -m pip wheel --wheel-dir=wheel .' % (sys.executable,)
-		,'touch ../mytouch'
+		,'touch mytouch'
 	],chdir=True
 )
 env.Depends(pipwheel,initpy)
+env.Depends(pipwheel,otherpy)
 
 wheel = env.Glob('wheel/*.whl')
 
@@ -24,5 +26,8 @@ pipinst = env.Command(
 	,source = wheel
 	,action = ['%s -m pip install --prefix=$PREFIX --upgrade $SOURCE'%(sys.executable,)]
 )
+
+# FIXME we still need to implement a smart way of *uninstall* the pip package.
+# for case of 'scons -c install'.
 
 # vim: ts=4:sw=4:noet:tw=80
