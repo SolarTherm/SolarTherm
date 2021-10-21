@@ -94,7 +94,7 @@ vars.AddVariables(
 	,PathVariable(
 		'TF_PREFIX'
 		,"Installation prefix for TensorFlow"
-		,default_glpk_prefix)
+		,default_tf_prefix)
 	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include")
 	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib")
 	,PathVariable(
