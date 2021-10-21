@@ -284,6 +284,12 @@ def check_tensorflow(ct):
 	cv = {}
 	for v in ['CPPPATH','LIBPATH','LIBS','ENV']:
 		cv[v] = ct.env.get(v)
+	def restore_env(env):
+		for v in cv:
+			if cv[v] is None:
+				del env[v]
+			else:
+				env[v] = cv[v]
 	ct.env.Append(CPPPATH=['$TF_CPPPATH'],LIBPATH=['$TF_LIBPATH'],LIBS=['tensorflow'])
 	runpath = 'PATH' if platform.system()=="Windows" else 'LD_LIBRARY_PATH'
 	ct.env['ENV'][runpath] = ct.env['ENV'].get(runpath,'') + os.pathsep + ct.env.subst('$TF_LIBPATH')
@@ -300,14 +306,11 @@ int main() {
 		res = ct.TryCompile(src,'.c')
 		ct.env['HAVE_TF'] = bool(res)
 		ct.Result(res)
+		restore_env(ct.env)
 		return res
 	else:
 		res, tfversion = ct.TryRun(src,'.c')
-		for v in cv:
-			if cv[v] is None:
-				del ct.env[v]
-			else:
-				ct.env[v] = cv[v]
+		restore_env(ct.env)
 		msg = 'no'
 		ct.env['HAVE_TF'] = False
 		if res:
