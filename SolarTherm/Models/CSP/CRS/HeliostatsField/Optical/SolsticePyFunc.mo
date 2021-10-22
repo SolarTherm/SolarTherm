@@ -1,5 +1,4 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField.Optical;
-
 function SolsticePyFunc
   input String ppath;
   input String pname;
@@ -16,4 +15,3 @@ function SolsticePyFunc
   external result = RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
     annotation(Library="st_solsticepy");
 end SolsticePyFunc;
-

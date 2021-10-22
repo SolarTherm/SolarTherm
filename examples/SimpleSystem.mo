@@ -72,6 +72,7 @@ model SimpleSystem
 			10*A_col // field cleaning/maintenance
 			"Cost per year";
 	parameter Real C_prod(unit="$/J/year") = 0 "Cost per production per year";
+
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Integer t_life(unit="year") = 20 "Lifetime of plant";
 	parameter Integer t_cons(unit="year") = 1 "Years of construction";
@@ -302,6 +303,6 @@ equation
 	end if;
 
 	der(E_elec) = P_elec;
-	der(R_spot) = P_elec*pri.price;
+	der(R_sc
 	annotation(experiment(StartTime=0.0, StopTime=31536000.0, Interval=60, Tolerance=1e-06));
 end SimpleSystem;

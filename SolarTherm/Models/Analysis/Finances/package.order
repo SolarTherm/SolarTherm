@@ -19,3 +19,5 @@ nLabour_m_sg_ft
 nLabour_m_sg_msr
 resistiveHeaterCost_P
 Money_USD
+particleBinCost
+heliostat_specific_cost_w_spd

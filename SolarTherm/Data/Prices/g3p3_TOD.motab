@@ -1,7 +1,5 @@
 #1
 double prices(8760,2)
-#TABLELABELS,time,tod
-#TABLEUNITS,s,1
 0,0
 3600,0
 7200,0

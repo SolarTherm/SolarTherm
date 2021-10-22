@@ -1,8 +1,10 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
 model SimpleHeatExchanger "A simple counterflow heat exchanger model based on LMTD method"
 	extends SolarTherm.Interfaces.Models.HeatExchangerFluid;
+
 	replaceable package Medium_A = Media.Sodium.Sodium_pT "Medium props for Sodium";
     replaceable package Medium_B = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
+
 
 	import CN = Modelica.Constants;
 	import SI = Modelica.SIunits;
@@ -47,7 +49,6 @@ equation
 	T_a_in = Medium_A.temperature(state_a_in);
 	T_b_in = Medium_B.temperature(state_b_in);
 	
-
 	dT_approach = T_a_out - T_b_in;
 	Q_flow = port_a_in.m_flow*(inStream(port_a_in.h_outflow) - port_a_out.h_outflow);
 	Q_flow = U*A*LMTD;
@@ -58,13 +59,18 @@ equation
 	port_b_out.p = pcold;
 
 	// Shouldn't have reverse flows
+
 	port_a_in.h_outflow = 0.0;
 	port_b_in.h_outflow = 0.0;
 
 	annotation (Documentation(info="<html>
 </html>", revisions="<html>
 <ul>
+<<<<<<< HEAD
 <li>A. Shirazi:<br>Released first version. </li>
+=======
+<li>A. Shirazi and A. Fontalvo:<br>Released first version. </li>
+>>>>>>> ParticleSystem1D
 </ul>
 </html>"));
 

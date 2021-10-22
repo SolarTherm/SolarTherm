@@ -1,4 +1,5 @@
 Import('env')
+import shutil, os
 
 senv = env.Clone()
 senv.Append(
@@ -38,6 +39,9 @@ penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
+#Adding st_solsticepy_windy library for particle system - 17 October 2021 -- Philipe
+lib5 = penv.SharedLibrary('st_solsticepy_windy',['run_py_func_windy.c'])
+
 # GLPK-linked bits...
 genv = senv.Clone()
 genv.Append(
@@ -56,14 +60,79 @@ lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
 genv.Depends(lib3,lib4)
 
-shlibs = [lib1,lib4,lib2,lib3]
-pysrcs = ['st_test_ext.py','run_solstice.py']
+#Adding st_linprog_particle library for particle system - 17 October 2021 -- Philipe
+lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linprog_particle/linprog.c'])
+
+#Tensorflow linked bits 19 October 2021 -- Philipe
+#Clone the standard + python environment
+tenv = penv.Clone()
+
+#Adding tensorflow
+tenv.Append(
+	CPPPATH = ['$TF_CPPPATH']
+	,LIBS = ["tensorflow"]
+	,LIBPATH = ["$TF_LIBPATH"]
+)
+conf = tenv.Configure()
+if not conf.CheckHeader('c_api.h'):
+	print("Unable to link to TensorFlow (required for surrogate models)")
+	Exit(1)
+tenv = conf.Finish()
+
+#Adding st_surrogate_single_output library for particle system - 19 October 2021 -- Philipe
+lib7 = tenv.SharedLibrary('st_surrogate_single_output',['st_surrogate.c'])
+
+tenv_mul = tenv.Clone()
+lib8 = tenv.SharedLibrary('st_surrogate_multi_output',['tf.c'])
+
+
+#On the fly surrogate bits 21 October 2021 -- Philipe
+fenv = tenv.Clone() #Python + tensorflow already included
+fenv.Append(
+	CPPPATH = ['$TF_CPPPATH']
+	,LIBS = ["m","gsl","gslcblas","dl","ssc"] #Original libs are Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"} however since python2.6 and TF are already in tenv, so it can be passed
+	,LIBPATH = ["$TF_LIBPATH","./SSC/"]
+)
+
+lib9 = fenv.SharedLibrary('st_surrogate_on_the_fly',['st_on_the_fly_surrogate.c'])
+
+#Appending the libs
+shlibs = [lib1, lib4, lib2, lib5, lib3, lib6, lib7, lib8, lib9]
+pysrcs = [
+	'st_test_ext.py',
+	'run_solstice.py',
+	'run_solstice_windy.py',
+	'gatherdata.py',
+	'libgatherdata.py',
+	'gen_OD_matrix.py',
+	'python_lib.py',
+	'trainANN.py',
+	'gen_receiver_off_design.py',
+	'trainANNReceiver.py',
+	'libANN.py'
+]
 
 # this is the location that st_simulate etc will use
 env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 
 # this is the location that you probably want to use with OMEdit
 # TODO examine option of placing these things in ~/.openmodelica/binaries ...?
-env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs)
+env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs) 
+
+#Install all the Tensorflow files
+owd = os.getcwd()
+
+folders = ['configurations','neural-network','simulation', 'training_data']
+
+os.chdir("../../")
+cwd = os.getcwd()
+
+for f in folders:
+	dirname = "%s/%s"%(owd,f)
+	dst = "%s/SolarTherm/Resources/Library/%s"%(cwd,f)
+	print("Copying %s to %s for surrogate modelling"%(dirname, dst))
+	shutil.copytree(dirname, dst,dirs_exist_ok=True)
+
+os.chdir(owd)
 
 # vim: ts=4:sw=4:noet:tw=123:syntax=python

@@ -1,7 +1,5 @@
 #1
 double prices(8760,2)
-#TABLELABELS,time,price
-#TABLEUNITS,s,AUD
 0,44.04
 3600,37.1
 7200,20.41

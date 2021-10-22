@@ -10,14 +10,17 @@ extends OpticalEfficiency;
     "Table angles"
         annotation (Dialog(group="Table data interpretation"));
 
+
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
 	parameter String pname = "run_solstice" "Name of the Python script";
 	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo") "the directory for saving the results"; 
+
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+
 
 	parameter Integer argc =19 "Number of variables to be passed to the C function";
 
@@ -56,6 +59,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{12,12},{32,32}})));
   Modelica.Blocks.Sources.RealExpression angle2_input(y=to_deg(angle2))
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
+
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 

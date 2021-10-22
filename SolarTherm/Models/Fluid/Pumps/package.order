@@ -2,3 +2,11 @@ EnergyPump
 IdealPump
 PumpSimple
 Pump_PressureLosses
+ParticleLift
+LiftSimple
+PumpSimple_EqualPressure
+LiftEqualPressure
+SkipHoist
+BucketModel
+SingleBucketModel
+DoubleBucketModel

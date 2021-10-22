@@ -1,6 +1,7 @@
 within SolarTherm.Models.Fluid.Sources;
 model FluidSink "Infinite fluid sink"
  replaceable package Medium = Modelica.Media.Interfaces.PartialMedium;
+
  Modelica.Fluid.Interfaces.FluidPort_a port_a(
   redeclare package Medium=Medium,
   m_flow(min=0)) annotation (Placement(transformation(extent={{-110,-12},{-90,8}},  rotation=

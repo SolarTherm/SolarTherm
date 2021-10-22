@@ -29,5 +29,4 @@ m_flow = Q_input / (Util.cp_T(T_mea) * abs(T_ref-T_mea));
 
 end if;
  
- 
 end IdealMassflowBlockCalculation;

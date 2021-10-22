@@ -10,6 +10,14 @@ protected
 
 algorithm
 	// Based on inverse function of h(T).
+	// Philipe Gunawan = Make another function of T as a function of h and I found that T(h) = -e-10 * h^2 + 0.001*h + 310.62, I got it using plot in Excel with deviation calue R of 0.999
+	// I bound the function to make it more robust and wont yield invalid root
+    if h < c then
+    	T := 0;    
+    else
 	T := (((b+1)/a) * (h-c)) ^ (1.0/(b+1));
+	//T:=-0.0000000001 * h^2 + 0.001*h + 310.62;
+	//T:= 0.001*h + 310.62;
+	end if;
 	annotation(derivative=T_h_der);
 end T_h;

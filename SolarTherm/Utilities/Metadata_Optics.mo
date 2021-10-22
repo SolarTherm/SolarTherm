@@ -5,6 +5,7 @@ function Metadata_Optics
     import Modelica.Utilities.Strings;
     input String file;
     output Real[8] meta;
+
   protected
     String line;
     Integer i;

@@ -400,3 +400,4 @@ def st_nsga2(objfunc, obj_n, par_b, par_n, scale, offset, dm_method, decisionmak
 
 
 
+

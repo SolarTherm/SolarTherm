@@ -1,9 +1,11 @@
 within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsField
+
+
   extends Interfaces.Models.Heliostats;
   parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
   parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
-  parameter Integer n_h=1 "Number of heliostats" annotation(Dialog(group="Technical data"));
+  parameter Real n_h=1.0 "Number of heliostats" annotation(Dialog(group="Technical data"));
   parameter SI.Area A_h=4 "Heliostat's Area" annotation(Dialog(group="Technical data"));
   parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
   replaceable model Optical =
@@ -27,11 +29,15 @@ model HeliostatsField
   parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 
   parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
-  parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
-
+  parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat (W)" annotation(Dialog(group="Parasitic loads"));
+  
+  SI.Efficiency nu;
   Optical optical(hra=solar.hra, dec=solar.dec, lat=lat);
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
+   
+  SI.HeatFlowRate Q_total_loses_optical;
+  SI.Energy E_total_loses_optical (final start=0, fixed=true, displayUnit="MW.h");
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
         transformation(extent={{-20,-20},{20,20}},
@@ -60,6 +66,11 @@ model HeliostatsField
   Real damping;
 //protected
   Boolean on_hf;
+
+  Modelica.Blocks.Interfaces.RealOutput Q_incident annotation(
+    Placement(transformation(extent = {{94, -18}, {130, 18}})));
+  Modelica.Blocks.Interfaces.BooleanInput on_hopper (start=false) annotation(
+    Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 protected
   SI.Power W_loss1;
   SI.Power W_loss2;
@@ -74,10 +85,17 @@ protected
     "Needed to connect to conditional connector";
   parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
   parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
-  parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  parameter SI.HeatFlowRate Q_defocus =nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 initial equation
    on_internal=Q_raw>Q_start;
+algorithm
+  when Q_raw>Q_start then
+    on_internal:=true;
+  elsewhen Q_raw<Q_min then
+    on_internal:=false;
+  end when;
 equation
+  nu = optical.nu;
   if use_on then
     connect(on,on_internal);
   end if;
@@ -93,21 +111,19 @@ equation
   end if;
 
   on_hf=(ele>ele_min) and
-                     (Wspd_internal<Wspd_max);
+                     (Wspd_internal<Wspd_max) and (on_hopper==true);
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
-
-  when Q_raw>Q_start then
-    on_internal=true;
-  elsewhen Q_raw<Q_min then
-    on_internal=false;
-  end when;
+  
+  Q_total_loses_optical = max(((n_h * A_h * solar.dni) - Q_net),0) "PG";
+  
+  der(E_total_loses_optical) = -(Q_total_loses_optical) "PG";
 
   Q_net= if on_internal then (if defocus_internal then min(Q_defocus,Q_raw) else Q_raw) else 0;
 
   heat.Q_flow= -Q_net;
+  Q_incident = Q_net;
   elo=SolarTherm.Models.Sources.SolarFunctions.eclipticLongitude(solar.dec);
-//   optical.hra=solar.hra;
-//   optical.dec=solar.dec;
+
 
   ele=SolarTherm.Models.Sources.SolarFunctions.elevationAngle(
     solar.dec,

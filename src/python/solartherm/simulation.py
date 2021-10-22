@@ -398,3 +398,4 @@ class Simulator(object):
 		assert os.access(self.res_fn,os.R_OK)
 
 # vim: ts=4:sw=4:noet:tw=80
+

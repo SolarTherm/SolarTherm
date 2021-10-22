@@ -2,10 +2,11 @@ TankDispatch
 SyngasTankDispatch
 Trigger
 Level2Logic
-PID_AW_reset3
 ReceiverControl
 PowerBlockControl
+PowerBlockControl_particle
 StartUpLogic5
+StartUpLogic5_particle
 HX_Control
 Switch2
 IdealMassflowBlockCalculation
@@ -16,3 +17,9 @@ m_flow_calculations_simple
 HX_Control_new_alg
 m_flow_calculations_simple_alg
 m_flow_calculations_simple_2
+SimpleReceiverControl
+PID_AW_reset3
+Interpolation3D
+TestLinprog
+StartUpLogic6
+ReactorControl

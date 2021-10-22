@@ -19,6 +19,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_glpk_prefix = default_prefix
+		default_tf_prefix = default_prefix #Added by Philipe 21 October 2021
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
@@ -27,6 +28,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
 	default_glpk_prefix = "/usr"
+	default_tf_prefix = "/usr" #Added by Philipe 21 October 2021
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
@@ -87,8 +89,14 @@ vars.AddVariables(
 		'GLPK_PREFIX'
 		,"Installation prefix for GLPK"
 		,default_glpk_prefix)
+	,PathVariable(
+		'TF_PREFIX'  #Added by Philipe 21 October 2021
+		,"Installation prefix for TensorFlow" #Added by Philipe 21 October 2021
+		,default_tf_prefix) #Added by Philipe 21 October 2021
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
+	,PathVariable('TF_CPPPATH' ,"Location where TF headers are located" ,"$TF_PREFIX/include/tensorflow/c") #Added by Philipe 21 October 2021. Default in my sys is /usr/local/... s.t. I copy to /usr/include
+	,PathVariable('TF_LIBPATH' ,"Location where TF libraries are located" ,"$TF_PREFIX/lib") #Added by Philipe 21 October 2021. Default in my sys is /usr/local/... s.t. I copy to /usr/lib
 	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
@@ -360,7 +368,7 @@ env.SConscript(
 import re, os, sys
 
 stfiles = []
-fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order)$')
+fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order)$') #Update this to include *pb *index etc.
 #print("test.mo:",fre.match('test.mo'))
 #sys.exit(1)
 def fmatch(root,fns):

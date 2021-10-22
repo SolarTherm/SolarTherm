@@ -1,8 +1,4 @@
 within SolarTherm.Utilities;
-
-// FIXME rename this to OptDispatch or similar... name is not representative.
-// FIXME place this in a folder near other dispatch strategy routines...
-
 function LinProgFunc
     import SolarTherm.Utilities.Tables.STMotab;
 
@@ -26,9 +22,6 @@ function LinProgFunc
             ,Ahelio
         );
     annotation(Library="st_linprog");
-// annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-//            Include="#include \"st_linprog.c\"",
-//            Library = "glpk");
 
 end LinProgFunc;
 
