@@ -17,7 +17,7 @@ def set_param(inputs={}):
 	'''
 
 	pm=Parameters()
-	for k, v in inputs.iteritems():
+	for k, v in inputs.items():
 		setattr(pm, k, v)
 
 	pm.dependent_par()
@@ -33,7 +33,7 @@ def run_simul(inputs={}):
 
 	print('')
 	print('Test inputs')
-	for k, v in inputs.iteritems():
+	for k, v in inputs.items():
 		print(k, '=', getattr(pm, k))
 	print('')
 	print('')
@@ -119,7 +119,8 @@ def run_simul(inputs={}):
 	print('')
 	print('total time %.2f'%((end-start)/60.), 'min')
 	np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
-
+	
+	tablefile=tablefile.encode('utf-8')
 	return tablefile
 
 

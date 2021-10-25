@@ -368,7 +368,7 @@ env.SConscript(
 import re, os, sys
 
 stfiles = []
-fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order)$') #Update this to include *pb *index etc.
+fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order|pb|index|data.*|index)$') #Update this to include *pb *index etc.
 #print("test.mo:",fre.match('test.mo'))
 #sys.exit(1)
 def fmatch(root,fns):

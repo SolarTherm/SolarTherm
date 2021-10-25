@@ -30,7 +30,7 @@ model StartUpLogic5_particle
   discrete Modelica.SIunits.Time t_on;
   
   /*This part is only active when scheduler is on*/
-  parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/sch_PG.motab");
+  parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/simple_schedule.motab");
   parameter Boolean set_scheduler = false;
   
   Modelica.Blocks.Types.ExternalCombiTable1D schedule_table = Modelica.Blocks.Types.ExternalCombiTable1D(

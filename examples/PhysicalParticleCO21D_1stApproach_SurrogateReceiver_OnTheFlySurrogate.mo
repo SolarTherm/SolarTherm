@@ -41,7 +41,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
-  parameter Boolean set_scheduler = true "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
+  parameter Boolean set_scheduler = false "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
   
   //****************************** Importing medium and external files
 
@@ -172,7 +172,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   
   parameter String saved_model_dir_rcv = 
                 Modelica.Utilities.Files.loadResource(
-                  "modelica://SolarTherm/Resources/Library/neural-network/trained-model/ParticleReceiver/surrogate_receiver_constant_T_out_800"
+                  "modelica://SolarTherm/Data/SurrogateModels/ParticleReceiver/surrogate_receiver_constant_T_out_800"
                 ) 
   "[RCV] path to which the static particle receiver surrogate model is stored";
   
