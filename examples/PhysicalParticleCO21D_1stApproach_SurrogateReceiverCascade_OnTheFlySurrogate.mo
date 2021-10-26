@@ -247,7 +247,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
   parameter Real y_min_rcv = 0.2329207794;
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
-              "modelica://SolarTherm/Resources/Include/neural-network/trained-model/ParticleReceiver/CascadeReceiver/surrogate_receiver_2"
+              "modelica://SolarTherm/Data/SurrogateModels/ParticleReceiver/CascadeReceiver/surrogate_receiver_2"
               )
   "[RCV] path to which the static particle receiver surrogate model is stored - Updated model MSE_test = 0.0067, old-model MSE = 0.08";
   
@@ -264,7 +264,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
     ***************************************************************************************************************/
   //******************************** OnTheFlySurrogate PB Simulation Set-up
   parameter String base_path = Modelica.Utilities.Files.loadResource(
-                                              "modelica://SolarTherm/Resources/Include"
+                                              "modelica://SolarTherm/Resources/Library"
                               ) 
   "[PB] Base path that points to which folder the C program located";
   

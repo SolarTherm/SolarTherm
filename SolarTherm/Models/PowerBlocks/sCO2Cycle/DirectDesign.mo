@@ -128,7 +128,7 @@ package DirectDesign
 
   model Turbine "OD model of a turbine"
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide;
     import SI = Modelica.SIunits;
     Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-60, 20}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-60, 20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -215,7 +215,7 @@ package DirectDesign
 
   model Exchanger
       extends SolarTherm.Media.CO2.PropCO2;
-      replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
+      replaceable package MedPB = SolarTherm.Media.CarbonDioxide;
       replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
       import SI = Modelica.SIunits;
       import Modelica.SIunits.Conversions.*;
@@ -371,7 +371,7 @@ package DirectDesign
   model Cooler
     extends SolarTherm.Media.CO2.PropCO2;
     import SI = Modelica.SIunits;
-    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide;
     Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium, m_flow.start = P_nom_des / 10 ^ 5) annotation(
       Placement(visible = true, transformation(origin = {0, -70}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-2.22045e-16, -70}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_b port_b(redeclare package Medium = Medium) annotation(
@@ -466,7 +466,7 @@ package DirectDesign
 
   model HeatRecuperatorDTAve "The heat recuperator is subdivised in N_q segments in order to accurately represent the CO2 properties variation."
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide;
     import SI = Modelica.SIunits;
   
     Modelica.Fluid.Interfaces.FluidPort_a from_comp_port_a(redeclare package Medium = Medium) annotation(
@@ -588,7 +588,7 @@ package DirectDesign
     extends SolarTherm.Media.CO2.PropCO2;
     import SI = Modelica.SIunits;
     import CV = Modelica.SIunits.Conversions;
-    replaceable package Medium = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package Medium = SolarTherm.Media.CarbonDioxide;
     
     Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = Medium) annotation(
       Placement(visible = true, transformation(origin = {-60, -40}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-60, -40}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -1422,7 +1422,7 @@ package DirectDesign
     end recompPB;*/
 
   model FlowSplitter
-    replaceable package MedRec = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package MedRec = SolarTherm.Media.CarbonDioxide;
     parameter Real gamma;
     Real gamma_var;
     Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium = MedRec) annotation(
@@ -1447,7 +1447,7 @@ package DirectDesign
 
   model FlowMixer "This model is useful for the recompression cycle cycle, as it allows to mix two different fluid. The pressure in both should entrance should be the same; in case it is not, we ponderated it by the mass flows: as it is the same molar mass, the resulting pressure should look like that."
     extends SolarTherm.Media.CO2.PropCO2;
-    replaceable package MedRec = SolarTherm.Media.CarbonDioxide_ph;
+    replaceable package MedRec = SolarTherm.Media.CarbonDioxide;
     Modelica.Fluid.Interfaces.FluidPort_a first_port_a(redeclare package Medium = MedRec) annotation(
       Placement(visible = true, transformation(origin = {0, 60}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-80, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
     Modelica.Fluid.Interfaces.FluidPort_a second_port_a(redeclare package Medium = MedRec) annotation(
@@ -2261,7 +2261,7 @@ package DirectDesign
   
   model Exchanger_JPidea
       extends SolarTherm.Media.CO2.PropCO2;
-      replaceable package MedPB = SolarTherm.Media.CarbonDioxide_ph;
+      replaceable package MedPB = SolarTherm.Media.CarbonDioxide;
       replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
       import SI = Modelica.SIunits;
       import Modelica.SIunits.Conversions.*;
