@@ -5,7 +5,7 @@
 #include "tensorflow/c/c_api.h"
 #include <dirent.h>
 #include <Python.h>
-#include "sscapi.h"
+#include "./sscapi.h"
 #define limitSize 1000000
 
 #include "on_the_fly_surrogate/ontheflysurrogate.h" 
