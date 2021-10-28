@@ -9,11 +9,12 @@ from solartherm import postproc
 
 import os
 import shutil
+import cleantest
 #@pytest.mark.skip(reason="Broken?")
 
 class TestParticleSystem1DSurrogate(unittest.TestCase):
 	def setUp(self):
-		fn = './PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo'
+		fn = '../examples/PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo'
 		sim = simulation.Simulator(fn)
 
 		#Compiling the model using old front end
@@ -22,7 +23,7 @@ class TestParticleSystem1DSurrogate(unittest.TestCase):
 		sim.compile_sim(args=['-s'])
 	
 		#Copy the OELT
-		shutil.copy("./OELT_ParticleSystem1D/OELT_Solstice.motab",".")
+		shutil.copy("./OELT_ParticleSystem1D_SingleAperture/OELT_Solstice.motab",".")
 	
 		SM=1.5
 		t_storage=14.0 
@@ -67,9 +68,10 @@ class TestParticleSystem1DSurrogate(unittest.TestCase):
 		LCOE = self.perf[1]
 		CF = self.perf[2]
 
-		assert(abs(LCOE - 97.18454991791468) <0.01) #LCOE
-		assert(abs(EPY - 295234.3265303934) < 0.01) #EPY
-		assert(abs(CF - 33.70254869068418) < 0.01) #CF
+		assert(abs(LCOE - 95.88000713637389) <0.01) #LCOE
+		assert(abs(EPY - 299381.0295875197) < 0.01) #EPY
+		assert(abs(CF - 34.17591661957987) < 0.01) #CF
+		cleantest.clean('PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate')
 #		self.assertAlmostEqual(self.perf[0], 349.78, 2) # epy
 #		self.assertAlmostEqual(self.perf[1], 97.26, 2) # LCOE
 #		self.assertAlmostEqual(self.perf[2], 39.93, 2) # Capacity factor
