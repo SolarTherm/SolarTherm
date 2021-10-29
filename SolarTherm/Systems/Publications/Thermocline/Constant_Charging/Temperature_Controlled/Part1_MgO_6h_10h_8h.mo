@@ -1,23 +1,60 @@
 within SolarTherm.Systems.Publications.Thermocline.Constant_Charging.Temperature_Controlled;
 
 model Part1_MgO_6h_10h_8h
+  function sigmoid_temperature
+    /*Source: https://stackoverflow.com/questions/43213069/fit-bipolar-sigmoid-python*/
+    input Integer N_f "Tank discretisation";
+    input Modelica.SIunits.Temperature T_max "Max temperature in the tank";
+    input Modelica.SIunits.Temperature T_min "Min temperature in the tank";
+    input Real X_offset "The smaller the offset, the more sigmoid moving to the right";
+    input Real slope "The smaller the offset, the more sigmoid moving to the right";
+    input Real delta_T "Temperature difference between filler and fluid";
+    output Modelica.SIunits.Temperature[N_f] T_tank;
+  algorithm
+    for i in 1:N_f loop
+      T_tank[i] := (T_max - T_min) / (1 + Modelica.Math.exp(-1 * slope * (i - X_offset))) + T_min - delta_T;
+    end for;
+  end sigmoid_temperature;
+
+  //***********************Sampling parameters
+  parameter Boolean gather_data = true "If true then change into sampling mode, if false change into constant charging discharging";
+  parameter SI.Temperature T_max_sampling = 510 + 273.15 "Maximum temperature at the storage during the sampling";
+  parameter SI.Temperature T_min_sampling = 510 + 273.15 "Minimum temperature at the storage during the sampling";
+  parameter Real X_offset = 50 "Temperature difference between fluid and filler";
+  parameter Real slope = 1 "Temperature difference between fluid and filler";
+  parameter SI.TemperatureDifference delta_T = 0 "Temperature difference between fluid and filler";
+  parameter Real mdot = -1800.9737199368346;
+  parameter SI.MassFlowRate mdot_f(fixed = false);
+  // = 1000 "Positive -> discharge, negative -> charge";
+  parameter SI.Temperature T_recv_sampling = 720 + 273.15 "Receiver outlet temp";
+  parameter SI.Temperature T_PB_sampling = 510 + 273.15 "PB outlet temp";
+  parameter SI.Temperature T_out_recv(fixed=false);
+  parameter SI.Temperature T_out_PB(fixed=false);
+  parameter Boolean regression_sigmoid = false "If true perform regression by calling python function";
+  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Absolute path to the Python script";
+  parameter String pname = "fit_sigmoid" "Name of the Python script";
+  parameter String pfunc = "fit" "Name of the Python function";
+  //***********************Generate both fluid and filler surface temperature at the initial condition
+  parameter Modelica.SIunits.Temperature[N_f] T_fluid_init = sigmoid_temperature(N_f, T_max_sampling, T_min_sampling, X_offset, slope, 0);
+  parameter Modelica.SIunits.Temperature[N_f] T_filler_init = sigmoid_temperature(N_f, T_max_sampling, T_min_sampling, X_offset, slope, delta_T);
   //Part one of the documentation studies effect of mesh refinement on output.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
-  package Medium = SolarTherm.Media.Sodium.Sodium_pT;
+  package Medium = SolarTherm.Media.Air.Air_amb_p;
   //Do not change
-  package Fluid_Package = SolarTherm.Materials.Sodium;
+  package Fluid_Package = SolarTherm.Materials.Air_Table;
   //Do not change
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
   //Design Parameters
   //Fixed
-  parameter Integer Correlation = 3 "Conservative";
+  parameter Integer Correlation = 1 "Conservative";
   parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
   parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_amb_design = 298.15;
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
@@ -25,36 +62,43 @@ model Part1_MgO_6h_10h_8h
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
-  parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
+  parameter SI.Power P_name = 120.0e6 "Nameplate power block";
+  parameter SI.Energy E_max = 10 * 3600 * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
+  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
   parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
-  parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   parameter Real ar = 2.0 "Tank aspect ratio";
+  //******************** Stored energy
+  parameter SI.Energy E_min = thermocline_Tank.Tank_A.rho_p * (1 / 6) * CN.pi * d_p ^ 3 * (thermocline_Tank.Tank_A.N_spheres_total / N_f) * sum(SolarTherm.Materials.MgO_Constant.h_Tf(fill(T_min, N_f), 0)) "Minimum level of energy stored in the storage tank is when all the filler temp equals to T_min";
+  parameter SI.Energy E_init = thermocline_Tank.Tank_A.rho_p * (1 / 6) * CN.pi * d_p ^ 3 * (thermocline_Tank.Tank_A.N_spheres_total / N_f) * sum(SolarTherm.Materials.MgO_Constant.h_Tf(T_filler_init, 0)) - E_min "The stored energy at t = 0, relative to E_min";
   //Derived
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
   parameter SI.MassFlowRate m_charge = E_max / (t_charge * (h_f_max - h_f_min));
   parameter SI.MassFlowRate m_discharge = E_max / (t_discharge * (h_f_max - h_f_min));
-  Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
+  Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_out_recv, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
+  Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_out_PB, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Efficiency
   parameter SI.Energy denom = m_charge * t_charge * (h_f_max - h_f_min);
   SI.Energy numer(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
-  //COntrol
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
+  //Control
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_LC_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+  /*
+            SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_LC_Final_SurrogateModel thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation, E_min=E_min) annotation(
+              Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+        */
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
+  Modelica.Blocks.Sources.RealExpression Tamb(y = T_amb_design) annotation(
     Placement(visible = true, transformation(origin = {-38, -2}, extent = {{-12, -18}, {12, 18}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow_Recv(y = m_Recv_signal) annotation(
     Placement(visible = true, transformation(origin = {-103, 5}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
@@ -94,8 +138,26 @@ model Part1_MgO_6h_10h_8h
   Real T_top_degC;
   Real T_bot_degC;
   Real T_outlet_degC;
+  //************************** Surrogate variables
+  parameter SI.Mass m_filler(fixed = false);
+  SI.SpecificEnthalpy h_p_rep "Enthalpy representative of the filler";
+  SI.Temperature T_p_rep "Temperature representative of the filler";
+  Real epsilon_stg "Effectiveness of the storage";
+  Real dummy;
+  Real[4] sigmoidParams "Sigmoid function regression parameters";
+  Real params_a, params_b, params_c, params_d "Sigmoid params";
+  Real der_a, der_b, der_c, der_d "Derivatives of a,b,c,d";
+  SI.Energy E_stored(start = E_init) "The stored energy starts at E_init. E_init = sum(m_p[i] * h_p[i]) for i in 1:N_f - E_min";
+  Real tank_level(start = E_init / E_max) "Tank level relative to the minimum level E_min";
+  SI.HeatFlowRate Q_loss_lump_sum "Using average fluid temp - T_amb";
+  Boolean logic_A;
+  Boolean logic_B;
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {0, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
+initial equation
+  m_filler = thermocline_Tank.Tank_A.rho_p * (1 / 6) * CN.pi * d_p ^ 3 * thermocline_Tank.Tank_A.N_spheres_total "Filler mass total [kg] = m_p * N_spheres_total";
+  T_out_PB = T_PB_sampling;
+  T_out_recv = T_recv_sampling;
 algorithm
   when rem(time, t_cycle) > 1e-6 then
     m_Recv_signal := m_charge;
@@ -111,17 +173,80 @@ algorithm
   end when;
   when thermocline_Tank.T_bot_measured > T_Recv_max then
     m_Recv_signal := 0.0;
+    logic_A := true;
+  elsewhen thermocline_Tank.T_bot_measured <= T_Recv_max then
+    m_Recv_signal := m_Recv_signal;
+    logic_A := false;
   end when;
 //when thermocline_Tank.fluid_bot.T > T_Recv_max then
 //if rem(time, t_cycle) < t_charge then
 //end if;
   when thermocline_Tank.T_top_measured < T_PB_min then
     m_PB_signal := 0.0;
+    logic_B := true;
+  elsewhen thermocline_Tank.T_top_measured >= T_PB_min then
+    m_PB_signal := m_PB_signal;
+    logic_B := false;
   end when;
 //when thermocline_Tank.fluid_top.T < T_PB_min then
 //if rem(time, t_cycle) >= t_charge and rem(time, t_cycle) < t_discharge + t_charge then
 //end if;
 equation
+/************************************************************************************************
+  ***************************************** PG Part************************************************  
+  *************************************************************************************************/
+//****************** Do the regression by calling Python function via external C-function
+  if regression_sigmoid == true then
+    sigmoidParams = SolarTherm.Utilities.sigmoid_regression(ppath, pname, pfunc, N_f, thermocline_Tank.Tank_A.T_s[1:N_f], thermocline_Tank.Tank_A.u_flow);
+  else
+    sigmoidParams = fill(0.0, 4);
+  end if;
+//******************* Assign the return value from the regression to a,b,c,d
+  params_a = sigmoidParams[1];
+  params_b = sigmoidParams[2];
+  params_c = sigmoidParams[3];
+  params_d = sigmoidParams[4];
+//******************* Assign derivative values
+  der_a = der(params_a);
+  der_b = der(params_b);
+  der_c = der(params_c);
+  der_d = der(params_d);
+/*
+    if mdot_f > 1e-5 then
+    //Discharging
+      m_PB_signal = mdot_f;
+      m_Recv_signal = 0;
+    else
+    //Charging
+      m_PB_signal = 0;
+      m_Recv_signal = abs(mdot_f);
+    end if;
+  */
+//******************** Calculates the effectiveness of the storage tank
+  if thermocline_Tank.Tank_A.m_flow > 1e-3 then
+//di  scharging
+    epsilon_stg = (thermocline_Tank.Tank_A.h_out - thermocline_Tank.Tank_A.h_in) / (h_f_max - thermocline_Tank.Tank_A.h_in);
+  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then
+//charging
+    epsilon_stg = (thermocline_Tank.Tank_A.h_out - thermocline_Tank.Tank_A.h_in) / (h_f_min - thermocline_Tank.Tank_A.h_in);
+  else
+//standby
+    epsilon_stg = 0;
+  end if;
+//********** Calculate the stored energy in the storage - Energy balance
+  der(E_stored) = abs(thermocline_Tank.Tank_A.m_flow) * (thermocline_Tank.Tank_A.h_in - thermocline_Tank.Tank_A.h_out) - thermocline_Tank.Tank_A.Q_loss_total;
+//********** Calculate the tank level
+  tank_level = E_stored / E_max;
+//********** Calculate the representative enthalpy - E_stored / total filler mass
+  h_p_rep = (E_stored + E_min) / m_filler "Since what we want is the absolute temperature, thus E_stored must be added by E_min";
+//********** Calculate the representative Temperature of the filler
+  (T_p_rep, dummy) = SolarTherm.Materials.MgO_Constant.Tf_h(h_p_rep);
+  Q_loss_lump_sum = 2 * U_loss_tank * 0.25 * CN.pi * thermocline_Tank.Tank_A.D_tank ^ 2 * (T_p_rep - thermocline_Tank.Tank_A.T_amb) + U_loss_tank * CN.pi * thermocline_Tank.Tank_A.D_tank * thermocline_Tank.Tank_A.H_tank * (T_p_rep - thermocline_Tank.Tank_A.T_amb);
+//Top- and bottom losses
+//Wall losses
+/********************************************************************************************************
+  ***************************************** End of PG Part ************************************************  
+  *********************************************************************************************************/
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
   if thermocline_Tank.Tank_A.m_flow > 1e-3 then
@@ -214,5 +339,5 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
+    experiment(StopTime = 950400, StartTime = 0, Tolerance = 0.0001, Interval = 300));
 end Part1_MgO_6h_10h_8h;

@@ -7,8 +7,11 @@ model Thermocline_Spheres_Section_Final
   import Tables = Modelica.Blocks.Tables;
 
   //Initialize Material Packages
-  replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
-  replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
+  //replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
+  //replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
+  
+  replaceable package Fluid_Package = SolarTherm.Materials.Sodium "Fluid Package";
+  replaceable package Filler_Package = SolarTherm.Materials.MgO_Constant"Filler Package";
   replaceable package Tank_Package =  SolarTherm.Materials.SS316L "Tank Package (steel shell)";
   replaceable package Encapsulation_Package = Filler_Package "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
 
@@ -120,13 +123,13 @@ model Thermocline_Spheres_Section_Final
   SI.Power W_loss_pump "losses due to pressure drop";
   
   //Cost breakdown
-  parameter Real C_fluid = min(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
-  parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation;
+  parameter Real C_fluid = max(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
   parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   parameter Real C_tank = C_shell(max(rho_f_max,rho_f_min),H_tank,D_tank,Tank_Package.sigma_yield(T_max),Tank_Package.rho_Tf(298.15,0.0),4.0);
   
   parameter Real C_filler = (if Filler_Package.MM == Encapsulation_Package.MM then rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost else rho_p*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Filler_Package.cost*(((d_p-2*t_e)/d_p)^3));
   parameter Real C_encapsulation = (if Filler_Package.MM == Encapsulation_Package.MM then 0.0 else rho_e*(1.0-eta)*(CN.pi*D_tank*D_tank*H_tank/4.0)*Encapsulation_Package.cost*(1-(((d_p-2*t_e)/d_p)^3)));
+  parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation;
 
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
@@ -137,6 +140,9 @@ model Thermocline_Spheres_Section_Final
   parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
   //Filler mass-liquid fraction
   Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
+  //Filler Geometry
+  parameter Real N_spheres_total = (N_f*6*(1-eta)*A*dz/(CN.pi*(d_p^3))) "Total number of spheres in the tank";
+
 protected  
   //Convection Properties
   Real Re[N_f] "Reynolds";
@@ -151,11 +157,9 @@ protected
   SI.SpecificEnthalpy h_p[N_f, N_p] "J/kg";
   SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
   
-
+  
 
   
-  //Filler Geometry
-  parameter Real N_spheres_total = (N_f*6*(1-eta)*A*dz/(CN.pi*(d_p^3))) "Total number of spheres in the tank";
 
   parameter SI.Mass m_p[N_f, N_p] = fill(cat(1,Particle_Masses(d_p-2*t_e, N_p-1, rho_p),{rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3))}), N_f) "Masses of each particle element";
   //parameter SI.Mass m_e = rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3)) "Masses of encapsulation in one particle";
@@ -180,6 +184,7 @@ protected
   Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
   
 
+  Real der_h_f[N_f] "Derivative of fluid specific enthalpy";
 
 initial equation
   for i in 1:N_f loop
@@ -189,6 +194,93 @@ initial equation
     end for;
     encapsulation[i].h = h_p_start[i,N_p];
   end for;
+
+algorithm
+  //Fluid Equations
+  if State == 1 then
+  //Charging (Mass flows top to bottom)
+  //Bottom Charging Fluid Node
+    der_h_f[1] :=
+    ( (-2.0*k_eff[1]*k_eff[2])*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    + (rho_f_avg*u_flow)*(h_f[1]-h_f[2])/dz
+    - h_v[1]*(T_f[1] - T_s[1])/eta
+    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz) 
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A) ) / rho_f_avg;
+    
+    h_out := h_f[1];
+  //End Bottom Charging Fluid Node
+  //Middle Charging Fluid Nodes
+    for i in 2:N_f - 1 loop
+      der_h_f[i] := 
+      ( 2.0*k_eff[i - 1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
+      - 2.0*k_eff[i]*k_eff[i+1]*(T_f[i]-T_f[i + 1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      + (rho_f_avg*u_flow)*(h_f[i]-h_f[i+1])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A) )/ rho_f_avg;
+    end for;
+  //End Middle Charging Fluid Nodes
+  //Top Charging Fluid Node
+    der_h_f[N_f] := 
+    ( 2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    + (rho_f_avg*u_flow)*(h_f[N_f]-h_in)/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz) ) / rho_f_avg;
+  //End Top Charging Fluid Node
+  else
+  //Discharge (Mass flows bottom to top)
+  //Bottom Discharge Node
+    der_h_f[1] :=
+    ( -2.0*k_eff[1]*k_eff[2]*(T_f[1]-T_f[2])/((k_eff[1]+k_eff[2])*dz*dz*eta)
+    + (rho_f_avg*u_flow)*(h_in-h_f[1])/dz
+    - h_v[1]*(T_f[1]-T_s[1])/eta
+    - U_bot*CN.pi*D_tank*D_tank*0.25*(T_f[1]-T_amb)/(eta*A*dz)
+    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A) ) / rho_f_avg;
+  //End Bottom Discharge Node
+  //Middle Discharge Nodes
+    for i in 2:N_f - 1 loop
+      der_h_f[i] :=
+      ( 2.0*k_eff[i-1]*k_eff[i]*(T_f[i-1]-T_f[i])/((k_eff[i-1]+k_eff[i])*dz*dz*eta)
+      - 2.0*k_eff[i]*k_eff[i + 1]*(T_f[i]-T_f[i+1])/((k_eff[i]+k_eff[i+1])*dz*dz*eta)
+      + (rho_f_avg*u_flow)*(h_f[i-1]-h_f[i])/dz
+      - h_v[i]*(T_f[i]-T_s[i])/eta
+      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A) ) / rho_f_avg;
+    end for;
+  //End Middle Discharge Nodes
+  //Top Discharge Node
+    der_h_f[N_f] :=
+    ( 2.0*k_eff[N_f-1]*k_eff[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_eff[N_f-1]+k_eff[N_f])*dz*dz*eta)
+    + (rho_f_avg*u_flow)*(h_f[N_f-1]-h_f[N_f])/dz
+    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
+    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
+    - U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb)/(eta*A*dz) )/ rho_f_avg;
+    
+    h_out := h_f[N_f];
+  end if;
+  /*
+  for i in 1:N_f loop
+  //Inner Particle Shell (actually just a sphere)
+    //U_in[i, 1] = 0.0;
+  //nothing in there
+    U_out[i, 1] := 
+    (f_surface)*4.0*k_p[i, 1]*k_p[i, 2]*CN.pi*r_p[1]*(r_p[1]+dr[1])*(2.0*r_p[1]+dr[1])/(dr[1]*(k_p[i,2]*dr[1]+k_p[i,1]*r_p[1]+k_p[i, 2]*r_p[1]));
+    der_h_p[i, 1] := (U_out[i, 1]*(T_p[i, 2]-T_p[i, 1]))/m_p[i, 1];
+  //End Inner Particle Shell
+  //Middle Particle Shells
+    for j in 2:N_p - 1 loop
+      //U_in[i, j] = (f_surface)*4.0*k_p[i, j - 1]*k_p[i, j]*CN.pi*r_p[i, j]*(2.0*r_p[i, j]-dr)*(dr-r_p[i, j])/(dr*(k_p[i,j-1]*dr-k_p[i,j-1]*r_p[i,j]-k_p[i,j]*r_p[i,j]));
+      U_out[i,j] := (f_surface)*4.0*k_p[i, j]*k_p[i,j+1]*CN.pi*r_p[j]*(r_p[j]+dr[j])*(2.0*r_p[j]+dr[j])/(dr[j]*(k_p[i,j+1]*dr[j]+k_p[i,j]*r_p[j]+k_p[i,j+1]*r_p[j]));
+      //m_p[i, j]*der(h_p[i,j]) = U_out[i,j]*(T_p[i,j+1]-T_p[i,j]) - U_in[i,j]*(T_p[i,j]-T_p[i,j-1]);
+      der_h_p[i,j] := (U_out[i,j]*(T_p[i,j+1]-T_p[i,j]) - U_out[i,j-1]*(T_p[i,j]-T_p[i,j-1]))/m_p[i, j];
+    end for;
+  //End Middle Particle Shells
+  //Outer Particle Shell
+    //U_in[i,N_p] = (f_surface)*4.0*k_p[i,N_p-1]*k_p[i,N_p]*CN.pi*r_p[i,N_p]*(2.0*r_p[i,N_p]-dr)*(dr-r_p[i,N_p])/(dr*(k_p[i,N_p-1]*dr-k_p[i,N_p-1]*r_p[i,N_p]-k_p[i,N_p]*r_p[i,N_p]));
+    U_out[i,N_p] := (f_surface)*8.0*CN.pi*k_p[i,N_p]*r_p[N_p]*(r_p[N_p]+0.5*dr[N_p])/dr[N_p];
+    //m_p[i,N_p]*der(h_p[i,N_p]) = U_out[i, N_p]*(T_s[i]-T_p[i, N_p]) - U_in[i, N_p]*(T_p[i, N_p]-T_p[i,N_p-1]);
+    der_h_p[i,N_p] := (U_out[i, N_p]*(T_s[i]-T_p[i, N_p]) - U_out[i, N_p-1]*(T_p[i, N_p]-T_p[i,N_p-1]))/m_p[i,N_p];
+  end for;
+  */  
 equation
 
   //Determine which operational state: In this version, standby and discharge are lumped.
@@ -197,6 +289,7 @@ equation
   else //mass is flowing upwards so discharging
     State = 3;
   end if;
+  
 
   u_flow = m_flow / (eta * rho_f_avg * A); //positive if flowing upwards (discharge)
 
@@ -205,7 +298,18 @@ equation
   fluid_out.h = h_out;
   fluid_in.T = T_in;
   fluid_out.T = T_out;
-
+  
+  for i in 1:N_f loop
+    der(h_f[i]) = der_h_f[i];
+  end for;
+  /*
+  for i in 1:N_f loop
+    for j in 1:N_p loop
+      der(h_p[i,j]) = der_h_p[i,j];
+    end for;
+  end for;
+  */
+  /*
   //Fluid Equations
   if State == 1 then
   //Charging (Mass flows top to bottom)
@@ -267,6 +371,7 @@ equation
     
     h_out = h_f[N_f];
   end if;
+  */
   //Fluid Property evaluation SolarSalt
   for i in 1:N_f loop
     h_f[i] = fluid[i].h;
@@ -327,6 +432,7 @@ equation
     h_v[i] = (f_surface)*6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p); //Note that filler surface area correction factor is applied elsewhere.
   end for;
   
+  
   //Particle Equations
   for i in 1:N_f loop
   //Inner Particle Shell (actually just a sphere)
@@ -350,6 +456,7 @@ equation
     //m_p[i,N_p]*der(h_p[i,N_p]) = U_out[i, N_p]*(T_s[i]-T_p[i, N_p]) - U_in[i, N_p]*(T_p[i, N_p]-T_p[i,N_p-1]);
     m_p[i,N_p]*der(h_p[i,N_p]) = U_out[i, N_p]*(T_s[i]-T_p[i, N_p]) - U_out[i, N_p-1]*(T_p[i, N_p]-T_p[i,N_p-1]);
   end for;
+  
   //Particle Surface equations energy balance
   for i in 1:N_f loop
     U_out[i, N_p] * (T_s[i] - T_p[i, N_p]) = CN.pi * d_p ^ 3 * h_v[i] * (T_f[i] - T_s[i]) / (6.0 * (1.0 - eta));

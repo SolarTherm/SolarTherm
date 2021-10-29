@@ -3,6 +3,7 @@
 
 #include <python2.7/Python.h>
 #include <stdio.h>
+#include <string.h>
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pfunc, const char *psave,  const char *field_type, const char *rcv_type, const char *wea_file, int argc, const char *varnames[], const double var[]);
 
@@ -30,7 +31,8 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
 
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
-
+	
+	fprintf(stderr,"WHOA!\n");
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, pfunc);
         /* pFunc is a new reference */
@@ -52,15 +54,19 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
                     Py_DECREF(pModule);
                     fprintf(stderr, "Cannot convert argument\n");
                 }
+
                 /* pValue reference stolen here: */
                 PyDict_SetItemString(inputs, varnames[i], pValue);
             }
 
             PyTuple_SetItem(pArgs, 0, inputs);
+			fprintf(stderr,"WHOA!\n");
 
             pValue = PyObject_CallObject(pFunc, pArgs);
+			fprintf(stderr,"WHOA!\n");
 
             tablefile=PyString_AsString(pValue);
+			fprintf(stderr,"WHOA!\n");
 
 
             Py_DECREF(pArgs);
@@ -88,15 +94,15 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname, const char *pf
         fprintf(stderr, "Failed to load \"%s\"\n", pname);
     }
 
-    Py_DECREF(ppath);
-    Py_DECREF(pname);
-    Py_DECREF(pfunc);
-    Py_DECREF(psave);
-    Py_DECREF(rcv_type);
-    Py_DECREF(field_type);
-    Py_DECREF(wea_file);
-    Py_DECREF(varnames);
-    Py_DECREF(sys_path);
+    //Py_DECREF(ppath);
+    //Py_DECREF(pname);
+    //Py_DECREF(pfunc);
+    //Py_DECREF(psave);
+    //Py_DECREF(rcv_type);
+    //Py_DECREF(field_type);
+    //Py_DECREF(wea_file);
+    //Py_DECREF(varnames);
+    //Py_DECREF(sys_path);
 
     return tablefile;
     Py_Finalize();

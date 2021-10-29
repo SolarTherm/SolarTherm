@@ -9,3 +9,6 @@ TestSCO2PB_Zeb_2
 Thermocline_Meier_1991
 Thermocline_Meier_1991_VD
 Thermocline_Meier_1991_LC
+TestDynTank
+ANNvsGenericModelicaFuncTest
+RobertsonStiffEq

@@ -87,12 +87,13 @@ equation
     //Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_des_blk) else Q_rcv_raw);
     //Q_rcv=fluid_a.m_flow*(h_out-h_in);
     h_out = h_in + Q_rcv/fluid_a.m_flow;
+    //Q_rcv = fluid_a.m_flow * (h_out - h_in);
     Q_rcv_in = ab*heat.Q_flow;
     //medium.h=(h_in+h_out)/2;
   else
     Q_loss = 0.0;
     Q_rcv = 0.0;
-    h_out = h_in;
+    h_out = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_0));//h_in;
     Q_rcv_in = 0.0;
     //medium.h=(Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_0))+Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_max)))/2;
   end if;

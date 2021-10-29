@@ -1,3 +1,7 @@
 PBS_Surround_SCO2NREL
+PBS_Surround_SCO2NREL_OG
 PBS_Surround_SCO2NREL_Parallel
 PBS_Surround_SCO2NREL_Series
+PBS_Surround_SCO2NREL_Surrogate_Tank
+PBS_Surround_SCO2NREL_LC_Tank
+PBS_Surround_SCO2NREL_Surrogate_Tank_Solstice

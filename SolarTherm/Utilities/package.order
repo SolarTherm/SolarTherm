@@ -8,3 +8,9 @@ CoolProp
 DNI_Models
 Interpolation
 Round
+SurrogateModelsSingleOutput
+SurrogateModelsMultiOutput
+sigmoid_regression
+toy_function
+storage_regression
+Metadata_Optics_ParticleBranch

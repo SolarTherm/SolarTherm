@@ -12,7 +12,7 @@ model Part2_MgO_6h_10h_8h
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
   parameter SI.Temperature T_min = 510 + 273.15 "Minimum temperature";
-  parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_max = 800 + 273.15 "Maximum temperature";
   
   parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
