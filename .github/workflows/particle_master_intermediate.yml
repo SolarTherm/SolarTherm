@@ -128,8 +128,8 @@ jobs:
         wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run
         sudo chmod +x ../sam-beta-linux-2020-11-12.run
         ../sam-beta-linux-2020-11-12.run
-        cp /opt/SAM/2020.11.12/linux_64/libssc.so usr/lib
-        cp /opt/SAM/2020.11.12/linux_64/sscapi.h usr/include
+        cp /opt/SAM/2020.11.12/linux_64/libssc.so /usr/lib
+        cp /opt/SAM/2020.11.12/linux_64/sscapi.h /usr/include
 
     - name: Build SolarTherm
       run: |
