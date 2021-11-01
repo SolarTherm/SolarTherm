@@ -91,7 +91,7 @@ fenv = tenv.Clone() #Python + tensorflow already included
 fenv.Append(
 	CPPPATH = ['$TF_CPPPATH']
 	,LIBS = ["m","gsl","gslcblas","dl","ssc"] #Original libs are Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"} however since python2.6 and TF are already in tenv, so it can be passed
-	,LIBPATH = ["$TF_LIBPATH","./SSC/"]
+	,LIBPATH = ["./SSC/","$TF_LIBPATH"]
 )
 
 lib9 = fenv.SharedLibrary('st_surrogate_on_the_fly',['st_on_the_fly_surrogate.c'])
