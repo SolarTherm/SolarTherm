@@ -129,7 +129,6 @@ jobs:
         sudo chmod +x ../sam-beta-linux-2020-11-12.run
         ../sam-beta-linux-2020-11-12.run
         cp /opt/SAM/2020.11.12/linux_64/libssc.so ./src/modelica/SSC
-        cp /opt/SAM/2020.11.12/linux_64/sscapi.h ./src/modelica/
 
     - name: Build SolarTherm
       run: |

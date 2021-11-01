@@ -120,6 +120,16 @@ env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs) 
 
 #Install all the Tensorflow files
+folders = ['configurations','neural-network','simulation', 'training_data']
+
+for f in folders:
+	print("Copy dir ./%s to ../../SolarTherm/Resources/Library for surrogate modelling"%(f))
+	os.system("cp -r ./%s/ ../../SolarTherm/Resources/Library/%s"%(f,f))
+
+
+#Workaround from using shutil since in shutil for python3.6, arg dirs_exist_ok does not exist
+'''
+#Install all the Tensorflow files
 owd = os.getcwd()
 
 folders = ['configurations','neural-network','simulation', 'training_data']
@@ -131,8 +141,9 @@ for f in folders:
 	dirname = "%s/%s"%(owd,f)
 	dst = "%s/SolarTherm/Resources/Library/%s"%(cwd,f)
 	print("Copying %s to %s for surrogate modelling"%(dirname, dst))
-	shutil.copytree(dirname, dst,dirs_exist_ok=True)
+	shutil.copytree(dirname, dst, dirs_exist_ok=True)
 
 os.chdir(owd)
+'''
 
 # vim: ts=4:sw=4:noet:tw=123:syntax=python
