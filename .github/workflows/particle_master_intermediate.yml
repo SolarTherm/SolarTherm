@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: SolarTherm Linux
+name: SolarTherm Particle-Master Intermediate Branch
 
 on:
   workflow_dispatch:
@@ -59,7 +59,7 @@ jobs:
 
     - name: Install OpenModelica
       run: |
-        echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ xenial release" | sudo tee /etc/apt/sources.list.d/openmodelica.list
+        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ xenial release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt update
         sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
