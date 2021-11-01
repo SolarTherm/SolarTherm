@@ -68,9 +68,12 @@ class TestParticleSystem1DSurrogate(unittest.TestCase):
 		LCOE = self.perf[1]
 		CF = self.perf[2]
 
-		assert(abs(LCOE - 95.88000713637389) <0.01) #LCOE
-		assert(abs(EPY - 299381.0295875197) < 0.01) #EPY
-		assert(abs(CF - 34.17591661957987) < 0.01) #CF
+		self.assertAlmostEqual(self.perf[0], 299381, 1) # epy
+		self.assertAlmostEqual(self.perf[1], 95.88, 2) # LCOE
+		self.assertAlmostEqual(self.perf[2], 34.17, 2) # Capacity factor
+		#assert(abs(LCOE - 95.88000713637389) <0.01) #LCOE
+		#assert(abs(EPY - 299381.0295875197) < 0.01) #EPY
+		#assert(abs(CF - 34.17591661957987) < 0.01) #CF
 		cleantest.clean('PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate')
 #		self.assertAlmostEqual(self.perf[0], 349.78, 2) # epy
 #		self.assertAlmostEqual(self.perf[1], 97.26, 2) # LCOE
