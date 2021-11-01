@@ -59,7 +59,7 @@ jobs:
 
     - name: Install OpenModelica
       run: |
-        for deb in deb deb-src; do echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ xenial release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+        echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ xenial release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt update
         sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
