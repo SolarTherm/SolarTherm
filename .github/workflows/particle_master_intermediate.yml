@@ -57,12 +57,19 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Install OpenModelica
+    - name: Install OpenModelica 1.14.2 for Ubuntu 18.04
+      if: ${{ matrix.os == 'ubuntu-18.04' }}
       run: |
-        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ xenial release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
-        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
-        sudo apt update
-        sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
+        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ bionic release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        sudo apt-get update
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
+
+    - name: Install OpenModelica 1.14.2 for Ubuntu 20.04
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      run: |
+        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ focal release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        sudo apt-get update
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
 
     - name: Install Tensorflow C API
       run: |
