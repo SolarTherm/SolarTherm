@@ -6,7 +6,7 @@ import numpy as np
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
-from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab, output_matadata_motab_multi_aperture, append_oelts
+from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab, output_metadata_motab_multi_aperture, append_oelts
 from solsticepy.design_multi_aperture import MultiApertureConfiguration
 import sys
 import traceback
@@ -96,9 +96,9 @@ def run_simul(inputs={}):
 		else:                          
 			A_helio=pm.H_helio*pm.W_helio
 			if pm.num_aperture==1:
-				output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, eff_annual=crs.eff_annual, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
+				output_metadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, eff_annual=crs.eff_annual, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
 			else:
-				output_matadata_motab_multi_aperture(TABLE=oelt, eff_design = crs.eff_des, eff_annual = crs.eff_annual, A_land = A_land, H_tower= pm.H_tower, A_helio    = A_helio, n_helios_total = crs.n_helios, Q_in_rcv_total = crs.Q_in_rcv, num_aperture= pm.num_aperture, Q_in_rcv= crs.Q_in_rcv_i, n_helios=crs.n_helios_i, H_rcv=pm.H_rcv, W_rcv= pm.W_rcv, Z_rcv= pm.Z_rcv, mac=mac, savedir= tablefile)
+				output_metadata_motab_multi_aperture(TABLE=oelt, eff_design = crs.eff_des, eff_annual = crs.eff_annual, A_land = A_land, H_tower= pm.H_tower, A_helio    = A_helio, n_helios_total = crs.n_helios, Q_in_rcv_total = crs.Q_in_rcv, num_aperture= pm.num_aperture, Q_in_rcv= crs.Q_in_rcv_i, n_helios=crs.n_helios_i, H_rcv=pm.H_rcv, W_rcv= pm.W_rcv, Z_rcv= pm.Z_rcv, mac=mac, savedir= tablefile)
 		
 
 
