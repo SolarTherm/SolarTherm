@@ -60,7 +60,9 @@ jobs:
     - name: Install OpenModelica 1.14.2 for Ubuntu 18.04
       if: ${{ matrix.os == 'ubuntu-18.04' }}
       run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3A59B53664970947 
         echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ bionic release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
         sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
 
@@ -68,6 +70,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
         echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ focal release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
         sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
 
