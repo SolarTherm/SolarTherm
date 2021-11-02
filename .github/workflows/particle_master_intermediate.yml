@@ -66,10 +66,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install build-essential openmodelica omlib-modelica-3.2.2 libglpk-dev libgsl-dev
 
-    - name: Install OpenModelica 1.14.2 for Ubuntu 20.04
+    - name: Install OpenModelica Latest OpenModelica on Ubuntu 20.04
       if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
-        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ focal release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
         sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
@@ -152,6 +152,7 @@ jobs:
         mpicc --version
             
     - name: Test SolarTherm
+      if: ${{ matrix.os == 'ubuntu-18.04' }}
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
@@ -161,5 +162,18 @@ jobs:
         st --version
         solstice --version
         st python -m pytest test_particlesystem1D_surrogate.py
+
+    - name: Test SolarTherm
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        which st
+        st --version
+        solstice --version
+        st env
+        cd ./examples
+        st simulate --start 0 --stop 86400 PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5 
 
 # vim: ts=2:sw=2:et
