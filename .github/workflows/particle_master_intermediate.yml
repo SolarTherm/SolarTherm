@@ -127,16 +127,14 @@ jobs:
       run: |
         wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run
         sudo chmod +x ../sam-beta-linux-2020-11-12.run
-        ../sam-beta-linux-2020-11-12.run
-        sudo cp /opt/SAM/2020.11.12/linux_64/libssc.so /usr/lib
-        sudo cp /opt/SAM/2020.11.12/linux_64/sscapi.h /usr/include
+        sudo ../sam-beta-linux-2020-11-12.run
 
     - name: Build SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons
+        scons SSC_PREFIX=/opt/SAM/2020.11.12
 
     - name: Install SolarTherm
       run: |
@@ -144,7 +142,7 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install
+        scons install SSC_PREFIX=/opt/SAM/2020.11.12
 
     - name: Test MPI
       run: |    
