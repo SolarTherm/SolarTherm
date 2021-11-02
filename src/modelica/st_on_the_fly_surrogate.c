@@ -2,18 +2,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "tensorflow/c/c_api.h"
 #include <dirent.h>
 #include <Python.h>
-#include "sscapi.h"
+#include <sscapi.h>
 #define limitSize 1000000
 
 #include "on_the_fly_surrogate/ontheflysurrogate.h" 
 
 #define limitSize 1000000
-
-
-//#include "on_the_fly_surrogate/ontheflysurrogate.c"
 
 
 void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double PR, 

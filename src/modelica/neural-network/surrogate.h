@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "c_api.h" //tensorflow c api header files located in /usr/include/tensorflow/c/
+#include <tensorflow/c/c_api.h>
 
 typedef struct  /*Struct to store neccesary session properties*/
 {

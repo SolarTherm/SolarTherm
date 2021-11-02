@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "c_api.h" //tensorflow c api header files located in /usr/include/tensorflow/c/
+#include <tensorflow/c/c_api.h>
 #include "neural-network/surrogate.h"
 
 void NoOpDeallocatorStaticANN(void* data, size_t a, void* b)

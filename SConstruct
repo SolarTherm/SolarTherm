@@ -20,6 +20,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
+		default_ssc_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
@@ -29,6 +30,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 else:
 	default_glpk_prefix = "/usr"
 	default_tf_prefix = default_prefix
+	default_ssc_prefix = Path(os.environ['HOME'])/'SAM'/'2020.11.12'
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
@@ -94,6 +96,10 @@ vars.AddVariables(
 		,"Installation prefix for TensorFlow",default_tf_prefix,PathVariable.PathAccept)
 	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include",PathVariable.PathAccept)
 	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib",PathVariable.PathAccept)
+	,PathVariable('SSC_PREFIX'
+		,"Installation prefix for SAM Simulation Core",default_ssc_prefix,PathVariable.PathAccept)
+	,PathVariable('SSC_CPPPATH' ,"Location where SAM SSC headers are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
+	,PathVariable('SSC_LIBPATH' ,"Location where SAM SSC libraries are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
 	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
@@ -265,6 +271,34 @@ def check_mpi(ct):
 	ct.Result(str(mpirun))
 	return True
 
+
+def check_ssc(ct):
+	ct.Message('Checking SSC...')
+	cv = {}
+	for v in ['CPPPATH','LIBPATH','LIBS','ENV']:
+		cv[v] = ct.env.get(v)
+	def restore_env(env):
+		for v in cv:
+			if cv[v] is None:
+				del env[v]
+			else:
+				env[v] = cv[v]
+	ct.env.Append(CPPPATH=['$SSC_CPPPATH'],LIBPATH=['$SSC_LIBPATH'],LIBS=['ssc'])
+	src = '''
+#include <sscapi.h>
+#include <stdio.h>
+int main() {
+	fprintf(stdout,"%s\\n",ssc_build_info());
+	return 0;
+}
+	'''
+	res = ct.TryCompile(src,'.c')
+	ct.env['HAVE_SSC'] = bool(res)
+	ct.Result(res)
+	restore_env(ct.env)
+	return res
+
+
 def check_path(ct):
 	ct.Message('Checking PATH...')
 	pp = os.environ.get('PATH','').split(os.pathsep)
@@ -336,6 +370,7 @@ conf = env.Configure(custom_tests={
 	,'MPI':check_mpi
 	,'PATH':check_path
 	,'TF':check_tensorflow
+	,'SSC':check_ssc
 })
 if not conf.CS():
 	print(REDWARN("Unable to locate 'solstice'"))
@@ -343,6 +378,7 @@ if not conf.CS():
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
 conf.TF()
+conf.SSC()
 if not conf.OMC() or not conf.OMLib():
 	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
