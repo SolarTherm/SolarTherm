@@ -152,7 +152,7 @@ jobs:
     - name: Test st_simulate
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/opt/SAM/2020.11.12/linux_64
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         which st
         st --version
