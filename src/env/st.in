@@ -90,9 +90,12 @@ NEWENV['ST_MPIRUN'] = CYG('@ST_MPIRUN@')
 #-------------------------------------------------------------------------------
 # adding path components if required
 
-# needed paths as identified by SCons at installation time:
+libpathpath = 'PATH' if platform.system()=="Windows" else 'LD_LIBRARY_PATH'
+
+# needed paths as identified by SCons at installation time, add them if missing
 st_paths = {
 	'PATH':"@ST_PATH@"
+	,libpathpath:"@ST_LIBPATH@"
 	, 'PYTHONPATH':"@ST_PYTHONPATH@"
 	, 'OPENMODELICALIBRARY':"@ST_MODELICAPATH@"
 }

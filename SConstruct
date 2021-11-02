@@ -377,8 +377,12 @@ if not conf.CS():
 	Exit(1)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
-conf.TF()
-conf.SSC()
+
+if conf.TF():
+	env.AppendUnique(ST_LIBPATH=['$TK_LIBPATH'])
+if conf.SSC():
+	env.AppendUnique(ST_LIBPATH=['$SSC_LIBPATH'])
+	
 if not conf.OMC() or not conf.OMLib():
 	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
@@ -416,6 +420,7 @@ env['SUBST_DICT'] = {
 	,'@PREFIX@' : '$PREFIX'
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
 	,'@ST_PATH@' : os.pathsep.join(env['ST_PATH'])
+	,'@ST_LIBPATH@' : os.pathsep.join(env['ST_LIBPATH'])
 	,'@ST_PYTHONPATH@' : os.pathsep.join(env['ST_PYTHONPATH'])
 	,'@ST_MODELICAPATH@' : os.pathsep.join(env['ST_MODELICAPATH'])
 	,'@ST_MPIRUN@' : env.subst('$MPIRUN')

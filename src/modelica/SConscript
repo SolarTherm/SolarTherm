@@ -50,6 +50,9 @@ conf= genv.Configure()
 if not conf.CheckHeader('glpk.h'):
 	print("Unable to link to GLPK (required for optimal dispatch routines)")
 	Exit(1)
+else:
+	env.AppendUnique(ST_LIBPATH=['$GLPK_LIBPATH'])
+
 genv = conf.Finish()
 
 
