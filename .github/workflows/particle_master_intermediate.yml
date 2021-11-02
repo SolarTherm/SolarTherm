@@ -150,8 +150,19 @@ jobs:
       run: |    
         mpirun --version
         mpicc --version
-            
-    - name: Test SolarTherm
+
+    - name: Test st_simulate
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        which st
+        st --version
+        solstice --version
+        cd ./examples
+        st simulate --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
+
+    - name: Test SolarTherm (18.04 only)
       if: ${{ matrix.os == 'ubuntu-18.04' }}
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
@@ -163,17 +174,6 @@ jobs:
         solstice --version
         st python -m pytest test_particlesystem1D_surrogate.py
 
-    - name: Test SolarTherm
-      if: ${{ matrix.os == 'ubuntu-20.04' }}
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
-        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        which st
-        st --version
-        solstice --version
-        st env
-        cd ./examples
-        st simulate --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
+
 
 # vim: ts=2:sw=2:et
