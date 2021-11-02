@@ -1,197 +1,187 @@
 Installation
 ============
-This section goes through the installation process for SolarTherm.  More detailed instructions are provided for two Linux distributions and Windows at the end.  The scripting and other tools in SolarTherm have currently only been tested on Linux, although they should also run on Mac.  On Windows currently only the Modelica library part of the project can be used.
+This section goes through the installation process for SolarTherm. The required dependencies and software packages are reviewd at the beginning, followed by more detailed installation instructions for two Linux distributions and Windows.  The scripting and tools in SolarTherm have currently been tested on Ubuntu (20.04 and 18.04) and Windows-MSYS2. Although they should also run on Mac, we have not tested it yet.
+
+
+Overview
+---------
+The SolarTherm package contains a series of CSP related Modelica models to perform dynamic performance analysis. It is also integrated with several software package to expand its simulation capability, for example, Solstice for Monte-Carlo ray tracing simulations, GLPK for linear programming optimisation, Tenserflow, SAM SSC (SAM simulation core) for surrogate modelling, etc. The Modelica models can be run by either OMEdit or a terminal command. `OMEdit <https://openmodelica.org/?id=78:omconnectioneditoromedit&catid=10:main-category>`_ is a graphical user interface that enables the users to easily create models, edit connections, run simulations and plot results.
+
+The SolarTherm package also contains a series of additional functions that perform financial calculations (e.g. LCOE, LCOF), parametric sweep, system optimisation and sensitivity analysis. It also itegrates with excel spreasheets and Dakota software package for expanding data sampling and optimisation capabilities. These functions are handled externally from Modelica, and must be run from a terminal command. It is recommonded that using OMEdit for Modelica model development and inspection, and using terminal commands to perform techno-economic analysis, system optimisation and sensitivity analysis.  
+
+The required dependencies and software packages are listed below:
 
 OpenModelica
-------------
-A working version of OpenModelica is required.  Instructions for installing OpenModelica on each platform:
+^^^^^^^^^^^^
+A working version of OpenModelica is required.  Instructions for installing OpenModelica (including OMEdit) on each platform:
 
 * `Windows <https://www.openmodelica.org/download/download-windows>`_
 * `Mac <https://www.openmodelica.org/download/download-mac>`_
 * `Linux <https://www.openmodelica.org/download/download-linux>`_
 * `Source <https://github.com/OpenModelica/OpenModelica>`_
 
-SolarTherm
-----------
+
 Dependencies
 ^^^^^^^^^^^^
-SolarTherm requires a number of python packages (some optional):
+SolarTherm requires a number of Python packages (some optional):
 
+* `scons <https://scons.org/>`_ prerequisite 
+* `distro <https://pypi.org/project/distro/>`_ prerequisite
+* `wheel <https://pypi.org/project/wheel/>`_ prerequisite
+* `numpy <https://numpy.org/>`_ prerequisite
 * `scipy <http://www.scipy.org/>`_ prerequisite
 * `DyMat <https://bitbucket.org/jraedler/dymat>`_ read in result files
+* `solsticepy <https://pypi.org/project/solsticepy/>`_ Solstice Python wrapper for CSP ray-tracing simulations
+* `openpyxl <https://pypi.org/project/openpyxl/>`_ for loading/exporting parameter from/to an excel spreadsheet
+* `colorama <https://pypi.org/project/colorama/>`_ for highlighting keywords in outputs
+* `pytest <https://docs.pytest.org>`_ for running tests 
 * `matplotlib <http://matplotlib.org/>`_ for plotting (optional)
 * `pyswarm <http://pythonhosted.org/pyswarm/>`_ optimisation (optional)
 * `cma <https://www.lri.fr/~hansen/cmaes_inmatlab.html>`_ optimisation (optimal)
+
+Integrated software packages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SolarTherm integrates with a number of software packages to expand its applications:
+
+* `Solstice <https://www.meso-star.com/projects/solstice/solstice.html>`_ for Monte-Carlo ray tracing simulations
+* `Dakota <https://dakota.sandia.gov/>`_ for optimisation and uncertainty quantification
+* `glpk <https://www.gnu.org/software/glpk/>`_ for linear programming
+
+
 
 .. _build-section:
 
 Build and Install
 ^^^^^^^^^^^^^^^^^
-Clone the SolarTherm source code, change to the SolarTherm source directory and make a build folder::
+Clone the SolarTherm source code, change to the SolarTherm source directory and compile the package using ``scons``::
     
     git clone https://github.com/SolarTherm/SolarTherm.git SolarTherm
     cd SolarTherm
-    mkdir build
-    cd build
+    scons
+    scons install
 
-Call ``cmake`` to build the library using a prefix to indicate where you would like to install SolarTherm.  If installing with root permissions, this will typically be either ``/usr/local`` or ``/usr``, otherwise if installing locally this will be a local directory, possibly ``~/.local`` or ``~/SolarTherm``::
+The default installation prefix is ``~/.local``. A user defined prefix can be given to the 'PREFIX' variable to change the installation prefix, for example::
 
-    cmake .. -DCMAKE_INSTALL_PREFIX=~/.local
+    scons PREFIX=/the/user/defined/directory
+    scons install PREFIX=/the/user/defined/directory
 
-.. By default it puts the SolarTherm modelica library in ``lib/omlibrary`` beneath the current install prefix.  If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``-DMODELICA_LIBRARY_INSTALL_DIR`` variable.  This variable can also be set to ``$HOME/.openmodelica/libraries/`` to install it locally for the user.
+The default SolarTherm modelica library prefix is ``~/.openmodelica/libraries`` on Linux and ``~/.local/lib/omlibrary`` on Windows (MSYS2). If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``INSTALL_OMLIBRARY`` variable. For example::
 
-Make and install the library (use ``sudo`` if installing it as root)::
+    scons PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
+    scons install PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
 
-    make
-    make install
-
-The final step is to set up the correct environment variables for the command line to find SolarTherm.  Some or all of these might already be correctly set up if SolarTherm was installed under one of the ``/usr/local``, ``/usr`` or ``~/.local`` prefixes.  Otherwise a script has been create to automatically set the correct environment for the current terminal.  This script ``st_local_env`` is located in ``build/src/env/`` and can be activated from the build directory by::
+The last step is to set up the correct environment variables for the command line to find SolarTherm.  A tool (``st``) has been created by the ``scons`` to automatically set the correct environment for the current terminal. By default, ``st`` is located in ``~/.local/bin/`` and can be called directly. The Solartherm environment can be activated by::
     
-    source src/env/st_local_env
+    st env
 
-The command ``st_deactive`` deactivates the environment again.  The ``st_local_env`` file can be moved to a more convenient location or the environment variables can be made permanent for the user by copying them into a suitable file, e.g., ``~/.bashrc``.
+The command ``exit`` deactivates the environment. 
 
-Once the environment is correctly set up tests can be run from the build directory with the command::
+Once the environment is correctly set up,  tests can be run from the tests directory with the command::
 
-    ctest -V
+    python -m pytest
 
-.. Currently the tests can only be run after installing the libraries.  A solution where the tests default to using the locally built copy is desired.
 
-Full Instructions
------------------
-Ubuntu 14.04 and 15.10
-^^^^^^^^^^^^^^^^^^^^^^
 
-OpenModelica::
-    
-    for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` stable"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
-    wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add -
+Installation Instruction (Ubuntu)
+---------------------------------
+This installation instruction is for Ubuntu 20.04 and Ubuntu 18.04
 
-    sudo apt-get update
+OpenModelica
+^^^^^^^^^^^^
+::
 
-    sudo apt-get install openmodelica
+    for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+    wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
+    sudo apt update
+    sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev
 
-SolarTherm dependencies::
+SolarTherm dependencies
+^^^^^^^^^^^^^^^^^^^^^^^  
+::
+ 
+    python3 -m pip install --upgrade pip 
+    python3 -m pip install --upgrade setuptools wheel
+    python3 -m pip install scons scipy matplotlib DyMat pyswarm cma pytest solsticepy openpyxl distro colorama
 
-    sudo apt-get install git cmake
+Solstice
+^^^^^^^^
+::
 
-    sudo apt-get install python-pip
-    sudo apt-get install python-scipy python-matplotlib
+    sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
+    export UBVER=`lsb_release -cs`
+    export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9-x86_64-$UBVER.tar.gz"
+    sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$SOLSTICEURL" -q -O-)
+    export PATH=$PATH:/usr/local/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    solstice --version
+	
+Dakota
+^^^^^^
+Prerequisite for Ubuntu 20.04::
 
-    sudo pip2 install dymat
-    sudo pip2 install pyswarm cma
+    sudo apt install openmpi-bin libltdl7 liblapack3 libhwloc15 \
+      libgslcblas0 libquadmath0 libboost-regex1.71.0 libgsl23 \
+      libevent-2.1-7 libgfortran5 libboost-filesystem1.71.0 libopenmpi3 \
+      libicu66 libblas3 libstdc++6 libevent-pthreads-2.1-7 \
+      libboost-serialization1.71.0
+    OS=ubuntu-20.04
+    mpirun --version
+	      
+Prerequisite for Ubuntu 18.04::     
+ 
+    sudo apt install libicu60 libboost-serialization1.65.1 libstdc++6 \
+          libboost-filesystem1.65.1 libgcc1 libquadmath0 liblapack3 \
+          libboost-regex1.65.1 libboost-system1.65.1 libblas3 libc6 \
+          libgfortran4 openmpi-bin libopenmpi-dev
+    OS=ubuntu-18.04
+    mpirun --version
 
-.. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
+Install Dakota::
 
-Continue onto :ref:`build-section`.
+    DAKOTA_VERSION=6.14.0
+    export PKGN=dakota-${DAKOTA_VERSION}-${OS}-x86_64-jp
+    export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$PKGN.tar.gz"
+    sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
+    export PATH=$PATH:/usr/local/bin    # needed for Ubuntu 18.04
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # needed for 18.04
+    dakota --version
+    export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+    python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"                    
 
-.. Ubuntu 14.04 and 15.10 Local Install
-.. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. 
-.. If you don't want to install SolarTherm under root, then it can be installed locally under a user account.  As prerequisites we still require:
-.. 
-.. * ``openmodelica``
-.. * ``git``
-.. * ``cmake``
-.. * ``pip``
-.. * ``scipy``
-.. * ``matplotlib`` (optionally)
-.. 
-.. In addition we need ``virtualenv``::
-.. 
-..     sudo apt-get install python-virtualenv
-.. 
-.. Additional dependencies can now be installed under a virtual python environment, for example in a new directory ``~/st_env``::
-.. 
-..     virtualenv --system-site-packages ~/st_env
-..     source ~/st_env/bin/activate
-..     pip2 install dymat
-..     pip2 install pyswarm cma
-..     deactivate
-.. 
-.. Checkout the repository and change into a new build directory as outlined in :ref:`build-section`.  The build process proceeds::
-.. 
-..     source ~/st_env/bin/activate
-..     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/st_env -DMODELICA_LIBRARY_INSTALL_DIR=$HOME/.openmodelica/libraries/
-..     make
-..     make install
-..     deactivate
-.. 
-.. Now in order to run the tests or use SolarTherm a different environment is required.  This is turned on and off with (note the ``st_`` prefix)::
-.. 
-..     source ~/st_env/bin/st_activate
-..     ctests -V
-..     st_deactivate
-.. 
-.. In addition to calling the ``virtualenv`` environment, it sets up paths to linked non-Modelica libraries.  Note that for this local installation ``omc`` will produce additional warnings when compiling code that links to external C libraries.  This is because it doesn't find the libraries in one of the default locations, but they still get linked in correctly later on in the process.
 
-Windows
-^^^^^^^
-The python scripts are currently not set up to run on a windows environment, but the Modelica library in the project can still be run through OMEdit.  The financial calculations are currently handled externally so will not be performed under Windows, but this might change in future versions.
+Build and install SolarTherm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
 
-Download and run the OpenModelica installer located `here <https://www.openmodelica.org/download/download-windows>`_.
+    export PATH=$PATH:/usr/local/bin:~/.local/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+    scons
+    scons install
+	    
+More about build and install SolarTherm :ref:`build-section`.
 
-Install git (and a GUI client if required) from `here <https://git-scm.com/download/win>`_.  Clone the SolarTherm github repository.
 
-Open OMEdit and load the ``SolarTherm/SolarTherm`` Modelica library (``File->Load Library``).  Load one of the examples under ``SolarTherm/examples/`` (``File->Open Model/Library File(s)``).  Change the working directory to the repository directory ``SolarTherm`` (``Tools->Options``), so that the resources files can be correctly located.
+Installation Instruction (Windows)
+----------------------------------
 
-Double click on the example on the left-hand list that you want to simulate.  Open up the simulation settings (``Simulation->Simulation Setup``).  Change the stop time to 31536000 seconds (1 year), the method from ``dassl`` to ``rungekutta``, and the number of intervals to 105120 (5 minute steps) (on the Output tab).
+On Windows platforms, the SolarTherm terminal commands are run from MSYS2. The installation includes MSYS2 system and OMEdit.
 
-Press the simulate button.
+The full instruction is available on SolarTherm Wiki `here <https://github.com/SolarTherm/SolarTherm/wiki/Running-SolarTherm-on-Windows-%28MSYS2%29>`_.
 
-Archlinux Source
-^^^^^^^^^^^^^^^^
-There is at least one AUR package for OpenModelica, but it was troublesome.  Here we have a manual installation so that we can get just what we need and easily keep it up to date.
 
-Install dependencies from pacman::
+Build omc from Source
+---------------------
+This section will be added to show how to build openmodelica (omc) from source, e.g. for supercomputer applications.
 
-    sudo pacman -S lapack blas lpsolve expat boost
 
-.. Install dependencies for python interface and sundials from AUR (here using packer)::
 
-Install dependencies sundials from AUR (here using packer)::
-
-    sudo packer -S sundials26
-
-..    sudo packer -S omniorb omniorbpy
-
-Check you have the right build depedencies installed listed `here <https://github.com/OpenModelica/OpenModelica>`__ (e.g., clang, clang++, cmake, etc).
-
-Clone the git repository::
-
-    git clone https://openmodelica.org/git-readonly/OpenModelica.git --recursive
-
-Configure, build and install selecting a prefix for the installation target (here ``/usr/local``)::
-
-    autoconf
-    ./configure CC=clang CXX=clang++ --prefix=/usr/local/ --with-omniORB --with-cppruntime --with-lapack='-llapack -lblas'
-    make
-    sudo make install
-
-.. Add enviroment variable with installation prefix so that python library can find OpenModelica::
-.. 
-..     export OPENMODELICAHOME="/usr/local/"
-
-SolarTherm dependencies::
-
-    sudo pacman -S git cmake
-
-    sudo pacman -S python2-pip
-    sudo pacman -S python2-scipy python2-matplotlib
-
-    sudo pip2 install dymat
-    sudo pip2 install pyswarm cma
-
-.. sudo pip2 install git+git://github.com/OpenModelica/OMPython.git
-
-Continue onto :ref:`build-section`.
-
-Notes & Troubleshooting
-"""""""""""""""""""""""
+.. Notes & Troubleshooting
+.. """""""""""""""""""""""
 .. * omniORB is a CORBA implementation required for python interface.
 
-* The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
-* The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`__ for the simple diff to apply.
+.. * The OpenModelica compiler omc builds its own version of Ipopt.  If a version of Ipopt is already installed, then at times it might be linked to by mistake during simulation compilation.
+.. * The 1.58-0-3 version of the boost library has a bug that causes a compilation error.  See `here <https://svn.boost.org/trac/boost/attachment/ticket/11207/patch_numeric-ublas-storage.hpp.diff>`__ for the simple diff to apply.
 
 .. Add the SolarTherm libraries where OpenModelica can find them.  The first way to do this is to copy or symbolically link the SolarTherm folder in the ``~/.openmodelica/libraries/`` folder.  On linux creating the symbolic link::
 .. 
