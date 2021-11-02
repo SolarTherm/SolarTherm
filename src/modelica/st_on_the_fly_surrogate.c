@@ -1090,12 +1090,12 @@ void NoOpDeallocator(void* data, size_t a, void* b)
 }
 
 Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, double PR, 
-double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
-double eta_gross_base, double eta_Q_base, char* base_path, char* SolarTherm_path, int match_index, 
-char* traindir_base, char* config_base, int status_config, int inputsize, int outputsize, double tolerance, int PB_model,
-int htf_choice, double dT_PHX_hot_approach, double dT_PHX_cold_approach, double eta_isen_mc, 
-double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name)
-{
+		double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
+		double eta_gross_base, double eta_Q_base, char* base_path, char* SolarTherm_path, int match_index, 
+		char* traindir_base, char* config_base, int status_config, int inputsize, int outputsize, double tolerance, int PB_model,
+		int htf_choice, double dT_PHX_hot_approach, double dT_PHX_cold_approach, double eta_isen_mc, 
+		double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name
+){
     char line[limitSize];
 
     Kriging_struct* Kriging_variables; //**************** mallocing is done in the load_KrigingVariables function
@@ -1418,13 +1418,13 @@ double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name)
 }
 
 Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double PR, 
-double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
-double eta_base, char* base_path, char* SolarTherm_path, int match_index, 
-char* traindir_base, char* config_base, char* ANN_path, int which_ANN_model, int gen_data, int status_config,
-int inputsize, int outputsize, double tolerance, int PB_model,
-int htf_choice, double dT_PHX_hot_approach, double dT_PHX_cold_approach, double eta_isen_mc, 
-double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name)
-{
+		double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
+		double eta_base, char* base_path, char* SolarTherm_path, int match_index, 
+		char* traindir_base, char* config_base, char* ANN_path, int which_ANN_model, int gen_data, int status_config,
+		int inputsize, int outputsize, double tolerance, int PB_model,
+		int htf_choice, double dT_PHX_hot_approach, double dT_PHX_cold_approach, double eta_isen_mc, 
+		double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name
+){
     //*************** initial number of training data
     int numdata = 150;
     Session_Props* session; //****************** mallocing will be done in the load_session func
@@ -2084,10 +2084,10 @@ int getNumOfData(char* filepath)
 }
 
 void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, double pinch_PHX, 
-double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
-double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
-double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach,double T_amb_base)
-{
+		double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
+		double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
+		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach,double T_amb_base
+){
     char line[limitSize];
     int matching_index = -1000;
     int status = -1000;
@@ -3718,4 +3718,4 @@ void ssc_test()
 }
 
 
-
+// vim: ts=4:sw=4:et

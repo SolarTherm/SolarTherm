@@ -1,15 +1,23 @@
 from __future__ import print_function
 
-import os
-import time
-import numpy as np
-import solsticepy
-from solsticepy.design_crs import CRS
-from solsticepy.input import Parameters
-from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab, output_metadata_motab_multi_aperture, append_oelts
-from solsticepy.design_multi_aperture import MultiApertureConfiguration
 import sys
-import traceback
+sys.stderr.write("Hello from Python...\n");
+
+
+try:
+	import os
+	import time
+	import numpy as np
+	import solsticepy
+	from solsticepy.design_crs import CRS
+	from solsticepy.input import Parameters
+	from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab, output_metadata_motab_multi_aperture, append_oelts
+	from solsticepy.design_multi_aperture import MultiApertureConfiguration
+except Exception as e:
+	sys.stderr.write("Error with imports...\n")
+	sys.stderr.write("e = %s" % (str(e),))
+
+sys.stderr.write("Done with imports...\n");
 
 def set_param(inputs={}):
 	'''

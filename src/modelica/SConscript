@@ -39,9 +39,6 @@ penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
-#Adding st_solsticepy_windy library for particle system - 17 October 2021 -- Philipe
-lib5 = penv.SharedLibrary('st_solsticepy_windy',['run_py_func_windy.c'])
-
 # GLPK-linked bits...
 genv = senv.Clone()
 genv.Append(
@@ -92,7 +89,7 @@ fenv.Append(
 lib9 = fenv.SharedLibrary('st_surrogate_on_the_fly',['st_on_the_fly_surrogate.c'])
 
 #Appending the libs
-shlibs = [lib1, lib4, lib2, lib5, lib3, lib6, lib7, lib8, lib9]
+shlibs = [lib1, lib4, lib2, lib3, lib6, lib7, lib8, lib9]
 pysrcs = [
 	'st_test_ext.py',
 	'run_solstice.py',

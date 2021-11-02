@@ -187,4 +187,5 @@ void free_surrogate_multi_output(Session_Props_multi_output *sess)
 {
     free(sess);
 }
-    
+
+// vim: ts=4:sw=4:et

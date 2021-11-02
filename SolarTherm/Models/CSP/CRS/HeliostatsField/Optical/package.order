@@ -1,11 +1,10 @@
-OpticalEfficiency
 Constant
 Function
 Table
 Correlation
 SolsticeOELT
-SolsticePyFunc
-SolsticeOELT_3Apertures
-OpticalEfficiency_3Apertures
 SolsticeOELT_windy
-SolsticePyFunc_windy
+SolsticeOELT_3Apertures
+OpticalEfficiency
+OpticalEfficiency_3Apertures
+SolsticePyFunc

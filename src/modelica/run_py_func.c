@@ -16,18 +16,32 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	PyObject *pArgs, *pValue, *inputs;
 	int i;
 
+	fprintf(stderr,"Running python module '%s' from path '%s'...\n",pname,ppath);
+	fprintf(stderr,"psave = %s\n",psave);
+	fprintf(stderr,"rcv_type = %s\n",rcv_type);
+	fprintf(stderr,"wea_file = %s\n",wea_file);
+	fprintf(stderr,"field_type = %s\n",field_type);
+
 	Py_Initialize(); /*  Initialize Interpreter  */
 
 	// add the path of the Python function file to the system path
 	PyObject *sys_path = PySys_GetObject("path");
+
+	fprintf(stderr,"Append '%s' to sys path...\n",ppath);
+
 	PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
 
-	// name of the Python file
-	pName = PyUnicode_FromString(pname);
-	/* Error checking of pName left out */
+	fprintf(stderr,"Import '%s'....\n",pname);
 
-	pModule = PyImport_Import(pName);
-	Py_DECREF(pName);
+	// name of the Python file
+	//pName = PyUnicode_FromString(pname);
+	/* Error checking of pName left out */
+	//fprintf(stderr,"Import '%s'....\n",pname);
+
+	pModule = PyImport_ImportModule(pname);
+	//Py_DECREF(pName);
+
+	fprintf(stderr,"eee\n");
 
 	if(pModule != NULL){
 		pFunc = PyObject_GetAttrString(pModule, pfunc);
@@ -36,6 +50,9 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 		pArgs =PyTuple_New(1);
 
 		if (pFunc && PyCallable_Check(pFunc)){
+
+			fprintf(stderr,"Creating dict to pass...\n");
+
 			inputs = PyDict_New();
 			PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
 			PyDict_SetItemString(inputs, "field_type", PyUnicode_FromString((char *)field_type));
@@ -56,7 +73,11 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 
 			PyTuple_SetItem(pArgs, 0, inputs);
 
+			fprintf(stderr,"Heading into PyObject_CallObject...\n");
+
 			pValue = PyObject_CallObject(pFunc, pArgs);
+
+			fprintf(stderr,"Got back from PyObject_CallObject...\n");
 
 			tablefile=PyBytes_AsString(pValue);
 

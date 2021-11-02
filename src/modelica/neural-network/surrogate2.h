@@ -20,3 +20,5 @@ void run_surrogate_multi_output(const Session_Props_multi_output*, const double 
                      const double [], const double [], const double[], const double[], double*);
 
 void free_surrogate_multi_output(Session_Props_multi_output*);
+
+// vim: ts=4:sw=4:et

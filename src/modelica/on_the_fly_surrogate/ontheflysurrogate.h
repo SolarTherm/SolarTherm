@@ -194,4 +194,4 @@ void genOffDesignArray(char* , sim_struct* );
 
 void ssc_test();
 
-
+// vim: ts=4:sw=4:et
