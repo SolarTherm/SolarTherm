@@ -11,6 +11,9 @@
 
 #define limitSize 1000000
 
+// max filename length for generated file paths
+#define MAXLEN 1024
+
 #define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
 #define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 
@@ -1858,6 +1861,9 @@ int getNumOfData(char* filepath){
 }
 
 
+/**
+	FIXME describe it...
+*/
 void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, double pinch_PHX, 
 		double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
 		double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
@@ -1868,37 +1874,23 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 	int status = -1000;
 
 	/*Check if the design param is already existing*/
+	int file_index = 0;
 	char* configdir = "/configurations/";
-	char* configbase;
-	if(PB_model==0){
-		configbase = "config";  
-	}else if(PB_model==1){
-		configbase = "configNREL";
-	}else{
+	char* config_base = (PB_model == 0 ? "config" : (PB_model == 1 ? "configNREL" : NULL));
+	if(!config_base){
 		fprintf(stderr,"PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d\n",PB_model);
 		exit(EXIT_FAILURE);
 	}
+	char* config_file_path = NEW_ARRAY(char,MAXLEN);
 
-	char* file_extension = ".txt";
-	int file_index = 0;
-	int l = snprintf(NULL,0,"%d",file_index); // calculate the amount of memory to be allocated for index
-	char* index_string = NEW_ARRAY(char,l);
+	while(1){
+		snprintf(config_file_path,MAXLEN,"%s/configurations/%s%d.txt",base_path,config_base,file_index);
+		fprintf(stderr,"Reading config '%s'...\n",config_file_path);
 
-	sprintf(index_string,"%d",file_index); //convert integer into string  
+		FILE* configfile = fopen(config_file_path,"r");
+		
+		if(!configfile)break; // no more saved configurations
 
-	//Unify index_string with configname
-	l = strlen(base_path) + strlen(configbase) + strlen(index_string) + strlen(file_extension) + 1;
-	char* config_file_path = NEW_ARRAY(char,l);
-	strcpy(config_file_path,base_path); //copy the basepath into configname
-	strcat(config_file_path,configdir); //copy the "config" into configname
-	strcat(config_file_path,configbase); //copy the "config" into configname
-	strcat(config_file_path,index_string); //concatenate configname with indexstring e.g. result config0
-	strcat(config_file_path,file_extension); //concatenate file extension e.g. config0.txt
-
-	FILE* configfile = fopen(config_file_path,"r");
-
-	//*******************start reading
-	while(configfile != NULL){
 		//**************** get the 1st line
 		fgets(line,limitSize,configfile);
 
@@ -1971,24 +1963,7 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 		    fprintf(stderr,"Configuration doesn't match in: %s\n",config_file_path);
 		}
 		
-		
 		file_index++; //**********increasing the file index
-		
-		//*********** Try opening the next file
-		l = snprintf(NULL,0,"%d",file_index);
-		index_string = NEW_ARRAY(char,l); 
-
-		sprintf(index_string,"%d",file_index); //convert integer into string  
-
-		//Unify index_string with configname
-		l = strlen(base_path) + strlen(configbase) + strlen(index_string) + strlen(file_extension) + 1;
-		config_file_path = NEW_ARRAY(char,l);
-		strcpy(config_file_path,base_path); //copy the basepath into configname
-		strcat(config_file_path,configdir); //copy the "config" into configname
-		strcat(config_file_path,configbase); //copy the "config" into configname
-		strcat(config_file_path,index_string); //concatenate configname with indexstring e.g. result config0
-		strcat(config_file_path,file_extension); //concatenate file extension e.g. config0.txt
-		configfile = fopen(config_file_path,"r");
 	}
 
 	//************** If no file is matching --> matching index is -1000, 
@@ -2365,32 +2340,21 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 }
 
 
-char* build_trainingdir_path(char* base_path
-		, char* traindir_base, char* config_base, int match_index
+/**
+	FIXME describe it
+*/
+char* build_trainingdir_path(
+		char* base_path, char* traindir_base, char* config_base, int match_index
 ){
-	int l = snprintf(NULL,0,"%d",match_index); 
-	char* index_string = NEW_ARRAY(char,l);
-
-	sprintf(index_string,"%d",match_index); //convert integer into string  
-
-	/*Build the file name for training, validation, min, max, kriging params*/           
-	l = strlen(base_path) + strlen(traindir_base) + strlen(config_base) + strlen(index_string) + 1;
-	char* trainingdir = NEW_ARRAY(char,l);
-	strcpy(trainingdir,base_path); //copy the basepath into traindir_base
-	strcat(trainingdir,traindir_base); //concatenate traindir base with basepath e.g. result /home/philgun/Documents/codecodecode/codecodecode/GSL_Project/training_data-dummy/
-	strcat(trainingdir,config_base); //concatenate trainingdir with config_base e.g. result /home/philgun/Documents/codecodecode/codecodecode/GSL_Project/training_data-dummy/config
-	strcat(trainingdir,index_string); //concatenate match_index e.g. ./training_data-dummy/config4
-
-	free(index_string);
+	char* trainingdir = NEW_ARRAY(char,MAXLEN);
+	snprintf(trainingdir,MAXLEN,"%s%s%s%d",base_path,traindir_base,config_base,match_index);
 	return trainingdir;
 }
 
 
 char* concat_training_dir(char* trainingdir, char* concat_string){
-	int l = strlen(trainingdir) + strlen(concat_string) + 1;
-	char* resultpath = NEW_ARRAY(char,l);
-	strcpy(resultpath,trainingdir);
-	strcat(resultpath,concat_string);
+	char *resultpath = NEW_ARRAY(char,MAXLEN);
+	snprintf(resultpath,MAXLEN,"%s%s",trainingdir,concat_string);
 	return resultpath;
 }
 
@@ -2560,7 +2524,10 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	}
 }
 
-void genPropsArray(char* fn_props, sim_struct* sim){
+/**
+	Load FIXME properties array from text file `fn_props` and store in sim_struct `sim`.
+*/
+void loadPropsArray(char* fn_props, sim_struct* sim){
 	char line[limitSize];
 
 	FILE* fn = fopen(fn_props,"r");
@@ -2610,8 +2577,11 @@ void genPropsArray(char* fn_props, sim_struct* sim){
 	fclose(fn);
 }
 
-
-void genOffDesignArray(char* fn_OD, sim_struct* sim){
+/*
+	Read an off-design FIXME FIXME from a text file named `fn_OD`, and
+	store the results in a provided sim_struct `sim`.
+*/
+void loadOffDesignArray(char* fn_OD, sim_struct* sim){
 	char line[limitSize];
 
 	FILE* fn = fopen(fn_OD,"r");
@@ -2672,22 +2642,13 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		,char* SolarTherm_path, char* base_path, int status_config, int match_index
 		,int is_OD_simulated
 ){
+	int l; /* for string lengths */
 	//******************************************** WRITE CONFIGURATIONS ******************************************************//
-	int l = snprintf(NULL,0,"%d",match_index); 
-	char* index_string = NEW_ARRAY(char,l);    
-
-	sprintf(index_string,"%d",match_index); //convert integer into string  
-
 	if(status_config==1){
 		 // dump the configurations
-		char* path_config = NEW_ARRAY(char
-			,strlen(base_path)+strlen("/configurations/configNREL")+strlen(index_string)+strlen(".txt")+1
-		);
-
-		strcpy(path_config,base_path);
-		strcat(path_config,"/configurations/configNREL");
-		strcat(path_config,index_string);
-		strcat(path_config,".txt");
+		char *path_config = NEW_ARRAY(char,MAXLEN);
+		snprintf(path_config,MAXLEN,"%s/configurations/configNREL%d.txt",base_path,match_index);
+		fprintf(stderr,"Writing '%s'...\n",path_config);
 
 		FILE* f = fopen(path_config,"w");
 		fprintf(f,
@@ -2705,15 +2666,11 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 	}
 
 	//******************************************** LOAD FLUID PROPS *********************************************************//
-	l = strlen(SolarTherm_path) + strlen("/Data/") + strlen(HTF_name) + strlen("/props_for_NREL_PB.csv") + 1;
-	char* fn_props = NEW_ARRAY(char,l);
-	strcpy(fn_props,SolarTherm_path);
-	strcat(fn_props,"/Data/");
-	strcat(fn_props,HTF_name);
-	strcat(fn_props,"/props_for_NREL_PB.csv");
+	char *fn_props = NEW_ARRAY(char,MAXLEN);
+	snprintf(fn_props,MAXLEN,"%s/Data/%s/props_for_NREL_PB.csv",SolarTherm_path,HTF_name);
 
 	sim_struct* sim = NEW(sim_struct);
-	genPropsArray(fn_props, sim);
+	loadPropsArray(fn_props, sim);
 	ssc_number_t* htf_props = NEW_ARRAY(ssc_number_t, sim->rows_props*7);
 	htf_props = sim->array_props;
 	free(fn_props);
@@ -2733,10 +2690,9 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		strcpy(fn_OD,trainingdir);
 		strcat(fn_OD,"/OD_matrix.csv");
 		
-		genOffDesignArray(fn_OD, sim);
+		loadOffDesignArray(fn_OD, sim);
 		ssc_number_t* OD_array = NEW_ARRAY(ssc_number_t, sim->rows_OD*6);
-		OD_array = sim->array_OD;
-
+		sim->array_OD = OD_array; // flipped this around... only way it makes sense -- JP
 
 		//**************************************************************************************************************************//
 		double eff_max = 1; 
@@ -2897,7 +2853,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		/*Generate validation data array*/
 		int rowval = 15;
 		generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, rowval,"validation");
-		genOffDesignArray(fn_OD, sim);
+		loadOffDesignArray(fn_OD, sim);
 		free(fn_OD);
 		len = sim->rows_OD;
 
@@ -3057,7 +3013,6 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 	}
 
 	free(htf_props);
-	free(index_string);
 	return data;
 }
 
@@ -3126,6 +3081,9 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 }
 
 
+/*
+	FIXME refactor the string operations in this function, see `checkConfig`
+*/
 void checkConfigReceiver(double H_drop, double T_HTF_in_des
 		, double T_HTF_out_des, char* base_path, int* index_and_status
 ){
@@ -3196,6 +3154,7 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 		l = snprintf(NULL,0,"%d",file_index);
 		index_string = NEW_ARRAY(char,l);
 
+		// FIXME refactor to avoid duplicating this code.
 		sprintf(index_string,"%d",file_index); //convert integer into string  
 
 		//Unify index_string with configname

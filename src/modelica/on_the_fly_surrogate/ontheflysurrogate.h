@@ -172,13 +172,12 @@ void simReceiver(int, double , double , double , char* , char* , char*, int);
 
 int trainingANNReceiver(char* , char* , int , char* );
 
-typedef struct sim_struct
-{
+typedef struct{
     ssc_number_t* array_props;
     ssc_number_t* array_OD;
     int rows_props;
     int rows_OD;
-}sim_struct;
+} sim_struct;
 
 ssc_data_t runNRELPB(int ,double , double , double ,
     double , double , double , 

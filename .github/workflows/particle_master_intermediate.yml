@@ -162,6 +162,7 @@ jobs:
         st --version
         solstice --version
         cd ./examples
+        export ST_DEBUG=1
         st simulate --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
 
     - name: Test SolarTherm (18.04 only)
