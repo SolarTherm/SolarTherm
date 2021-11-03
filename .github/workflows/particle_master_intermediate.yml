@@ -26,7 +26,8 @@ jobs:
             python-version: 3.6
 
     env:
-      DAKVER: 6.14.0
+      DAKVER: 6.14.0 # version of DAKOTA
+      SAMVER: 2020-11-12 # version of SAM
       PYTEST_ADDOPTS: --color=yes
 
     steps:
@@ -42,6 +43,7 @@ jobs:
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
         python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.4
+        # FIXME move to pypi version of solsticepy ASAP...
         python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
@@ -76,8 +78,10 @@ jobs:
 
     - name: Install Tensorflow C API
       run: |
-        wget -P ../ https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz
-        sudo tar -C /usr/ -xzf ../libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz
+        wget https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz
+        mkdir -p /usr/local
+        tar zxv libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz -C /usr/local
+        wc -l /usr/local/include/tensorflow/c/c_api.h
         
     - name: Install Solstice
       run: |
@@ -95,7 +99,7 @@ jobs:
         echo "SOLSTICE VERSION:"
         solstice --version
 
-    - name: Prepare for DAKOTA 18.04
+    - name: Install dependencies for DAKOTA (18.04)
       if: ${{ matrix.os == 'ubuntu-18.04' }}
       run: |
         sudo apt install libicu60 libboost-serialization1.65.1 libstdc++6 \
@@ -103,7 +107,7 @@ jobs:
           libboost-regex1.65.1 libboost-system1.65.1 libblas3 libc6 \
           libgfortran4 openmpi-bin libopenmpi-dev
 
-    - name: Prepare for DAKOTA 20.04
+    - name: Install dependencies for DAKOTA (20.04)
       if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
         sudo apt install openmpi-bin libltdl7 liblapack3 libhwloc15 \
@@ -125,16 +129,17 @@ jobs:
 
     - name: Install SAM Simulation Core
       run: |
-        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run
-        sudo chmod +x ../sam-beta-linux-2020-11-12.run
-        sudo ../sam-beta-linux-2020-11-12.run
+        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+        ls /opt/SAM/${SAMVER//-/.}
 
     - name: Build SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons SSC_PREFIX=/opt/SAM/2020.11.12
+        scons SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Install SolarTherm
       run: |
@@ -142,7 +147,7 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install SSC_PREFIX=/opt/SAM/2020.11.12
+        scons install SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Test MPI
       run: |    
@@ -152,7 +157,7 @@ jobs:
     - name: Test st_simulate
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/opt/SAM/2020.11.12/linux_64
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         which st
         st --version

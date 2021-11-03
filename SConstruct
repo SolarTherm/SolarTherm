@@ -78,18 +78,19 @@ vars.AddVariables(
 	,('PYVERSION','Version of Python to use',default_pyversion)
 	,('PYTHON','Python executable','python%s'%(sys.version_info[0]))
 	,('PYTHON_SHEBANG','Python as named in the `st` shebang',"/usr/bin/env $PYTHON")
-	,PathVariable(
-		'OM_PREFIX'
-		,"Installation prefix for location where OpenModelica is installed"
+	,PathVariable('OM_PREFIX',"Installation prefix for location where OpenModelica is installed"
 		,default_om_prefix,PathVariable.PathAccept)
-	,PathVariable( 'OM_CPPPATH' ,"Location where OM C runtime headers are located","$OM_PREFIX/include/omc/c",PathVariable.PathAccept)
+	,PathVariable( 'OM_CPPPATH' ,"Location where OM C runtime headers are located"
+		,"$OM_PREFIX/include/omc/c",PathVariable.PathAccept)
 	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
-	,('OM_BIN',"Libraries to link when building external functions",'$OM_PREFIX/bin')
-	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
-	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries',default_om_modelicapath,PathVariable.PathAccept)
-	,PathVariable(
-		'GLPK_PREFIX'
-		,"Installation prefix for GLPK",default_glpk_prefix,PathVariable.PathAccept)
+	,PathVariable('OM_BIN',"Location of OM executables"
+		,'$OM_PREFIX/bin',PathVariable.PathAccept)
+	,PathVariable('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular"
+		,default_om_libpath, PathVariable.PathAccept)
+	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries'
+		,default_om_modelicapath,PathVariable.PathAccept)
+	,PathVariable('GLPK_PREFIX',"Installation prefix for GLPK"
+		,default_glpk_prefix,PathVariable.PathAccept)
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
 	,PathVariable('TF_PREFIX'
@@ -379,10 +380,12 @@ conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
 
 if conf.TF():
-	env.AppendUnique(ST_LIBPATH=['$TK_LIBPATH'])
+	env.AppendUnique(ST_LIBPATH=['$TF_LIBPATH'])
 if conf.SSC():
 	env.AppendUnique(ST_LIBPATH=['$SSC_LIBPATH'])
-	
+
+print(env['ST_LIBPATH'])
+
 if not conf.OMC() or not conf.OMLib():
 	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
@@ -409,9 +412,15 @@ env['PKGCONFIGPYTHON'] = configcmd
 
 env.AppendUnique(
 	ST_PATH=[env.subst('$INSTALL_BIN')]
+	,ST_LIBPATH=[]
 	,ST_PYTHONPATH=[env.subst('$PREFIX/lib/python$PYVERSION/site-packages')]	
 	,ST_MODELICAPATH=[env.subst('$OM_MODELICAPATH'),env.subst('$INSTALL_OMLIBRARY')]
 )
+
+# Note: ST_PATH, ST_LIBPATH and ST_PYTHONPATH contain paths that will be added to PATH,
+# LD_LIBRARY_PATH and PYTHONPATH (Linux) or just PATH and PYTHONPATH (Windows) when the 'st' script
+# is run, to reduce the risks of runtime configuration errors. The components will only be added
+# if not already in the relevant path.
 
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {

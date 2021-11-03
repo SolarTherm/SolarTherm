@@ -809,25 +809,11 @@ void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_c
 	double guess_val = 5;
 	while(delta>0.5){
 		simulation_result = runNRELPB(
-		10,
-		P_net,
-		T_in_ref_blk,
-		p_high,
-		T_amb_base,
-		guess_val,  /**********************************************dT_PHX_hot_approach ==> iterated value*/
-		dT_PHX_cold_approach,                  
-		eta_isen_mc,
-		eta_isen_rc,
-		eta_isen_t,
-		dT_mc_approach,
-		HTF_name,
-		HTF_choice,
-		".",
-		SolarTherm_path,
-		".",
-		0,
-		0,
-		0);
+				10, P_net, T_in_ref_blk, p_high, T_amb_base
+				,guess_val, dT_PHX_cold_approach /* iterated value */, eta_isen_mc, eta_isen_rc, eta_isen_t
+				,dT_mc_approach, HTF_name, HTF_choice, ".", SolarTherm_path
+				,".", 0, 0, 0
+			);
 
 		double T_HTF_cold_calculated;
 		ssc_data_get_number(simulation_result,"T_htf_cold_des",&T_HTF_cold_calculated);
