@@ -80,7 +80,7 @@ jobs:
       run: |
         wget https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz
         mkdir -p /usr/local
-        tar zxv libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz -C /usr/local
+        tar zxvf libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz -C /usr/local
         wc -l /usr/local/include/tensorflow/c/c_api.h
         
     - name: Install Solstice
