@@ -78,9 +78,8 @@ jobs:
 
     - name: Install Tensorflow C API
       run: |
-        wget https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz
-        mkdir -p /usr/local
-        tar zxvf libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz -C /usr/local
+        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz"
+        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
         wc -l /usr/local/include/tensorflow/c/c_api.h
         
     - name: Install Solstice
