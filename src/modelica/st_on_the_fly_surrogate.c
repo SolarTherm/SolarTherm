@@ -1862,7 +1862,7 @@ int getNumOfData(char* filepath){
 
 
 /**
-	FIXME describe it...
+This function is to check the existing sCO2 PB configurations against the requested configuration by the system model. When the configuration exists, no need to generate new surrogate model, instead the program will load the existing surrogate model and proceed with simulation. Checking confiugration is done by reading txt files located in ./configurations directory.
 */
 void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, double pinch_PHX, 
 		double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
@@ -2835,6 +2835,8 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		    fclose(f);
 		}
 		
+		fclose(f);
+
 		f = fopen(fn,"a");
 		
 		for(size_t i=0;i<len;i++){
@@ -2884,7 +2886,8 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		    fprintf(g,"P_net,T_in_ref_blk,p_high,PR,pinch_PHX,dTemp_HTF_PHX,load,T_HTF_in,T_amb_input,eta_gross,eta_Q,\n");
 		    fclose(g);
 		}
-		
+		fclose(g);
+
 		g = fopen(fn_val,"a");
 		
 		for(size_t i=0;i<rowval;i++){
@@ -3092,52 +3095,45 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 	int status = -1000;
 
 	/*Check if the design param is already existing*/
-	char* configdir = "/configurations/";
-	char* configbase = "configParticleReceiver";
-
-	char* file_extension = ".txt";
 	int file_index = 0;
-	int l = snprintf(NULL,0,"%d",file_index); // calculate the amount of memory to be allocated for index
-	char* index_string = NEW_ARRAY(char,l);
+	char* config_base = "configParticleReceiver";
 
-	sprintf(index_string,"%d",file_index); //convert integer into string  
+	char* config_file_path = NEW_ARRAY(char, MAXLEN);
+	
+	while(1){
+		//************** String refactoring operation
+		snprintf(config_file_path,MAXLEN,"%s/configurations/%s%d.txt", base_path, config_base, file_index);
 
-	//Unify index_string with configname
-	l = strlen(base_path) + strlen(configbase) + strlen(index_string) + strlen(file_extension) + 1;
-	char* config_file_path = NEW_ARRAY(char,l);
-	strcpy(config_file_path,base_path); //copy the basepath into configname
-	strcat(config_file_path,configdir); //copy the "config" into configname
-	strcat(config_file_path,configbase); //copy the "config" into configname
-	strcat(config_file_path,index_string); //concatenate configname with indexstring e.g. result config0
-	strcat(config_file_path,file_extension); //concatenate file extension e.g. config0.txt
+		fprintf(stderr,"Reading config '%s'...\n",config_file_path);
+		
+		//************** Try open the config_file_path
+		FILE* configfile = fopen(config_file_path, "r");
 
-	FILE* configfile = fopen(config_file_path,"r");
-
-	//*******************start reading
-	while(configfile != NULL){
+		//************** If fail to open, break out of the while loop
+		if(!configfile)break; //Finished looping over all configfile
+		
 		//**************** get the 1st line
 		fgets(line,limitSize,configfile);
 
-		//**************** get the 2nd line where the information is
+		//**************** get the 2nd line where the information is located
 		fgets(line,limitSize,configfile);
 
-		//**************** start scanning the information
-		//Initialise CEA PB and NREL parameters that want to be compared
+		//**************** Start scanning the information
+		//Initialise the particle receiver parameters that want to be compared
 		double H_drop_existing, T_HTF_in_des_existing,T_HTF_out_des_existing;
 
 		double deviation_of_configurations;
-		{
-		    sscanf(
-		        line,"%lf,%lf,%lf",
-		        &H_drop_existing,
-		        &T_HTF_in_des_existing,
-		        &T_HTF_out_des_existing
-		    );
-		    double deviation_H_drop = fabs(H_drop_existing - H_drop);
-		    double deviation_T_HTF_in_des = fabs(T_HTF_in_des_existing - T_HTF_in_des);
-		    double deviation_T_HTF_out_des = fabs(T_HTF_out_des_existing - T_HTF_out_des);
-		    deviation_of_configurations = deviation_H_drop + deviation_T_HTF_in_des + deviation_T_HTF_out_des;            
-		}
+		sscanf(
+	        line,"%lf,%lf,%lf",
+	        &H_drop_existing,
+	        &T_HTF_in_des_existing,
+	        &T_HTF_out_des_existing
+	    );
+
+		double deviation_H_drop = fabs(H_drop_existing - H_drop);
+		double deviation_T_HTF_in_des = fabs(T_HTF_in_des_existing - T_HTF_in_des);
+		double deviation_T_HTF_out_des = fabs(T_HTF_out_des_existing - T_HTF_out_des);
+		deviation_of_configurations = deviation_H_drop + deviation_T_HTF_in_des + deviation_T_HTF_out_des;            
 		
 		if(deviation_of_configurations < 1e-3){
 		    matching_index = file_index;
@@ -3147,25 +3143,7 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 		    fprintf(stderr,"Configuration doesn't match in: %s\n",config_file_path);
 		}
 		
-		
 		file_index++; //**********increasing the file index
-		
-		//*********** Try opening the next file
-		l = snprintf(NULL,0,"%d",file_index);
-		index_string = NEW_ARRAY(char,l);
-
-		// FIXME refactor to avoid duplicating this code.
-		sprintf(index_string,"%d",file_index); //convert integer into string  
-
-		//Unify index_string with configname
-		l = strlen(base_path) + strlen(configbase) + strlen(index_string) + strlen(file_extension) + 1;
-		config_file_path = NEW_ARRAY(char,l);
-		strcpy(config_file_path,base_path); //copy the basepath into configname
-		strcat(config_file_path,configdir); //copy the "config" into configname
-		strcat(config_file_path,configbase); //copy the "config" into configname
-		strcat(config_file_path,index_string); //concatenate configname with indexstring e.g. result config0
-		strcat(config_file_path,file_extension); //concatenate file extension e.g. config0.txt
-		configfile = fopen(config_file_path,"r");
 	}
 
 	//************** If no file is matching --> matching index is -1000, 
