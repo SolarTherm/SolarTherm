@@ -80,6 +80,23 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 	return;
 }
 
+int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){
+	char* cmd = NEW_ARRAY(char, MAXLEN);
+	snprintf(cmd, MAXLEN, "python %s/Resources/Library/trainANNReceiver.py %s %s %d",SolarTherm_path, fn_data, prefixres, count);
+
+	fprintf(stderr,"%s\n",cmd); //e.g. python /home/philgun/solartherm/SolarTherm/Resources/Library/trainANNReceiver.py ./surrogates . 0
+
+	int status_training = system(cmd);
+
+	if(status_training==0){
+		fprintf(stderr,"Training ANN has been finished without any error\n");
+		return 0;
+	}else{
+		fprintf(stderr,"Training error with status %d\n",status_training);
+		return -1;
+	}
+}
+
 void simReceiver(int numdata, double H_drop_design, double T_HTF_in_design
 		, double T_HTF_out_des, char* trainingdir, char* SolarTherm_path
 		, char* base_path, int status_config

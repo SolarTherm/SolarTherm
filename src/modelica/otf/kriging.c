@@ -539,40 +539,6 @@ void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, cha
 	}
 }
 
-int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
-	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
-	char* index = NEW_ARRAY(char,l);    
-	sprintf(index,"%d",count); //convert integer into string 
-
-	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
-	char* base_cmd = NEW_ARRAY(char,l);
-	strcpy(base_cmd,"python ");
-	strcat(base_cmd,SolarTherm_path);
-	strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
-
-	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
-	char* cmd = NEW_ARRAY(char,l);
-
-	strcpy(cmd,base_cmd);
-	strcat(cmd,fn_data);
-	strcat(cmd," ");
-	strcat(cmd,prefixres);
-	strcat(cmd," ");
-	strcat(cmd,index);
-
-	fprintf(stderr,"%s\n",cmd);
-
-	int status_training = system(cmd);
-
-	if(status_training==0){
-		fprintf(stderr,"Training ANN has been finished without any error\n");
-		return 0;
-	}else{
-		fprintf(stderr,"Training error with status %d\n",status_training);
-		return -1;
-	}
-}
-
 void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
 	double var;
 	double dist;
@@ -671,9 +637,6 @@ void eucledianDistance_2(Kriging_struct* Kriging_variables
 		            square_difference = square_difference + (delta*delta);
 		        }
 		        dist = pow(square_difference,0.5);
-		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
-		        //printf("DISTANCE = %lf\n",dist);
-		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
 		        gsl_matrix_set(DISTANCE,i,j,dist);
 		    }
 		}
@@ -795,9 +758,6 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 		            square_difference = square_difference + (delta*delta);
 		        }
 		        dist = pow(square_difference,0.5);
-		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
-		        //printf("DISTANCE = %lf\n",dist);
-		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
 		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,dist);
 		    }
 		}

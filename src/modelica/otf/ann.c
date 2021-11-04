@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdlib.h>
 
 //********************* SEQUENCE 3.2
 double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model){
