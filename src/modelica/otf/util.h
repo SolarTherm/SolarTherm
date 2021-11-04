@@ -1,6 +1,7 @@
 #ifndef ST_OTF_UTIL_H
 #define ST_OTF_UTIL_H
 
+#include <stdlib.h>
 #define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
 #define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 
