@@ -35,7 +35,7 @@ package SurrogateModelsSingleOutput
       input Real Y_min;
       output Real out;
       external "C" out = run_surrogate(session,raw_input,inputsize,X_max,X_min,Y_max,Y_min)
-      annotation(Library="st_surrogate_single_output");
+      annotation(Library="st_recv_surrogate_single_output");
     //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
     //          Include="#include \"st_surrogate.c\"",
     //          Library = "tensorflow");

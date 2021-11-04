@@ -45,7 +45,7 @@ package SurrogateModelsMultiOutput
       Y_min,
       out
       )
-    annotation(Library="st_surrogate_multi_output");
+    annotation(Library="st_recv_surrogate_multi_output");
     //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
     //          Include="#include \"tf.c\"",
     //          Library = "tensorflow");

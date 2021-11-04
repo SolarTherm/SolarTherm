@@ -75,10 +75,10 @@ tenv.Append(
 )
 
 #Adding st_surrogate_single_output library for particle system - 19 October 2021 -- Philipe
-lib7 = tenv.SharedLibrary('st_surrogate_single_output',['st_surrogate.c'])
+lib7 = tenv.SharedLibrary('st_recv_surrogate_single_output',['st_recv_surrogate.c'])
 
 tenv_mul = tenv.Clone()
-lib8 = tenv.SharedLibrary('st_surrogate_multi_output',['tf.c'])
+lib8 = tenv.SharedLibrary('st_recv_surrogate_multi_output',['st_recv_surrogate_multi.c'])
 
 
 #On the fly surrogate bits 21 October 2021 -- Philipe
