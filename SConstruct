@@ -446,6 +446,8 @@ elif env['COLORS'] == 'no':
 		,LINKFLAGS=['-fdiagnostics-color=never']
 	)
 
+env.Append(CPPFLAGS=['-Wall'])
+
 if env['DEBUG']:
 	env.Append(
 		CPPFLAGS = "-g"

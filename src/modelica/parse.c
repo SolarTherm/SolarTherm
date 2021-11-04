@@ -84,6 +84,7 @@ static cbool parseStandardUnGetCharFunction( Parser *p, char c )
   return TRUE;
 }
 
+#if 0
 static void parseFileDisposeFunction( Parser *p )
 {
   free( p->buf );
@@ -91,6 +92,7 @@ static void parseFileDisposeFunction( Parser *p )
   fclose( p->file );
   free( p );
 }
+#endif
 
 static cbool parseFileGetCharFunction( Parser *p, char *c )
 {

@@ -224,7 +224,6 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		,char* SolarTherm_path, char* base_path, int status_config, int match_index
 		,int is_OD_simulated
 ){
-	int l; /* for string lengths */
 	//******************************************** WRITE CONFIGURATIONS ******************************************************//
 	if(status_config==1){
 		 // dump the configurations
@@ -379,27 +378,27 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		    exit(EXIT_FAILURE);
 		}
 
-		ssc_number_t val;
-		ssc_bool_t status_call = ssc_data_get_number(data,"eta_thermal_calc",&val); //address of the value is assigned to eta
-		double eta_thermal_cycle_des = val; //************************retrieve eta cycle at design point
+		//ssc_number_t val;
+		//ssc_bool_t status_call; /*= ssc_data_get_number(data,"eta_thermal_calc",&val) */; //address of the value is assigned to eta
+		//double eta_thermal_cycle_des = val; //************************retrieve eta cycle at design point
 
 		ssc_number_t m;
-		status_call = ssc_data_get_number(data, "m_dot_htf_des",&m);
+		ssc_data_get_number(data, "m_dot_htf_des",&m);
 		
 		ssc_number_t p_low;
-		status_call = ssc_data_get_number(data,"t_P_out_des",&p_low);
+		ssc_data_get_number(data,"t_P_out_des",&p_low);
 
 		ssc_number_t Q_dot_PHX_des;
-		status_call = ssc_data_get_number(data,"q_dot_PHX",&Q_dot_PHX_des);
+		ssc_data_get_number(data,"q_dot_PHX",&Q_dot_PHX_des);
 
 		ssc_number_t T_HTF_cold_des;
-		status_call = ssc_data_get_number(data,"T_htf_cold_des",&T_HTF_cold_des);
+		ssc_data_get_number(data,"T_htf_cold_des",&T_HTF_cold_des);
 
 		/*Get the off design result*/
 		int len = sim->rows_OD;
 
 		ssc_number_t* Q_dot_cycle = ssc_data_get_array(data, "Q_dot_od",&len);
-		ssc_number_t* eta_cycle_OD = ssc_data_get_array(data,"eta_thermal_od",&len);
+		//ssc_number_t* eta_cycle_OD = ssc_data_get_array(data,"eta_thermal_od",&len);
 		ssc_number_t* W_cooler_OD = ssc_data_get_array(data,"cooler_tot_W_dot_fan_od",&len);
 		ssc_number_t* W_net_OD = ssc_data_get_array(data,"W_dot_net_od",&len); //*********** Before cooling power
 

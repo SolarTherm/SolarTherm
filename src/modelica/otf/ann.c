@@ -18,9 +18,9 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	//*********************Read input struct
 	TF_Session* Session = sess->Session;
 	TF_Graph* Graph = sess->Graph;
-	TF_SessionOptions* SessionOpts = sess->SessionOpts;
+	//TF_SessionOptions* SessionOpts = sess->SessionOpts;
 	TF_Status* Status = sess->Status;
-	TF_Buffer* RunOpts = sess->RunOpts;
+	//TF_Buffer* RunOpts = sess->RunOpts;
 
 	//*********************Input Holder Initialisation
 	int NumInputs = 1; // number of input tensor
@@ -190,7 +190,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		status_config = 0;
 
 		/*Training ANN for predicting eta*/
-		int train_status_ANN = trainingANN(filepath,trainingdir,which_ANN_model, SolarTherm_path);  
+		/*int train_status_ANN = */trainingANN(filepath,trainingdir,which_ANN_model, SolarTherm_path);  
 
 		/*Start validating the ANN model*/
 		//*************Reading scaler
@@ -412,8 +412,7 @@ void *load_session(char* saved_model_dir, double* X_max
 	//*********************in the environment called TF_CPP_MIN_LOG_LEVEL
 
 	char *var = "TF_CPP_MIN_LOG_LEVEL=0";
-	int ret;
-	ret = putenv(var);
+	putenv(var);
 
 	//*********************Allocate dynamic memory from the heap for Session_Props data struct 
 	Session_Props *sess = NEW(Session_Props);

@@ -121,14 +121,6 @@ env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 # TODO examine option of placing these things in ~/.openmodelica/binaries ...?
 env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs) 
 
-#Install all the Tensorflow files
-folders = ['configurations','neural-network','simulation', 'training_data']
-
-for f in folders:
-	print("Copy dir ./%s to ../../SolarTherm/Resources/Library for surrogate modelling"%(f))
-	os.system("cp -r ./%s/ ../../SolarTherm/Resources/Library/%s"%(f,f))
-
-
 #Workaround from using shutil since in shutil for python3.6, arg dirs_exist_ok does not exist
 '''
 #Install all the Tensorflow files

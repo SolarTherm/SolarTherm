@@ -12,8 +12,6 @@
 #define limitSize 1000000
 
 
-
-
 //******************** SEQUENCE 3
 /*
 After returning Kriging_variables* (from SEQ. 2.1) or sess* (from SEQ 2.2.), SolarTHerm use the pointer to predict the performance of the power block.
@@ -44,20 +42,20 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 
 	int rows = Kriging_variables->rows;
 	int inputsize = Kriging_variables->inputsize;
-	int outputsize = Kriging_variables->outputsize;
+	//int outputsize = Kriging_variables->outputsize;
 
-	double Nugget, Spherical, Range;
+	//double Nugget, Spherical, Range;
 	int index_var;
 
 	if (strcmp(which_eta,"eta_gross")==0){
-		Nugget = Kriging_variables->Nugget_PB;
-		Spherical = 1 - (Kriging_variables->Nugget_PB);
-		Range = Kriging_variables->Range_PB;
+		//Nugget = Kriging_variables->Nugget_PB;
+		//Spherical = 1 - (Kriging_variables->Nugget_PB);
+		//Range = Kriging_variables->Range_PB;
 		index_var = 3;
 	}else if (strcmp(which_eta,"eta_Q")==0){
-		Nugget = Kriging_variables->Nugget_HX;
-		Spherical = 1 - (Kriging_variables->Nugget_HX);
-		Range = Kriging_variables->Range_HX;
+		//Nugget = Kriging_variables->Nugget_HX;
+		//Spherical = 1 - (Kriging_variables->Nugget_HX);
+		//Range = Kriging_variables->Range_HX;
 		index_var = 4;
 	}else{
 		fprintf(stderr,"Choice of eta is not available. Your choice is %s, the avilable ones are eta_gross or eta_Q\n",which_eta);
@@ -120,13 +118,13 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 
 	/*Find the sum of weight*/
 	double sum_weight = 0;
-	double residual_weight = 0;
+	//double residual_weight = 0;
 
 	for(size_t i=0;i<rows;i++){
 		sum_weight = sum_weight + gsl_matrix_get(WEIGHT,i,0);
 	}
 
-	residual_weight = 1 - sum_weight;
+	//residual_weight = 1 - sum_weight;
 
 	/*Calculate Kriging Estimate*/
 	double estimate = 0;
@@ -302,7 +300,7 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 
 		double sill_PB = krig_param_PB[0];
 		double Nugget_PB = krig_param_PB[1];
-		double Spherical_PB = 1-Nugget_PB;
+		//double Spherical_PB = 1-Nugget_PB;
 		double Range_PB = krig_param_PB[2];
 
 		//***********************HX
@@ -317,7 +315,7 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 
 		double sill_HX = krig_param_HX[0];
 		double Nugget_HX = krig_param_HX[1];
-		double Spherical_HX = 1-Nugget_HX;
+		//double Spherical_HX = 1-Nugget_HX;
 		double Range_HX = krig_param_HX[2];
 		/*End reading Kriging Parameters*/
 
@@ -500,18 +498,18 @@ void getWeight(gsl_matrix* INVERSE_LSM, gsl_matrix* COVARIANCE, gsl_matrix* WEIG
 }
 
 void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
-	double Range;
+	//double Range;
 	double Nugget;
 	double Spherical;
 
 	int rows = Kriging_variables->rows;
 
 	if(strcmp(which_eta,"eta_gross")==0){
-		Range = Kriging_variables->Range_PB;
+		//Range = Kriging_variables->Range_PB;
 		Nugget = Kriging_variables->Nugget_PB;
 		Spherical = 1 - Kriging_variables->Nugget_PB;
 	}else if(strcmp(which_eta,"eta_Q")==0){
-		Range = Kriging_variables->Range_HX;
+		//Range = Kriging_variables->Range_HX;
 		Nugget = Kriging_variables->Nugget_HX;
 		Spherical = 1 - Kriging_variables->Nugget_HX;
 	}else{
@@ -540,7 +538,7 @@ void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, cha
 }
 
 void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
-	double var;
+	//double var;
 	double dist;
 	double multiplier;
 	double Range;
@@ -764,7 +762,7 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	}
 
 	//********************** LHS VARIOGRAM PB
-	double var;
+	//double var;
 	double multiplier;
 	double Range_variogram = Kriging_variables->Range_PB;
 	double Nugget_variogram = Kriging_variables->Nugget_PB;

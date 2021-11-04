@@ -321,7 +321,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
 			double sill_PB = krig_param_PB[0];
 			double Nugget_PB = krig_param_PB[1];
-			double Spherical_PB = 1-Nugget_PB;
+			//double Spherical_PB = 1-Nugget_PB;
 			double Range_PB = krig_param_PB[2];
 
 			//***********************HX
@@ -336,7 +336,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
 			double sill_HX = krig_param_HX[0];
 			double Nugget_HX = krig_param_HX[1];
-			double Spherical_HX = 1-Nugget_HX;
+			//double Spherical_HX = 1-Nugget_HX;
 			double Range_HX = krig_param_HX[2];
 
 			//*************************** input and outputsize
@@ -566,7 +566,8 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 				);
 			}else if(PB_model==1){
 				//*********** Run SSC Model
-				ssc_data_t NRELPBSimulationResult = runNRELPB(
+				/*ssc_data_t NRELPBSimulationResult = */
+				runNRELPB(
 					initialnumdata, P_net, T_in_ref_blk, p_high,
 					T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
 					eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,

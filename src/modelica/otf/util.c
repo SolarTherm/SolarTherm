@@ -50,7 +50,6 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 
 	/*Check if the design param is already existing*/
 	int file_index = 0;
-	char* configdir = "/configurations/";
 	char* config_base = (PB_model == 0 ? "config" : (PB_model == 1 ? "configNREL" : NULL));
 	if(!config_base){
 		fprintf(stderr,"PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d\n",PB_model);
@@ -165,7 +164,7 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 	char* training_dir = NEW_ARRAY(char, MAXLEN);
 	char* training_dir_name = "/training_data/";
 
-	snprintf(training_dir, MAXLEN, "%s%s",training_dir, training_dir_name); //e.g. base_path/training_data/
+	snprintf(training_dir, MAXLEN, "%s%s",base_path, training_dir_name); //e.g. base_path/training_data/
 
 	char* configbase = "config";
 

@@ -12,7 +12,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	// psave: directory of saving the results from mcrt
 
 	const char *tablefile = NULL; //the file of the lookup table
-	PyObject *pName, *pModule, *pFunc;
+	PyObject *pModule, *pFunc;
 	PyObject *pArgs, *pValue, *inputs;
 	int i;
 
