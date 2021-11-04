@@ -8,7 +8,7 @@ package SurrogateModelsSingleOutput
       input String saved_model_dir "Path to pre-trained Neural Network (saved in SavedModel template)";
       output STNeuralNetwork session "Session variable with Graph, Status, SessionOptions, RunOptions objects";
       external "C" session = load_session_static_ANN(saved_model_dir) 
-      annotation(Library="st_surrogate_single_output");
+      annotation(Library="st_recv_surrogate_single_output");
                 //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 //Include="#include \"st_surrogate.c\"",
                 //Library = "tensorflow");
@@ -17,7 +17,7 @@ package SurrogateModelsSingleOutput
     function destructor
       input STNeuralNetwork session;
       external "C" free_surrogate(session)
-      annotation(Library="st_surrogate_single_output");
+      annotation(Library="st_recv_surrogate_single_output");
       //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
       //          Include="#include \"st_surrogate.c\"",
       //          Library = "tensorflow");
