@@ -56,3 +56,5 @@ Particle
 *_prof.*data
 ParticleReceiver1D_standalone
 PhysicalParticleSystem
+TroughWagner*.[ch]
+TroughWagner

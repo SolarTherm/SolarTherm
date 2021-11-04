@@ -39,5 +39,5 @@ function designNRELPB
                 Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
                 LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );*/
-	annotation(Library = "st_surrogate_on_the_fly");
+	annotation(Library = "st_otf_surrogate");
 end designNRELPB;

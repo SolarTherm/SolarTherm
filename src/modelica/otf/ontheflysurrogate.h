@@ -3,11 +3,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <gsl/gsl_matrix.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
 #include <gsl/gsl_blas.h>
-#include <tensorflow/c/c_api.h>
+
 
 #define limitSize 1000000
 
@@ -67,31 +66,6 @@ typedef struct Kriging_struct
     int count;
 
 }Kriging_struct;
-
-typedef struct  /*Struct to store neccesary session properties*/
-{
-    //************** TensorFlow properties
-    TF_Session* Session;
-    TF_Graph* Graph;
-    TF_Status* Status;
-    TF_SessionOptions* SessionOpts;
-    TF_Buffer* RunOpts;
-
-    //************ Base values
-    double* base_values;
-
-    //************** Scaler properties
-    double* X_max;
-    double* X_min;
-    double* y_max;
-    double* y_min;
-
-    int inputsize;
-    int outputsize;
-
-    int count;
-
-}Session_Props;
 
 
 

@@ -43,7 +43,7 @@ package ANN_OnTheFly
                 Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
                 LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );*/
-				annotation(Library="st_surrogate_on_the_fly");
+				annotation(Library="st_otf_surrogate");
     end constructor;
   
     function destructor
@@ -56,7 +56,7 @@ package ANN_OnTheFly
                 LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );
 */
-	annotation(Library="st_surrogate_on_the_fly");
+	annotation(Library="st_otf_surrogate");
     end destructor;
   end ANN_properties;
 
@@ -77,6 +77,6 @@ package ANN_OnTheFly
                 LibraryDirectory="modelica://SolarTherm/Resources/SSC"
                 );
 	*/
-	annotation(Library="st_surrogate_on_the_fly");
+	annotation(Library="st_otf_surrogate");
   end OTF_ANN_predict;
 end ANN_OnTheFly;

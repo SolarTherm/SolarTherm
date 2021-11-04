@@ -89,7 +89,14 @@ fenv.Append(
 	,LIBPATH = ["$SSC_LIBPATH","$TF_LIBPATH"]
 )
 
-lib9 = fenv.SharedLibrary('st_surrogate_on_the_fly',['st_on_the_fly_surrogate.c'])
+lib9 = fenv.SharedLibrary('st_otf_surrogate',[
+	'st_otf_surrogate.c'
+	,'otf/kriging.c'
+	,'otf/ann.c'
+	,'otf/util.c'
+	,'otf/sscpb.c'
+#	'otf-surrogate/otfreceiver.c
+	])
 
 #Appending the libs
 shlibs = [lib1, lib4, lib2, lib3, lib6, lib7, lib8, lib9]
