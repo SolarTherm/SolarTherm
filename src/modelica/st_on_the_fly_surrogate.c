@@ -1457,40 +1457,6 @@ void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, cha
 	}
 }
 
-int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
-	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
-	char* index = NEW_ARRAY(char,l);    
-	sprintf(index,"%d",count); //convert integer into string 
-
-	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
-	char* base_cmd = NEW_ARRAY(char,l);
-	strcpy(base_cmd,"python ");
-	strcat(base_cmd,SolarTherm_path);
-	strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
-
-	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
-	char* cmd = NEW_ARRAY(char,l);
-
-	strcpy(cmd,base_cmd);
-	strcat(cmd,fn_data);
-	strcat(cmd," ");
-	strcat(cmd,prefixres);
-	strcat(cmd," ");
-	strcat(cmd,index);
-
-	fprintf(stderr,"%s\n",cmd);
-
-	int status_training = system(cmd);
-
-	if(status_training==0){
-		fprintf(stderr,"Training ANN has been finished without any error\n");
-		return 0;
-	}else{
-		fprintf(stderr,"Training error with status %d\n",status_training);
-		return -1;
-	}
-}
-
 void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
 	double var;
 	double dist;
@@ -2515,6 +2481,72 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 	//Py_Finalize();
 }
 
+/*
+	Processing the off-design data array before training the surrogate model. Using Python script
+*/
+void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
+	PyObject *pName, *pModule, *pFunc;
+	PyObject *pArgs, *inputs;
+
+	char* ppath = base_path;
+	char* pname = "gatherdata"; //gatherdata.py
+	char* pfunc = "processing_data"; //def processing_data(inputs)
+
+	Py_Initialize(); /*  Initialize Interpreter  */
+
+	//Obtain the python path, append it with the ppath
+	PyObject *sys_path = PySys_GetObject("path");
+	PyList_Append(sys_path, PyUnicode_FromString((char *) ppath));
+
+	//Convert the pname into Python String
+	pName = PyUnicode_FromString(pname);
+
+	//Import the script into C environment using PyImport_Import
+	pModule = PyImport_Import(pName);
+	Py_DECREF(pName);
+
+
+	/*Check python script: exist or not!*/
+	if (pModule != NULL){
+		/*Obtain the function from the imported python script*/
+		pFunc = PyObject_GetAttrString(pModule, pfunc);
+
+		pArgs = PyTuple_New(1);
+
+		/*if the function is callable*/
+		if (pFunc && PyCallable_Check(pFunc)){
+		    /*Instantiate a python dictionary and assign it to inputs (pointer type)*/
+		    inputs = PyDict_New();
+
+		    /*Populate the python dictionary*/
+		    PyDict_SetItemString(inputs, "fntrain", PyUnicode_FromString((char *)fntrain));
+
+		    PyDict_SetItemString(inputs, "resdir", PyUnicode_FromString((char *)trainingdir));
+		    
+		    PyTuple_SetItem(pArgs, 0, inputs);
+
+		    PyObject_CallObject(pFunc, pArgs);
+
+		    Py_DECREF(inputs);
+		    Py_DECREF(pArgs);
+		}else{
+		    if (PyErr_Occurred()){
+		        PyErr_Print();
+		    }else{
+		        fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
+		        exit(EXIT_FAILURE);
+		    }
+		}
+		Py_XDECREF(pFunc);
+		Py_DECREF(pModule);
+	}else{
+		/*if python script does not exist*/
+		PyErr_Print();
+		fprintf(stderr, "Failed to load \"%s\"\n", pname);
+		exit(EXIT_FAILURE);
+	}
+}
+
 /**
 	String formating from fragmented path
 */
@@ -3163,71 +3195,6 @@ void ssc_test(){
 	assert(dens_mirror==val);
 }
 
-/*
-	Processing the off-design data array before training the surrogate model. Using Python script
-*/
-void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
-	PyObject *pName, *pModule, *pFunc;
-	PyObject *pArgs, *inputs;
-
-	char* ppath = base_path;
-	char* pname = "gatherdata"; //gatherdata.py
-	char* pfunc = "processing_data"; //def processing_data(inputs)
-
-	Py_Initialize(); /*  Initialize Interpreter  */
-
-	//Obtain the python path, append it with the ppath
-	PyObject *sys_path = PySys_GetObject("path");
-	PyList_Append(sys_path, PyUnicode_FromString((char *) ppath));
-
-	//Convert the pname into Python String
-	pName = PyUnicode_FromString(pname);
-
-	//Import the script into C environment using PyImport_Import
-	pModule = PyImport_Import(pName);
-	Py_DECREF(pName);
-
-
-	/*Check python script: exist or not!*/
-	if (pModule != NULL){
-		/*Obtain the function from the imported python script*/
-		pFunc = PyObject_GetAttrString(pModule, pfunc);
-
-		pArgs = PyTuple_New(1);
-
-		/*if the function is callable*/
-		if (pFunc && PyCallable_Check(pFunc)){
-		    /*Instantiate a python dictionary and assign it to inputs (pointer type)*/
-		    inputs = PyDict_New();
-
-		    /*Populate the python dictionary*/
-		    PyDict_SetItemString(inputs, "fntrain", PyUnicode_FromString((char *)fntrain));
-
-		    PyDict_SetItemString(inputs, "resdir", PyUnicode_FromString((char *)trainingdir));
-		    
-		    PyTuple_SetItem(pArgs, 0, inputs);
-
-		    PyObject_CallObject(pFunc, pArgs);
-
-		    Py_DECREF(inputs);
-		    Py_DECREF(pArgs);
-		}else{
-		    if (PyErr_Occurred()){
-		        PyErr_Print();
-		    }else{
-		        fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
-		        exit(EXIT_FAILURE);
-		    }
-		}
-		Py_XDECREF(pFunc);
-		Py_DECREF(pModule);
-	}else{
-		/*if python script does not exist*/
-		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
-		exit(EXIT_FAILURE);
-	}
-}
 
 /*=================================== END OF FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
 
@@ -3383,6 +3350,43 @@ void simReceiver(int numdata, double H_drop_design, double T_HTF_in_design
 		exit(EXIT_FAILURE);
 	}
 }
+
+
+int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
+	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
+	char* index = NEW_ARRAY(char,l);    
+	sprintf(index,"%d",count); //convert integer into string 
+
+	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
+	char* base_cmd = NEW_ARRAY(char,l);
+	strcpy(base_cmd,"python ");
+	strcat(base_cmd,SolarTherm_path);
+	strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
+
+	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
+	char* cmd = NEW_ARRAY(char,l);
+
+	strcpy(cmd,base_cmd);
+	strcat(cmd,fn_data);
+	strcat(cmd," ");
+	strcat(cmd,prefixres);
+	strcat(cmd," ");
+	strcat(cmd,index);
+
+	fprintf(stderr,"%s\n",cmd);
+
+	int status_training = system(cmd);
+
+	if(status_training==0){
+		fprintf(stderr,"Training ANN has been finished without any error\n");
+		return 0;
+	}else{
+		fprintf(stderr,"Training error with status %d\n",status_training);
+		return -1;
+	}
+}
+
+/*=================================== END OF FUNCTIONS WORK IN PROGRESS WITH OTF RECEIVER ==============================*/
 
 
 // vim: ts=4:sw=4:noet
