@@ -17,6 +17,203 @@
 #define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
 #define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 
+/*
+This C code is used to generate surrogate model for sCO2 PB on the fly. Choice of surrogate modelling techniques are Kriging interpolation and Artificial Neural Network (ANN).
+SolarTherm component passes a series of sCO2 PB parameters to construct the surrogate model. The code then check whether a surrogate model based on these parameters has been generated before, and load the surrogate model if it exists, otherwise, a new surrogate is generated. There are two power block model choices: 1) SAM Power Block and 2) CEA Power block. CEA Power block is still work in progress, implemented 100% in Modelica.
+
+The generation of surrogate model makes use of SAM Simulation Core (SSC) sCO2 recompression cycle library, made available by SAM team https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run . Shall new surrogate is generated, this code will fire SSC based on the PB parameters, simulate the sCO2 PB module on- and off- design, gather the training data, train the model and return it as a pointer back to SolarTherm.
+
+Lib dependency: tensorflow, GSL (GNU Scientific Library), Python 3, SSC
+*/
+
+//******************** SEQUENCE 1
+/*
+Initialisation of SSC Power Block makes use initNREPB function. The function receives inputs from SolarTherm, and passes the input to SSC PB module. SSC then simulates the on-design sCO2 recup PB cycle.
+The function assign the on-design calculation result in `res` (pointer to double) and SolarTherm then grabs the values inside res for further use.
+
+@params:
+	P_net					: type double, net power of the power block in W at design point
+	T_in_ref_blk			: type double, inlet HTF temp. to the primary heat exchanger (PHX) in K at design point
+	p_high					: type double, outlet pressure of main compressor in Pa at design point
+	dt_PHX_cold_approach	: type double, delta temp. between incoming sCO2 to PHX and outgoing HTF temp from PHX in K at design point
+	eta_isen_mc				: type double, main compressor isentropic efficiency at design point
+	eta_isen_rc				: type double, re-compressor isentropic efficiency at design point
+	eta_isen_t				: type double, turbine isentropic efficiency at design point
+	dT_mc_approach			: type double, design point temperature difference between ambient temperature and desired outlet temperature of CO2 after the mian cooler in K
+	T_amb_base				: type double, temperature of the ambient at design point in K at design point
+	HTF_name				: type string, HTF name, shall HTF_choice == 50 (user choice), the code will look into the data base whether the requested HTF properies exist based on HTF_name. If does not exist, it will stop the simulation
+	HTF_choice				: type int, put 50 for user choice, 1 for solar salt (built in HTF properties within SSC). For more info look into SAM SSC github
+	SolarTherm_path			: type string, path where SolarTherm is located
+	T_HTF_cold_des			: type double, the target outlet temp. of HTF from the PHX at design point in K. Internal variable within SSC called dt_PHX_hot_approach is iterated.
+	res						: type double*, array to store the on-design result
+
+	res indexing:
+	*            res[0] = HTR_UA;                    [W/K] 			--> UA value of high temp. recuperator
+	*            res[1] = LTR_UA;                    [W/K]			--> UA value of low temp. recuperator
+	*            res[2] = W_turb_des;                [W]			--> Turbine gross size 
+	*            res[3] = W_maincomp_des;            [W]			--> Main comp. gross size
+	*            res[4] = W_recomp_des;              [W]			--> Recompressor gross size
+	*            res[5] = Cooler_UA;                 [W/K]			--> Main cooler UA value (dry cooler)
+	*            res[6] = PHX_UA;                    [W/K]			--> UA value for the PHX
+	*            res[7] = m_dot_CO2_des;             [kg/s]			--> mass flow rate of CO2 at design point
+	*            res[8] = m_dot_HTF_des;             [kg/s]			--> mass flow rate of HTF at design point
+	*            res[9] = Q_dot_PHX_des;             [W]			--> PHX thermal rating at desing point
+	*            res[10] = eta_gross_base;           [-]			--> Cycle efficiency at design point (W_turb_des - W_comp_des - W_recomp_des - W_main_cooler (fan)) / Q_dot_PHX_des
+	*            res[11] = eta_Q_base;               [-]			--> Q_dot_PHX/Q_dot_PHX_des which equals to 1 since it is on design calculation
+	*            res[12] = dT_PHX_hot_approach;      [K]			--> delta temp. between sCO2 inlet flow to turbine and incoming HTF to PHX
+
+*/
+
+void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
+		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
+		,double T_amb_base, char* HTF_name, int HTF_choice
+		,char* SolarTherm_path, double T_HTF_cold_des, double* res
+){
+	fprintf(stderr,"======================Initialising NREL Power Block  based on //doi.org/10.1016/j.solener.2019.01.078====================\n");
+
+	double delta = 100;
+	ssc_data_t simulation_result;
+	double guess_val = 5;
+	while(delta>0.5){
+		simulation_result = runNRELPB(
+				10, P_net, T_in_ref_blk, p_high, T_amb_base
+				,guess_val, dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc, eta_isen_t
+				,dT_mc_approach, HTF_name, HTF_choice, ".", SolarTherm_path
+				,".", 0, 0, 0
+			);
+
+		double T_HTF_cold_calculated;
+		ssc_data_get_number(simulation_result,"T_htf_cold_des",&T_HTF_cold_calculated);
+		fprintf(stderr,"HTF outlet temperature at design point: %lf C\n",T_HTF_cold_calculated);
+
+		delta = fabs(T_HTF_cold_des - (T_HTF_cold_calculated+273.15));
+		fprintf(stderr,"dT_PHX_hot_approach iteration: %lf C\n",guess_val);
+		
+		if(delta>0.5){
+			guess_val = guess_val + (delta-0.5);
+		}
+	}
+
+	double dT_PHX_hot_approach = guess_val;
+	fprintf(stderr,"dT_PHX_hot_approach at design point: %lf C\n",dT_PHX_hot_approach);
+
+	double HTR_UA;
+	ssc_data_get_number(simulation_result, "HTR_UA_calculated", &HTR_UA);
+	fprintf(stderr,"HTR_UA at design point = %lf [MW/K]\n",HTR_UA);
+
+	double C_cooler;
+	ssc_data_get_number(simulation_result, "cooler_tot_cost", &C_cooler);
+	fprintf(stderr,"Cooler cost = %lf [M.USD]\n",C_cooler);
+
+	double LTR_UA;
+	ssc_data_get_number(simulation_result,"LTR_UA_calculated",&LTR_UA);
+	fprintf(stderr,"LTR_UA at design point = %lf [MW/K]\n",LTR_UA);
+
+	double W_turb_des;
+	ssc_data_get_number(simulation_result,"t_W_dot",&W_turb_des);
+	fprintf(stderr,"Turbine power at design point = %lf [MW]\n",W_turb_des);
+
+	double W_maincomp_des;
+	ssc_data_get_number(simulation_result,"mc_W_dot",&W_maincomp_des);
+	fprintf(stderr,"Main compressor power at design point = %lf [MW]\n",W_maincomp_des);
+
+	double W_recomp_des;
+	ssc_data_get_number(simulation_result,"rc_W_dot",&W_recomp_des);
+	fprintf(stderr,"Re-compressor power at design point = %lf [MW]\n",W_recomp_des);
+
+	double Cooler_UA;
+	ssc_data_get_number(simulation_result,"cooler_tot_UA",&Cooler_UA);
+	fprintf(stderr,"Cooler UA value design point = %lf [MW/K]\n",Cooler_UA);
+
+	double PHX_UA;
+	ssc_data_get_number(simulation_result,"UA_PHX",&PHX_UA);
+	fprintf(stderr,"HX UA value design point = %lf [MW/K]\n",PHX_UA);
+
+	double m_dot_CO2_des;
+	ssc_data_get_number(simulation_result,"m_dot_co2_full",&m_dot_CO2_des);
+	fprintf(stderr,"Mass flow rate of CO2 at design point = %lf [kg/s]\n",m_dot_CO2_des);
+
+	double m_dot_HTF_des;
+	ssc_data_get_number(simulation_result,"m_dot_htf_des",&m_dot_HTF_des);
+	fprintf(stderr,"Mass flow rate of HTF at design point = %lf [kg/s]\n",m_dot_HTF_des);
+
+	double Q_dot_PHX_des;
+	ssc_data_get_number(simulation_result,"q_dot_PHX",&Q_dot_PHX_des);
+	fprintf(stderr,"PHX heat transfer at design point: %lf MWth\n",Q_dot_PHX_des);
+
+	double W_dot_cooler_des;
+	ssc_data_get_number(simulation_result,"cooler_tot_W_dot_fan",&W_dot_cooler_des);
+	fprintf(stderr,"Cooler fan power at design point: %lf MW\n",W_dot_cooler_des);
+
+	double eta_gross_pure = (P_net)/(Q_dot_PHX_des*1e6);
+	fprintf(stderr,"PB cycle thermal efficiency (before cooling fan) = %lf \n",eta_gross_pure);
+
+	double eta_gross_base = (P_net-(W_dot_cooler_des*1e6))/(Q_dot_PHX_des*1e6);
+	fprintf(stderr,"PB cycle thermal efficiency (cooler fan has been included) = %lf \n",eta_gross_base);
+
+	/*Assigning values*/
+	res[0] = HTR_UA * 1e6;           /*Converting from MW/K to W/K*/
+	res[1] = LTR_UA * 1e6;           /*Converting from MW/K to W/K*/
+	res[2] = W_turb_des *1e6;        /*Converting from MW to W*/
+	res[3] = W_maincomp_des * 1e6;
+	res[4] = W_recomp_des * 1e6;     /*Converting from MW to W*/
+	res[5] = Cooler_UA * 1e6;        /*Converting from MW/K to W/K*/
+	res[6] = PHX_UA  * 1e6;          /*Converting from MW/K to W/K*/
+	res[7] = m_dot_CO2_des;
+	res[8] = m_dot_HTF_des;
+	res[9] = Q_dot_PHX_des * 1e6;    /*Heat exchanger thermal power rate [W]*/
+
+	res[10] = eta_gross_base;
+	res[11] = 1;                     /*ratio of Q_PHX / Q_PHX at design point will always be 1
+			                           since there's no deviation from the on design 
+			                           in the operating condition*/
+	res[12] = dT_PHX_hot_approach;   /*Approach temperature*/
+
+	ssc_data_free(simulation_result);
+	fprintf(stderr,"====================== Done initialising NREL PB ====================\n");
+
+	return;
+}
+
+
+//******************** SEQUENCE 2
+/*
+After all the values within res* from SEQ.1 grabbed by SolarTherm, the on-design result is passed to either constructKriging (SEQUENCE 2.1) or constructANN (SEQUENCE 2.2). These sequences are responsible to check the availability of the surrogate model, load it if it is available or train a new surrogate.
+*/
+
+//******************** SEQUENCE 2.1
+/*
+Function constructKriging is the constructor function which returns a pointer to an object called Kriging_variables (type Kriging_struct) which contains all the information of the surrogate model e.g. the inverse matrix, variogram matrix, existing data for interpolation purpose. The inverse of the matrices are pre-calculated during the construction process to reduce the runtime.
+
+@params:
+	P_net					: type double, net power of the power block in W at design point
+	T_in_ref_blk			: type double, inlet HTF temp. to the primary heat exchanger (PHX) in K at design point
+	p_high					: type double, outlet pressure of main compressor in Pa at design point
+	load_base				: type double, full load design (default is always 1 since we design a PB to operate at full load)
+	eta_gross_base			: type double, cycle efficiency after cooling fan at design point
+	eta_Q_base				: type double, effectiveness of PHX at design point
+	base_path				: type string, path to where this C- code is located
+	SolarTherm_path			: type string, path to SolarTherm library
+	inputsize				: type int, input dimension of the surrogate model
+	outpusize				: type int, output dimension of the surrogate model
+	tolerance				: type double, termination criteria of surrogate training
+	PB_model				: type int, 0 for CEA PB, 1 for SSC
+	
+	CEA PB params:
+		PR					: type double, pressure ratio between compressor and turbine outlet at design point
+		pinch_PHX			: type double, pinch point of PHX in K (HTF temperature outlet from PHX - sCO2 inlet temperature to PHX) at design point
+		dTemp_HTF_PHX		: type double, temperature difference between outlet and inlet flow to PHX of the HTF in K at design point
+
+	SSC PB params:
+		htf_choice			: type int, 50 for user choice, 1 for solar salt
+		dT_PHX_hot_approach	: type double, design point temperature difference between sCO2 PB going into the turbine and HTF going into the PHX
+		dT_PHX_cold_apprahch: type double, design point temperature difference between sCO2 PB going into the PHX and HTF going from the PHX
+		eta_isen_mc			: type double, main compressor isentropic efficiency at design point
+		eta_isen_rc			: type double, re-compressor isentropic efficiency at design point
+		eta_isen_t			: type double, turbine isentropic efficiency at design point
+		dT_mc_approach		: type double, design point temperature difference between ambient temperature and desired outlet temperature of CO2 after the mian cooler in K
+		HTF_name			: type string, HTF name, shall HTF_choice == 50 (user choice), the code will look into the data base whether the requested HTF properies exist based on HTF_name. If does not exist, it will stop the simulation
+*/
 
 void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double PR, 
 		double pinch_PHX, double dTemp_HTF_PHX, double load_base,  double T_amb_base, 
@@ -68,8 +265,8 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 	}else{ 
 		/*If a configuration exists in the data bank*/
 		char* name_training = "/scaled_Kriging_training_data_deviation.csv";
-		char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
-		char* filepathtraining  = concat_training_dir(trainingdir,name_training);
+		char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index); //e.g. base_path/training_data/config0
+		char* filepathtraining  = concat_training_dir(trainingdir,name_training); //e.g. base_path/training_data/config0/scaled_Kriging_training_data_deviation.csv
 
 		FILE* check_path = fopen(filepathtraining,"r");
 		
@@ -214,7 +411,40 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 	return Kriging_variables;
 }
 
+//******************** SEQUENCE 2.2
+/*
+Function constructKriging is the constructor function which returns a pointer to an object called Kriging_variables (type Kriging_struct) which contains all the information of the surrogate model e.g. the inverse matrix, variogram matrix, existing data for interpolation purpose. The inverse of the matrices are pre-calculated during the construction process to reduce the runtime.
 
+@params:
+	P_net					: type double, net power of the power block in W at design point
+	T_in_ref_blk			: type double, inlet HTF temp. to the primary heat exchanger (PHX) in K at design point
+	p_high					: type double, outlet pressure of main compressor in Pa at design point
+	load_base				: type double, full load design (default is always 1 since we design a PB to operate at full load)
+	eta_gross_base			: type double, cycle efficiency after cooling fan at design point
+	eta_Q_base				: type double, effectiveness of PHX at design point
+	base_path				: type string, path to where this C- code is located
+	SolarTherm_path			: type string, path to SolarTherm library
+	inputsize				: type int, input dimension of the surrogate model
+	outpusize				: type int, output dimension of the surrogate model
+	tolerance				: type double, termination criteria of surrogate training
+	PB_model				: type int, 0 for CEA PB, 1 for SSC
+	which_ANN_model			: type int, 0 for surrogate model to predict deviation in cycle efficiency, 1 for surrogate model to predict deviation in HX effectiveness
+
+	CEA PB params:
+		PR					: type double, pressure ratio between compressor and turbine outlet at design point
+		pinch_PHX			: type double, pinch point of PHX in K (HTF temperature outlet from PHX - sCO2 inlet temperature to PHX) at design point
+		dTemp_HTF_PHX		: type double, temperature difference between outlet and inlet flow to PHX of the HTF in K at design point
+
+	SSC PB params:
+		htf_choice			: type int, 50 for user choice, 1 for solar salt
+		dT_PHX_hot_approach	: type double, design point temperature difference between sCO2 PB going into the turbine and HTF going into the PHX
+		dT_PHX_cold_apprahch: type double, design point temperature difference between sCO2 PB going into the PHX and HTF going from the PHX
+		eta_isen_mc			: type double, main compressor isentropic efficiency at design point
+		eta_isen_rc			: type double, re-compressor isentropic efficiency at design point
+		eta_isen_t			: type double, turbine isentropic efficiency at design point
+		dT_mc_approach		: type double, design point temperature difference between ambient temperature and desired outlet temperature of CO2 after the mian cooler in K
+		HTF_name			: type string, HTF name, shall HTF_choice == 50 (user choice), the code will look into the data base whether the requested HTF properies exist based on HTF_name. If does not exist, it will stop the simulation
+*/
 void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR, 
 		double pinch_PHX, double dTemp_HTF_PHX, double load_base, double T_amb_base, 
 		double eta_gross_base, double eta_Q_base, int which_ANN_model, char* base_path, char* SolarTherm_path, 
@@ -323,10 +553,12 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 			int initialnumdata = 150;
 
 			if(PB_model==0){
+				//*********** Run CEA Model
 				generateTrainingData(P_net, T_in_ref_blk, p_high, PR, pinch_PHX,
 					dTemp_HTF_PHX, match_index, initialnumdata, base_path, status_config, SolarTherm_path
 				);
 			}else if(PB_model==1){
+				//*********** Run SSC Model
 				ssc_data_t NRELPBSimulationResult = runNRELPB(
 					initialnumdata, P_net, T_in_ref_blk, p_high,
 					T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
@@ -536,9 +768,20 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 }
 
 
+//******************** SEQUENCE 3
+/*
+After returning Kriging_variables* (from SEQ. 2.1) or sess* (from SEQ 2.2.), SolarTHerm use the pointer to predict the performance of the power block.
+The surrogate models predict the DEVIATION of eta_Q and eta_gross based on the deviation of inputs which are:
+	1. load 
+	2. HTF inlet temp.
+	3. ambient temp.
+*/
+
+//********************* SEQUENCE 3.1
 double predict_Kriging(Kriging_struct* Kriging_variables
 		, const double raw_inputs[], char* which_eta, char* variogram_model
-){   
+){  
+	//*************** Calculate deviation in inputs
 	double deviation_load = Kriging_variables->load_base - raw_inputs[0];
 	double deviation_T_in = Kriging_variables->T_in_ref_blk - raw_inputs[1];
 	double deviation_T_amb = Kriging_variables->T_amb_base - raw_inputs[2];
@@ -683,7 +926,7 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 	return real_deviation_estimate;
 }
 
-
+//********************* SEQUENCE 3.2
 double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model){
 	double* inputs = NEW_ARRAY(double,sess->inputsize);
 
@@ -783,135 +1026,6 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	return res; 
 }
 
-
-void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
-		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
-		,double T_amb_base, char* HTF_name, int HTF_choice
-		,char* SolarTherm_path, double T_HTF_cold_des, double* res
-){
-	/* Result indexing:
-	*            res[0] = HTR_UA;                    [W/K]
-	*            res[1] = LTR_UA;                    [W/K]
-	*            res[2] = W_turb_des;                [W]
-	*            res[3] = W_maincomp_des;            [W]
-	*            res[4] = W_recomp_des;              [W]
-	*            res[5] = Cooler_UA;                 [W/K]
-	*            res[6] = PHX_UA;                    [W/K]
-	*            res[7] = m_dot_CO2_des;             [kg/s]
-	*            res[8] = m_dot_HTF_des;             [kg/s]
-	*            res[9] = Q_dot_PHX_des;             [W]
-	*            res[10] = eta_gross_base;           [-]
-	*            res[11] = eta_Q_base;               [-]
-	*            res[12] = dT_PHX_hot_approach;      [-]
-	*/
-
-	fprintf(stderr,"======================Initialising NREL Power Block  based on //doi.org/10.1016/j.solener.2019.01.078====================\n");
-
-	double delta = 100;
-	ssc_data_t simulation_result;
-	double guess_val = 5;
-	while(delta>0.5){
-		simulation_result = runNRELPB(
-				10, P_net, T_in_ref_blk, p_high, T_amb_base
-				,guess_val, dT_PHX_cold_approach /* iterated value */, eta_isen_mc, eta_isen_rc, eta_isen_t
-				,dT_mc_approach, HTF_name, HTF_choice, ".", SolarTherm_path
-				,".", 0, 0, 0
-			);
-
-		double T_HTF_cold_calculated;
-		ssc_data_get_number(simulation_result,"T_htf_cold_des",&T_HTF_cold_calculated);
-		fprintf(stderr,"HTF outlet temperature at design point: %lf C\n",T_HTF_cold_calculated);
-
-		delta = fabs(T_HTF_cold_des - (T_HTF_cold_calculated+273.15));
-		fprintf(stderr,"dT_PHX_hot_approach iteration: %lf C\n",guess_val);
-		
-		if(delta>0.5){
-			guess_val = guess_val + (delta-0.5);
-		}
-	}
-
-	double dT_PHX_hot_approach = guess_val;
-	fprintf(stderr,"dT_PHX_hot_approach at design point: %lf C\n",dT_PHX_hot_approach);
-
-	double HTR_UA;
-	ssc_data_get_number(simulation_result, "HTR_UA_calculated", &HTR_UA);
-	fprintf(stderr,"HTR_UA at design point = %lf [MW/K]\n",HTR_UA);
-
-	double C_cooler;
-	ssc_data_get_number(simulation_result, "cooler_tot_cost", &C_cooler);
-	fprintf(stderr,"Cooler cost = %lf [M.USD]\n",C_cooler);
-
-	double LTR_UA;
-	ssc_data_get_number(simulation_result,"LTR_UA_calculated",&LTR_UA);
-	fprintf(stderr,"LTR_UA at design point = %lf [MW/K]\n",LTR_UA);
-
-	double W_turb_des;
-	ssc_data_get_number(simulation_result,"t_W_dot",&W_turb_des);
-	fprintf(stderr,"Turbine power at design point = %lf [MW]\n",W_turb_des);
-
-	double W_maincomp_des;
-	ssc_data_get_number(simulation_result,"mc_W_dot",&W_maincomp_des);
-	fprintf(stderr,"Main compressor power at design point = %lf [MW]\n",W_maincomp_des);
-
-	double W_recomp_des;
-	ssc_data_get_number(simulation_result,"rc_W_dot",&W_recomp_des);
-	fprintf(stderr,"Re-compressor power at design point = %lf [MW]\n",W_recomp_des);
-
-	double Cooler_UA;
-	ssc_data_get_number(simulation_result,"cooler_tot_UA",&Cooler_UA);
-	fprintf(stderr,"Cooler UA value design point = %lf [MW/K]\n",Cooler_UA);
-
-	double PHX_UA;
-	ssc_data_get_number(simulation_result,"UA_PHX",&PHX_UA);
-	fprintf(stderr,"HX UA value design point = %lf [MW/K]\n",PHX_UA);
-
-	double m_dot_CO2_des;
-	ssc_data_get_number(simulation_result,"m_dot_co2_full",&m_dot_CO2_des);
-	fprintf(stderr,"Mass flow rate of CO2 at design point = %lf [kg/s]\n",m_dot_CO2_des);
-
-	double m_dot_HTF_des;
-	ssc_data_get_number(simulation_result,"m_dot_htf_des",&m_dot_HTF_des);
-	fprintf(stderr,"Mass flow rate of HTF at design point = %lf [kg/s]\n",m_dot_HTF_des);
-
-	double Q_dot_PHX_des;
-	ssc_data_get_number(simulation_result,"q_dot_PHX",&Q_dot_PHX_des);
-	fprintf(stderr,"PHX heat transfer at design point: %lf MWth\n",Q_dot_PHX_des);
-
-	double W_dot_cooler_des;
-	ssc_data_get_number(simulation_result,"cooler_tot_W_dot_fan",&W_dot_cooler_des);
-	fprintf(stderr,"Cooler fan power at design point: %lf MW\n",W_dot_cooler_des);
-
-	double eta_gross_pure = (P_net)/(Q_dot_PHX_des*1e6);
-	fprintf(stderr,"PB cycle thermal efficiency (before cooling fan) = %lf \n",eta_gross_pure);
-
-	double eta_gross_base = (P_net-(W_dot_cooler_des*1e6))/(Q_dot_PHX_des*1e6);
-	fprintf(stderr,"PB cycle thermal efficiency (cooler fan has been included) = %lf \n",eta_gross_base);
-
-	/*Assigning values*/
-	res[0] = HTR_UA * 1e6;           /*Converting from MW/K to W/K*/
-	res[1] = LTR_UA * 1e6;           /*Converting from MW/K to W/K*/
-	res[2] = W_turb_des *1e6;        /*Converting from MW to W*/
-	res[3] = W_maincomp_des * 1e6;
-	res[4] = W_recomp_des * 1e6;     /*Converting from MW to W*/
-	res[5] = Cooler_UA * 1e6;        /*Converting from MW/K to W/K*/
-	res[6] = PHX_UA  * 1e6;          /*Converting from MW/K to W/K*/
-	res[7] = m_dot_CO2_des;
-	res[8] = m_dot_HTF_des;
-	res[9] = Q_dot_PHX_des * 1e6;    /*Heat exchanger thermal power rate [W]*/
-
-	res[10] = eta_gross_base;
-	res[11] = 1;                     /*ratio of Q_PHX / Q_PHX at design point will always be 1
-			                           since there's no deviation from the on design 
-			                           in the operating condition*/
-	res[12] = dT_PHX_hot_approach;   /*Approach temperature*/
-
-	ssc_data_free(simulation_result);
-	fprintf(stderr,"====================== Done initialising NREL PB ====================\n");
-
-	return;
-}
-
-
 /* 
 	destructor for ANN session
 */
@@ -931,7 +1045,6 @@ void destructANN(Session_Props* sess){
 
 	free(sess);
 }
-
 
 /* 
 	destructor for Kriging
@@ -976,13 +1089,11 @@ void* constructOnTheFlyReceiver(double H_drop, double T_HTF_in_des, double T_HTF
 }*/
 
 
-//*******************on_the_fly_surrogate.c
-
-void NoOpDeallocator(void* data, size_t a, void* b){
-    /* nothing here */
-}
 
 
+
+
+/*=================================== STARTING FROM HERE IS KRIGING UTILITIES FUNCS ==============================*/
 Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, double PR, 
 		double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
 		double eta_gross_base, double eta_Q_base, char* base_path, char* SolarTherm_path, int match_index, 
@@ -1291,6 +1402,470 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 	return Kriging_variables;
 }
 
+void getWeight(gsl_matrix* INVERSE_LSM, gsl_matrix* COVARIANCE, gsl_matrix* WEIGHTS, int rows){
+	double val;
+	double InverseVal;
+	double CovarianceVal;
+	for(size_t i=0;i<rows;i++){
+		val = 0;
+		for(size_t j=0;j<rows;j++){
+		    InverseVal = gsl_matrix_get(INVERSE_LSM,i,j);
+		    CovarianceVal = gsl_matrix_get(COVARIANCE,j,rows);
+		    val = val + (InverseVal*CovarianceVal);
+		}
+		gsl_matrix_set(WEIGHTS,i,0,val);
+	}
+}
+
+void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
+	double Range;
+	double Nugget;
+	double Spherical;
+
+	int rows = Kriging_variables->rows;
+
+	if(strcmp(which_eta,"eta_gross")==0){
+		Range = Kriging_variables->Range_PB;
+		Nugget = Kriging_variables->Nugget_PB;
+		Spherical = 1 - Kriging_variables->Nugget_PB;
+	}else if(strcmp(which_eta,"eta_Q")==0){
+		Range = Kriging_variables->Range_HX;
+		Nugget = Kriging_variables->Nugget_HX;
+		Spherical = 1 - Kriging_variables->Nugget_HX;
+	}else{
+		fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+		exit(EXIT_FAILURE);
+	}
+
+	double sum = Nugget + Spherical;
+
+	for(size_t i=0;i<rows;i++){
+		if(strcmp(which_eta,"eta_gross")==0){
+		    gsl_matrix_set(
+		        Kriging_variables->COVARIANCE_PB,i,rows,
+		        sum - gsl_matrix_get(Kriging_variables->VARIOGRAM_PB,i,rows)
+		        );   
+		}else if(strcmp(which_eta,"eta_Q")==0){
+		    gsl_matrix_set(
+		        Kriging_variables->COVARIANCE_HX,i,rows,
+		        sum - gsl_matrix_get(Kriging_variables->VARIOGRAM_HX,i,rows)
+		        );   
+		}else{
+		    fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+		    exit(EXIT_FAILURE);
+		}
+	}
+}
+
+int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
+	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
+	char* index = NEW_ARRAY(char,l);    
+	sprintf(index,"%d",count); //convert integer into string 
+
+	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
+	char* base_cmd = NEW_ARRAY(char,l);
+	strcpy(base_cmd,"python ");
+	strcat(base_cmd,SolarTherm_path);
+	strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
+
+	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
+	char* cmd = NEW_ARRAY(char,l);
+
+	strcpy(cmd,base_cmd);
+	strcat(cmd,fn_data);
+	strcat(cmd," ");
+	strcat(cmd,prefixres);
+	strcat(cmd," ");
+	strcat(cmd,index);
+
+	fprintf(stderr,"%s\n",cmd);
+
+	int status_training = system(cmd);
+
+	if(status_training==0){
+		fprintf(stderr,"Training ANN has been finished without any error\n");
+		return 0;
+	}else{
+		fprintf(stderr,"Training error with status %d\n",status_training);
+		return -1;
+	}
+}
+
+void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
+	double var;
+	double dist;
+	double multiplier;
+	double Range;
+	double Nugget;
+	double Spherical;
+
+	int rows = Kriging_variables->rows;
+
+	if(strcmp(which_eta,"eta_gross")==0){
+		Range = Kriging_variables->Range_PB;
+		Nugget = Kriging_variables->Nugget_PB;
+		Spherical = 1 - Kriging_variables->Nugget_PB;
+	}else if(strcmp(which_eta,"eta_Q")==0){
+		Range = Kriging_variables->Range_HX;
+		Nugget = Kriging_variables->Nugget_HX;
+		Spherical = 1 - Kriging_variables->Nugget_HX;
+	}else{
+		fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for(size_t i=0;i<rows;i++){
+		dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,rows);
+
+		if(strcmp(type,"spherical")==0){
+		    if(fabs(dist)>Range){
+		        multiplier = 1;
+		    }else{
+		        multiplier = 1.5 * (dist/Range) - 0.5 * pow(dist/Range,3);
+		    }
+		}else if (strcmp(type,"gaussian")==0){
+		    double dist_square = pow(dist,2);
+		    double range_square = pow(Range,2);
+		    multiplier = 1 - exp(-dist_square/range_square);
+		}else if(strcmp(type,"exponential")==0){
+		    multiplier = 1 - exp(-fabs(dist)/Range);
+		}else if(strcmp(type,"nugget")==0){
+		    multiplier = Range;
+		}else if(strcmp(type,"power")==0){
+		    multiplier = pow(Range,2);
+		}else{
+		    printf("Variogram model is not valid\n");
+		    return;
+		}                  
+		
+		if(strcmp(which_eta,"eta_gross")==0){
+		    gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,rows, Nugget + Spherical * multiplier);
+		}else if(strcmp(which_eta,"eta_Q")==0){
+		    gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,rows, Nugget + Spherical * multiplier);
+		}else{
+		    fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
+		    exit(EXIT_FAILURE);
+		}
+	}
+}
+
+void completeDistanceMatrix(Kriging_struct* Kriging_variables, double* inputs, int inputsize){
+	double square_difference;
+	double delta;
+	double dist;
+	int rows = Kriging_variables->rows;
+
+	for(size_t i=0;i<rows;i++){
+		square_difference = 0;
+
+		for(size_t j=0;j<inputsize;j++){
+			delta = Kriging_variables->trainingData[i][j]- inputs[j];
+			square_difference = square_difference + (delta*delta);
+		}
+
+		dist = pow(square_difference,0.5);
+		gsl_matrix_set(Kriging_variables->DISTANCE,i,rows,dist);
+
+	}
+}
+
+void eucledianDistance_2(Kriging_struct* Kriging_variables
+		, int rows, int inputsize, gsl_matrix* DISTANCE
+){
+	double square_difference;
+	double delta;
+	double dist;
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    square_difference = 0;
+
+		    if(i==j){ //Diagonal Matrix --> 0
+		        gsl_matrix_set(DISTANCE,i,j,0.0);
+		    }else{
+		        for(size_t l=0;l<inputsize;l++){
+		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
+		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
+		            square_difference = square_difference + (delta*delta);
+		        }
+		        dist = pow(square_difference,0.5);
+		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
+		        //printf("DISTANCE = %lf\n",dist);
+		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
+		        gsl_matrix_set(DISTANCE,i,j,dist);
+		    }
+		}
+	}
+}
+
+double** create2Darray(int row, int col){
+	int i;
+	double** arr;
+	arr = NEW_ARRAY(double*,row);
+	for(i=0;i<row;i++){
+		arr[i] = NEW_ARRAY(double,col);
+	}
+	return arr;
+}
+
+void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsize
+	,double Nugget_PB, double Nugget_HX, double sill_PB, double sill_HX
+	,double Range_PB, double Range_HX, double load_base, double T_in_ref_blk
+	,double T_amb_base, double deviation_load_max,double deviation_T_in_max
+	,double deviation_T_amb_max ,double deviation_eta_gross_max
+	,double deviation_eta_Q_max,double deviation_load_min,double deviation_T_in_min
+	,double deviation_T_amb_min,double deviation_eta_gross_min
+	,double deviation_eta_Q_min, char* variogram_model
+){
+	/*This function is for populating the Kriging_trianing_struct*/
+	char line[limitSize];
+	Kriging_struct* Kriging_variables = NEW(Kriging_struct);
+
+	/*Open the file*/
+	FILE* training_file = fopen(filepathtraining,"r");
+	if (training_file==NULL){
+		printf("Your file doesn't exist mate! Check your address %s!\n",filepathtraining);
+	}
+
+	int rows = getNumOfData(filepathtraining);    
+
+	/*Populating Kriging struct*/
+	Kriging_variables->rows = rows;
+	Kriging_variables->inputsize = inputsize;
+	Kriging_variables->outputsize = outputsize;
+
+	Kriging_variables->Nugget_PB = Nugget_PB;
+	Kriging_variables->Nugget_HX = Nugget_HX;
+	Kriging_variables->sill_PB = sill_PB;
+	Kriging_variables->sill_HX = sill_HX;
+	Kriging_variables->Range_PB = Range_PB;
+	Kriging_variables->Range_HX = Range_HX;
+
+	Kriging_variables->load_base = load_base;
+	Kriging_variables->T_in_ref_blk = T_in_ref_blk;
+	Kriging_variables->T_amb_base = T_amb_base;
+
+	Kriging_variables->deviation_load_max = deviation_load_max;
+	Kriging_variables->deviation_T_in_max = deviation_T_in_max;
+	Kriging_variables->deviation_T_amb_max = deviation_T_amb_max;
+	Kriging_variables->deviation_eta_gross_max = deviation_eta_gross_max;
+	Kriging_variables->deviation_eta_Q_max = deviation_eta_Q_max;
+
+	Kriging_variables->deviation_load_min = deviation_load_min;
+	Kriging_variables->deviation_T_in_min = deviation_T_in_min;
+	Kriging_variables->deviation_T_amb_min = deviation_T_amb_min;
+	Kriging_variables->deviation_eta_gross_min = deviation_eta_gross_min;
+	Kriging_variables->deviation_eta_Q_min = deviation_eta_Q_min;
+
+	/*Allocate memory to store 2D array*/
+	Kriging_variables->trainingData = NEW_ARRAY(double*,Kriging_variables->rows);
+	for(size_t i=0;i<rows;i++){
+		Kriging_variables->trainingData[i] = NEW_ARRAY(double,inputsize+outputsize); /*for each element in the memory address, create number of r of integer*/
+	}
+
+	/*Skip the header*/
+	fgets(line,limitSize,training_file);
+
+	/*Read the data!*/
+	fgets(line,limitSize,training_file);
+	size_t i = 0;
+	while(!feof(training_file)){
+		sscanf(
+		    line,"%lf,%lf,%lf,%lf,%lf",
+		    &Kriging_variables->trainingData[i][0],
+		    &Kriging_variables->trainingData[i][1], 
+		    &Kriging_variables->trainingData[i][2], 
+		    &Kriging_variables->trainingData[i][3], 
+		    &Kriging_variables->trainingData[i][4]
+		);
+		i++;
+		fgets(line,limitSize,training_file);
+	}
+	fclose(training_file);
+
+	/*Populate all the LHS Matrix*/
+	Kriging_variables->DISTANCE = gsl_matrix_alloc(rows,rows+1);
+
+	Kriging_variables->VARIOGRAM_HX = gsl_matrix_alloc(rows,rows+1);
+	Kriging_variables->COVARIANCE_HX = gsl_matrix_alloc(rows,rows+1);
+	Kriging_variables->INVERSE_HX = gsl_matrix_alloc(rows,rows);
+
+	Kriging_variables->VARIOGRAM_PB = gsl_matrix_alloc(rows,rows+1);
+	Kriging_variables->COVARIANCE_PB = gsl_matrix_alloc(rows,rows+1);
+	Kriging_variables->INVERSE_PB = gsl_matrix_alloc(rows,rows);
+
+	//********************** LHS DISTANCE MATRIX
+	double square_difference;
+	double delta;
+	double dist;
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    square_difference = 0;
+
+		    if(i==j){
+		    	//Diagonal Matrix --> 0
+		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,0.0);
+		    }else{
+		        for(size_t l=0;l<inputsize;l++){
+		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
+		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
+		            square_difference = square_difference + (delta*delta);
+		        }
+		        dist = pow(square_difference,0.5);
+		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
+		        //printf("DISTANCE = %lf\n",dist);
+		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
+		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,dist);
+		    }
+		}
+	}
+
+	//********************** LHS VARIOGRAM PB
+	double var;
+	double multiplier;
+	double Range_variogram = Kriging_variables->Range_PB;
+	double Nugget_variogram = Kriging_variables->Nugget_PB;
+	double Spherical_variogram = 1 - Kriging_variables->Nugget_PB;
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    if(i==j){
+		        gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,j,0.0);
+		    }else{
+		        dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,j);
+
+		        if (strcmp(variogram_model,"spherical")==0){
+		            if(dist>Range_variogram){
+		                multiplier = 1;
+		            }else{
+		                multiplier = 1.5 * (dist/Range_variogram) - 0.5 * pow(dist/Range_variogram,3);
+		            }
+		        }else if (strcmp(variogram_model,"gaussian")==0){
+		            double dist_square = pow(dist,2);
+		            double range_square = pow(Range_variogram,2);
+		            multiplier = 1 - exp(-dist_square/range_square);
+		        }else if (strcmp(variogram_model,"exponential")==0) {
+		            multiplier = 1 - exp(-fabs(dist)/Range_variogram);
+		        }else if (strcmp(variogram_model,"power")==0){
+		            multiplier = pow(Range_variogram,2);
+		        }else if (strcmp(variogram_model,"nugget")==0){
+		            multiplier = Range_variogram;
+		        }else{
+		            fprintf(stderr,"Variogram model is not valid\n");
+		            exit(EXIT_FAILURE);
+		        }
+
+		        gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,j, Nugget_variogram + Spherical_variogram * multiplier);
+		    }
+		    
+		}
+	}
+
+	//********************** LHS COVARIANCE PB
+	double sum_variogram = Nugget_variogram + Spherical_variogram;
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    gsl_matrix_set(Kriging_variables->COVARIANCE_PB,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_PB,i,j));
+		}
+	}
+
+	//********************** Inverse PB
+	gsl_matrix* LSM_PB = gsl_matrix_alloc(rows,rows); 
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    gsl_matrix_set(LSM_PB,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,j));
+		}
+	}
+
+	/*Inverse the LSM*/
+	gsl_permutation* perm_PB = gsl_permutation_alloc(rows);
+	int s;
+	gsl_linalg_LU_decomp (LSM_PB, perm_PB, &s);    
+	gsl_linalg_LU_invert (LSM_PB, perm_PB, Kriging_variables->INVERSE_PB);
+
+	//********************** LHS VARIOGRAM HX
+	Range_variogram = Kriging_variables->Range_HX;
+	Nugget_variogram = Kriging_variables->Nugget_HX;
+	Spherical_variogram = 1 - Kriging_variables->Nugget_HX;
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    if(i==j){
+		        gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,j,0.0);
+		    }else{
+		        dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,j);
+
+		        if (strcmp(variogram_model,"spherical")==0){
+		            if(dist>Range_variogram){
+		                multiplier = 1;
+		            }else{
+		                multiplier = 1.5 * (dist/Range_variogram) - 0.5 * pow(dist/Range_variogram,3);
+		            }
+		        }else if (strcmp(variogram_model,"gaussian")==0){
+		            double dist_square = pow(dist,2);
+		            double range_square = pow(Range_variogram,2);
+		            multiplier = 1 - exp(-dist_square/range_square);
+		        }else if (strcmp(variogram_model,"exponential")==0){
+		            multiplier = 1 - exp(-fabs(dist)/Range_variogram);
+		        }else if (strcmp(variogram_model,"power")==0){
+		            multiplier = pow(Range_variogram,2);
+		        }else if (strcmp(variogram_model,"nugget")==0){
+		            multiplier = Range_variogram;
+		        }else{
+		            fprintf(stderr,"Variogram model is not valid\n");
+		            exit(EXIT_FAILURE);
+		        }
+		                        
+		        gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,j, Nugget_variogram + Spherical_variogram * multiplier);
+		    }
+		    
+		}
+	}
+
+	//********************** LHS COVARIANCE HX
+	sum_variogram = Nugget_variogram + Spherical_variogram;
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    gsl_matrix_set(Kriging_variables->COVARIANCE_HX,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_HX,i,j));
+		}
+	}
+
+	//********************** Inverse HX
+	gsl_matrix* LSM_HX = gsl_matrix_alloc(rows,rows); 
+
+	for(size_t i=0;i<rows;i++){
+		for(size_t j=0;j<rows;j++){
+		    gsl_matrix_set(LSM_HX,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_HX,i,j));
+		}
+	}
+
+	/*Inverse the LSM*/
+	gsl_permutation* perm_HX = gsl_permutation_alloc(rows);
+	gsl_linalg_LU_decomp (LSM_HX, perm_HX, &s);    
+	gsl_linalg_LU_invert (LSM_HX, perm_HX, Kriging_variables->INVERSE_HX); 
+
+	/*Free resources*/
+	gsl_matrix_free(LSM_HX);
+	gsl_permutation_free(perm_HX);
+	gsl_matrix_free(LSM_PB);
+	gsl_permutation_free(perm_PB);
+
+	return Kriging_variables;
+}
+
+/*=================================== END OF IS KRIGING UTILITIES FUNCS ==============================*/
+
+
+
+
+
+/*=================================== STARTING FROM HERE IS ANN UTILITIES FUNCS ==============================*/
+void NoOpDeallocator(void* data, size_t a, void* b){
+    /* nothing here */
+}
 
 Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double PR, 
 		double pinch_PHX, double dTemp_HTF_PHX,double load_base, double T_amb_base, 
@@ -1583,29 +2158,85 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 	return session;
 }
 
+/*Function to load ANN model in C*/
+void *load_session(char* saved_model_dir, double* X_max
+		,double* X_min, double* y_max, double* y_min, int inputsize
+		,int outputsize, double load_base, double T_in_ref_blk, double T_amb_base
+){
+	//*********************Adjust the logging of tensorflow by setting a variable 
+	//*********************in the environment called TF_CPP_MIN_LOG_LEVEL
 
-int trainingANN(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
-	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
-	char* index = NEW_ARRAY(char,l);    
-	sprintf(index,"%d",count); //convert integer into string 
+	char *var = "TF_CPP_MIN_LOG_LEVEL=0";
+	int ret;
+	ret = putenv(var);
 
-	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANN.py ")+ 1;
-	char* base_cmd = NEW_ARRAY(char,l);
-	strcpy(base_cmd,"python ");
-	strcat(base_cmd,SolarTherm_path);
-	strcat(base_cmd,"/Resources/Include/trainANN.py ");
+	//*********************Allocate dynamic memory from the heap for Session_Props data struct 
+	Session_Props *sess = NEW(Session_Props);
 
-	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
-	char* cmd = NEW_ARRAY(char,l);
+	//*********************Instantiate Session Properties
+	TF_Graph* Graph = TF_NewGraph();
+	TF_Status* Status = TF_NewStatus();
+	TF_SessionOptions* SessionOpts = TF_NewSessionOptions();
+	TF_Buffer* RunOpts = NULL;
 
-	strcpy(cmd,base_cmd);
-	strcat(cmd,fn_data);
-	strcat(cmd," ");
-	strcat(cmd,prefixres);
-	strcat(cmd," ");
-	strcat(cmd,index);
+	const char* tags = "serve"; // default model serving tag
+	int ntags = 1;
 
-	fprintf(stderr,"%s\n",cmd);
+	TF_Session* Session = TF_LoadSessionFromSavedModel(SessionOpts, RunOpts
+			,saved_model_dir, &tags, ntags, Graph, NULL, Status
+		);
+
+	if(TF_GetCode(Status) == TF_OK){
+		printf("TF Loading Pre-Trained Model : Complete!\n");
+	}else{
+		printf("%s",TF_Message(Status));
+	}
+
+	//***************************Populate the member of the struct --- TensorFlow properties
+	sess->Graph = Graph;
+	sess->Session = Session;
+	sess->Status = Status;
+	sess->SessionOpts = SessionOpts;
+	sess->RunOpts = RunOpts;
+
+	//***************************Populate the member of the struct --- Scaler
+	sess->X_max = NEW_ARRAY(double,inputsize);
+	sess->X_min = NEW_ARRAY(double,inputsize);
+
+	sess->y_max = NEW_ARRAY(double,outputsize);
+	sess->y_min = NEW_ARRAY(double,outputsize);
+
+	for(size_t i=0;i<inputsize;i++){
+		sess->X_max[i] = X_max[i];
+		sess->X_min[i] = X_min[i];
+	}
+		
+	for(size_t i=0;i<outputsize;i++){
+		sess->y_max[i] = y_max[i];
+		sess->y_min[i] = y_min[i];
+	}
+
+	sess->inputsize = inputsize;
+	sess->outputsize = outputsize;
+	sess->base_values = NEW_ARRAY(double,inputsize);
+	sess->base_values[0] = load_base;
+	sess->base_values[1] = T_in_ref_blk;
+	sess->base_values[2] = T_amb_base;
+	return sess;
+}
+
+/*
+	Function to train new ANN by executing python script
+*/
+int trainingANN(char* fn_data, char* prefixres, int count, char* SolarTherm_path){  
+
+	//Command to execute the python script
+	char* cmd = NEW_ARRAY(char, MAXLEN);
+
+	//Build the command e.g. python SolarTherm_path/Resources/Library/trainANN.py fn_data prefixres 0
+	snprintf(cmd, MAXLEN, "python %s/Resources/Library/trainANN.py %s %s %d", SolarTherm_path, fn_data, prefixres , count);
+
+	fprintf(stderr,"Running %s\n",cmd);
 
 	int status_training = system(cmd);
 
@@ -1618,220 +2249,21 @@ int trainingANN(char* fn_data, char* prefixres, int count, char* SolarTherm_path
 	}
 }
 
-
-void getWeight(gsl_matrix* INVERSE_LSM, gsl_matrix* COVARIANCE, gsl_matrix* WEIGHTS, int rows){
-	double val;
-	double InverseVal;
-	double CovarianceVal;
-	for(size_t i=0;i<rows;i++){
-		val = 0;
-		for(size_t j=0;j<rows;j++){
-		    InverseVal = gsl_matrix_get(INVERSE_LSM,i,j);
-		    CovarianceVal = gsl_matrix_get(COVARIANCE,j,rows);
-		    val = val + (InverseVal*CovarianceVal);
-		}
-		gsl_matrix_set(WEIGHTS,i,0,val);
-	}
-}
+/*=================================== END OF ANN UTILITIES FUNCS ==============================*/
 
 
-void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
-	double Range;
-	double Nugget;
-	double Spherical;
-
-	int rows = Kriging_variables->rows;
-
-	if(strcmp(which_eta,"eta_gross")==0){
-		Range = Kriging_variables->Range_PB;
-		Nugget = Kriging_variables->Nugget_PB;
-		Spherical = 1 - Kriging_variables->Nugget_PB;
-	}else if(strcmp(which_eta,"eta_Q")==0){
-		Range = Kriging_variables->Range_HX;
-		Nugget = Kriging_variables->Nugget_HX;
-		Spherical = 1 - Kriging_variables->Nugget_HX;
-	}else{
-		fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
-		exit(EXIT_FAILURE);
-	}
-
-	double sum = Nugget + Spherical;
-
-	for(size_t i=0;i<rows;i++){
-		if(strcmp(which_eta,"eta_gross")==0){
-		    gsl_matrix_set(
-		        Kriging_variables->COVARIANCE_PB,i,rows,
-		        sum - gsl_matrix_get(Kriging_variables->VARIOGRAM_PB,i,rows)
-		        );   
-		}else if(strcmp(which_eta,"eta_Q")==0){
-		    gsl_matrix_set(
-		        Kriging_variables->COVARIANCE_HX,i,rows,
-		        sum - gsl_matrix_get(Kriging_variables->VARIOGRAM_HX,i,rows)
-		        );   
-		}else{
-		    fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
-		    exit(EXIT_FAILURE);
-		}
-	}
-}
 
 
-int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){   
-	int l = snprintf(NULL,0,"%d",count); // calculate the amount of memory to be allocated for index
-	char* index = NEW_ARRAY(char,l);    
-	sprintf(index,"%d",count); //convert integer into string 
-
-	l = strlen("python ") + strlen(SolarTherm_path) + strlen("/Resources/Include/trainANNReceiver.py ")+ 1;
-	char* base_cmd = NEW_ARRAY(char,l);
-	strcpy(base_cmd,"python ");
-	strcat(base_cmd,SolarTherm_path);
-	strcat(base_cmd,"/Resources/Include/trainANNReceiver.py ");
-
-	l = strlen(base_cmd) + strlen(fn_data) + strlen(" ") + strlen(prefixres) + strlen(" ") + strlen(index) + 1;
-	char* cmd = NEW_ARRAY(char,l);
-
-	strcpy(cmd,base_cmd);
-	strcat(cmd,fn_data);
-	strcat(cmd," ");
-	strcat(cmd,prefixres);
-	strcat(cmd," ");
-	strcat(cmd,index);
-
-	fprintf(stderr,"%s\n",cmd);
-
-	int status_training = system(cmd);
-
-	if(status_training==0){
-		fprintf(stderr,"Training ANN has been finished without any error\n");
-		return 0;
-	}else{
-		fprintf(stderr,"Training error with status %d\n",status_training);
-		return -1;
-	}
-}
 
 
-void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char* which_eta){
-	double var;
-	double dist;
-	double multiplier;
-	double Range;
-	double Nugget;
-	double Spherical;
-
-	int rows = Kriging_variables->rows;
-
-	if(strcmp(which_eta,"eta_gross")==0){
-		Range = Kriging_variables->Range_PB;
-		Nugget = Kriging_variables->Nugget_PB;
-		Spherical = 1 - Kriging_variables->Nugget_PB;
-	}else if(strcmp(which_eta,"eta_Q")==0){
-		Range = Kriging_variables->Range_HX;
-		Nugget = Kriging_variables->Nugget_HX;
-		Spherical = 1 - Kriging_variables->Nugget_HX;
-	}else{
-		fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
-		exit(EXIT_FAILURE);
-	}
-
-	for(size_t i=0;i<rows;i++){
-		dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,rows);
-
-		if(strcmp(type,"spherical")==0){
-		    if(fabs(dist)>Range){
-		        multiplier = 1;
-		    }else{
-		        multiplier = 1.5 * (dist/Range) - 0.5 * pow(dist/Range,3);
-		    }
-		}else if (strcmp(type,"gaussian")==0){
-		    double dist_square = pow(dist,2);
-		    double range_square = pow(Range,2);
-		    multiplier = 1 - exp(-dist_square/range_square);
-		}else if(strcmp(type,"exponential")==0){
-		    multiplier = 1 - exp(-fabs(dist)/Range);
-		}else if(strcmp(type,"nugget")==0){
-		    multiplier = Range;
-		}else if(strcmp(type,"power")==0){
-		    multiplier = pow(Range,2);
-		}else{
-		    printf("Variogram model is not valid\n");
-		    return;
-		}                  
-		
-		if(strcmp(which_eta,"eta_gross")==0){
-		    gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,rows, Nugget + Spherical * multiplier);
-		}else if(strcmp(which_eta,"eta_Q")==0){
-		    gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,rows, Nugget + Spherical * multiplier);
-		}else{
-		    fprintf(stderr,"Invalid eta! Choose between eta_gross or eta_Q\n");
-		    exit(EXIT_FAILURE);
-		}
-	}
-}
 
 
-void completeDistanceMatrix(Kriging_struct* Kriging_variables, double* inputs, int inputsize){
-	double square_difference;
-	double delta;
-	double dist;
-	int rows = Kriging_variables->rows;
-
-	for(size_t i=0;i<rows;i++){
-		square_difference = 0;
-
-		for(size_t j=0;j<inputsize;j++){
-			delta = Kriging_variables->trainingData[i][j]- inputs[j];
-			square_difference = square_difference + (delta*delta);
-		}
-
-		dist = pow(square_difference,0.5);
-		gsl_matrix_set(Kriging_variables->DISTANCE,i,rows,dist);
-
-	}
-}
 
 
-void eucledianDistance_2(Kriging_struct* Kriging_variables
-		, int rows, int inputsize, gsl_matrix* DISTANCE
-){
-	double square_difference;
-	double delta;
-	double dist;
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    square_difference = 0;
-
-		    if(i==j){ //Diagonal Matrix --> 0
-		        gsl_matrix_set(DISTANCE,i,j,0.0);
-		    }else{
-		        for(size_t l=0;l<inputsize;l++){
-		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
-		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
-		            square_difference = square_difference + (delta*delta);
-		        }
-		        dist = pow(square_difference,0.5);
-		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
-		        //printf("DISTANCE = %lf\n",dist);
-		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
-		        gsl_matrix_set(DISTANCE,i,j,dist);
-		    }
-		}
-	}
-}
-
-
-double** create2Darray(int row, int col){
-	int i;
-	double** arr;
-	arr = NEW_ARRAY(double*,row);
-	for(i=0;i<row;i++){
-		arr[i] = NEW_ARRAY(double,col);
-	}
-	return arr;
-}
-
-
+/*=================================== STARTING FROM HERE IS GENERAL UTILITIES FUNCS ==============================*/
+/*
+	This function checks number of data in the training data file s.t. the memory allocation for the kriging struct is on point
+*/
 int getNumOfData(char* filepath){   
 	/*Declare a variable to store the string from CSV*/
 	char line[limitSize];
@@ -1860,9 +2292,8 @@ int getNumOfData(char* filepath){
 	return i;
 }
 
-
 /**
-This function is to check the existing sCO2 PB configurations against the requested configuration by the system model. When the configuration exists, no need to generate new surrogate model, instead the program will load the existing surrogate model and proceed with simulation. Checking confiugration is done by reading txt files located in ./configurations directory.
+	This function is to check the existing sCO2 PB configurations against the requested configuration by the system model. When the configuration exists, no need to generate new surrogate model, instead the program will load the existing surrogate model and proceed with simulation. Checking confiugration is done by reading txt files located in ./configurations directory.
 */
 void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, double pinch_PHX, 
 		double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
@@ -1981,30 +2412,25 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 	free(config_file_path);
 }
 
-
+/*Python function to run CEA PB shall new training data should be generated*/
 void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 		,double PR, double pinch_PHX, double dTemp_HTF_PHX, int match_index
 		,int numdata, char* base_path, int status_config
 		,char* SolarTherm_path
 ){
+	char* training_dir = NEW_ARRAY(char, MAXLEN);
 	char* training_dir_name = "/training_data/";
-	int l = strlen(base_path) + strlen(training_dir_name) + 1;
-	char* training_dir = NEW_ARRAY(char,l);
-	strcpy(training_dir,base_path);
-	strcat(training_dir,training_dir_name);
+
+	snprintf(training_dir, MAXLEN, "%s%s",training_dir, training_dir_name); //e.g. base_path/training_data/
 
 	char* configbase = "config";
 
 	/*Convert matching_index from integer to string*/
-	l = snprintf(NULL,0,"%d",match_index);
-	char* index_string = NEW_ARRAY(char,l); 
-	sprintf(index_string,"%d",match_index); //convert integer into string  
+	char* index_string = NEW_ARRAY(char,MAXLEN); 
+	sprintf(index_string,"%d",match_index); //convert integer into string e.g. cofig0
 
-	l = strlen(training_dir) + strlen(configbase) + strlen(index_string) + 1;
-	char* dirname = NEW_ARRAY(char,l);
-	strcpy(dirname,training_dir); //copy training_dir and insert it in dirname memory space
-	strcat(dirname,configbase); //concatenate configbase with dirname e.g. result /training_data-dummy/config
-	strcat(dirname,index_string); //concatenate index e.g. result /training_data-dummy/config0
+	char* dirname = NEW_ARRAY(char,MAXLEN);
+	snprintf(dirname, MAXLEN, "%s%s%s",training_dir,configbase,index_string);
 
 	/*Call python function here to gather data*/
 	// ppath: path of the Python script
@@ -2014,7 +2440,6 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *inputs;
-
 
 	char* ppath = base_path;
 	char* pname = "gatherdata"; //gatherdata.py
@@ -2090,258 +2515,8 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 	//Py_Finalize();
 }
 
-
-void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsize
-	,double Nugget_PB, double Nugget_HX, double sill_PB, double sill_HX
-	,double Range_PB, double Range_HX, double load_base, double T_in_ref_blk
-	,double T_amb_base, double deviation_load_max,double deviation_T_in_max
-	,double deviation_T_amb_max ,double deviation_eta_gross_max
-	,double deviation_eta_Q_max,double deviation_load_min,double deviation_T_in_min
-	,double deviation_T_amb_min,double deviation_eta_gross_min
-	,double deviation_eta_Q_min, char* variogram_model
-){
-	/*This function is for populating the Kriging_trianing_struct*/
-	char line[limitSize];
-	Kriging_struct* Kriging_variables = NEW(Kriging_struct);
-
-	/*Open the file*/
-	FILE* training_file = fopen(filepathtraining,"r");
-	if (training_file==NULL){
-		printf("Your file doesn't exist mate! Check your address %s!\n",filepathtraining);
-	}
-
-	int rows = getNumOfData(filepathtraining);    
-
-	/*Populating Kriging struct*/
-	Kriging_variables->rows = rows;
-	Kriging_variables->inputsize = inputsize;
-	Kriging_variables->outputsize = outputsize;
-
-	Kriging_variables->Nugget_PB = Nugget_PB;
-	Kriging_variables->Nugget_HX = Nugget_HX;
-	Kriging_variables->sill_PB = sill_PB;
-	Kriging_variables->sill_HX = sill_HX;
-	Kriging_variables->Range_PB = Range_PB;
-	Kriging_variables->Range_HX = Range_HX;
-
-	Kriging_variables->load_base = load_base;
-	Kriging_variables->T_in_ref_blk = T_in_ref_blk;
-	Kriging_variables->T_amb_base = T_amb_base;
-
-	Kriging_variables->deviation_load_max = deviation_load_max;
-	Kriging_variables->deviation_T_in_max = deviation_T_in_max;
-	Kriging_variables->deviation_T_amb_max = deviation_T_amb_max;
-	Kriging_variables->deviation_eta_gross_max = deviation_eta_gross_max;
-	Kriging_variables->deviation_eta_Q_max = deviation_eta_Q_max;
-
-	Kriging_variables->deviation_load_min = deviation_load_min;
-	Kriging_variables->deviation_T_in_min = deviation_T_in_min;
-	Kriging_variables->deviation_T_amb_min = deviation_T_amb_min;
-	Kriging_variables->deviation_eta_gross_min = deviation_eta_gross_min;
-	Kriging_variables->deviation_eta_Q_min = deviation_eta_Q_min;
-
-	/*Allocate memory to store 2D array*/
-	Kriging_variables->trainingData = NEW_ARRAY(double*,Kriging_variables->rows);
-	for(size_t i=0;i<rows;i++){
-		Kriging_variables->trainingData[i] = NEW_ARRAY(double,inputsize+outputsize); /*for each element in the memory address, create number of r of integer*/
-	}
-
-	/*Skip the header*/
-	fgets(line,limitSize,training_file);
-
-	/*Read the data!*/
-	fgets(line,limitSize,training_file);
-	size_t i = 0;
-	while(!feof(training_file)){
-		sscanf(
-		    line,"%lf,%lf,%lf,%lf,%lf",
-		    &Kriging_variables->trainingData[i][0],
-		    &Kriging_variables->trainingData[i][1], 
-		    &Kriging_variables->trainingData[i][2], 
-		    &Kriging_variables->trainingData[i][3], 
-		    &Kriging_variables->trainingData[i][4]
-		);
-		i++;
-		fgets(line,limitSize,training_file);
-	}
-	fclose(training_file);
-
-	/*Populate all the LHS Matrix*/
-	Kriging_variables->DISTANCE = gsl_matrix_alloc(rows,rows+1);
-
-	Kriging_variables->VARIOGRAM_HX = gsl_matrix_alloc(rows,rows+1);
-	Kriging_variables->COVARIANCE_HX = gsl_matrix_alloc(rows,rows+1);
-	Kriging_variables->INVERSE_HX = gsl_matrix_alloc(rows,rows);
-
-	Kriging_variables->VARIOGRAM_PB = gsl_matrix_alloc(rows,rows+1);
-	Kriging_variables->COVARIANCE_PB = gsl_matrix_alloc(rows,rows+1);
-	Kriging_variables->INVERSE_PB = gsl_matrix_alloc(rows,rows);
-
-	//********************** LHS DISTANCE MATRIX
-	double square_difference;
-	double delta;
-	double dist;
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    square_difference = 0;
-
-		    if(i==j){
-		    	//Diagonal Matrix --> 0
-		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,0.0);
-		    }else{
-		        for(size_t l=0;l<inputsize;l++){
-		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
-		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
-		            square_difference = square_difference + (delta*delta);
-		        }
-		        dist = pow(square_difference,0.5);
-		        //printf("SQUARE DIFFERENCE = %lf\n",square_difference);
-		        //printf("DISTANCE = %lf\n",dist);
-		        //printf("SET DISTANCE[%zu][%zu] = %lf\n",i,j,dist);
-		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,dist);
-		    }
-		}
-	}
-
-	//********************** LHS VARIOGRAM PB
-	double var;
-	double multiplier;
-	double Range_variogram = Kriging_variables->Range_PB;
-	double Nugget_variogram = Kriging_variables->Nugget_PB;
-	double Spherical_variogram = 1 - Kriging_variables->Nugget_PB;
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    if(i==j){
-		        gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,j,0.0);
-		    }else{
-		        dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,j);
-
-		        if (strcmp(variogram_model,"spherical")==0){
-		            if(dist>Range_variogram){
-		                multiplier = 1;
-		            }else{
-		                multiplier = 1.5 * (dist/Range_variogram) - 0.5 * pow(dist/Range_variogram,3);
-		            }
-		        }else if (strcmp(variogram_model,"gaussian")==0){
-		            double dist_square = pow(dist,2);
-		            double range_square = pow(Range_variogram,2);
-		            multiplier = 1 - exp(-dist_square/range_square);
-		        }else if (strcmp(variogram_model,"exponential")==0) {
-		            multiplier = 1 - exp(-fabs(dist)/Range_variogram);
-		        }else if (strcmp(variogram_model,"power")==0){
-		            multiplier = pow(Range_variogram,2);
-		        }else if (strcmp(variogram_model,"nugget")==0){
-		            multiplier = Range_variogram;
-		        }else{
-		            fprintf(stderr,"Variogram model is not valid\n");
-		            exit(EXIT_FAILURE);
-		        }
-
-		        gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,j, Nugget_variogram + Spherical_variogram * multiplier);
-		    }
-		    
-		}
-	}
-
-	//********************** LHS COVARIANCE PB
-	double sum_variogram = Nugget_variogram + Spherical_variogram;
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    gsl_matrix_set(Kriging_variables->COVARIANCE_PB,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_PB,i,j));
-		}
-	}
-
-	//********************** Inverse PB
-	gsl_matrix* LSM_PB = gsl_matrix_alloc(rows,rows); 
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    gsl_matrix_set(LSM_PB,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,j));
-		}
-	}
-
-	/*Inverse the LSM*/
-	gsl_permutation* perm_PB = gsl_permutation_alloc(rows);
-	int s;
-	gsl_linalg_LU_decomp (LSM_PB, perm_PB, &s);    
-	gsl_linalg_LU_invert (LSM_PB, perm_PB, Kriging_variables->INVERSE_PB);
-
-	//********************** LHS VARIOGRAM HX
-	Range_variogram = Kriging_variables->Range_HX;
-	Nugget_variogram = Kriging_variables->Nugget_HX;
-	Spherical_variogram = 1 - Kriging_variables->Nugget_HX;
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    if(i==j){
-		        gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,j,0.0);
-		    }else{
-		        dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,j);
-
-		        if (strcmp(variogram_model,"spherical")==0){
-		            if(dist>Range_variogram){
-		                multiplier = 1;
-		            }else{
-		                multiplier = 1.5 * (dist/Range_variogram) - 0.5 * pow(dist/Range_variogram,3);
-		            }
-		        }else if (strcmp(variogram_model,"gaussian")==0){
-		            double dist_square = pow(dist,2);
-		            double range_square = pow(Range_variogram,2);
-		            multiplier = 1 - exp(-dist_square/range_square);
-		        }else if (strcmp(variogram_model,"exponential")==0){
-		            multiplier = 1 - exp(-fabs(dist)/Range_variogram);
-		        }else if (strcmp(variogram_model,"power")==0){
-		            multiplier = pow(Range_variogram,2);
-		        }else if (strcmp(variogram_model,"nugget")==0){
-		            multiplier = Range_variogram;
-		        }else{
-		            fprintf(stderr,"Variogram model is not valid\n");
-		            exit(EXIT_FAILURE);
-		        }
-		                        
-		        gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,j, Nugget_variogram + Spherical_variogram * multiplier);
-		    }
-		    
-		}
-	}
-
-	//********************** LHS COVARIANCE HX
-	sum_variogram = Nugget_variogram + Spherical_variogram;
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    gsl_matrix_set(Kriging_variables->COVARIANCE_HX,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_HX,i,j));
-		}
-	}
-
-	//********************** Inverse HX
-	gsl_matrix* LSM_HX = gsl_matrix_alloc(rows,rows); 
-
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
-		    gsl_matrix_set(LSM_HX,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_HX,i,j));
-		}
-	}
-
-	/*Inverse the LSM*/
-	gsl_permutation* perm_HX = gsl_permutation_alloc(rows);
-	gsl_linalg_LU_decomp (LSM_HX, perm_HX, &s);    
-	gsl_linalg_LU_invert (LSM_HX, perm_HX, Kriging_variables->INVERSE_HX); 
-
-	/*Free resources*/
-	gsl_matrix_free(LSM_HX);
-	gsl_permutation_free(perm_HX);
-	gsl_matrix_free(LSM_PB);
-	gsl_permutation_free(perm_PB);
-
-	return Kriging_variables;
-}
-
-
 /**
-	FIXME describe it
+	String formating from fragmented path
 */
 char* build_trainingdir_path(
 		char* base_path, char* traindir_base, char* config_base, int match_index
@@ -2351,83 +2526,28 @@ char* build_trainingdir_path(
 	return trainingdir;
 }
 
-
 char* concat_training_dir(char* trainingdir, char* concat_string){
 	char *resultpath = NEW_ARRAY(char,MAXLEN);
 	snprintf(resultpath,MAXLEN,"%s%s",trainingdir,concat_string);
 	return resultpath;
 }
+/*=================================== END OF GENERAL UTILITIES FUNCS ==============================*/
 
 
-void *load_session(char* saved_model_dir, double* X_max
-		,double* X_min, double* y_max, double* y_min, int inputsize
-		,int outputsize, double load_base, double T_in_ref_blk, double T_amb_base
-){
-	//*********************Adjust the logging of tensorflow by setting a variable 
-	//*********************in the environment called TF_CPP_MIN_LOG_LEVEL
-
-	char *var = "TF_CPP_MIN_LOG_LEVEL=0";
-	int ret;
-	ret = putenv(var);
-
-	//*********************Allocate dynamic memory from the heap for Session_Props data struct 
-	Session_Props *sess = NEW(Session_Props);
-
-	//*********************Instantiate Session Properties
-	TF_Graph* Graph = TF_NewGraph();
-	TF_Status* Status = TF_NewStatus();
-	TF_SessionOptions* SessionOpts = TF_NewSessionOptions();
-	TF_Buffer* RunOpts = NULL;
-
-	const char* tags = "serve"; // default model serving tag
-	int ntags = 1;
-
-	TF_Session* Session = TF_LoadSessionFromSavedModel(SessionOpts, RunOpts
-			,saved_model_dir, &tags, ntags, Graph, NULL, Status
-		);
-
-	if(TF_GetCode(Status) == TF_OK){
-		printf("TF Loading Pre-Trained Model : Complete!\n");
-	}else{
-		printf("%s",TF_Message(Status));
-	}
-
-	//***************************Populate the member of the struct --- TensorFlow properties
-	sess->Graph = Graph;
-	sess->Session = Session;
-	sess->Status = Status;
-	sess->SessionOpts = SessionOpts;
-	sess->RunOpts = RunOpts;
-
-	//***************************Populate the member of the struct --- Scaler
-	sess->X_max = NEW_ARRAY(double,inputsize);
-	sess->X_min = NEW_ARRAY(double,inputsize);
-
-	sess->y_max = NEW_ARRAY(double,outputsize);
-	sess->y_min = NEW_ARRAY(double,outputsize);
-
-	for(size_t i=0;i<inputsize;i++){
-		sess->X_max[i] = X_max[i];
-		sess->X_min[i] = X_min[i];
-	}
-		
-	for(size_t i=0;i<outputsize;i++){
-		sess->y_max[i] = y_max[i];
-		sess->y_min[i] = y_min[i];
-	}
-
-	sess->inputsize = inputsize;
-	sess->outputsize = outputsize;
-	sess->base_values = NEW_ARRAY(double,inputsize);
-	sess->base_values[0] = load_base;
-	sess->base_values[1] = T_in_ref_blk;
-	sess->base_values[2] = T_amb_base;
-	return sess;
-}
 
 
-/*=================================== STARTING FROM HERE IS FUNCTIONS TO CALL SAM PB ==============================*/
 
+
+
+
+
+
+
+/*=================================== STARTING FROM HERE IS FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
+/*
+	This function is to create off design input array for CEA PB to simulate shall new surrogate model is needed
+	char* training_or_validation controls the sampling process
+*/
 void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_des
 		,char* trainingdir, char* base_path, int numinputs, int numdata
 		,char* training_or_validation
@@ -2454,7 +2574,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	}else if(strcmp(training_or_validation,"LHS")==0){
 		pfunc = "generate_matrix"; //doesn't care which data it is, go with LHS
 	}else{
-		fprintf(stderr,"Function is invalid. Choose either validation or trianing. Your choice: %s\n",training_or_validation);
+		fprintf(stderr,"Function is invalid. Choose either validation or training. Your choice: %s\n",training_or_validation);
 		exit(EXIT_FAILURE);
 	}
 
@@ -2524,8 +2644,8 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	}
 }
 
-/**
-	Load FIXME properties array from text file `fn_props` and store in sim_struct `sim`.
+/*
+	Load properties array from text file `fn_props` and store in sim_struct `sim`.
 */
 void loadPropsArray(char* fn_props, sim_struct* sim){
 	char line[limitSize];
@@ -2578,7 +2698,7 @@ void loadPropsArray(char* fn_props, sim_struct* sim){
 }
 
 /*
-	Read an off-design FIXME FIXME from a text file named `fn_OD`, and
+	Read an off-design from a text file named `fn_OD`, and
 	store the results in a provided sim_struct `sim`.
 */
 void loadOffDesignArray(char* fn_OD, sim_struct* sim){
@@ -2634,7 +2754,9 @@ void loadOffDesignArray(char* fn_OD, sim_struct* sim){
 	return;
 }
 
-
+/*
+	The MAIN FUNCTION to run SSC sCO2 PB module
+*/
 ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_high
 		,double T_amb_base, double dT_PHX_hot_approach, double dT_PHX_cold_approach
 		,double eta_isen_mc, double eta_isen_rc, double eta_isen_t
@@ -2688,7 +2810,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, numdata,"training");
 		char* fn_OD = NEW_ARRAY(char, strlen(trainingdir) + strlen("/OD_matrix.csv") + 1);
 		strcpy(fn_OD,trainingdir);
-		strcat(fn_OD,"/OD_matrix.csv");
+		strcat(fn_OD,"/OD_matrix.csv"); //e.g. /home/philgun/solartherm-intermediate/SolarTherm/Resources/Library/training_data/configNREL0/OD_matrix.csv
 		
 		loadOffDesignArray(fn_OD, sim);
 		ssc_number_t* OD_array = NEW_ARRAY(ssc_number_t, sim->rows_OD*6);
@@ -3019,7 +3141,31 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 	return data;
 }
 
+/*
+	Test if parameters are passed successfully to SSC
+*/
+void ssc_test(){
+	printf("SSC version = %d\n", ssc_version());
 
+	ssc_data_t data = ssc_data_create();
+
+	ssc_data_set_string( data, "solar_resource_file", "aaa" );
+	const char* text = ssc_data_get_string( data, "solar_resource_file" );
+	assert(strcmp(text,"aaa")==0);
+
+	double val = 0.3;
+	ssc_data_set_number( data, "dens_mirror", val );
+
+	ssc_number_t dens_mirror;
+	ssc_bool_t nerr = ssc_data_get_number( data, "dens_mirror", &dens_mirror );\
+	assert(nerr);
+	//fprintf(stderr,"dens mirror: %f\n", dens_mirror );
+	assert(dens_mirror==val);
+}
+
+/*
+	Processing the off-design data array before training the surrogate model. Using Python script
+*/
 void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *inputs;
@@ -3083,9 +3229,13 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 	}
 }
 
+/*=================================== END OF FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
 
+
+/*=================================== WORK IN PROGRESS WITH OTF RECEIVER ==============================*/
 /*
-	FIXME refactor the string operations in this function, see `checkConfig`
+	Work in progress --> generate receiver surrogate model on the fly for a given receiver size. 
+	Current implementation in SolarTherm was to pre-train a global surrogate model encompassing both on and off design parameters
 */
 void checkConfigReceiver(double H_drop, double T_HTF_in_des
 		, double T_HTF_out_des, char* base_path, int* index_and_status
@@ -3162,7 +3312,6 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 	return;
 }
 
-
 void simReceiver(int numdata, double H_drop_design, double T_HTF_in_design
 		, double T_HTF_out_des, char* trainingdir, char* SolarTherm_path
 		, char* base_path, int status_config
@@ -3233,26 +3382,6 @@ void simReceiver(int numdata, double H_drop_design, double T_HTF_in_design
 		fprintf(stderr, "Failed to load \"%s\"\n", pname);
 		exit(EXIT_FAILURE);
 	}
-}
-
-
-void ssc_test(){
-	printf("SSC version = %d\n", ssc_version());
-
-	ssc_data_t data = ssc_data_create();
-
-	ssc_data_set_string( data, "solar_resource_file", "aaa" );
-	const char* text = ssc_data_get_string( data, "solar_resource_file" );
-	assert(strcmp(text,"aaa")==0);
-
-	double val = 0.3;
-	ssc_data_set_number( data, "dens_mirror", val );
-
-	ssc_number_t dens_mirror;
-	ssc_bool_t nerr = ssc_data_get_number( data, "dens_mirror", &dens_mirror );\
-	assert(nerr);
-	//fprintf(stderr,"dens mirror: %f\n", dens_mirror );
-	assert(dens_mirror==val);
 }
 
 
