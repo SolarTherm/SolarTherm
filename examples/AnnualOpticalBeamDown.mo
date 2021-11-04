@@ -26,7 +26,7 @@ import metadata = SolarTherm.Utilities.Metadata_Optics;
   parameter Real secref_inv_eccen=0.6 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=75 "Tower height";
   parameter Real fb=0.7 "factor to grow the field layout";
-  parameter nSI.Angle_deg secref_angle_deg=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
+  parameter nSI.Angle_deg tilt_secref=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
   parameter SI.Length W_rcv=8 "Polygon receiver width";
   parameter SI.Length H_rcv=8 "Polygon receiver length";
   parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
@@ -76,7 +76,7 @@ SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELTBeamdown lookuptab
         secref_inv_eccen=secref_inv_eccen,
         H_tower=H_tower,
         fb=fb,
-        secref_angle_deg=secref_angle_deg,
+        tilt_secref=tilt_secref,
         Z_rcv=Z_rcv,
         W_rcv=W_rcv,
         H_rcv=H_rcv,

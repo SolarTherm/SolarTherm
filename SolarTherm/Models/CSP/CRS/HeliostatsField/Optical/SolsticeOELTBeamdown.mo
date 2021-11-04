@@ -23,7 +23,7 @@ extends OpticalEfficiency;
         parameter SI.Length H_tower = 75 "Tower height";
         parameter Real fb=0.6 "factor to grow the field layout";
         parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
-        parameter nSI.Angle_deg secref_angle_deg=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
+        parameter nSI.Angle_deg tilt_secref=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
 
     parameter SI.HeatFlowRate Q_in_rcv = 50e6;
     // heliostat field
@@ -77,8 +77,8 @@ extends OpticalEfficiency;
 
 initial algorithm
 tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "rim_angle_x", "rim_angle_y", "secref_inv_eccen",
-"H_tower", "fb", "secref_angle_deg", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error_bd",
-"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv"}, {cpc_theta_deg, cpc_h_ratio, rim_angle_x, rim_angle_y, secref_inv_eccen, H_tower, fb, secref_angle_deg, Z_rcv, W_rcv,
+"H_tower", "fb", "tilt_secref", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error_bd",
+"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv"}, {cpc_theta_deg, cpc_h_ratio, rim_angle_x, rim_angle_y, secref_inv_eccen, H_tower, fb, tilt_secref, Z_rcv, W_rcv,
 H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error_bd, rho_secref, rho_cpc, cpc_nfaces, n_H_rcv});
 
 equation
