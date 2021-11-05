@@ -12,7 +12,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	// psave: directory of saving the results from mcrt
 
 	const char *tablefile = NULL; //the file of the lookup table
-	PyObject *pModule, *pFunc;
+	PyObject *pFunc;
 	PyObject *pArgs, *pValue, *inputs;
 	int i;
 
@@ -38,7 +38,12 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	/* Error checking of pName left out */
 	//fprintf(stderr,"Import '%s'....\n",pname);
 
-	pModule = PyImport_ImportModule(pname);
+	PyObject *pModule = PyImport_ImportModule(pname);
+	if(pModule == NULL){
+		fprintf(stderr,"Failed to import '%s'\n",pname);
+		return NULL;
+	}
+
 	//Py_DECREF(pName);
 
 	fprintf(stderr,"eee\n");

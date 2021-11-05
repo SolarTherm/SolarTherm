@@ -403,8 +403,6 @@ if conf.TF():
 if conf.SSC():
 	env.AppendUnique(ST_LIBPATH=['$SSC_LIBPATH'])
 
-print(env['ST_LIBPATH'])
-
 if not conf.OMC() or not conf.OMLib():
 	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
 	Exit(1)
