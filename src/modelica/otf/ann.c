@@ -7,6 +7,14 @@
 #include <time.h>
 #include <stdlib.h>
 
+//#define ST_SSCPB_DEBUG
+#ifdef ST_ANN_DEBUG
+# define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+#else
+# define MSG(...) ((void)0)
+#endif
+#define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+
 //********************* SEQUENCE 3.2
 double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model){
 	double* inputs = NEW_ARRAY(double,sess->inputsize);
@@ -28,7 +36,7 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	TF_Output t0 = {TF_GraphOperationByName(Graph,"serving_default_Input_input"),0}; //take the input tensor from loaded model
 
 	if(t0.oper == NULL){
-		fprintf(stderr,"ERROR: Failed TF_GraphOperationByName serving_default_Input_input\n");
+		ERR("Failed TF_GraphOperationByName serving_default_Input_input");
 	}
 
 	Input[0] = t0;
@@ -40,7 +48,7 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	TF_Output t2 = {TF_GraphOperationByName(Graph,"StatefulPartitionedCall"),0}; //take the output tensor from loaded model
 
 	if(t2.oper == NULL){
-		fprintf(stderr,"ERROR: Failed TF_GraphOperationByName StatefulPartitionedCall\n");
+		ERR("Failed TF_GraphOperationByName StatefulPartitionedCall");
 	}
 
 	Output[0] = t2;
@@ -67,7 +75,7 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	TF_Tensor* TensorIn = TF_NewTensor(TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocator, 0);
 
 	if (TensorIn == NULL){
-		fprintf(stderr,"ERROR: Failed TF_NewTensor\n");
+		ERR("Failed TF_NewTensor");
 	}
 
 	InputValues[0] = TensorIn;
@@ -81,7 +89,7 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 		NULL, 0,NULL , Status);
 
 	if(TF_GetCode(Status) != TF_OK){
-		printf("%s",TF_Message(Status));
+		ERR("Not-OK status from TF_SessionRun: %s",TF_Message(Status));
 	}
 
 	//Extracting output
@@ -124,7 +132,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 	int numdata = 150;
 	Session_Props* session; //****************** mallocing will be done in the load_session func
 
-	printf("User choice of surrogate = ANN\n");
+	MSG("User choice of surrogate = ANN\n");
 	char line[limitSize];
 
 	/*List of file or directory that will be created under trainingdir*/
@@ -154,7 +162,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 	}else if(which_ANN_model==1){
 		filepath = filepathtraining_eta_Q;
 	}else{
-		fprintf(stderr,"Invalid choice of ANN model. Please choose either 0 for ANN power block, 1 for ANN HX. Your choice is %d\n",which_ANN_model);
+		ERR("Invalid choice of ANN model. Please choose either 0 for ANN power block, 1 for ANN HX. Your choice is %d",which_ANN_model);
 		exit(EXIT_FAILURE);
 	}
 
@@ -162,7 +170,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 
 	while(stop == 0){
 		if(gen_data == 1){
-		    printf("Start gathering %d off-design data points\n",numdata);
+		    MSG("Start gathering %d off-design data points\n",numdata);
 		    clock_t begin = clock();
 		    if(PB_model==0){
 		        generateTrainingData(
@@ -178,13 +186,13 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		        );
 		        ssc_data_free(NRELPBSimulationResult);
 		    }else{
-		        fprintf(stderr,"PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d\n",PB_model);
+		        ERR("PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d",PB_model);
 		        exit(EXIT_FAILURE);
 		    }
 		        
 		    clock_t end = clock();
 		    double time_spent = (double)(end-begin) / CLOCKS_PER_SEC;
-		    printf("Finish gathering %d points off-design data: it took %lf s\n",numdata,time_spent);
+		    MSG("Finish gathering %d points off-design data: it took %lf s\n",numdata,time_spent);
 		}
 
 		status_config = 0;
@@ -196,7 +204,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		//*************Reading scaler
 		FILE *fnmax = fopen(filepathmax,"r"); //instantiate pointer to the filepathmax
 		if(fnmax==NULL){
-		    printf("File path max data doesn't exist! Check your path %s\n",filepathmax);
+		    ERR("File path max data doesn't exist! Check your path %s",filepathmax);
 		}
 
 		double* UB = NEW_ARRAY(double,inputsize+outputsize);
@@ -213,7 +221,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		FILE *fnmin = fopen(filepathmin,"r"); //instantiate pointer to the filepathmin
 
 		if(fnmin==NULL){
-		    printf("File path min data doesn't exist! Check your path %s\n",filepathmin);
+		    ERR("File path min data doesn't exist! Check your path '%s'",filepathmin);
 		}
 
 		double* LB = NEW_ARRAY(double,inputsize+outputsize);
@@ -269,11 +277,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 
 		double absolute_error_eta = 0;
 
-		printf("MAX : %lf,%lf,%lf,%lf,%lf\n",
+		MSG("MAX : %lf,%lf,%lf,%lf,%lf\n",
 		session->X_max[0],session->X_max[1],session->X_max[2],session->y_max[0],session->y_max[1]
 		);      
 		
-		printf("MIN : %lf,%lf,%lf,%lf,%lf\n",
+		MSG("MIN : %lf,%lf,%lf,%lf,%lf\n",
 		session->X_min[0],session->X_min[1],session->X_min[2],session->y_min[0],session->y_min[1]
 		);
 
@@ -312,7 +320,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		    }else if(which_ANN_model==1){
 		        delta_eta = estimate_eta - test_data[i].eta_Q; 
 		    }else{
-		        fprintf(stderr,"Invalid ANN choice. Valid choices are 0 for ANN PB, 1 for ANN HC. Your choice is %d\n",which_ANN_model);
+		        ERR("Invalid ANN choice. Valid choices are 0 for ANN PB, 1 for ANN HC. Your choice is %d",which_ANN_model);
 		        exit(EXIT_FAILURE);
 		    }            
 		
@@ -353,25 +361,25 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		}
 
 		double R_squared_eta = 1 - (squared_error_eta / variance_eta);
-		printf("%lf %lf\n",squared_error_eta,variance_eta);
+		MSG("%lf %lf\n",squared_error_eta,variance_eta);
 
 		double MAE_eta = absolute_error_eta/rows;
-		printf("%lf %d\n",absolute_error_eta,rows);
+		MSG("%lf %d\n",absolute_error_eta,rows);
 
-		printf("\n------------------------------------------------\n");
-		printf("------------------------------------------------\n");
-		printf("--------SURROGATE VALIDATION RESULT-------------\n");
-		printf("------------------------------------------------\n");
-		printf("------------------------------------------------\n\n");
+		MSG("\n------------------------------------------------\n");
+		MSG("------------------------------------------------\n");
+		MSG("--------SURROGATE VALIDATION RESULT-------------\n");
+		MSG("------------------------------------------------\n");
+		MSG("------------------------------------------------\n\n");
 
-		printf("Sum of square error eff: %lf\nR squared eff: %lf\nMAE eff: %lf\n",squared_error_eta,R_squared_eta, MAE_eta);
+		MSG("Sum of square error eff: %lf\nR squared eff: %lf\nMAE eff: %lf\n",squared_error_eta,R_squared_eta, MAE_eta);
 
 		/*Stop criterion*/
 		if(MAE_eta < tolerance){
-		    printf("Model OK!\n");
+		    MSG("Model OK!\n");
 		    stop = 1;
 		}else{
-		    printf("Model is still not OK! Need more data!\n");
+		    MSG("Model is still not OK! Need more data!\n");
 		    numdata = 25;
 		    gen_data = 1; //*********** generating another data points
 		}
@@ -381,11 +389,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		fprintf(fnRsquared,"%lf,%lf\n",MAE_eta,R_squared_eta);
 		fclose(fnRsquared);
 
-		printf("\n------------------------------------------------\n");
-		printf("------------------------------------------------\n");
-		printf("------------------------------------------------\n");
-		printf("------------------------------------------------\n");
-		printf("------------------------------------------------\n\n");
+		MSG("\n------------------------------------------------\n");
+		MSG("------------------------------------------------\n");
+		MSG("------------------------------------------------\n");
+		MSG("------------------------------------------------\n");
+		MSG("------------------------------------------------\n\n");
 
 		fclose(testfile); 
 		fclose(dump);
@@ -431,9 +439,9 @@ void *load_session(char* saved_model_dir, double* X_max
 		);
 
 	if(TF_GetCode(Status) == TF_OK){
-		printf("TF Loading Pre-Trained Model : Complete!\n");
+		MSG("TF Loading Pre-Trained Model : Complete!\n");
 	}else{
-		printf("%s",TF_Message(Status));
+		ERR("Not-OK TF_LoadSessionFromSavedModel status: %s.",TF_Message(Status));
 	}
 
 	//***************************Populate the member of the struct --- TensorFlow properties
@@ -480,15 +488,15 @@ int trainingANN(char* fn_data, char* prefixres, int count, char* SolarTherm_path
 	//Build the command e.g. python SolarTherm_path/Resources/Library/trainANN.py fn_data prefixres 0
 	snprintf(cmd, MAXLEN, "python %s/Resources/Library/trainANN.py %s %s %d", SolarTherm_path, fn_data, prefixres , count);
 
-	fprintf(stderr,"Running %s\n",cmd);
+	MSG("Running %s\n",cmd);
 
 	int status_training = system(cmd);
 
 	if (status_training==0){
-		fprintf(stderr,"Training ANN has been finished without any error\n");
+		MSG("Training ANN has been finished without any error\n");
 		return 0;
 	}else{
-		fprintf(stderr,"Training error with status %d\n",status_training);
+		ERR("Training error with status %d.",status_training);
 		return -1;
 	}
 }

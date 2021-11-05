@@ -4,6 +4,14 @@
 
 #include <Python.h>
 
+//#define SSCPB_DEBUG
+#ifdef SSCPB_DEBUG
+# define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+#else
+# define MSG(...) ((void)0)
+#endif
+#define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+
 /*=================================== STARTING FROM HERE IS FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
 /*
 	This function is to create off design input array for CEA PB to simulate shall new surrogate model is needed
@@ -35,7 +43,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	}else if(strcmp(training_or_validation,"LHS")==0){
 		pfunc = "generate_matrix"; //doesn't care which data it is, go with LHS
 	}else{
-		fprintf(stderr,"Function is invalid. Choose either validation or training. Your choice: %s\n",training_or_validation);
+		ERR("Function is invalid. Choose either validation or training. Your choice: %s",training_or_validation);
 		exit(EXIT_FAILURE);
 	}
 
@@ -93,7 +101,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 		    if (PyErr_Occurred()){
 		        PyErr_Print();
 		    }else{
-		        fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
+		        ERR("Cannot find function \"%s\"", pfunc);
 		    }
 		}
 		Py_XDECREF(pFunc);
@@ -101,7 +109,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	}else{
 		/*if python script does not exist*/
 		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
+		ERR("Failed to load \"%s\"", pname);
 	}
 }
 
@@ -114,7 +122,7 @@ void loadPropsArray(char* fn_props, sim_struct* sim){
 	FILE* fn = fopen(fn_props,"r");
 
 	if(fn==NULL){
-		fprintf(stderr,"File doesn't exist. File path: %s\n",fn_props);
+		ERR("File doesn't exist. File path: %s",fn_props);
 		exit(EXIT_FAILURE);
 	}
 
@@ -168,7 +176,7 @@ void loadOffDesignArray(char* fn_OD, sim_struct* sim){
 	FILE* fn = fopen(fn_OD,"r");
 
 	if(fn==NULL){
-		fprintf(stderr,"File doesn't exist. File path: %s\n",fn_OD);
+		ERR("File doesn't exist. File path: %s",fn_OD);
 		exit(EXIT_FAILURE);
 	}
 
@@ -230,11 +238,11 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		 // dump the configurations
 		char *path_config = NEW_ARRAY(char,MAXLEN);
 		snprintf(path_config,MAXLEN,"%s/configurations/configNREL%d.txt",base_path,match_index);
-		fprintf(stderr,"Writing '%s'...\n",path_config);
+		MSG("Writing '%s'...\n",path_config);
 
 		FILE* f = fopen(path_config,"w");
 		if(f==NULL){
-			fprintf(stderr,"Unable to open file for writing\n");
+			ERR("Unable to open file '%s' for writing.",path_config);
 		}
 		fprintf(f,
 		    "P_net,T_in_ref_blk,p_high,dT_PHX_hot_approach,dT_PHX_cold_approach,eta_isen_mc,eta_isen_rc,eta_isen_t,dT_mc_approach,T_amb_base\n"
@@ -376,7 +384,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		ssc_module_t module = ssc_module_create("sco2_csp_system");
 
 		if(ssc_module_exec(module,data)==0){
-		    fprintf(stderr,"Error in simulation!\n");
+		    ERR("Error in simulation while running ssc_module_exec.");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
 		    exit(EXIT_FAILURE);
@@ -448,7 +456,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		OD_array = sim->array_OD;
 		ssc_data_set_matrix( data, "od_cases", OD_array, sim->rows_OD, 6); /*user Off design cases*/
 		if(ssc_module_exec(module,data)==0){
-		    fprintf(stderr,"Error in simulation!\n");
+		    ERR("Error in simulation while running ssc_module_exec!");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
 		    exit(EXIT_FAILURE);
@@ -500,7 +508,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 
 	}else{
 
-		fprintf(stderr,"===========================SIMULATE NREL SAM PB ON DESIGN ONLY =================================\n");
+		MSG("===========================SIMULATE NREL SAM PB ON DESIGN ONLY =================================\n");
 		
 		//**************************************************************************************************************************//
 		double eff_max = 1; 
@@ -593,7 +601,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		ssc_module_t module = ssc_module_create("sco2_csp_system");
 
 		if(ssc_module_exec(module,data)==0){
-		    fprintf(stderr,"Error in simulation!\n");
+		    ERR("Error in simulation while running ssc_module_exec!");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
 		    exit(EXIT_FAILURE);
@@ -622,7 +630,7 @@ void ssc_test(){
 	ssc_number_t dens_mirror;
 	ssc_bool_t nerr = ssc_data_get_number( data, "dens_mirror", &dens_mirror );
 	assert(nerr);
-	//fprintf(stderr,"dens mirror: %f\n", dens_mirror );
+	//MSG("dens mirror: %f\n", dens_mirror );
 	assert(dens_mirror==val);
 }
 
@@ -678,7 +686,7 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 		    if (PyErr_Occurred()){
 		        PyErr_Print();
 		    }else{
-		        fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
+		        ERR("Cannot find function \"%s\"", pfunc);
 		        exit(EXIT_FAILURE);
 		    }
 		}
@@ -687,7 +695,7 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 	}else{
 		/*if python script does not exist*/
 		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
+		ERR("Failed to load \"%s\"", pname);
 		exit(EXIT_FAILURE);
 	}
 }

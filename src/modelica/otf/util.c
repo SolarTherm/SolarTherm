@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include <Python.h>
 
+//#define ST_UTIL_DEBUG
+#ifdef ST_UTIL_DEBUG
+# define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+#else
+# define MSG(...) ((void)0)
+#endif
+#define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+
 /*=================================== STARTING FROM HERE IS GENERAL UTILITIES FUNCS ==============================*/
 /*
 	This function checks number of data in the training data file s.t. the memory allocation for the kriging struct is on point
@@ -17,7 +25,7 @@ int getNumOfData(char* filepath){
 	FILE* training_file = fopen(filepath,"r");
 	if (training_file==NULL)
 	{
-		printf("Your file doesn't exist! Check your address %s!\n",filepath);
+		ERR("Your file doesn't exist! Check your address %s!",filepath);
 		return -1;
 	}
 
@@ -52,14 +60,14 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 	int file_index = 0;
 	char* config_base = (PB_model == 0 ? "config" : (PB_model == 1 ? "configNREL" : NULL));
 	if(!config_base){
-		fprintf(stderr,"PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d\n",PB_model);
+		ERR("PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d",PB_model);
 		exit(EXIT_FAILURE);
 	}
 	char* config_file_path = NEW_ARRAY(char,MAXLEN);
 
 	while(1){
 		snprintf(config_file_path,MAXLEN,"%s/configurations/%s%d.txt",base_path,config_base,file_index);
-		fprintf(stderr,"Reading config '%s'...\n",config_file_path);
+		MSG("Reading config '%s'...",config_file_path);
 
 		FILE* configfile = fopen(config_file_path,"r");
 		
@@ -132,9 +140,9 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 		if(deviation_of_configurations < 1e-3){
 		    matching_index = file_index;
 		    status = 0; //******changing status to 0 from -1000 s.t. we dont need to gather the data
-		    fprintf(stderr,"Configuration match in: %s\n",config_file_path);
+		    MSG("Configuration match in: %s",config_file_path);
 		}else{ 
-		    fprintf(stderr,"Configuration doesn't match in: %s\n",config_file_path);
+		    MSG("Configuration doesn't match in: %s",config_file_path);
 		}
 		
 		file_index++; //**********increasing the file index
@@ -143,7 +151,7 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 	//************** If no file is matching --> matching index is -1000, 
 	//************** force the value of matching index = file_index for foldering purpose of the new training data
 	if(matching_index == -1000){
-		fprintf(stderr,"No match in the data base!\n");
+		MSG("No match in the data base!");
 		matching_index = file_index;
 		status = 1;
 	}
@@ -234,7 +242,7 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 		    if (PyErr_Occurred()){
 		        PyErr_Print();
 		    }else{
-		        fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
+		        ERR("Cannot find function \"%s\"", pfunc);
 		    }
 		}
 		Py_XDECREF(pFunc);
@@ -242,7 +250,7 @@ void generateTrainingData(double P_net, double T_in_ref_blk, double p_high
 	}else{
 		/*if python script does not exist*/
 		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
+		ERR("Failed to load \"%s\"", pname);
 	}
 
 
