@@ -15,7 +15,7 @@ try:
 	from solsticepy.design_multi_aperture import MultiApertureConfiguration
 except Exception as e:
 	sys.stderr.write("Error with imports...\n")
-	sys.stderr.write("e = %s" % (str(e),))
+	sys.stderr.write("e = %s\n" % (str(e),))
 
 sys.stderr.write("Done with imports...\n");
 

@@ -133,6 +133,21 @@ Help(vars.GenerateHelpText(env))
 #---------------------------------------------------------------------------------------------------
 # CHECK FOR DAKOTA, SOLSTICE, OPENMODELICA, OPENMPI/MSMPI, correct PATH.
 
+def check_solsticepy(ct):
+	ct.Message('Checking for solsticepy...')
+	try:
+		import solsticepy
+	except Exception as e:
+		ct.Result(str(e))
+		return False
+
+	try:
+		from solsticepy.output_motab import output_metadata_motab
+	except ImportError as e:
+		ct.Result(str(e))
+		return False
+	ct.Result("yes")
+	return True
 def check_solstice(ct):
 	ct.Message('Checking for solstice... ')
 	try:
@@ -363,7 +378,8 @@ int main() {
 		return False
 
 conf = env.Configure(custom_tests={
-	'CS':check_solstice
+	'CSP':check_solsticepy
+	,'CS':check_solstice
 	, 'DAK':check_dakota
 	,'DAKPY':check_dakota_python
 	,'OMC':check_omc
@@ -373,6 +389,9 @@ conf = env.Configure(custom_tests={
 	,'TF':check_tensorflow
 	,'SSC':check_ssc
 })
+if not conf.CSP():
+	print(REDWARN("Missing or wrong version of 'solsticepy'"))
+	Exit(1)
 if not conf.CS():
 	print(REDWARN("Unable to locate 'solstice'"))
 	Exit(1)
