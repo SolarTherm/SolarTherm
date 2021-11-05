@@ -11,7 +11,7 @@
 double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model){
 	double* inputs = NEW_ARRAY(double,sess->inputsize);
 
-	for(size_t i=0;i<sess->inputsize;i++){
+	for(int i=0;i<sess->inputsize;i++){
 		inputs[i] = sess->base_values[i] - raw_input[i];
 	}
 
@@ -57,7 +57,7 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	//*********************Pre-processing the input - normalisation of the input using Min Max Scaler
 	//Allocate memory for scaled input
 	float* data = NEW_ARRAY(float,numData); //==> where the input from modelica is gonna be inserted
-	for(size_t i=0; i<sess->inputsize; i++){
+	for(int i=0; i<sess->inputsize; i++){
 		data[i] = (inputs[i] - sess->X_min[i]) / (sess->X_max[i]-sess->X_min[i]);
 	}
 
@@ -233,12 +233,12 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		double* y_max = NEW_ARRAY(double,outputsize);
 		double* y_min = NEW_ARRAY(double,outputsize);
 
-		for(size_t i=0;i<inputsize;i++){
+		for(int i=0;i<inputsize;i++){
 		    X_max[i] = UB[i];
 		    X_min[i] = LB[i];
 		}
 		
-		for(size_t i=0;i<outputsize;i++){
+		for(int i=0;i<outputsize;i++){
 		    y_max[i] = UB[i+inputsize];
 		    y_min[i] = LB[i+inputsize];
 		}
@@ -329,11 +329,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		double sum_real_eta = 0;
 
 		if(which_ANN_model==0){
-		    for(size_t i=0;i<rows;i++){
+		    for(int i=0;i<rows;i++){
 		        sum_real_eta += test_data[i].eta_gross;
 		    }
 		}else{
-		    for(size_t i=0;i<rows;i++){
+		    for(int i=0;i<rows;i++){
 		        sum_real_eta += test_data[i].eta_Q;
 		    }
 		}
@@ -343,11 +343,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		double variance_eta = 0;
 		
 		if(which_ANN_model==0){
-		    for(size_t i=0;i<rows;i++){
+		    for(int i=0;i<rows;i++){
 		        variance_eta = variance_eta + (test_data[i].eta_gross - mean_real_eta) * (test_data[i].eta_gross - mean_real_eta);
 		    }
 		}else{
-		    for(size_t i=0;i<rows;i++){
+		    for(int i=0;i<rows;i++){
 		        variance_eta = variance_eta + (test_data[i].eta_Q - mean_real_eta) * (test_data[i].eta_Q - mean_real_eta);
 		    }
 		}
@@ -450,12 +450,12 @@ void *load_session(char* saved_model_dir, double* X_max
 	sess->y_max = NEW_ARRAY(double,outputsize);
 	sess->y_min = NEW_ARRAY(double,outputsize);
 
-	for(size_t i=0;i<inputsize;i++){
+	for(int i=0;i<inputsize;i++){
 		sess->X_max[i] = X_max[i];
 		sess->X_min[i] = X_min[i];
 	}
 		
-	for(size_t i=0;i<outputsize;i++){
+	for(int i=0;i<outputsize;i++){
 		sess->y_max[i] = y_max[i];
 		sess->y_min[i] = y_min[i];
 	}

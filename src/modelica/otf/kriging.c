@@ -64,7 +64,7 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 
 	/*Find the mean value of the value we want to Krig*/
 	double sum_eff = 0;
-	for (size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		sum_eff = sum_eff + Kriging_variables->trainingData[i][index_var];
 	}
 
@@ -72,7 +72,7 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 
 	/*Substract the mean from the value*/
 	double* RESIDUAL_VAL = NEW_ARRAY(double,rows);
-	for (size_t i=0;i<rows;i++){
+	for (int i=0;i<rows;i++){
 		RESIDUAL_VAL[i] =  Kriging_variables->trainingData[i][index_var] - avg_eff;
 	}
 
@@ -90,7 +90,7 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 	gsl_matrix* RHS = gsl_matrix_alloc(rows,1);
 
 	/*Take only the most right of the covariance matrix*/
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		if(strcmp(which_eta,"eta_gross")==0){
 		    gsl_matrix_set(
 		        RHS,i,0,
@@ -120,7 +120,7 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 	double sum_weight = 0;
 	//double residual_weight = 0;
 
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		sum_weight = sum_weight + gsl_matrix_get(WEIGHT,i,0);
 	}
 
@@ -129,14 +129,14 @@ double predict_Kriging(Kriging_struct* Kriging_variables
 	/*Calculate Kriging Estimate*/
 	double estimate = 0;
 
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		estimate = estimate + RESIDUAL_VAL[i] * gsl_matrix_get(WEIGHT,i,0);
 	}
 
 
 	/*Find kriging variance (uncertainty)??*/
 	double vars = 0;
-	for(size_t i = 0; i<rows;i++){
+	for(int i = 0; i<rows;i++){
 		if(strcmp(which_eta,"eta_gross")==0){
 		    vars = vars + (gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,rows)*gsl_matrix_get(WEIGHT,i,0));
 		}else if(strcmp(which_eta,"eta_Q")==0){
@@ -408,7 +408,7 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 		double sum_real_eta_PB = 0;
 		double sum_real_eta_HX = 0;
 
-		for(size_t i=0;i<rows;i++){
+		for(int i=0;i<rows;i++){
 		    sum_real_eta_PB += test_data[i].eta_gross;
 		    sum_real_eta_HX += test_data[i].eta_Q;
 		}
@@ -419,7 +419,7 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 		double variance_eta_PB=0;
 		double variance_eta_HX=0;
 
-		for(size_t i=0;i<rows;i++){
+		for(int i=0;i<rows;i++){
 		    variance_eta_PB = variance_eta_PB + (test_data[i].eta_gross - mean_real_eta_PB) * (test_data[i].eta_gross - mean_real_eta_PB);
 		    variance_eta_HX = variance_eta_HX + (test_data[i].eta_Q - mean_real_eta_HX) * (test_data[i].eta_Q - mean_real_eta_HX);
 		}
@@ -486,9 +486,9 @@ void getWeight(gsl_matrix* INVERSE_LSM, gsl_matrix* COVARIANCE, gsl_matrix* WEIG
 	double val;
 	double InverseVal;
 	double CovarianceVal;
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		val = 0;
-		for(size_t j=0;j<rows;j++){
+		for(int j=0;j<rows;j++){
 		    InverseVal = gsl_matrix_get(INVERSE_LSM,i,j);
 		    CovarianceVal = gsl_matrix_get(COVARIANCE,j,rows);
 		    val = val + (InverseVal*CovarianceVal);
@@ -519,7 +519,7 @@ void completeCovarianceMatrix(Kriging_struct* Kriging_variables, char* type, cha
 
 	double sum = Nugget + Spherical;
 
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		if(strcmp(which_eta,"eta_gross")==0){
 		    gsl_matrix_set(
 		        Kriging_variables->COVARIANCE_PB,i,rows,
@@ -560,7 +560,7 @@ void completeVariogramMatrix(Kriging_struct* Kriging_variables, char* type, char
 		exit(EXIT_FAILURE);
 	}
 
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		dist = gsl_matrix_get(Kriging_variables->DISTANCE,i,rows);
 
 		if(strcmp(type,"spherical")==0){
@@ -601,10 +601,10 @@ void completeDistanceMatrix(Kriging_struct* Kriging_variables, double* inputs, i
 	double dist;
 	int rows = Kriging_variables->rows;
 
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		square_difference = 0;
 
-		for(size_t j=0;j<inputsize;j++){
+		for(int j=0;j<inputsize;j++){
 			delta = Kriging_variables->trainingData[i][j]- inputs[j];
 			square_difference = square_difference + (delta*delta);
 		}
@@ -622,14 +622,14 @@ void eucledianDistance_2(Kriging_struct* Kriging_variables
 	double delta;
 	double dist;
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    square_difference = 0;
 
 		    if(i==j){ //Diagonal Matrix --> 0
 		        gsl_matrix_set(DISTANCE,i,j,0.0);
 		    }else{
-		        for(size_t l=0;l<inputsize;l++){
+		        for(int l=0;l<inputsize;l++){
 		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
 		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
 		            square_difference = square_difference + (delta*delta);
@@ -702,7 +702,7 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 
 	/*Allocate memory to store 2D array*/
 	Kriging_variables->trainingData = NEW_ARRAY(double*,Kriging_variables->rows);
-	for(size_t i=0;i<rows;i++){
+	for(int i=0;i<rows;i++){
 		Kriging_variables->trainingData[i] = NEW_ARRAY(double,inputsize+outputsize); /*for each element in the memory address, create number of r of integer*/
 	}
 
@@ -742,15 +742,15 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	double delta;
 	double dist;
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    square_difference = 0;
 
 		    if(i==j){
 		    	//Diagonal Matrix --> 0
 		        gsl_matrix_set(Kriging_variables->DISTANCE,i,j,0.0);
 		    }else{
-		        for(size_t l=0;l<inputsize;l++){
+		        for(int l=0;l<inputsize;l++){
 		            delta = Kriging_variables->trainingData[i][l] - Kriging_variables->trainingData[j][l];
 		            //printf("%lf - %lf = %lf\n",training_data[i][l],training_data[j][l],delta);
 		            square_difference = square_difference + (delta*delta);
@@ -767,8 +767,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	double Range_variogram = Kriging_variables->Range_PB;
 	double Nugget_variogram = Kriging_variables->Nugget_PB;
 	double Spherical_variogram = 1 - Kriging_variables->Nugget_PB;
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    if(i==j){
 		        gsl_matrix_set(Kriging_variables->VARIOGRAM_PB,i,j,0.0);
 		    }else{
@@ -804,8 +804,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	//********************** LHS COVARIANCE PB
 	double sum_variogram = Nugget_variogram + Spherical_variogram;
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    gsl_matrix_set(Kriging_variables->COVARIANCE_PB,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_PB,i,j));
 		}
 	}
@@ -813,8 +813,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	//********************** Inverse PB
 	gsl_matrix* LSM_PB = gsl_matrix_alloc(rows,rows); 
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    gsl_matrix_set(LSM_PB,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_PB,i,j));
 		}
 	}
@@ -830,8 +830,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	Nugget_variogram = Kriging_variables->Nugget_HX;
 	Spherical_variogram = 1 - Kriging_variables->Nugget_HX;
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    if(i==j){
 		        gsl_matrix_set(Kriging_variables->VARIOGRAM_HX,i,j,0.0);
 		    }else{
@@ -867,8 +867,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	//********************** LHS COVARIANCE HX
 	sum_variogram = Nugget_variogram + Spherical_variogram;
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    gsl_matrix_set(Kriging_variables->COVARIANCE_HX,i,j,sum_variogram - gsl_matrix_get(Kriging_variables->VARIOGRAM_HX,i,j));
 		}
 	}
@@ -876,8 +876,8 @@ void* load_KrigingVariables(char* filepathtraining, int inputsize, int outputsiz
 	//********************** Inverse HX
 	gsl_matrix* LSM_HX = gsl_matrix_alloc(rows,rows); 
 
-	for(size_t i=0;i<rows;i++){
-		for(size_t j=0;j<rows;j++){
+	for(int i=0;i<rows;i++){
+		for(int j=0;j<rows;j++){
 		    gsl_matrix_set(LSM_HX,i,j, gsl_matrix_get(Kriging_variables->COVARIANCE_HX,i,j));
 		}
 	}

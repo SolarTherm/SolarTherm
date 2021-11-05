@@ -58,3 +58,5 @@ ParticleReceiver1D_standalone
 PhysicalParticleSystem
 TroughWagner*.[ch]
 TroughWagner
+PhysicalParticleCO21D_*_OnTheFlySurrogate*.[ch]
+

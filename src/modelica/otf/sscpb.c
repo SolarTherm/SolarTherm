@@ -1,5 +1,6 @@
 #include "sscpb.h"
 #include "util.h"
+#include "assert.h"
 
 #include <Python.h>
 
@@ -232,6 +233,9 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		fprintf(stderr,"Writing '%s'...\n",path_config);
 
 		FILE* f = fopen(path_config,"w");
+		if(f==NULL){
+			fprintf(stderr,"Unable to open file for writing\n");
+		}
 		fprintf(f,
 		    "P_net,T_in_ref_blk,p_high,dT_PHX_hot_approach,dT_PHX_cold_approach,eta_isen_mc,eta_isen_rc,eta_isen_t,dT_mc_approach,T_amb_base\n"
 		);
@@ -420,7 +424,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 
 		f = fopen(fn,"a");
 		
-		for(size_t i=0;i<len;i++){
+		for(int i=0;i<len;i++){
 		    fprintf(f,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,\n",
 		        P_net,T_in_ref_blk,p_high,-1.0,-1.0,-1.0,
 		        sim->array_OD[i*6 + 1],                              /*Load*/
@@ -471,7 +475,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 
 		g = fopen(fn_val,"a");
 		
-		for(size_t i=0;i<rowval;i++){
+		for(int i=0;i<rowval;i++){
 		    fprintf(g, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,\n",
 		        P_net,T_in_ref_blk,p_high,-1.0,-1.0,-1.0,
 		        sim->array_OD[i*6 + 1],            /*Load*/
@@ -616,7 +620,7 @@ void ssc_test(){
 	ssc_data_set_number( data, "dens_mirror", val );
 
 	ssc_number_t dens_mirror;
-	ssc_bool_t nerr = ssc_data_get_number( data, "dens_mirror", &dens_mirror );\
+	ssc_bool_t nerr = ssc_data_get_number( data, "dens_mirror", &dens_mirror );
 	assert(nerr);
 	//fprintf(stderr,"dens mirror: %f\n", dens_mirror );
 	assert(dens_mirror==val);

@@ -189,7 +189,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
     ***************************************************************************************************************/
   //******************************** OnTheFlySurrogate PB Simulation Set-up
   parameter String base_path = Modelica.Utilities.Files.loadResource(
-                                              "modelica://SolarTherm/Resources/Library"
+                                              "modelica://SolarTherm/Data/SurrogateModels/PowerBlock"
                               ) 
   "[PB] Base path that points to which folder the C program located";
   
