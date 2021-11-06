@@ -6,7 +6,7 @@ tenv = env.Clone()
 #tenv.Command("ModelicaExternalTables.c","$OM_MSL_RES_INC/ModelicaExternalTables.c",Copy("$TARGET","$SOURCE"))
 
 tenv.Append(
-	CPPPATH = ['#/src/modelica/']
+	CPPPATH = ['#/src/modelica/','$SSC_CPPPATH']
 	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '"$SSC_LIBPATH"']
 )
 tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
