@@ -7,8 +7,9 @@ tenv = env.Clone()
 
 tenv.Append(
 	CPPPATH = ['#/src/modelica/','$SSC_CPPPATH']
-	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '"$SSC_LIBPATH"']
+	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '$SSC_LIBPATH']
 )
+
 tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
 
 tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
