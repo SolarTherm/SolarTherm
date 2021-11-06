@@ -7,7 +7,7 @@ tenv = env.Clone()
 
 tenv.Append(
 	CPPPATH = ['#/src/modelica/']
-	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH']
+	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '"$SSC_LIBPATH"']
 )
 tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
 
@@ -16,6 +16,9 @@ tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
 tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
+
+#OTF Surrogate test C code compilation
+tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'], LIBS=['gsl','tensorflow','st_otf_surrogate'])
 
 import platform
 if platform.system()=="Windows":
