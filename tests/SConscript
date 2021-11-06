@@ -18,7 +18,7 @@ tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_mot
 tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
 
 #OTF Surrogate test C code compilation
-tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'], LIBS=['gsl','tensorflow','st_otf_surrogate'])
+tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'], LIBS=['gsl','tensorflow','st_otf_surrogate','ssc'])
 
 import platform
 if platform.system()=="Windows":

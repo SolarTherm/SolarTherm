@@ -31,21 +31,31 @@
 #endif
 
 /*
-	Initialtisation of NREL Power Block. Return 1 if pass, 0 if fail
+	Simple function to grab SolarTherm path
 */
-
 char* grab_SolarTherm_path(){
+	//****************** Grab CWD
 	char* cwd = NEW_ARRAY(char,MAXLEN);
 	cwd = getcwd(cwd, MAXLEN);
 	
+	//****************** Grab parrent dir for CWD
 	char* one_dir_up = NEW_ARRAY(char, MAXLEN);
 	one_dir_up = dirname(cwd);
-		
+
+	//****************** String fomrating for SolarTherm_path
 	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
 	snprintf(SolarTherm_path, MAXLEN, "%s/SolarTherm",one_dir_up);
+
+	//****************** Free stuff
+	free(cwd);
+	free(one_dir_up)
+
 	return SolarTherm_path;
 }
 
+/*
+	Initialtisation of NREL Power Block. Return 0 if pass, -1 if fail
+*/
 int test_initNRELPB(){
 	double P_net = 100000000/0.9; 
 	double T_in_ref_blk = 1073.15;
