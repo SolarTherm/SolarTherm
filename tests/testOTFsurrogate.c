@@ -20,8 +20,6 @@
 //#include <Python.h>
 
 #define MAXLEN 1024
-#define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
-#define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*SIZE)
 
 #define TESTOTF_DEBUG
 #ifdef TESTOTF_DEBUG
@@ -48,7 +46,7 @@ char* grab_SolarTherm_path(){
 
 	//****************** Free stuff
 	free(cwd);
-	free(one_dir_up)
+	free(one_dir_up);
 
 	return SolarTherm_path;
 }
