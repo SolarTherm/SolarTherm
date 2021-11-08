@@ -51,6 +51,7 @@ char* grab_SolarTherm_path(){
 	Initialtisation of NREL Power Block. Return 0 if pass, -1 if fail
 */
 int test_initNRELPB(){
+	fprintf(stderr,"MARKER 1\n");
 	double P_net = 100000000/0.9; 
 	double T_in_ref_blk = 1073.15;
 	double p_high = 25000000.0;
@@ -69,6 +70,7 @@ int test_initNRELPB(){
 	double T_HTF_cold_des = 823.15;
 
 	double* res = NEW_ARRAY(double,13);
+	fprintf(stderr,"MARKER 2\n");
 
 	initNRELPB(
 		P_net, T_in_ref_blk, p_high, 
@@ -77,12 +79,13 @@ int test_initNRELPB(){
 		SolarTherm_path, T_HTF_cold_des, res
 	);
 
+	fprintf(stderr,"MARKER 3\n");
 	double dT_PHX_hot_approach = res[12];
 	fprintf(stderr, "dt PHX hot approach at design point = %lf\n", dT_PHX_hot_approach);
 	assert(
 		abs(dT_PHX_hot_approach - 93.831340) < 0.1
 	);
-
+	fprintf(stderr,"MARKER 4\n");
 	return 0;
 }
 
@@ -90,6 +93,7 @@ int test_initNRELPB(){
 	Test function to load existing Kriging model
 */
 int test_loadExistingKriging(){
+	fprintf(stderr,"MARKER 5\n");
 	double P_net = 100000000/0.9; 
 	double T_in_ref_blk = 1073.15;
 	double p_high = 25000000.0;
@@ -120,6 +124,7 @@ int test_loadExistingKriging(){
 	char* HTF_name = "CarboHSP";
 
 	/*Start building*/
+	fprintf(stderr,"MARKER 6\n");
 	Kriging_struct* Kriging_variables = constructKriging(
 		P_net, T_in_ref_blk, p_high, PR, 
 		pinch_PHX, dTemp_HTF_PHX, load_base,  T_amb_base, 
@@ -129,6 +134,7 @@ int test_loadExistingKriging(){
 		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, 
 		HTF_name
 	);
+	fprintf(stderr,"MARKER 7\n");
 
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->sill_HX, 0.10501801002768738);
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Nugget_HX, 0.006652692211982437);
@@ -145,11 +151,14 @@ int test_loadExistingKriging(){
 	assert(
 		abs(Kriging_variables->Range_HX - 1.7320508075688772) < 0.01
 	);
+	fprintf(stderr,"MARKER 8\n");
 
 	return 0;
 }
 
 int main(){
 	test_initNRELPB();
+	fprintf(stderr,"Init PB done\n");
 	test_loadExistingKriging();
+	fprintf(stderr,"Load existing Kriging done\n");
 }

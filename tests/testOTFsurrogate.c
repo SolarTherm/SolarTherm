@@ -82,7 +82,6 @@ int test_initNRELPB(){
 	assert(
 		abs(dT_PHX_hot_approach - 93.831340) < 0.1
 	);
-
 	return 0;
 }
 
