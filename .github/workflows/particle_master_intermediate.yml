@@ -153,16 +153,6 @@ jobs:
         mpirun --version
         mpicc --version
 
-    - name: Mock test OTF surrogate
-      run: |    
-        cd tests
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:../src/modelica:/usr/local/lib:/opt/SAM/2020.11.12/linux_64
-        gcc running_OTF_surrogate.c -I../src/modelica -I/opt/SAM/2020.11.12/linux_64 -L/opt/SAM/2020.11.12/linux_64 -L../src/modelica -L/usr/lib -lgsl -ltensorflow -lst_otf_surrogate -lssc -o running_OTF_surrogate
-        echo $LD_LIBRARY_PATH
-        ls
-        ldd ./running_OTF_surrogate
-        ./running_OTF_surrogate
-
     - name: Test OTF Surrogate
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin

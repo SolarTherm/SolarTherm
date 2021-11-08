@@ -29,25 +29,6 @@
 #endif
 
 /*
-	Simple function to grab SolarTherm path
-*/
-char* grab_SolarTherm_path(){
-	//****************** Grab CWD
-	char* cwd = NEW_ARRAY(char,MAXLEN);
-	cwd = getcwd(cwd, MAXLEN);
-	
-	//****************** Grab parrent dir for CWD
-	char* one_dir_up = NEW_ARRAY(char, MAXLEN);
-	one_dir_up = dirname(cwd);
-
-	//****************** String fomrating for SolarTherm_path
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	snprintf(SolarTherm_path, MAXLEN, "%s/SolarTherm",one_dir_up);
-
-	return SolarTherm_path;
-}
-
-/*
 	Initialtisation of NREL Power Block. Return 0 if pass, -1 if fail
 */
 int test_initNRELPB(){
@@ -63,8 +44,7 @@ int test_initNRELPB(){
 	char* HTF_name = "CarboHSP";
 	int HTF_choice = 50;
 			
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	SolarTherm_path = grab_SolarTherm_path();
+	const char* SolarTherm_path = "../SolarTherm"; 
 
 	double T_HTF_cold_des = 823.15;
 
@@ -98,8 +78,7 @@ int test_loadExistingKriging(){
 	double load_base = 1.0;
 	double eta_gross_base = 0.5;
 	double eta_Q_base = 1.0;
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	SolarTherm_path = grab_SolarTherm_path();
+	const char* SolarTherm_path = "../SolarTherm";
 
 	char* base_path  = NEW_ARRAY(char, MAXLEN);
 	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
@@ -117,7 +96,8 @@ int test_loadExistingKriging(){
 	double dT_mc_approach = 6.0;
 	double T_amb_base = 41.0 + 273.15 - dT_mc_approach;
 	char* HTF_name = "CarboHSP";
-
+	
+	fprintf(stderr,"Start loading existing Kriging....\n\n");
 	/*Start building*/
 	Kriging_struct* Kriging_variables = constructKriging(
 		P_net, T_in_ref_blk, p_high, PR, 
@@ -128,6 +108,7 @@ int test_loadExistingKriging(){
 		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, 
 		HTF_name
 	);
+	fprintf(stderr,"\n\nFinish loading existing Kriging....\n");
 
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->sill_HX, 0.10501801002768738);
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Nugget_HX, 0.006652692211982437);
