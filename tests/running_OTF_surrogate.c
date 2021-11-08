@@ -37,6 +37,7 @@ void grab_SolarTherm_path(char* SolarTherm_path){
 	char* cwd = NEW_ARRAY(char,limsize);
 	cwd = getcwd(cwd, limsize);
 	fprintf(stderr,"MARKER B\n");
+	fprintf(stderr,"CWD: %s\n",cwd);
 
 	snprintf(SolarTherm_path, MAXLEN, "%s/SolarTherm",dirname(cwd));
 	fprintf(stderr,"MARKER C\n");
