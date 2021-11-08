@@ -17,7 +17,7 @@ def run_ctest(name):
 	env = None
 	if platform.system()=="Linux":
 		env = os.environ.copy()
-		env['LD_LIBRARY_PATH']='../src/modelica'
+		env['LD_LIBRARY_PATH'] +=':../src/modelica'
 	proc = sp.run([exe,str(name)],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
 	assert proc.returncode == 0
 
