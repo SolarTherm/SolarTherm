@@ -83,7 +83,7 @@ int test_initNRELPB(){
 		abs(dT_PHX_hot_approach - 93.831340) < 0.1
 	);
 
-	return 0;
+	return dT_PHX_hot_approach;
 }
 
 /*
@@ -146,7 +146,7 @@ int test_loadExistingKriging(){
 		abs(Kriging_variables->Range_HX - 1.7320508075688772) < 0.01
 	);
 
-	return 0;
+	return Kriging_variables->Range_HX;
 }
 
 
