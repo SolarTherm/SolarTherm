@@ -156,7 +156,7 @@ jobs:
     - name: Mock test OTF surrogate
       run: |    
         cd tests
-        gcc running_OTF_surrogate.c -I../src/modelica -I/opt/SAM/2020.11.12/linux_64 -L../src/modelica -L/usr/lib -lgsl -ltensorflow -lst_otf_surrogate -lssc -o running_OTF_surrogate
+        gcc running_OTF_surrogate.c -I../src/modelica -L/opt/SAM/2020.11.12/linux_64 -L../src/modelica -L/usr/lib -lgsl -ltensorflow -lst_otf_surrogate -lssc -o running_OTF_surrogate
         ./running_OTF_surrogate
 
     - name: Test OTF Surrogate
