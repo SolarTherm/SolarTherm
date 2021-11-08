@@ -33,16 +33,20 @@
 */
 char* grab_SolarTherm_path(){
 	//****************** Grab CWD
+	fprintf(stderr,"MARKER A\n");
 	char* cwd = NEW_ARRAY(char,MAXLEN);
 	cwd = getcwd(cwd, MAXLEN);
+	fprintf(stderr,"MARKER B\n");
 	
 	//****************** Grab parrent dir for CWD
 	char* one_dir_up = NEW_ARRAY(char, MAXLEN);
 	one_dir_up = dirname(cwd);
+	fprintf(stderr,"MARKER C\n");
 
 	//****************** String fomrating for SolarTherm_path
 	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
 	snprintf(SolarTherm_path, MAXLEN, "%s/SolarTherm",one_dir_up);
+	fprintf(stderr,"MARKER D\n");
 
 	return SolarTherm_path;
 }
