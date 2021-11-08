@@ -19,7 +19,7 @@
 #include <dirent.h>
 //#include <Python.h>
 
-#define MAXLEN 1024
+#define limsize 512
 
 #define TESTOTF_DEBUG
 #ifdef TESTOTF_DEBUG
@@ -31,20 +31,16 @@
 /*
 	Simple function to grab SolarTherm path
 */
-char* grab_SolarTherm_path(){
+void grab_SolarTherm_path(char* SolarTherm_path){
 	//****************** Grab CWD
 	fprintf(stderr,"MARKER A\n");
-	char* cwd = NEW_ARRAY(char,MAXLEN);
-	cwd = getcwd(cwd, MAXLEN);
+	char* cwd = NEW_ARRAY(char,limsize);
+	cwd = getcwd(cwd, limsize);
 	fprintf(stderr,"MARKER B\n");
-	
-	//****************** String fomrating for SolarTherm_path
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
+
 	snprintf(SolarTherm_path, MAXLEN, "%s/SolarTherm",dirname(cwd));
 	fprintf(stderr,"MARKER C\n");
 	fprintf(stderr,"SolarTherm path: %s\n",SolarTherm_path);
-
-	return SolarTherm_path;
 }
 
 /*
@@ -65,7 +61,7 @@ int test_initNRELPB(){
 	int HTF_choice = 50;
 			
 	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	SolarTherm_path = grab_SolarTherm_path();
+	grab_SolarTherm_path(SolarTherm_path);
 
 	double T_HTF_cold_des = 823.15;
 
@@ -104,7 +100,7 @@ int test_loadExistingKriging(){
 	double eta_gross_base = 0.5;
 	double eta_Q_base = 1.0;
 	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	SolarTherm_path = grab_SolarTherm_path();
+	grab_SolarTherm_path(SolarTherm_path);
 
 	char* base_path  = NEW_ARRAY(char, MAXLEN);
 	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
