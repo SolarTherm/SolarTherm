@@ -42,7 +42,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.4
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.4 pyDOE
         # FIXME move to pypi version of solsticepy ASAP...
         python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -152,6 +152,17 @@ jobs:
       run: |    
         mpirun --version
         mpicc --version
+
+    - name: Test OTF Surrogate
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        cd tests
+        which st
+        st --version
+        solstice --version
+        st python -m pytest test_OTF_surrogate.py
 
     - name: Test st_simulate
       run: |

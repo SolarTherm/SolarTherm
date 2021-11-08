@@ -24,6 +24,9 @@ def run_ctest(name):
 def test_initNRELPB():
 	run_ctest('initNRELPB')
 
+def test_loadExistingKriging():
+	run_ctest('loadExistingKriging')
+
 '''
 
 def test_daggett():
