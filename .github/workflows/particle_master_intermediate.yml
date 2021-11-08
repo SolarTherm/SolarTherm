@@ -156,7 +156,10 @@ jobs:
     - name: Mock test OTF surrogate
       run: |    
         cd tests
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:../src/modelica:/usr/local/lib
         gcc running_OTF_surrogate.c -I../src/modelica -I/opt/SAM/2020.11.12/linux_64 -L/opt/SAM/2020.11.12/linux_64 -L../src/modelica -L/usr/lib -lgsl -ltensorflow -lst_otf_surrogate -lssc -o running_OTF_surrogate
+        echo $LD_LIBRARY_PATH
+        ls
         ./running_OTF_surrogate
 
     - name: Test OTF Surrogate
