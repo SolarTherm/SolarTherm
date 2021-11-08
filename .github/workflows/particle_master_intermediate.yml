@@ -156,7 +156,8 @@ jobs:
     - name: Test OTF Surrogate
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/2020.11.12/linux_64:/usr/local/lib # this is only needed on 18.04
+        echo $LD_LIBRARY_PATH
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         cd tests
         which st
