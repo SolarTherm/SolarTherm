@@ -61,8 +61,7 @@ int test_initNRELPB(){
 	char* HTF_name = "CarboHSP";
 	int HTF_choice = 50;
 			
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	grab_SolarTherm_path(SolarTherm_path);
+	char* SolarTherm_path = "../SolarTherm";
 
 	double T_HTF_cold_des = 823.15;
 
@@ -100,8 +99,7 @@ int test_loadExistingKriging(){
 	double load_base = 1.0;
 	double eta_gross_base = 0.5;
 	double eta_Q_base = 1.0;
-	char* SolarTherm_path = NEW_ARRAY(char, MAXLEN);
-	grab_SolarTherm_path(SolarTherm_path);
+	char* SolarTherm_path = "../SolarTherm";
 
 	char* base_path  = NEW_ARRAY(char, MAXLEN);
 	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
