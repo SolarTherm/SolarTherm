@@ -232,7 +232,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 ){
 	fprintf(stderr,"User surrogate choice: Kriging..........................................\n");
 
-	Kriging_struct* Kriging_variables;
+	Kriging_struct* Kriging_variables = NEW(Kriging_struct); //change PG
 
 	char line[limitSize];
 
