@@ -142,4 +142,5 @@ int main(){
 	fprintf(stderr,"Init PB done\n");
 	test_loadExistingKriging();
 	fprintf(stderr,"Load existing Kriging done\n");
+	return 0;
 }
