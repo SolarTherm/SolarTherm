@@ -3,7 +3,6 @@ from solsticepy.design_bd import *
 from solsticepy.gen_vtk import read_vtk_annual
 import numpy as np
 import os
-from glob import glob
 
 def set_param(inputs={}):
     '''
@@ -45,7 +44,7 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
-        if pm.rim_angle_y is 0.:
+        if pm.rim_angle_y == 0.:
         	pm.rim_angle_y=None
         else:
         	pm.rim_angle_y=float(pm.rim_angle_y)
@@ -83,11 +82,11 @@ def run_simul(inputs={}):
 
         oelt, A_land=bd.annual_oelt(dni_des=900., num_rays=int(pm.n_rays), nd=nd, nh=nh, zipfiles=False, gen_vtk=True, plot=False, verbose=True)
 
-        filename = glob(os.path.join(casedir,'sunpos_*'))
-
-        # Read vtk and produce 1D flux map
-        dataname='Front_faces_Absorbed_flux'
-        read_vtk_annual(vtkfile=casedir, vtkname='receiver', savedir=casedir,  dataname=dataname, ncases=len(filename), gencsv=True, deletefolder=True)
+        # Read vtk files and produce 1D flux map in csv files
+        # =========
+        
+        dataname = 'Front_faces_Absorbed_flux'
+        read_vtk_annual(casefolder=casedir, vtkname='receiver', savedir=casedir,  dataname=dataname, gencsv=True, deletefolder=True)
 
 
     return tablefile
