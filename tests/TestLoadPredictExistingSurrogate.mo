@@ -7,7 +7,7 @@ model TestLoadPredictExistingSurrogate
 	import SolarTherm.Utilities.ANN_OnTheFly.*;
 
 	//******************************** Parameters -- for initalisation of the OTF object
-	parameter Real P_net = 100000000/0.9; 
+	parameter Real P_gross = 100000000/0.9; 
 	parameter Real T_in_ref_blk = 1073.15;
 	parameter Real p_high = 25000000.0;
 	parameter Real PR = 2.57;
@@ -25,7 +25,7 @@ model TestLoadPredictExistingSurrogate
 	parameter Integer inputsize = 3;
 	parameter Integer outputsize = 2;
 	parameter Real tolerance = 0.006;
-	parameter Integer PB_model = 1 /*SSC sCO2 PB*/;
+	parameter Integer which_PB_model = 1 /*SSC sCO2 PB*/;
 	parameter Integer htf_choice = 50;
 	parameter Real dT_PHX_hot_approach = 93.831340;
 	parameter Real dT_PHX_cold_approach = 15.0;
@@ -39,24 +39,10 @@ model TestLoadPredictExistingSurrogate
 
   
 	//********************************** On design efficiency values
-	parameter Real eta_gross_base = 0.005;
-	parameter Real eta_Q_base = 5;
-
 	parameter Integer inputsize = 3;
 	parameter Integer outputsize = 2;
 	parameter Real tolerance_kriging = 2.5e-3;
 	parameter Real tolerance_ANN= 1.5e-3;
-
-
-	//********************************** Other essential parameters
-	parameter SI.Temperature T_cold_set = 823.15;
-	parameter SI.MassFlowRate m_HTF_des = 1000;
-	parameter SI.Power Q_HX_des = 300e8;
-	parameter Real f_fixed_load = 0.005;
-	parameter Boolean external_parasities = true;
-	parameter Boolean test_mode = true;
-	parameter SI.Efficiency eta_motor = 0.95;
-	parameter Real nu_min = 0.5;
 
 	//******************** Kriging
 	Kriging_properties Kriging_variables = Kriging_properties(

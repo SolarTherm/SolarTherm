@@ -40,7 +40,7 @@ def test_loadPredictExistingSurrogate():
 
 	sys.stderr.write("%f\n\n"%(deviation_eta_gross_Kriging))
 	sys.stderr.write("%f\n\n"%(deviation_eta_gross_ANN))
-	sys.stderr.write("%f\n\n"%(deviation_eta_Q_iging))
+	sys.stderr.write("%f\n\n"%(deviation_eta_Q_Kriging))
 	sys.stderr.write("%f\n\n"%(deviation_eta_Q_ANN))
 	
 	cleantest.clean('TestLoadPredictExistingSurrogate')
