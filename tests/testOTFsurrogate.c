@@ -47,17 +47,9 @@ int test_initNRELPB(){
 	char* HTF_name = "CarboHSP";
 	int HTF_choice = 50;
 
-	char cwd[5000];
-
-	getcwd(cwd, 5000);
-
-	char* xx = dirname(cwd);
-
-	char* SolarTherm_path = NEW_ARRAY(char, 5000);
-	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	char SolarTherm_path[5000];
+	realpath("../SolarTherm", SolarTherm_path);
 	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
-			
-	//const char* SolarTherm_path = "../SolarTherm"; 
 
 	double T_HTF_cold_des = 823.15;
 
@@ -97,17 +89,9 @@ int test_runNRELPBOffDesign(){
 	char* HTF_name = "CarboHSP";
 	int htf_choice = 50;
 
-	char cwd[5000];
-
-	getcwd(cwd, 5000);
-
-	char* xx = dirname(cwd);
-
-	char* SolarTherm_path = NEW_ARRAY(char, 5000);
-	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	char SolarTherm_path[5000];
+	realpath("../SolarTherm", SolarTherm_path);
 	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
-
-	//char* SolarTherm_path = "../SolarTherm";
 
 	char* trainingdir = NEW_ARRAY(char, MAXLEN);
 	snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock/training_data/configNREL3000", SolarTherm_path);
@@ -140,7 +124,7 @@ int test_runNRELPBOffDesign(){
 
 	fclose(check_file);
 
-	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000/scaled_Kriging_training_data_deviation.csv","r");
+	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000/OD_matrix.csv","r");
 	if(check_file == NULL){
 		fprintf(stderr,"Training data not generated. Generating new training data of NREL PB failed\n\n");
 		return -1;

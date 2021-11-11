@@ -30,7 +30,6 @@
 int test_initNRELPB();
 int test_runNRELPBOffDesign();
 
-
 /*
 	Initialtisation of NREL Power Block. Return 0 if pass, -1 if fail
 */
@@ -47,14 +46,8 @@ int test_initNRELPB(){
 	char* HTF_name = "CarboHSP";
 	int HTF_choice = 50;
 
-	char cwd[5000];
-
-	getcwd(cwd, 5000);
-
-	char* xx = dirname(cwd);
-
-	char* SolarTherm_path = NEW_ARRAY(char, 5000);
-	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	char SolarTherm_path[5000];
+	realpath("../SolarTherm", SolarTherm_path);
 	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 			
 	//const char* SolarTherm_path = "../SolarTherm"; 
@@ -97,14 +90,8 @@ int test_runNRELPBOffDesign(){
 	char* HTF_name = "CarboHSP";
 	int htf_choice = 50;
 
-	char cwd[5000];
-
-	getcwd(cwd, 5000);
-
-	char* xx = dirname(cwd);
-
-	char* SolarTherm_path = NEW_ARRAY(char, 5000);
-	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	char SolarTherm_path[5000];
+	realpath("../SolarTherm", SolarTherm_path);
 	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 
 	//char* SolarTherm_path = "../SolarTherm";
@@ -131,7 +118,7 @@ int test_runNRELPBOffDesign(){
 
 	/*Check of files are generated*/
 	FILE* check_file;
-	check_file = fopen("../SolarTherm//Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt","r");
+	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt","r");
 	
 	if(check_file == NULL){
 		fprintf(stderr,"configNREL3000.txt is not generated. Generating new config of NREL PB failed\n\n");

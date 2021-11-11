@@ -552,8 +552,11 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		fclose(g);
 
 		/*Data Processing*/
-		dataProcessing(fn, trainingdir, SolarTherm_path);
-
+		if(is_run_test_func==0){
+			/*If not test func, run data processing*/
+			dataProcessing(fn, trainingdir, SolarTherm_path);
+		}
+		
 		ssc_module_free(module);
 		
 		free(OD_array);

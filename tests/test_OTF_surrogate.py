@@ -60,9 +60,16 @@ def test_loadPredictExistingSurrogate():
 	cleantest.clean('TestLoadPredictExistingSurrogate')
 
 def test_initNRELPB():
+	if os.path.exists("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt"):
+		os.remove("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt")
 	run_ctest('initNRELPB')
 
 def test_runNRELPBOffDesign():
+	try:
+		shutil.rmtree("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000")
+	except:
+		pass
+	
 	run_ctest('runNRELPBOffDesign')
 
 	#Removing files generated when testing run NREL PB
