@@ -17,6 +17,7 @@
 #include <libgen.h>
 #include <math.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #define MAXLEN 1024
 
@@ -45,8 +46,17 @@ int test_initNRELPB(){
 	double T_amb_base = 41.0 + 273.15 - dT_mc_approach;
 	char* HTF_name = "CarboHSP";
 	int HTF_choice = 50;
+
+	char cwd[5000];
+
+	getcwd(cwd, 5000);
+
+	char* xx = dirname(cwd);
+
+	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
 			
-	const char* SolarTherm_path = "../SolarTherm"; 
+	//const char* SolarTherm_path = "../SolarTherm"; 
 
 	double T_HTF_cold_des = 823.15;
 
@@ -86,7 +96,16 @@ int test_runNRELPBOffDesign(){
 	char* HTF_name = "CarboHSP";
 	int htf_choice = 50;
 
-	char* SolarTherm_path = "../SolarTherm";
+	char cwd[5000];
+
+	getcwd(cwd, 5000);
+
+	char* xx = dirname(cwd);
+
+	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+
+	//char* SolarTherm_path = "../SolarTherm";
 
 	char* trainingdir = NEW_ARRAY(char, MAXLEN);
 	snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock/training_data/configNREL3000", SolarTherm_path);
