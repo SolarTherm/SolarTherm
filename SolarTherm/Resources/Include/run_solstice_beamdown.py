@@ -1,6 +1,6 @@
 import solsticepy
 from solsticepy.design_bd import *
-from solsticepy.gen_vtk import read_vtk_annual
+from solsticepy.gen_flux_map import gencsvannual
 import numpy as np
 import os
 
@@ -75,18 +75,18 @@ def run_simul(inputs={}):
         # Create vtk files and 1D flux map
         # =========
 
-        nd = int(pm.n_row_oelt)
-        nh = int(pm.n_col_oelt)
+        nd = pm.n_row_oelt
+        nh = pm.n_col_oelt
 
         bd.yaml(sunshape=pm.sunshape,csr=pm.crs,half_angle_deg=pm.half_angle_deg,std_dev=pm.std_dev)
 
-        oelt, A_land=bd.annual_oelt(dni_des=900., num_rays=int(pm.n_rays), nd=nd, nh=nh, zipfiles=False, gen_vtk=True, plot=False, verbose=True)
+        oelt, A_land=bd.annual_oelt(dni_des=900., num_rays=int(pm.n_rays), nd=int(nd), nh=int(nh), zipfiles=False, gen_vtk=True, plot=False, verbose=True)
 
         # Read vtk files and produce 1D flux map in csv files
         # =========
         
         dataname = 'Front_faces_Absorbed_flux'
-        read_vtk_annual(casefolder=casedir, vtkname='receiver', savedir=casedir,  dataname=dataname, gencsv=True, deletefolder=True)
+        gencsvannual(casefolder=casedir, vtkname='receiver', savedir=casedir,  dataname=dataname, latitude=pm.lat, deletefolder=True)
 
 
     return tablefile
