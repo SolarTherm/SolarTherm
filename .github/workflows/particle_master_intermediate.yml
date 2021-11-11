@@ -159,6 +159,15 @@ jobs:
         sudo apt-get install gdb
         gdb --version
 
+    - name: Mock test OTF surrogate (build with gdb)
+      run: |    
+        cd tests
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib:../src/modelica:/usr/local/lib:/opt/SAM/${SAMVER//-/.}/linux_64
+        gcc running_OTF_surrogate.c -g -I../src/modelica -I/opt/SAM/${SAMVER//-/.}/linux_64 -L/opt/SAM/${SAMVER//-/.}/linux_64 -L../src/modelica -L/usr/lib -L/usr/local/lib -lgsl -ltensorflow -lst_otf_surrogate -lssc -o running_OTF_surrogate
+        echo $LD_LIBRARY_PATH
+        ldd ./running_OTF_surrogate
+        gdb -ex run ./running_OTF_surrogate
+
     - name: Test OTF Surrogate
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin

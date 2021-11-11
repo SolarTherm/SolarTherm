@@ -552,7 +552,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		fclose(g);
 
 		/*Data Processing*/
-		dataProcessing(fn, trainingdir, base_path);
+		dataProcessing(fn, trainingdir, SolarTherm_path);
 
 		ssc_module_free(module);
 		
@@ -691,11 +691,18 @@ void ssc_test(){
 /*
 	Processing the off-design data array before training the surrogate model. Using Python script
 */
-void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
+void dataProcessing(char* fntrain, char* trainingdir, char* SolarTherm_path){
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *inputs;
 
-	char* ppath = base_path;
+	/*
+		Change PG--> char* ppath = basepath;
+	*/
+
+	char* ppath = NEW_ARRAY(char, MAXLEN);
+	snprintf(ppath,MAXLEN,"%s/Resources/Library",SolarTherm_path);
+	fprintf(stderr,"%s\n",ppath);
+
 	char* pname = "gatherdata"; //gatherdata.py
 	char* pfunc = "processing_data"; //def processing_data(inputs)
 
@@ -752,6 +759,8 @@ void dataProcessing(char* fntrain, char* trainingdir, char* base_path){
 		ERR("Failed to load \"%s\"", pname);
 		exit(EXIT_FAILURE);
 	}
+
+	free(ppath);
 }
 
 /*=================================== END OF FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
