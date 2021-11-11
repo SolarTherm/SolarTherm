@@ -53,8 +53,9 @@ int test_initNRELPB(){
 
 	char* xx = dirname(cwd);
 
-	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	char* SolarTherm_path = NEW_ARRAY(char, 5000);
 	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 			
 	//const char* SolarTherm_path = "../SolarTherm"; 
 
@@ -102,8 +103,9 @@ int test_runNRELPBOffDesign(){
 
 	char* xx = dirname(cwd);
 
-	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	char* SolarTherm_path = NEW_ARRAY(char, 5000);
 	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 
 	//char* SolarTherm_path = "../SolarTherm";
 
@@ -129,7 +131,7 @@ int test_runNRELPBOffDesign(){
 
 	/*Check of files are generated*/
 	FILE* check_file;
-	check_file = fopen("../SolarTherm//Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt","r");
+	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt","r");
 	
 	if(check_file == NULL){
 		fprintf(stderr,"configNREL3000.txt is not generated. Generating new config of NREL PB failed\n\n");

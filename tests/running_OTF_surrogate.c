@@ -53,8 +53,9 @@ int test_initNRELPB(){
 
 	char* xx = dirname(cwd);
 
-	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	char* SolarTherm_path = NEW_ARRAY(char, 5000);
 	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 			
 	//const char* SolarTherm_path = "../SolarTherm"; 
 
@@ -102,8 +103,9 @@ int test_runNRELPBOffDesign(){
 
 	char* xx = dirname(cwd);
 
-	const char* SolarTherm_path = NEW_ARRAY(char, 5000);
+	char* SolarTherm_path = NEW_ARRAY(char, 5000);
 	snprintf(SolarTherm_path, 5000, "%s/SolarTherm",xx);
+	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 
 	//char* SolarTherm_path = "../SolarTherm";
 

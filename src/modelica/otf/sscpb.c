@@ -700,8 +700,8 @@ void dataProcessing(char* fntrain, char* trainingdir, char* SolarTherm_path){
 	*/
 
 	char* ppath = NEW_ARRAY(char, MAXLEN);
-	snprintf(ppath,MAXLEN,"%s/Resources/Library",SolarTherm_path);
-	fprintf(stderr,"%s\n",ppath);
+	snprintf(ppath,MAXLEN,"%s/Resources/Library", SolarTherm_path);
+	fprintf(stderr,"PPATH: %s\n",ppath);
 
 	char* pname = "gatherdata"; //gatherdata.py
 	char* pfunc = "processing_data"; //def processing_data(inputs)
