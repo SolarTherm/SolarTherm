@@ -3,6 +3,7 @@ import subprocess as sp
 import shutil, platform, os
 from pathlib import Path
 import DyMat
+import sys
 
 import cleantest
 from solartherm import simulation
@@ -21,14 +22,38 @@ def run_ctest(name):
 	proc = sp.run([exe,str(name)],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
 	assert proc.returncode == 0
 
+def test_loadPredictExistingSurrogate():
+	"""
+	Run the modelica test of LoadPredictExistingSurrogate.
+	"""
+	fn = './TestLoadPredictExistingSurrogate.mo'
+	sim = simulation.Simulator(fn)
+	sim.compile_model()
+	sim.compile_sim(args=['-s'])
+	sim.simulate(start=0, stop='1', step='1', solver='dassl', nls='homotopy')
+
+	res = DyMat.DyMatFile('TestLoadPredictExistingSurrogate_res.mat')
+	deviation_eta_gross_Kriging = res.data('deviation_eta_gross_Kriging')[-1]
+	deviation_eta_Q_Kriging = res.data('deviation_eta_Q_Kriging')[-1]
+	deviation_eta_gross_ANN = res.data('deviation_eta_gross_ANN')[-1]
+	deviation_eta_Q_ANN = res.data('deviation_eta_Q_ANN')[-1]
+
+	sys.stderr.write("%f\n\n"%(deviation_eta_gross_Kriging))
+	sys.stderr.write("%f\n\n"%(deviation_eta_gross_ANN))
+	sys.stderr.write("%f\n\n"%(deviation_eta_Q_iging))
+	sys.stderr.write("%f\n\n"%(deviation_eta_Q_ANN))
+	
+	cleantest.clean('TestLoadPredictExistingSurrogate')
+
+
 def test_initNRELPB():
 	run_ctest('initNRELPB')
 
-def test_loadExistingKriging():
-	run_ctest('loadExistingKriging')
+#def test_loadExistingKriging():
+	#run_ctest('loadExistingKriging')
 
-def test_loadPredictExistingANN():
-	run_ctest('loadPredictExistingANN')
+#def test_loadPredictExistingANN():
+	#run_ctest('loadPredictExistingANN')
 
 '''
 
