@@ -62,6 +62,13 @@ def test_loadPredictExistingSurrogate():
 def test_initNRELPB():
 	run_ctest('initNRELPB')
 
+def test_runNRELPBOffDesign():
+	run_ctest('runNRELPBOffDesign')
+
+	#Removing files generated when testing run NREL PB
+	os.remove("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt")
+	shutil.rmtree("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000")
+
 #def test_loadExistingKriging():
 	#run_ctest('loadExistingKriging')
 
@@ -69,7 +76,6 @@ def test_initNRELPB():
 	#run_ctest('loadPredictExistingANN')
 
 '''
-
 def test_daggett():
 	run_ctest('daggett')
 

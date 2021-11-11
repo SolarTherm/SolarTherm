@@ -71,6 +71,37 @@ The function assign the on-design calculation result in `res` (pointer to double
 
 */
 
+/*
+	Function protoypes
+*/
+void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
+		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
+		,double T_amb_base, char* HTF_name, int HTF_choice
+		,char* SolarTherm_path, double T_HTF_cold_des, double* res
+);
+
+void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double PR, 
+		double pinch_PHX, double dTemp_HTF_PHX, double load_base,  double T_amb_base, 
+		double eta_gross_base, double eta_Q_base, char* base_path,  char* SolarTherm_path,
+		int inputsize, int outputsize, double tolerance, int PB_model, 
+		int htf_choice, double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
+		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach, 
+		char* HTF_name
+);
+
+void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR, 
+		double pinch_PHX, double dTemp_HTF_PHX, double load_base, double T_amb_base, 
+		double eta_gross_base, double eta_Q_base, int which_ANN_model, char* base_path, char* SolarTherm_path, 
+		int inputsize, int outputsize, double tolerance, int PB_model,
+		int htf_choice, double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
+		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach,
+		char* HTF_name
+);
+
+void destructANN(Session_Props* sess);
+
+void destructKriging(Kriging_struct* Kriging_variables);
+
 void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
 		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
 		,double T_amb_base, char* HTF_name, int HTF_choice
@@ -86,7 +117,7 @@ void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_c
 				10, P_net, T_in_ref_blk, p_high, T_amb_base
 				,guess_val, dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc, eta_isen_t
 				,dT_mc_approach, HTF_name, HTF_choice, ".", SolarTherm_path
-				,".", 0, 0, 0
+				,".", 0, 0, 0, 0
 			);
 
 		double T_HTF_cold_calculated;
@@ -181,7 +212,6 @@ void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_c
 
 	return;
 }
-
 
 //******************** SEQUENCE 2
 /*
@@ -571,7 +601,9 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 					initialnumdata, P_net, T_in_ref_blk, p_high,
 					T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
 					eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
-					HTF_name, htf_choice, trainingdir,SolarTherm_path, base_path, status_config, match_index,1
+					HTF_name, htf_choice, trainingdir,SolarTherm_path, base_path, status_config, match_index,
+					1, /*OD simulated*/
+					0 /*Test function false*/
 				);
 			}else{
 				fprintf(stderr,"PB model choice is invalid. Choose 0 for CEA PB, 1 for NREL-SAM PB. Your choice is %d\n",PB_model);

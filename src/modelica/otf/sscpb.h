@@ -41,7 +41,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		,double eta_isen_mc, double eta_isen_rc, double eta_isen_t
 		,double dT_mc_approach, char* HTF_name, int HTF_choice, char* trainingdir
 		,char* SolarTherm_path, char* base_path, int status_config, int match_index
-		,int is_OD_simulated
+		,int is_OD_simulated, int is_run_test_func
 );
 
 void ssc_test();

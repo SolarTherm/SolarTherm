@@ -18,7 +18,7 @@
 	char* training_or_validation controls the sampling process
 */
 void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_des
-		,char* trainingdir, char* base_path, int numinputs, int numdata
+		,char* trainingdir, char* SolarTherm_path, int numinputs, int numdata
 		,char* training_or_validation
 ){
 	double UB_1 = T_in_ref_blk + 20; //*************** Maximum temperature of the HTF at off design case [C]
@@ -33,7 +33,10 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *inputs;
 
-	char* ppath = base_path;
+	//char* ppath = base_path;
+	char* ppath = NEW_ARRAY(char, MAXLEN);
+	snprintf(ppath,MAXLEN,"%s/Resources/Library",SolarTherm_path);
+
 	char* pname = "gen_OD_matrix"; //gen_OD_matrix.py
 	char* pfunc;
 	if(strcmp(training_or_validation,"training")==0){
@@ -231,7 +234,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		,double eta_isen_mc, double eta_isen_rc, double eta_isen_t
 		,double dT_mc_approach, char* HTF_name, int HTF_choice, char* trainingdir
 		,char* SolarTherm_path, char* base_path, int status_config, int match_index
-		,int is_OD_simulated
+		,int is_OD_simulated, int is_run_test_func
 ){
 	//******************************************** WRITE CONFIGURATIONS ******************************************************//
 	if(status_config==1){
@@ -278,14 +281,40 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 	if(is_OD_simulated==1){
 		//******************************************** LOAD OD MATRIX *********************************************************//
 		/*Generate OD training data array*/
-		generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, numdata,"training");
+		if(is_run_test_func == 1){
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, 
+				T_amb_base-273.15,
+				trainingdir, 
+				SolarTherm_path,  //Before it was base_path --> change to SolarTherm_path
+				3, 
+				2, //===> running test function for only 1 data point
+				"LHS" 
+			);
+		}
+		else{
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, 
+				T_amb_base-273.15,
+				trainingdir, 
+				SolarTherm_path,  //Before it was base_path --> change to SolarTherm_path
+				3, 
+				numdata,
+				"training"
+			);
+		}
+
+		/*Generate OD training data array*/
 		char* fn_OD = NEW_ARRAY(char, strlen(trainingdir) + strlen("/OD_matrix.csv") + 1);
 		strcpy(fn_OD,trainingdir);
 		strcat(fn_OD,"/OD_matrix.csv"); //e.g. /home/philgun/solartherm-intermediate/SolarTherm/Resources/Library/training_data/configNREL0/OD_matrix.csv
 		
 		loadOffDesignArray(fn_OD, sim);
 		ssc_number_t* OD_array = NEW_ARRAY(ssc_number_t, sim->rows_OD*6);
-		sim->array_OD = OD_array; // flipped this around... only way it makes sense -- JP
+		//sim->array_OD = OD_array; // flipped this around... only way it makes sense -- JP
+		OD_array = sim->array_OD; // reflip this one since JP's suggestion does not work
 
 		//**************************************************************************************************************************//
 		double eff_max = 1; 
@@ -420,15 +449,16 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		strcpy(fn,trainingdir);
 		strcat(fn,"/training_data.csv");
 
-		FILE* f = fopen(fn,"r");
-		if(f==NULL){
+		//FILE* f = fopen(fn,"r"); PG CHANGE
+		FILE* f;
+		if(fopen(fn,"r") == NULL){
 			 /*If file doesn't exist, create the file and write the header*/
 		    f = fopen(fn,"w");
 		    fprintf(f,"P_net,T_in_ref_blk,p_high,PR,pinch_PHX,dTemp_HTF_PHX,load,T_HTF_in,T_amb_input,eta_gross,eta_Q,\n");
 		    fclose(f);
 		}
 		
-		fclose(f);
+		//fclose(f); PG CHANGE
 
 		f = fopen(fn,"a");
 		
@@ -447,7 +477,30 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 
 		/*Generate validation data array*/
 		int rowval = 15;
-		generateOffDesignFile(T_in_ref_blk-273.15, 1, (T_amb_base-273.15),trainingdir, base_path, 3, rowval,"validation");
+		if(is_run_test_func==1){
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, 
+				T_amb_base-273.15,
+				trainingdir, 
+				SolarTherm_path,  //Before it was base_path --> change to SolarTherm_path
+				3, 
+				2, //===> running test function for only one data point
+				"LHS" 
+			);
+
+		}else{
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, T_amb_base-273.15,
+				trainingdir, 
+				base_path, 
+				3, 
+				rowval,
+				"validation"
+			);
+		}
+
 		loadOffDesignArray(fn_OD, sim);
 		free(fn_OD);
 		len = sim->rows_OD;
@@ -472,15 +525,16 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		strcpy(fn_val,trainingdir);
 		strcat(fn_val,"/validation_data.csv");
 
-		FILE* g = fopen(fn_val,"r");
-		if(g==NULL){
+		// FILE* g = fopen(fn_val,"r"); CHANGE PG
+		FILE* g;
+		if(fopen(fn_val,"r") == NULL){
 		     /*If file doesn't exist, create the file and write the header*/
 		    g = fopen(fn_val,"w");
 		    fprintf(g,"P_net,T_in_ref_blk,p_high,PR,pinch_PHX,dTemp_HTF_PHX,load,T_HTF_in,T_amb_input,eta_gross,eta_Q,\n");
 		    fclose(g);
 		}
-		fclose(g);
-
+		
+		//fclose(g); CHANGE PG
 		g = fopen(fn_val,"a");
 		
 		for(int i=0;i<rowval;i++){

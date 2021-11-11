@@ -182,7 +182,9 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		            numdata, P_net, T_in_ref_blk, p_high,
 		            T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
 		            eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, 
-		            HTF_name, htf_choice, trainingdir, SolarTherm_path, base_path, status_config, match_index,1
+		            HTF_name, htf_choice, trainingdir, SolarTherm_path, base_path, status_config, match_index, 
+					1, /*OD is simulated if this is one*/ 
+					0 /*Add this s.t. when test run is triggered, only three data points to run */
 		        );
 		        ssc_data_free(NRELPBSimulationResult);
 		    }else{

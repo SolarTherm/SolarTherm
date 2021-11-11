@@ -27,6 +27,9 @@
 # define MSG(...) ((void)0)
 #endif
 
+int test_initNRELPB();
+int test_runNRELPBOffDesign();
+
 /*
 	Initialtisation of NREL Power Block. Return 0 if pass, -1 if fail
 */
@@ -65,28 +68,14 @@ int test_initNRELPB(){
 }
 
 /*
-	Test function to load existing Kriging model purely in C
+	Running off design NREL PB and save the training data
 */
-int test_loadExistingKriging(){
-	double P_net = 100000000/0.9; 
+int test_runNRELPBOffDesign(){
+	//****************** Run parameters
+	int numdata = 10;
+	double P_net = 70000000/0.9; 
 	double T_in_ref_blk = 1073.15;
 	double p_high = 25000000.0;
-	double PR = 2.57;
-	double pinch_PHX = 15.0;
-	double dTemp_HTF_PHX = 250.0;
-	double load_base = 1.0;
-	double eta_gross_base = 0.5;
-	double eta_Q_base = 1.0;
-	const char* SolarTherm_path = "../SolarTherm";
-
-	char* base_path  = NEW_ARRAY(char, MAXLEN);
-	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
-
-	int inputsize = 3;
-	int outputsize = 2;
-	double tolerance = 0.006;
-	int PB_model = 1 /*SSC sCO2 PB*/;
-	int htf_choice = 50;
 	double dT_PHX_hot_approach = 93.831340;
 	double dT_PHX_cold_approach = 15.0;
 	double eta_isen_mc = 0.89;
@@ -95,112 +84,48 @@ int test_loadExistingKriging(){
 	double dT_mc_approach = 6.0;
 	double T_amb_base = 41.0 + 273.15 - dT_mc_approach;
 	char* HTF_name = "CarboHSP";
+	int htf_choice = 50;
+
+	char* SolarTherm_path = "../SolarTherm";
+
+	char* trainingdir = NEW_ARRAY(char, MAXLEN);
+	snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock/training_data/configNREL3000", SolarTherm_path);
 	
-	fprintf(stderr,"Start loading existing Kriging....\n\n");
-	/*Start building*/
-	Kriging_struct* Kriging_variables = NULL;
-		
-	Kriging_variables = constructKriging(
-		P_net, T_in_ref_blk, p_high, PR, 
-		pinch_PHX, dTemp_HTF_PHX, load_base,  T_amb_base, 
-		eta_gross_base, eta_Q_base, base_path, SolarTherm_path,
-		inputsize, outputsize, tolerance, PB_model, 
-		htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach,
-		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, 
-		HTF_name
-	);
-	fprintf(stderr,"\n\nFinish loading existing Kriging....\n");
+	char* base_path = NEW_ARRAY(char,MAXLEN);
+	snprintf(base_path, MAXLEN,"%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
 
-	/*
-	fprintf(stderr,"%lf , %lf \n",Kriging_variables->sill_HX, 0.10501801002768738);
-	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Nugget_HX, 0.006652692211982437);
-	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Range_HX, 1.7320508075688772);
+	int status_config = 1;
+	int match_index = 3000;
 
-	assert(
-		abs(Kriging_variables->sill_HX - 0.10501801002768738) < 0.01
-	);
-
-	assert(
-		abs(Kriging_variables->Nugget_HX - 0.006652692211982437) < 0.0001
-	);
-
-	assert(
-		abs(Kriging_variables->Range_HX - 1.7320508075688772) < 0.01
-	);
-	*/
-
-	return 0;
-}
-
-/*
-	Test function to load existing ANN model purely in C
-*/
-int test_loadPredictExistingANN(){
-	double P_net = 100000000/0.9; 
-	double T_in_ref_blk = 1073.15;
-	double p_high = 25000000.0;
-	double PR = 2.57;
-	double pinch_PHX = 15.0;
-	double dTemp_HTF_PHX = 250.0;
-	double load_base = 1.0;
-	double eta_gross_base = 0.5;
-	double eta_Q_base = 1.0;
-	const char* SolarTherm_path = "../SolarTherm";
-
-	char* base_path  = NEW_ARRAY(char, MAXLEN);
-	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
-
-	int inputsize = 3;
-	int outputsize = 2;
-	double tolerance = 0.006;
-	int PB_model = 1 /*SSC sCO2 PB*/;
-	int htf_choice = 50;
-	double dT_PHX_hot_approach = 93.831340;
-	double dT_PHX_cold_approach = 15.0;
-	double eta_isen_mc = 0.89;
-	double eta_isen_rc = 0.89;
-	double eta_isen_t = 0.93;
-	double dT_mc_approach = 6.0;
-	double T_amb_base = 41.0 + 273.15 - dT_mc_approach;
-	char* HTF_name = "CarboHSP";
-
-	Session_Props* sess;
-
-	int which_ANN_model = 0;
-
-	sess = constructANN(P_net, T_in_ref_blk, p_high, PR, 
-		pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base, 
-		eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, 
-		inputsize, outputsize, tolerance, PB_model,
-		htf_choice, dT_PHX_hot_approach, dT_PHX_cold_approach,
+	ssc_data_t simulation_result = runNRELPB(
+		numdata, P_net, T_in_ref_blk, p_high,
+		T_amb_base, dT_PHX_hot_approach, dT_PHX_cold_approach, 
 		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
-		HTF_name
+		HTF_name, htf_choice, trainingdir, SolarTherm_path, base_path, status_config, match_index, 
+		1, /*OD simulated*/
+		1 /*test mode*/
 	);
 
-	which_ANN_model = 1;
+	//Deleting directory and files will be done in Python
 
-	sess = constructANN(P_net, T_in_ref_blk, p_high, PR, 
-		pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base, 
-		eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, 
-		inputsize, outputsize, tolerance, PB_model,
-		htf_choice, dT_PHX_hot_approach, dT_PHX_cold_approach,
-		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
-		HTF_name
-	);
+	/*Check of files are generated*/
+	FILE* check_file;
+	check_file = fopen("../SolarTherm//Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt","r");
+	
+	if(check_file == NULL){
+		fprintf(stderr,"configNREL3000.txt is not generated. Generating new config of NREL PB failed\n\n");
+		return -1;
+	}
 
-	const double raw_input[] = {1.0, 1073.15, 20 +273.15};
-	double prediction = predict_ANN(
-		sess,
-		raw_input,
-		which_ANN_model
-	);
+	fclose(check_file);
 
-	assert(
-		prediction - (-0.006550) < 0.01
-	);
-
+	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000/scaled_Kriging_training_data_deviation.csv","r");
+	if(check_file == NULL){
+		fprintf(stderr,"Training data not generated. Generating new training data of NREL PB failed\n\n");
+		return -1;
+	} 
+	
 	return 0;
-
 }
 
 typedef int (TestFunction)(void);
@@ -211,8 +136,7 @@ typedef struct{
 #define FN(N) {test_##N, #N}
 const NamedFunction tests[] = {
 	FN(initNRELPB), 
-	FN(loadExistingKriging), 
-	FN(loadPredictExistingANN), 
+	FN(runNRELPBOffDesign),
 	{NULL,NULL}
 };	
 
