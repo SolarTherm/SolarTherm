@@ -38,13 +38,26 @@ def test_loadPredictExistingSurrogate():
 	deviation_eta_gross_ANN = res.data('deviation_eta_gross_ANN')[-1]
 	deviation_eta_Q_ANN = res.data('deviation_eta_Q_ANN')[-1]
 
-	sys.stderr.write("%f\n\n"%(deviation_eta_gross_Kriging))
-	sys.stderr.write("%f\n\n"%(deviation_eta_gross_ANN))
-	sys.stderr.write("%f\n\n"%(deviation_eta_Q_Kriging))
-	sys.stderr.write("%f\n\n"%(deviation_eta_Q_ANN))
+	try:
+		assert(
+			abs(deviation_eta_gross_Kriging - res.data('deviation_eta_gross_Kriging')[-1]) < 0.01
+		)
+		assert(
+			abs(deviation_eta_Q_Kriging - res.data('deviation_eta_Q_Kriging')[-1]) < 0.01
+		)
+		assert(
+			abs(deviation_eta_gross_ANN - res.data('deviation_eta_gross_ANN')[-1]) < 0.01
+		)
+		assert(
+			abs(deviation_eta_Q_ANN - res.data('deviation_eta_Q_ANN')[-1]) < 0.01
+		)
+		sys.stderr.write("\n\nAssertion passed!...................\n\n")
+	except:
+		raise AssertionError(
+			"\n\nValue does not match................\n\n!!"
+		)
 	
 	cleantest.clean('TestLoadPredictExistingSurrogate')
-
 
 def test_initNRELPB():
 	run_ctest('initNRELPB')

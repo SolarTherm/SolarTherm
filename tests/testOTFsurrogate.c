@@ -17,7 +17,6 @@
 #include <libgen.h>
 #include <math.h>
 #include <dirent.h>
-//#include <Python.h>
 
 #define MAXLEN 1024
 
@@ -66,7 +65,7 @@ int test_initNRELPB(){
 }
 
 /*
-	Test function to load existing Kriging model
+	Test function to load existing Kriging model purely in C
 */
 int test_loadExistingKriging(){
 	double P_net = 100000000/0.9; 
@@ -134,7 +133,7 @@ int test_loadExistingKriging(){
 }
 
 /*
-	Test function to load existing ANN model
+	Test function to load existing ANN model purely in C
 */
 int test_loadPredictExistingANN(){
 	double P_net = 100000000/0.9; 
