@@ -112,6 +112,7 @@ int test_loadExistingKriging(){
 	);
 	fprintf(stderr,"\n\nFinish loading existing Kriging....\n");
 
+	/*
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->sill_HX, 0.10501801002768738);
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Nugget_HX, 0.006652692211982437);
 	fprintf(stderr,"%lf , %lf \n",Kriging_variables->Range_HX, 1.7320508075688772);
@@ -127,10 +128,81 @@ int test_loadExistingKriging(){
 	assert(
 		abs(Kriging_variables->Range_HX - 1.7320508075688772) < 0.01
 	);
+	*/
 
 	return 0;
 }
 
+/*
+	Test function to load existing ANN model
+*/
+int test_loadPredictExistingANN(){
+	double P_net = 100000000/0.9; 
+	double T_in_ref_blk = 1073.15;
+	double p_high = 25000000.0;
+	double PR = 2.57;
+	double pinch_PHX = 15.0;
+	double dTemp_HTF_PHX = 250.0;
+	double load_base = 1.0;
+	double eta_gross_base = 0.5;
+	double eta_Q_base = 1.0;
+	const char* SolarTherm_path = "../SolarTherm";
+
+	char* base_path  = NEW_ARRAY(char, MAXLEN);
+	snprintf(base_path, MAXLEN, "%s/Data/SurrogateModels/PowerBlock",SolarTherm_path);
+
+	int inputsize = 3;
+	int outputsize = 2;
+	double tolerance = 0.006;
+	int PB_model = 1 /*SSC sCO2 PB*/;
+	int htf_choice = 50;
+	double dT_PHX_hot_approach = 93.831340;
+	double dT_PHX_cold_approach = 15.0;
+	double eta_isen_mc = 0.89;
+	double eta_isen_rc = 0.89;
+	double eta_isen_t = 0.93;
+	double dT_mc_approach = 6.0;
+	double T_amb_base = 41.0 + 273.15 - dT_mc_approach;
+	char* HTF_name = "CarboHSP";
+
+	Session_Props* sess;
+
+	int which_ANN_model = 0;
+
+	sess = constructANN(P_net, T_in_ref_blk, p_high, PR, 
+		pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base, 
+		eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, 
+		inputsize, outputsize, tolerance, PB_model,
+		htf_choice, dT_PHX_hot_approach, dT_PHX_cold_approach,
+		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
+		HTF_name
+	);
+
+	which_ANN_model = 1;
+
+	sess = constructANN(P_net, T_in_ref_blk, p_high, PR, 
+		pinch_PHX, dTemp_HTF_PHX, load_base, T_amb_base, 
+		eta_gross_base, eta_Q_base, which_ANN_model, base_path, SolarTherm_path, 
+		inputsize, outputsize, tolerance, PB_model,
+		htf_choice, dT_PHX_hot_approach, dT_PHX_cold_approach,
+		eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
+		HTF_name
+	);
+
+	const double raw_input[] = {1.0, 1073.15, 20 +273.15};
+	double prediction = predict_ANN(
+		sess,
+		raw_input,
+		which_ANN_model
+	);
+
+	assert(
+		prediction - (-0.006550) < 0.01
+	);
+
+	return 0;
+
+}
 
 typedef int (TestFunction)(void);
 typedef struct{
@@ -139,7 +211,10 @@ typedef struct{
 } NamedFunction;
 #define FN(N) {test_##N, #N}
 const NamedFunction tests[] = {
-	FN(initNRELPB), FN(loadExistingKriging), {NULL,NULL}
+	FN(initNRELPB), 
+	FN(loadExistingKriging), 
+	FN(loadPredictExistingANN), 
+	{NULL,NULL}
 };	
 
 int main(int argc, const char **argv){
