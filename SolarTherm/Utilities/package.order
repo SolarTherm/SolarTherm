@@ -6,3 +6,5 @@ ReadHelNum
 Metadata_Optics
 CoolProp
 LinProgFunc
+RunSinteringThermalModel
+InterpolateSinteringThermalModel

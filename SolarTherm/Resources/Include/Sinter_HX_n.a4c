@@ -1,0 +1,730 @@
+REQUIRE "johnpye/airprops2.a4c";
+(*REQUIRE "johnpye/liquidsodium.a4c";*)
+REQUIRE "johnpye/thermo_types.a4c";
+(*REQUIRE "johnpye/datareader/testairprops.a4c";*)
+IMPORT "johnpye/fprops/fprops";
+IMPORT "sensitivity/solve";
+IMPORT "johnpye/extpy/extpy";
+IMPORT "utils_sintering_thermal_model";
+
+MODEL fprops_fluid;
+	component IS_A symbol_constant;
+	type IS_A symbol_constant;
+END fprops_fluid;
+
+MODEL iron_ore REFINES thermophysical_fluid_base;
+
+	(* constants of integration set to give h = 0 at 25 °C 
+	h_eq: h = 2e-06{J/kg/K^4}*T^4 - 0.0054{J/kg/K^3}*T^3 + 5.36{J/kg/K^2}*T^2 - 1295.8{J/kg/K}*T +29114{kJ/kg};*)
+	h_eq: h = -439548{J/kg} - 7.35881699e-01{J/kg} -22.5142{J/kg/K}*T + 1.35627{J/kg/K^2}*T^2 -0.000148679{J/kg/K^3}*T^3 + -9.50023e-007{J/kg/K^4}*T^4 + 4.82806e-010{J/kg/K^5}*T^5 + 223852{J/kg} + (-202224{J/kg}-223852{J/kg})/(1+exp((-4.01164e+094-T)/-4.09328e+094)) + 575882{J/kg} + (228424-575882)/(1+exp((1416.8-T)/-4.2379));
+	
+	rho_eq: rho = 4500 {kg/m^3}; (* not that correct *)
+
+END iron_ore;
+
+MODEL fluid_state;
+	fluid IS_A symbol_constant;
+	state IS_A thermophysical_fluid_base;
+	T ALIASES state.T;
+	h ALIASES state.h;
+	p ALIASES state.p;
+	v ALIASES state.v;
+	rho ALIASES state.rho;
+	SELECT(fluid)
+		CASE 'air':
+			mu ALIASES state.mu;
+			k ALIASES state.k;
+			cp ALIASES state.cp;
+			state IS_REFINED_TO air_fluid;
+			Pr IS_A factor;
+			Pr_eq: Pr = cp * mu / k;
+			nu IS_A kinematic_viscosity;
+			nu_eq: nu = mu / rho;
+			vel IS_A speed;
+			vel = mdot * v / A;	
+		CASE 'iron':
+			state IS_REFINED_TO iron_ore;
+	END SELECT;
+	mdot IS_A mass_rate;
+	A "cross-section area" IS_A area;
+	(*eps IS_A fraction;*)
+
+
+METHODS
+METHOD default;
+	RUN state.default;
+END default;
+END fluid_state;
+
+MODEL fluid_node;
+	state IS_A fluid_state;
+	fluid ALIASES state.fluid;
+	T ALIASES state.T;                h ALIASES state.h;                
+	p ALIASES state.p;                v ALIASES state.v;
+	rho ALIASES state.rho;  
+
+	mdot IS_A mass_rate;
+	H, W, d_h IS_A distance; (*d_h is the hydraulic diameter of a rect. duct*)
+	d_h = 2 * (W * H) / (W + H);
+	A IS_A area;
+	A_eq: A = W * H; (* rectangular *)
+	vel IS_A speed;
+	vel_eq: vel = mdot * v / A;
+
+METHODS
+METHOD solve;
+	EXTERNAL do_solve(SELF);
+END solve;
+METHOD default;
+	RUN state.default;
+END default;
+END fluid_node;
+
+MODEL energy_segment;
+	inlet, outlet IS_A fluid_state;
+	inlet.A, outlet.A ARE_THE_SAME;
+	fluid ALIASES inlet.fluid;
+	Q_seg IS_A energy_rate;
+	inlet.mdot, outlet.mdot ARE_THE_SAME;
+	(*inlet.eps, outlet.eps ARE_THE_SAME;*)
+	inlet.fluid, outlet.fluid ARE_THE_SAME;
+
+	T_in ALIASES inlet.T;		T_out ALIASES outlet.T;
+	p_in ALIASES inlet.p;		p_out ALIASES outlet.p;
+
+	mdot ALIASES inlet.mdot;
+	Q_seg = mdot * (outlet.h-inlet.h);
+
+	(*eps ALIASES inlet.eps;*)
+METHODS
+	METHOD default;
+		RUN inlet.default;
+		RUN outlet.default;
+	END default;
+END energy_segment;
+
+
+(*
+	moving bed heat exchanger segment model.
+	solid-gas heat transfer for cross-flow direct-contact configuration
+	no pressure drops considered here. gas and solid at the same pressure.
+*)
+MODEL HX_segment;
+	HX_g, HX_s IS_A energy_segment;
+	fluid_g ALIASES HX_g.fluid; (*AIR*)
+	fluid_s ALIASES HX_s.fluid; (*Iron*)
+	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
+
+	ave ALIASES HX_g.inlet;
+	(*ave IS_A fluid_state;
+	fluid_g, ave.fluid ARE_THE_SAME;
+	HX_g.mdot, ave.mdot ARE_THE_SAME;
+	HX_g.d_i, ave.d ARE_THE_SAME;
+	ave.p = HX_g.p_in;
+	(*ave.T = (HX_g.T_in + HX_g.T_out) / 2.;*)
+	ave.T = HX_g.T_in; *)
+
+	Nu_ave IS_A factor;
+	d_p "particle diameter" IS_A distance;
+	A_p "particle surface area" IS_A area;
+	V_p "particle volume" IS_A volume;
+	A_p = 4{PI}*(d_p/2)^2; (* cross-section area of the entrance *)
+	V_p = 4{PI}/3*(d_p/2)^3;
+	
+	eps IS_A fraction; (* void fraction *)	
+	eps = 0.403 * (d_p *100)^0.14; (* SOURCE? *)
+
+	Re_HX IS_A factor;
+	Re_HX = ave.vel * V_p / ((1 - eps) * A_p * ave.nu);
+
+	SELECT(intconv_corr)
+	CASE 'Nsofor':
+		Nu_Nso: Nu_ave = 8.74 + 9.34 * (6 * (1 - eps))^0.2 * Re_HX^0.2 * ave.Pr^(1/3);
+	CASE 'Wakao':
+		Nu_Wakao: Nu_ave = 2 + 1.1 * (6 * (1 - eps))^0.6 * Re_HX^0.6 * ave.Pr^(1/3);
+	CASE 'Feng':
+		Nu_Feng: Nu_ave = 0.198 * eps^0.07 * (6 * (1 - eps))^0.66 * Re_HX^0.66 * ave.Pr^(1/3);
+	END SELECT;
+
+	t "bed thickness" IS_A distance;
+	A_fr "bed frontal area (grate area)" IS_A area;
+	V_pcl_tot IS_A volume;
+	V_bed IS_A volume;
+	V_pcl_tot = V_bed * (1 - eps);
+	V_bed = A_fr * t;
+
+	A "total particle area" IS_A area;
+	A =  A_p * V_pcl_tot / V_p;
+	A_fr, HX_g.inlet.A ARE_THE_SAME;
+
+	h_int_ave IS_A heat_transfer_coefficient;
+	h_int_ave = Nu_ave * ave.k / d_p; (* d here is the particle diameter *)
+
+	DT_lm "log mean temperature difference" IS_A temperature;
+	(*T_lm_temp IS_A temperature;*)
+	T_i_s ALIASES HX_s.T_in;
+	T_o_s ALIASES HX_s.T_out;
+	T_i_g ALIASES HX_g.T_in;
+	T_o_g ALIASES HX_g.T_out;
+
+	DT1, DT2 IS_A delta_temperature; (*, DT3, DT4*)
+	DT1_eq1: DT1 = T_i_g - T_o_s;
+	DT2_eq1: DT2 = T_o_g - T_i_s;
+	(*DT3_eq1: DT3 = T_i_g - T_o_g;
+	DT4_eq1: DT4 = T_o_s - T_i_s;*)
+
+	DT1_eq2: DT1 = T_o_s - T_i_g;
+	DT2_eq2: DT2 = T_i_s - T_o_g;
+
+
+	(* DT_lm_eq: (DT1/DT2) = exp((DT1 - DT2)/DT_lm); *)
+	DT_lm_eq1: DT_lm = (DT1 - DT2)/ln(DT1/DT2); 
+	(*DT_lm_eq1: DT_lm = 0.5*(DT1 + DT2);*)
+	(*DT_lm_eq2: DT_lm = -(DT1 - DT2)/ln(DT1/DT2);*)
+	(* T_lm_eq: DT_lm = ((T_o_g - T_i_s) - (T_i_g - T_o_s)) / ln((T_o_g - T_i_s) / (T_i_g - T_o_s)); (* Eq. 10-12 Holman 9th Edition, assuming T_o_g is the hot side*) *)
+
+	p_i_s ALIASES HX_s.p_in;
+	p_o_s ALIASES HX_s.p_out;
+	p_i_g ALIASES HX_g.p_in;
+	p_o_g ALIASES HX_g.p_out;
+	p_i_s, p_o_s ARE_THE_SAME;
+	p_i_g, p_o_g ARE_THE_SAME;
+	p_i_s, p_i_g ARE_THE_SAME;
+	mdot_s ALIASES HX_s.mdot;
+	mdot_g ALIASES HX_g.mdot;
+
+	Q IS_A energy_rate;
+	U "overall heat-transfer coefficient" IS_A heat_transfer_coefficient;
+	U = h_int_ave;
+	Q = U * A * DT_lm;
+	Q_eq1: Q=-HX_g.Q_seg;
+	Q_eq2: Q=HX_g.Q_seg;
+	HX_s.Q_seg = - HX_g.Q_seg;
+
+METHODS
+	METHOD default;
+		RUN HX_s.default;
+		RUN HX_g.default;
+		RUN ave.default;
+
+		DT1.lower_bound := 10 {K};
+		DT2.lower_bound := 10 {K};
+		DT1.upper_bound := 1500 {K};
+		DT2.upper_bound := 1498 {K};
+		(*DT3.lower_bound := 1{K};
+		DT4.lower_bound := 1{K};
+		DT3.upper_bound := 1000{K};
+		DT4.upper_bound := 1000{K};*)
+		(* initial guesses, bounds and scaling, to help model to solve *)
+		DT_lm.lower_bound :=0 {K};
+		DT_lm.upper_bound :=1500 {K} + 273.15 {K};
+
+		HX_g.inlet.T.lower_bound := 24 {K} + 273.15 {K};
+		HX_g.inlet.T.upper_bound := 2000 {K};
+		HX_s.inlet.T.lower_bound := 24 {K} + 273.15 {K};
+		HX_s.inlet.T.upper_bound := 1999 {K};
+		HX_g.outlet.T.lower_bound := 24 {K} + 273.15 {K};
+		HX_g.outlet.T.upper_bound := 2000 {K};
+		HX_s.outlet.T.lower_bound := 24 {K} + 273.15 {K};
+		HX_s.outlet.T.upper_bound := 1999 {K};
+		HX_s.inlet.state.u.lower_bound := -1e5 {kJ/kg};
+		(*Q.lower_bound := 20{MW};*)
+		(*A.lower_bound :=200 {m^2};
+		A.upper_bound :=6000 {m^2};	
+		A := 5000 {m^2};*)
+
+		U.lower_bound :=-10 {W/m^2/K};
+		U.upper_bound :=7 {kW/m^2/K};	
+
+
+		SWITCH(intconv_corr)
+		CASE 'Nsofor':
+			ave.Pr.lower_bound := 0.5;
+			ave.Pr.upper_bound := 1.5;
+			Re_HX.lower_bound := 4; 
+			Re_HX.upper_bound := 8000;
+			Re_HX := 500; 
+			ave.Pr := 0.7;
+		CASE 'Wakao':
+			ave.Pr.lower_bound := 0.5;
+			ave.Pr.upper_bound := 1.5;
+			Re_HX.lower_bound := 4; 
+			Re_HX.upper_bound := 6000;
+			Re_HX := 500; 
+			ave.Pr := 0.7;
+		CASE 'Feng':
+			ave.Pr.lower_bound := 0.5;
+			ave.Pr.upper_bound := 1.5;
+			Re_HX.lower_bound := 500; 
+			Re_HX.upper_bound := 6000;
+			Re_HX := 500; 
+			ave.Pr := 0.7;
+		END SWITCH;
+	END default;
+END HX_segment;
+
+MODEL HX_base;
+	fluid_g, fluid_s IS_A symbol_constant;
+	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
+	n IS_A integer_constant;
+
+	seg[0..n-1] IS_A HX_segment;
+	node_g[0..n], node_s[0..n] IS_A fluid_state;
+	d_p "particle diameter" IS_A distance;
+	(*eps IS_A fraction;*)
+
+	(* connecting flow path *)
+	FOR i IN [0..n-1] CREATE
+		seg[i].HX_g.inlet, node_g[i] ARE_THE_SAME;
+		seg[i].HX_g.outlet, node_g[i+1] ARE_THE_SAME;
+		seg[i].HX_s.outlet, node_s[i] ARE_THE_SAME;
+		seg[i].HX_s.inlet, node_s[i+1] ARE_THE_SAME;
+	END FOR;
+	mdot_g ALIASES node_g[0].mdot;
+	mdot_s ALIASES node_s[n].mdot;
+	fluid_g, seg[0].HX_g.fluid ARE_THE_SAME;
+	fluid_s, seg[0].HX_s.fluid ARE_THE_SAME;
+	eps ALIASES seg[0].eps;
+	t ALIASES seg[0].t;
+	p_i_g ALIASES node_g[0].p; T_i_g ALIASES node_g[0].T;
+	p_o_g ALIASES node_g[n].p; T_o_g ALIASES node_g[n].T;
+	p_i_s ALIASES node_s[n].p; T_i_s ALIASES node_s[n].T;
+	p_o_s ALIASES node_s[0].p; T_o_s ALIASES node_s[0].T;
+	
+	(* connect segment parameters *)
+	FOR i IN [0..n-1] CREATE
+		seg[i].intconv_corr, intconv_corr ARE_THE_SAME;
+		seg[i].d_p, d_p ARE_THE_SAME;
+		seg[i].t, t ARE_THE_SAME;
+		(*seg[i].eps, eps ARE_THE_SAME;*)
+	END FOR;
+
+	(* total heat transfer and area *)	
+	A_HX IS_A area;
+	Q_HX IS_A energy_rate;
+	A_HX = seg[0].A * n;
+	Q_HX = SUM[seg[i].Q | i IN [0..n-1]];
+METHODS
+	METHOD default;
+		RUN seg[0..n-1].default;
+	END default;
+END HX_base;
+
+MODEL sinter_flow_segment;
+	inlet, outlet IS_A fluid_node;
+	air_inlet IS_A fluid_state;
+	fluid_sinter ALIASES air_inlet.fluid;
+	inlet.T, air_inlet.T ARE_THE_SAME;
+	inlet.p, air_inlet.p ARE_THE_SAME;
+	fluid ALIASES inlet.fluid;
+	inlet.mdot, outlet.mdot, air_inlet.mdot ARE_THE_SAME;
+	inlet.A, air_inlet.A ARE_THE_SAME;
+	inlet.fluid, outlet.fluid ARE_THE_SAME;
+	inlet.p, outlet.p ARE_THE_SAME;
+
+	H ALIASES inlet.H;
+	W ALIASES inlet.W;
+	d_i ALIASES inlet.d_h;
+	L "sinter length" IS_A distance;
+	(*H_o, W_o "sinter outside dimensions" IS_A distance;
+	H_o = H + 2*t;
+	W_o = W + 2*t;*)
+
+	A_ext_slice IS_A area; A_ext_slice = L * W; (* top surface only *)
+	
+	k_g, k_s, k_eff , k_r IS_A thermal_conductivity;
+	h_ext IS_A heat_transfer_coefficient;
+	alpha_eff IS_A fraction;
+	
+	mdot ALIASES inlet.mdot;
+
+	(*------------ ENERGY --------------*)
+	Q_ext_conv, Q_ext_rad, Q_sun, Q_abs, Q_refl, Q_i IS_A energy_rate;
+	T_ext, T_amb, T_sky IS_A temperature;
+	
+	Q_abs_eq: Q_abs = Q_sun * alpha_eff;
+	Q_refl_eq: Q_refl = Q_sun * (1 - alpha_eff);
+
+	(* external convection *)
+	(* TODO re-implement a convection correlation to calculation h_ext *)
+	Q_ext_conv_eq: Q_ext_conv = h_ext * A_ext_slice * (T_ext - T_amb);
+
+	eps IS_A factor;
+	eps = 0.9;
+	eps_vf IS_A fraction;
+	Q_ext_rad_eq: Q_ext_rad = eps * 1{SIGMA_C} * A_ext_slice * (T_ext^4 - T_sky^4);
+
+	(*conduction*)
+	Q_i_eq0: Q_i = (k_eff + k_r) * (T_ext - inlet.T) * (W * L / (0.5 * H));
+	k_g = air_inlet.k;
+	(*k_g = *)
+	k_eff = eps_vf * k_g + (1 - eps_vf) * k_s;
+	T_b IS_A temperature;
+	T_b = (inlet.T + T_ext)/2.;
+	F IS_A factor;
+	d_p IS_A distance;
+	F = 0.1843 + 0.5756 * arctan(1.535 / eps * (k_s / (4 * d_p * 1{SIGMA_C} * T_b^3))^0.8011);
+	k_r = 4 * F * d_p * 1{SIGMA_C} * T_b^3;
+
+	(* wall energy balance *)
+	Q_i_eq1: Q_abs = Q_i + Q_ext_conv + Q_ext_rad;
+
+	(* ENERGY BALANCE *)
+	Q_i_eq3: mdot * (outlet.h - inlet.h) = Q_i;
+
+	eta IS_A factor;
+	eta_eq: eta = Q_i / Q_sun; (* sun-to-HTF energy efficiency of a single slice *)
+
+METHODS
+METHOD default;
+	RUN inlet.default;
+	RUN outlet.default;
+	RUN air_inlet.default;
+END default;
+END sinter_flow_segment;
+
+(*
+	The main sinter model. We will aim to remove the flow segment and put
+	that into a submodel.
+*)
+MODEL sinter_base;
+	fluid IS_A symbol_constant;
+	fluid_sinter IS_A symbol_constant;
+
+	(* geometry of the sinter *)
+	W, H IS_A distance; (* sinter inside deminsions *)
+	L IS_A distance;
+	A_aper IS_A area; (* sinter aperture area *)
+	A_aper = W * L;
+
+	L_slice IS_A distance; 
+	L_slice_eq: L_slice = L / n;
+	
+	d_p IS_A distance;
+	eps_vf IS_A fraction;
+
+	h_ext IS_A heat_transfer_coefficient;
+	k_s IS_A thermal_conductivity;
+	mdot IS_A mass_rate;
+
+	(* solar input *)
+	alpha IS_A fraction; (* solar-weighted absorptivity of the sinter surface*)
+	alpha_eff IS_A fraction; (* effective solar absorptivity of the sinter surface, assuming diffuse*)
+	alpha_eff_eq: alpha_eff = alpha;
+	Q_sun, Q_abs, Q_refl IS_A energy_rate; (* incident, absorbed, reflected solar radiation *)
+	(*Q_eq1: Q_sun = G * C * A_aper;*)
+	Q_eq2: Q_abs = alpha_eff * Q_sun;
+	Q_eq3: Q_refl = Q_sun - Q_abs;
+	(* discretisation of pipes *)
+	n IS_A integer_constant; (* number of segments *)
+	seg[0..n-1] IS_A sinter_flow_segment;
+	node[0..n] IS_A fluid_node;
+	node[0..n].fluid, fluid ARE_THE_SAME;
+	seg[0..n-1].fluid_sinter, fluid_sinter ARE_THE_SAME;
+	p IS_A pressure;
+	FOR i IN [0..n-1] CREATE
+		seg[i].inlet, node[i] ARE_THE_SAME;
+		seg[i].outlet, node[i+1] ARE_THE_SAME;
+		seg[i].L, L_slice ARE_THE_SAME;
+		seg[i].mdot, mdot ARE_THE_SAME;
+		seg[i].inlet.p, p ARE_THE_SAME;
+
+		seg[i].h_ext, h_ext ARE_THE_SAME;
+		seg[i].k_s, k_s ARE_THE_SAME;
+		seg[i].d_p, d_p ARE_THE_SAME;
+		seg[i].eps_vf, eps_vf ARE_THE_SAME;
+		seg[i].alpha_eff, alpha_eff ARE_THE_SAME;
+		eq1[i]: seg[i].Q_sun= Q_sun / n;
+	END FOR;
+	
+	(*seg[0..n-1].Q_sun, Q_sun_slice ARE_THE_SAME;*)
+	
+	node[0..n].H, seg[0..n-1].H, H ARE_THE_SAME;
+	node[0..n].W, seg[0..n-1].W, W ARE_THE_SAME;
+
+	T_amb, 	T_sky IS_A temperature;
+	seg[0..n-1].T_amb, T_amb ARE_THE_SAME;
+	seg[0..n-1].T_sky, T_sky ARE_THE_SAME;
+
+	T_i ALIASES node[0].T;              T_o ALIASES node[n].T;
+    h_o ALIASES node[n].h;				h_i ALIASES node[0].h;                
+	vel_out ALIASES node[n].vel;
+
+	Q_i_tot, Q_ext_conv_tot, Q_ext_rad_tot, Q_tot IS_A energy_rate;
+	eq2: Q_sun = SUM[seg[i].Q_sun | i IN [0..n-1]];
+	Q_i_tot = SUM[seg[i].Q_i | i IN [0..n-1]];
+	Q_ext_conv_tot = SUM[seg[i].Q_ext_conv | i IN [0..n-1]];
+	Q_ext_rad_tot = SUM[seg[i].Q_ext_rad | i IN [0..n-1]];
+	Q_tot = Q_sun - Q_refl - Q_i_tot - Q_ext_conv_tot - Q_ext_rad_tot; (* should be zero? *)
+METHODS
+	METHOD set_common_parameters;
+		FIX T_amb := 25 {K} + 273.15{K};
+		FIX k_s := $N_SEGMENTS_SUBST_1 {W/m/K};
+		FIX alpha := $N_SEGMENTS_SUBST_2;
+	END set_common_parameters;
+
+	METHOD on_load;
+		RUN default;
+	END on_load;
+
+	METHOD default;
+		FOR i IN [0..n] DO
+			RUN node[i].default;
+		END FOR;
+
+		FOR i IN [0..n-1] DO
+			RUN seg[i].air_inlet.state.default;
+		END FOR;
+
+		(* initial guesses, bounds and scaling, to help model to solve *)
+		Q_abs.nominal := 50 {MW};
+		seg[0..n-1].Q_abs.nominal :=  Q_abs.nominal / n;
+		seg[0..n-1].Q_i.nominal :=  Q_abs.nominal / n;
+		seg[0..n-1].Q_ext_conv.nominal :=  Q_abs.nominal / n;
+		seg[0..n-1].Q_ext_rad.nominal :=  Q_abs.nominal / n;
+		
+		seg[0..n-1].T_ext := 2000 {K};
+		seg[0..n-1].T_ext.upper_bound := 4000 {K};
+		node[0..n].p.lower_bound := 1 {bar};
+		
+	END default;
+END sinter_base;
+
+MODEL HX_Sinter_HX;
+	Sinter IS_A sinter_base;
+	HX1, HX2 IS_A HX_base;
+	Sinter.mdot, HX2.mdot_s ARE_THE_SAME;
+	(*HX1.mdot_g, HX2.mdot_g ARE_THE_SAME;*)
+	mdot_eq: HX1.mdot_g = HX2.mdot_g;
+	mdot_eq2: HX1.mdot_s = Sinter.mdot;
+	
+	Sinter.d_p, HX2.d_p ARE_THE_SAME;
+
+	(*Sinter.eps_vf, HX2.eps ARE_THE_SAME;*)
+
+	HX1.T_o_s, Sinter.T_i ARE_THE_SAME;
+	HX2.T_i_s, Sinter.T_o ARE_THE_SAME;
+	(*HX1.T_i_g, HX2.T_o_g ARE_THE_SAME;*)
+	fluid_g, fluid_s IS_A symbol_constant;
+	fluid_g, HX1.fluid_g, HX2.fluid_g, Sinter.fluid_sinter ARE_THE_SAME;
+	fluid_s, HX1.fluid_s, HX2.fluid_s, Sinter.fluid ARE_THE_SAME;
+	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
+	intconv_corr, HX1.intconv_corr, HX2.intconv_corr ARE_THE_SAME;
+
+	p_all IS_A pressure;
+	
+	p_all, HX1.p_i_g, HX2.p_i_g, Sinter.p ARE_THE_SAME;
+	(*Sinter.inlet.A, HX1.seg[0].HX_s.inlet.A ARE_THE_SAME;*)
+
+	time_required IS_A time;
+	time_required = (HX1.seg[0].HX_g.inlet.A) * HX1.n / (HX1.mdot_s / (HX1.node_s[0].rho * (1 - HX1.eps) * HX1.t));
+	
+	Vel_ore, Vel_air IS_A speed;
+	Vel_ore = (HX1.mdot_s / (HX1.node_s[0].rho * HX1.seg[0].HX_s.inlet.A)) / (1 - HX1.eps);
+	Vel_air = (HX1.mdot_g / (HX1.node_g[HX1.n].rho * HX1.seg[0].HX_g.inlet.A)) / HX1.eps;
+	Length_1, width_1 IS_A distance;
+	width_1 = HX1.seg[0].HX_s.inlet.A / HX1.t;
+	Length_1 = HX1.n * (HX1.seg[0].HX_g.inlet.A / width_1);
+
+	Vel_ore_2, Vel_air_2 IS_A speed;
+	Vel_ore_2 = (HX2.mdot_s / (HX2.node_s[0].rho * HX2.seg[0].HX_s.inlet.A)) / (1 - HX2.eps);
+	Vel_air_2 = (HX2.mdot_g / (HX2.node_g[HX2.n].rho * HX2.seg[0].HX_g.inlet.A)) / HX2.eps;
+	Length_2, width_2 IS_A distance;
+	width_2 = HX2.seg[0].HX_s.inlet.A / HX2.t;
+	Length_2 = HX2.n * (HX2.seg[0].HX_g.inlet.A / width_2);
+
+	HX_A_1 ALIASES HX1.A_HX;
+	HX_A_2 ALIASES HX2.A_HX;
+	t_HX1 ALIASES HX1.t;
+	t_HX2 ALIASES HX2.t;
+	L_Sinter ALIASES Sinter.L;
+	W_Sinter ALIASES Sinter.W;
+	H_Sinter ALIASES Sinter.H;
+	width_2, W_Sinter ARE_THE_SAME;
+	L_Sinter = 1 * W_Sinter;
+	H_Sinter, t_HX1 ARE_THE_SAME;
+	Q_sun ALIASES Sinter.Q_sun;
+	Q_refl ALIASES Sinter.Q_refl;
+	Q_ext_rad ALIASES Sinter.Q_ext_rad_tot;
+	Q_ext_conv ALIASES Sinter.Q_ext_conv_tot;
+	Q_net ALIASES Sinter.Q_i_tot;
+
+	eta_th IS_A factor;
+	eta_th = Q_net / (Q_sun - Q_refl);
+	mdot_g_HX1 ALIASES HX1.mdot_g;
+	mdot_s_HX1 ALIASES HX1.mdot_s;
+	mdot_g_HX2 ALIASES HX2.mdot_g;
+	mdot_s_HX2 ALIASES HX2.mdot_s;
+	mdot_Sinter ALIASES Sinter.mdot;
+
+	HX1_T_i_g ALIASES HX1.T_i_g;
+	HX1_T_o_g ALIASES HX1.T_o_g;
+	HX1_T_i_s ALIASES HX1.T_i_s;
+	HX1_T_o_s ALIASES HX1.T_o_s;
+
+	HX2_T_i_g ALIASES HX2.T_i_g;
+	HX2_T_o_g ALIASES HX2.T_o_g;
+	HX2_T_i_s ALIASES HX2.T_i_s;
+	HX2_T_o_s ALIASES HX2.T_o_s;
+
+	t_wall_1, t_wall_2 IS_A distance;
+	A_material_HX1, A_material_HX2 IS_A area;
+	A_material_HX1 = 4 * (Length_1 * width_1 + Length_1 * t_HX1 + width_1 * t_wall_1 + t_HX1 * t_wall_1 - 2 * Length_1 * t_wall_1 - 2 * t_wall_1^2);
+	A_material_HX2 = 4 * (Length_2 * width_2 + Length_2 * t_HX2 + width_2 * t_wall_2 + t_HX2 * t_wall_2 - 2 * Length_2 * t_wall_2 - 2 * t_wall_2^2);
+	V_material_HX1, V_material_HX2 IS_A volume;
+	V_material_HX1 = 2 * Length_1 * t_wall_1 * (width_1 + t_HX1 - 2 * t_wall_1);
+	V_material_HX2 = 2 * Length_2 * t_wall_2 * (width_2 + t_HX2 - 2 * t_wall_2);
+	eq_temp: HX2.T_o_g = HX1.T_i_g;
+	eq_vel: Vel_ore_2 = Vel_ore;
+	flux_ratio IS_A fraction;
+END HX_Sinter_HX;
+
+MODEL HX_all REFINES HX_Sinter_HX;
+	fluid_g :=='air';
+	fluid_s :=='iron';
+	intconv_corr :== 'Nsofor';
+	HX2.n :==6;
+	HX1.n :==6;
+	Sinter.n :==$N_SEGMENTS_SUBST_19;
+
+METHODS
+	METHOD on_load;
+		RUN HX1.default;
+		RUN Sinter.set_common_parameters;
+		RUN Sinter.default;
+		RUN HX2.default;
+
+		FOR i IN [0..HX1.n-1] DO
+			HX1.seg[i].DT1_eq2.included := FALSE;
+			HX1.seg[i].DT2_eq2.included := FALSE;
+			HX1.seg[i].Q_eq2.included := FALSE;
+		END FOR;
+		FOR i IN [0..HX2.n-1] DO
+			HX2.seg[i].DT1_eq1.included := FALSE;
+			HX2.seg[i].DT2_eq1.included := FALSE;
+			HX2.seg[i].Q_eq1.included := FALSE;
+		END FOR;
+		Sinter.eq2.included := FALSE;
+		mdot_eq.included := FALSE;
+		mdot_eq2.included := FALSE;
+		eq_temp.included := FALSE;
+		eq_vel.included := FALSE;
+		FIX HX1.T_i_g :=$N_SEGMENTS_SUBST_6 {K} + 273.15 {K};
+		FIX HX1.T_o_s :=$N_SEGMENTS_SUBST_7 {K} + 273.15 {K};
+		(*FIX HX1.eps :=0.42;
+		FIX HX2.eps :=0.48;*)
+
+		FIX HX1.d_p :=$N_SEGMENTS_SUBST_9 {mm};
+		FIX t_HX1 := $N_SEGMENTS_SUBST_10 {m};
+		FIX HX1.A_HX := 1000 {m^2};
+		FIX width_1 := $N_SEGMENTS_SUBST_11 {m};
+		FIX HX1.mdot_g := 76 {kg/s};
+		FIX HX1.mdot_s := 56 {kg/s};
+
+		FIX t_wall_1 := $N_SEGMENTS_SUBST_12 {cm};
+		FIX t_wall_2 := t_wall_1;
+
+		IF HX1.T_o_s.fixed == TRUE THEN
+			FOR i IN [0..HX1.n] DO
+				HX1.node_s[i].T := HX1.T_o_s - (1250{K} - 25{K}) / HX1.n * i;
+				HX1.node_g[i].T := HX1.T_i_g - i*109{K};
+			END FOR;
+		END IF;
+
+		(*FIX HX1.T_i_s := 25 {K} + 273.15 {K};*)
+
+		FIX HX2.T_i_g :=$N_SEGMENTS_SUBST_13 {K} + 273.15 {K};
+		FIX HX2.T_o_s :=$N_SEGMENTS_SUBST_14 {K} + 273.15 {K};
+
+		FIX HX2.mdot_g := 76 {kg/s};
+		FIX HX2.mdot_s := 56 {kg/s};
+		FIX HX2.d_p :=$N_SEGMENTS_SUBST_16 {mm};
+		FIX width_2 := $N_SEGMENTS_SUBST_17 {m};
+		FIX Sinter.eps_vf :=$N_SEGMENTS_SUBST_18;
+		FIX flux_ratio :=$N_SEGMENTS_SUBST_20;
+
+		FIX t_HX2 := 0.077{m}; (*80cm*)
+		FIX HX2.A_HX := 9000 {m^2};(*8000 m^2*)
+
+		FIX	p_all := 1 {bar};
+
+		IF HX2.T_i_s.fixed == TRUE THEN
+			FOR i IN [0..HX2.n] DO
+				HX2.node_g[i].T := HX2.T_i_g + i*700{K};
+				HX2.node_s[HX2.n-i].T := HX2.T_i_s - i*399{K};
+			END FOR;
+		END IF;
+
+		IF HX2.T_o_s.fixed == TRUE THEN
+			FOR i IN [0..HX2.n] DO
+				HX2.node_s[i].T := HX2.T_o_s + (1350{K} - 125{K}) / HX2.n * i;
+				HX2.node_g[i].T := HX2.T_i_g + (1300{K} - 25{K}) / HX2.n * i;
+			END FOR;
+		END IF;
+
+		FIX Sinter.T_sky := $N_SEGMENTS_SUBST_3 {K} + 273.15{K};
+		FIX Sinter.h_ext := $N_SEGMENTS_SUBST_4 {W/m^2/K};
+
+		SOLVER QRSlv;
+		OPTION convopt 'RELNOM_SCALE';
+		OPTION iterationlimit 20000;
+
+	END on_load;
+
+	METHOD solve_T;
+		FREE HX2.mdot_g;
+		FIX HX2.T_i_s :=$N_SEGMENTS_SUBST_15 {K} + 273.15 {K};
+		FREE HX1.mdot_g;
+		FIX HX1.T_i_s :=$N_SEGMENTS_SUBST_8 {K} + 273.15 {K};
+	END solve_T;
+
+	METHOD solve_A;
+		FREE HX2.A_HX;
+		eq_temp.included := TRUE;
+	END solve_A;
+
+	METHOD solve_mdot;
+		FREE HX1.A_HX;
+		FREE HX1.mdot_s;
+		mdot_eq.included := TRUE;
+		mdot_eq2.included := TRUE;
+	END solve_mdot;
+
+	METHOD solve_Q;
+		FREE Sinter.mdot;
+		Sinter.eq2.included := TRUE;
+		FOR i IN [0..Sinter.n-1] DO
+			Sinter.eq1[i].included := FALSE;
+		END FOR;
+		(*FIX Sinter.Q_i_tot := 50 {MW};*)
+		EXTERNAL set_x_y(SELF);
+	END solve_Q;
+
+	METHOD identical_vel;
+		FREE HX2.t;
+		eq_vel.included := TRUE;
+	END identical_vel;
+
+	METHOD off_design;
+		EXTERNAL off_design_flux(SELF);
+		FIX Length_1;
+		FIX Length_2;
+		(*FIX HX2.T_o_s := 125 {K} + 273.15 {K};*)
+		FREE Vel_ore_2;
+		(*FREE HX1.T_o_s;*)
+		FREE HX2.T_o_g;
+		FREE HX2.T_o_s;
+		FREE HX1.T_i_g;
+
+	END off_design;
+
+	METHOD plot_x_y;
+		EXTERNAL plot_x_y(SELF);
+	END plot_x_y;
+
+END HX_all;
+
+
+
+
+
