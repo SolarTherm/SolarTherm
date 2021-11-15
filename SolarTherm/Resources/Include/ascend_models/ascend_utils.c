@@ -87,7 +87,7 @@ void write_flux_array(int file_index, const char* SolarTherm_path, const char* m
 	free(fn_source);
 };
 
-int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int argc, int num_segment, const double var[], const char* modelica_wd, const char* SolarTherm_path, double* angles){
+int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int num_segment, const double var[], const char* modelica_wd, const char* SolarTherm_path, double* angles){
     /*python run_sintering_thermal_model.py --T_sky 40.0 --k_s 6.5 --alpha 0.95 --eps_r 0.9 --h_ext 20.0 --eps 0.4 --T_i_s_HX1 25 --T_o_s_HX1 1140 --T_i_g_HX1 1250 --d_p_HX1 0.0075 --H_HX1 0.05 --W_HX1 8.0 --t_wall_HX1 0.01 --T_i_s_HX2 1350 --T_o_s_HX2 200.0 --T_i_g_HX2 25.0 --W_HX2 8.0 --d_p_HX2 0.04 --flux_multiple_off 1 --seg 40 --dir_save /tmp/OpenModelica_philgun/OMEdit --SolarTherm_path /home/philgun/solartherm-sintering/SolarTherm --angle1 22.5 --angle2 30.0*/
     char* cmd = NEW_ARRAY(char, MAXLEN);
     snprintf(
