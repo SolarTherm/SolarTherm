@@ -69,8 +69,7 @@ model HeliostatsField
 
   Modelica.Blocks.Interfaces.RealOutput Q_incident annotation(
     Placement(transformation(extent = {{94, -18}, {130, 18}})));
-  Modelica.Blocks.Interfaces.BooleanInput on_hopper (start=false) annotation(
-    Placement(visible = true, transformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-106, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+
 protected
   SI.Power W_loss1;
   SI.Power W_loss2;
@@ -111,7 +110,7 @@ equation
   end if;
 
   on_hf=(ele>ele_min) and
-                     (Wspd_internal<Wspd_max) and (on_hopper==true);
+                     (Wspd_internal<Wspd_max);
   Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
   
   Q_total_loses_optical = max(((n_h * A_h * solar.dni) - Q_net),0) "PG";

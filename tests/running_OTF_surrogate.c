@@ -127,7 +127,7 @@ int test_runNRELPBOffDesign(){
 
 	fclose(check_file);
 
-	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000/scaled_Kriging_training_data_deviation.csv","r");
+	check_file = fopen("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000/OD_matrix.csv","r");
 	if(check_file == NULL){
 		fprintf(stderr,"Training data not generated. Generating new training data of NREL PB failed\n\n");
 		return -1;

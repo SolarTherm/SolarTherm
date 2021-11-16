@@ -53,7 +53,7 @@ model ReceiverControl
         extent={{-20,-20},{20,20}},
         rotation=-90,
         origin={0,-114})));
-  SolarTherm.Models.Control.PID_AW_reset3_voriginal PID(
+  SolarTherm.Models.Control.PID_AW_reset3 PID(
     Tt = 1,
     uMax=m_flow_max,
     uMin=m_flow_min,

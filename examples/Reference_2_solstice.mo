@@ -455,7 +455,7 @@ model Reference_2_solstice
 																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
 	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
-	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
+	//SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	// Variables:
 	SI.Power P_elec "Output power of power block";
