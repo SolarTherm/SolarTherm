@@ -1,4 +1,5 @@
 //#include "on_the_fly_surrogate/ontheflysurrogate.h" 
+#include "st_otf_surrogate.h"
 
 #include "otf/kriging.h"
 #include "otf/ann.h"
@@ -70,37 +71,6 @@ The function assign the on-design calculation result in `res` (pointer to double
 	*            res[12] = dT_PHX_hot_approach;      [K]			--> delta temp. between sCO2 inlet flow to turbine and incoming HTF to PHX
 
 */
-
-/*
-	Function protoypes
-*/
-void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
-		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
-		,double T_amb_base, char* HTF_name, int HTF_choice
-		,char* SolarTherm_path, double T_HTF_cold_des, double* res
-);
-
-void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double PR, 
-		double pinch_PHX, double dTemp_HTF_PHX, double load_base,  double T_amb_base, 
-		double eta_gross_base, double eta_Q_base, char* base_path,  char* SolarTherm_path,
-		int inputsize, int outputsize, double tolerance, int PB_model, 
-		int htf_choice, double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
-		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach, 
-		char* HTF_name
-);
-
-void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR, 
-		double pinch_PHX, double dTemp_HTF_PHX, double load_base, double T_amb_base, 
-		double eta_gross_base, double eta_Q_base, int which_ANN_model, char* base_path, char* SolarTherm_path, 
-		int inputsize, int outputsize, double tolerance, int PB_model,
-		int htf_choice, double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
-		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach,
-		char* HTF_name
-);
-
-void destructANN(Session_Props* sess);
-
-void destructKriging(Kriging_struct* Kriging_variables);
 
 void initNRELPB(double P_net,double T_in_ref_blk, double p_high, double dT_PHX_cold_approach
 		,double eta_isen_mc,double eta_isen_rc,double eta_isen_t,double dT_mc_approach
@@ -445,7 +415,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 	free(index_and_status);
 
 	Kriging_variables->count = 0;
-	return Kriging_variables;
+	return (void*)Kriging_variables;
 }
 
 //******************** SEQUENCE 2.2
@@ -689,12 +659,12 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 				double* y_max = NEW_ARRAY(double,outputsize);
 				double* y_min = NEW_ARRAY(double,outputsize);
 
-				for(size_t i=0;i<inputsize;i++){
+				for(int i=0;i<inputsize;i++){
 				    X_max[i] = UB[i];
 				    X_min[i] = LB[i];
 				}
 				
-				for(size_t i=0;i<outputsize;i++){
+				for(int i=0;i<outputsize;i++){
 				    y_max[i] = UB[i+inputsize];
 				    y_min[i] = LB[i+inputsize];
 				}
@@ -772,12 +742,12 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 				double* y_max = NEW_ARRAY(double,outputsize);
 				double* y_min = NEW_ARRAY(double,outputsize);
 
-				for(size_t i=0;i<inputsize;i++){
+				for(int i=0;i<inputsize;i++){
 				    X_max[i] = UB[i];
 				    X_min[i] = LB[i];
 				}
 				
-				for(size_t i=0;i<outputsize;i++){
+				for(int i=0;i<outputsize;i++){
 				    y_max[i] = UB[i+inputsize];
 				    y_min[i] = LB[i+inputsize];
 				}
@@ -804,7 +774,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 
 	sess->count=0;
 
-	return sess;
+	return (void *)sess;
 }
 
 
@@ -813,7 +783,10 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 /* 
 	destructor for ANN session
 */
-void destructANN(Session_Props* sess){
+void destructANN(void *sess0){
+	assert(sess0);
+	Session_Props* sess = (Session_Props *)sess0;
+
 	fprintf(stderr,"ANN is called %d times to predict 1 eta during the simulation\n",sess->count);
 
 	TF_DeleteSession(sess->Session,sess->Status);
@@ -833,10 +806,13 @@ void destructANN(Session_Props* sess){
 /* 
 	destructor for Kriging
 */
-void destructKriging(Kriging_struct* Kriging_variables){
+void destructKriging(void *krigingdata){
+	assert(krigingdata);
+	Kriging_struct* Kriging_variables = (Kriging_struct *)krigingdata;
+
 	fprintf(stderr,"Kriging is called %d times to predict 1 eta during the simulation\n",Kriging_variables->count/2);
 
-	for(size_t i=0; i<Kriging_variables->rows;i++){
+	for(int i=0; i<Kriging_variables->rows;i++){
 		free(Kriging_variables->trainingData[i]);
 	}
 

@@ -1,6 +1,8 @@
 /*
 	Test code for testing on the fly surrogate functionality
 */
+#include "st_otf_surrogate.h"
+
 #include "otf/kriging.h"
 #include "otf/ann.h"
 #include "otf/sscpb.h"
@@ -110,6 +112,9 @@ int test_runNRELPBOffDesign(){
 		1, /*OD simulated*/
 		1 /*test mode*/
 	);
+
+	/* can we do something to check that it's valid...? */
+	(void)simulation_result;
 
 	//Deleting directory and files will be done in Python
 

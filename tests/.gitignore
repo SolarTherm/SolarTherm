@@ -59,4 +59,8 @@ PhysicalParticleSystem
 TroughWagner*.[ch]
 TroughWagner
 PhysicalParticleCO21D_*_OnTheFlySurrogate*.[ch]
-
+PhysicalParticleCO21D_*_OnTheFlySurrogate
+testOTFsurrogate
+time.csv
+simulated_parameters.csv
+OELT_Solstice.motab
