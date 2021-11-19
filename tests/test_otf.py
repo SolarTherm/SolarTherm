@@ -62,34 +62,5 @@ def test_runNRELPBOffDesign():
 	os.remove("../SolarTherm/Data/SurrogateModels/PowerBlock/configurations/configNREL3000.txt")
 	shutil.rmtree("../SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL3000")
 
-#def test_loadExistingKriging():
-	#run_ctest('loadExistingKriging')
 
-#def test_loadPredictExistingANN():
-	#run_ctest('loadPredictExistingANN')
-
-'''
-def test_daggett():
-	run_ctest('daggett')
-
-def test_wrap():
-	run_ctest('wrap')
-
-def test_modelica():
-	"""
-	Run the modelica test of STMotab.
-	"""
-	fn = './TestSTMotab.mo'
-	sim = simulation.Simulator(fn)
-	sim.compile_model()
-	sim.compile_sim(args=['-s'])
-	sim.simulate(start=0, stop='1y', step='5m', solver='dassl', nls='homotopy')
-
-	res = DyMat.DyMatFile('TestSTMotab_res.mat')
-	assert res.data("t1")[0] == 31500000.
-	assert res.data("dnival")[0] == 976.
-	assert res.data("dnicol")[0] == 2.
-	
-	cleantest.clean('TestSTMotab')
-'''
 # vim: ts=4:sw=4:noet:tw=80

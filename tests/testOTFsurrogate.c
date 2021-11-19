@@ -9,6 +9,7 @@
 #define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
 #define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 
+
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
 #include <gsl/gsl_blas.h>
@@ -22,7 +23,7 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#define MAXLEN 1024
+#define MAXLEN (2*PATH_MAX)
 
 #define TESTOTF_DEBUG
 #ifdef TESTOTF_DEBUG
@@ -92,7 +93,7 @@ int test_runNRELPBOffDesign(){
 	char* HTF_name = "CarboHSP";
 	int htf_choice = 50;
 
-	char SolarTherm_path[5000];
+	char SolarTherm_path[PATH_MAX];
 	realpath("../SolarTherm", SolarTherm_path);
 	fprintf(stderr, "STPATH: %s\n\n", SolarTherm_path);
 
@@ -168,7 +169,7 @@ int main(int argc, const char **argv){
 		}
 		return(1);
 	}
-	MSG("\nTesting OTF surrogate '%s'...\n",argv[1]);
+	MSG("\nRunning C test function 'test_%s'...\n",argv[1]);
 	int res = (*fn)();
 	MSG("res = %d",res);
 	return res;
