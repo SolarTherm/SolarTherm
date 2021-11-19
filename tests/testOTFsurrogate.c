@@ -3,10 +3,11 @@
 */
 #include "st_otf_surrogate.h"
 
-#include "otf/kriging.h"
-#include "otf/ann.h"
 #include "otf/sscpb.h"
-#include "otf/util.h"
+
+#include <stdlib.h>
+#define NEW(TYPE) (TYPE*)malloc(sizeof(TYPE))
+#define NEW_ARRAY(TYPE,SIZE) (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>

@@ -178,7 +178,7 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest -vv -s test_OTF_surrogate.py
+        st python -m pytest -vv -s test_otf.py
 
     - name: Test st_simulate
       run: |
