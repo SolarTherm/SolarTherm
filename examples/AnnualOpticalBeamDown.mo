@@ -87,8 +87,46 @@ model AnnualOpticalBeamDown
   parameter SI.Length W_HX2 = 8.0 "Width of heat exchanger [m]";
   parameter SI.Length d_p_HX2 = 40e-3 "Iron ore diameter [m]";
   
+  parameter SI.Area A_land = metadata_list[8];
+  
   //status_run to launch the ASCEND model --> collecting training data
   parameter Integer status_run(fixed=false);
+  parameter Real mdot_ore_design_point(fixed=false);
+ 
+  //Specific cost of components
+  parameter Real pri_tower = 725.9 "USD/kWth";
+  parameter Real pri_secondary_mirror = 100 "USD/m2";
+  parameter Real pri_field = 75 "USD/m2";
+  parameter Real pri_CPC = 300 "USD/m2";
+  parameter Real pri_land = 2.47105163015276 "USD/m2 based on Gen3 Topic 1 Downselect Criteria rev_1 Chapter 3.1.3";
+     
+  //Financial parameters
+  parameter Real r_disc = 0.0401;  
+  parameter Integer t_life = 30;
+  parameter Integer t_cons = 0;
+  parameter Real r_contg = 0.1;
+  parameter Real r_cons = 0.06;
+  
+  //O&M cost
+  parameter Real C_year = 0.05 * C_cap;
+  parameter Real C_prod = 0;
+    
+  //Cost calculation
+  parameter Real C_tower = pri_tower * Q_in_rcv/1e3;
+  parameter Real C_secondary_mirror = pri_secondary_mirror * 0; //=====> Ask C secondary mirror to clotilde
+  parameter Real C_field = pri_field * n_h * A_h;
+  parameter Real C_CPC = pri_CPC * 0; //=====> Ask clotilde about CPC area
+  parameter Real C_trussed_framework = 0.84 * 1e6 "USD"; 
+  parameter Real C_reactor = 0;
+  parameter Real C_HX = 0; 
+  parameter Real C_land = pri_land * A_land;
+  
+  parameter Real C_equipment = C_tower + C_secondary_mirror + C_field + C_CPC + C_trussed_framework;
+  parameter Real C_direct = (1 + r_contg) * C_equipment;
+  parameter Real C_indirect = r_cons * C_direct + C_land;
+  
+  parameter Real C_cap = C_direct + C_indirect;
+ 
 
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -165,6 +203,9 @@ model AnnualOpticalBeamDown
 initial algorithm
   /*Call Solstice to generate OELT*/
   opt_file := lookuptable.tablefile;
+  
+  /*Call mdot ore design point*/
+  mdot_ore_design_point := SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19);
   
   /*Initialisation of the model, skip for now since it has been initialised*/
   status_run := SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters);

@@ -66,6 +66,123 @@ def test_model(modelname,solvername='QRSlv',varvalues={},parameters={},retvars=[
 	return R
 
 '''
+	Function to run sintering thermal model for design point
+'''
+def run_thermalSinteringModelDesignPoint(inputs):
+	sys.stderr.write("Entering python function run_thermalSinteringModelDesignPoint\n\n")
+
+	#Reading the inputs
+	T_sky = inputs["T_sky"]
+	k_s = inputs["k_s"]
+	alpha = inputs["alpha"]
+	eps_r = inputs["eps_r"]
+	h_ext = inputs["h_ext"]
+	eps = inputs["eps"]
+
+	T_i_s_HX1 = inputs["T_i_s_HX1"]
+	T_o_s_HX1 = inputs["T_o_s_HX1"]
+	T_i_g_HX1 = inputs["T_i_g_HX1"]
+	d_p_HX1 = inputs["d_p_HX1"]
+	H_HX1 = inputs["H_HX1"]
+	W_HX1 = inputs["W_HX1"]
+	t_wall_HX1 = inputs["t_wall_HX1"]
+
+	T_i_s_HX2 = inputs["T_i_s_HX2"]
+	T_o_s_HX2 = inputs["T_o_s_HX2"]
+	T_i_g_HX2 = inputs["T_i_g_HX2"]
+	W_HX2 = inputs["W_HX2"]
+	d_p_HX2 = inputs["d_p_HX2"]
+
+	dirsave = inputs["dir_save"]
+	st_path = inputs["SolarTherm_path"]
+	#Reading the flux multiplier based on DNI ratio
+	flux = 1
+
+	seg = inputs["seg"]
+	
+	sys.stderr.write("\n\nDone reading inputs...\n\n")
+
+
+	#Open ASCEND model
+	try:
+		t = open("%s/Resources/Include/Sinter_HX_n.a4c"%(st_path)).read()
+	except Exception as e:
+		sys.stderr.write(str(e))
+
+	sys.stderr.write("Done reading ASCEND model...\n\n")
+
+	#Parse the simulation parameters
+	P_1 = Template(t).safe_substitute(N_SEGMENTS_SUBST_1 = k_s, N_SEGMENTS_SUBST_2 = alpha,N_SEGMENTS_SUBST_3 = T_sky, N_SEGMENTS_SUBST_4 = h_ext, N_SEGMENTS_SUBST_6 = T_i_g_HX1, N_SEGMENTS_SUBST_7 = T_o_s_HX1, N_SEGMENTS_SUBST_8 = T_i_s_HX1, N_SEGMENTS_SUBST_9 = d_p_HX1, N_SEGMENTS_SUBST_10 = H_HX1, N_SEGMENTS_SUBST_11 = W_HX1, N_SEGMENTS_SUBST_12 = t_wall_HX1, N_SEGMENTS_SUBST_13 = T_i_g_HX2, N_SEGMENTS_SUBST_14 = T_o_s_HX2, N_SEGMENTS_SUBST_15 = T_i_s_HX2, N_SEGMENTS_SUBST_16 = d_p_HX2, N_SEGMENTS_SUBST_17 = W_HX2, N_SEGMENTS_SUBST_18 = eps,N_SEGMENTS_SUBST_19 = int(seg),N_SEGMENTS_SUBST_20 = flux)
+
+	f2 = open("%s/Resources/Include/Sinter_HX_LOADME.a4c"%(st_path),"w")
+	f2.write(P_1)
+	f2.close()
+
+	sys.stderr.write("Done modifying ASCEND model...\n\n")
+
+	modelname = 'HX_all'
+	L = ascpy.Library()
+
+	#Grab modelica wd
+	modelica_wd = os.getcwd()
+	sys.stderr.write("modelica wd: %s\n"%(modelica_wd))
+
+	#change dir to SolarTherm/Resources/Include
+	os.chdir("%s/Resources/Include"%(st_path))
+
+	thisdir = os.path.dirname(os.path.abspath(__file__))
+	wd = os.getcwd()
+	comm = os.path.commonprefix([thisdir,wd])
+
+	filename = os.path.relpath(os.path.join(thisdir,'Sinter_HX_LOADME.a4c'),comm)
+
+	try:
+		L.load(filename)			
+	except Exception as e:
+		sys.stderr.write(str(e))
+		return -1
+
+	#Execute the model
+	try:
+		R = test_model(
+			modelname,
+			varvalues={'width_1':(W_HX1,'m'), 't_HX1':(H_HX1,'m')},
+			parameters={'iterationlimit':20000},
+			retvars=[
+				'Vel_ore','Vel_air','Vel_ore_2','Vel_air_2','Length_1','width_1','Length_2',
+				'width_2','HX_A_1','HX_A_2','time_required','t_HX1','t_HX2',
+				'W_Sinter','L_Sinter','H_Sinter',
+				'Q_sun','Q_refl','Q_ext_rad','Q_ext_conv','Q_net',
+				'mdot_g_HX1','mdot_s_HX1','mdot_g_HX2','mdot_s_HX2','mdot_Sinter',
+				'A_material_HX1','A_material_HX2','V_material_HX1','V_material_HX2','eta_th'
+			]
+		)
+
+		L.clear()
+		sys.stderr.write("mdot ore: %f kg/s \n\n"%(R['mdot_s_HX2']))
+		os.remove("HX_DESIGN_RESULTS_0.csv")
+		mdot_ore = R['mdot_s_HX2']
+	except Exception as e:
+		L.clear()
+		sys.stderr.write(str(e))
+		sys.stderr.write("Not converging. mdot ore: %f kg/s \n\n"%(0.0))
+		mdot_ore = 0
+
+	os.remove("Sinter_HX_LOADME.a4c")
+
+	#Get back to modelica_wd
+	os.chdir(modelica_wd)
+
+	#Make sure we get back to modelica wd
+	assert(
+		os.getcwd() == modelica_wd
+	)
+
+	#Append the data
+	return mdot_ore
+		
+
+'''
 	Function to run sintering thermal model for given parameters, and records the mdot_ore
 '''
 def run_thermalSinteringModel(inputs):

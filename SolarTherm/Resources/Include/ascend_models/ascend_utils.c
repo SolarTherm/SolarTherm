@@ -189,10 +189,10 @@ double run_interpolation(const char *ppath, const char *pname, const char *pfunc
 /*
 	Function to call Python code that execute ASCEND model for sintering process
 */
-int run_ascend_sintering_model(const char *ppath, const char *pname, const char *pfunc, int argc, int num_segment, const char *varnames[], 
+double run_ascend_sintering_model(const char *ppath, const char *pname, const char *pfunc, int argc, int num_segment, const char *varnames[], 
 				const double var[], const char *modelica_wd, const char* SolarTherm_path, double* angles){
 					
-	int status_run;
+	double mdot_ore;
 	int i;
 
 	PyObject *pName, *pModule, *pFunc;
@@ -224,8 +224,6 @@ int run_ascend_sintering_model(const char *ppath, const char *pname, const char 
             PyDict_SetItemString(inputs, "dir_save", PyString_FromString((char *)modelica_wd));
             PyDict_SetItemString(inputs, "SolarTherm_path", PyString_FromString((char *)SolarTherm_path));
             PyDict_SetItemString(inputs, "seg", PyLong_FromLong(num_segment));
-            PyDict_SetItemString(inputs, "angle1", PyFloat_FromDouble(angles[0]));
-            PyDict_SetItemString(inputs, "angle2", PyFloat_FromDouble(angles[1]));
 
             for (i = 0; i < argc; ++i) {
                 pValue = PyFloat_FromDouble(var[i]);
@@ -243,7 +241,7 @@ int run_ascend_sintering_model(const char *ppath, const char *pname, const char 
 
             pValue = PyObject_CallObject(pFunc, pArgs);
 
-            status_run = PyLong_AsLong(pValue);
+            mdot_ore = PyFloat_AsDouble(pValue);
 			
             Py_DECREF(pArgs);
             Py_DECREF(inputs);
@@ -270,5 +268,5 @@ int run_ascend_sintering_model(const char *ppath, const char *pname, const char 
         fprintf(stderr, "Failed to load \"%s\"\n", pname);
     }
 
-	return status_run;
+	return mdot_ore;
 }

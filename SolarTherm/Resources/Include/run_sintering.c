@@ -9,6 +9,41 @@
 
 int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[]);
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off);
+double run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc);
+
+double run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc){
+	/*Build destination fn destination*/
+	char* fn_destination = NEW_ARRAY(char, MAXLEN);
+	snprintf(fn_destination, MAXLEN, "%s/Resources/Include/ascend_models/test_data/fluxmap.csv",SolarTherm_path);
+
+	/*Build destination fn source*/
+	char* fn_source = NEW_ARRAY(char, MAXLEN);
+	snprintf(fn_source,MAXLEN,"%s/test/receiver_1D_FluxMap_des_point.csv",modelica_wd);
+
+	fprintf(stderr,"Copy flux array from : %s to %s\n",fn_source, fn_destination);
+
+	//Start reading the file starting from line 1 of fn_flux
+	FILE* f_source = fopen(fn_source, "r");
+	FILE* f_dest = fopen(fn_destination, "w");
+	char ch = fgetc(f_source);
+
+	while(ch != EOF){
+		fputc(ch, f_dest);
+		ch = fgetc(f_source);
+	}
+	fclose(f_source);
+	fclose(f_dest);
+	free(fn_destination);
+	free(fn_source);
+	
+	int num_segment = read_num_segment(modelica_wd);
+	double* angles = NEW_ARRAY(double,2);
+	angles[0] = 0;
+	angles[1] = 0;
+
+	double mdot_ore = run_ascend_sintering_model(ppath, pname, pfunc, argc, num_segment, varnames, vars, modelica_wd, SolarTherm_path, angles);
+	return mdot_ore;
+}
 
 int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[]){
 	char* CSV_test = NEW_ARRAY(char, MAXLEN);

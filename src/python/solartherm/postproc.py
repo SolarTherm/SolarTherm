@@ -195,55 +195,152 @@ class SimResult(object):
 		return constr, distance
 
 class SimResultElec(SimResult):
-	def calc_perf(self, peaker=False):
+	def calc_perf(self, peaker=False, IRR=False, Ore=True):
 		"""Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
 
 		peaker: bool, True: to calculate performance of a peaker plant
+		IRR: bool, True: to calculate performance of a peaker plant using IRR. peaker bool must be false
 		"""
 		var_names = self.get_names()
-		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
+		if Ore == True:
+			assert('M_ore' in var_names), "For a levelised cost of ore, It is expected to see M_ore variable in the result files"
+			eng_t = self.mat.abscissa('M_ore')
+			eng_v = self.mat.data('M_ore')[-1]
+			cap_v = self.mat.data('C_cap')[-1] # Capital costs [$]
+			om_y_v = self.mat.data('C_year')[-1] # O&M costs per year [$/year]
+			om_p_v = self.mat.data('C_prod')[-1] # O&M costs per production per year [$/J/year]
+			disc_v = self.mat.data('r_disc')[-1] # Discount rate [-]
+			life_v = int(self.mat.data('t_life')[-1]) # Plant lifetime [year]
+			cons_v = int(self.mat.data('t_cons')[-1]) # Construction time [year]
+			name_v = self.mat.data('mdot_ore_design_point')[-1] # Generator nameplate [kg/s]
+			t_life = int(self.mat.data('t_life')[-1]) # Year of lifetime
 
-		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
-		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
-		cap_v = self.mat.data('C_cap') # Capital costs [$]
-		om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
-		om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
-		disc_v = self.mat.data('r_disc') # Discount rate [-]
-		life_v = self.mat.data('t_life') # Plant lifetime [year]
-		cons_v = self.mat.data('t_cons') # Construction time [year]
-		name_v = self.mat.data('P_name') # Generator nameplate [W]
-		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+			#Calculate LCO Ore
+			nu = 0.
+			de = 0.
 
-		dur = eng_t[-1] - eng_t[0] # Time duration [s]
-		years = dur/31536000 # number of years of simulation [year]
-		# Only provide certain metrics if runtime is a multiple of a year
-		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
-
-		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
-		srev = rev_v[-1] # spot market revenue [$]
-		lcoe = None # Levelised cost of electricity
-		capf = None # Capacity factor
-		if close_to_year: 
-			if peaker:
-				tod_v=self.mat.data('TOD_W')
-				tod_factor=tod_v[-1]/eng_v[-1]
-				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
-				capf = fin.capacity_factor(name_v[0], tod_v[-1])
-
+			# Assume capital cost is evenly split between years in construction phase,
+			# else if no construction phase it is all paid up front
+			if cons_v == 0:
+				nu += cap_v
 			else:
-				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-						int(life_v[0]), int(cons_v[0]), epy)
-				capf = fin.capacity_factor(name_v[0], epy)
+				for i in range(cons_v):
+					nu += (cap_v/cons_v)/((1 + disc_v)**i)
 
-		# Convert to useful units
-		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
-		if close_to_year: 
-			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
-			capf = 100*capf
+			for i in range(cons_v+1, cons_v+t_life+1):
+				nu += om_y_v/((1 + disc_v)**i)
+				de += eng_v/((1 + disc_v)**i)
 
+			try:
+				LCO_Ore = nu/de
+			except Exception as e:
+				import sys
+				sys.stderr.write("%s\n"%(str(e)))
+				sys.stderr.write("Can not calculate LCO Ore with numerator val: %s and denominator val: %s\n\n"%(nu,de))
+				sys.stderr.write("Return value as 99999 instead\n")
+				LCO_Ore = 9999999
+
+			try:			
+				cf = eng_v / name_v * 3.1536e7
+			except Exception as e:
+				sys.stderr.write("%s\n"%(str(e)))
+				sys.stderr.write("Can not calculate CF with numerator val: %s and denominator val: %s\n\n"%(eng_v,name_v * 3.1536e7))
+				cf = -1
+			
+			return [eng_v, LCO_Ore, cf, 0,]
+				
+		else:
+			assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
+
+			eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
+			eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
+			cap_v = self.mat.data('C_cap') # Capital costs [$]
+			om_y_v = self.mat.data('C_year') # O&M costs per year [$/year]
+			om_p_v = self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
+			disc_v = self.mat.data('r_disc') # Discount rate [-]
+			life_v = self.mat.data('t_life') # Plant lifetime [year]
+			cons_v = self.mat.data('t_cons') # Construction time [year]
+			name_v = self.mat.data('P_name') # Generator nameplate [W]
+			rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+			t_life = self.mat.data('t_life') # Year of lifetime
+
+			dur = eng_t[-1] - eng_t[0] # Time duration [s]
+			years = dur/31536000 # number of years of simulation [year]
+			# Only provide certain metrics if runtime is a multiple of a year
+			close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+			epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+			srev = rev_v[-1] # spot market revenue [$]
+			lcoe = None # Levelised cost of electricity
+			capf = None # Capacity factor
+			if close_to_year: 
+				if peaker:
+					tod_v=self.mat.data('TOD_W')
+					tod_factor=tod_v[-1]/eng_v[-1]
+					lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+							int(life_v[0]), int(cons_v[0]), epy, tod_factor)
+					capf = fin.capacity_factor(name_v[0], tod_v[-1])
+				elif IRR:
+					CAPEX = self.mat.data("C_cap")[-1]
+					FixedCost = self.mat.data('C_year')[-1]
+					VariableCost = self.mat.data('pri_om_prod')[-1] * epy
+					EBITDA = srev - FixedCost - VariableCost
+					CF = []
+					t_cons = int(cons_v[-1])
+
+					if t_cons == 0:
+						for _ in range(t_cons+1):
+							CF.append(CAPEX * -1)
+				
+						for _ in range(int(t_life[0])):
+							CF.append(EBITDA)
+					else:
+						for _ in range(t_cons):
+							CF.append(CAPEX/t_cons * -1)
+				
+						for _ in range(int(t_life[0]) - t_cons):
+							CF.append(EBITDA)
+				
+
+					CF = np.array(CF)
+				
+					lcoe = np.irr(CF)
+					capf = fin.capacity_factor(name_v[0], epy)
+
+
+				else:
+					lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+							int(life_v[0]), int(cons_v[0]), epy)
+					capf = fin.capacity_factor(name_v[0], epy)
+
+			# Convert to useful units
+			epy = epy/(1e6*3600) # Convert from J/year to MWh/year
+			if close_to_year: 
+				if not IRR:
+					lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
+				capf = 100*capf
+			'''
+			#dump param
+			SM = self.mat.data('SM')[0]
+			H_tower = self.mat.data("H_tower")[0]
+			t_storage = self.mat.data("t_storage")[0]
+			fb = self.mat.data("fb")[0]
+			R1 = self.mat.data("R1")[0]
+		
+			if peaker:
+				fn = "/home/philgun/Documents/PhD/report/dispatch-optimisation-report/new-run-for-epri/withglpk/result.csv"
+				import os
+				if not os.path.exists(fn):
+					f = open(fn,'w')
+					f.write("SM,H_tower,t_storage,fb,R1,lcoe_peaker,capf_peaker,t_bar,TOD_W\n")
+					f.close()
+				
+				f = open(fn,"a")
+				f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s\n"%(SM,H_tower,t_storage,fb,R1,lcoe,capf,tod_factor,tod_v[-1]))
+				f.close()
+			'''
 		return [epy, lcoe, capf, srev,]
 
 
