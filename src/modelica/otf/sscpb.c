@@ -33,7 +33,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	snprintf(
 		cmd,
 		MAXLEN, 
-		"python %s/Resources/Library/gen_OD_matrix.py --UB1 %lf --UB2 %lf --UB3 %lf --LB1 %lf --LB2 %lf --LB3 %lf --T_HTF_des %lf --load_des %lf --T_amb_des %lf --numinputs %d --numdata %d --trainingdir %s --type %s",
+		"python3 %s/Resources/Library/gen_OD_matrix.py --UB1 %lf --UB2 %lf --UB3 %lf --LB1 %lf --LB2 %lf --LB3 %lf --T_HTF_des %lf --load_des %lf --T_amb_des %lf --numinputs %d --numdata %d --trainingdir %s --type %s",
 		SolarTherm_path, UB_1, UB_2, UB_3, LB_1, LB_2, LB_3,T_in_ref_blk, load_des, T_amb_des, numinputs, numdata, trainingdir, training_or_validation
 	);
 
