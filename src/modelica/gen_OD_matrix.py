@@ -1,6 +1,7 @@
 from pyDOE import *
 import numpy as np
 import os
+import argparse
 
 def generate_matrix(inputs):
     UB_1 = inputs["UB_1"]
@@ -132,26 +133,114 @@ def generate_matrix_validation(inputs):
     np.savetxt("%s/OD_matrix.csv"%(trainingdir),res_matrix,delimiter=",")
     return
 
+if __name__=="__main__":
+    parser = argparse.ArgumentParser()
 
-if __name__ == "__main__":
+    parser.add_argument(
+        '--UB1',
+        help = 'Upper Boundary of T_HTF_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--UB2',
+        help = 'Upper Boundary of load_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--UB3',
+        help = 'Upper Boundary of T_amb_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--LB1',
+        help = 'Lower Boundary of T_HTF_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--LB2',
+        help = 'Lower Boundary of load_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--LB3',
+        help = 'Lower Boundary of T_amb_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--T_HTF_des',
+        help = 'T_HTF_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--load_des',
+        help = 'load_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--T_amb_des',
+        help = 'T_amb_des',
+        type = float
+    )
+
+    parser.add_argument(
+        '--numinputs',
+        help = 'number of inputs',
+        type = int
+    )
+
+    parser.add_argument(
+        '--numdata',
+        help = 'number of data',
+        type = int
+    )
+
+    parser.add_argument(
+        '--trainingdir',
+        help = 'trainingdir',
+        type = str
+    )
+
+    parser.add_argument(
+        '--type',
+        help = 'type',
+        type = str
+    )
+
+    args = parser.parse_args()
+    type_func = args.type
+    
     inputs = {}
 
-    inputs["UB_1"] = 1100 + 25
-    inputs["UB_2"] = 1.25
-    inputs["UB_3"] = 50
+    inputs["UB_1"] = args.UB1
+    inputs["UB_2"] = args.UB2
+    inputs["UB_3"] = args.UB3
 
-    inputs["LB_1"] = 950
-    inputs["LB_2"] = 0.45
-    inputs["LB_3"] = -20
+    inputs["LB_1"] = args.LB1
+    inputs["LB_2"] = args.LB2
+    inputs["LB_3"] = -args.LB3
 
-    inputs["T_HTF_des"] = 1000
-    inputs["load_des"] = 1
-    inputs["T_amb_des"] = 41
+    inputs["T_HTF_des"] = args.T_HTF_des
+    inputs["load_des"] = args.load_des
+    inputs["T_amb_des"] = args.T_amb_des
 
-    inputs["num_inputs"] = 3
-    inputs["numdata"] = 500
+    inputs["num_inputs"] = args.numinputs
+    inputs["numdata"] = args.numdata
 
-    inputs["trainingdir"] = "."
-
-    generate_matrix_factorial(inputs)
-    generate_matrix_validation(inputs)
+    inputs["trainingdir"] = args.trainingdir
+    
+    if type_func == 'training':
+        generate_matrix_factorial(inputs)
+    elif type_func == 'validation':
+        generate_matrix_validation(inputs)
+    elif type_func == 'LHS':
+        generate_matrix(inputs)
+    else:
+        raise TypeError("Function type either training, validation or LHS. Your type: %s\n"%(type_func))

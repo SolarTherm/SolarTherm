@@ -29,7 +29,19 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	double LB_2 = 0.45; //******************** minimum part load
 	double LB_3 = -20; //******************* minimum ambient temperature [C]
 
+	char* cmd = NEW_ARRAY(char,MAXLEN);
+	snprintf(
+		cmd,
+		MAXLEN, 
+		"python %s/Resources/Library/gen_OD_matrix.py --UB1 %lf --UB2 %lf --UB3 %lf --LB1 %lf --LB2 %lf --LB3 %lf --T_HTF_des %lf --load_des %lf --T_amb_des %lf --numinputs %d --numdata %d --trainingdir %s --type %s",
+		SolarTherm_path, UB_1, UB_2, UB_3, LB_1, LB_2, LB_3,T_in_ref_blk, load_des, T_amb_des, numinputs, numdata, trainingdir, training_or_validation
+	);
 
+	//Try system call instead of subprocess --> problems with Python C API for Python 3
+	system(cmd);
+	free(cmd);
+	
+	/*
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *inputs;
 
@@ -50,7 +62,7 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 		exit(EXIT_FAILURE);
 	}
 
-	Py_Initialize(); /*  Initialize Interpreter  */
+	Py_Initialize(); 
 
 	//Obtain the python path, append it with the ppath
 	PyObject *sys_path = PySys_GetObject("path");
@@ -63,19 +75,15 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 	pModule = PyImport_Import(pName);
 	Py_DECREF(pName);
 
-	/*Check if python script exists or not!*/
 	if (pModule != NULL){
-		/*Obtain the function from the imported python script*/
+		
 		pFunc = PyObject_GetAttrString(pModule, pfunc);
 
 		pArgs = PyTuple_New(1);
 
-		/*if the function is callable*/
 		if (pFunc && PyCallable_Check(pFunc)){
-		    /*Instantiate a python dictionary and assign it to inputs (pointer type)*/
 		    inputs = PyDict_New();
 
-		    /*Populate the python dictionary*/
 		    PyDict_SetItemString(inputs, "UB_1", PyFloat_FromDouble(UB_1));
 		    PyDict_SetItemString(inputs, "UB_2", PyFloat_FromDouble(UB_2));
 		    PyDict_SetItemString(inputs, "UB_3", PyFloat_FromDouble(UB_3));
@@ -110,10 +118,10 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 		Py_XDECREF(pFunc);
 		Py_DECREF(pModule);
 	}else{
-		/*if python script does not exist*/
 		PyErr_Print();
 		ERR("Failed to load \"%s\"", pname);
 	}
+	*/
 }
 
 /*
