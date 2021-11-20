@@ -290,6 +290,8 @@ class Simulator(object):
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
 		"""Compile modelica model in .mo file."""
 		call = ['omc', '-s', '-q', '-n='+str(n_proc)] + args + ['-i='+self.model, self.fn] + libs
+		if os.environ.get('ST_DEBUG',0):
+			call += ['--debug=gendebugsymbols'] # add debug flags
 		sp_run(call)
 			
 		#TODO solve the issue of linker flags in the latest msys2 (v20210228), ASLR enabled by default

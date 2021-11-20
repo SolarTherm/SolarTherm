@@ -175,7 +175,10 @@ if __name__ == '__main__':
 			sim.compile_model()
 		if not args.nosc:
 			print('Compiling simulator')
-			sim.compile_sim(args=([] if args.v else ['-s']))
+			compile_args = ['-s'] # silent
+			if args.v or os.environ.get('ST_DEBUG',0):
+				compile_args=[] # verbose
+			sim.compile_sim(args=compile_args)
 
 	if args.fuel:
 		resultclass = postproc.SimResultFuel
