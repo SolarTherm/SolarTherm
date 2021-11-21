@@ -10,7 +10,7 @@ tenv.Append(
 	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '$SSC_LIBPATH']
 )
 
-tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
+prog1 = tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
 
 tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
@@ -29,6 +29,7 @@ else:
 	env.Program('testmpi',['testmpi.c'],CC='mpicc')
 	
 
+env.Depends(target=prog1,dependency=['#/SolarTherm/Resources/Library'])
 
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])
