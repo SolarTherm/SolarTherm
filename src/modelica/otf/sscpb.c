@@ -12,6 +12,29 @@
 #endif
 #define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 
+/* SSC error handler */
+
+ssc_bool_t st_ssc_message_callback(ssc_module_t module, ssc_handler_t handle, int action, float f0,float f1,const char *s0,const char *s1,void *user_data){
+	switch(action){
+	case SSC_LOG:
+		switch((int)f0){
+			case SSC_LOG: MSG("Log: %s",s0); break;
+			case SSC_NOTICE: MSG("Notice: %s",s0); break;
+			case SSC_WARNING: MSG("Warning: %s",s0); break;
+			case SSC_ERROR: ERR("ERROR: %s",s0); break;
+			default: ERR("Unknown message type: %s",s0);break;
+		}
+		return 1;
+	case SSC_UPDATE:
+		MSG("Progress %f%%: %s time %f",f0,s1,f1);
+		return 1;
+	}
+	return 0;
+}
+
+#define SSC_CALL_MODULE(MODULE,DATA) ssc_module_exec_with_handler(MODULE,DATA,&st_ssc_message_callback,NULL)
+
+
 /*=================================== STARTING FROM HERE IS FUNCTIONS TO CALL POWER BLOCK MODEL ==============================*/
 /*
 	This function is to create off design input array for CEA PB to simulate shall new surrogate model is needed
@@ -37,8 +60,18 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 		SolarTherm_path, UB_1, UB_2, UB_3, LB_1, LB_2, LB_3,T_in_ref_blk, load_des, T_amb_des, numinputs, numdata, trainingdir, training_or_validation
 	);
 
+	MSG("Running call to generate off-design matrix...");
+	MSG("%s",cmd);
+
 	//Try system call instead of subprocess --> problems with Python C API for Python 3
-	system(cmd);
+	int res = system(cmd);
+
+	if(res != 0){
+		ERR("ERROR: Call \"%s\" returned error code %d",cmd,res);
+	}else{
+		MSG("Off-design file generated without error");
+	}
+
 	free(cmd);
 	
 	/*
@@ -420,7 +453,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		/*Instantiate the sCO2 PB module in SAM*/
 		ssc_module_t module = ssc_module_create("sco2_csp_system");
 
-		if(ssc_module_exec(module,data)==0){
+		if(SSC_CALL_MODULE(module,data)==0){
 		    ERR("Error in simulation while running ssc_module_exec.");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
@@ -516,7 +549,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		OD_array = NEW_ARRAY(ssc_number_t, sim->rows_OD*6);
 		OD_array = sim->array_OD;
 		ssc_data_set_matrix( data, "od_cases", OD_array, sim->rows_OD, 6); /*user Off design cases*/
-		if(ssc_module_exec(module,data)==0){
+		if(SSC_CALL_MODULE(module,data)==0){
 		    ERR("Error in simulation while running ssc_module_exec!");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
@@ -665,7 +698,7 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 		/*Instantiate the sCO2 PB module in SAM*/
 		ssc_module_t module = ssc_module_create("sco2_csp_system");
 
-		if(ssc_module_exec(module,data)==0){
+		if(SSC_CALL_MODULE(module,data)==0){
 		    ERR("Error in simulation while running ssc_module_exec!");
 		    ssc_module_free(module);
 		    ssc_data_free(data);
