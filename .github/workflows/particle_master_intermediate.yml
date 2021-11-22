@@ -200,7 +200,7 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest test_particlesystem1D_surrogate.py
+        st python -m pytest -s -vv
 
 
 
