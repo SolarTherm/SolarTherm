@@ -180,7 +180,7 @@ jobs:
         solstice --version
         st python -m pytest -vv -s test_otf.py
 
-    - name: Test st_simulate
+    - name: Test st_simulate with GDB
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
@@ -189,8 +189,8 @@ jobs:
         st --version
         solstice --version
         cd ./examples
-        export ST_DEBUG=1
-        st simulate --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
+        ST_DEBUG=1 st simulate --nosim --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
+        gdb -ex run ./PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
 
     - name: Test SolarTherm (18.04 only)
       if: ${{ matrix.os == 'ubuntu-18.04' }}
