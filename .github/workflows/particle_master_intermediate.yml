@@ -190,6 +190,7 @@ jobs:
         solstice --version
         cd ./examples
         ST_DEBUG=1 st simulate --nosim --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
         gdb -ex run ./PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
 
     - name: Test SolarTherm (18.04 only)
