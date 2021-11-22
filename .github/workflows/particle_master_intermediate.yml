@@ -159,6 +159,17 @@ jobs:
         sudo apt-get install gdb
         gdb --version
 
+    - name: Test SolarTherm (18.04 only) Ubuntu 20.04 can not be tested at the moment since particle system model only works with OpenModelica 1.14.2
+      if: ${{ matrix.os == 'ubuntu-18.04' }}
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        cd tests
+        which st
+        st --version
+        solstice --version
+        st python -m pytest -vv
+
     - name: Mock test OTF surrogate (build with gdb)
       run: |    
         cd tests
@@ -179,7 +190,8 @@ jobs:
         solstice --version
         st python -m pytest -vv -s test_otf.py
 
-    - name: Test st_simulate with GDB
+    - name: Test st_simulate with GDB Ubuntu 20.04 only
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
@@ -190,17 +202,6 @@ jobs:
         ST_DEBUG=1 st simulate --nosim --start 0 --stop 86400 --tolerance 0.000001 --nls homotopy --solver dassl PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
         gdb -ex run ./PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
-
-    - name: Test SolarTherm (18.04 only)
-      if: ${{ matrix.os == 'ubuntu-18.04' }}
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
-        cd tests
-        which st
-        st --version
-        solstice --version
-        st python -m pytest -s -vv
 
 
 
