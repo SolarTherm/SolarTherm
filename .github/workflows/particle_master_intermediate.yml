@@ -173,7 +173,8 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
         echo $LD_LIBRARY_PATH
-        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+# following is not required... 'st' does this already:
+#       export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         cd tests
         which st
         st --version
@@ -184,7 +185,8 @@ jobs:
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+# following is not required... 'st' does this already:
+#       export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         which st
         st --version
         solstice --version
@@ -197,7 +199,8 @@ jobs:
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
-        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+# following is not required... 'st' does this already:
+#       export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         cd tests
         which st
         st --version

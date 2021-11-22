@@ -9,6 +9,15 @@ import cleantest
 from solartherm import simulation
 from solartherm import postproc
 
+def append_path(env,var,add):
+	val = env.get(var,None)
+	if val is None:
+		val = []
+	val = val.split(os.pathsep)
+	val += [str(add)]
+	env[var] = os.pathsep.join(val)
+	print("Appended '%s' to $%s, new value '%s'"%(add,var,env[var]))
+
 def run_ctest(name):
 	"""
 	This simply runs the C-langage tests in testOTFsurrogate.c.
@@ -18,7 +27,7 @@ def run_ctest(name):
 	env = None
 	if platform.system()=="Linux":
 		env = os.environ.copy()
-		env['LD_LIBRARY_PATH']+=':../src/modelica'
+		append_path(env,'LD_LIBRARY_PATH',Path('../src/modelica'))
 	proc = sp.run([exe,str(name)],env=env)#stdout=sp.PIPE,stderr=sp.PIPE,env=env)
 	assert proc.returncode == 0
 
