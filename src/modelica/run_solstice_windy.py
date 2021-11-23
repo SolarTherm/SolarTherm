@@ -3,19 +3,33 @@ from __future__ import print_function
 import sys
 sys.stderr.write("Hello from Python...\n");
 
+sys.stderr.write("Python Paths\n");
+for i in sys.path:
+	print(i)
 
-try:
-	import os
-	import time
-	import numpy as np
-	import solsticepy
-	from solsticepy.design_crs import CRS
-	from solsticepy.input import Parameters
-	from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab, output_metadata_motab_multi_aperture, append_oelts
-	from solsticepy.design_multi_aperture import MultiApertureConfiguration
-except Exception as e:
-	sys.stderr.write("Error with imports...\n")
-	sys.stderr.write("e = %s\n" % (str(e),))
+
+
+sys.stderr.write("\nImport os\n");
+import os
+import time
+print(os.system("python --version\n"))
+
+sys.stderr.write("Import numpy\n");
+import numpy as np
+
+sys.stderr.write("Import solsticepy\n");
+import solsticepy
+
+sys.stderr.write("Import design crs\n");
+from solsticepy.design_crs import CRS
+sys.stderr.write("Import parm\n");
+from solsticepy.input import Parameters
+sys.stderr.write("Import motab\n");
+from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab, output_metadata_motab_multi_aperture, append_oelts
+
+sys.stderr.write("Import multi-aperture\n");
+from solsticepy.design_multi_aperture import MultiApertureConfiguration
+
 
 sys.stderr.write("Done with imports...\n");
 
