@@ -41,7 +41,7 @@ model Reference_2_solstice
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
 
-	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
 	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
 	//parameter SI.Length H_tower = 150 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
@@ -342,7 +342,7 @@ model Reference_2_solstice
 		R_tower = R_tower,
 		R1 = R1,
 		fb = fb,
-		rho_helio = rho_helio,
+		helio_refl = helio_refl,
 		slope_error = slope_error,
 		n_row_oelt = n_row_oelt,
 		n_col_oelt = n_col_oelt,
