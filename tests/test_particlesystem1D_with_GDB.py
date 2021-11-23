@@ -16,12 +16,18 @@ from DyMat import DyMatFile as D
 
 class TestParticleSystem1DSurrogate(unittest.TestCase):
 	def setUp(self):
+		try:
+			os.remove("./OELT_Solstice.motab")
+		except:
+			pass
 		fn = '../examples/PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo'
 		shutil.copy(fn,".")
 		
-		sp.call("ST_DEBUG=1 st simulate --nosim PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=0.5",shell=True)
+		sp.call('ST_DEBUG=1 st simulate --stop 604800 PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo SM=1', shell=True)
 		
-		sp.call('gdb -ex run ./PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate', shell=True)
+		sp.call(
+			'gdb -ex=run -ex=quit --args ./PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate -override startTime=0.0,stopTime=604800.0,stepSize=300.0,tolerance=1e-04 -s dassl -nls homotopy -maxIntegrationOrder 5 -lv -LOG_SUCCESS,-stdout -f PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate_init_0.xml -r PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate_res_0.mat',
+			shell=True)
 
 		self.status = 0
 
