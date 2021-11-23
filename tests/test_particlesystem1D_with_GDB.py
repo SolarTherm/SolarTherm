@@ -46,8 +46,8 @@ class TestParticleSystem1DSurrogate(unittest.TestCase):
 	def test_particle_system_1D_surrogate_with_GDB(self):
 		#Start comparing the perf with pre-run numbers
 		assert(self.status==0)
-		cleantest.clean('PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate')
 		try:
+			cleantest.clean('PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate')
 			os.remove("PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate_res_0.mat")
 			os.remove("PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo")
 		except:
