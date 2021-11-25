@@ -19,13 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
+        python-version: [3.8.12]
         include:
           - os: ubuntu-20.04
-            python-version: 3.8.12
-          - os: ubuntu-20.04
             python-version: 3.9.9
-          - os: ubuntu-20.04
-            python-version: 3.10.0
           - os: ubuntu-18.04
             python-version: 3.6.9
 
