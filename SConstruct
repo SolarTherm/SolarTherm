@@ -53,6 +53,41 @@ vars.AddVariables(
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 )
 
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['default','mingw'])
+	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+		if v in os.environ:
+			env['ENV'][v] = os.environ[v]
+elif platform.system()=="Linux":
+	import distro
+	env = Environment(variables=vars)
+	if distro.id()=="centos":
+		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
+		# for pkg-config to work correctly.
+		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
+			if v in os.environ:
+				env['ENV'][v] = os.environ[v]
+Help(vars.GenerateHelpText(env))
+
+# some tricks required for Ubuntu 18.04...
+import platform
+configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
+if platform.system()=="Linux":
+    import distro
+    if distro.id() == 'ubuntu' and distro.version() == '18.04':
+        configcmd = 'python$PYVERSION-config --libs --cflags'
+env['PKGCONFIGPYTHON'] = configcmd
+
+#print("os.environ['PATH']=",os.environ.get('PATH'))
+#print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
+#print("env['ENV']['PKG_CONFIG_PATH']=",env['ENV'].get('PKG_CONFIG_PATH'))
+#print("env['ENV']['PATH']=",env['ENV'].get('PATH'))
+
+env.AppendUnique(
+	ST_PATH=[env.subst('$INSTALL_BIN')]
+	,ST_PYTHONPATH=[env.subst('$PREFIX/lib/python$PYVERSION/site-packages')]	
+	,ST_MODELICAPATH=[env.subst('$OM_MODELICAPATH'),env.subst('$INSTALL_OMLIBRARY')]
+)
 
 env = Environment(variables=vars)
 
