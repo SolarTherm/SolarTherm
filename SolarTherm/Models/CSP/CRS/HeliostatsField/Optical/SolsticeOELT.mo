@@ -19,13 +19,14 @@ extends OpticalEfficiency;
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
     parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
-    parameter Integer argc =27 "Number of variables to be passed to the C function";
+    parameter Integer argc =25 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
     parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
     parameter Real n_helios=1000 "Number of heliostats";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real SM = 2.5 "[SYS] Real solar multiple";    
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -47,18 +48,25 @@ extends OpticalEfficiency;
     parameter String tablefile(fixed=false);
 
 
-    // additional parameters for aiming strategy and thermal performance
-    parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
-    parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
-    parameter Real f_oversize = 1 "Field oversizing factor";
-    parameter Integer Nb=0 "Number of banks";
-    parameter Integer Nfp=0 "Number of flow paths";
-    parameter Real Do=0 "Tube outer diameter";
-    parameter Boolean run_aiming = false "Run aiming strategy or not";
-    parameter Boolean run_therm = false "Run receiver thermal model or not";
-    parameter Integer aimingstrategy(fixed=false) "Run aiming strategy or not? 1 is yes, 0 is no";
-    parameter Integer therm(fixed=false) "Run receiver thermal model or not? 1 is yes, 0 is no";
+	// additional parameters for aiming strategy and thermal performance
+	parameter Boolean run_aiming = false "[H&T] Run aiming strategy or not";
+	parameter Boolean run_therm = false "[H&T] Run receiver thermal model or not";
+    parameter Real f_oversize = 1. "[H&T] Field oversizing factor";
+	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
+	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";
+	parameter Real num_rays=50000 "[H&T] Number of rays in the optical simulations";
+	parameter String fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/Sodium"); 
 
+	parameter Integer aimingstrategy(fixed=false) "Run aiming strategy or not?";
+	parameter Integer therm(fixed=false) "Run receiver thermal model or not?";
+
+	
+ 	//parameter Integer Nb=0 "Number of banks";
+ 	//parameter Integer Nfp=0 "Number of flow paths";
+ 	//parameter Real Do=0 "Tube outer diameter";
+    //parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
+    //parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
+    
     SI.Angle angle1;
     SI.Angle angle2;
 
@@ -73,17 +81,17 @@ extends OpticalEfficiency;
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
-initial algorithm
-
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "aimingstrategy", "therm", "aim_pm1", "aim_pm2", "f_oversize", "Nb", "Nfp", "Do" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, aim_pm1, aim_pm2, f_oversize, Nb, Nfp, Do}); 
-
-if run_aiming then aimingstrategy:=1;
-else aimingstrategy:=0;
+initial equation
+if run_aiming then aimingstrategy=1;
+else aimingstrategy=0;
 end if;
 
-if run_therm then therm:=1;
-else therm:=0;
+if run_therm then therm=1;
+else therm=0;
 end if;
+
+tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file,fluxlimitpath, argc, {"method","Q_in_rcv", "SM", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "aimingstrategy", "therm", "f_oversize", "delta_r2", "delta_r3"}, {method, Q_in_rcv, SM, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, f_oversize, delta_r2, delta_r3}); 
+
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

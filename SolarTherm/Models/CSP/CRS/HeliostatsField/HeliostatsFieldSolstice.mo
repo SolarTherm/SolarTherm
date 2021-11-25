@@ -2,6 +2,8 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Solstice_Optics;
+   parameter SolarTherm.Types.Solar_angles angles=SolarTherm.Types.Solar_angles.dec_hra
+    "Table angles" annotation (Dialog(group="Table data interpretation"));    
      parameter Boolean set_soiling_model = true "[H&T] Set the cleaning strategy to true or false. If true, optical efficiency is multiplied by soiling factor";
     parameter String soiling_table =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Soiling/ave_soil_factor_2tr_7cl.motab");
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
@@ -12,6 +14,7 @@ model HeliostatsFieldSolstice
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real SM = 2.5 "[SYS] Real solar multiple";    
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -31,18 +34,22 @@ model HeliostatsFieldSolstice
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";  
     parameter String field_type = "polar" "Other options are : surround";
-    parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
+    parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 	// additional parameters for aiming strategy and thermal performance
-    parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
-    parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
-    parameter Real f_oversize = 1 "Field oversizing factor";
- 	parameter Integer Nb=0 "Number of banks";
- 	parameter Integer Nfp=0 "Number of flow paths";
- 	parameter Real Do=0 "Tube outer diameter";
-	parameter Boolean run_aiming = false "Run aiming strategy or not";
-	parameter Boolean run_therm = false "Run receiver thermal model or not";
+	parameter Boolean run_aiming = true "[H&T] Run aiming strategy or not";
+	parameter Boolean run_therm = true "[H&T] Run receiver thermal model or not";
+    parameter Real f_oversize = 1 "[H&T] Field oversizing factor";
+	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
+	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";
+	parameter Real num_rays=50000 "[H&T] Number of rays in the optical simulations";
+	parameter String fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/Sodium"); 
+ 	//parameter Integer Nb=0 "Number of banks";
+ 	//parameter Integer Nfp=0 "Number of flow paths";
+ 	//parameter Real Do=0 "Tube outer diameter";
+    //parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
+    //parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
 
 
   parameter Boolean use_on = false
@@ -73,7 +80,46 @@ model HeliostatsFieldSolstice
     fileName=soiling_table
   );
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_refl=helio_refl,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file, run_aiming=run_aiming, run_therm=run_therm, aim_pm1=aim_pm1, aim_pm2=aim_pm2, f_oversize=f_oversize, Nb=Nb, Nfp=Nfp, Do=Do);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(
+	angles=angles,
+	hra=solar.hra, 
+	dec=solar.dec, 
+	lat=lat, 
+	method=method, 
+	Q_in_rcv=Q_in_rcv, 
+	SM=SM,	
+	H_rcv=H_rcv, 
+	W_rcv=W_rcv, 
+	n_H_rcv=n_H_rcv, 
+	n_W_rcv=n_W_rcv, 
+	tilt_rcv=tilt_rcv, 
+	W_helio=W_helio, 
+	H_helio=H_helio, 
+	H_tower=H_tower, 
+	R_tower=R_tower, 
+	R1=R1, 
+	fb=fb, 
+	helio_refl=helio_refl,
+	slope_error=slope_error, 
+	n_row_oelt=n_row_oelt, 
+	n_col_oelt=n_col_oelt, 
+	n_rays=n_rays, 
+	field_type=field_type, 
+	rcv_type=rcv_type, 
+	psave=psave, 
+	wea_file=wea_file, 
+	fluxlimitpath=fluxlimitpath,
+	run_aiming=run_aiming, 
+	run_therm=run_therm, 
+	f_oversize=f_oversize,
+	delta_r2=delta_r2,
+	delta_r3=delta_r3);
+	//aim_pm1=aim_pm1, 
+	//aim_pm2=aim_pm2, 
+	//Nb=Nb, 
+	//Nfp=Nfp, 
+	//Do=Do
+
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
