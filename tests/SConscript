@@ -43,6 +43,15 @@ lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
 
 lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
 
+
+ppenv = penv.Clone()
+ppenv.Append(LIBS=['crypto','ssl'])
+
+lib4 = ppenv.Program('testembednumpy',['testembednumpy.c']) # no install needed
+
+
+
+
 # the file needs to be in tests/Resources/Library for OM to find it
 env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
 

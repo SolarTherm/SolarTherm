@@ -488,13 +488,13 @@ int trainingANN(char* fn_data, char* prefixres, int count, char* SolarTherm_path
 	char* cmd = NEW_ARRAY(char, MAXLEN);
 
 	//Build the command e.g. python SolarTherm_path/Resources/Library/trainANN.py fn_data prefixres 0
-	snprintf(cmd, MAXLEN, "python %s/Resources/Library/trainANN.py %s %s %d", SolarTherm_path, fn_data, prefixres , count);
+	snprintf(cmd, MAXLEN, "python3 %s/Resources/Library/trainANN.py %s %s %d", SolarTherm_path, fn_data, prefixres , count);
 
 	MSG("Running %s\n",cmd);
 
 	int status_training = system(cmd);
 
-	if (status_training==0){
+	if(status_training==0){
 		MSG("Training ANN has been finished without any error\n");
 		return 0;
 	}else{

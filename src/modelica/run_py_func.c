@@ -1,5 +1,15 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdio.h>
+
+#define RUNPYFUNC_DEBUG
+#ifdef RUNPYFUNC_DEBUG
+# define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+#else
+# define MSG(...) ((void)0)
+#endif
+#define ERR(FMT,...) fprintf(stderr,"%s:%d: ERROR: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
+
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname
 	, const char *pfunc, const char *psave,  const char *field_type
@@ -16,37 +26,40 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	PyObject *pArgs, *pValue, *inputs;
 	int i;
 
-	fprintf(stderr,"Running python module '%s' from path '%s'...\n",pname,ppath);
-	fprintf(stderr,"psave = %s\n",psave);
-	fprintf(stderr,"rcv_type = %s\n",rcv_type);
-	fprintf(stderr,"wea_file = %s\n",wea_file);
-	fprintf(stderr,"field_type = %s\n",field_type);
+	MSG("Running python module '%s' from path '%s'...",pname,ppath);
+	MSG("psave = %s\n",psave);
+	MSG("rcv_type = %s\n",rcv_type);
+	MSG("wea_file = %s\n",wea_file);
+	MSG("field_type = %s\n",field_type);
 
+	wchar_t *progname = Py_DecodeLocale("run_py_func.c", NULL);
+	Py_SetProgramName(progname);
 	Py_Initialize(); /*  Initialize Interpreter  */
+	PyRun_SimpleString("import numpy\n");
 
 	// add the path of the Python function file to the system path
 	PyObject *sys_path = PySys_GetObject("path");
 
-	fprintf(stderr,"Append '%s' to sys path...\n",ppath);
+	MSG("Append '%s' to sys path...\n",ppath);
 
 	PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
 
-	fprintf(stderr,"Import '%s'....\n",pname);
+	MSG("Import '%s'....\n",pname);
 
 	// name of the Python file
 	//pName = PyUnicode_FromString(pname);
 	/* Error checking of pName left out */
-	//fprintf(stderr,"Import '%s'....\n",pname);
+	//MSG("Import '%s'....\n",pname);
 
 	PyObject *pModule = PyImport_ImportModule(pname);
 	if(pModule == NULL){
-		fprintf(stderr,"Failed to import '%s'\n",pname);
+		ERR("Failed to import '%s'\n",pname);
 		return NULL;
 	}
 
 	//Py_DECREF(pName);
 
-	fprintf(stderr,"eee\n");
+	MSG("eee\n");
 
 	if(pModule != NULL){
 		pFunc = PyObject_GetAttrString(pModule, pfunc);
@@ -56,7 +69,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 
 		if (pFunc && PyCallable_Check(pFunc)){
 
-			fprintf(stderr,"Creating dict to pass...\n");
+			MSG("Creating dict to pass...\n");
 
 			inputs = PyDict_New();
 			PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
@@ -70,7 +83,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 				if(!pValue){
 					Py_DECREF(pArgs);
 					Py_DECREF(pModule);
-					fprintf(stderr, "Cannot convert argument\n");
+					ERR( "Cannot convert argument\n");
 				}
 				/* pValue reference stolen here: */
 				PyDict_SetItemString(inputs, varnames[i], pValue);
@@ -78,11 +91,11 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 
 			PyTuple_SetItem(pArgs, 0, inputs);
 
-			fprintf(stderr,"Heading into PyObject_CallObject...\n");
+			MSG("Heading into PyObject_CallObject...\n");
 
 			pValue = PyObject_CallObject(pFunc, pArgs);
 
-			fprintf(stderr,"Got back from PyObject_CallObject...\n");
+			MSG("Got back from PyObject_CallObject...\n");
 
 			tablefile=PyBytes_AsString(pValue);
 
@@ -95,21 +108,26 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 				Py_DECREF(pFunc);
 				Py_DECREF(pModule);
 				PyErr_Print();
-				fprintf(stderr,"Call failed\n");
+				ERR("Call failed\n");
 			}
 		}else{
 			if(PyErr_Occurred())PyErr_Print();
-			fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
+			ERR( "Cannot find function \"%s\"\n", pfunc);
 		}
 		Py_XDECREF(pFunc);
 		Py_DECREF(pModule);
 	}else{
 		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
+		ERR( "Failed to load \"%s\"\n", pname);
 	}
 	
 	return tablefile;
-	Py_Finalize();
+	if(Py_FinalizeEx() != 0){
+		ERR("ERROR: Errors during Python finalisation.\n");
+	}
+	
+	PyMem_RawFree(progname);
 }
+
 
 // vim: ts=4:sw=4:tw=80:noet

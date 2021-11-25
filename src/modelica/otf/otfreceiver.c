@@ -82,7 +82,7 @@ void checkConfigReceiver(double H_drop, double T_HTF_in_des
 
 int trainingANNReceiver(char* fn_data, char* prefixres, int count, char* SolarTherm_path){
 	char* cmd = NEW_ARRAY(char, MAXLEN);
-	snprintf(cmd, MAXLEN, "python %s/Resources/Library/trainANNReceiver.py %s %s %d",SolarTherm_path, fn_data, prefixres, count);
+	snprintf(cmd, MAXLEN, "python3 %s/Resources/Library/trainANNReceiver.py %s %s %d",SolarTherm_path, fn_data, prefixres, count);
 
 	fprintf(stderr,"%s\n",cmd); //e.g. python /home/philgun/solartherm/SolarTherm/Resources/Library/trainANNReceiver.py ./surrogates . 0
 

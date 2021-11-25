@@ -12,7 +12,7 @@ for i in sys.path:
 sys.stderr.write("\nImport os\n");
 import os
 import time
-print(os.system("python --version\n"))
+print("SYS.VERSION_INFO\n",sys.version_info)
 
 sys.stderr.write("Import numpy\n");
 import numpy as np

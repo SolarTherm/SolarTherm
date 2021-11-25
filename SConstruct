@@ -467,8 +467,8 @@ env.Append(CPPFLAGS=['-Wall'])
 
 if env['DEBUG']:
 	env.Append(
-		CPPFLAGS = "-g"
-		,LDFLAGS = "-g"
+		CPPFLAGS =["-g"]
+		,LDFLAGS =["-g"]
 	)
 
 
