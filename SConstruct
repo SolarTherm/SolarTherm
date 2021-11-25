@@ -2,6 +2,33 @@ import os, sys, platform, subprocess; from pathlib import Path
 default_prefix=Path.home()/'.local'
 default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
+
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['default','mingw'])
+	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+		if v in os.environ:
+			env['ENV'][v] = os.environ[v]
+elif platform.system()=="Linux":
+	import distro
+	env = Environment(variables=vars)
+	if distro.id()=="centos":
+		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
+		# for pkg-config to work correctly.
+		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
+			if v in os.environ:
+				env['ENV'][v] = os.environ[v]
+Help(vars.GenerateHelpText(env))
+
+# some tricks required for Ubuntu 18.04...
+import platform
+configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
+if platform.system()=="Linux":
+    import distro
+    if distro.id() == 'ubuntu' and distro.version() == '18.04':
+        configcmd = 'python$PYVERSION-config --libs --cflags'
+env['PKGCONFIGPYTHON'] = configcmd
+
+
 print('system',platform.system())
 if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
@@ -53,30 +80,7 @@ vars.AddVariables(
 	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
 )
 
-if platform.system()=="Windows":
-	env = Environment(variables=vars,tools=['default','mingw'])
-	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
-		if v in os.environ:
-			env['ENV'][v] = os.environ[v]
-elif platform.system()=="Linux":
-	import distro
-	env = Environment(variables=vars)
-	if distro.id()=="centos":
-		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
-		# for pkg-config to work correctly.
-		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
-			if v in os.environ:
-				env['ENV'][v] = os.environ[v]
-Help(vars.GenerateHelpText(env))
 
-# some tricks required for Ubuntu 18.04...
-import platform
-configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
-if platform.system()=="Linux":
-    import distro
-    if distro.id() == 'ubuntu' and distro.version() == '18.04':
-        configcmd = 'python$PYVERSION-config --libs --cflags'
-env['PKGCONFIGPYTHON'] = configcmd
 
 #print("os.environ['PATH']=",os.environ.get('PATH'))
 #print("os.environ['PKG_CONFIG_PATH']=",os.environ.get('PKG_CONFIG_PATH'))
