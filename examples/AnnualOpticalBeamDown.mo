@@ -65,7 +65,7 @@ model AnnualOpticalBeamDown
       1
   };
   
-  //Receiver design point parameters
+  //Ambient condition parameters
   parameter SI.Temperature T_sky = 40 + 273.15 "Sky temperature [K]";
   parameter SI.ThermalConductivity k_s = 6.5 "Thermal conductivity [W/(m.K)]";
   parameter Real alpha = 0.95 "Absorptivity [-]";
@@ -73,6 +73,8 @@ model AnnualOpticalBeamDown
   parameter SI.CoefficientOfHeatTransfer h_ext = 20 "Coefficient of convective heat transfer [W/(m2.K)]";
   parameter Real eps = 0.4 "Void fraction [-]";
   
+
+  //Receiver design point parameters
   parameter SI.Temperature T_i_s_HX1 = 25 +273.15 "Iron ore inlet temperature [K]";
   parameter SI.Temperature T_o_s_HX1 = 1140 + 273.15 "Iron ore outlet temperature [K]";
   parameter SI.Temperature T_i_g_HX1 = 1250 + 273.15 "Air inlet temperature [K]";
@@ -91,7 +93,10 @@ model AnnualOpticalBeamDown
   
   //status_run to launch the ASCEND model --> collecting training data
   parameter Integer status_run(fixed=false);
+  parameter Real design_point_result[3](each fixed=false);
   parameter Real mdot_ore_design_point(fixed=false);
+  parameter SI.Volume V_HX1(fixed=false);
+  parameter SI.Volume V_HX2(fixed=false);
  
   //Specific cost of components
   parameter Real pri_tower = 725.9 "USD/kWth";
@@ -125,8 +130,7 @@ model AnnualOpticalBeamDown
   parameter Real C_direct = (1 + r_contg) * C_equipment;
   parameter Real C_indirect = r_cons * C_direct + C_land;
   
-  parameter Real C_cap = C_direct + C_indirect;
- 
+  parameter Real C_cap = C_direct + C_indirect; 
 
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -205,7 +209,11 @@ initial algorithm
   opt_file := lookuptable.tablefile;
   
   /*Call mdot ore design point*/
-  mdot_ore_design_point := SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19);
+  design_point_result := SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19);
+  
+  mdot_ore_design_point := design_point_result[1]; 
+  V_HX1 := design_point_result[2]; 
+  V_HX2 := design_point_result[3];
   
   /*Initialisation of the model, skip for now since it has been initialised*/
   status_run := SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters);

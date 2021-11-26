@@ -70,7 +70,7 @@ def test_model(modelname,solvername='QRSlv',varvalues={},parameters={},retvars=[
 '''
 def run_thermalSinteringModelDesignPoint(inputs):
 	sys.stderr.write("Entering python function run_thermalSinteringModelDesignPoint\n\n")
-
+	
 	#Reading the inputs
 	T_sky = inputs["T_sky"]
 	k_s = inputs["k_s"]
@@ -95,6 +95,7 @@ def run_thermalSinteringModelDesignPoint(inputs):
 
 	dirsave = inputs["dir_save"]
 	st_path = inputs["SolarTherm_path"]
+
 	#Reading the flux multiplier based on DNI ratio
 	flux = 1
 
@@ -162,11 +163,15 @@ def run_thermalSinteringModelDesignPoint(inputs):
 		sys.stderr.write("mdot ore: %f kg/s \n\n"%(R['mdot_s_HX2']))
 		os.remove("HX_DESIGN_RESULTS_0.csv")
 		mdot_ore = R['mdot_s_HX2']
+		V_HX_1 = R['V_material_HX1']
+		V_HX_2 = R['V_material_HX2']
 	except Exception as e:
 		L.clear()
 		sys.stderr.write(str(e))
 		sys.stderr.write("Not converging. mdot ore: %f kg/s \n\n"%(0.0))
 		mdot_ore = 0
+		V_HX_1 = 10000000000000
+		V_HX_2 = 10000000000000
 
 	os.remove("Sinter_HX_LOADME.a4c")
 
@@ -178,9 +183,10 @@ def run_thermalSinteringModelDesignPoint(inputs):
 		os.getcwd() == modelica_wd
 	)
 
-	#Append the data
-	return mdot_ore
-		
+	sys.stderr.write("V_HX1: %lf, V_HX2: %lf\n"%(V_HX_1, V_HX_2))
+
+	with open("%s/des_point_calc.csv"%(dirsave),"w") as f:
+		f.write('%s,%s,%s'%(mdot_ore,V_HX_1, V_HX_2))
 
 '''
 	Function to run sintering thermal model for given parameters, and records the mdot_ore

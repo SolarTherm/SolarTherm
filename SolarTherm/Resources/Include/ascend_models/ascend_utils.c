@@ -189,11 +189,12 @@ double run_interpolation(const char *ppath, const char *pname, const char *pfunc
 /*
 	Function to call Python code that execute ASCEND model for sintering process
 */
-double run_ascend_sintering_model(const char *ppath, const char *pname, const char *pfunc, int argc, int num_segment, const char *varnames[], 
-				const double var[], const char *modelica_wd, const char* SolarTherm_path, double* angles){
+void run_ascend_sintering_model(const char *ppath, const char *pname, const char *pfunc, int argc, int num_segment, const char *varnames[], 
+				const double var[], const char *modelica_wd, const char* SolarTherm_path, double* angles, double* returns){
 					
 	double mdot_ore;
 	int i;
+	char str[MAXLEN];
 
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *pValue, *inputs;
@@ -239,9 +240,25 @@ double run_ascend_sintering_model(const char *ppath, const char *pname, const ch
 
             PyTuple_SetItem(pArgs, 0, inputs);
 
-            pValue = PyObject_CallObject(pFunc, pArgs);
+            PyObject* result = PyObject_CallObject(pFunc, pArgs);
 
-            mdot_ore = PyFloat_AsDouble(pValue);
+			fprintf(stderr,"Done calling python function to design the thermal model..................\n\n\n");
+			
+			char* fn_res_py = NEW_ARRAY(char, MAXLEN);
+			snprintf(fn_res_py, MAXLEN,"%s/des_point_calc.csv",modelica_wd);
+			FILE* f = fopen(fn_res_py,"r");
+			if(f != NULL){
+				fgets(str, MAXLEN, f);
+    			sscanf(str,"%lf,%lf,%lf",&returns[0],&returns[1],&returns[2]);
+			}
+			else{
+				fprintf(stderr,"%s/des_point_calc.csv can not be found..........................\n",modelica_wd);
+				EXIT(EXIT_FAILURE);
+			}
+			fclose(f);
+
+			fprintf(stderr,"MDOT ORE AT DP: %lf kg/s\nVOL. HX1: %lf m3\nVOL. HX2: %lf m3................................\n\n",returns[0], returns[1], returns[2]);
+            //mdot_ore = PyFloat_AsDouble(pValue);
 			
             Py_DECREF(pArgs);
             Py_DECREF(inputs);
@@ -267,6 +284,5 @@ double run_ascend_sintering_model(const char *ppath, const char *pname, const ch
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", pname);
     }
-
-	return mdot_ore;
+	//return mdot_ore;
 }
