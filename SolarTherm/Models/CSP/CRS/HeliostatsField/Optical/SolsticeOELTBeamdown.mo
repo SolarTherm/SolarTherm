@@ -17,13 +17,14 @@ extends OpticalEfficiency;
 
         parameter nSI.Angle_deg cpc_theta_deg=20 "CPC acceptance half angle in degree";
         parameter Real cpc_h_ratio=1 "CPC critical height ratio [0,1]";
-        parameter nSI.Angle_deg rim_angle_x=80 "rim angle of the hyperboloid and heliostat field in the xOz plan in degree ]0,120?] ";
-        parameter nSI.Angle_deg rim_angle_y=80 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree ]0,120?] ";
+        parameter nSI.Angle_deg aperture_angle_x=80 "aperture angle of the heliostat field in the xOz plan in degree ]0,180] ";
+        parameter nSI.Angle_deg aperture_angle_y=80 "aperture angle of the heliostat field in the yOz plan in degree ]0,180] ";
+        parameter nSI.Angle_deg secref_offset = 10.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
         parameter Real secref_inv_eccen=0.6 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
         parameter SI.Length H_tower = 75 "Tower height";
         parameter Real fb=0.6 "factor to grow the field layout";
         parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
-        parameter nSI.Angle_deg tilt_secref=10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
+        parameter nSI.Angle_deg tilt_secref=-10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
 
     parameter SI.HeatFlowRate Q_in_rcv = 50e6;
     // heliostat field
@@ -57,7 +58,7 @@ extends OpticalEfficiency;
 	parameter String pfunc = "run_simul" "Name of the Python functiuon";
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results";
-        parameter Integer argc = 25 "Number of variables to be passed to the C function";
+        parameter Integer argc = 26 "Number of variables to be passed to the C function";
 
     parameter String tablefile(fixed=false);
 
@@ -76,9 +77,9 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "rim_angle_x", "rim_angle_y", "secref_inv_eccen",
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "aperture_angle_x", "aperture_angle_y", "secref_offset", "secref_inv_eccen",
 "H_tower", "fb", "tilt_secref", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error_bd",
-"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv"}, {cpc_theta_deg, cpc_h_ratio, rim_angle_x, rim_angle_y, secref_inv_eccen, H_tower, fb, tilt_secref, Z_rcv, W_rcv,
+"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv"}, {cpc_theta_deg, cpc_h_ratio, aperture_angle_x, aperture_angle_y, secref_offset, secref_inv_eccen, H_tower, fb, tilt_secref, Z_rcv, W_rcv,
 H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error_bd, rho_secref, rho_cpc, cpc_nfaces, n_H_rcv});
 
 equation

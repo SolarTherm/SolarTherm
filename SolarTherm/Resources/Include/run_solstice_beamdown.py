@@ -44,10 +44,10 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
-        if pm.rim_angle_y == 0.:
-        	pm.rim_angle_y=None
+        if pm.aperture_angle_y == 0.:
+                pm.aperture_angle_y=None
         else:
-        	pm.rim_angle_y=float(pm.rim_angle_y)
+                pm.aperture_angle_y=float(pm.aperture_angle_y)
 
         pm.saveparam(casedir)
 
@@ -57,7 +57,7 @@ def run_simul(inputs={}):
         bd=BD(latitude=pm.lat, casedir=casedir)
 
         bd.receiversystem(receiver=pm.rcv_type, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.Z_rcv), rec_grid=int(pm.n_H_rcv), cpc_nfaces=int(pm.cpc_nfaces), cpc_theta_deg=float(pm.cpc_theta_deg), cpc_h_ratio=float(pm.cpc_h_ratio), cpc_nZ=float(pm.cpc_nZ),
-        rim_angle_x=float(pm.rim_angle_x), rim_angle_y=pm.rim_angle_y, aim_z=float(pm.H_tower), secref_inv_eccen=float(pm.secref_inv_eccen), tilt_secref=float(pm.tilt_secref), rho_secref=float(pm.rho_secref), rho_cpc=float(pm.rho_cpc), slope_error=float(pm.slope_error_bd))
+        aperture_angle_x=float(pm.aperture_angle_x), aperture_angle_y=pm.aperture_angle_y, secref_offset=pm.secref_offset, aim_z=float(pm.H_tower), secref_inv_eccen=float(pm.secref_inv_eccen), tilt_secref=float(pm.tilt_secref), rho_secref=float(pm.rho_secref), rho_cpc=float(pm.rho_cpc), slope_error=float(pm.slope_error_bd))
 
         bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=int(pm.n_helios), R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
 
@@ -65,12 +65,11 @@ def run_simul(inputs={}):
 
         oelt, A_land=bd.field_design_annual(dni_des=900., num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=1, Q_in_des=pm.Q_in_rcv, n_helios=None, zipfiles=False, gen_vtk=False, plot=False)
 
-
         if (A_land==0):
-        	tablefile=None
+                tablefile=None
         else:
-        	A_helio=pm.H_helio*pm.W_helio
-        	output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=bd.n_helios, A_helio=A_helio, eff_design=bd.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=bd.Q_in_rcv, A_land=A_land, savedir=tablefile)
+                A_helio=pm.H_helio*pm.W_helio
+                output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=bd.n_helios, A_helio=A_helio, eff_design=bd.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=bd.Q_in_rcv, A_land=A_land, A_secref=bd.A_secref, A_cpc=bd.A_cpc, savedir=tablefile)
 
         # Create vtk files and 1D flux map
         # =========
@@ -101,13 +100,14 @@ if __name__=='__main__':
         ## Variables
         cpc_theta_deg=20.
         cpc_h_ratio=1.
-        rim_angle_x=70.
-        rim_angle_y=70.
+        aperture_angle_x=70.
+        aperture_angle_y=70.
+        secref_offset=10.
         secref_inv_eccen=0.6
         H_tower=75.
         fb=0.7
         Z_rcv=0.
-        tilt_secref=0.
+        tilt_secref=-10.
         # fixed parameters
         ## Siumulation
         num_rays=int(5e5)#int(5e6)
@@ -134,7 +134,7 @@ if __name__=='__main__':
         cpc_nfaces=4
         n_H_rcv=40
 
-        inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'rim_angle_x': rim_angle_x, 'rim_angle_y': rim_angle_y, 'secref_inv_eccen': secref_inv_eccen,
+        inputs={'casedir': case, 'wea_file': weafile, 'cpc_theta_deg': cpc_theta_deg, 'cpc_h_ratio': cpc_h_ratio, 'aperture_angle_x': aperture_angle_x, 'aperture_angle_y': aperture_angle_y, 'secref_offset': secref_offset, 'secref_inv_eccen': secref_inv_eccen,
         'H_tower': H_tower, 'fb': fb, 'Z_rcv': Z_rcv, 'tilt_secref': tilt_secref, 'W_rcv': W_rcv, 'H_rcv': H_rcv, 'n_rays': num_rays, 'n_row_oelt': ndays, 'n_col_oelt': nhours, 'sunshape': sunshape, 'crs': crs,'lat': lat, 'Q_in_rcv': Q_in_rcv,
         'field_type': field_type, 'R1': R1, 'W_helio': W_helio, 'H_helio': H_helio, 'Z_helio': Z_helio, 'rcv_type': receiver, 'slope_error': slope_error, 'slope_error_bd': slope_error, 'n_H_rcv': n_H_rcv,
         'rho_secref': rho_secref, 'rho_cpc': rho_cpc, 'cpc_nfaces': cpc_nfaces}

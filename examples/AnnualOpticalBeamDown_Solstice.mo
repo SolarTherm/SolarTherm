@@ -20,8 +20,9 @@ model AnnualOpticalBeamDown_Solstice
 
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
   parameter Real cpc_h_ratio=0.6 "ratio of CPC critical height [0,1]";
-  parameter nSI.Angle_deg rim_angle_x=80 "rim angle of the hyperboloid and heliostat field in the xOz plan in degree";
-  parameter nSI.Angle_deg rim_angle_y=80 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree";
+  parameter nSI.Angle_deg aperture_angle_x=80 "aperture angle of the heliostat field in the xOz plan in degree ]0,180] ";
+  parameter nSI.Angle_deg aperture_angle_y=80 "aperture angle of the heliostat field in the yOz plan in degree ]0,180] ";
+  parameter nSI.Angle_deg secref_offset = 10.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
   parameter Real secref_inv_eccen=0.7 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=80.64 "Tower height";
   parameter Real fb=0.9618 "factor to grow the field layout";
@@ -160,8 +161,9 @@ model AnnualOpticalBeamDown_Solstice
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELTBeamdown lookuptable(
       cpc_theta_deg=cpc_theta_deg,
       cpc_h_ratio=cpc_h_ratio,
-      rim_angle_x=rim_angle_x,
-      rim_angle_y=rim_angle_y,
+      aperture_angle_x=aperture_angle_x,
+      aperture_angle_y=aperture_angle_y,
+      secref_offset=secref_offset,
       secref_inv_eccen=secref_inv_eccen,
       H_tower=H_tower,
       fb=fb,
