@@ -160,8 +160,7 @@ jobs:
         sudo apt-get install gdb
         gdb --version
 
-    - name: Test Particle System 1D with GDB (18.04 only) Ubuntu 20.04 can not be tested at the moment since particle system model only works with OpenModelica 1.14.2
-      if: ${{ matrix.os == 'ubuntu-18.04' }}
+    - name: Test Particle System 1D with GDB
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
