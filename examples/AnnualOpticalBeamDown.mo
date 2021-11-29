@@ -8,20 +8,31 @@ model AnnualOpticalBeamDown
   import metadata = SolarTherm.Utilities.Metadata_Optics;
 
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Leinster_Airport_954480_TMY.motab");
+  parameter Real metadata_list[10] = metadata(opt_file);
   parameter nSI.Angle_deg lon = 120.70 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = -27.85 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
-  parameter Real n_h=metadata_list[1] "Number of heliostats";
-  parameter SI.Area A_h=metadata_list[2] "Heliostat's Area";
-  parameter Real metadata_list[8] = metadata(opt_file);
   parameter String opt_file(fixed=false);
   parameter String casefolder ="test" "dont change this";
+  
+  /*
+      Reading metadata from $casefolder/OELT_Solstice.motab
+          n_helios, A_helio, A_secref, A_cpc, Eff_design, H_rcv, W_rcv, H_tower, Q_in_rcv, A_land
+  */
+  parameter Real n_h=metadata_list[1] "Number of heliostats";
+  parameter SI.Area A_h=metadata_list[2] "Heliostat's area in m2";
+  parameter Real A_secref=metadata_list[3] "Secondary reflector area in m2";
+  parameter SI.Area A_cpc=metadata_list[4] "CPC area in m2";
+  parameter Real Eff_design=metadata_list[5] "Field eff. at design point";
+  
+  parameter SI.Area A_land = metadata_list[10] "Land area in m2";
 
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
   parameter Real cpc_h_ratio=0.6 "ratio of CPC critical height [0,1]";
-  parameter nSI.Angle_deg rim_angle_x=80 "rim angle of the hyperboloid and heliostat field in the xOz plan in degree";
-  parameter nSI.Angle_deg rim_angle_y=80 "rim angle of the hyperboloid and heliostat field in the yOz plan in degree";
+  parameter nSI.Angle_deg aperture_angle_x=80 "aperture angle of the heliostat field in the xOz plan in degree [0,180] ";
+  parameter nSI.Angle_deg aperture_angle_y=80 "aperture angle of the heliostat field in the yOz plan in degree [0,180] ";
+  parameter nSI.Angle_deg secref_offset = 10.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
   parameter Real secref_inv_eccen=0.7 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=80.64 "Tower height";
   parameter Real fb=0.9618 "factor to grow the field layout";
@@ -88,15 +99,19 @@ model AnnualOpticalBeamDown
   parameter SI.Temperature T_i_g_HX2 = 25 + 273.15 "Air inlet temperature [K]";
   parameter SI.Length W_HX2 = 8.0 "Width of heat exchanger [m]";
   parameter SI.Length d_p_HX2 = 40e-3 "Iron ore diameter [m]";
-  
-  parameter SI.Area A_land = metadata_list[8];
-  
+    
   //status_run to launch the ASCEND model --> collecting training data
   parameter Integer status_run(fixed=false);
   parameter Real design_point_result[3](each fixed=false);
+  
+  /*Design point calculation result*/
   parameter Real mdot_ore_design_point(fixed=false);
   parameter SI.Volume V_HX1(fixed=false);
   parameter SI.Volume V_HX2(fixed=false);
+  
+  /*PHX calculation*/
+  parameter SI.Density rho_material_HX = 7850 "Density of carbon steel assumed material for HXs Carbon Steel ASTM A36. Source: https://amesweb.info/Materials/Density_of_Steel.aspx";
+  parameter SI.Mass M_HX = (V_HX1 + V_HX2) * rho_material_HX "Total weight of HXs in kg for CAPEX calculation";
  
   //Specific cost of components
   parameter Real pri_tower = 725.9 "USD/kWth";
@@ -118,12 +133,15 @@ model AnnualOpticalBeamDown
     
   //Cost calculation
   parameter Real C_tower = pri_tower * Q_in_rcv/1e3;
-  parameter Real C_secondary_mirror = pri_secondary_mirror * 0; //=====> Ask C secondary mirror to clotilde
+  parameter Real C_secondary_mirror = pri_secondary_mirror * A_secref; //=====> Ask C secondary mirror to clotilde
   parameter Real C_field = pri_field * n_h * A_h;
-  parameter Real C_CPC = pri_CPC * 0; //=====> Ask clotilde about CPC area
+  parameter Real C_CPC = pri_CPC * A_cpc; //=====> Ask clotilde about CPC area
   parameter Real C_trussed_framework = 0.84 * 1e6 "USD"; 
   parameter Real C_reactor = 0;
-  parameter Real C_HX = 0; 
+  parameter Real C_HX = Modelica.Math.exp(
+                8.9552-0.233 * Modelica.Math.log(M_HX)+ 
+                      0.04333*(Modelica.Math.log(M_HX)^2)
+  ); 
   parameter Real C_land = pri_land * A_land;
   
   parameter Real C_equipment = C_tower + C_secondary_mirror + C_field + C_CPC + C_trussed_framework;
@@ -160,8 +178,9 @@ model AnnualOpticalBeamDown
   SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELTBeamdown lookuptable(
       cpc_theta_deg=cpc_theta_deg,
       cpc_h_ratio=cpc_h_ratio,
-      rim_angle_x=rim_angle_x,
-      rim_angle_y=rim_angle_y,
+      aperture_angle_x=aperture_angle_x,
+      aperture_angle_y=aperture_angle_y,
+      secref_offset=secref_offset,
       secref_inv_eccen=secref_inv_eccen,
       H_tower=H_tower,
       fb=fb,

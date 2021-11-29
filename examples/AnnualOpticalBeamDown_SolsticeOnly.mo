@@ -1,6 +1,6 @@
 within examples;
 
-model AnnualOpticalBeamDown_Solstice
+model AnnualOpticalBeamDown_SolsticeOnly
 
   import SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT;
   import SI = Modelica.SIunits;
@@ -244,4 +244,4 @@ equation
 
 	</html>"),
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)));
-end AnnualOpticalBeamDown_Solstice;
+end AnnualOpticalBeamDown_SolsticeOnly;
