@@ -172,6 +172,14 @@ package ChlorideSaltPH_ph "Chloride Salt model, explicit in p and h"
 		annotation (Inline=true);
 	end specificInternalEnergy;
 
+	redeclare function extends dynamicViscosity "Return dynamic viscosity"
+	algorithm
+		eta := eta_T(T_h(state.h));
+		annotation (Documentation(info="<html>
+
+			</html>"));
+	end dynamicViscosity;
+
 	redeclare function extends thermalConductivity "Return thermal conductivity"
 	algorithm
 		lambda := lamda_T(T_h(state.h));

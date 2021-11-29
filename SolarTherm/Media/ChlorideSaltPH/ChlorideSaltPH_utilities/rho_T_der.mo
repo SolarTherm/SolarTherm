@@ -1,6 +1,6 @@
 within SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities;
 function rho_T_der "Derivative of the density of Chloride Salt particle w.r.t. time"
-	import SolarTherm.Media.SolidParticles.CarboHSP_utilities.*;
+	import SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature";
 	input Real der_T "Derivative of temperature w.r.t time";

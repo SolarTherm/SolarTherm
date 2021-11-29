@@ -9,6 +9,7 @@ temperature
 specificEnthalpy
 density
 specificInternalEnergy
+dynamicViscosity
 thermalConductivity
 specificEntropy
 specificGibbsEnergy

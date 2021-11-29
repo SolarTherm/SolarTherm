@@ -1,6 +1,6 @@
 within SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities;
 function T_h_der "Derivative of temperature of Chloride Salt w.r.t. time"
-	import SolarTherm.Media.SolidParticles.CarboHSP_utilities.*;
+	import SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_utilities.*;
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.SpecificEnthalpy h "Specific enthalpy";
 	input Real der_h "Derivative of specific enthalpy w.r.t. time";
