@@ -8,8 +8,9 @@ model HX
   import Modelica.Math.Vectors;
   import FI = SolarTherm.Models.Analysis.Finances;
   import UF = SolarTherm.Models.Fluid.HeatExchangers.Utilities;
-  replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
+  replaceable package Medium1 = SolarTherm.Media.Sodium.Sodium_pT "Medium props for Sodium";
+  replaceable package Medium2 = SolarTherm.Media.MoltenSalt.MoltenSalt_ph
+	constrainedby Modelica.Media.Interfaces.PartialMedium"Medium props for Molten Salt";
   
   //Design Parameters
   parameter SI.HeatFlowRate Q_d_des = 50e6 "Design Heat Flow Rate";
@@ -169,7 +170,7 @@ initial algorithm
   
   m_flow_MS_min_des := 1e-3;
   m_flow_Na_min_des := 1e-3;
-  
+
 equation
 //Hydraulics
   port_a_in.m_flow + port_a_out.m_flow = 0;
@@ -229,13 +230,14 @@ equation
   Q = U * A_HX * F * LMTD;
 
   if HF_on then
-    if noEvent(abs(DT1 - DT2) > 1e-3) then
-      LMTD = (DT1 - DT2) / MA.log(max(1e-3, DT1 / DT2));
+    if noEvent(DT1 > CN.small and DT2 > 0) then
+      assert(DT1 > 0 and DT2>0, "Hot fluid should be hotter than cold fluid");
+      LMTD = (DT1 - DT2) / MA.log(max(CN.small, DT1 / DT2));
     else
       LMTD = DT1;
     end if;
   else
-    LMTD = 1e-3;
+    LMTD = CN.small;
   end if;
 
   F = 1;

@@ -8,7 +8,8 @@ function Design_HX
   import FI = SolarTherm.Models.Analysis.Finances;
   import SolarTherm.Types.Currency;
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
+  replaceable package Medium2 = Media.MoltenSalt.MoltenSalt_ph
+	constrainedby Modelica.Media.Interfaces.PartialMedium"Medium props for Molten Salt";
   
   input SI.HeatFlowRate Q_d "Design Heat Flow Rate";
   input SI.Temperature T_Na1 "Desing Sodium Hot Fluid Temperature";
