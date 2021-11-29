@@ -153,7 +153,9 @@ if __name__ == '__main__':
 	sim = simulation.Simulator(fn,fusemount=args.fuse)
 	fuse_dirs = sim.get_fuse_dirs()
 
-	mcargs = []
+	# TODO This part to temperately fix the old front end issue for omc 1.17
+	# will be revised later to work with the new front end
+	mcargs = ['-d=nonewInst']
 	if len(args.mcargs) == 1:
 		mcargs = args.mcargs[0].split(' ')
 
