@@ -17,7 +17,10 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
 
 	// Input Parameters
-	parameter Integer n_modules = 2 "Number of parallel CSP systems";
+	parameter SI.Power P_net = 100e6 "Power block net rating at design point";
+	parameter String opt_file_wspd1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_700_MWth_175_m.motab");
+	parameter Integer n_modules = if P_net == 25e6 then 4 elseif P_net == 33e6 then 3 elseif P_net == 50e6 then 2 else 1 "Number of parallel CSP systems";
+	parameter Integer n_parallel_tanks = if P_net == 100e6 then 2 else 1 "Number of parallel tanks";
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = true "true if the size of the solar field is fixed";
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
@@ -34,10 +37,9 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Integer year = 2008 "Meteorological year";
 
 	// Field
-	parameter String opt_file_wspd1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_150_m_1.5mrad.motab");
-	parameter String opt_file_wspd2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_350_MWth_150_m_2.0mrad.motab");
+	parameter String opt_file_wspd2 = opt_file_wspd1;
 	parameter Real metadata_list[23] = metadata(opt_file_wspd1);
-	parameter SI.Irradiance dni_des = 980 "DNI at design point";
+	parameter SI.Irradiance dni_des = 930 "DNI at design point";
 	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
 	parameter SI.Length H_heliostat = A_heliostat^0.5 "Heliostat height";
@@ -45,13 +47,14 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter SI.Length H_tower = metadata_list[6] "Tower height (ground to base of receiver)";
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 	parameter Real land_mult = 6.16783860571 "Land area multiplier";
+	parameter Real A_land_fix = 197434.207385281 "Fixed land area per module";
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter Real he_av_design = 0.99 "Heliostats availability";
 	parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat";
 	parameter SI.Power W_tracking = n_heliostat*W_track*he_av_design "Tracking power consumed at design point";
 
 	// Receiver
-	parameter SI.RadiantPower R_des = Q_rec_out_des/(1 - rec_fr) "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des = if P_net == 25e6 then 175e6 elseif P_net == 33e6 then 230e6 elseif P_net == 50e6 then 350e6 else 700e6 "Input power to receiver at design point";
 	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
 	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
 	parameter Integer N_pa_rec = 12 "Number of panels in receiver";
@@ -68,7 +71,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real F_mult=2.6 "Piping length multiplier";
 	parameter Real C_pip(unit="W/m") = 10200 "Piping loss coeficient";
 	parameter SI.Efficiency eta_pump = 0.85 "Design point efficiency of the tower/receiver pump";
-	parameter Real SM = metadata_list[23] "Solar multiple";
+	parameter Real SM = Q_rec_out_des/Q_flow_des "Solar multiple";
 
 	// HX
 	parameter SI.HeatFlowRate Q_hx_design = Q_rec_out_des * hx_to_rec_factor "HX design power";
@@ -84,7 +87,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
 	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet asodium temperature";
 	parameter FI.MassPrice material_sc = 80 "Material HX Specific Cost"; // UNS 06230
-	parameter Real hx_to_rec_factor = 1; //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+	parameter Real hx_to_rec_factor = 1.1; //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint"; //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10) Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
@@ -123,28 +126,27 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real tolerance_kriging = 6e-3 "Mean Absolute Error";
 	parameter Real tolerance_ANN = 6e-3 "Mean Absolute Error";
 	parameter Integer which_surrogate = 2 "1 for Kriging, 2 for ANN";
-	parameter Real eta_net_base = 0.48 "Net thermal-to-electric cycle efficiency after power cycle parasitic loads";
+	parameter Real eta_net_base(fixed = false) "Net thermal-to-electric cycle efficiency after power cycle parasitic loads";
 	parameter Real eta_Q_base(fixed = false) "By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
 	parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
 	parameter SI.MassFlowRate m_flow_blk(fixed = false) "Mass flow rate to power block at design point, By product of PB initialisation, regardless which PB model is chosen e.g CEA or SAM";
 	//*** NREL SAM PB Parameters
-	parameter SI.Temperature T_low = from_degC(41) "Inlet temperature of the compressor";
+	parameter SI.Temperature T_low = from_degC(31) "Inlet temperature of the compressor"; // To obtain a PB efficiency of 51%
 	parameter Integer N_HTR = 15 "Discretisation of high temperature recuperator";
 	parameter Integer N_LTR_parameter = 15 "Discretisation of low temperature recuperator";
 	parameter SI.Temperature T_high = from_degC(700) "inlet temperature of the turbine";
 	parameter Real gamma = 0.28 "Part of the mass flow going to the recompression directly";
 	parameter Real par_fr = 0.1 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fr_des (fixed = false) "Verification of parasitics fraction of power block rating at design point";
-	parameter SI.Power P_net = 50e6 "Power block net rating at design point";
 	parameter SI.Power P_gross = P_net / (1 - par_fr);
 	parameter SI.Pressure p_high = 25e6 "high pressure of the cycle in Pa";
-	parameter SI.Temperature blk_T_amb_des = from_degC(35) "Ambient temperature at design for power block";
+	parameter SI.Temperature blk_T_amb_des = from_degC(25) "Ambient temperature at design for power block";
 	parameter Integer htf_choice = 50 "Choice for fluid properties in SAM SIMULATION CORE (SSC)";
 	parameter SI.TemperatureDifference dT_PHX_hot_approach(fixed = false) "Temp. difference between hot HTF and TIT";
 	parameter SI.TemperatureDifference dT_PHX_cold_approach = 15 "Temp. difference between cold HTF and cold CO2 PHX inlet";
 	parameter SI.Efficiency eta_comp_main = 0.89 "Main compressor isentropic efficiency";
 	parameter SI.Efficiency eta_comp_re = 0.89 "Re-compressor isentropic efficiency";
-	parameter SI.Efficiency eta_turb = if P_gross > 3e7 then 0.93 else 0.85 "Turbine isentropic efficiency";
+	parameter SI.Efficiency eta_turb = 0.93 "Turbine isentropic efficiency"; // To obtain a PB efficiency of 51%
 	parameter SI.TemperatureDifference dT_mc_approach = 6.0 "Temp. difference between main compressor CO2 inlet and ambient";
 	parameter Integer which_PB_model = 1 "Choice of the Expensive PB model: 0 is for CEA power block, 1 is for NREL-SAM power block";
 	parameter String HTF_name = "ChlorideSalt";
@@ -155,7 +157,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Boolean external_parasities = true "true if there is external parasitic power losses";
 	parameter Real nu_min_blk = 0.5 "minimum allowed part-load mass flow fraction to power block";
 	parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
-	parameter SI.Power W_cooling_des = 0.02*P_gross "Fraction of gross power consumed by cooling system";
+	parameter SI.Power f_cooling_des = 0.02 "Fraction of gross power consumed by cooling system";
+	parameter SI.Power W_cooling_des = f_cooling_des*P_gross "Power consumed by cooling system";
 	parameter SI.Power W_pump_pb(fixed = false) "PB pump parasitic losses at design";
 	parameter SI.Power W_pump_rec(fixed = false) "Receiver pump parasitic losses at design";
 	parameter SI.Power W_pump_tk(fixed = false) "Cold tank pump parasitic losses at design";
@@ -173,8 +176,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real nu_min_sf = 0.20 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real hot_tnk_empty_lb = 10 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 12 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-	parameter Real hot_tnk_full_lb = 120 "Hot tank full trigger lower bound";
-	parameter Real hot_tnk_full_ub = 123 "Hot tank full trigger upper bound";
+	parameter Real hot_tnk_full_lb = 97 "Hot tank full trigger lower bound";
+	parameter Real hot_tnk_full_ub = 100 "Hot tank full trigger upper bound";
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
@@ -192,14 +195,24 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;
 	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
-	parameter SI.Length H_storage = 10.9 "Storage tank height";
-	parameter SI.Diameter D_storage = 45 "Storage tank diameter";
+	parameter SI.Length H_storage = 10.97 "Storage tank height";
+	//parameter SI.Diameter D_storage = if P_net == 25e6 then 30.9 elseif P_net == 33e6 then 35.66 elseif P_net == 50e6 then 43.62 else 43.62 "Storage tank diameter";
+	parameter Real E_cost = E_max/3600/1e6/n_parallel_tanks;
+	parameter SI.Diameter D_storage = 7.2445970263907293
+		+6.1806489744702035e-002 *E_cost
+		-7.2433338838190540e-005 *E_cost^2
+		+8.0419452477010190e-008 *E_cost^3
+		-6.1534083233241065e-011 *E_cost^4
+		+3.0452190802267542e-014 *E_cost^5
+		-9.1854047271801962e-018 *E_cost^6
+		+1.5103194474081185e-021 *E_cost^7
+		-1.0138170136870917e-025 *E_cost^8 "Storage tank diameter";
 	//parameter SI.Pressure Dp_tube_design
 	//parameter SI.Pressure Dp_shell_design
 
 
 	//Receiver Calculated parameters
-	parameter SI.HeatFlowRate Q_rec_out_des = Q_flow_des * SM "Heat from receiver at design";
+	parameter SI.HeatFlowRate Q_rec_out_des = R_des * (1 - rec_fr) "Heat from receiver at design";
 	parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
 	parameter SI.MassFlowRate m_flow_rec = Q_hx_design / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
@@ -210,7 +223,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	//SF Calculated Parameters
 	parameter SI.Area A_field = n_heliostat * A_heliostat "Heliostat field reflective area";
 	parameter SI.Area A_receiver = CN.pi*D_receiver*H_receiver "Receiver aperture area";
-	parameter SI.Area A_land = n_modules*land_mult * A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_land = n_modules*(land_mult * A_field + A_land_fix) "Land area";
 
 	//Power Block Control and Calculated parameters
 	parameter SI.Power P_name = P_net "Nameplate rating of power block";
@@ -264,8 +277,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real C_r_mat_pm(unit = "$/m") = C_r_m*mass_pm_r "Riser material cost per m";
 	parameter Real C_d_mat_pm(unit = "$/m") = C_d_m*mass_pm_d "Downcomer material cost per m";
 
-	parameter Real C_r_ref(unit = "$/m") = 5192 "Riser reference cost without material";
-	parameter Real C_d_ref(unit = "$/m") = 8056 "Riser reference cost without material";
+	parameter Real C_r_ref(unit = "$/m") = 5595 "Riser reference cost without material";
+	parameter Real C_d_ref(unit = "$/m") = 8502 "Riser reference cost without material";
 
 	parameter FI.Money_USD C_riser = C_r_ref*(D_r/D_r_ref)*L_riser + C_r_mat_pm*L_riser "Riser cost";
 	parameter FI.Money_USD C_downcomer = C_d_ref*(D_d/D_d_ref)*L_downcomer + C_d_mat_pm*L_downcomer "Downcomer cost";
@@ -311,8 +324,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_salt_pump_hot = C_salt_pump_hot_ref*(Q_rec_out_des/Q_rec_NREL_ref)^pump_salt_exp "Hot salt pump cost";
 
 	// Power block cost
-	parameter SI.Power P_gross_ref = 111e6 "Power block reference size";
-	parameter SI.HeatFlowRate Q_flow_des_ref = 100000000 "Salt-CO2 primary heat exchanger reference size";	
+	parameter SI.Power P_gross_ref = 100e6 "Power block reference size";
+	parameter SI.HeatFlowRate Q_flow_des_ref = 100e6 "Salt-CO2 primary heat exchanger reference size";
 	parameter Real pri_block_ref(unit="$/kWe") = 600 "Power block reference unit price";
 	parameter Real pri_hex_salt_co2_ref(unit="$/kWth") = 229 "Salt-CO2 primary heat exchanger reference unit price";
 	parameter Real power_block_exp = 0.7 "Power block scaling exponent";
@@ -367,8 +380,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter Real C_salt_co2_cold_mat_pm(unit = "$/m") = C_sc_m*mass_pm_salt_co2_cold "Cold salt piping material cost per m";
 	parameter Real C_salt_co2_hot_mat_pm(unit = "$/m") = C_sh_m*mass_pm_salt_co2_hot "Hot salt piping material cost per m";
 
-	parameter Real C_sc_ref(unit="$/m") = 5192 "Cold salt reference cost (excluding pipe material)";
-	parameter Real C_sh_ref(unit="$/m") = 8056 "Hot saltreference cost (excluding pipe material";
+	parameter Real C_sc_ref(unit="$/m") = 5595 "Cold salt reference cost (excluding pipe material)";
+	parameter Real C_sh_ref(unit="$/m") = 8502 "Hot saltreference cost (excluding pipe material";
 
 	parameter FI.Money_USD C_piping_cold_salt_na = C_sc_ref*(D_salt_na_cold/D_sc_ref)*lm_sc*L_salt_na_cold + C_salt_na_cold_mat_pm*lm_sc*L_salt_na_cold "Cold salt charge piping cost";
 	parameter FI.Money_USD C_piping_hot_salt_na = C_sh_ref*(D_salt_na_hot/D_sh_ref)*lm_sh*L_salt_na_hot + C_salt_na_hot_mat_pm*lm_sh*L_salt_na_hot "Hot salt charge piping cost";
@@ -379,11 +392,11 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_piping_cold_salt = C_piping_cold_salt_na + C_piping_cold_salt_co2 "Cold salt piping cost";
 	parameter FI.Money_USD C_piping_hot_salt = C_piping_hot_salt_na + C_piping_hot_salt_co2 "Hot salt piping cost";
 
-	parameter FI.Money_USD C_salt_valves = 1890000 "Cost of salt valves";
+	parameter FI.Money_USD C_salt_valves = 2106720 "Cost of salt valves";
 
 	// Purchase equipment costs
 	parameter FI.Money_USD C_receiver = C_rec_fix + C_rec_ref * (D_receiver / D_receiver_ref) * (H_receiver/H_receiver_ref)^rec_exp "Receiver cost";
-	parameter FI.Money_USD C_tower = 16339938 "Tower cost";
+	parameter FI.Money_USD C_tower = 3000000*exp(0.0113*H_tower) "Tower cost";
 	parameter FI.Money_USD C_rd = C_riser + C_downcomer "Riser and downcomer cost";
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
 	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
@@ -570,7 +583,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
-		n_parallel_tanks = 1,
+		n_parallel_tanks = n_parallel_tanks,
 		T_start = T_hot_start_CS,
 		L_start = (1 - split_cold) * 100,
 		alpha = alpha, use_p_top = tnk_use_p_top,
@@ -591,7 +604,7 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 		redeclare package Medium = Medium2,
 		D = D_storage,
 		H = H_storage,
-		n_parallel_tanks = 1,
+		n_parallel_tanks = n_parallel_tanks,
 		T_start = T_cold_start_CS,
 		L_start = split_cold * 100,
 		alpha = alpha,
@@ -697,7 +710,7 @@ initial equation
 		T_cold_set_CS);
 
 	Q_flow_des = NREL_PB_configurations[10] "Heat transfer of the PHX at the design point";
-	//eta_net_base = NREL_PB_configurations[11] "PB cycle thermal efficiency (cooler fan has been included)";
+	eta_net_base = NREL_PB_configurations[11] "PB cycle thermal efficiency (cooler fan has been included)";
 	eta_Q_base = NREL_PB_configurations[12];
 	dT_PHX_hot_approach = NREL_PB_configurations[13] "Heat transfer of the PHX at the design point";
 	m_flow_blk = NREL_PB_configurations[9] "HTF mass flow rate at the design point";
@@ -713,11 +726,13 @@ equation
 	powerBlock.raw_input[1] = powerBlock.load;
 	powerBlock.raw_input[2] = tankHot.medium.T;
 	powerBlock.raw_input[3] = data.Tdry;
+	
+	//heliostatsField.Q_raw = heliostatsField.Q_dump_field;
 
 	if heliostatsField.Q_raw > heliostatsField.Q_start then
-		Q_rec_out_des = heliostatsField.Q_dump_field*receiver.eta_rec;
+		Q_hx_design = heliostatsField.Q_dump_field*receiver.eta_rec;
 	else
-		Q_rec_out_des = heliostatsField.Q_dump_field;
+		Q_hx_design = heliostatsField.Q_dump_field;
 	end if;
 
 	if heliostatsField.defocus_internal and heliostatsField.on_internal then
@@ -879,7 +894,7 @@ equation
 		__Dymola_experimentSetupOutput,
 		Documentation(info = "<html>
 	<p>
-		<b>NaSaltsCO2System</b> models the system-level interactions of a CSP System using a Sodium Receiver and two-tank storage system using Chloride Salt.
+		<b>NaSaltsCO2System_fixed</b> models the system-level interactions of a CSP System using a Sodium Receiver and two-tank storage system using Chloride Salt.
 	</p>
 	</html>", revisions = "<html>
 	<ul>
