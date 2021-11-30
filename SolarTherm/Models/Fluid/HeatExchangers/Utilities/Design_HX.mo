@@ -24,8 +24,8 @@ function Design_HX
   input SI.Pressure p_MS1 "Molten Salt Inlet Pressure";
   input FI.EnergyPrice_kWh c_e "Power cost";
   input Real r "Real interest rate";
-  input Real H_y(unit = "h") "Operating hours";
-  input Integer n(unit = "h") "Operating years";
+  input Real H_y "Operating hours";
+  input Integer n "Operating years";
   input FI.MassPrice material_sc /*= 84*/ "Material HX Specific Cost";
   input Real ratio_max "Maximum L/D_s ratio";
   input Boolean ratio_cond "Activate ratio constraint";
