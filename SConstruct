@@ -18,7 +18,6 @@ default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
-		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
 		default_ssc_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
@@ -28,7 +27,6 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
-	default_glpk_prefix = "/usr"
 	default_tf_prefix = default_prefix
 	default_ssc_prefix = Path(os.environ['HOME'])/'SAM'/'2020.11.12'
 	default_om_libpath = None
@@ -40,6 +38,11 @@ if shutil.which('dakota'):
 	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
 else:
 	default_dakota_prefix = default_prefix
+
+if shutil.which('glpsol'):
+	default_glpk_prefix = Path(shutil.which('glpsol')).parent.parent
+else:
+	default_glpk_prefix = default_prefix
 
 if shutil.which('omc'):
 	default_om_prefix = Path(shutil.which('omc')).parent.parent
@@ -122,7 +125,7 @@ if platform.system()=="Windows":
 elif platform.system()=="Linux":
 	import distro
 	env = Environment(variables=vars)
-	if distro.id()=="centos":
+	if distro.id()=="centos" or distro.id()=="rocky":
 		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
 		# for pkg-config to work correctly.
 		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
