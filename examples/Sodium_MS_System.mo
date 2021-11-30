@@ -87,9 +87,8 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter SI.Temperature T_hot_set_CS = CV.from_degC(565) "Hot tank target temperature";
 	parameter Medium2.ThermodynamicState state_cold_set_CS = Medium2.setState_pTX(Medium2.p_default, T_cold_set_CS) "Cold salt thermodynamic state at design";
 	parameter Medium2.ThermodynamicState state_hot_set_CS = Medium2.setState_pTX(Medium2.p_default, T_hot_set_CS) "Hold salt thermodynamic state at design";
-	parameter SI.Temperature T_Na2_input = T_cold_set_Na "Outlet sodium temperature";
 	parameter FI.MassPrice material_sc = 80 "Material HX Specific Cost"; // UNS 06230
-	parameter Real hx_to_rec_factor = 1.1; //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
+	parameter Real hx_to_rec_factor = 1.0; //Use ratio_cond to constrain the design of the HX: if "true" the HX will be forced to have L/D_s aspect ratio<ratio_max.
 	parameter Boolean ratio_cond = true "Activate ratio constraint"; //Default value = true
 	parameter Real ratio_max = 10 "Maximum L/D_s ratio"; //If ratio_cond = true provide a value (default value = 10) Use it to constrain the design of the HX: if "true" the HX will be forced to have L<L_max.
 	parameter Boolean L_max_cond = false "Activate maximum HX length constraint"; //Default value = false
@@ -155,8 +154,8 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-	parameter Real nu_start = 0.20 "Minimum energy start-up fraction to start the receiver";
-	parameter Real nu_min_sf = 0.20 "Minimum turn-down energy fraction to stop the receiver";
+	parameter Real nu_start = 0.25 "Minimum energy start-up fraction to start the receiver";
+	parameter Real nu_min_sf = 0.25 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real hot_tnk_empty_lb = 10 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 12 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
 	parameter Real hot_tnk_full_lb = 97 "Hot tank full trigger lower bound";
@@ -175,7 +174,7 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter SI.Mass m_max = E_max / (h_hot_set_CS - h_cold_set_CS) "Max salt mass in tanks";
 	parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) "Max salt volume in tanks";
 	parameter SI.MassFlowRate m_flow_fac = Q_hx_design / (h_hot_set_CS - h_cold_set_CS) "Mass flow rate to receiver at design point";
-	parameter Real CS_velocity_factor=Shell_and_Tube_HX.v_max_MS_lim_max/Shell_and_Tube_HX.v_max_MS_design;
+	parameter Real CS_velocity_factor=HX.v_max_MS_lim_max/HX.v_max_MS_design;
 	parameter SI.MassFlowRate m_flow_max_CS = CS_velocity_factor * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_CS = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.Length H_storage = 10.97 "Storage tank height";
@@ -199,7 +198,7 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter SI.SpecificEnthalpy h_cold_set_Na = Medium1.specificEnthalpy(state_cold_set_Na) "Cold Sodium specific enthalpy at design";
 	parameter SI.SpecificEnthalpy h_hot_set_Na = Medium1.specificEnthalpy(state_hot_set_Na) "Hot Sodium specific enthalpy at design";
 	parameter SI.MassFlowRate m_flow_rec = Q_hx_design / (h_hot_set_Na - h_cold_set_Na) "Mass flow rate to receiver at design point";
-	parameter Real Na_velocity_factor=Shell_and_Tube_HX.v_Na_lim_max/Shell_and_Tube_HX.v_Na_design; /*1.54*/	
+	parameter Real Na_velocity_factor=HX.v_Na_lim_max/HX.v_Na_design; /*1.54*/	
 	parameter SI.MassFlowRate m_flow_max_Na = Na_velocity_factor * m_flow_rec "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_start_Na = m_flow_rec "Initial or guess value of mass flow rate to receiver in the feedback controller";
 
@@ -214,8 +213,8 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.044 "Real discount rate";
 	parameter Real r_i = 0.025 "Inflation rate";
-	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
-	parameter Integer t_cons(unit = "year") = 0 "Years of construction";
+	parameter Integer t_life = 30 "Lifetime of plant in years";
+	parameter Integer t_cons = 0 "Years of construction";
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
 	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";
@@ -318,7 +317,7 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter Real pri_hex_na_salt_ref(unit="$/m2") = 1833.99 "Sodium-salt hex reference unit price";
 	parameter SI.Area A_hx_na_salt_ref = 10e3 "Sodium-salt hex reference area";
 	parameter Real hex_na_salt_exp = 0.7 "Sodium-salt hex scaling exponent";
-	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(Shell_and_Tube_HX.A_HX/A_hx_na_salt_ref)^hex_na_salt_exp "Sodium-salt hex unit price";
+	parameter Real pri_hex_na_salt(unit="$/m2") = pri_hex_na_salt_ref*(HX.A_HX/A_hx_na_salt_ref)^hex_na_salt_exp "Sodium-salt hex unit price";
 
 	// Salt piping and valves
 	parameter SI.Length L_salt_na_cold = 20 "Length of cold salt charge piping (exc. expansion loops)";
@@ -384,7 +383,7 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 	parameter FI.Money_USD C_loop_na = C_pip_na + C_ic_na + C_valve_na + C_tank_na + C_vessel_na + C_skid_na + C_argon_na + C_pump_na "Sodium loop cost";
 	parameter FI.Money_USD C_salt_pumps = C_salt_pump_cold + C_salt_pump_hot "Salt pump cost";
 	parameter FI.Money_USD C_salt_piping = C_piping_cold_salt + C_piping_hot_salt "Salt piping and valves cost";
-	parameter FI.Money_USD C_hx = pri_hex_na_salt*Shell_and_Tube_HX.A_HX "Heat Exchanger cost";
+	parameter FI.Money_USD C_hx = pri_hex_na_salt*HX.A_HX "Heat Exchanger cost";
 	parameter FI.Money_USD C_storage = pri_storage * E_max / (1e3 * 3600) "Storage cost";
 	parameter FI.Money_USD C_block = P_gross_ref/1000*pri_block_ref*(P_gross/P_gross_ref)^power_block_exp "Power block cost";
 	parameter FI.Money_USD C_hex_salt_co2 = Q_flow_des_ref/1000*pri_hex_salt_co2_ref*(Q_flow_des/Q_flow_des_ref)^hex_salt_co2_exp "Salt-CO2 HEX cost";
@@ -448,12 +447,12 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 
 	//Sodium loop Pressure Losses
 	Modelica.Blocks.Sources.RealExpression PressureLosses_Na_loop(
-		y = Shell_and_Tube_HX.Dp_tube) 
+		y = HX.Dp_tube) 
 		annotation(Placement(visible = true, transformation(extent = {{-132, -50}, {-112, -30}}, rotation = 0)));
 
 	//ChlorideSalt loop Pressure Losses
 	Modelica.Blocks.Sources.RealExpression PressureLosses_CS_loop(
-		y = Shell_and_Tube_HX.Dp_shell)
+		y = HX.Dp_shell)
 		annotation(Placement(visible = true, transformation(extent = {{-22, 52}, {-2, 72}}, rotation = 0)));
 
 	// Or block for defocusing
@@ -536,10 +535,13 @@ model Sodium_MS_System "High temperature Sodium-sCO2 system"
 		annotation(Placement(visible = true, transformation(origin = {40, -56}, extent = {{10, -10}, {-10, 10}}, rotation = -90)));
 
 	//HX
-	SolarTherm.Models.Fluid.HeatExchangers.HX Shell_and_Tube_HX(
+	SolarTherm.Models.Fluid.HeatExchangers.HX HX(
 		replaceable package Medium1 = Medium1,
 		replaceable package Medium2 = Medium2,
-		T_Na2_input=T_Na2_input,
+		T_MS1_des = T_cold_set_CS,
+		T_MS2_des = T_hot_set_CS,
+		T_Na1_des = T_hot_set_Na,
+		T_Na2_input=T_cold_set_Na,
 		Q_d_des = Q_hx_design,
 		optimize_and_run=optimize_HX_design,
 		material_sc = material_sc,
@@ -707,10 +709,10 @@ equation
 	connect(temperature1.fluid_a, pumpSodium.fluid_b) annotation(
 		Line(points = {{-27, -24}, {-27, -36}, {-22, -36}}, color = {0, 127, 255}));
 
-	connect(Shell_and_Tube_HX.port_b_out, tankHot.fluid_a) annotation(
+	connect(HX.port_b_out, tankHot.fluid_a) annotation(
 		Line(points = {{14, 6}, {6, 6}, {6, 68}, {48, 68}, {48, 70}}, color = {0, 127, 255}));
 
-	connect(Shell_and_Tube_HX.port_a_in, receiver.fluid_b) annotation(
+	connect(HX.port_a_in, receiver.fluid_b) annotation(
 		Line(points = {{18, 12}, {18, 12}, {18, 30}, {-30, 30}, {-30, 30}}, color = {0, 127, 255}));
 
 	connect(receiver.Q_out, hX_Control.Q_out_rec) annotation(
@@ -762,8 +764,6 @@ equation
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
 		Line(points = {{111, 73}, {112, 73}, {112, 58}, {84, 58}, {84, 54}}, color = {0, 0, 127}));
 
-	//connect(controlHot.PB_ramp_fraction, powerBlock.PB_ramp_fraction) annotation(Line(points = {{112, 76}, {120, 76}, {120, 45}, {105, 45}, {105, 22}, {112, 22}}, color = {0, 0, 127}));
-
 	//Connections from data
 	connect(Wspd_input.y, heliostatsField.Wspd) annotation(
 		Line(points = {{-109, 30}, {-98, 30}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -782,7 +782,7 @@ equation
 		Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, -74}, {34, -74}, {34, -67}, {33, -67}}, color = {255, 0, 255}));
 
 	//Solar field connections i.e. solar.heat port and control
-	connect(heliostatsField.on, Shell_and_Tube_HX.HF_on) annotation(
+	connect(heliostatsField.on, HX.HF_on) annotation(
 		Line(points = {{-82, 2}, {-82, -20}, {-44, -20}, {-44, -6}, {13, -6}}, color = {255, 0, 255}));
 
 	connect(sun.solar, heliostatsField.solar) annotation(
@@ -795,21 +795,36 @@ equation
 	connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
 		Line(points = {{68, 58}, {72, 58}, {72, 48}, {78, 48}, {78, 48}}, color = {0, 127, 255}));
 
-	connect(Shell_and_Tube_HX.port_a_out, SodiumBufferTank.fluid_a) annotation(
+	connect(HX.port_a_out, SodiumBufferTank.fluid_a) annotation(
 		Line(points = {{24, -14}, {24, -30.5}, {14, -30.5}}, color = {0, 127, 255}));
 
-	connect(pumpCold2.fluid_b, Shell_and_Tube_HX.port_b_in) annotation(
+	connect(pumpCold2.fluid_b, HX.port_b_in) annotation(
 		Line(points = {{54, 14}, {34, 14}, {34, -7}, {29, -7}}, color = {0, 127, 255}));
 
-	connect(receiver.Q_out, Shell_and_Tube_HX.Q_out_rec) annotation(
+	connect(receiver.Q_out, HX.Q_out_rec) annotation(
 		Line(points = {{-31, 18}, {-9, 18}, {-9, 0}, {12, 0}}, color = {0, 127, 255}));
+
 	//PowerBlock connections
 	P_elec = powerBlock.W_net*n_modules;
 	E_elec = powerBlock.E_net*n_modules;
 	R_spot = market.profit*n_modules;
 
 	annotation(
-		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 10, fontName = "CMU Serif"), Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 10, fontName = "CMU Serif"), Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 10, fontName = "CMU Serif"), Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 10, fontName = "CMU Serif"), Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 10, fontName = "CMU Serif"), Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 10, fontName = "CMU Serif"), Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 10, fontName = "CMU Serif"), Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 10, fontName = "CMU Serif"), Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 10, fontName = "CMU Serif")}),
+		Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {
+		Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 8), 
+		Text(origin = {0, -18}, lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 8), 
+		Text(origin = {-14, 50}, extent = {{-42, 0}, {-4, -12}}, textString = "Receiver", fontSize = 8), 
+		Text(origin = {10, 0}, extent = {{-110, 4}, {-72, -16}}, textString = "Heliostats Field", fontSize = 8), 
+		Text(origin = {-34, 14}, extent = {{-62, 76}, {-32, 66}}, textString = "Sun", fontSize = 8), 
+		Text(origin = {28, 6}, extent = {{14, 46}, {48, 38}}, textString = "Hot Tank", fontSize = 8), 
+		Text(origin = {44, -18}, extent = {{30, -24}, {62, -38}}, textString = "Cold Tank", fontSize = 8), 
+		Text(origin = {22, 0}, extent = {{80, 12}, {116, -6}}, textString = "Power Block", fontSize = 8), 
+		Text(origin = {4, 38}, extent = {{130, 6}, {160, -4}}, textString = "Market", fontSize = 8), 
+		Text(origin = {30, -96}, extent = {{-6, 20}, {28, 2}}, textString = "HX Control", fontSize = 8), 
+		Text(origin = {54, 38}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 8), 
+		Text(origin = {14, -52}, extent = {{-146, -26}, {-106, -44}}, textString = "Data Source", fontSize = 8), 
+		Text(origin = {48, 22}, extent = {{-52, 8}, {-4, -12}}, textString = "Heat Exchanger", fontSize = 8), 
+		Text(origin = {-132, -44}, extent = {{124, 4}, {160, -4}}, textString = "Buffer Tank", fontSize = 8)}),
 		Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}})),
 		experiment(StopTime = 3.1536e+7, 
 		StartTime = 0, 
