@@ -108,7 +108,7 @@ equation
 	W_loss=W_net/e_ht;
 
 	annotation (
-		Icon(coordinateSystem(preserveAspectRatio=false)),
+		Icon(coordinateSystem(preserveAspectRatio = false), graphics = {Text(origin = {0, -140}, lineColor = {24, 5, 250}, extent = {{-140, 20}, {140, -20}}, textString = "%name")}),
 		Diagram(coordinateSystem(preserveAspectRatio=false)),
 		Documentation(revisions="<html>
 <ul>

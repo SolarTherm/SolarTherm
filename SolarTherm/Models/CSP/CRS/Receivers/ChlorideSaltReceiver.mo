@@ -135,7 +135,7 @@ equation
 	der(E_pip) = Q_pip;
 	der(E_rec) = Q_rcv;
 
-	annotation (Documentation(info="<html>
+	annotation (Documentation(info = "<html>
 	<p>
 	<b>ChlorideSaltReceiver</b> models the heat transfer characteristics of an external tubular receiver with a user-defined geometry by employing simple energy and mass balances, an average temperature 	for receiver external surface, and heat transfer correlations. The receiver <b>ChlorideSaltReceiver</b> model has the following connectors:
 	</p>
@@ -158,11 +158,12 @@ equation
 	<li> <b>const_alpha</b>: Boolean, true if external convective heat transfer. <b>Default</b>: true.</li>
 	<li> <b>alpha</b>: Heat transfer coefficient due to external convection, in W/(m2.K). <b>Default</b>: 30.0 W/(m2.K).</li>
 	</ul>
-	</html>", revisions="<html>
+	</html>", revisions = "<html>
 	<ul>
 		<li><i>Jan 2020</i> by <a href=\"mailto:armando.fontalvo@anu.edu.au\">Armando Fontalvo</a>:<br>
 		Created.</li>
 	</ul>
-	</html>"));
+	</html>"),
+	Icon(graphics = {Text(origin = {0, -140}, lineColor = {0, 0, 255}, extent = {{-120, 20}, {120, -20}}, textString = "%name")}));
 
 end ChlorideSaltReceiver;

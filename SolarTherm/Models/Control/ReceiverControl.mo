@@ -85,9 +85,10 @@ equation
           {1.33227e-015,-64},{0,-64},{0,-60.96}}, color={255,0,255}));
   connect(not1.y, defocus)
     annotation (Line(points={{0,-80.6},{0,-114}}, color={255,0,255}));
-  annotation (Documentation(revisions="<html>
+  annotation (Documentation(revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Text(origin = {0, 140}, lineColor = {0, 0, 255}, extent = {{-140, 20}, {140, -20}}, textString = "%name")}));
 end ReceiverControl;
