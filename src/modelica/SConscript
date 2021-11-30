@@ -63,43 +63,48 @@ genv.Depends(lib3,lib4)
 #Adding st_linprog_particle library for particle system - 17 October 2021 -- Philipe
 lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linprog_particle/linprog.c'])
 
-#Tensorflow linked bits 19 October 2021 -- Philipe
-#Clone the standard + python environment
-tenv = penv.Clone()
-
-#Adding tensorflow
-tenv.Append(
-	CPPPATH = ['$TF_CPPPATH']
-	,LIBS = ["tensorflow"]
-	,LIBPATH = ["$TF_LIBPATH"]
-)
-
-#Adding st_surrogate_single_output library for particle system - 19 October 2021 -- Philipe
-lib7 = tenv.SharedLibrary('st_recv_surrogate_single_output',['st_recv_surrogate.c'])
-
-tenv_mul = tenv.Clone()
-lib8 = tenv.SharedLibrary('st_recv_surrogate_multi_output',['st_recv_surrogate_multi.c'])
-
-
-#On the fly surrogate bits 21 October 2021 -- Philipe
-fenv = tenv.Clone() #Python + tensorflow already included
-fenv.Append(
-	CPPPATH = ["$SSC_CPPPATH", '$TF_CPPPATH']
-	,LIBS = ["m","gsl","gslcblas","dl","ssc"] #Original libs are Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"} however since python2.6 and TF are already in tenv, so it can be passed
-	,LIBPATH = ["$SSC_LIBPATH","$TF_LIBPATH"]
-)
-
-lib9 = fenv.SharedLibrary('st_otf_surrogate',[
-	'st_otf_surrogate.c'
-	,'otf/kriging.c'
-	,'otf/ann.c'
-	,'otf/util.c'
-	,'otf/sscpb.c'
-#	'otf-surrogate/otfreceiver.c
-	])
-
 #Appending the libs
-shlibs = [lib1, lib4, lib2, lib3, lib6, lib7, lib8, lib9]
+shlibs = [lib1, lib4, lib2, lib3, lib6]
+
+if env['HAVE_TF']:
+	#Tensorflow linked bits 19 October 2021 -- Philipe
+	#Clone the standard + python environment
+	tenv = penv.Clone()
+
+	#Adding tensorflow
+	tenv.Append(
+		CPPPATH = ['$TF_CPPPATH']
+		,LIBS = ["tensorflow"]
+		,LIBPATH = ["$TF_LIBPATH"]
+	)
+
+	#Adding st_surrogate_single_output library for particle system - 19 October 2021 -- Philipe
+	lib7 = tenv.SharedLibrary('st_recv_surrogate_single_output',['st_recv_surrogate.c'])
+
+	tenv_mul = tenv.Clone()
+	lib8 = tenv.SharedLibrary('st_recv_surrogate_multi_output',['st_recv_surrogate_multi.c'])
+	shlibs += [lib7,lib8]
+
+	if env['HAVE_SSC']:
+		#On the fly surrogate bits 21 October 2021 -- Philipe
+		fenv = tenv.Clone() #Python + tensorflow already included
+		fenv.Append(
+			CPPPATH = ["$SSC_CPPPATH", '$TF_CPPPATH']
+			,LIBS = ["m","gsl","gslcblas","dl","ssc"] # plus the ones in tenv...
+			,LIBPATH = ["$SSC_LIBPATH","$TF_LIBPATH"]
+		)
+
+		lib9 = fenv.SharedLibrary('st_otf_surrogate',[
+			'st_otf_surrogate.c'
+			,'otf/kriging.c'
+			,'otf/ann.c'
+			,'otf/util.c'
+			,'otf/sscpb.c'
+		#	'otf-surrogate/otfreceiver.c
+			])
+
+		shlibs.append(lib9)
+
 pysrcs = [
 	'st_test_ext.py',
 	'run_solstice.py',

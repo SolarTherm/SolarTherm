@@ -44,6 +44,11 @@ if shutil.which('glpsol'):
 else:
 	default_glpk_prefix = default_prefix
 
+if shutil.which('gsl-config'):
+	default_gsl_config = Path(shutil.which('gsl-config'))
+else:
+	default_gsl_config = 'gsl-config'
+
 if shutil.which('omc'):
 	default_om_prefix = Path(shutil.which('omc')).parent.parent
 else:
@@ -53,6 +58,8 @@ default_om_modelicapath = '$OM_PREFIX/lib/omlibrary' # location of MSL, eg Model
 default_colors='auto'
 if sys.stdout.isatty():
 	default_colors = 'yes'
+def ORANGEWARN(msg):
+	return(colorama.Fore.YELLOW+colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)
 def REDWARN(msg):
 	return(colorama.Fore.RED+colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)
 
@@ -104,6 +111,7 @@ vars.AddVariables(
 		,"Installation prefix for SAM Simulation Core",default_ssc_prefix,PathVariable.PathAccept)
 	,PathVariable('SSC_CPPPATH' ,"Location where SAM SSC headers are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
 	,PathVariable('SSC_LIBPATH' ,"Location where SAM SSC libraries are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
+	,PathVariable('GSL_CONFIG',"Location of 'gsl-config' tool for GSL installation info.",default_gsl_config,PathVariable.PathAccept)
 	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
@@ -137,7 +145,7 @@ Help(vars.GenerateHelpText(env))
 # CHECK FOR DAKOTA, SOLSTICE, OPENMODELICA, OPENMPI/MSMPI, correct PATH.
 
 def check_solsticepy(ct):
-	ct.Message('Checking for solsticepy...')
+	ct.Message('Checking for solsticepy... ')
 	try:
 		import solsticepy
 	except Exception as e:
@@ -234,7 +242,7 @@ def check_omc(ct):
 		)
 	return True
 def check_omlibrary(ct):
-	ct.Message("Checking for Modelica Standard Library...")
+	ct.Message("Checking for Modelica Standard Library... ")
 	try:
 		p = Path(ct.env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
@@ -292,7 +300,7 @@ def check_mpi(ct):
 
 
 def check_ssc(ct):
-	ct.Message('Checking SSC...')
+	ct.Message('Checking SSC... ')
 	cv = {}
 	for v in ['CPPPATH','LIBPATH','LIBS','ENV']:
 		cv[v] = ct.env.get(v)
@@ -319,7 +327,7 @@ int main() {
 
 
 def check_path(ct):
-	ct.Message('Checking PATH...')
+	ct.Message('Checking PATH.... ')
 	pp = os.environ.get('PATH','').split(os.pathsep)
 	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
@@ -392,28 +400,58 @@ conf = env.Configure(custom_tests={
 	,'TF':check_tensorflow
 	,'SSC':check_ssc
 })
+
+def confmsg(env,msg,fail=0):
+	if fail:
+		print(REDWARN(msg))
+		Exit(1)
+	else:
+		print(ORANGEWARN(msg))
+
 if not conf.CSP():
-	print(REDWARN("Missing or wrong version of 'solsticepy'"))
-	Exit(1)
+	confmsg(env,"Missing or wrong version of 'solsticepy'",CONFFAIL)
 if not conf.CS():
-	print(REDWARN("Unable to locate 'solstice'"))
-	Exit(1)
+	confmsg(env,"Unable to locate 'solstice'",CONFFAIL)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
 
 if conf.TF():
 	env.AppendUnique(ST_LIBPATH=['$TF_LIBPATH'])
+else:
+	confmsg(env,"Warning: TensorFlow was not found, some components will not be built.")
 if conf.SSC():
 	env.AppendUnique(ST_LIBPATH=['$SSC_LIBPATH'])
+else:
+	confmsg(env,"Warning: SSC was not found, some components will not be built.")
 
 if not conf.OMC() or not conf.OMLib():
-	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
-	Exit(1)
+	confmsg(env,"Unable to locate OpenModelica. Unable to continue.",CONFFAIL)
 if not conf.MPI():
-	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
+	# FIXME can we make MPI optional?
+	confmsg(env,"Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN']),CONFFAIL)
 if not conf.PATH():
-	print(REDWARN("Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),)))
+	confmsg(env,"Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),))
 env = conf.Finish()
+
+envg = env.Clone()
+envg.ParseConfig('$GSL_CONFIG --libs --cflags')
+def check_gsl(ct):
+	ct.Message('Checking for GSL... ')
+	src = """#include <gsl/gsl_sf_bessel.h>
+int main(void){
+	double y = gsl_sf_bessel_J0(5);
+	return 0;
+}
+"""
+	res = ct.TryLink(src,'.c')
+	ct.Result(res)
+	ct.env['HAVE_GSL'] = res
+	return res
+confg = envg.Configure(custom_tests={'GSL':check_gsl})
+if not confg.GSL():
+	confmsg(env,"Warning: unable to locate GSL. Some components will not be built.")
+envg = confg.Finish()
+env['HAVE_GSL'] = envg['HAVE_GSL']
 
 #---------------------------------------------------------------------------------------------------
 
@@ -504,5 +542,6 @@ env.Alias('install',['#','$PREFIX','$INSTALL_OMLIBRARY'])
 #env.SConscript('resources')
 
 # TODO install SolarTherm directory
+#
 
 # vim: ts=4:noet:sw=4:tw=100:syntax=python

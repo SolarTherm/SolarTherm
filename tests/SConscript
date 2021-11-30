@@ -18,8 +18,10 @@ tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_mot
 
 tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
 
-#OTF Surrogate test C code compilation
-tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'], LIBS=['gsl','tensorflow','st_otf_surrogate','ssc'])
+if env['HAVE_SSC'] and env['HAVE_TF'] and env['HAVE_GSL']:
+	tenv.ParseConfig('$GSL_CONFIG --libs --cflags')
+	tenv.AppendUnique(LIBS=['tensorflow','st_otf_surrogate'])
+	tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'])
 
 import platform
 if platform.system()=="Windows":
