@@ -13,8 +13,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	extends Modelica.Icons.Example;
 
 	//Media
-	replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-	replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
+	replaceable package Medium1 = SolarTherm.Media.Sodium.Sodium_pT "Medium props for Sodium";
+	replaceable package Medium2 = SolarTherm.Media.ChlorideSaltPH.ChlorideSaltPH_ph "Medium props for Molten Salt";
 
 	// Input Parameters
 	parameter SI.Power P_net = 100e6 "Power block net rating at design point";
@@ -231,8 +231,8 @@ model NaSaltsCO2System "High temperature Sodium-sCO2 system"
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.044 "Real discount rate";
 	parameter Real r_i = 0.025 "Inflation rate";
-	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant";
-	parameter Integer t_cons(unit = "year") = 0 "Years of construction";
+	parameter Integer t_life = 30 "Lifetime of plant";
+	parameter Integer t_cons = 0 "Years of construction";
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = 75 "Field cost per design aperture area ($/m2)";
 	parameter FI.AreaPrice pri_site = 10 "Site improvements cost per area ($/m2)";
