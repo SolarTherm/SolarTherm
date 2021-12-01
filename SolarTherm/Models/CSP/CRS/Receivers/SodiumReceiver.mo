@@ -97,7 +97,7 @@ equation
 	Q_ref = (1 - ab)*heat.Q_flow;
 	Q_emi = em*sigma*A*(T4l^4 - Tamb^4);
 	Q_conv = h_conv*A*(Tl - Tamb);
-	Q_loss -Q_emi - Q_conv - Q_ref = 0.0;
+	Q_loss + Q_emi + Q_conv + Q_ref = 0.0;
 	y = 1;
 
 	0 = heat.Q_flow + Q_loss + (fluid_a.m_flow + eps)*(inStream(fluid_a.h_outflow) - fluid_b.h_outflow);
