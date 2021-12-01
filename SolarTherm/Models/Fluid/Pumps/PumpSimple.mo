@@ -24,5 +24,6 @@ equation
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+	Icon(graphics = {Text(origin = {0, -140}, lineColor = {0, 0, 255}, extent = {{-120, 20}, {120, -20}}, textString = "%name")}));
 end PumpSimple;
