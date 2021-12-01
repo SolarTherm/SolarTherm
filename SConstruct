@@ -463,7 +463,8 @@ if platform.system()=="Linux":
 		configcmd = 'python$PYVERSION-config --libs --cflags'
 
 	elif distro.id() == 'rocky': #You are on the super computer MODIFIED BY PG --> 
-		configcmd = 'python$PYVERSION-config --libs --cflags'
+		configcmd = 'pkg-config python-$PYVERSION --libs --cflags'
+
 env['PKGCONFIGPYTHON'] = configcmd
 
 #print("os.environ['PATH']=",os.environ.get('PATH'))
