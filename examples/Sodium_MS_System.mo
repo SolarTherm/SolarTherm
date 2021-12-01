@@ -277,7 +277,17 @@ model Sodium_MS_System "Medium temperature sodium-nitrate salt system"
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
 		y = heliostatField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
-																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
+			Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
+
+	//parasitic inputs
+	Modelica.Blocks.Sources.RealExpression Q_rcv(
+		y = receiver.Q_rec_out) annotation(
+			Placement(visible = true, transformation(origin = {110, -10}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+
+	//parasitic inputs
+	Modelica.Blocks.Sources.RealExpression T_rec(
+		y = receiver.T) annotation(
+			Placement(visible = true, transformation(origin = {110, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 
 	// Or block for defocusing
 	Modelica.Blocks.Logical.Or or1 annotation(
@@ -467,12 +477,14 @@ equation
 		Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
 
 	// controlCold connections
-	connect(receiver.T, controlCold.T_mea) annotation(
-		Line(points = {{-24, 18.4}, {35, 18.4}, {35, 6}, {32, 6}}, color = {0, 0, 127}));
+	connect(Q_rcv.y, controlCold.Q_rec_out) annotation(
+		Line(points = {{32, 9}, {85, 9}, {85, -10}, {99, -10}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+	connect(T_rec.y, controlCold.T_mea) annotation(
+		Line(points = {{32, 3}, {80, 3}, {80, -30}, {99, -30}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(tankCold.L, controlCold.L_mea) annotation(
-		Line(points = {{32, 0}, {38, 0}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
+		Line(points = {{32, -3}, {38, -3}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
 	connect(heliostatField.on, controlCold.sf_on) annotation(
-		Line(points = {{-72, 2}, {-72, 2}, {-72, -36}, {35, -36}, {35, -6}, {32, -6}}, color = {255, 0, 255}));
+		Line(points = {{-72, 2}, {-72, 2}, {-72, -36}, {35, -36}, {35, -9}, {32, -9}}, color = {255, 0, 255}));
 	connect(controlCold.m_flow, pumpCold.m_flow) annotation(
 		Line(points = {{9.16, 0}, {4, 0}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlCold.defocus, or1.u2) annotation(
@@ -509,8 +521,6 @@ equation
 	connect(heliostatField.on, receiver.on);
 	connect(Wspd_input.y, receiver.Wspd) annotation(
 		Line(points = {{-120, 29.54}, {-100, 29.54}, {-100, 40}, {-31.5, 40}, {-31.5, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
- connect(receiver.Q_rec_out, controlCold.Q_rec_out) annotation(
-    Line(points = {{-24, 22}, {20, 22}, {20, 10}}, color = {0, 0, 127}));
 	annotation(
 	Diagram(
 		coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),

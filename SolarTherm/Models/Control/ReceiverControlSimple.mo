@@ -28,13 +28,13 @@ model ReceiverControlSimple
   Modelica.Blocks.Sources.RealExpression T_ref_input(y=T_ref)
     annotation (Placement(transformation(extent={{-62,18},{-42,38}})));
   Modelica.Blocks.Interfaces.RealInput L_mea
-    annotation (Placement(transformation(extent={{-128,-20},{-88,20}})));
+    annotation (Placement(visible = true, transformation(extent = {{-128, -20}, {-88, 20}}, rotation = 0), iconTransformation(extent = {{-130, -50}, {-90, -10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput m_flow
     annotation (Placement(transformation(extent={{94,-18},{130,18}})));
   Modelica.Blocks.Interfaces.BooleanInput sf_on
-    annotation (Placement(transformation(extent={{-130,-80},{-90,-40}})));
+    annotation (Placement(visible = true, transformation(extent = {{-130, -80}, {-90, -40}}, rotation = 0), iconTransformation(extent = {{-130, -110}, {-90, -70}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput T_mea
-    annotation (Placement(transformation(extent={{-130,40},{-90,80}})));
+    annotation (Placement(visible = true, transformation(extent = {{-130, 40}, {-90, 80}}, rotation = 0), iconTransformation(extent = {{-130, 10}, {-90, 50}}, rotation = 0)));
   Level2Logic hotTankLogic(level_max=30, level_min=L_off)
     annotation (Placement(transformation(extent={{-74,-10},{-54,10}})));
   Modelica.Blocks.Logical.And and1
@@ -58,7 +58,7 @@ model ReceiverControlSimple
   Modelica.Blocks.Sources.RealExpression m_flow_calc(y = m_flow_internal) annotation(
     Placement(visible = true, transformation(origin = {16, 37}, extent = {{-10, -9}, {10, 9}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput Q_rec_out annotation(
-    Placement(visible = true,transformation(origin = {0, 110},extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {0, 100}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+    Placement(visible = true,transformation(origin = {0, 110},extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-110, 90}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 equation
   m_flow_internal = Q_rec_out/(h_ref - h_mea + eps);
   connect(m_flow_off_input.y, switch.u3) annotation(
