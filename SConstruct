@@ -461,6 +461,9 @@ if platform.system()=="Linux":
 	import distro
 	if distro.id() == 'ubuntu' and distro.version() == '18.04':
 		configcmd = 'python$PYVERSION-config --libs --cflags'
+
+	elif distro.id() == 'rocky': #You are on the super computer MODIFIED BY PG --> 
+		configcmd = 'python$PYVERSION-config --libs --cflags'
 env['PKGCONFIGPYTHON'] = configcmd
 
 #print("os.environ['PATH']=",os.environ.get('PATH'))
