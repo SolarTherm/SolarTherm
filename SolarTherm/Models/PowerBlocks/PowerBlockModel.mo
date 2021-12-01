@@ -121,4 +121,11 @@ equation
   W_loss=(1-nu_net)*W_gross+W_base+parasities_internal;
   W_net = W_gross - W_loss;
 
+annotation (Documentation(info = "<html>
+</html>", revisions = "<html>
+<ul>
+<li>Alberto de la Calle:<br>Released first version. </li>
+</ul>
+</html>"),
+    Icon(graphics = {Text(origin = {0, -100}, lineColor = {0, 0, 255}, extent = {{-140, 20}, {140, -20}}, textString = "%name")}));
 end PowerBlockModel;

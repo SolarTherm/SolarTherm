@@ -43,19 +43,11 @@ model SodiumReceiver "ReceiverSimple with convective losses"
 				rotation=-90,
 				origin={-20,78})));
 
-	Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
-				transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
-						-24,-98},{-12,-86}})));
+	Modelica.Blocks.Interfaces.BooleanInput on;
 
-	Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature", final unit = "K", displayUnit = "degC", min=0) 
-	annotation (
-		Placement(visible = true, 
-			transformation(origin = {31, -23}, extent = {{-11, -11}, {11, 11}}, rotation = 0), 
-			iconTransformation(origin = {25, -20}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+	Modelica.Blocks.Interfaces.RealOutput T(final quantity="ThermodynamicTemperature", final unit = "K", displayUnit = "degC", min=0);
 
-	Modelica.Blocks.Interfaces.RealOutput Q_rec_out annotation (Placement(visible = true, 
-			transformation(origin = {31, 19}, extent = {{-11, -11}, {11, 11}}, rotation = 0), 
-			iconTransformation(origin = {25, 0}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+	Modelica.Blocks.Interfaces.RealOutput Q_rec_out;
 
 	Medium.ThermodynamicState state_in = Medium.setState_phX(fluid_a.p, inStream(fluid_a.h_outflow));
 	Medium.ThermodynamicState state_out = Medium.setState_phX(fluid_b.p, fluid_b.h_outflow);
@@ -108,5 +100,6 @@ annotation (Documentation(info="<html>
 <ul>
 <li>Armando Fontalvo:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+	Icon(graphics = {Text(origin = {0, -140}, lineColor = {0, 0, 255}, extent = {{-120, 20}, {120, -20}}, textString = "%name")}));
 end SodiumReceiver;

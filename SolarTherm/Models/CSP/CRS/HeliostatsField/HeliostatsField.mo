@@ -133,10 +133,11 @@ equation
   end when;
   W_loss2= if time<t_on+t_start then n_h*he_av*damping*E_start/t_start else 0;
   W_loss=W_loss1+W_loss2;
-  annotation (Documentation(info="<html>
-</html>", revisions="<html>
+  annotation (Documentation(info = "<html>
+</html>", revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Text(origin = {0, -140}, lineColor = {0, 0, 255}, extent = {{-140, 20}, {140, -20}}, textString = "%name")}));
 end HeliostatsField;
