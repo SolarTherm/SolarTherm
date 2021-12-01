@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <Python.h>
 
-//#define ST_UTIL_DEBUG
+#define ST_UTIL_DEBUG
 #ifdef ST_UTIL_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -48,7 +48,7 @@ int getNumOfData(char* filepath){
 	This function is to check the existing sCO2 PB configurations against the requested configuration by the system model. When the configuration exists, no need to generate new surrogate model, instead the program will load the existing surrogate model and proceed with simulation. Checking confiugration is done by reading txt files located in ./configurations directory.
 */
 void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, double pinch_PHX, 
-		double dTemp_HTF_PHX, int* index_and_status, char* base_path, int PB_model,
+		double dTemp_HTF_PHX, int* index_and_status, char* SolarTherm_path, int PB_model,
 		double dT_PHX_hot_approach,  double dT_PHX_cold_approach,
 		double eta_isen_mc, double eta_isen_rc, double eta_isen_t,double dT_mc_approach,double T_amb_base
 ){
@@ -66,7 +66,7 @@ void checkConfig(double P_net, double T_in_ref_blk, double p_high, double PR, do
 	char* config_file_path = NEW_ARRAY(char,MAXLEN);
 
 	while(1){
-		snprintf(config_file_path,MAXLEN,"%s/configurations/%s%d.txt",base_path,config_base,file_index);
+		snprintf(config_file_path,MAXLEN,"%s/Data/SurrogateModels/PowerBlock/configurations/%s%d.txt",SolarTherm_path,config_base,file_index);
 		MSG("Reading config '%s'...",config_file_path);
 
 		FILE* configfile = fopen(config_file_path,"r");

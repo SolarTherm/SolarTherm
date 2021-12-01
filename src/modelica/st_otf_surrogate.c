@@ -240,7 +240,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 
 	/*Check the configurations database whether the requested configuration exists or not in the database*/
 	checkConfig(
-		P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX,index_and_status, base_path, PB_model,
+		P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX,index_and_status, SolarTherm_path, PB_model,
 		dT_PHX_hot_approach, dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, T_amb_base
 		);
 
@@ -268,12 +268,14 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 		    inputsize, outputsize, tolerance, PB_model, 
 		    htf_choice, dT_PHX_hot_approach,  dT_PHX_cold_approach,eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
 		    HTF_name
-		    );
+	    );
 	}else{ 
 		/*If a configuration exists in the data bank*/
 		char* name_training = "/scaled_Kriging_training_data_deviation.csv";
-		char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index); //e.g. base_path/training_data/config0
-		char* filepathtraining  = concat_training_dir(trainingdir,name_training); //e.g. base_path/training_data/config0/scaled_Kriging_training_data_deviation.csv
+		char* trainingdir = NEW_ARRAY(char, MAXLEN);
+		snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock%s%s%d",SolarTherm_path,traindir_base,config_base,match_index);
+		char* filepathtraining = NEW_ARRAY(char,MAXLEN);
+		snprintf(filepathtraining,MAXLEN,"%s%s",trainingdir,name_training); //e.g. base_path/training_data/config0/scaled_Kriging_training_data_deviation.csv
 
 		FILE* check_path = fopen(filepathtraining,"r");
 		
@@ -410,6 +412,7 @@ void* constructKriging(double P_net, double T_in_ref_blk, double p_high, double 
 			free(filepath_kriging_param_eta_Q);
 		}
 		free(filepathtraining);
+		free(trainingdir);
 	}
 
 	free(index_and_status);
@@ -468,10 +471,10 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 
 	/*Check the configurations database whether the requested configuration exists or not in the database*/
 	checkConfig(
-		P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX,index_and_status, base_path, PB_model,
+		P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX,index_and_status, SolarTherm_path, PB_model,
 		dT_PHX_hot_approach, dT_PHX_cold_approach, eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach,
 		T_amb_base
-		);
+	);
 
 	int match_index = index_and_status[0];
 	int status_config = index_and_status[1];
@@ -502,7 +505,8 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 		char* ANN_PB_model_name = "/surrogate_model_0";
 		char* ANN_HX_model_name = "/surrogate_model_1";
 
-		char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
+		char* trainingdir = NEW_ARRAY(char,MAXLEN);
+		snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock%s%s%d",SolarTherm_path,traindir_base,config_base,match_index);
 		char* ANN_PB_path = concat_training_dir(trainingdir,ANN_PB_model_name);
 		char* ANN_HX_path = concat_training_dir(trainingdir,ANN_HX_model_name);
 
@@ -543,7 +547,8 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 		char* ANN_PB_model_name = "/surrogate_model_0";
 		char* ANN_HX_model_name = "/surrogate_model_1"; 
 
-		char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
+		char* trainingdir = NEW_ARRAY(char,MAXLEN);
+		snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock%s%s%d",SolarTherm_path,traindir_base,config_base,match_index);
 		char* filepathtraining = concat_training_dir(trainingdir,name_training);
 		char* ANN_PB_path = concat_training_dir(trainingdir,ANN_PB_model_name);
 		char* ANN_HX_path = concat_training_dir(trainingdir,ANN_HX_model_name);
@@ -551,7 +556,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 		/*End the filepath building*/
 
 		FILE* check_path = fopen(filepathtraining,"r");
-		fprintf(stderr,"%s\n",filepathtraining);
+		fprintf(stderr,"File path %s\n",filepathtraining);
 		
 		if(check_path == NULL){ //********* if filepath training doesn't exist
 			fprintf(stderr,"Training data doesn't exist even though configuration exists.......Start gathering data.............\n");

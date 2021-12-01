@@ -197,8 +197,11 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 	char* name_max = "/max.txt";
 	char* name_krig_param_eta_PB = "/Kriging_Param_eta_PB.txt";
 	char* name_krig_param_eta_Q = "/Kriging_Param_eta_Q.txt";
+	
+	/*Build training dir path e.g. SolarTherm/Data/SurrogateModels/PowerBlock/training_data/configNREL20*/
+	char* trainingdir = NEW_ARRAY(char, MAXLEN);
+	snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock%s%s%d",SolarTherm_path,traindir_base,config_base,match_index);
 
-	char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
 	char* filepathpredictionvalidation = concat_training_dir(trainingdir,name_prediction_validation_dump);
 	char* filepathRsquared = concat_training_dir(trainingdir,name_R_squared);
 	char* filepathtraining = concat_training_dir(trainingdir,name_training);

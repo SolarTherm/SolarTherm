@@ -4,7 +4,7 @@
 
 #include <Python.h>
 
-//#define SSCPB_DEBUG
+#define SSCPB_DEBUG
 #ifdef SSCPB_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -279,9 +279,9 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 ){
 	//******************************************** WRITE CONFIGURATIONS ******************************************************//
 	if(status_config==1){
-		 // dump the configurations
+		// dump the configurations
 		char *path_config = NEW_ARRAY(char,MAXLEN);
-		snprintf(path_config,MAXLEN,"%s/configurations/configNREL%d.txt",base_path,match_index);
+		snprintf(path_config,MAXLEN,"%s/Data/SurrogateModels/PowerBlock/configurations/configNREL%d.txt",SolarTherm_path,match_index);
 		MSG("Writing '%s'...\n",path_config);
 
 		FILE* f = fopen(path_config,"w");

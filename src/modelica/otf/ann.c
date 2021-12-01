@@ -145,7 +145,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 	char* name_max = "/max.txt";
 
 	/*Build the file name for training, validation, min, max, kriging params*/           
-	char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
+	
+	//char* trainingdir = build_trainingdir_path(base_path,traindir_base,config_base,match_index);
+	char* trainingdir = NEW_ARRAY(char, MAXLEN);
+	snprintf(trainingdir, MAXLEN, "%s/Data/SurrogateModels/PowerBlock%s%s%d",SolarTherm_path,traindir_base,config_base,match_index);
+
 	char* filepathpredictionvalidation = concat_training_dir(trainingdir,name_prediction_validation_dump);
 	char* filepathRsquared = concat_training_dir(trainingdir,name_R_squared);
 	char* filepathtraining_eta_PB = concat_training_dir(trainingdir,name_training_eta_PB);
