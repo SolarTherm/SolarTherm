@@ -458,7 +458,8 @@ try:
 			perf = resultclass.calc_perf(peaker=True)
 		else:
 			perf = resultclass.calc_perf()
-
+			
+	summary=resultclass.report_summary(var_n=var_n, savedir='.', suffix=suffix)	
 
 	solartherm_res=[]
 
@@ -496,9 +497,14 @@ for i, r in enumerate(results.responses()):
         r.function = solartherm_res[i]
 results.write()
 
-map(os.unlink, glob.glob(sim.res_fn))
-#map(os.unlink, glob.glob(model+'_init_*.xml'))
+#os.system('rm %s'%sim.res_fn)
+os.system('rm %s_init_%s.xml'%(model, suffix))
+#os.system('rm -rf optic_case_%s'%suffix)
 
+
+#map(os.unlink, glob.glob(sim.res_fn))
+#map(os.unlink, glob.glob(model+'_init_%s.xml'%suffix))
+#map(os.unlink, glob.glob('optic_case_%s'%suffix))
 '''
 	if not os.path.exists(savedir):
 		os.makedirs(savedir)

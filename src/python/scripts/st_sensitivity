@@ -81,6 +81,13 @@ if __name__=='__main__':
 		savedir=args.wd
 
 	os.chdir(args.wd)
+	
+	# compile the model first
+	sim = simulation.Simulator(fn=fn, fusemount=False)
+	sim.compile_model()
+	sim.compile_sim(args=['-s'])
+	
+	# initialise DAKOTA
 	U=UncertaintyDakotaIn(mofn=fn, start=args.start, stop=args.stop, 
 		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
 		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, 
@@ -88,10 +95,10 @@ if __name__=='__main__':
 
 
 	if args.excel!=None:
-		if not os.path.exists(mn):
-			sim = simulation.Simulator(fn=fn, fusemount=False)
-			sim.compile_model()
-			sim.compile_sim(args=['-s'])
+		#if not os.path.exists(mn):
+		#	sim = simulation.Simulator(fn=fn, fusemount=False)
+		#	sim.compile_model()
+		#	sim.compile_sim(args=['-s'])
 		input_xml=mn+'_init.xml'
 		tree=params.Tree()
 		tree.load_xml(input_xml)
@@ -186,27 +193,16 @@ if __name__=='__main__':
 	if args.restart!=None:
 		os.chdir(args.restart)
 		if args.np!=0:
-			if not os.path.exists(mn):
-				sim = simulation.Simulator(fn=fn, fusemount=False)
-				sim.compile_model()
-				sim.compile_sim(args=['-s'])
-			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+
+			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
 
 	else:
 		if args.np!=0:
-			if not os.path.exists(mn):
-				sim = simulation.Simulator(fn=fn, fusemount=False)
-				sim.compile_model()
-				sim.compile_sim(args=['-s'])
-			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+
+			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
-	
-
-	
-
-
-	
+		
