@@ -1,5 +1,4 @@
 HeatTransfer
-Panel
 AvgTElem
 Elem
 EndTElem
@@ -21,3 +20,4 @@ SodiumReceiver_withOutput
 ParticleReceiver
 ChlorideSaltReceiver
 SodiumReceiver_modular
+PipeThermoMechanical

@@ -1,7 +1,7 @@
 within SolarTherm.Interfaces.Models;
 partial model Pipe
   extends Icons.Pipe;
-    replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_base
+    replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph
     constrainedby Modelica.Media.Interfaces.PartialMedium
     "Medium in the component"
       annotation (choicesAllMatching = true,Dialog(group="Working fluid"));

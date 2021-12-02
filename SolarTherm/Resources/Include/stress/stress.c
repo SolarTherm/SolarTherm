@@ -1,164 +1,39 @@
-#include "stress/stress.h"
-#include "stress/stress.c"
+#include "stress.h"
 
-void stress(
-	double Ri,
-	double Ro,
-	double dz,
-	double m_flow,
-	double T_htf_in,
-	double Tamb,
-	double * CG,
-	int nt,
-	int nz,
-	double R_fouling,
-	double ab,
-	double em,
-	double kp,
-	double h_ext,
-	double alpha,
-	double E,
-	double nu,
-	double * Tcrown_o,
-	double * T_fluid,
-	double * stress
-	)
-	{
-
-	double BDp[3], BDpp[3], Ti[nt], To[nt], Tf[nz+1];
-	double Tcrown_i[nz];
-	double theta = 0.;
-	double C;
-
-	// Mechanical params
-	double l = E*nu/((1+nu)*(1-2*nu));
-	double m = 0.5*E/(1+nu);
-
-	// Variables
-	int k;
-	double Q;
-	double stress_sec[5];
-	double strain_sec[1];
-
-	// GSL matrix inverse
-	gsl_matrix *props = gsl_matrix_alloc(3, 3);         // Elasticity tensor
-	gsl_matrix *invprop = gsl_matrix_alloc(3, 3);       // Inverse of elasticity tensor
-	int row, col;
-	for (row = 0; row < 3; ++row) {
-		for (col = 0; col < 3; ++col) {
-			if(row == col){
-				gsl_matrix_set(props, row, col, l + 2*m);
-			}
-			else{
-				gsl_matrix_set(props, row, col, l);
-			}
-		}
-	}
-	gsl_permutation *p = gsl_permutation_alloc(3);      // GSL parameter
-	int s;                                              // GSL parameter
-	gsl_linalg_LU_decomp(props, p, &s);
-	gsl_linalg_LU_invert(props, p, invprop);
-	gsl_permutation_free(p);
-
-	Tf[0] = T_htf_in;
-	for(k=1; k<=nz; k++){
-		Temperature (Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
-		C = specificHeatCapacityCp(Tf[k-1]);
-		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
-		Tf[k] = Tf[k-1] + Q/m_flow/C;
-		T_fluid[k-1] = Tf[k];
-		Tcrown_i[k-1] = Ti[0];
-		Tcrown_o[k-1] = To[0];
-		Thermoelastic(To[0], Ro, theta, Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress_sec, strain_sec);
-		stress[k-1] = stress_sec[4]/1e6;
-	}
-
-	return;
-}
-
-void stress2(
-	double Ri,
-	double Ro,
-	double dz,
-	double m_flow,
-	double T_htf_in,
-	double Tamb,
-	double * CG,
-	int nt,
-	int nz,
-	double R_fouling,
-	double ab,
-	double em,
-	double kp,
-	double h_ext,
-	double alpha,
-	double E,
-	double nu,
-	double * Tcrown_o,
-	double * T_fluid,
-	double * stress
-	)
-	{
-
-	double BDp[3], BDpp[3], Ti[1], To[1], Tf[nz+1];
-	double Tcrown_i[nz];
-	double theta = 0.;
-	double C;
-
-	// Mechanical params
-	double l = E*nu/((1+nu)*(1-2*nu));
-	double m = 0.5*E/(1+nu);
-
-	// Variables
-	int k;
-	double Q;
-	double stress_sec[5];
-	double strain_sec[1];
-
-	// GSL matrix inverse
-	gsl_matrix *props = gsl_matrix_alloc(3, 3);         // Elasticity tensor
-	gsl_matrix *invprop = gsl_matrix_alloc(3, 3);       // Inverse of elasticity tensor
-	int row, col;
-	for (row = 0; row < 3; ++row) {
-		for (col = 0; col < 3; ++col) {
-			if(row == col){
-				gsl_matrix_set(props, row, col, l + 2*m);
-			}
-			else{
-				gsl_matrix_set(props, row, col, l);
-			}
-		}
-	}
-	gsl_permutation *p = gsl_permutation_alloc(3);      // GSL parameter
-	int s;                                              // GSL parameter
-	gsl_linalg_LU_decomp(props, p, &s);
-	gsl_linalg_LU_invert(props, p, invprop);
-	gsl_permutation_free(p);
-
-	Tf[0] = T_htf_in;
-	for(k=1; k<=nz; k++){
-		Temperature2 (Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
-		C = specificHeatCapacityCp(Tf[k-1]);
-		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
-		Tf[k] = Tf[k-1] + Q/m_flow/C;
-		T_fluid[k-1] = Tf[k];
-		Tcrown_i[k-1] = Ti[0];
-		Tcrown_o[k-1] = To[0];
-		Thermoelastic(To[0], Ro, theta, Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress_sec, strain_sec);
-		stress[k-1] = stress_sec[4]/1e6;
-	}
-
-	return;
-}#include <stdio.h>
-#include <stdbool.h>
-#include <math.h>
-#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_matrix_double.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_linalg.h>
-#define pi 3.141592653589793
-#define g_n 9.81
-#define sigma 5.670374419e-8
+/*
+https://github.com/willietheboy/nashTubeStress/blob/master/se6413.py
+ -- Solar Energy 160 (2018) 368-379
+ -- https://doi.org/10.1016/j.solener.2017.12.003
+=============== NPS Sch. 5S 1" S31609 at 450degC ===============
+                      Nitrate Salt
+                         T:  723.1500 (K)
+                       rho:  1803.8000 (kg/m^3)
+                        Cp:  1520.4000 (m^2/s^2/K)
+                        mu:  1472.4232 (x1e6 kg/m/s)
+                     kappa:  0.5285 (kg*m/s^3/K)
+                        Pr:  4.2359 (-)
+                         U:  3.8960 (m/s)
+                      mdot:  5.0000 (kg/s)
+                        Re:  143651.3945 (-)
+                        Pe:  608492.6747 (-)
+                    deltaP: -7589.5960 (Pa/m)
+                       HCR:  7602.0000 (J/K/s)
+                     h_int:  9613.0515 (W/m^2/K)
+                        Bi:  0.7936 (-)
+                Biharmonic coefficients:
+                    Tbar_i:  749.6892 (K)
+                      B'_1:  45.1191 (K)
+                      D'_1: -0.0000 (K)
+                    Tbar_o:  769.7119 (K)
+                     B''_1:  79.4518 (K)
+                     D''_1:  0.0000 (K)
+              Stress at outside tube crown:
+                   sigma_r:  0.0000 (MPa)
+              sigma_rTheta:  0.0000 (MPa)
+               sigma_theta: -101.0056 (MPa)
+                   sigma_z: -389.5197 (MPa)
+                  sigma_Eq:  350.1201 (MPa)
+*/
 
 // Fluid properties
 double dynamicViscosity(double T){
@@ -225,6 +100,11 @@ int curve_fit(int cols, double dt, double mat[cols], double * C){
 		printf("  %+.5e, %+.5e, %+.5e ]\n", COV(2,0), COV(2,1), COV(2,2));
 		printf("# chisq = %g\n", chisq);
 	}
+	gsl_matrix_free(X);
+	gsl_vector_free(y);
+	gsl_vector_free(w);
+	gsl_vector_free(c);
+	gsl_matrix_free(cov);
 	return 0;
 }
 
@@ -330,55 +210,87 @@ void Thermoelastic(double T, double r, double theta, double b, double a, double 
 	return;
 };
 
-void stress(
-	double Ri,
-	double Ro,
-	double m_flow,
-	double Tf,
-	double Tamb,
-	double CG,
-	int nt,
-	double R_fouling,
-	double ab,
-	double em,
-	double kp,
-	double h_ext,
-	double alpha,
-	double E,
-	double nu,
-	double * Tci,
-	double * Tco,
-	double * stress_eq,
-	double * strain) {
+// Fourier temperature
+double gn(double rb, double n, double a, double Bi1){
+	return pow(rb,n) + pow(a, 2*n)*(n-Bi1)/(n+Bi1)*1/pow(rb,n);
+};
 
-	double BDp[3], BDpp[3], Ti[nt], To[nt];
+double gpn(double rb, double n, double a, double Bi1){
+	return n*(pow(rb,n-1) - pow(a,2*n)*(n-Bi1)/(n+Bi1)*1/pow(rb,n+1));
+};
 
-	Temperature (Ri, Ro, m_flow, Tf, Tamb, CG, nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
-
-	double l = E*nu/((1+nu)*(1-2*nu));
-	double m = 0.5*E/(1+nu);
-	gsl_matrix *props = gsl_matrix_alloc(3, 3);         // Elasticity tensor
-	gsl_matrix *invprop = gsl_matrix_alloc(3, 3);       // Inverse of elasticity tensor
-	int row, col;
-	for (row = 0; row < 3; ++row) {
-		for (col = 0; col < 3; ++col) {
-			if(row == col){
-				gsl_matrix_set(props, row, col, l + 2*m);
-			}
-			else{
-				gsl_matrix_set(props, row, col, l);
-			}
-		}
-	}
-	gsl_permutation *p = gsl_permutation_alloc(3);      // GSL parameter
-	int s;                                              // GSL parameter
-	gsl_linalg_LU_decomp(props, p, &s);
-	gsl_linalg_LU_invert(props, p, invprop);
-	gsl_permutation_free(p);
-	double stress[5];                                    // Thermo-elastic stress at tube crown
-	Thermoelastic(To[0], Ro, 0., Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress, strain);
-	Tci[0] = Ti[0];
-	Tco[0] = To[0];
-	stress_eq[0] = stress[4];
+void Tinit(double T1, double h1, double R1, double T2, double h2, double R2, double ab, double q0, double k, double r, double t, double tol, double itermax,
+	double * T, double * C){
+	double Bi1 = h1*R1/k;
+	double Bi2 = h2*R2/k;
+	double T2b = (T2 - T1)*k/(ab*q0*R2);
+	double a = R1/R2;
+	double rb = r/R2;
+	double Tb;
+	double n = 1.;
+	int iter = 0;
+	double err, Told;
+	Tb = (1+pi*Bi2*T2b)/(pi*(Bi1+Bi2*(1-Bi1*log(a))))*(1+Bi1*log(rb/a))
+		+0.5/(gpn(1,1,a,Bi1)+Bi2*gn(1,1,a,Bi1))*gn(rb,1,a,Bi1)*cos(t);
+	do{
+		Told = Tb;
+		Tb += 2/pi*(pow(-1, n)*gn(rb,2*n,a,Bi1)*cos(2*n*t))/((1-4*pow(n,2))*(gpn(1,2*n,a,Bi1)+Bi2*gn(1,2*n,a,Bi1)));
+		n += 1;
+		err = fabs(Tb - Told);
+		iter += 1;
+	}while(err>tol && iter<itermax);
+	C[0] = T1 + (1+pi*Bi2*T2b)/(pi*(Bi1+Bi2*(1-Bi1*log(a))))*(1+Bi1*log(rb/a))*(ab*q0*R2)/k;
+	C[1] = 0.5/(gpn(1,1,a,Bi1)+Bi2*gn(1,1,a,Bi1))*gn(rb,1,a,Bi1)*(ab*q0*R2)/k;
+	C[2] = 0;
+	T[0] = T1 + Tb*(ab*q0*R2)/k;
 	return;
 }
+
+void Temperature2 (double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
+				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To){
+	// Flow and thermal variables
+	double hf;                          // Heat transfer coefficient due to internal forced-convection
+	double mu;                          // HTF dynamic viscosity (Pa-s)
+	double kf;                          // HTF thermal conductivity (W/m-K)
+	double C;                           // HTF specific heat capacity (J/kg-K)
+	double Re;                          // HTF Reynolds number
+	double Pr;                          // HTF Prandtl number
+	double Nu;                          // Nusselt number due to internal forced convection
+	double ln = log(Ro/Ri);             // Log of Ro/Ri simplification
+
+	// Discretisation parameters
+	int j;
+	double a, b, c1, c2, qabs;
+	double dt = pi/(nt-1);
+
+	// Tube section diameter and area
+	double d = 2.*Ri;                    // Tube inner diameter (m)
+	double area = 0.25 * pi * pow(d,2.); // Tube flow area (m2)
+
+
+	// HTF thermo-physical properties
+	mu = dynamicViscosity(Tf);       // HTF dynamic viscosity (Pa-s)
+	kf = thermalConductivity(Tf);    // HTF thermal conductivity (W/m-K)
+	C = specificHeatCapacityCp(Tf);  // HTF specific heat capacity (J/kg-K)
+
+	// HTF internal flow variables
+	Re = m_flow * d / (area * mu);   // HTF Reynolds number
+	Pr = mu * C / kf;                // HTF Prandtl number
+
+	Nu = 0.023 * pow(Re, 0.8) * pow(Pr, 0.4);
+
+	// HTF internal heat transfer coefficient
+	if(R_fouling==0){
+		hf = Nu * kf / d;
+	}
+	else{
+		hf = Nu * kf / d / (1. + Nu * kf / d * R_fouling);
+	}
+	double tol = 1e-4;
+	int iter = 0;
+	int itermax = 10000;
+	Tinit(Tf, hf, Ri, Tamb, h_ext, Ro, ab, CG, kp, Ri, 0., tol, itermax, Ti, BDp);
+	Tinit(Tf, hf, Ri, Tamb, h_ext, Ro, ab, CG, kp, Ro, 0., tol, itermax, To, BDpp);
+	return;
+}
+

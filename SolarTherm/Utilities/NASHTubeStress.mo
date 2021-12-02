@@ -3,11 +3,13 @@ function NASHTubeStress
 	extends Modelica.Icons.Function;
 	input Real Ri;
 	input Real Ro;
+	input Real dz;
 	input Real m_flow;
-	input Real Tf;
+	input Real T_htf_in;
 	input Real Tamb;
-	input Real CG;
+	input Real CG[:];
 	input Integer nt;
+	input Integer nz;
 	input Real R_fouling;
 	input Real ab;
 	input Real em;
@@ -16,10 +18,11 @@ function NASHTubeStress
 	input Real alpha;
 	input Real E;
 	input Real nu;
-	output Real Ti;
-	output Real To;
-	output Real stress;
-	output Real strain;
-	external "C" stress(Ri,Ro,m_flow,Tf,Tamb,CG,nt,R_fouling,ab,em,kp,h_ext,alpha,E,nu,Ti,To,stress,strain);
-	annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",Include="#include \"st_nash_tube_stress.c\"",Library = {"m","gsl"});
+	output Real Tcrown_o[nz];
+	output Real T_fluid[nz];
+	output Real stress_o[nz];
+	external "C" stress(Ri, Ro, dz, m_flow, T_htf_in, Tamb, 
+		CG, nt, nz, R_fouling, ab, em, kp, h_ext, alpha, E, 
+		nu, Tcrown_o, T_fluid, stress_o);
+	annotation(IncludeDirectory="modelica://receiver/Include",Include="#include \"TubeStress.c\"",Library = {"m","gsl"});
 end NASHTubeStress;
