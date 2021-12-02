@@ -39,8 +39,14 @@ senv.Append(CPPPATH = ['/usr/include/omc/c'])
 lib1 = senv.SharedLibrary('st_test_ext',['st_test_ext.c'])
 
 # environment for libraries which link to Python
+
 penv = senv.Clone()
 penv.ParseConfig('$PKGCONFIGPYTHON')
+if penv['PYVERSION'] == '3.6':
+	print('CPPFLAGS',penv['CPPFLAGS'])
+	print('LINKFLAGS',penv['LINKFLAGS'])
+	penv.Append(CFLAGS=['-fPIC'])
+
 lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
 
 lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])

@@ -459,7 +459,7 @@ env['HAVE_GSL'] = envg['HAVE_GSL']
 # some tricks required for Ubuntu 18.04...
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
-	if env['PYVERSION']=='3.7':
+	if env['PYVERSION'] in ('3.6','3.7'):
 		configcmd = 'python$PYVERSION-config --ldflags --cflags'
 
 env['PKGCONFIGPYTHON'] = configcmd

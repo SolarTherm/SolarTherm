@@ -346,6 +346,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 		// Get the value of the optimal obj. function
 		MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
+#ifdef ST_LINPROG_DEBUG
 #define PRVEC(FN,LABEL,UNITS) {\
 			MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
 			for(int i=1;i <= N; i++){ \
@@ -390,7 +391,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 		MSG("%-20s%10s %-7s: %10.1f","Initial storage lev","SLinit","(MWth)",SLinit);
 		PRVEC1(SL,"Storage level","MWth");
 		PRREV("Revenue","USD");
-
+#endif
 	}
 	
 	double optimalDispatch = glp_get_col_prim(P,DE(1));
