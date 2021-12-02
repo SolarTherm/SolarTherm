@@ -401,6 +401,7 @@ conf = env.Configure(custom_tests={
 	,'SSC':check_ssc
 })
 
+CONFFAIL=1
 def confmsg(env,msg,fail=0):
 	if fail:
 		print(REDWARN(msg))
@@ -458,12 +459,8 @@ env['HAVE_GSL'] = envg['HAVE_GSL']
 # some tricks required for Ubuntu 18.04...
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
-	import distro
-	if distro.id() == 'ubuntu' and distro.version() == '18.04':
-		configcmd = 'python$PYVERSION-config --libs --cflags'
-
-	elif distro.id() == 'rocky': #You are on the super computer MODIFIED BY PG --> 
-		configcmd = 'pkg-config python-$PYVERSION --libs --cflags'
+	if env['PYVERSION']=='3.7':
+		configcmd = 'python$PYVERSION-config --ldflags --cflags'
 
 env['PKGCONFIGPYTHON'] = configcmd
 

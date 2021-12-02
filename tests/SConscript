@@ -20,7 +20,7 @@ tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_m
 
 if env['HAVE_SSC'] and env['HAVE_TF'] and env['HAVE_GSL']:
 	tenv.ParseConfig('$GSL_CONFIG --libs --cflags')
-	tenv.AppendUnique(LIBS=['tensorflow','st_otf_surrogate'])
+	tenv.AppendUnique(LIBS=['tensorflow','st_otf_surrogate','ssc'])
 	tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'])
 
 import platform

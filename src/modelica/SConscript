@@ -26,6 +26,7 @@ penv = senv.Clone()
 penv.ParseConfig('$PKGCONFIGPYTHON')
 conf = penv.Configure()
 if not conf.CheckHeader('Python.h'):
+	print("conf.env.CPPPATH =",conf.env['CPPPATH'])
 	print("Python.h is needed for building solartherm. Unable to continue.")
 	Exit(1)
 if not conf.CheckLib(penv['LIBS'],"Py_Initialize",'#include <Python.h>',autoadd=False):
