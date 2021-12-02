@@ -8,12 +8,22 @@
 #include "ascend_models/ascend_utils.h"
 
 /*Function Prototype*/
-int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[]);
-double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off);
-double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc, double* results);
+int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], char* opt_file);
 
-double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc, double* results){
+double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off);
+
+double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc, char* opt_file, double* results);
+
+
+
+
+
+
+double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], int argc, char* opt_file, double* results){
+
 	/*Build destination fn destination*/
+	fprintf(stderr, "RUN THERMAL MODEL FOR DESIGN CONDITION......................................................\n\n");
+
 	char* fn_destination = NEW_ARRAY(char, MAXLEN);
 	snprintf(fn_destination, MAXLEN, "%s/Resources/Include/ascend_models/test_data/fluxmap.csv",SolarTherm_path);
 
@@ -44,10 +54,12 @@ double* run_sintering_thermal_model_designpoint(const char* ppath, const char* p
 
 	run_ascend_sintering_model(ppath, pname, pfunc, argc, num_segment, varnames, vars, modelica_wd, SolarTherm_path, angles, results);
 	free(angles);
+
+	fprintf(stderr, "DONE RUNNING THERMAL MODEL FOR DESIGN CONDITION......................................................\n\n");
 	return results;
 }
 
-int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[]){
+int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* modelica_wd, const char* varnames[], const double vars[], char* opt_file){
 	char* CSV_test = NEW_ARRAY(char, MAXLEN);
 	snprintf(CSV_test, MAXLEN,"%s/test/receiver_1D_FluxMap_sunpos_1.csv",modelica_wd);
 
@@ -86,7 +98,6 @@ int run_sintering_thermal_model(const char* ppath, const char* pname, const char
 	return status_run;
 
 }
-
 
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off){
 	double mdot_ore;

@@ -14,17 +14,44 @@ END fprops_fluid;
 
 MODEL iron_ore REFINES thermophysical_fluid_base;
 
-	(* constants of integration set to give h = 0 at 25 °C 
-	h_eq: h = 2e-06{J/kg/K^4}*T^4 - 0.0054{J/kg/K^3}*T^3 + 5.36{J/kg/K^2}*T^2 - 1295.8{J/kg/K}*T +29114{kJ/kg};*)
-	h_eq: h = -439548{J/kg} - 7.35881699e-01{J/kg} -22.5142{J/kg/K}*T + 1.35627{J/kg/K^2}*T^2 -0.000148679{J/kg/K^3}*T^3 + -9.50023e-007{J/kg/K^4}*T^4 + 4.82806e-010{J/kg/K^5}*T^5 + 223852{J/kg} + (-202224{J/kg}-223852{J/kg})/(1+exp((-4.01164e+094-T)/-4.09328e+094)) + 575882{J/kg} + (228424-575882)/(1+exp((1416.8-T)/-4.2379));
-	
+	iron_sample IS_A symbol_constant;
+	(* constants of integration set to give h = 0 at 25 °C *)
+	SELECT(iron_sample)
+	CASE 'A_1':
+		h_A1: h = -439548{J/kg} - 7.35881699e-01{J/kg} -22.5142{J/kg/K}*T + 1.35627{J/kg/K^2}*T^2 -0.000148679{J/kg/K^3}*T^3 + -9.50023e-007{J/kg/K^4}*T^4 + 4.82806e-010{J/kg/K^5}*T^5 + 223852{J/kg} + (-202224{J/kg}-223852{J/kg})/(1+exp((-4.01164e+094-T)/-4.09328e+094)) + 575882{J/kg} + (228424-575882)/(1+exp((1416.8-T)/-4.2379));
+	CASE 'B_1':
+		h_B1: h = -114759 + 177.019*T + 0.814622*T^2 + 0.00046323*T^3 + -1.24399e-006*T^4 + 5.26136e-010*T^5 + 397817 + (-14120.8-397817)/(1+exp((1422.27-T)/-5.61067))+0.28348052146611;
+	CASE 'C_1':
+		h_C1: h = -428450 + -452.707*T + 2.50663*T^2 + -0.00144104*T^3 + -3.42324e-007*T^4 + 3.89901e-010*T^5 + 694446 + (380581-694446)/(1+exp((1408.6-T)/-0.94639));
+	CASE 'D_1':
+		h_D1: h = -403354 + -882.468*T + 3.77973*T^2 + -0.00300265*T^3 + 4.89894e-007*T^4 + 2.28898e-010*T^5 + 688409 + (405640-688409)/(1+exp((1412.34-T)/-2.07234));
+	END SELECT;
+
 	rho_eq: rho = 4500 {kg/m^3}; (* not that correct *)
 
 END iron_ore;
 
+MODEL iron_select REFINES iron_ore;
+	iron_sample :=='C_1';
+METHODS
+	METHOD default;
+		h := 70 {kJ/kg};
+	END default;
+
+	METHOD on_load;
+		FIX T:= 1175 {K} + 273.15 {K};
+		FIX p:= 1{bar};
+		(*EXTERNAL set_x_y(SELF);*)
+		SOLVER QRSlv;
+		OPTION convopt 'RELNOM_SCALE';
+	END on_load;
+
+END iron_select;
+
 MODEL fluid_state;
 	fluid IS_A symbol_constant;
 	state IS_A thermophysical_fluid_base;
+
 	T ALIASES state.T;
 	h ALIASES state.h;
 	p ALIASES state.p;
@@ -44,6 +71,9 @@ MODEL fluid_state;
 			vel = mdot * v / A;	
 		CASE 'iron':
 			state IS_REFINED_TO iron_ore;
+			iron_sample IS_A symbol_constant;
+			iron_sample, state.iron_sample ARE_THE_SAME;
+
 	END SELECT;
 	mdot IS_A mass_rate;
 	A "cross-section area" IS_A area;
@@ -59,6 +89,7 @@ END fluid_state;
 MODEL fluid_node;
 	state IS_A fluid_state;
 	fluid ALIASES state.fluid;
+	iron_sample ALIASES state.iron_sample;
 	T ALIASES state.T;                h ALIASES state.h;                
 	p ALIASES state.p;                v ALIASES state.v;
 	rho ALIASES state.rho;  
@@ -84,11 +115,12 @@ MODEL energy_segment;
 	inlet, outlet IS_A fluid_state;
 	inlet.A, outlet.A ARE_THE_SAME;
 	fluid ALIASES inlet.fluid;
+	iron_sample ALIASES inlet.iron_sample;
 	Q_seg IS_A energy_rate;
 	inlet.mdot, outlet.mdot ARE_THE_SAME;
 	(*inlet.eps, outlet.eps ARE_THE_SAME;*)
 	inlet.fluid, outlet.fluid ARE_THE_SAME;
-
+	inlet.iron_sample, outlet.iron_sample ARE_THE_SAME;
 	T_in ALIASES inlet.T;		T_out ALIASES outlet.T;
 	p_in ALIASES inlet.p;		p_out ALIASES outlet.p;
 
@@ -114,7 +146,7 @@ MODEL HX_segment;
 	fluid_g ALIASES HX_g.fluid; (*AIR*)
 	fluid_s ALIASES HX_s.fluid; (*Iron*)
 	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
-
+	iron_sample ALIASES HX_s.iron_sample;
 	ave ALIASES HX_g.inlet;
 	(*ave IS_A fluid_state;
 	fluid_g, ave.fluid ARE_THE_SAME;
@@ -168,12 +200,10 @@ MODEL HX_segment;
 	T_o_g ALIASES HX_g.T_out;
 
 	DT1, DT2 IS_A delta_temperature; (*, DT3, DT4*)
-	DT1_eq1: DT1 = T_i_g - T_o_s;
+	DT1_eq1: DT1 = T_i_g - T_o_s; (*HX1*)
 	DT2_eq1: DT2 = T_o_g - T_i_s;
-	(*DT3_eq1: DT3 = T_i_g - T_o_g;
-	DT4_eq1: DT4 = T_o_s - T_i_s;*)
 
-	DT1_eq2: DT1 = T_o_s - T_i_g;
+	DT1_eq2: DT1 = T_o_s - T_i_g; (*HX2*)
 	DT2_eq2: DT2 = T_i_s - T_o_g;
 
 
@@ -210,7 +240,7 @@ METHODS
 		DT1.lower_bound := 10 {K};
 		DT2.lower_bound := 10 {K};
 		DT1.upper_bound := 1500 {K};
-		DT2.upper_bound := 1498 {K};
+		DT2.upper_bound := 1500 {K};
 		(*DT3.lower_bound := 1{K};
 		DT4.lower_bound := 1{K};
 		DT3.upper_bound := 1000{K};
@@ -233,8 +263,8 @@ METHODS
 		A.upper_bound :=6000 {m^2};	
 		A := 5000 {m^2};*)
 
-		U.lower_bound :=-10 {W/m^2/K};
-		U.upper_bound :=7 {kW/m^2/K};	
+		U.lower_bound :=-30 {W/m^2/K};
+		U.upper_bound :=30 {kW/m^2/K};	
 
 
 		SWITCH(intconv_corr)
@@ -266,6 +296,7 @@ END HX_segment;
 MODEL HX_base;
 	fluid_g, fluid_s IS_A symbol_constant;
 	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
+	iron_sample IS_A symbol_constant;
 	n IS_A integer_constant;
 
 	seg[0..n-1] IS_A HX_segment;
@@ -284,6 +315,7 @@ MODEL HX_base;
 	mdot_s ALIASES node_s[n].mdot;
 	fluid_g, seg[0].HX_g.fluid ARE_THE_SAME;
 	fluid_s, seg[0].HX_s.fluid ARE_THE_SAME;
+	iron_sample, seg[0].HX_s.iron_sample ARE_THE_SAME;
 	eps ALIASES seg[0].eps;
 	t ALIASES seg[0].t;
 	p_i_g ALIASES node_g[0].p; T_i_g ALIASES node_g[0].T;
@@ -321,6 +353,9 @@ MODEL sinter_flow_segment;
 	inlet.A, air_inlet.A ARE_THE_SAME;
 	inlet.fluid, outlet.fluid ARE_THE_SAME;
 	inlet.p, outlet.p ARE_THE_SAME;
+
+	iron_sample ALIASES inlet.iron_sample;
+	inlet.iron_sample, outlet.iron_sample ARE_THE_SAME;
 
 	H ALIASES inlet.H;
 	W ALIASES inlet.W;
@@ -390,6 +425,7 @@ END sinter_flow_segment;
 MODEL sinter_base;
 	fluid IS_A symbol_constant;
 	fluid_sinter IS_A symbol_constant;
+	iron_sample IS_A symbol_constant;
 
 	(* geometry of the sinter *)
 	W, H IS_A distance; (* sinter inside deminsions *)
@@ -420,6 +456,7 @@ MODEL sinter_base;
 	seg[0..n-1] IS_A sinter_flow_segment;
 	node[0..n] IS_A fluid_node;
 	node[0..n].fluid, fluid ARE_THE_SAME;
+	seg[0..n-1].iron_sample, iron_sample ARE_THE_SAME;
 	seg[0..n-1].fluid_sinter, fluid_sinter ARE_THE_SAME;
 	p IS_A pressure;
 	FOR i IN [0..n-1] CREATE
@@ -510,6 +547,8 @@ MODEL HX_Sinter_HX;
 	fluid_s, HX1.fluid_s, HX2.fluid_s, Sinter.fluid ARE_THE_SAME;
 	intconv_corr "correlation for internal convection heat transfer" IS_A symbol_constant;
 	intconv_corr, HX1.intconv_corr, HX2.intconv_corr ARE_THE_SAME;
+	iron_sample IS_A symbol_constant;
+	iron_sample, Sinter.iron_sample, HX1.iron_sample, HX2.iron_sample ARE_THE_SAME;
 
 	p_all IS_A pressure;
 	
@@ -576,13 +615,15 @@ MODEL HX_Sinter_HX;
 	V_material_HX2 = 2 * Length_2 * t_wall_2 * (width_2 + t_HX2 - 2 * t_wall_2);
 	eq_temp: HX2.T_o_g = HX1.T_i_g;
 	eq_vel: Vel_ore_2 = Vel_ore;
-	flux_ratio IS_A fraction;
+	flux_ratio_off IS_A fraction;
+	flux_ratio_on IS_A fraction;
 END HX_Sinter_HX;
 
 MODEL HX_all REFINES HX_Sinter_HX;
 	fluid_g :=='air';
 	fluid_s :=='iron';
 	intconv_corr :== 'Nsofor';
+	iron_sample :== 'A_1';
 	HX2.n :==6;
 	HX1.n :==6;
 	Sinter.n :==$N_SEGMENTS_SUBST_19;
@@ -616,7 +657,7 @@ METHODS
 
 		FIX HX1.d_p :=$N_SEGMENTS_SUBST_9 {mm};
 		FIX t_HX1 := $N_SEGMENTS_SUBST_10 {m};
-		FIX HX1.A_HX := 1000 {m^2};
+		FIX HX1.A_HX := 500 {m^2} -(1140 -$N_SEGMENTS_SUBST_7) * 10{m^2};
 		FIX width_1 := $N_SEGMENTS_SUBST_11 {m};
 		FIX HX1.mdot_g := 76 {kg/s};
 		FIX HX1.mdot_s := 56 {kg/s};
@@ -641,10 +682,11 @@ METHODS
 		FIX HX2.d_p :=$N_SEGMENTS_SUBST_16 {mm};
 		FIX width_2 := $N_SEGMENTS_SUBST_17 {m};
 		FIX Sinter.eps_vf :=$N_SEGMENTS_SUBST_18;
-		FIX flux_ratio :=$N_SEGMENTS_SUBST_20;
+		FIX flux_ratio_off :=$N_SEGMENTS_SUBST_20;
+		FIX flux_ratio_on :=$N_SEGMENTS_SUBST_21;
 
 		FIX t_HX2 := 0.077{m}; (*80cm*)
-		FIX HX2.A_HX := 9000 {m^2};(*8000 m^2*)
+		FIX HX2.A_HX := 6000 {m^2};(*8000 m^2*)
 
 		FIX	p_all := 1 {bar};
 

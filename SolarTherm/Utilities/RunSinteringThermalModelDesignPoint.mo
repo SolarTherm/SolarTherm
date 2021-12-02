@@ -9,8 +9,9 @@ function RunSinteringThermalModelDesignPoint
   input String varnames[:];
   input Real vars[:];
   input Integer argc;
+  input String opt_file;
   output Real result[3];
-  external "C" run_sintering_thermal_model_designpoint(ppath, pname, pfunc, SolarTherm_path, modelica_wd, varnames, vars, argc, result)
+  external "C" run_sintering_thermal_model_designpoint(ppath, pname, pfunc, SolarTherm_path, modelica_wd, varnames, vars, argc,opt_file,result)
   annotation(Library="python2.7",
       IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="

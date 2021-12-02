@@ -24,10 +24,14 @@ model AnnualOpticalBeamDown
   parameter SI.Area A_h=metadata_list[2] "Heliostat's area in m2";
   parameter Real A_secref=metadata_list[3] "Secondary reflector area in m2";
   parameter SI.Area A_cpc=metadata_list[4] "CPC area in m2";
-  parameter Real Eff_design=metadata_list[5] "Field eff. at design point";
-  
+  parameter Real eta_field_design=metadata_list[5] "Field eff. at design point";
+  parameter SI.HeatFlowRate Q_in_rcv_from_OELT = metadata_list[9] "Incident heat flow rate on the aperture at design point after ray tracing [W]";
   parameter SI.Area A_land = metadata_list[10] "Land area in m2";
 
+  /*System size*/
+  parameter SI.HeatFlowRate Q_in_rcv = 50e6 "Incident thermal power to the receiver";
+  
+  /*Heliostat and tower parameters*/
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
   parameter Real cpc_h_ratio=0.6 "ratio of CPC critical height [0,1]";
   parameter nSI.Angle_deg aperture_angle_x=80 "aperture angle of the heliostat field in the xOz plan in degree [0,180] ";
@@ -36,23 +40,24 @@ model AnnualOpticalBeamDown
   parameter Real secref_inv_eccen=0.7 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=80.64 "Tower height";
   parameter Real fb=0.9618 "factor to grow the field layout";
-  parameter nSI.Angle_deg tilt_secref=0 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
+  parameter nSI.Angle_deg tilt_secref=-10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
   parameter SI.Length W_rcv=8 "Polygon receiver width";
-  parameter SI.Length H_rcv=8 "Polygon receiver length";
-  parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
-  parameter Real n_rays = 5e5 "number of rays for the optical simulation";
-  parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-  parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
-  parameter SI.HeatFlowRate Q_in_rcv = 50e6 "Incident thermal power to the receiver";
-  parameter SI.Length R1=15. "distance between the first row heliostat and the tower";
+  parameter SI.Length H_rcv= W_rcv "Polygon receiver length. Made square";
+  parameter SI.Length R1=10. "distance between the first row heliostat and the tower";
   parameter SI.Length W_helio = 6.1 "width of heliostat in m";
   parameter SI.Length H_helio = 6.1 "height of heliostat in m";
-  parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";
   parameter SI.Angle slope_error_bd = 1e-3 "slope error of all reflective surfaces in mrad";
   parameter SI.Efficiency rho_secref = 0.95 "reflectivity of the secondary reflector (hyperboloid)";
   parameter SI.Efficiency rho_cpc = 0.95 "reflectivity of the CPC";
   parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
+
+  /*Optical parameters*/
+  parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+  parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+  parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+  parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";
   parameter Real n_H_rcv=40 "rendering of flux map on receiver";
+  parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
   
   //Environmental variables to run the interpolation functions
   parameter String ppath_sintering = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Path to the directory where the Python script is hosted";
@@ -97,7 +102,7 @@ model AnnualOpticalBeamDown
   parameter SI.Temperature T_i_s_HX2 = 1350 +273.15 "Iron ore inlet temperature [K]";
   parameter SI.Temperature T_o_s_HX2 = 200 + 273.15 "Iron ore outlet temperature [K]";
   parameter SI.Temperature T_i_g_HX2 = 25 + 273.15 "Air inlet temperature [K]";
-  parameter SI.Length W_HX2 = 8.0 "Width of heat exchanger [m]";
+  parameter SI.Length W_HX2 = W_rcv "Width of heat exchanger [m] = W_rcv";
   parameter SI.Length d_p_HX2 = 40e-3 "Iron ore diameter [m]";
     
   //status_run to launch the ASCEND model --> collecting training data
@@ -223,34 +228,47 @@ model AnnualOpticalBeamDown
   SI.HeatFlowRate Q_sun;
   SI.HeatFlowRate Q_rcv;
 
-initial algorithm
+initial equation
   /*Call Solstice to generate OELT*/
-  opt_file := lookuptable.tablefile;
+  opt_file = lookuptable.tablefile;
   
   /*Call mdot ore design point*/
-  design_point_result := SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19);
+  design_point_result = SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19, opt_file);
   
-  mdot_ore_design_point := design_point_result[1]; 
-  V_HX1 := design_point_result[2]; 
-  V_HX2 := design_point_result[3];
+  mdot_ore_design_point = design_point_result[1]; 
+  V_HX1 = design_point_result[2]; 
+  V_HX2 = design_point_result[3];
   
-  /*Initialisation of the model, skip for now since it has been initialised*/
-  status_run := SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters);
+  /*Initialisation of the model*/
+  if Q_in_rcv_from_OELT > Q_in_rcv then
+      Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is enough\n\n");
+      status_run = SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, opt_file);
+  else
+      Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is NOT enough\n\n");
+      status_run = -1000;
+  end if;
 
 equation
   declination_inDeg = Modelica.SIunits.Conversions.to_deg(sun.dec);
   sun_hour_angle_inDeg = Modelica.SIunits.Conversions.to_deg(sun.hra);
   flux_multiple_off = data.DNI/1000;
   
-  if flux_multiple_off < 0.7 then
-      der(M_ore) = 0;
+  if status_run > 0 then
+	  /*If heliostat field gives the adeuqate amount of heat at design point then the system is eligible to run*/
+	  if flux_multiple_off < 0.7 then
+		  der(M_ore) = 0;
+	  else
+		  der(M_ore) = SolarTherm.Utilities.InterpolateSinteringThermalModel(
+		        ppath_sintering, pname_sintering, 
+		        pfunc_sintering, 
+		        modelica_wd, declination_inDeg, 
+		        sun_hour_angle_inDeg, flux_multiple_off
+		  );
+	  end if;
+  
   else
-      der(M_ore) = SolarTherm.Utilities.InterpolateSinteringThermalModel(
-            ppath_sintering, pname_sintering, 
-            pfunc_sintering, 
-            modelica_wd, declination_inDeg, 
-            sun_hour_angle_inDeg, flux_multiple_off
-      );
+	  /*If heliostat field could not provide the requested heat, then the yield is forced to be zero to cut computational time*/
+	  der(M_ore) = 0;
   end if;
   
   opt_eff=lookuptable.nu;

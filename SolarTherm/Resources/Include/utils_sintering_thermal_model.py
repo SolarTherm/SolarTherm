@@ -18,7 +18,6 @@ try:
 	import math
 	import os,itertools
 	import shutil
-	import csv
 
 	from matplotlib import rc
 	rc('font',**{'family':'serif','serif':['Liberation Serif'],'size':14})
@@ -31,25 +30,23 @@ from solverreporter import *
 	
 
 def set_x_y(self):
-	#flux_seg_data = np.genfromtxt("./ascend_models/test_data/receiver_1D_FluxMap_despoint.csv",dtype='float', delimiter = ',')
 	flux_seg_data = np.genfromtxt("./ascend_models/test_data/fluxmap.csv",dtype='float', delimiter = ',')
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)
+	flux_multiple_on = float(self.flux_ratio_on)
 	flux_seg_1 = np.reshape(flux_seg_data,(n_sinter+3,1))
-	flux_seg = flux_seg_1[3:n_sinter+3]
+	flux_seg = flux_seg_1[3:n_sinter+3]*flux_multiple_on
 	for i in range(0,n_sinter):
 		self.Sinter.seg[i].Q_sun.setRealValue(float(flux_seg[i]) * L * W / n_sinter)
 		self.Sinter.seg[i].Q_sun.setFixed(True)		
 
 def off_design_flux(self):
-	#flux_seg_data = np.genfromtxt("./ascend_models/test_data/receiver_1D_FluxMap_despoint.csv",dtype='float', delimiter = ',')
 	flux_seg_data = np.genfromtxt("./ascend_models/test_data/fluxmap.csv",dtype='float', delimiter = ',')
-
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)
-	flux_multiple_off = float(self.flux_ratio)
+	flux_multiple_off = float(self.flux_ratio_off)
 	flux_seg_1 = np.reshape(flux_seg_data,(n_sinter+3,1))
 	flux_seg = flux_seg_1[3:n_sinter+3]
 
@@ -122,7 +119,8 @@ def plot_x_y(self):
 	T_s_HX2 = np.zeros(n_HX2+1)
 	x_HX1 = np.arange(0,n_HX1+1,1)
 	x_HX2 = np.arange(0,n_HX2+1,1)
-	x_sinter = np.arange(0,n_sinter,1)
+	L = float(self.Sinter.L)
+	x_sinter = np.linspace(0,L,n_sinter)
 
 	T_top_sinter = np.zeros(n_sinter)
 	T_f_sinter = np.zeros(n_sinter)
@@ -146,11 +144,9 @@ def plot_x_y(self):
 		h_s_HX2[ii] = float(self.HX2.node_s[ii].h) / 1000.
 	h_diff = np.where(delta_T_HX1 == min(delta_T_HX1))
 
-
 	for ix in range(0,n_sinter):
 		T_top_sinter[ix] = float(self.Sinter.seg[ix].T_ext - 273.15)
 		T_f_sinter[ix] = float(self.Sinter.seg[ix].inlet.T - 273.15)
-	
 
 extpy.registermethod(set_x_y)
 extpy.registermethod(off_design_flux)

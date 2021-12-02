@@ -95,6 +95,8 @@ def run_thermalSinteringModelDesignPoint(inputs):
 
 	dirsave = inputs["dir_save"]
 	st_path = inputs["SolarTherm_path"]
+	
+	flux_multiple_on = 1
 
 	#Reading the flux multiplier based on DNI ratio
 	flux = 1
@@ -113,7 +115,7 @@ def run_thermalSinteringModelDesignPoint(inputs):
 	sys.stderr.write("Done reading ASCEND model...\n\n")
 
 	#Parse the simulation parameters
-	P_1 = Template(t).safe_substitute(N_SEGMENTS_SUBST_1 = k_s, N_SEGMENTS_SUBST_2 = alpha,N_SEGMENTS_SUBST_3 = T_sky, N_SEGMENTS_SUBST_4 = h_ext, N_SEGMENTS_SUBST_6 = T_i_g_HX1, N_SEGMENTS_SUBST_7 = T_o_s_HX1, N_SEGMENTS_SUBST_8 = T_i_s_HX1, N_SEGMENTS_SUBST_9 = d_p_HX1, N_SEGMENTS_SUBST_10 = H_HX1, N_SEGMENTS_SUBST_11 = W_HX1, N_SEGMENTS_SUBST_12 = t_wall_HX1, N_SEGMENTS_SUBST_13 = T_i_g_HX2, N_SEGMENTS_SUBST_14 = T_o_s_HX2, N_SEGMENTS_SUBST_15 = T_i_s_HX2, N_SEGMENTS_SUBST_16 = d_p_HX2, N_SEGMENTS_SUBST_17 = W_HX2, N_SEGMENTS_SUBST_18 = eps,N_SEGMENTS_SUBST_19 = int(seg),N_SEGMENTS_SUBST_20 = flux)
+	P_1 = Template(t).safe_substitute(N_SEGMENTS_SUBST_1 = k_s, N_SEGMENTS_SUBST_2 = alpha,N_SEGMENTS_SUBST_3 = T_sky, N_SEGMENTS_SUBST_4 = h_ext, N_SEGMENTS_SUBST_6 = T_i_g_HX1, N_SEGMENTS_SUBST_7 = T_o_s_HX1, N_SEGMENTS_SUBST_8 = T_i_s_HX1, N_SEGMENTS_SUBST_9 = d_p_HX1, N_SEGMENTS_SUBST_10 = H_HX1, N_SEGMENTS_SUBST_11 = W_HX1, N_SEGMENTS_SUBST_12 = t_wall_HX1, N_SEGMENTS_SUBST_13 = T_i_g_HX2, N_SEGMENTS_SUBST_14 = T_o_s_HX2, N_SEGMENTS_SUBST_15 = T_i_s_HX2, N_SEGMENTS_SUBST_16 = d_p_HX2, N_SEGMENTS_SUBST_17 = W_HX2, N_SEGMENTS_SUBST_18 = eps,N_SEGMENTS_SUBST_19 = int(seg),N_SEGMENTS_SUBST_20 = flux, N_SEGMENTS_SUBST_21 = flux_multiple_on)
 
 	f2 = open("%s/Resources/Include/Sinter_HX_LOADME.a4c"%(st_path),"w")
 	f2.write(P_1)
@@ -225,6 +227,7 @@ def run_thermalSinteringModel(inputs):
 	#FIXME flux_multiple_off should be SAMPLED
 	#flux_multiple_off = inputs["flux_multiple_off"]
 	flux_multiple_off = np.linspace(start=0.7, stop=1.1, num=5)
+	flux_multiple_on = 1
 
 	seg = inputs["seg"]
 	
@@ -248,7 +251,7 @@ def run_thermalSinteringModel(inputs):
 		sys.stderr.write("Done reading ASCEND model...\n\n")
 
 		#Parse the simulation parameters
-		P_1 = Template(t).safe_substitute(N_SEGMENTS_SUBST_1 = k_s, N_SEGMENTS_SUBST_2 = alpha,N_SEGMENTS_SUBST_3 = T_sky, N_SEGMENTS_SUBST_4 = h_ext, N_SEGMENTS_SUBST_6 = T_i_g_HX1, N_SEGMENTS_SUBST_7 = T_o_s_HX1, N_SEGMENTS_SUBST_8 = T_i_s_HX1, N_SEGMENTS_SUBST_9 = d_p_HX1, N_SEGMENTS_SUBST_10 = H_HX1, N_SEGMENTS_SUBST_11 = W_HX1, N_SEGMENTS_SUBST_12 = t_wall_HX1, N_SEGMENTS_SUBST_13 = T_i_g_HX2, N_SEGMENTS_SUBST_14 = T_o_s_HX2, N_SEGMENTS_SUBST_15 = T_i_s_HX2, N_SEGMENTS_SUBST_16 = d_p_HX2, N_SEGMENTS_SUBST_17 = W_HX2, N_SEGMENTS_SUBST_18 = eps,N_SEGMENTS_SUBST_19 = int(seg),N_SEGMENTS_SUBST_20 = flux)
+		P_1 = Template(t).safe_substitute(N_SEGMENTS_SUBST_1 = k_s, N_SEGMENTS_SUBST_2 = alpha,N_SEGMENTS_SUBST_3 = T_sky, N_SEGMENTS_SUBST_4 = h_ext, N_SEGMENTS_SUBST_6 = T_i_g_HX1, N_SEGMENTS_SUBST_7 = T_o_s_HX1, N_SEGMENTS_SUBST_8 = T_i_s_HX1, N_SEGMENTS_SUBST_9 = d_p_HX1, N_SEGMENTS_SUBST_10 = H_HX1, N_SEGMENTS_SUBST_11 = W_HX1, N_SEGMENTS_SUBST_12 = t_wall_HX1, N_SEGMENTS_SUBST_13 = T_i_g_HX2, N_SEGMENTS_SUBST_14 = T_o_s_HX2, N_SEGMENTS_SUBST_15 = T_i_s_HX2, N_SEGMENTS_SUBST_16 = d_p_HX2, N_SEGMENTS_SUBST_17 = W_HX2, N_SEGMENTS_SUBST_18 = eps,N_SEGMENTS_SUBST_19 = int(seg), N_SEGMENTS_SUBST_20 = flux, N_SEGMENTS_SUBST_21 = flux_multiple_on)
 
 		f2 = open("%s/Resources/Include/Sinter_HX_LOADME.a4c"%(st_path),"w")
 		f2.write(P_1)
@@ -348,7 +351,11 @@ def run_interpolate(inputs):
 	fn_name = "%s/sintering_performance_data.csv"%(modelica_wd)
 	
 	#Read df
-	df = pd.read_csv(fn_name)
+	try:
+		df = pd.read_csv(fn_name)
+	except Exception as e:
+		sys.stderr.write("%s\n"%(e))
+		raise IOError("No training data. Should be saved as %s"%(fn_name))
 
 	#X and y from df
 	X = df[['angle_1','angle_2','flux_multiple_off']].to_numpy()
@@ -374,6 +381,7 @@ def run_interpolate(inputs):
 
 
 if __name__ == '__main__':
+	#Running off design
 	parser = argparse.ArgumentParser()
 
 	parser.add_argument('--T_sky', type=float)

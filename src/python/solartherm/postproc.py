@@ -195,8 +195,9 @@ class SimResult(object):
 		return constr, distance
 
 class SimResultElec(SimResult):
-	def calc_perf(self, peaker=False, IRR=False, Ore=True):
-		"""Calculate the solar power plant performance.
+	def calc_perf(self, savedir, peaker=False, IRR=False, Ore=True):
+		"""
+		Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
 		not a multiple of a year.
 
@@ -214,7 +215,7 @@ class SimResultElec(SimResult):
 			disc_v = self.mat.data('r_disc')[-1] # Discount rate [-]
 			life_v = int(self.mat.data('t_life')[-1]) # Plant lifetime [year]
 			cons_v = int(self.mat.data('t_cons')[-1]) # Construction time [year]
-			name_v = self.mat.data('mdot_ore_design_point')[-1] # Generator nameplate [kg/s]
+			name_v = self.mat.data('mdot_ore_design_point')[-1] # Mdot ore nameplate [kg/s]
 			t_life = int(self.mat.data('t_life')[-1]) # Year of lifetime
 
 			#Calculate LCO Ore
@@ -232,23 +233,42 @@ class SimResultElec(SimResult):
 			for i in range(cons_v+1, cons_v+t_life+1):
 				nu += om_y_v/((1 + disc_v)**i)
 				de += eng_v/((1 + disc_v)**i)
-
-			try:
-				LCO_Ore = nu/de
-			except Exception as e:
-				import sys
-				sys.stderr.write("%s\n"%(str(e)))
-				sys.stderr.write("Can not calculate LCO Ore with numerator val: %s and denominator val: %s\n\n"%(nu,de))
-				sys.stderr.write("Return value as 99999 instead\n")
-				LCO_Ore = 9999999
-
-			try:			
-				cf = eng_v / name_v * 3.1536e7
-			except Exception as e:
-				sys.stderr.write("%s\n"%(str(e)))
-				sys.stderr.write("Can not calculate CF with numerator val: %s and denominator val: %s\n\n"%(eng_v,name_v * 3.1536e7))
-				cf = -1
 			
+			if de == 0:
+				LCO_Ore = 999999
+			else:
+				LCO_Ore = nu/de
+			
+			if name_v == 0:
+				cf = -1
+			else:
+				cf = eng_v / (name_v * 3.1536e7) #Convert to total ore accummulated at shall the plant operate at design point for 24/7 365 days
+
+			print("####################%s"%savedir)
+			
+			fn_opt = "%s/result_optimisation.csv"%(savedir)
+
+			string = "Q_in_rcv,cpc_theta_deg,cpc_h_ratio,aperture_angle_x,aperture_angle_y,secref_offset,secref_inv_eccen,H_tower,fb,tilt_secref,W_rcv,H_rcv,R1,W_helio,H_helio,slope_error_bd,rho_secref,rho_cpc,cpc_nfaces,T_i_s_HX1,T_o_s_HX1,T_i_g_HX1,d_p_HX1,H_HX1,W_HX1,t_wall_HX1,T_i_s_HX2,T_o_s_HX2,T_i_g_HX2,d_p_HX2,W_HX2,LCO_Ore,CF\n"
+		
+			try:
+				f = open(fn_opt,"r")
+			except:
+				print("Create file %s"%(fn_opt))
+				with open(fn_opt,"w") as f:
+					f.write(string)
+			
+			to_write = ""
+			for var in string.split(","):
+				if var == 'LCO_Ore':
+					break
+				val = self.mat.data(var)[-1]
+				to_write += "%s,"%(val)
+
+			to_write+="%s,%s\n"%(LCO_Ore, cf)
+
+			with open(fn_opt,"a") as f:
+				f.write(to_write)
+
 			return [eng_v, LCO_Ore, cf, 0,]
 				
 		else:
@@ -275,6 +295,7 @@ class SimResultElec(SimResult):
 			srev = rev_v[-1] # spot market revenue [$]
 			lcoe = None # Levelised cost of electricity
 			capf = None # Capacity factor
+
 			if close_to_year: 
 				if peaker:
 					tod_v=self.mat.data('TOD_W')
