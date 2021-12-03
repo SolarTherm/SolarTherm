@@ -63,6 +63,7 @@ def inpath(path,envvar):
 	return False
 
 def append_if_missing(path,var):
+	if path == '': return
 	for p in path.split(os.pathsep):
 		p1 = CYG(p)
 		if not inpath(p,var):

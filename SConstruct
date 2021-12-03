@@ -435,7 +435,8 @@ if not conf.PATH():
 env = conf.Finish()
 
 envg = env.Clone()
-envg.ParseConfig('$GSL_CONFIG --libs --cflags')
+if shutil.which(env['GSL_CONFIG']):
+	envg.ParseConfig('$GSL_CONFIG --libs --cflags')
 def check_gsl(ct):
 	ct.Message('Checking for GSL... ')
 	src = """#include <gsl/gsl_sf_bessel.h>
