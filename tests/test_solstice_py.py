@@ -19,7 +19,7 @@ class TestSolsticePyFunc(unittest.TestCase):
 
 
 	def test_touching(self):
-		self.assertTrue(abs(self.res.interpolate('nu', 0)-0.8834)/0.8834<0.01)
+		self.assertTrue(abs(self.res.interpolate('nu', 0)-0.928)/0.928<0.05)
 		cleantest.clean('TestSolsticePyFunc')
 
 if __name__ == '__main__':
