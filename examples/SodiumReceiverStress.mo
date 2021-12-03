@@ -17,7 +17,7 @@ model SodiumReceiverStress
 		Placement(visible = true, transformation(origin = {76, -16}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 	
 	SolarTherm.Models.Sources.DataTable.DataTable data(
-		file = Modelica.Utilities.Files.loadResource("modelica://receiver/data/Daggett_Ca_TMY32.motab"), 
+		file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab"), 
 		lat = 34.85, 
 		lon = -116.78, 
 		t_zone = -8, 
