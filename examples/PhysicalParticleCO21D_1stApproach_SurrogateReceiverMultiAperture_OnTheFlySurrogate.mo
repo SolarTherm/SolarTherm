@@ -178,25 +178,25 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   
   //****************************** NN Based Single Aperture Rcv Parameters
   parameter Integer inputsize_rcv = 7;
-  
-  parameter SI.Length H_drop_max_rcv = 45 "[RCV] maximum drop height where the receiver surrogate model is still valid [m]";
-  parameter Real ar_rec_max_rcv = 3 "[RCV] maximum receiver aspect ratioto the receiver surrogate model [-]";
+
+  parameter SI.Length H_drop_max_rcv = 39.0 "[RCV] maximum drop height where the receiver surrogate model is still valid [m]";
+  parameter Real ar_rec_max_rcv = 1.75 "[RCV] maximum receiver aspect ratioto the receiver surrogate model [-]";
   parameter SI.Temperature T_out_max_rcv = 1073.15 "[RCV] maximum particle outlet temperature [K]";
-  parameter SI.HeatFlowRate Q_in_max_rcv = 9041492610.03646 "[RCV] maximum incident heat to the receiver [W]";
-  parameter SI.Temperature T_in_max_rcv = 972.9825827048 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
-  parameter SI.Temperature T_amb_max_rcv = 313.1089448632 "[RCV] maximum ambient temperature to the surrogate model [K]";
-  parameter Real F_wind_max_rcv = 6.2660812586 "[RCV] maximum wind factor to the surrogate model [-]";
-  
+  parameter SI.HeatFlowRate Q_in_max_rcv = 1915524779.31452 "[RCV] maximum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_max_rcv = 973.143535350473 "[RCV] maximum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_max_rcv = 313.066942659631 "[RCV] maximum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_max_rcv = 6.44485438388785 "[RCV] maximum wind factor to the surrogate model [-]";
+    
   parameter SI.Length H_drop_min_rcv = 15 "[RCV] minimum drop height where the receiver surrogate model is still valid [m]";
-  parameter Real ar_rec_min_rcv = 0.25 "[RCV] minimum receiver aspect ratioto the receiver surrogate model [-]";
+  parameter Real ar_rec_min_rcv = 0.5 "[RCV] minimum receiver aspect ratioto the receiver surrogate model [-]";
   parameter SI.Temperature T_out_min_rcv = 1073.15 "[RCV] minimum particle outlet temperature [K]";
-  parameter SI.HeatFlowRate Q_in_min_rcv = 24201848.6838298 "[RCV] minimum incident heat to the receiver [W]";
-  parameter SI.Temperature T_in_min_rcv = 773.2819470034 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
-  parameter SI.Temperature T_amb_min_rcv = 253.1991227209 "[RCV] minimum ambient temperature to the surrogate model [K]";
-  parameter Real F_wind_min_rcv = 1.0000006398 "[RCV] minimum wind factor to the surrogate model [-]";
+  parameter SI.HeatFlowRate Q_in_min_rcv = 30707116.0733028 "[RCV] minimum incident heat to the receiver [W]";
+  parameter SI.Temperature T_in_min_rcv = 773.488068404742 "[RCV] minimum particle inlet temperature to the surrogate model [K]";
+  parameter SI.Temperature T_amb_min_rcv = 253.195291854307 "[RCV] minimum ambient temperature to the surrogate model [K]";
+  parameter Real F_wind_min_rcv = 1.00000380701676 "[RCV] minimum wind factor to the surrogate model [-]";
   
-  parameter SI.Efficiency eta_thermal_max_rcv = 0.9944160723 "[RCV] maximum thermal efficiency of the receiver of surrogate model";
-  parameter SI.Efficiency eta_thermal_min_rcv = 0.0055724285 "[RCV] minimum thermal efficiency of the receiver of surrogate model";
+  parameter Real y_max_rcv = 0.994870462245571 "[RCV] maximum thermal efficiency";
+  parameter Real y_min_rcv = 0.201110600582715 "[RCV] minimum thermal efficiency";
   
   parameter Real[inputsize_rcv] X_max_rcv = {
                                 H_drop_max_rcv, 
@@ -216,8 +216,6 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
                                 T_amb_min_rcv, 
                                 F_wind_min_rcv};
                                 
-  parameter Real y_max_rcv = eta_thermal_max_rcv;
-  parameter Real y_min_rcv = eta_thermal_min_rcv;
   
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
@@ -1324,35 +1322,35 @@ initial equation
 
 equation
 //************************************ Equations below exist to close the model
-  particleReceiver.raw_input_1[1] = A_ap_lv1;
+  particleReceiver.raw_input_1[1] = H_rcv_lv1;
   particleReceiver.raw_input_1[2] = ar_rec_lv1;
-  particleReceiver.raw_input_1[3] = particleReceiver.Q_in_1;
-  particleReceiver.raw_input_1[4] = particleReceiver.Tamb;
+  particleReceiver.raw_input_1[3] = T_hot_set;
+  particleReceiver.raw_input_1[4] = particleReceiver.Q_in_1;
   particleReceiver.raw_input_1[5] = particleReceiver.T_in;
-  particleReceiver.raw_input_1[6] = T_hot_set;
+  particleReceiver.raw_input_1[6] = particleReceiver.Tamb;
   particleReceiver.raw_input_1[7] =  1 + 
                                          0.13929 * 
                                               (particleReceiver.Wspd * (Modelica.Math.log(H_tower/1e-3))/(Modelica.Math.log(2/1e-3))) 
                                                   * Modelica.Math.exp(-1*((abs(Modelica.SIunits.Conversions.to_deg(data.Wdir)-180)-105)/30)^2);
                                                   
-  particleReceiver.raw_input_2[1] = A_ap_lv2;
+  particleReceiver.raw_input_2[1] = H_rcv_lv2;
   particleReceiver.raw_input_2[2] = ar_rec_lv2;
-  particleReceiver.raw_input_2[3] = particleReceiver.Q_in_2;
-  particleReceiver.raw_input_2[4] = particleReceiver.Tamb;
+  particleReceiver.raw_input_2[3] = T_hot_set;
+  particleReceiver.raw_input_2[4] = particleReceiver.Q_in_2;
   particleReceiver.raw_input_2[5] = particleReceiver.T_in;
-  particleReceiver.raw_input_2[6] = T_hot_set;
+  particleReceiver.raw_input_2[6] = particleReceiver.Tamb;
   particleReceiver.raw_input_2[7] =  1 + 
                                          0.13929 * 
                                               (particleReceiver.Wspd * (Modelica.Math.log(H_tower/1e-3))/(Modelica.Math.log(2/1e-3))) 
                                                   * Modelica.Math.exp(-1*((abs(Modelica.SIunits.Conversions.to_deg(data.Wdir)-180)-105)/30)^2);
                                                   
   
-  particleReceiver.raw_input_3[1] = A_ap_lv3;
+  particleReceiver.raw_input_3[1] = H_rcv_lv3;
   particleReceiver.raw_input_3[2] = ar_rec_lv3;
-  particleReceiver.raw_input_3[3] = particleReceiver.Q_in_3;
-  particleReceiver.raw_input_3[4] = particleReceiver.Tamb;
+  particleReceiver.raw_input_3[3] = T_hot_set;
+  particleReceiver.raw_input_3[4] = particleReceiver.Q_in_3;
   particleReceiver.raw_input_3[5] = particleReceiver.T_in;
-  particleReceiver.raw_input_3[6] = T_hot_set;
+  particleReceiver.raw_input_3[6] = particleReceiver.Tamb;
   particleReceiver.raw_input_3[7] =  1 + 
                                          0.13929 * 
                                               (particleReceiver.Wspd * (Modelica.Math.log(H_tower/1e-3))/(Modelica.Math.log(2/1e-3))) 

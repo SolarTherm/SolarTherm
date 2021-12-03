@@ -554,3 +554,4 @@ class CSVResult(object):
 
 	def get_unit(self, name):
 		return self.units[name]
+
