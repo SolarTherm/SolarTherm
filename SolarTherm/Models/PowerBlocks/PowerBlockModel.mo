@@ -96,7 +96,7 @@ equation
   logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
   h_out=fluid_b.h_outflow;
-  h_out=fluid_a.h_outflow; //?
+  h_out=fluid_a.h_outflow;
   fluid_a.m_flow+fluid_b.m_flow=0;
   fluid_a.p=fluid_b.p;
 
@@ -114,7 +114,6 @@ equation
 
   Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
   W_gross/(cool.nu_w*W_des*load)=k_w;
-
   eff_pb=W_gross/max(1,Q_flow);
 
   der(E_gross)=W_gross;

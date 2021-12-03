@@ -434,7 +434,7 @@ initial equation
 			// SAM 2018 cost data: 1.09025e6 * (603.1/318.4) * exp(0.00879 * H_tower)
 	end if;
 
-	equation	
+	equation
 	//Connections from data
 	connect(DNI_input.y, sun.dni) annotation(
 												Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));

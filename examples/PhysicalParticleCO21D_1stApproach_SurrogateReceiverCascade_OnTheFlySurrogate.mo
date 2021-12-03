@@ -866,7 +866,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
     Placement(visible = true, transformation(origin = {12, 130}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   
   //********************* Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(
+  SolarTherm.Models.Storage.Tank.Tank_Particle tankHot(
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
@@ -890,7 +890,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverCascade_OnTheFlySurroga
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   
   //********************* Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(
+  SolarTherm.Models.Storage.Tank.Tank_Particle tankCold(
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 

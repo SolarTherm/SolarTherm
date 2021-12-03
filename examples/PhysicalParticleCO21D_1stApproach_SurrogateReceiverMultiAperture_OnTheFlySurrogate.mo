@@ -960,7 +960,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   );
   
   //********************* Hot tank
-  SolarTherm.Models.Storage.Tank.Tank tankHot(
+  SolarTherm.Models.Storage.Tank.Tank_Particle tankHot(
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
@@ -984,7 +984,7 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
     Placement(transformation(extent = {{16, 54}, {36, 74}})));
   
   //********************* Cold tank
-  SolarTherm.Models.Storage.Tank.Tank tankCold(
+  SolarTherm.Models.Storage.Tank.Tank_Particle tankCold(
       redeclare package Medium = Medium, 
       D = D_storage, 
       H = H_storage, 
