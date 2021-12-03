@@ -10,13 +10,8 @@ from solartherm import simulation
 from solartherm import postproc
 
 def append_path(env,var,add):
-	val = env.get(var,None)
-	if val is None:
-		val = []
-	val = val.split(os.pathsep)
-	val += [str(add)]
+	val = (env[var].split(os.pathsep) if var in env else []) + [str(add)]
 	env[var] = os.pathsep.join(val)
-	print("Appended '%s' to $%s, new value '%s'"%(add,var,env[var]))
 
 def run_ctest(name):
 	"""
