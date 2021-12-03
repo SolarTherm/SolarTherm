@@ -8,7 +8,9 @@ def test_1():
 	env = None
 	if platform.system()=="Linux":
 		env = os.environ.copy()
-		env['LD_LIBRARY_PATH']='../src/modelica'
+		paths = env['LD_LIBRARY_PATH']
+		paths += ":../src/modelica"
+		env['LD_LIBRARY_PATH'] = paths
 	fdni = Path("../SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab")
 	fprice = Path("../SolarTherm/Data/Prices/aemo_vic_2014_hourly_manipulated.motab")
 	t = 180.0
@@ -20,7 +22,10 @@ def test_2():
 	env = None
 	if platform.system()=="Linux":
 		env = os.environ.copy()
-		env['LD_LIBRARY_PATH']='../src/modelica'
+		paths = env['LD_LIBRARY_PATH']
+		paths += ":../src/modelica"
+		env['LD_LIBRARY_PATH'] = paths
+
 	proc = sp.run([exe],env=env)
 	assert(proc.returncode==0)
 
