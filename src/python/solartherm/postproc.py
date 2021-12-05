@@ -243,7 +243,7 @@ class SimResultElec(SimResult):
 				cf = -1
 			else:
 				cf = eng_v / (name_v * 3.1536e7) #Convert to total ore accummulated at shall the plant operate at design point for 24/7 365 days
-
+			'''
 			print("####################%s"%savedir)
 			
 			fn_opt = "%s/result_optimisation.csv"%(savedir)
@@ -268,7 +268,7 @@ class SimResultElec(SimResult):
 
 			with open(fn_opt,"a") as f:
 				f.write(to_write)
-
+			'''
 			return [eng_v, LCO_Ore, cf, 0,]
 				
 		else:

@@ -5,7 +5,6 @@ import extpy
 try:
 	from mpl_toolkits.mplot3d import Axes3D
 	from matplotlib import cm
-	from matplotlib.ticker import LinearLocator, FormatStrFormatter
 	from pylab import *
 	import numpy as np
 	import matplotlib
@@ -18,6 +17,8 @@ try:
 	import math
 	import os,itertools
 	import shutil
+	import sys
+	import csv #MODIF PG
 
 	from matplotlib import rc
 	rc('font',**{'family':'serif','serif':['Liberation Serif'],'size':14})
@@ -30,7 +31,12 @@ from solverreporter import *
 	
 
 def set_x_y(self):
-	flux_seg_data = np.genfromtxt("./ascend_models/test_data/fluxmap.csv",dtype='float', delimiter = ',')
+	try:
+		sys.stderr.write("Loading flux data.......\n")
+		flux_seg_data = np.genfromtxt("fluxmap.csv",dtype='float', delimiter = ',')
+		sys.stderr.write("Loading flux data done.......\n")
+	except Exception as e:
+		sys.stderr.write(str(e))
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)
@@ -42,7 +48,12 @@ def set_x_y(self):
 		self.Sinter.seg[i].Q_sun.setFixed(True)		
 
 def off_design_flux(self):
-	flux_seg_data = np.genfromtxt("./ascend_models/test_data/fluxmap.csv",dtype='float', delimiter = ',')
+	try:
+		sys.stderr.write("Loading flux data.......\n")
+		flux_seg_data = np.genfromtxt("fluxmap.csv",dtype='float', delimiter = ',')
+		sys.stderr.write("Loading flux data done.......\n")
+	except Exception as e:
+		sys.stderr.write(str(e))
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)

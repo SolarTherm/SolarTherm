@@ -9,13 +9,13 @@
 /*
 	Function to read number of segmentation
 */
-int read_num_segment(const char* modelica_wd){
+int read_num_segment(const char* solstice_wd){
 
 	char* fn_names = NEW_ARRAY(char, MAXLEN);
 	char str[MAXLEN];
 	int num_segment;
 	
-	snprintf(fn_names, MAXLEN, "%s/test/receiver_1D_FluxMap_sunpos_1.csv",modelica_wd);
+	snprintf(fn_names, MAXLEN, "%s/receiver_1D_FluxMap_sunpos_1.csv",solstice_wd);
 	FILE* f = fopen(fn_names ,"r");
 	
 	fgets(str, MAXLEN, f);
@@ -30,12 +30,12 @@ int read_num_segment(const char* modelica_wd){
 /*
     Function to read solar angles
 */
-void read_solar_angles(double* angles, int file_index, const char* modelica_wd){
+void read_solar_angles(double* angles, int file_index, const char* solstice_wd){
     
 	char* fn_names = NEW_ARRAY(char, MAXLEN);
     char str[MAXLEN];
 
-    snprintf(fn_names, MAXLEN, "%s/test/receiver_1D_FluxMap_sunpos_%d.csv", modelica_wd, file_index);
+    snprintf(fn_names, MAXLEN, "%s/receiver_1D_FluxMap_sunpos_%d.csv", solstice_wd, file_index);
 
     if(fopen(fn_names,"r")==NULL){
         fprintf(stderr,"File can not be found. File path: %s\n", fn_names);
@@ -61,14 +61,14 @@ void read_solar_angles(double* angles, int file_index, const char* modelica_wd){
 /*
 	Function to copy the content of fn_source to fn_destination
 */
-void write_flux_array(int file_index, const char* SolarTherm_path, const char* modelica_wd){
+void write_flux_array(int file_index, const char* SolarTherm_path, const char* solstice_wd){
 	/*Build destination fn destination*/
 	char* fn_destination = NEW_ARRAY(char, MAXLEN);
-	snprintf(fn_destination, MAXLEN, "%s/Resources/Include/ascend_models/test_data/fluxmap.csv",SolarTherm_path);
+	snprintf(fn_destination, MAXLEN, "%s/fluxmap.csv",solstice_wd);
 
 	/*Build destination fn source*/
 	char* fn_source = NEW_ARRAY(char, MAXLEN);
-	snprintf(fn_source,MAXLEN,"%s/test/receiver_1D_FluxMap_sunpos_%d.csv",modelica_wd, file_index); // e.g. {$modelica_wd}/test/flux_1.csv
+	snprintf(fn_source,MAXLEN,"%s/receiver_1D_FluxMap_sunpos_%d.csv",solstice_wd, file_index); // e.g. {$solstice_wd}/flux_1.csv
 
 	fprintf(stderr,"Copy flux array from : %s to %s\n",fn_source, fn_destination);
 
@@ -87,13 +87,13 @@ void write_flux_array(int file_index, const char* SolarTherm_path, const char* m
 	free(fn_source);
 };
 
-int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int num_segment, const double var[], const char* modelica_wd, const char* SolarTherm_path, double* angles){
+int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int num_segment, const double var[], const char* solstice_wd, const char* SolarTherm_path, double* angles, char* iron_sample){
     /*python run_sintering_thermal_model.py --T_sky 40.0 --k_s 6.5 --alpha 0.95 --eps_r 0.9 --h_ext 20.0 --eps 0.4 --T_i_s_HX1 25 --T_o_s_HX1 1140 --T_i_g_HX1 1250 --d_p_HX1 0.0075 --H_HX1 0.05 --W_HX1 8.0 --t_wall_HX1 0.01 --T_i_s_HX2 1350 --T_o_s_HX2 200.0 --T_i_g_HX2 25.0 --W_HX2 8.0 --d_p_HX2 0.04 --flux_multiple_off 1 --seg 40 --dir_save /tmp/OpenModelica_philgun/OMEdit --SolarTherm_path /home/philgun/solartherm-sintering/SolarTherm --angle1 22.5 --angle2 30.0*/
     char* cmd = NEW_ARRAY(char, MAXLEN);
     snprintf(
         cmd, 
         MAXLEN, 
-        "python %s/Resources/Include/run_sintering_thermal_model.py --T_sky %lf --k_s %lf --alpha %lf --eps_r %lf --h_ext %lf --eps %lf --T_i_s_HX1 %lf --T_o_s_HX1 %lf --T_i_g_HX1 %lf --d_p_HX1 %lf --H_HX1 %lf --W_HX1 %lf --t_wall_HX1 %lf --T_i_s_HX2 %lf --T_o_s_HX2 %lf --T_i_g_HX2 %lf --W_HX2 %lf --d_p_HX2 %lf --flux_multiple_off %lf --seg %d --dir_save %s --SolarTherm_path %s --angle1 %lf --angle2 %lf",
+        "python %s/Resources/Include/run_sintering_thermal_model.py --T_sky %lf --k_s %lf --alpha %lf --eps_r %lf --h_ext %lf --eps %lf --T_i_s_HX1 %lf --T_o_s_HX1 %lf --T_i_g_HX1 %lf --d_p_HX1 %lf --H_HX1 %lf --W_HX1 %lf --t_wall_HX1 %lf --T_i_s_HX2 %lf --T_o_s_HX2 %lf --T_i_g_HX2 %lf --W_HX2 %lf --d_p_HX2 %lf --flux_multiple_off %lf --seg %d --dir_save %s --SolarTherm_path %s --angle1 %lf --angle2 %lf --iron_sample %s",
         SolarTherm_path,
         var[0],var[1], var[2],
         var[3],var[4], var[5],
@@ -102,7 +102,7 @@ int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int num
         var[12],var[13],var[14],
         var[15], var[16], var[17],
         var[18],
-        num_segment, modelica_wd, SolarTherm_path, angles[0], angles[1]
+        num_segment, solstice_wd, SolarTherm_path, angles[0], angles[1], iron_sample
     );
 
     fprintf(stderr,"%s\n\n",cmd);
@@ -117,7 +117,7 @@ int run_ascend_sintering_model_CLI(const char* ppath, const char* pname, int num
 /*
     Function to interpolate
 */
-double run_interpolation(const char *ppath, const char *pname, const char *pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off){
+double run_interpolation(const char *ppath, const char *pname, const char *pfunc, const char* solstice_wd, double declination, double sun_hour_angle, double flux_multiple_off){
 	double mdot_ore;
 	int i;
 
@@ -148,7 +148,7 @@ double run_interpolation(const char *ppath, const char *pname, const char *pfunc
             inputs = PyDict_New();
 
 			/*Populate dictionary inputs*/
-            PyDict_SetItemString(inputs, "dir_save", PyString_FromString((char *)modelica_wd));
+            PyDict_SetItemString(inputs, "dir_save", PyString_FromString((char *)solstice_wd));
             PyDict_SetItemString(inputs, "declination", PyFloat_FromDouble(declination));
             PyDict_SetItemString(inputs, "sunhour", PyFloat_FromDouble(sun_hour_angle));
             PyDict_SetItemString(inputs, "flux", PyFloat_FromDouble(flux_multiple_off));
@@ -190,7 +190,7 @@ double run_interpolation(const char *ppath, const char *pname, const char *pfunc
 	Function to call Python code that execute ASCEND model for sintering process
 */
 void run_ascend_sintering_model(const char *ppath, const char *pname, const char *pfunc, int argc, int num_segment, const char *varnames[], 
-				const double var[], const char *modelica_wd, const char* SolarTherm_path, double* angles, double* returns){
+			const double var[], const char *solstice_wd, const char* SolarTherm_path, double* angles, double* returns, const char* iron_sample){
 					
 	double mdot_ore;
 	int i;
@@ -222,8 +222,9 @@ void run_ascend_sintering_model(const char *ppath, const char *pname, const char
             inputs = PyDict_New();
 
 			/*Populate dictionary inputs*/
-            PyDict_SetItemString(inputs, "dir_save", PyString_FromString((char *)modelica_wd));
+            PyDict_SetItemString(inputs, "dir_save", PyString_FromString((char *)solstice_wd));
             PyDict_SetItemString(inputs, "SolarTherm_path", PyString_FromString((char *)SolarTherm_path));
+            PyDict_SetItemString(inputs, "iron_sample", PyString_FromString((char *)iron_sample));
             PyDict_SetItemString(inputs, "seg", PyLong_FromLong(num_segment));
 
             for (i = 0; i < argc; ++i) {
@@ -245,14 +246,14 @@ void run_ascend_sintering_model(const char *ppath, const char *pname, const char
 			fprintf(stderr,"Done calling python function to design the thermal model..................\n\n\n");
 			
 			char* fn_res_py = NEW_ARRAY(char, MAXLEN);
-			snprintf(fn_res_py, MAXLEN,"%s/des_point_calc.csv",modelica_wd);
+			snprintf(fn_res_py, MAXLEN,"%s/des_point_calc.csv",solstice_wd);
 			FILE* f = fopen(fn_res_py,"r");
 			if(f != NULL){
 				fgets(str, MAXLEN, f);
     			sscanf(str,"%lf,%lf,%lf",&returns[0],&returns[1],&returns[2]);
 			}
 			else{
-				fprintf(stderr,"%s/des_point_calc.csv can not be found..........................\n",modelica_wd);
+				fprintf(stderr,"%s/des_point_calc.csv can not be found..........................\n",solstice_wd);
 				EXIT(EXIT_FAILURE);
 			}
 			fclose(f);

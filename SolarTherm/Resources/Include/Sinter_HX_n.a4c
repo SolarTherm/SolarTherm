@@ -5,7 +5,7 @@ REQUIRE "johnpye/thermo_types.a4c";
 IMPORT "johnpye/fprops/fprops";
 IMPORT "sensitivity/solve";
 IMPORT "johnpye/extpy/extpy";
-IMPORT "utils_sintering_thermal_model";
+IMPORT "/home/philgun/solartherm-sintering/SolarTherm/Resources/Include/utils_sintering_thermal_model";
 
 MODEL fprops_fluid;
 	component IS_A symbol_constant;

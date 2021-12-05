@@ -14,7 +14,7 @@ model AnnualOpticalBeamDown
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter String opt_file(fixed=false);
-  parameter String casefolder ="test" "dont change this";
+  parameter String casefolder = "test_run" "dont change this";
   
   /*
       Reading metadata from $casefolder/OELT_Solstice.motab
@@ -30,6 +30,9 @@ model AnnualOpticalBeamDown
 
   /*System size*/
   parameter SI.HeatFlowRate Q_in_rcv = 50e6 "Incident thermal power to the receiver";
+  
+  /*Iron sample*/
+  parameter String iron_sample = "A_1" "Which iron sample used"; 
   
   /*Heliostat and tower parameters*/
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
@@ -52,7 +55,7 @@ model AnnualOpticalBeamDown
   parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
 
   /*Optical parameters*/
-  parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+  parameter Real n_rays = 5e5 "number of rays for the optical simulation";
   parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
   parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";
@@ -63,18 +66,18 @@ model AnnualOpticalBeamDown
   parameter String ppath_sintering = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Path to the directory where the Python script is hosted";
   parameter String pname_sintering = "run_sintering_thermal_model" "The name of the Python script";
   parameter String pfunc_sintering = "run_interpolate" "Name of the function inside pname.py that will be called";
-  parameter String modelica_wd = Modelica.Utilities.Files.fullPathName(".") "Folder in which the CSVs storing flux map are located absolute p";
+  parameter String modelica_wd = Modelica.Utilities.Files.loadResource(casefolder) "Folder in which the CSVs storing flux map are located absolute p";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm");
   
   //Parameters to generate the training data
-  parameter String receiver_name_parameters[:] = {
+  parameter String thermal_model_name_parameters[:] = {
     "T_sky", "k_s", "alpha", "eps_r", "h_ext", "eps",
     "T_i_s_HX1", "T_o_s_HX1", "T_i_g_HX1", "d_p_HX1", "H_HX1", "W_HX1", "t_wall_HX1",
     "T_i_s_HX2", "T_o_s_HX2", "T_i_g_HX2", "W_HX2", "d_p_HX2",
     "flux_multiple_off"
   };
   
-  parameter Real receiver_parameters[19] = {
+  parameter Real thermal_model_parameters[:] = {
       T_sky -273.15, k_s, alpha, eps_r, h_ext, eps,
       T_i_s_HX1 -273.15, T_o_s_HX1 -273.15, T_i_g_HX1 -273.15, d_p_HX1 * 1000, H_HX1, W_HX1, t_wall_HX1 * 100,
       T_i_s_HX2 - 273.15, T_o_s_HX2 - 273.15, T_i_g_HX2 - 273.15, W_HX2, d_p_HX2 * 1000,
@@ -96,13 +99,13 @@ model AnnualOpticalBeamDown
   parameter SI.Temperature T_i_g_HX1 = 1250 + 273.15 "Air inlet temperature [K]";
   parameter SI.Length d_p_HX1 = 7.5e-3 "Iron ore diameter [m]";
   parameter SI.Length H_HX1 = 0.05 "Thickness of heat exchanger [m]";
-  parameter SI.Length W_HX1 = 8.0 "Width of heat exchanger [m]";
+  parameter SI.Length W_HX1 = W_rcv "Width of heat exchanger [m] equals to W_rcv. SRC: P45 Meeting 3 Dec 2021";
   parameter SI.Length t_wall_HX1 = 0.01 "Wall thickness of heat exchanger [m]";
   
   parameter SI.Temperature T_i_s_HX2 = 1350 +273.15 "Iron ore inlet temperature [K]";
   parameter SI.Temperature T_o_s_HX2 = 200 + 273.15 "Iron ore outlet temperature [K]";
   parameter SI.Temperature T_i_g_HX2 = 25 + 273.15 "Air inlet temperature [K]";
-  parameter SI.Length W_HX2 = W_rcv "Width of heat exchanger [m] = W_rcv";
+  parameter SI.Length W_HX2 = W_rcv "Width of heat exchanger [m] equals to W_rcv. SRC: P45 Meeting 3 Dec 2021";
   parameter SI.Length d_p_HX2 = 40e-3 "Iron ore diameter [m]";
     
   //status_run to launch the ASCEND model --> collecting training data
@@ -233,7 +236,18 @@ initial equation
   opt_file = lookuptable.tablefile;
   
   /*Call mdot ore design point*/
-  design_point_result = SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(ppath_sintering, pname_sintering, "run_thermalSinteringModelDesignPoint", SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, 19, opt_file);
+  design_point_result = SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(
+      ppath_sintering, 
+      pname_sintering, 
+      "run_thermalSinteringModelDesignPoint", 
+      SolarTherm_path, 
+      modelica_wd, 
+      thermal_model_name_parameters, 
+      thermal_model_parameters, 
+      19, 
+      iron_sample, 
+      opt_file
+  );
   
   mdot_ore_design_point = design_point_result[1]; 
   V_HX1 = design_point_result[2]; 
@@ -242,7 +256,7 @@ initial equation
   /*Initialisation of the model*/
   if Q_in_rcv_from_OELT > Q_in_rcv then
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is enough\n\n");
-      status_run = SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, receiver_name_parameters, receiver_parameters, opt_file);
+      status_run = SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, thermal_model_name_parameters, thermal_model_parameters, opt_file, iron_sample);
   else
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is NOT enough\n\n");
       status_run = -1000;

@@ -8,8 +8,9 @@ function RunSinteringThermalModel
   input String varnames[:];
   input Real vars[:];
   input String opt_file;
+  input String iron_sample;
   output Integer result;
-  external result = run_sintering_thermal_model(ppath, pname, SolarTherm_path, modelica_wd,varnames, vars, opt_file)
+  external result = run_sintering_thermal_model(ppath, pname, SolarTherm_path, modelica_wd,varnames, vars, opt_file, iron_sample)
   annotation(Library="python2.7",
       IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="
