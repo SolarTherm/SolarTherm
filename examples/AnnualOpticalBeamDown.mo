@@ -55,7 +55,7 @@ model AnnualOpticalBeamDown
   parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
 
   /*Optical parameters*/
-  parameter Real n_rays = 5e5 "number of rays for the optical simulation";
+  parameter Real n_rays = 5e6 "number of rays for the optical simulation";
   parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
   parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
   parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";

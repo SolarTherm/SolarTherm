@@ -5,6 +5,7 @@
 #include <libgen.h>
 #include <python2.7/Python.h>
 #include "ascend_utils.h"
+#include <unistd.h>
 
 /*
 	Function to read number of segmentation
@@ -260,7 +261,12 @@ void run_ascend_sintering_model(const char *ppath, const char *pname, const char
 
 			fprintf(stderr,"MDOT ORE AT DP: %lf kg/s\nVOL. HX1: %lf m3\nVOL. HX2: %lf m3................................\n\n",returns[0], returns[1], returns[2]);
             //mdot_ore = PyFloat_AsDouble(pValue);
-			
+
+            char cwd[2000];
+            getcwd(cwd, sizeof(cwd));
+            fprintf(stderr,"Current working dir: %s\n", cwd);
+            
+
             Py_DECREF(pArgs);
             Py_DECREF(inputs);
             if (pValue != NULL) {
