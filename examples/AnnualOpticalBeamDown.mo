@@ -14,7 +14,7 @@ model AnnualOpticalBeamDown
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter String opt_file(fixed=false);
-  parameter String casefolder = "test_run" "dont change this";
+  parameter String casefolder = "optic" "dont change this";
   
   /*
       Reading metadata from $casefolder/OELT_Solstice.motab
@@ -37,16 +37,16 @@ model AnnualOpticalBeamDown
   /*Heliostat and tower parameters*/
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
   parameter Real cpc_h_ratio=0.6 "ratio of CPC critical height [0,1]";
-  parameter nSI.Angle_deg aperture_angle_x=80 "aperture angle of the heliostat field in the xOz plan in degree [0,180] ";
-  parameter nSI.Angle_deg aperture_angle_y=80 "aperture angle of the heliostat field in the yOz plan in degree [0,180] ";
-  parameter nSI.Angle_deg secref_offset = 10.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
+  parameter nSI.Angle_deg aperture_angle_x=160 "aperture angle of the heliostat field in the xOz plan in degree [0,180] ";
+  parameter nSI.Angle_deg aperture_angle_y=0 "aperture angle of the heliostat field in the yOz plan in degree [0,180] ";
+  parameter nSI.Angle_deg secref_offset = 0.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
   parameter Real secref_inv_eccen=0.7 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=80.64 "Tower height";
   parameter Real fb=0.9618 "factor to grow the field layout";
-  parameter nSI.Angle_deg tilt_secref=-10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
+  parameter nSI.Angle_deg tilt_secref=-5 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
   parameter SI.Length W_rcv=8 "Polygon receiver width";
   parameter SI.Length H_rcv= W_rcv "Polygon receiver length. Made square";
-  parameter SI.Length R1=10. "distance between the first row heliostat and the tower";
+  parameter SI.Length R1=15. "distance between the first row heliostat and the tower";
   parameter SI.Length W_helio = 6.1 "width of heliostat in m";
   parameter SI.Length H_helio = 6.1 "height of heliostat in m";
   parameter SI.Angle slope_error_bd = 1e-3 "slope error of all reflective surfaces in mrad";
