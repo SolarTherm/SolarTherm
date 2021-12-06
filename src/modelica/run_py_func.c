@@ -11,11 +11,17 @@ int RunSolsticeFunc(const char* ppath, const char* pname
 ){
 	// ppath: path of the Python script
 	// pname: name of the Python script
-	// psave: directory of saving the results 
+	// psave: directory to save the results 
+	// varnames: a list of variable names
+	// var: a list of variable values (all float numbers) corresponding to varnames
+	
+	
 	int i;
-	char* var_tmp =  malloc(sizeof(char)*MALLOC); 
-	       
-	char* var_names = malloc(sizeof(char)*MALLOC);	
+	char* var_tmp =  malloc(sizeof(char)*MALLOC); // a temperary string
+	
+	// convert the list `varnames' to a string `var_names' 
+	// to form one parts of the command        	       
+	char* var_names = malloc(sizeof(char)*MALLOC); 	
 	strcpy(var_names, "");
 	for (i = 0; i < num_args; ++i) {
 	   snprintf(var_tmp, MALLOC, 
@@ -23,7 +29,8 @@ int RunSolsticeFunc(const char* ppath, const char* pname
 	   strcat(var_names, var_tmp);    
 	}
 
-	
+	// convert the list `var' to a string `var_vals' 
+	// to form one parts of the command   
 	char* var_vals =   (char*)malloc(sizeof(char)*MALLOC);
 	strcpy(var_vals, "");	
 	for (i = 0; i < num_args; ++i) {
@@ -33,7 +40,8 @@ int RunSolsticeFunc(const char* ppath, const char* pname
 	}
 	fprintf(stderr,"%s\n\n",var_vals);	
 
-    char* cmd = (char*)malloc(sizeof(char)*MALLOC); //NEW_ARRAY(char, MALLOC);
+	// shape the commands together
+    char* cmd = (char*)malloc(sizeof(char)*MALLOC); 
     snprintf(cmd, MALLOC, 
         "python %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --num_args %d --var_names %s --var_vals %s",
         ppath, pname, psave, wea_file, field_type, rcv_type, num_args, var_names, var_vals);
@@ -42,7 +50,8 @@ int RunSolsticeFunc(const char* ppath, const char* pname
     free(var_names);
     free(var_vals);
     
-    fprintf(stderr,"%s\n\n",cmd);
+    // system call the command
+    fprintf(stderr,"%s\n\n",cmd);    
     system(cmd);
     free(cmd);
     return 1;
