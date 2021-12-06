@@ -1,6 +1,7 @@
 within SolarTherm.Utilities;
 function NASHTubeStress
 	extends Modelica.Icons.Function;
+	input Integer coolant;
 	input Real Ri;
 	input Real Ro;
 	input Real dz;
@@ -21,7 +22,7 @@ function NASHTubeStress
 	output Real Tcrown_o[nz];
 	output Real T_fluid[nz];
 	output Real stress_o[nz];
-	external "C" stress(Ri, Ro, dz, m_flow, T_htf_in, Tamb, 
+	external "C" stress(coolant, Ri, Ro, dz, m_flow, T_htf_in, Tamb, 
 		CG, nt, nz, R_fouling, ab, em, kp, h_ext, alpha, E, 
 		nu, Tcrown_o, T_fluid, stress_o);
 	annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",Include="#include \"st_nash_tube_stress.c\"",Library = {"m","gsl"});

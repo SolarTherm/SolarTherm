@@ -36,21 +36,36 @@ https://github.com/willietheboy/nashTubeStress/blob/master/se6413.py
 */
 
 // Fluid properties
-double dynamicViscosity(double T){
+double dynamicViscosity(double T, int coolant){
 	double eta;
-	eta = 0.001 * (22.714 - 0.120 * (T - 273.15) + 2.281e-4 * pow((T - 273.15),2) - 1.474e-7 * pow((T - 273.15),3));
+	if (coolant == 1){
+		eta = 0.001 * (22.714 - 0.120 * (T - 273.15) + 2.281e-4 * pow((T - 273.15),2) - 1.474e-7 * pow((T - 273.15),3));
+	}
+	else{
+		eta = exp(-6.4406 - 0.3958 * log(T) + 556.835/T);
+	}
 	return eta;
 };
 
-double thermalConductivity(double T){
+double thermalConductivity(double T, int coolant){
 	double k;
-	k = 0.443 + 1.9e-4 * (T - 273.15);
+	if (coolant == 1){
+		k = 0.443 + 1.9e-4 * (T - 273.15);
+	}
+	else{
+		k = 124.67 - 0.11381 * T + 5.5226e-5 * pow(T,2) - 1.1842e-8 * pow(T,3);
+	}
 	return k;
 };
 
-double specificHeatCapacityCp(double T){
+double specificHeatCapacityCp(double T, int coolant){
 	double C;
-	C = 1396.0182 + 0.172 * T;
+	if (coolant == 1){
+		C = 1396.0182 + 0.172 * T;
+	}
+	else{
+		C = 1000 * (1.6582 - 8.4790e-4 * T + 4.4541e-7 * pow(T,2) - 2992.6 * pow(T,-2));
+	}
 	return C;
 };
 
@@ -108,7 +123,7 @@ int curve_fit(int cols, double dt, double mat[cols], double * C){
 	return 0;
 }
 
-void Temperature (double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
+void Temperature (int coolant, double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
 				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To){
 	// Flow and thermal variables
 	double hf;                          // Heat transfer coefficient due to internal forced-convection
@@ -131,15 +146,20 @@ void Temperature (double Ri, double Ro, double m_flow, double Tf, double Tamb, d
 
 
 	// HTF thermo-physical properties
-	mu = dynamicViscosity(Tf);       // HTF dynamic viscosity (Pa-s)
-	kf = thermalConductivity(Tf);    // HTF thermal conductivity (W/m-K)
-	C = specificHeatCapacityCp(Tf);  // HTF specific heat capacity (J/kg-K)
+	mu = dynamicViscosity(Tf, coolant);       // HTF dynamic viscosity (Pa-s)
+	kf = thermalConductivity(Tf, coolant);    // HTF thermal conductivity (W/m-K)
+	C = specificHeatCapacityCp(Tf, coolant);  // HTF specific heat capacity (J/kg-K)
 
 	// HTF internal flow variables
 	Re = m_flow * d / (area * mu);   // HTF Reynolds number
 	Pr = mu * C / kf;                // HTF Prandtl number
 
-	Nu = 0.023 * pow(Re, 0.8) * pow(Pr, 0.4);
+	if (coolant == 1){
+		Nu = 0.023 * pow(Re, 0.8) * pow(Pr, 0.4);
+	}
+	else{
+		Nu = 5.6 + 0.0165 * pow(Re*Pr, 0.85) * pow(Pr, 0.01);
+	}
 
 	// HTF internal heat transfer coefficient
 	if(R_fouling==0){
@@ -246,7 +266,7 @@ void Tinit(double T1, double h1, double R1, double T2, double h2, double R2, dou
 	return;
 }
 
-void Temperature2 (double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
+void Temperature2 (int coolant, double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
 				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To){
 	// Flow and thermal variables
 	double hf;                          // Heat transfer coefficient due to internal forced-convection
@@ -269,9 +289,9 @@ void Temperature2 (double Ri, double Ro, double m_flow, double Tf, double Tamb, 
 
 
 	// HTF thermo-physical properties
-	mu = dynamicViscosity(Tf);       // HTF dynamic viscosity (Pa-s)
-	kf = thermalConductivity(Tf);    // HTF thermal conductivity (W/m-K)
-	C = specificHeatCapacityCp(Tf);  // HTF specific heat capacity (J/kg-K)
+	mu = dynamicViscosity(Tf, coolant);       // HTF dynamic viscosity (Pa-s)
+	kf = thermalConductivity(Tf, coolant);    // HTF thermal conductivity (W/m-K)
+	C = specificHeatCapacityCp(Tf, coolant);  // HTF specific heat capacity (J/kg-K)
 
 	// HTF internal flow variables
 	Re = m_flow * d / (area * mu);   // HTF Reynolds number

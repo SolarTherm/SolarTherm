@@ -2,6 +2,7 @@
 #include "stress/stress.c"
 
 void stress(
+	int coolant,
 	double Ri,
 	double Ro,
 	double dz,
@@ -62,8 +63,8 @@ void stress(
 
 	Tf[0] = T_htf_in;
 	for(k=1; k<=nz; k++){
-		Temperature (Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
-		C = specificHeatCapacityCp(Tf[k-1]);
+		Temperature (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
+		C = specificHeatCapacityCp(Tf[k-1], coolant);
 		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
 		Tf[k] = Tf[k-1] + Q/m_flow/C;
 		T_fluid[k-1] = Tf[k];
@@ -77,6 +78,7 @@ void stress(
 }
 
 void stress2(
+	int coolant,
 	double Ri,
 	double Ro,
 	double dz,
@@ -137,8 +139,8 @@ void stress2(
 
 	Tf[0] = T_htf_in;
 	for(k=1; k<=nz; k++){
-		Temperature2 (Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
-		C = specificHeatCapacityCp(Tf[k-1]);
+		Temperature2 (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
+		C = specificHeatCapacityCp(Tf[k-1], coolant);
 		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
 		Tf[k] = Tf[k-1] + Q/m_flow/C;
 		T_fluid[k-1] = Tf[k];

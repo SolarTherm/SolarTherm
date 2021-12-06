@@ -3,7 +3,7 @@ model SodiumReceiverStress
 	extends Modelica.Icons.Example;
 	import Modelica.SIunits.Conversions.*;
 
-	replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph;
+	replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
 		
 	Modelica.Fluid.Sources.Boundary_pT source(
 		T = from_degC(290),
@@ -33,7 +33,7 @@ model SodiumReceiverStress
 	Modelica.Blocks.Sources.RealExpression DNI(y = data.DNI) annotation(
 		Placement(visible = true, transformation(origin = {-88, 86}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 	
-	SolarTherm.Models.CSP.CRS.Receivers.PipeThermoMechanical pipe annotation(
+	SolarTherm.Models.CSP.CRS.Receivers.PipeThermoMechanical pipe(redeclare package Medium = Medium) annotation(
 		Placement(visible = true, transformation(origin = {2, -16}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	SolarTherm.Models.Fluid.Pumps.PumpSimple pump(redeclare package Medium = Medium) annotation(
@@ -43,21 +43,24 @@ model SodiumReceiverStress
 		Placement(visible = true, transformation(origin = {-56, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 	
 equation
+	// pipe connections
 	connect(T_amb.y, pipe.Tamb) annotation(
 	Line(points = {{-76, 20}, {-4, 20}, {-4, -12}, {-4, -12}}, color = {0, 0, 127}));
 	connect(Wsped.y, pipe.v_wind) annotation(
 	Line(points = {{-76, 62}, {2, 62}, {2, -12}, {2, -12}}, color = {0, 0, 127}));
 	connect(DNI.y, pipe.solar_flux) annotation(
 	Line(points = {{-76, 86}, {8, 86}, {8, -12}, {8, -12}}, color = {0, 0, 127}));
-	connect(source.ports[1], pump.fluid_a) annotation(
-	Line(points = {{-70, -16}, {-48, -16}}, color = {0, 127, 255}));
 	connect(pump.fluid_b, pipe.fluid_a) annotation(
 	Line(points = {{-28, -16}, {-8, -16}}, color = {0, 127, 255}));
+	connect(pipe.fluid_b, sink.ports[1]) annotation(
+	Line(points = {{12, -16}, {66, -16}}, color = {0, 127, 255}));
+
+	// pump
+	connect(source.ports[1], pump.fluid_a) annotation(
+	Line(points = {{-70, -16}, {-48, -16}}, color = {0, 127, 255}));
 	connect(m_flow.y, pump.m_flow) annotation(
 	Line(points = {{-44, 4}, {-38, 4}, {-38, -8}}, color = {0, 0, 127}));
-	connect(pipe.fluid_b, sink.ports[1]) annotation(
-	Line(points = {{12, -16}, {66, -16}}, color = {0, 127, 255}));	protected
-	annotation(
+annotation(
 	__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"),
-	experiment(StartTime = 0, StopTime = 86400, Tolerance = 1e-06, Interval = 300));
+	experiment(StartTime = 0, StopTime = 864000, Tolerance = 1e-06, Interval = 300));
 end SodiumReceiverStress;

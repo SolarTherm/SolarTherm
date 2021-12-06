@@ -4,6 +4,9 @@ model PipeThermoMechanical
 	import SI = Modelica.SIunits;
 	import Modelica.SIunits.Conversions.*;
 	import SolarTherm.Utilities.NASHTubeStress;
+
+	parameter Integer coolant = 2 "Heat transfer fluid (1: Nitrate salt, 2: Liquid sodium)";
+
 	// Geometry
 	parameter SI.Diameter id = 42e-3 "Inner tube diameter" annotation(group = "Geometry");
 	parameter SI.Diameter od = 45e-3 "Outer tube diameter" annotation(group = "Geometry");
@@ -69,7 +72,7 @@ equation
 
 	fluid_b.h_outflow = Medium.specificEnthalpy(state_out);
 	fluid_a.h_outflow = inStream(fluid_a.h_outflow);
-	(Tcrown, T_fluid, sigma) = NASHTubeStress(Ri,Ro,dz,fluid_a.m_flow,Tf,	Tamb,
+	(Tcrown, T_fluid, sigma) = NASHTubeStress(coolant, Ri,Ro,dz,fluid_a.m_flow,Tf,	Tamb,
 		CG,nt,nz,R_fouling,ab,em,kp,h_ext,alpha,E,nu);
 
 end PipeThermoMechanical;
