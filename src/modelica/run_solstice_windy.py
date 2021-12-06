@@ -8,10 +8,10 @@ for i in sys.path:
 	print(i)
 
 
-
 sys.stderr.write("\nImport os\n");
 import os
 import time
+import argparse
 print("SYS.VERSION_INFO\n",sys.version_info)
 
 sys.stderr.write("Import numpy\n");
@@ -146,8 +146,19 @@ def run_simul(inputs={}):
 	return tablefile
 
 
-
+def convert_list(alist, delimiter=','):
+	c=[]
+	tmp=''
+	for l in alist:
+		if l==delimiter:
+			c.append(tmp)
+			tmp=''
+		else:
+			tmp+=l
+	return c
+	
 if __name__=='__main__':
+	'''
 	# tests
 	case="test-multi-aperture"
 
@@ -213,4 +224,32 @@ if __name__=='__main__':
 	run_simul(inputs)
 	print("Finish execution.......")
 
+	'''
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--casedir', type=str)
+	parser.add_argument('--wea_file', type=str)
+	parser.add_argument('--field_type', type=str)
+	parser.add_argument('--rcv_type', type=str)
+	parser.add_argument('--num_args', type=int, default=0, 
+			help="number of float arguments")
+	parser.add_argument('--var_names', type=list)
+	parser.add_argument('--var_vals', type=list)
+		
+	args = parser.parse_args()
+	args.var_names=convert_list(args.var_names)
+	args.var_vals=convert_list(args.var_vals)
+	inputs=vars(args)
+	
+	for i in range(args.num_args):
+		i=int(i)
+		n=args.var_names[i]
+		v=float(args.var_vals[i])
+		inputs[n]=v
+			
+	del inputs['num_args']
+	del inputs['var_names']
+	del inputs['var_vals']
 
+	run_simul(inputs)
+	
+	

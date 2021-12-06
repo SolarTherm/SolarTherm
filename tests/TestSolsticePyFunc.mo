@@ -1,32 +1,12 @@
 block TestSolsticePyFunc
 
-  function RunPyFunction
-    input String ppath;
-    input String pname;
-    input String pfunc;
-    input String psave;
-    input String field_type;
-    input String rcv_type;
-    input String wea_file;
-    input Integer argc;
-    input String varnames[:];
-    input Real vars[:];
-    output String result;
-    external result =RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
-      annotation(
-        Library="st_solsticepy"
-        ,LibraryDirectory="modelica://SolarTherm/Resources/Library"
-      );
-      //	IncludeDirectory="modelica://SolarTherm/Resources/Include",
-      //	Include="#include \"run_py_func.c\""
-      //	);
-  end RunPyFunction;
-
+  import SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticePyFunc;
+  import SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeStatusFunc;  
+  
   parameter String ppath = 
       Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library")
       "Absolute path to the Python script";
   parameter String pname = "run_solstice" "Name of the Python script";
-  parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
   parameter String psave = "Test_SolsticePyFunc";    
   parameter String field_type = "polar" "Other options are : surround";
   parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
@@ -41,6 +21,7 @@ block TestSolsticePyFunc
   parameter Real W_rcv=24.789 "width of the receiver";
 
   parameter String tablefile(fixed=false);
+  parameter Integer tablefile_status(fixed=false);  
   Real nu;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table(
@@ -50,13 +31,16 @@ block TestSolsticePyFunc
     fileName=tablefile
   );
 
-initial algorithm
-  tablefile := RunPyFunction(ppath, pname, pfunc, psave
+
+
+initial equation
+  tablefile_status = SolsticePyFunc(ppath, pname, psave
     , field_type, rcv_type, wea_file, argc
     , {"n_helios","H_tower", "W_helio", "H_helio", "H_rcv", "W_rcv"}
     , {n_helios, H_tower, W_helio, H_helio, H_rcv, W_rcv}
   );
 
+  tablefile = SolsticeStatusFunc(tablefile_status, psave);
 equation
 
   nu_table.u1=0;

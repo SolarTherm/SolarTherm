@@ -12,7 +12,7 @@ extends OpticalEfficiency;
 
 	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
 	parameter String pname = "run_solstice_windy" "Name of the Python script";
-	parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
+	//parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo") "the directory for saving the results"; 
     parameter String field_type = "polar" "Other options are : surround";
@@ -50,6 +50,7 @@ extends OpticalEfficiency;
     parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
 
     parameter String tablefile(fixed=false);
+    parameter Integer tablefile_status(fixed=false);  
     parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
 
     SI.Angle angle1;
@@ -117,7 +118,13 @@ initial algorithm
   end if;
 
 initial equation
-  tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, {method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs}); 
+  tablefile_status = SolsticePyFunc(ppath, pname, psave, 
+  		field_type, rcv_type, wea_file, argc, 
+  		{"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, 
+  		{method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs}
+  		); 
+
+  tablefile = SolsticeStatusFunc(tablefile_status, psave);
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then
