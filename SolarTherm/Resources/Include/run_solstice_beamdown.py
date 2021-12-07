@@ -98,16 +98,16 @@ if __name__=='__main__':
         case="./test"
         weafile='../../Data/Weather/AUS_WA_Leinster_Airport_954480_TMY.motab'
         ## Variables
-        cpc_theta_deg=20.
-        cpc_h_ratio=1.
-        aperture_angle_x=70.
-        aperture_angle_y=70.
-        secref_offset=10.
-        secref_inv_eccen=0.6
-        H_tower=75.
-        fb=0.7
+        cpc_theta_deg=26.
+        cpc_h_ratio=0.6
+        aperture_angle_x=160.
+        aperture_angle_y=0.
+        secref_offset=0.
+        secref_inv_eccen=0.7
+        H_tower=80.64
+        fb=0.9618
         Z_rcv=0.
-        tilt_secref=-10.
+        tilt_secref=5.
         # fixed parameters
         ## Siumulation
         num_rays=int(5e5)#int(5e6)
@@ -117,7 +117,7 @@ if __name__=='__main__':
         sunshape='buie'
         crs=0.02
         lat=-27.85 # Leinster (WA, AUS) degree
-        Q_in_rcv=10e6#50e6
+        Q_in_rcv=50e6
         field_type = 'surround'
         R1 = 15.
         ## Heliostats
