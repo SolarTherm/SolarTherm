@@ -15,7 +15,7 @@ END fprops_fluid;
 MODEL iron_ore REFINES thermophysical_fluid_base;
 
 	iron_sample IS_A symbol_constant;
-	(* constants of integration set to give h = 0 at 25 °C *)
+	(* constants of integration set to give h = 0 at 25 C *)
 	SELECT(iron_sample)
 	CASE 'A_1':
 		h_A1: h = -439548{J/kg} - 7.35881699e-01{J/kg} -22.5142{J/kg/K}*T + 1.35627{J/kg/K^2}*T^2 -0.000148679{J/kg/K^3}*T^3 + -9.50023e-007{J/kg/K^4}*T^4 + 4.82806e-010{J/kg/K^5}*T^5 + 223852{J/kg} + (-202224{J/kg}-223852{J/kg})/(1+exp((-4.01164e+094-T)/-4.09328e+094)) + 575882{J/kg} + (228424-575882)/(1+exp((1416.8-T)/-4.2379));
@@ -610,6 +610,8 @@ MODEL HX_Sinter_HX;
 	A_material_HX1, A_material_HX2 IS_A area;
 	A_material_HX1 = 4 * (Length_1 * width_1 + Length_1 * t_HX1 + width_1 * t_wall_1 + t_HX1 * t_wall_1 - 2 * Length_1 * t_wall_1 - 2 * t_wall_1^2);
 	A_material_HX2 = 4 * (Length_2 * width_2 + Length_2 * t_HX2 + width_2 * t_wall_2 + t_HX2 * t_wall_2 - 2 * Length_2 * t_wall_2 - 2 * t_wall_2^2);
+	A_HX_1 = Length_1 * width_1;
+	A_HX_2 = Length_2 * width_2;
 	V_material_HX1, V_material_HX2 IS_A volume;
 	V_material_HX1 = 2 * Length_1 * t_wall_1 * (width_1 + t_HX1 - 2 * t_wall_1);
 	V_material_HX2 = 2 * Length_2 * t_wall_2 * (width_2 + t_HX2 - 2 * t_wall_2);
@@ -623,11 +625,12 @@ MODEL HX_all REFINES HX_Sinter_HX;
 	fluid_g :=='air';
 	fluid_s :=='iron';
 	intconv_corr :== 'Nsofor';
-	iron_sample :== 'A_1';
+	iron_sample :== '$IRON_SAMPLE';
 	HX2.n :==6;
 	HX1.n :==6;
 	Sinter.n :==$N_SEGMENTS_SUBST_19;
-
+	fluxmap IS_A symbol_constant;
+	fluxmap :== '$FLUXMAP_FILENAME';
 METHODS
 	METHOD on_load;
 		RUN HX1.default;

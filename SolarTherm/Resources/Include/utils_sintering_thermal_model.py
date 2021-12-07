@@ -28,15 +28,27 @@ except:
  
 # you can import standard ASCEND components, for example:
 from solverreporter import *
-	
 
-def set_x_y(self):
+def load_fluxmap(self):
 	try:
-		sys.stderr.write("Loading flux data.......\n")
-		flux_seg_data = np.genfromtxt("fluxmap.csv",dtype='float', delimiter = ',')
-		sys.stderr.write("Loading flux data done.......\n")
+		filename = self.fluxmap.getSymbolValue()
+		if not isinstance(filename, str):
+			filename = str(filename)
+
+		sys.stderr.write("fluxmap: %s\n"%(filename))#PG
+		sys.stderr.write("Loading flux data from '%s'.......\n"%(filename,))
+		try:
+			flux_seg_data = np.genfromtxt(filename, dtype='float', delimiter = ',')
+			sys.stderr.write("Loading flux data done.......\n")
+		except Exception as e:
+			sys.stderr.write("Loading flux data failed.....\n")
+			sys.stderr.write("%s\n%s\n"%(str(e),str(e.__class__)))
 	except Exception as e:
 		sys.stderr.write(str(e))
+	return flux_seg_data
+
+def set_x_y(self):
+	flux_seg_data = load_fluxmap(self)
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)
@@ -48,12 +60,7 @@ def set_x_y(self):
 		self.Sinter.seg[i].Q_sun.setFixed(True)		
 
 def off_design_flux(self):
-	try:
-		sys.stderr.write("Loading flux data.......\n")
-		flux_seg_data = np.genfromtxt("fluxmap.csv",dtype='float', delimiter = ',')
-		sys.stderr.write("Loading flux data done.......\n")
-	except Exception as e:
-		sys.stderr.write(str(e))
+	flux_seg_data = load_fluxmap(self)
 	n_sinter = self.Sinter.n.getIntValue()
 	L = float(self.Sinter.L)
 	W = float(self.Sinter.W)

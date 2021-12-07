@@ -271,7 +271,7 @@ class Simulator(object):
 
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=[]):
 		"""Compile modelica model in .mo file."""
-		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc)]
+		sp.check_call(['omc', '-s', '-q', '-n='+str(n_proc),"--debug=gendebugsymbols"]
 			+ args
 			+ ['-i='+self.model, self.fn]
 			+ libs)

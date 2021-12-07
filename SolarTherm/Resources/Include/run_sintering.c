@@ -8,68 +8,66 @@
 #include "ascend_models/ascend_utils.h"
 
 /*Function Prototype*/
-int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* solstice_wd, const char* varnames[], const double vars[], char* opt_file, char* iron_sample);
+int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* iron_sample,  char* opt_file);
+
+double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* iron_sample, const char* opt_file, double* results);
 
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off);
 
-double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* solstice_wd, const char* varnames[], const double vars[], int argc, char* iron_sample, char* opt_file, double* results);
 
 
 
-
-
-
-double* run_sintering_thermal_model_designpoint(const char* ppath, const char* pname, const char* pfunc, const char* SolarTherm_path, const char* solstice_wd, const char* varnames[], const double vars[], int argc, char* iron_sample, char* opt_file, double* results){
+double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* iron_sample, const char* opt_file, double* results){
 
 	/*Build destination fn destination*/
-	fprintf(stderr, "RUN THERMAL MODEL FOR DESIGN CONDITION......................................................\n\n");
-
-	char* fn_destination = NEW_ARRAY(char, MAXLEN);
-	snprintf(fn_destination, MAXLEN, "%s/fluxmap.csv",solstice_wd);
+	fprintf(stderr, "RUN THERMAL MODEL FOR DESIGN CONDITION......................................................\n");
+	fprintf(stderr, "OPT_FILE On Design: %s......................................................\n",opt_file);
 
 	/*Build destination fn source*/
-	char* fn_source = NEW_ARRAY(char, MAXLEN);
-	snprintf(fn_source,MAXLEN,"%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
+	char* fmfile = NEW_ARRAY(char, MAXLEN);
+	snprintf(fmfile,MAXLEN,"%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
 
-	fprintf(stderr,"Copy flux array from : %s to %s\n",fn_source, fn_destination);
-
-	//Start reading the file starting from line 1 of fn_flux
-	FILE* f_source = fopen(fn_source, "r");
-	FILE* f_dest = fopen(fn_destination, "w");
-	char ch = fgetc(f_source);
-
-	while(ch != EOF){
-		fputc(ch, f_dest);
-		ch = fgetc(f_source);
-	}
-	fclose(f_source);
-	fclose(f_dest);
-	free(fn_destination);
-	free(fn_source);
+	int status_run = run_ascend_sintering_model_CLI(
+		vars, solstice_wd, SolarTherm_path, iron_sample, "on_design", fmfile
+	);
 	
-	int num_segment = read_num_segment(solstice_wd);
-	double* angles = NEW_ARRAY(double,2);
-	angles[0] = 0;
-	angles[1] = 0;
+	/*Read the design point file here*/
+	char str[MAXLEN];
+	char* fn_res_py = NEW_ARRAY(char, MAXLEN);
 
-	run_ascend_sintering_model(ppath, pname, pfunc, argc, num_segment, varnames, vars, solstice_wd, SolarTherm_path, angles, results, iron_sample);
-	free(angles);
+	snprintf(fn_res_py, MAXLEN,"%s/des_point_calc.csv",solstice_wd);
+
+	if (fopen(fn_res_py,"r") == NULL){
+		fprintf(stderr,"File does not exist: %s\n",fn_res_py);
+		exit(EXIT_FAILURE);
+	}
+	FILE* f = fopen(fn_res_py,"r");
+	if(f != NULL){
+		fgets(str, MAXLEN, f);
+		sscanf(str,"%lf,%lf,%lf",&results[0],&results[1],&results[2]);
+	}
+	else{
+		fprintf(stderr,"%s/des_point_calc.csv can not be found. Exiting the simulation..........................\n",solstice_wd);
+		EXIT(EXIT_FAILURE);
+	}
+	fclose(f);
 
 	fprintf(stderr, "DONE RUNNING THERMAL MODEL FOR DESIGN CONDITION......................................................\n\n");
+
 	return results;
 }
 
-int run_sintering_thermal_model(const char* ppath, const char* pname, const char* SolarTherm_path, const char* solstice_wd, const char* varnames[], const double vars[], char* opt_file, char* iron_sample){
+int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* opt_file, char* iron_sample){
 	fprintf(stderr,"START GATHERING DATA FOR SURROGATE MODEL............................\n\n");
-	char* CSV_test = NEW_ARRAY(char, MAXLEN);
-	snprintf(CSV_test, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_1.csv",solstice_wd);
+	fprintf(stderr, "OPT_FILE Off Design: %s......................................................\n",opt_file);
+	
+	char* fmfile = NEW_ARRAY(char, MAXLEN);
+	snprintf(fmfile, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_1.csv",solstice_wd);
 
-	if(fopen(CSV_test,"r")==NULL){
-		fprintf(stderr,"File does not exist: fname %s\n",CSV_test);
+	if(fopen(fmfile,"r")==NULL){
+		fprintf(stderr,"File does not exist: fname %s\n",fmfile);
 		exit(EXIT_FAILURE);
 	}
-
-	free(CSV_test);
 
 	/*Delete old file if exists*/
 	char* old_file = NEW_ARRAY(char, MAXLEN);
@@ -77,24 +75,18 @@ int run_sintering_thermal_model(const char* ppath, const char* pname, const char
 	remove(old_file);
 	free(old_file);
 
-	int num_segment = read_num_segment(solstice_wd);
-	double* angles = NEW_ARRAY(double, 2);
-
 	int status_run;
 
 	for(size_t file_index=1; file_index<27; file_index++){
-		/*Read solar angles*/
-		read_solar_angles(angles, file_index, solstice_wd);
+		snprintf(fmfile, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_%zu.csv",solstice_wd, file_index);
 
-		/*Copy flux array*/
-		write_flux_array(file_index, SolarTherm_path, solstice_wd);
-		
 		/*Run ASCEND thru system call instead of using python C-API --> creates problem not sure why*/
-		status_run = run_ascend_sintering_model_CLI(ppath, pname, num_segment, vars, solstice_wd, SolarTherm_path, angles, iron_sample);
+		int status_run = run_ascend_sintering_model_CLI(
+			vars, solstice_wd, SolarTherm_path, iron_sample, "off_design", fmfile
+		);
 	}
 
 	assert(status_run == 0);
-	free(angles);
 
 	fprintf(stderr,"FINISH GATHERING DATA FOR SURROGATE MODEL............................\n\n");
 	return status_run;

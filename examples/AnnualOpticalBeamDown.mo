@@ -66,22 +66,20 @@ model AnnualOpticalBeamDown
   parameter String ppath_sintering = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Path to the directory where the Python script is hosted";
   parameter String pname_sintering = "run_sintering_thermal_model" "The name of the Python script";
   parameter String pfunc_sintering = "run_interpolate" "Name of the function inside pname.py that will be called";
-  parameter String modelica_wd = Modelica.Utilities.Files.loadResource(casefolder) "Folder in which the CSVs storing flux map are located absolute p";
+  parameter String solstice_wd = Modelica.Utilities.Files.loadResource(casefolder) "Folder in which the CSVs storing flux map are located absolute p";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm");
   
   //Parameters to generate the training data
   parameter String thermal_model_name_parameters[:] = {
     "T_sky", "k_s", "alpha", "eps_r", "h_ext", "eps",
     "T_i_s_HX1", "T_o_s_HX1", "T_i_g_HX1", "d_p_HX1", "H_HX1", "W_HX1", "t_wall_HX1",
-    "T_i_s_HX2", "T_o_s_HX2", "T_i_g_HX2", "W_HX2", "d_p_HX2",
-    "flux_multiple_off"
+    "T_i_s_HX2", "T_o_s_HX2", "T_i_g_HX2", "W_HX2", "d_p_HX2"
   };
   
   parameter Real thermal_model_parameters[:] = {
       T_sky -273.15, k_s, alpha, eps_r, h_ext, eps,
       T_i_s_HX1 -273.15, T_o_s_HX1 -273.15, T_i_g_HX1 -273.15, d_p_HX1 * 1000, H_HX1, W_HX1, t_wall_HX1 * 100,
-      T_i_s_HX2 - 273.15, T_o_s_HX2 - 273.15, T_i_g_HX2 - 273.15, W_HX2, d_p_HX2 * 1000,
-      1
+      T_i_s_HX2 - 273.15, T_o_s_HX2 - 273.15, T_i_g_HX2 - 273.15, W_HX2, d_p_HX2 * 1000
   };
   
   //Ambient condition parameters
@@ -114,49 +112,66 @@ model AnnualOpticalBeamDown
   
   /*Design point calculation result*/
   parameter Real mdot_ore_design_point(fixed=false);
-  parameter SI.Volume V_HX1(fixed=false);
-  parameter SI.Volume V_HX2(fixed=false);
+  parameter SI.Volume A_HX1(fixed=false);
+  parameter SI.Volume A_HX2(fixed=false);
   
   /*PHX calculation*/
   parameter SI.Density rho_material_HX = 7850 "Density of carbon steel assumed material for HXs Carbon Steel ASTM A36. Source: https://amesweb.info/Materials/Density_of_Steel.aspx";
-  parameter SI.Mass M_HX = (V_HX1 + V_HX2) * rho_material_HX "Total weight of HXs in kg for CAPEX calculation";
- 
+  //parameter SI.Mass M_HX = (V_HX1 + V_HX2) * rho_material_HX "Total weight of HXs in kg for CAPEX calculation";
+  parameter SI.Area A_HX_total = A_HX1 + A_HX2 "Total area of the HXs"; 
+
+  /*Rector calculation*/
+  parameter SI.Area A_reactor = W_rcv * H_rcv "Area of the reactor";
+
   //Specific cost of components
   parameter Real pri_tower = 725.9 "USD/kWth";
-  parameter Real pri_secondary_mirror = 100 "USD/m2";
+  parameter Real pri_secondary_mirror = 1011.81753912 * Modelica.Math.exp(-0.02349651 * Q_in_rcv_from_OELT/1e6) "USD/m2";
   parameter Real pri_field = 75 "USD/m2";
   parameter Real pri_CPC = 300 "USD/m2";
   parameter Real pri_land = 2.47105163015276 "USD/m2 based on Gen3 Topic 1 Downselect Criteria rev_1 Chapter 3.1.3";
+  parameter Real pri_steel = 4 * EU_to_USD "USD/kg of steel. Converted from 4 Euro/kg. ";
+  parameter Real pri_HX = 40000 * EU_to_USD "Cost of HX for 6m^2 in euro";
+  parameter Real pri_labour = 139000 * AUD_to_USD "Cost of labour per person per year";
      
   //Financial parameters
-  parameter Real r_disc = 0.0401;  
+  parameter Real r_disc = 0.0401 "Based on Gen 3";  
   parameter Integer t_life = 30;
   parameter Integer t_cons = 0;
   parameter Real r_contg = 0.1;
   parameter Real r_cons = 0.06;
+  parameter Real CEPCI_2020 = 596.2 "CEPCI 2020 https://www.cheresources.com/invision/topic/29828-i-need-2020-cepci/";
+  parameter Real CEPCI_1986 = 318.4 "Reference 2 case in SolarTherm master branch";
+  parameter Real CEPCI_2005 = 468.2;
+  parameter Real CEPCI_2016 = 541.7;
+
+  //Exchange rate
+  parameter Real EU_to_USD = 1.13 "Euro to USD Exchange rate is from google (7 December 2021)";
+  parameter Real AUD_to_USD = 0.71 "AUD to USD Exchange rate is from google (7 December 2021)";
   
   //O&M cost
   parameter Real C_year = 0.05 * C_cap;
-  parameter Real C_prod = 0;
+  parameter Real C_prod = 0.02 * C_cap "Variable O&M";
+
+  //Other constants
+  parameter Real bm_factor_HX = 4.00;
+  parameter Real bm_factor_sf = 1.00;
     
   //Cost calculation
-  parameter Real C_tower = pri_tower * Q_in_rcv/1e3;
-  parameter Real C_secondary_mirror = pri_secondary_mirror * A_secref; //=====> Ask C secondary mirror to clotilde
-  parameter Real C_field = pri_field * n_h * A_h;
-  parameter Real C_CPC = pri_CPC * A_cpc; //=====> Ask clotilde about CPC area
-  parameter Real C_trussed_framework = 0.84 * 1e6 "USD"; 
-  parameter Real C_reactor = 0;
-  parameter Real C_HX = Modelica.Math.exp(
-                8.9552-0.233 * Modelica.Math.log(M_HX)+ 
-                      0.04333*(Modelica.Math.log(M_HX)^2)
-  ); 
+  parameter Real C_tower = 1.09025e6 * Modelica.Math.exp(0.00879 * H_tower)  * (CEPCI_2020/CEPCI_1986)"Latticework steel trussed tower DELSOL Manual 3. 318.4 is CEPCI 1986 the year DELSOL guideline was published";
+  parameter Real C_secondary_mirror =  pri_secondary_mirror * A_secref * (CEPCI_2020/CEPCI_2005); 
+  parameter Real C_field = pri_field * n_h * A_h * bm_factor_sf;
+  parameter Real C_CPC = (28564 * Q_in_rcv_from_OELT/1e6 + 43581) * EU_to_USD * (CEPCI_2020/CEPCI_2016); 
+  parameter Real C_reactor = A_reactor / 6 * pri_HX * bm_factor_HX "Cost of reactor";
+  parameter Real C_HX = A_HX_total/6 * pri_HX * bm_factor_HX "Cost of HX";
   parameter Real C_land = pri_land * A_land;
   
-  parameter Real C_equipment = C_tower + C_secondary_mirror + C_field + C_CPC + C_trussed_framework;
-  parameter Real C_direct = (1 + r_contg) * C_equipment;
-  parameter Real C_indirect = r_cons * C_direct + C_land;
+  parameter Real C_equipment = C_tower + C_secondary_mirror + C_field + C_CPC + C_reactor + C_HX "Equipment cost";
+
+  //parameter Real C_direct = (1 + r_contg) * C_equipment "Direct cost";
+  //parameter Real C_indirect = r_cons * C_direct + C_land "Indirect cost";
+  //parameter Real C_HX = M_HX * pri_steel * bm_factor_HX "Cost of HX"; 
   
-  parameter Real C_cap = C_direct + C_indirect; 
+  parameter Real C_cap = 2.051784 * C_equipment "Total cost. Ali's paper on Solar Fuel Plant via Supercritical Water Gasification 2019";//C_direct + C_indirect "The total cost"; 
 
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -237,26 +252,21 @@ initial equation
   
   /*Call mdot ore design point*/
   design_point_result = SolarTherm.Utilities.RunSinteringThermalModelDesignPoint(
-      ppath_sintering, 
-      pname_sintering, 
-      "run_thermalSinteringModelDesignPoint", 
       SolarTherm_path, 
-      modelica_wd, 
-      thermal_model_name_parameters, 
-      thermal_model_parameters, 
-      19, 
+      solstice_wd, 
+      thermal_model_parameters,
       iron_sample, 
       opt_file
   );
   
   mdot_ore_design_point = design_point_result[1]; 
-  V_HX1 = design_point_result[2]; 
-  V_HX2 = design_point_result[3];
+  A_HX1 = design_point_result[2]; 
+  A_HX2 = design_point_result[3];
   
   /*Initialisation of the model*/
   if Q_in_rcv_from_OELT > Q_in_rcv then
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is enough\n\n");
-      status_run = SolarTherm.Utilities.RunSinteringThermalModel(ppath_sintering, pname_sintering, SolarTherm_path, modelica_wd, thermal_model_name_parameters, thermal_model_parameters, opt_file, iron_sample);
+      status_run = SolarTherm.Utilities.RunSinteringThermalModel(SolarTherm_path, solstice_wd, thermal_model_parameters, opt_file, iron_sample);
   else
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is NOT enough\n\n");
       status_run = -1000;
@@ -275,7 +285,7 @@ equation
 		  der(M_ore) = SolarTherm.Utilities.InterpolateSinteringThermalModel(
 		        ppath_sintering, pname_sintering, 
 		        pfunc_sintering, 
-		        modelica_wd, declination_inDeg, 
+		        solstice_wd, declination_inDeg, 
 		        sun_hour_angle_inDeg, flux_multiple_off
 		  );
 	  end if;

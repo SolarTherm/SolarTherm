@@ -217,6 +217,12 @@ class SimResultElec(SimResult):
 			cons_v = int(self.mat.data('t_cons')[-1]) # Construction time [year]
 			name_v = self.mat.data('mdot_ore_design_point')[-1] # Mdot ore nameplate [kg/s]
 			t_life = int(self.mat.data('t_life')[-1]) # Year of lifetime
+			
+			#Calculate labours
+			daily_eng_t =  eng_t / 1000 / 365 #Tons production per day
+			num_labours = int(daily_eng_t/100) * 2
+			labour_cost = self.mat.data('pri_labour')[-1] * num_labours
+			om_y_v = om_y_v + labour_cost
 
 			#Calculate LCO Ore
 			nu = 0.
