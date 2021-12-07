@@ -112,8 +112,8 @@ if __name__ == '__main__':
 			help='use text rendering With LaTeX')
 	parser.add_argument('--unicode', action='store_true',
 			help='use usetex with unicode')
-	parser.add_argument('--mcargs', nargs=1, type=str, default=[],
-			help='model compilation arguments')
+	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
+	#		help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
@@ -185,13 +185,12 @@ if __name__ == '__main__':
 	else:
 		resultclass = postproc.SimResultElec
 
-
 	if args.excel!=None:
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		#TODO check the units of the loaded parameters
 		# convert the units if nessary using simulation.parse_var_val
-		params.load_values_from_excel(args.excel, tree)	
+		tree=params.load_values_from_excel(args.excel, tree)	
 		tree.write_xml(input_xml)
 
 	sim.load_init()
