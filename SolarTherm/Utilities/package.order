@@ -20,3 +20,4 @@ opt_eff_horizon
 horizon_function
 LangerCheck
 FlowpathFlux
+FluxInterpolation
