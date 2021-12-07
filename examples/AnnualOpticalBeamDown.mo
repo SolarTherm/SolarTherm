@@ -7,7 +7,7 @@ model AnnualOpticalBeamDown
   import nSI = Modelica.SIunits.Conversions.NonSIunits;
   import metadata = SolarTherm.Utilities.Metadata_Optics;
 
-  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA_Leinster_Airport_954480_TMY.motab");
+  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA.Newman.Airport.943170_RMY.motab");
   parameter Real metadata_list[10] = metadata(opt_file);
   parameter nSI.Angle_deg lon = 120.70 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = -27.85 "Latitude (+ve North)";
@@ -15,6 +15,11 @@ model AnnualOpticalBeamDown
   parameter Integer year = 1996 "Meteorological year";
   parameter String opt_file(fixed=false);
   parameter String casefolder = "optic" "dont change this";
+
+  /*
+	 Boolean for the cost
+  */
+  parameter Boolean low_cost = true "If false, HX and reactor cost is multiplied by a factor (roughly 2)"; 
   
   /*
       Reading metadata from $casefolder/OELT_Solstice.motab
@@ -38,7 +43,7 @@ model AnnualOpticalBeamDown
   parameter nSI.Angle_deg cpc_theta_deg=26 "acceptance half angle of the CPC in degree";
   parameter Real cpc_h_ratio=0.6 "ratio of CPC critical height [0,1]";
   parameter nSI.Angle_deg aperture_angle_x=160 "aperture angle of the heliostat field in the xOz plan in degree [0,180] ";
-  parameter nSI.Angle_deg aperture_angle_y=0 "aperture angle of the heliostat field in the yOz plan in degree [0,180] ";
+  parameter nSI.Angle_deg aperture_angle_y=160 "aperture angle of the heliostat field in the yOz plan in degree [0,180] ";
   parameter nSI.Angle_deg secref_offset = 0.  "Offset of the mirror central line with regards to the hyperboloid axis of symmetry [-100,100]";
   parameter Real secref_inv_eccen=0.7 "Secondary Reflector (hyperboloid) inverse eccentricity [0,1]";
   parameter SI.Length H_tower=80.64 "Tower height";
@@ -149,7 +154,7 @@ model AnnualOpticalBeamDown
   parameter Real AUD_to_USD = 0.71 "AUD to USD Exchange rate is from google (7 December 2021)";
   
   //O&M cost
-  parameter Real C_year = 0.05 * C_cap;
+  parameter Real C_year = 0.02 * C_cap;
   parameter Real C_prod = 0.02 * C_cap "Variable O&M";
 
   //Other constants
@@ -165,13 +170,13 @@ model AnnualOpticalBeamDown
   parameter Real C_HX = A_HX_total/6 * pri_HX * bm_factor_HX "Cost of HX";
   parameter Real C_land = pri_land * A_land;
   
-  parameter Real C_equipment = C_tower + C_secondary_mirror + C_field + C_CPC + C_reactor + C_HX "Equipment cost";
+  parameter Real C_equipment_no_thermal = C_tower + C_secondary_mirror + C_field + C_CPC "Cost of eq without thermal stuffs";
+  parameter Real C_equipment_thermal = if low_cost then (C_reactor + C_HX) else 2.051784 * (C_reactor + C_HX)  "Cost of eq with thermal stuffs. The multiplier (default is 2.05) already considers the contingency, construction cost, site prep etc.";
 
-  //parameter Real C_direct = (1 + r_contg) * C_equipment "Direct cost";
-  //parameter Real C_indirect = r_cons * C_direct + C_land "Indirect cost";
-  //parameter Real C_HX = M_HX * pri_steel * bm_factor_HX "Cost of HX"; 
+  parameter Real C_direct_no_thermal = if low_cost then (1 + r_contg) * (C_equipment_no_thermal+C_equipment_thermal) else (1 + r_contg) * C_equipment_no_thermal "Direct cost";
+  parameter Real C_indirect_no_thermal = r_cons * C_direct_no_thermal + C_land "Indirect cost";
   
-  parameter Real C_cap = 2.051784 * C_equipment "Total cost. Ali's paper on Solar Fuel Plant via Supercritical Water Gasification 2019";//C_direct + C_indirect "The total cost"; 
+  parameter Real C_cap = if low_cost then C_direct_no_thermal + C_indirect_no_thermal else C_direct_no_thermal + C_indirect_no_thermal + C_equipment_thermal;
 
   //Sun
   SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -227,7 +232,8 @@ model AnnualOpticalBeamDown
       psave=casefolder,
       hra=sun.solar.hra,
       dec=sun.solar.dec,
-      lat=lat
+      lat=lat,
+      wea_file = wea_file
   );
   
   //Variable for optical
@@ -277,7 +283,7 @@ equation
   sun_hour_angle_inDeg = Modelica.SIunits.Conversions.to_deg(sun.hra);
   flux_multiple_off = data.DNI/1000;
   
-  if status_run > 0 then
+  if status_run > -500 then
 	  /*If heliostat field gives the adeuqate amount of heat at design point then the system is eligible to run*/
 	  if flux_multiple_off < 0.7 then
 		  der(M_ore) = 0;

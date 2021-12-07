@@ -195,7 +195,7 @@ class SimResult(object):
 		return constr, distance
 
 class SimResultElec(SimResult):
-	def calc_perf(self, savedir, peaker=False, IRR=False, Ore=True):
+	def calc_perf(self, peaker=False, IRR=False, Ore=True, savedir="."):
 		"""
 		Calculate the solar power plant performance.
 		Some of the metrics will be returned as none if simulation runtime is
@@ -205,6 +205,7 @@ class SimResultElec(SimResult):
 		IRR: bool, True: to calculate performance of a peaker plant using IRR. peaker bool must be false
 		"""
 		var_names = self.get_names()
+		import math
 		if Ore == True:
 			assert('M_ore' in var_names), "For a levelised cost of ore, It is expected to see M_ore variable in the result files"
 			eng_t = self.mat.abscissa('M_ore')
@@ -219,10 +220,10 @@ class SimResultElec(SimResult):
 			t_life = int(self.mat.data('t_life')[-1]) # Year of lifetime
 			
 			#Calculate labours
-			daily_eng_t =  eng_t / 1000 / 365 #Tons production per day
-			num_labours = int(daily_eng_t/100) * 2
-			labour_cost = self.mat.data('pri_labour')[-1] * num_labours
-			om_y_v = om_y_v + labour_cost
+			daily_eng_v =  eng_v / 1000.0 / 365.0 #Tons production per day
+			self.num_labours = math.ceil(daily_eng_v/100.0) * 2.0
+			labour_cost = self.mat.data('pri_labour')[-1] * self.num_labours
+			self.om_y_v = om_y_v + labour_cost
 
 			#Calculate LCO Ore
 			nu = 0.

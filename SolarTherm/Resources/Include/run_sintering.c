@@ -96,6 +96,6 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* solstice_wd, double declination, double sun_hour_angle, double flux_multiple_off){
 	double mdot_ore;
 	mdot_ore = run_interpolation(ppath, pname, pfunc, solstice_wd, declination, sun_hour_angle, flux_multiple_off);
-	fprintf(stderr,"mdot_ore = %lf kg/s\n", mdot_ore);
+	//fprintf(stderr,"mdot_ore = %lf kg/s\n", mdot_ore);
 	return mdot_ore;
 }

@@ -70,7 +70,7 @@ def test_model(modelname,solvername='QRSlv',varvalues={},parameters={},retvars=[
 '''
 def run_thermalSinteringModelDesignPoint(inputs):
 	sys.stderr.write("Entering python function run_thermalSinteringModelDesignPoint\n\n")
-	sys.stderr.write("Reading inputs...\n\n")
+	sys.stderr.write("Reading inputs to thermal model:\n\n")
 
 	#Reading the inputs
 	T_sky = inputs["T_sky"]
@@ -104,8 +104,9 @@ def run_thermalSinteringModelDesignPoint(inputs):
 	for key in inputs:
 		sys.stderr.write("%s : %s\n"%(key, inputs[key]))
 
-	sys.stderr.write("\nDone reading inputs...\n")
-	sys.stderr.write("Running function for iron sample : %s\n\n"%(iron_sample))
+	sys.stderr.write("Done reading thermal model inputs\n")
+	sys.stderr.write("Running function for iron sample : %s with %s discretisation\n"%(iron_sample, seg))
+	sys.stderr.write("Fluxmap file : '%s'\n"%(fmfile))
 	
 	#Since it is on design calculation, flux_multiple_on == 1
 	flux_multiple_on = 1
@@ -115,16 +116,14 @@ def run_thermalSinteringModelDesignPoint(inputs):
 
 	#Open ASCEND model
 	try:
+		sys.stderr.write("Reading template ASCEND model from %s\n"%("%s/Resources/Include/Sinter_HX_n.a4c"%(st_path)))
 		t = open("%s/Resources/Include/Sinter_HX_n.a4c"%(st_path)).read()
 	except Exception as e:
 		sys.stderr.write(str(e))
 
-	sys.stderr.write("Done reading ASCEND model...\n\n")
+	sys.stderr.write("Done reading template ASCEND model\n")
 
-	assert os.path.isfile(fmfile)
-
-	# READ THE number of segments
-	seg = int(np.genfromtxt(fmfile, delimiter=",")[0])
+	assert(os.path.isfile(fmfile))
 
 	#Parse the simulation parameters
 	P_1 = Template(t).safe_substitute(
@@ -144,7 +143,7 @@ def run_thermalSinteringModelDesignPoint(inputs):
 	sys.stderr.write("solstice wd: %s\n"%(solstice_wd))
 	filename = "%s/testname.a4c"%(solstice_wd)
 	sys.stderr.write(
-		"Modify the model code and save it as: %s\n"%(
+		"Modify the template ASCEND model and save it as: %s\n"%(
 			filename
 		)
 	)
@@ -154,32 +153,22 @@ def run_thermalSinteringModelDesignPoint(inputs):
 	f2.close()
 
 	sys.stderr.write(
-		"Done modifying ASCEND model. Written to %s...\n"%(
-			filename
-		)
+		"Done modifying the template ASCEND model\n"
 	)
+
+	assert(os.path.isfile(filename))
 
 	modelname = 'HX_all'
 	L = ascpy.Library()
 
-	#Grab modelica wd
-	modelica_wd = os.getcwd()
-	sys.stderr.write("modelica wd: %s\n"%(modelica_wd))
-
-	#change dir to solstice_wd
-	#sys.stderr.write("change dir to solstice_wd: %s\n"%(solstice_wd))
-
-	#os.chdir(solstice_wd)
-	#sys.stderr.write("done change dir to solstice_wd. current dir: %s\n"%(os.getcwd()))
-
-	sys.stderr.write("Loading the modified ASCEND file: %s\n"%(filename))
+	sys.stderr.write("Loading the modified ASCEND model: '%s'\n"%(filename))
 
 	L.load(filename)
 
-	sys.stderr.write("Done loading modified ASCEND file: %s\n"%(filename))
+	sys.stderr.write("Done loading the modified ASCEND file: '%s'\n"%(filename))
 
 	#Execute the model
-	sys.stderr.write("Execute the model %s\n"%(filename))
+	sys.stderr.write("Execute the model: %s\n"%(filename))
 
 	try:
 		R = test_model(
@@ -197,8 +186,6 @@ def run_thermalSinteringModelDesignPoint(inputs):
 		)
 
 		L.clear()
-		sys.stderr.write("mdot ore: %f kg/s \n\n"%(R['mdot_s_HX2']))
-		os.remove("HX_DESIGN_RESULTS_0.csv")
 		mdot_ore = R['mdot_s_HX2']
 		V_HX_1 = R['V_material_HX1']
 		V_HX_2 = R['V_material_HX2']
@@ -216,18 +203,7 @@ def run_thermalSinteringModelDesignPoint(inputs):
 
 	sys.stderr.write("Done execute the model %s\n"%(filename))
 
-	#sys.stderr.write("Change back to modelica wd %s\n"%(modelica_wd))
-	
-	#Get back to modelica_wd
-	#os.chdir(modelica_wd)
-	#sys.stderr.write("Done change back to modelica wd. Current wd: %s\n"%(os.getcwd()))
-
-	#Make sure we get back to modelica wd
-	#assert(
-	#	os.getcwd() == modelica_wd
-	#)
-
-	sys.stderr.write("A_HX1: %lf, A_HX2: %lf\n"%(A_HX_1, A_HX_2))
+	sys.stderr.write("A_HX1: %lf, A_HX2: %lf, mdot_ore DP: %lf\n"%(A_HX_1, A_HX_2,mdot_ore))
 
 	with open("%s/des_point_calc.csv"%(solstice_wd),"w") as f:
 		f.write('%s,%s,%s'%(mdot_ore,A_HX_1, A_HX_2))
@@ -236,8 +212,8 @@ def run_thermalSinteringModelDesignPoint(inputs):
 	Function to run sintering thermal model for given parameters, and records the mdot_ore
 '''
 def run_thermalSinteringModelOffDesign(inputs):
-	sys.stderr.write("Entering python function run_thermalSinteringModelOffDesign to generate training data for surrogate models\n\n")
-	sys.stderr.write("Reading inputs...\n\n")
+	sys.stderr.write("Entering python function run_thermalSinteringModelOffDesign\n\n")
+	sys.stderr.write("Reading inputs to thermal model:\n\n")
 
 	#Reading the inputs
 	T_sky = inputs["T_sky"]
@@ -266,9 +242,6 @@ def run_thermalSinteringModelOffDesign(inputs):
 	st_path = inputs["SolarTherm_path"]
 	iron_sample = inputs["iron_sample"]
 	
-	#Reading the flux multiplier based on DNI ratio
-	#FIXME flux_multiple_off should be SAMPLED
-	#flux_multiple_off = inputs["flux_multiple_off"]
 	flux_multiple_off = np.linspace(start=0.7, stop=1.1, num=5)
 	flux_multiple_on = 1
 	
@@ -277,16 +250,20 @@ def run_thermalSinteringModelOffDesign(inputs):
 	angle_1 = arr[1]
 	angle_2 = arr[2]
 	
-	sys.stderr.write("Done reading inputs...\n\n")
+	sys.stderr.write("Done reading thermal model inputs\n")
+	sys.stderr.write("Running function for iron sample : %s with %s discretisation\n"%(iron_sample, seg))
+	sys.stderr.write("Fluxmap file : '%s'\n"%(fmfile))
 
-	if not os.path.exists("%s/sintering_performance_data.csv"%(solstice_wd)):
+	fn_result = "%s/sintering_performance_data.csv"%(solstice_wd)
+
+	if not os.path.exists(fn_result):
 		f = open("%s/sintering_performance_data.csv"%(solstice_wd),"w")
 		f.write("angle_1,angle_2,flux_multiple_off,res\n")
 		f.close()
 	
-	sys.stderr.write(
-		"Flux map file: '%s'\n"%(fmfile)
-	)
+	assert(os.path.isfile(fn_result))
+	
+
 	for flux in flux_multiple_off:
 		sys.stderr.write(
 			"Running ASCEND model for:\nsun angle 1: %lf\nsun angle 2: %lf\nFlux multiplier: %lf\n"%(angle_1, angle_2, flux)
@@ -294,11 +271,12 @@ def run_thermalSinteringModelOffDesign(inputs):
 
 		#Open the default ascend model located in SolarTherm/Resources/Include
 		try:
+			sys.stderr.write("Reading template ASCEND model from %s\n"%("%s/Resources/Include/Sinter_HX_n.a4c"%(st_path)))
 			t = open("%s/Resources/Include/Sinter_HX_n.a4c"%(st_path)).read()
 		except Exception as e:
 			sys.stderr.write(str(e))
 
-		sys.stderr.write("Done reading ASCEND model...\n\n")
+		sys.stderr.write("Done reading template ASCEND model\n")
 
 		#Parse the simulation parameters
 		P_1 = Template(t).safe_substitute(
@@ -319,7 +297,7 @@ def run_thermalSinteringModelOffDesign(inputs):
 		filename = "%s/testname.a4c"%(solstice_wd)
 
 		sys.stderr.write(
-			"Modify the model code and save it as: %s\n"%(
+			"Modify the template ASCEND model and save it as: %s\n"%(
 				filename
 			)
 		)
@@ -329,29 +307,20 @@ def run_thermalSinteringModelOffDesign(inputs):
 		f2.close()
 
 		sys.stderr.write(
-			"Done modifying ASCEND model. Written to %s...\n\n"%(
-				filename
-			)
+			"Done modifying the template ASCEND model"
 		)
 
 		modelname = 'HX_all'
 		L = ascpy.Library()
 
-		#Grab modelica wd
-		modelica_wd = os.getcwd()
-		sys.stderr.write("modelica wd: %s\n"%(modelica_wd))
+		sys.stderr.write("Loading the modified ASCEND model: '%s'\n"%(filename))
 
-		#Change directory to solstice wd
-		#os.chdir(solstice_wd)
+		L.load(filename)
 
-		try:
-			sys.stderr.write("Load: %s\n"%(filename))
-			L.load(filename)
-		except Exception as e:
-			sys.stderr.write(str(e))
-			return -1
+		sys.stderr.write("Done loading the modified ASCEND file: '%s'\n"%(filename))
 
 		#Execute the model
+		sys.stderr.write("Execute the model: %s\n"%(filename))
 		try:
 			R = test_model(
 				modelname,
@@ -368,8 +337,6 @@ def run_thermalSinteringModelOffDesign(inputs):
 			)
 
 			L.clear()
-			sys.stderr.write("mdot ore: %f kg/s \n\n"%(R['mdot_s_HX2']))
-			os.remove("%s/HX_DESIGN_RESULTS_0.csv"%(solstice_wd))
 			mdot_ore = R['mdot_s_HX2']
 		except Exception as e:
 			L.clear()
@@ -377,18 +344,14 @@ def run_thermalSinteringModelOffDesign(inputs):
 			sys.stderr.write("Not converging. mdot ore: %f kg/s \n\n"%(0.0))
 			mdot_ore = 0
 		
-		#os.remove(filename)
-
-		#Get back to modelica_wd
-		#os.chdir(modelica_wd)
-
-		#Make sure we get back to modelica wd
-		#assert(
-		#	os.getcwd() == modelica_wd
-		#)
 
 		#Append the data
-		f = open("%s/sintering_performance_data.csv"%(solstice_wd),"a")
+		to_write = "%s,%s,%s,%s\n"%(angle_1, angle_2, flux, mdot_ore)
+		sys.stderr.write(
+			"Write %s to '%s'\n"%(to_write, fn_result)
+		)
+
+		f = open(fn_result,"a")
 		f.write("%s,%s,%s,%s\n"%(angle_1, angle_2, flux, mdot_ore))
 		f.close()
 
