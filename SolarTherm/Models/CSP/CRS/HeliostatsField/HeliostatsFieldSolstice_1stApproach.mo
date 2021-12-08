@@ -9,7 +9,9 @@ model HeliostatsFieldSolstice_1stApproach
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
     parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
 	parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
-
+  parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
+  
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
     parameter SI.Length H_rcv=10 "Receiver aperture height";
@@ -31,6 +33,9 @@ model HeliostatsFieldSolstice_1stApproach
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";  
+	
     parameter Boolean use_on = false
     "= true to display when solar field is connected"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -75,6 +80,10 @@ model HeliostatsFieldSolstice_1stApproach
         rcv_type=rcv_type, 
         psave=psave, 
         wea_file=wea_file,
+        sunshape=sunshape,
+        buie_csr=buie_csr,
+        optics_verbose=optics_verbose,
+        optics_view_scene=optics_view_scene,
         set_swaying_optical_eff = set_swaying_optical_eff,
 	    get_optics_breakdown = get_optics_breakdown);
 

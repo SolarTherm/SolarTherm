@@ -127,6 +127,7 @@ if __name__=='__main__':
 	parser.add_argument('--wea_file', type=str)
 	parser.add_argument('--field_type', type=str)
 	parser.add_argument('--rcv_type', type=str)
+	parser.add_argument('--sunshape', type=str)	
 	parser.add_argument('--num_args', type=int, default=0, 
 			help="number of float arguments")
 	parser.add_argument('--var_names', type=list)

@@ -21,9 +21,10 @@ extends OpticalEfficiency;
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";  
 
-
-	parameter Integer argc =19 "Number of variables to be passed to the C function";
+	parameter Integer argc =20 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
@@ -67,9 +68,9 @@ extends OpticalEfficiency;
 
 initial equation
   tablefile_status = SolsticePyFunc(ppath, pname, psave, 
-      field_type, rcv_type, wea_file, argc, 
-      {"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, 
-      {method, Q_in_rcv, n_helios, H_rcv, W_rcv, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, n_row_oelt, n_col_oelt, n_rays}
+      field_type, rcv_type, wea_file, sunshape, argc, 
+      {"method","csr","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, 
+      {method, buie_csr, Q_in_rcv, n_helios, H_rcv, W_rcv, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, n_row_oelt, n_col_oelt, n_rays}
       ); 
       
   tablefile = SolsticeStatusFunc(tablefile_status, psave);

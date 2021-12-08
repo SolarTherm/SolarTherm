@@ -12,6 +12,7 @@ block TestSolsticePyFunc
   parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
   parameter String wea_file = 
       Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
+  parameter String sunshape = "pillbox" "sunshape, options are pillbox and buie";        
   parameter Integer argc = 6 "Number of variables to be passed to the C function";
   parameter Integer n_helios=20 "Number of heliostats";
   parameter Real H_tower=200 "Tower height";
@@ -35,7 +36,7 @@ block TestSolsticePyFunc
 
 initial equation
   tablefile_status = SolsticePyFunc(ppath, pname, psave
-    , field_type, rcv_type, wea_file, argc
+    , field_type, rcv_type, wea_file, sunshape, argc
     , {"n_helios","H_tower", "W_helio", "H_helio", "H_rcv", "W_rcv"}
     , {n_helios, H_tower, W_helio, H_helio, H_rcv, W_rcv}
   );

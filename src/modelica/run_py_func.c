@@ -6,7 +6,7 @@
  
 int RunSolsticeFunc(const char* ppath, const char* pname 
 	, const char *psave,  const char *field_type
-	, const char *rcv_type, const char *wea_file, int num_args
+	, const char *rcv_type, const char *wea_file, const char *sunshape, int num_args
 	, const char *varnames[], const double var[]
 ){
 	// ppath: path of the Python script
@@ -43,8 +43,8 @@ int RunSolsticeFunc(const char* ppath, const char* pname
 	// shape the commands together
     char* cmd = (char*)malloc(sizeof(char)*MALLOC); 
     snprintf(cmd, MALLOC, 
-        "python3 %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --num_args %d --var_names %s --var_vals %s",
-        ppath, pname, psave, wea_file, field_type, rcv_type, num_args, var_names, var_vals);
+        "python3 %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %d --var_names %s --var_vals %s",
+        ppath, pname, psave, wea_file, field_type, rcv_type, sunshape, num_args, var_names, var_vals);
 
     free(var_tmp);
     free(var_names);

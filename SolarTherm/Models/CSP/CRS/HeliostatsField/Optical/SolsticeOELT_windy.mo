@@ -18,12 +18,16 @@ extends OpticalEfficiency;
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
-
-	parameter Integer argc =22 "Number of variables to be passed to the C function";
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";  
+  
+	parameter Integer argc =25 "Number of variables to be passed to the C function";
 	
 	parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
 	parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
-
+  parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
+  
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
     parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
@@ -52,7 +56,9 @@ extends OpticalEfficiency;
     parameter String tablefile(fixed=false);
     parameter Integer tablefile_status(fixed=false);  
     parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
-
+  	parameter Integer verbose(fixed=false) "save all the optical simulation details or not? 1 is yes, 0 is no";
+  	parameter Integer gen_vtk(fixed=false) "visualise the optical simulation scene or not? 1 is yes, 0 is no";
+  
     SI.Angle angle1;
     SI.Angle angle2;
     SI.Efficiency nu_windy;
@@ -119,9 +125,9 @@ initial algorithm
 
 initial equation
   tablefile_status = SolsticePyFunc(ppath, pname, psave, 
-  		field_type, rcv_type, wea_file, argc, 
-  		{"method","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" }, 
-  		{method, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs}
+  		field_type, rcv_type, wea_file, sunshape, argc, 
+  		{"method","csr","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics", "n_row_oelt", "n_col_oelt", "n_rays", "n_procs" ,"verbose", "gen_vtk"}, 
+  		{method, buie_csr, Q_in_rcv, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_row_oelt, n_col_oelt, n_rays, n_procs, verbose, gen_vtk}
   		); 
 
   tablefile = SolsticeStatusFunc(tablefile_status, psave);

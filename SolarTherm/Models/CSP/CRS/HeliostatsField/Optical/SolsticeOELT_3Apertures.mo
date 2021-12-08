@@ -15,8 +15,10 @@ extends OpticalEfficiency_3Apertures;
   parameter String field_type = "multi-aperture" "Other options are : surround";
   parameter String rcv_type = "multi-aperture" "other options are : flat, cylinder, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";  
 
-  parameter Integer argc = 29 "Number of variables to be passed to the C function";
+  parameter Integer argc = 30 "Number of variables to be passed to the C function";
   parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
@@ -170,9 +172,9 @@ initial algorithm
 initial equation
 
   tablefile_status =  SolsticePyFunc(ppath, pname, psave, 
-  	field_type, rcv_type, wea_file, argc, 
-  	{"method", "num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk","n_row_oelt","n_col_oelt"}, 
-  	{method, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk, n_row_oelt, n_col_oelt}
+  	field_type, rcv_type, wea_file, sunshape, argc, 
+  	{"method", "csr","num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk","n_row_oelt","n_col_oelt"}, 
+  	{method, buie_csr, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk, n_row_oelt, n_col_oelt}
   	); 
   
   tablefile = SolsticeStatusFunc(tablefile_status, psave);

@@ -57,6 +57,9 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter String field_type = "multi-aperture" "Other options are : surround";
   parameter String rcv_type = "multi-aperture" "other options are : flat, cylindrical, stl";  
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";    
+  
   parameter Boolean use_on = false "= true to display when solar field is connected"
     annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
   parameter Boolean use_defocus = false "= true to use defocus strategy"
@@ -96,6 +99,8 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       rcv_type=rcv_type, 
       psave=psave, 
       wea_file=wea_file,
+      sunshape=sunshape,
+      buie_csr=buie_csr,      
       set_swaying_optical_eff = set_swaying_optical_eff,
  	  get_optics_breakdown = get_optics_breakdown,
 	  optics_verbose=optics_verbose,
