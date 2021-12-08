@@ -60,6 +60,8 @@ model AnnualOpticalBeamDown
   parameter SI.Efficiency rho_cpc = 0.9025 "reflectivity of the CPC";
   parameter SI.Efficiency rho_helio = 0.9025 "reflectivity of the heliostat";
   parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
+  parameter String sun_shape = "buie" "Sun shape";
+  parameter Real circum_solar_ratio = 0.028 "Circum solar ratio";
 
   /*Optical parameters*/
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
@@ -237,7 +239,9 @@ model AnnualOpticalBeamDown
       hra=sun.solar.hra,
       dec=sun.solar.dec,
       lat=lat,
-      wea_file = wea_file
+      wea_file = wea_file,
+      sun_shape = sun_shape, 
+      circum_solar_ratio = circum_solar_ratio
   );
   
   //Variable for optical

@@ -27,6 +27,8 @@ extends OpticalEfficiency;
     parameter nSI.Angle_deg tilt_secref=-10 "tilt angle of the secondary mirror (hyperboloid) central axis along the N-S axis in degree";
     parameter SI.Efficiency rho_helio = 0.9 "Reflectivity of the heliostat";
     parameter SI.Efficiency slope_error = 0.9 "Slope error of the mirror";
+  	parameter String sun_shape = "buie" "Sun shape";
+ 	parameter Real circum_solar_ratio = 0.028 "Circum solar ratio";
 
     parameter SI.HeatFlowRate Q_in_rcv = 50e6;
     // heliostat field
@@ -60,7 +62,7 @@ extends OpticalEfficiency;
 	parameter String pfunc = "run_simul" "Name of the Python function";
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include/solstice-result/demo") "the directory for saving the results (default value)";
-    parameter Integer argc = 28 "Number of variables to be passed to the C function";
+    parameter Integer argc = 29 "Number of variables to be passed to the C function";
 
     parameter String tablefile(fixed=false);
 
@@ -79,10 +81,10 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial equation
-  tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, {"cpc_theta_deg", "cpc_h_ratio", "aperture_angle_x", "aperture_angle_y", "secref_offset", "secref_inv_eccen",
+  tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, sun_shape, argc, {"cpc_theta_deg", "cpc_h_ratio", "aperture_angle_x", "aperture_angle_y", "secref_offset", "secref_inv_eccen",
 "H_tower", "fb", "tilt_secref", "Z_rcv", "W_rcv", "H_rcv", "n_rays", "n_row_oelt", "n_col_oelt", "lat", "Q_in_rcv", "R1", "W_helio", "H_helio", "Z_helio", "slope_error_bd",
-"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv", "rho_helio", "slope_error"}, {cpc_theta_deg, cpc_h_ratio, aperture_angle_x, aperture_angle_y, secref_offset, secref_inv_eccen, H_tower, fb, tilt_secref, Z_rcv, W_rcv,
-H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error_bd, rho_secref, rho_cpc, cpc_nfaces, n_H_rcv, rho_helio, slope_error});
+"rho_secref", "rho_cpc", "cpc_nfaces", "n_H_rcv", "rho_helio", "slope_error", "csr"}, {cpc_theta_deg, cpc_h_ratio, aperture_angle_x, aperture_angle_y, secref_offset, secref_inv_eccen, H_tower, fb, tilt_secref, Z_rcv, W_rcv,
+H_rcv, n_rays, n_row_oelt, n_col_oelt, lat, Q_in_rcv, R1, W_helio, H_helio, Z_helio, slope_error_bd, rho_secref, rho_cpc, cpc_nfaces, n_H_rcv, rho_helio, slope_error, circum_solar_ratio});
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

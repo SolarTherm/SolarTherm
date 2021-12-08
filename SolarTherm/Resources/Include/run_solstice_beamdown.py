@@ -8,12 +8,12 @@ def set_param(inputs={}):
     '''
     set parameters
     '''
-
     pm=Parameters()
     for k, v in inputs.iteritems():
-        if hasattr(pm, k):
+        try:
             setattr(pm, k, v)
-        else:
+        except Exception as e:
+            sys.stderr.write("%s\n"%(str(e)))
             raise RuntimeError("invalid parameter '%s'"%(k,))
 
     return pm
@@ -23,7 +23,6 @@ def run_simul(inputs={}):
     design the field base on performance of annual performance
     the annual performance is TMY DNI weighted
     '''
-
     pm=set_param(inputs)
 
     print('')
@@ -61,7 +60,7 @@ def run_simul(inputs={}):
 
         bd.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=int(pm.n_helios), R1=pm.R1, fb=pm.fb, dsep=pm.dsep, x_max=150., y_max=150.)
 
-        bd.yaml(sunshape=pm.sunshape,csr=pm.crs,half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+        bd.yaml(sunshape=pm.sunshape,csr=pm.csr,half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
         oelt, A_land=bd.field_design_annual(dni_des=900., num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=1, Q_in_des=pm.Q_in_rcv, n_helios=None, zipfiles=False, gen_vtk=False, plot=False)
 
