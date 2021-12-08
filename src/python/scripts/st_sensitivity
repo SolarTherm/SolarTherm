@@ -1,6 +1,6 @@
 #! /bin/env python
 
-from solartherm.dakota import gen_dakota_in, gen_interface_bb, UncertaintyDakotaIn
+from solartherm.dakota import DakotaSampleIn
 from solartherm import simulation
 from solartherm import params
 import multiprocessing as mp
@@ -41,7 +41,7 @@ if __name__=='__main__':
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')	
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
-			help='number of processes (set to 0 for serial mode)')	
+			help='number of processes (set to 0 or 1 for serial mode)')	
 	parser.add_argument('--excel', type=str, default=None,
 			help='the directry of the input excel data sheet')
 	parser.add_argument('--peaker', action='store_true',
@@ -61,7 +61,7 @@ if __name__=='__main__':
 	parser.add_argument('--wd', type=str, default='.',
 			help='the working directory')
 	parser.add_argument('--restart', type=str, default=None,
-			help='restart by continuing the last simulation (available now only via dakota), given the directory of the simulations')
+			help='restart by continuing the last simulation (available now only via dakota), given the directory where dakota.rst is located')
 
 	args = parser.parse_args()
 
@@ -81,23 +81,23 @@ if __name__=='__main__':
 		savedir=args.wd
 
 	os.chdir(args.wd)
-	U=UncertaintyDakotaIn(mofn=fn, start=args.start, stop=args.stop, 
-		step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-		integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, 
-		system=system, runsolstice=args.runsolstice)
-
-
+	
+	# compile the model first
+	sim = simulation.Simulator(fn=fn, fusemount=False)
+	sim.compile_model()
+	sim.compile_sim(args=['-s'])
+	
+	dists=[]
 	if args.excel!=None:
-		if not os.path.exists(mn):
-			sim = simulation.Simulator(fn=fn, fusemount=False)
-			sim.compile_model()
-			sim.compile_sim(args=['-s'])
+		#if not os.path.exists(mn):
+		#	sim = simulation.Simulator(fn=fn, fusemount=False)
+		#	sim.compile_model()
+		#	sim.compile_sim(args=['-s'])
 		input_xml=mn+'_init.xml'
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)
 		tree.write_xml(input_xml)
-
 
 		par_n=tree.filter_type(1) # 1 is for uncertainty analysis
 		par_uniform=tree.filter_dist('uniform',par_n)
@@ -106,16 +106,18 @@ if __name__=='__main__':
 
 		#uniform
 		if len(par_uniform)>0:
-			lb=[]
-			ub=[]
+			dists.append('uniform')
+			lb_uniform=[]
+			ub_uniform=[]
 			for n in par_uniform:
 				b1=tree.get(n+'.boundary1')
 				b2=tree.get(n+'.boundary2')
-				lb.append(b1)
-				ub.append(b2)
-			U.uniform(par_uniform, lb, ub)
+				lb_uniform.append(b1)
+				ub_uniform.append(b2)
+
 		# normal
 		if len(par_normal)>0:
+			dists.append('normal')		
 			mean=[]
 			stdev=[]
 			for n in par_normal:
@@ -123,91 +125,140 @@ if __name__=='__main__':
 				sd=tree.get(n+'.boundary1')
 				mean.append(m)
 				stdev.append(sd)
-			U.normal(par_normal, mean, stdev)
 		# pert
 		if len(par_pert)>0:
-			nominals=[]
-			lb=[]
-			ub=[]
+			dists.append('pert')			
+			nominal_pert=[]
+			lb_pert=[]
+			ub_pert=[]
 			for n in par_pert:
 				nominal=tree.get(n+'.nominal')	
 				b1=tree.get(n+'.boundary1')
 				b2=tree.get(n+'.boundary2')	
-				nominals.append(nominal)
-				lb.append(b1)
-				ub.append(b2)
-			U.pert(par_pert, nominals, lb, ub)
+				nominal_pert.append(nominal)
+				lb_pert.append(b1)
+				ub_pert.append(b2)
 
 	else:
 		# if the parameters are passed from the command line directly
 		# (not from the spreadsheet)
 		# all the parameters are in the same distribution
-		dist_type=args.dist
-		par_n = [] # names
-		b1 = [] # bounds
-		b2 = []
-		nominals =[]
-		for pp in args.par:
-			k, v = pp.split('=')
-			par_n.append(k)
-			vals = [(vv) for vv in v.split(',')]
-			if dist_type=='uniform':
-				lb=vals[0]
-				ub=vals[1]
-				b1.append(lb)				
-				b2.append(ub)
-			elif dist_type=='normal':
-				mean=vals[0]
-				sd=vals[1]
-				nominals.append(mean)
-				b1.append(sd)
-			elif dist_type=='pert':
-				nominal=float(vals[0])
-				lb=float(vals[1])
-				ub=float(vals[2])
-				b1.append(lb)				
-				b2.append(ub)	
-				nominals.append(nominal)		
-		if dist_type=='uniform':
-			U.uniform(par_n, b1, b2)
-		elif dist_type=='normal':
-			U.normal(par_n, nominals, b1)
-		elif dist_type=='pert':
-			U.pert(par_n, nominals, b1, b2)
-	variables=U.variables
-	response=U.response()
-	method=U.method(sample_type=args.sample, num_sample=args.ns)
 
-	gen_dakota_in( response=response, method=method, variables=variables, savedir=savedir)
-	gen_interface_bb(savedir)
+		dist_type=args.dist
+		dists.append(dist_type)		
+
+		if dist_type=='uniform':
+			lb_uniform=[]
+			ub_uniform=[]
+			par_uniform=[]
+			for pp in args.par:			
+				k, v = pp.split('=')
+				vals = [(vv) for vv in v.split(',')]			
+				lb=vals[0]
+				ub=vals[1]			
+				par_uniform.append(k)
+				lb_uniform.append(b1)
+				ub_uniform.append(b2)	
+		elif dist_type=='normal':
+			mean=[]
+			stdev=[]
+			par_normal=[]
+			for pp in args.par:			
+				k, v = pp.split('=')
+				vals = [(vv) for vv in v.split(',')]			
+				m=vals[0]
+				sd=vals[1]		
+				par_normal.append(k)
+				mean.append(m)
+				stdev.append(sd)
+		elif dist_type=='pert':
+			nominal_pert=[]
+			lb_pert=[]
+			ub_pert=[]
+			par_pert=[]
+			for pp in args.par:			
+				k, v = pp.split('=')
+				vals = [(vv) for vv in v.split(',')]						
+				nominal=float(vals[0])
+				b1=float(vals[1])
+				b2=float(vals[2])	
+				nominal_pert.append(nominal)
+				lb_pert.append(b1)
+				ub_pert.append(b2)
+				par_pert.append(k)
+
+	if len(dists)==1:
+		if 'uniform' in dists:
+			var_names=par_uniform
+			lbs=lb_uniform
+			ubs=ub_uniform
+			nominals=None
+			stdevs=None					
+		elif 'pert' in dists:
+			# FIXME an issue has been found
+			# in dakota to sample a pert distribution
+			# need investigation
+			var_name=par_pert
+			nominals=nominal_pert
+			lbs=lb_pert
+			ubs=ub_pert
+			stdevs=None
+		elif 'normal' in dists:
+			var_name=par_normal
+			nominals=mean
+			stdevs=stdev
+			lbs=None
+			ubs=None
+			
+	elif len(dists)==2:
+		if 'normal' not in dists:
+			# uniform and pert distributions
+			var_names=[par_uniform, par_pert]
+			lbs=[lb_uniform, lb_pert]
+			ubs=[ub_uniform, ub_pert]
+			nominals=[[], nominal_pert]
+			stdevs=None
+		elif 'pert' not in dists:
+			# uniform and normal distributions
+			var_names=[par_uniform, par_normal]
+			lbs=[lb_uniform]
+			ubs=[ub_uniform]
+			nominals=[[],mean]
+			stdevs=stdev			
+		elif 'uniform' not in dists:
+			# pert and normal distributions
+			var_names=[par_normal, par_pert]
+			lbs=[[],lb_pert]
+			ubs=[[],ub_pert]
+			nominals=[mean, nominal_pert]
+			stdevs=stdev					
+						
+	elif len(dists)==3:
+			var_names=[par_uniform, par_normal, par_pert]
+			lbs=[lb_uniform, [], lb_pert]
+			ubs=[ub_uniform, [], ub_pert]
+			nominals=[[], mean, nominal_pert]
+			stdevs=stdev			
+
+	method_args={'sample_type':'lhs', 'num_sample': args.ns}
+
+	dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method='uq', args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=['lcoe'], signs=[1])
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
 	if args.restart!=None:
 		os.chdir(args.restart)
 		if args.np!=0:
-			if not os.path.exists(mn):
-				sim = simulation.Simulator(fn=fn, fusemount=False)
-				sim.compile_model()
-				sim.compile_sim(args=['-s'])
-			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+
+			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
 
 
 	else:
 		if args.np!=0:
-			if not os.path.exists(mn):
-				sim = simulation.Simulator(fn=fn, fusemount=False)
-				sim.compile_model()
-				sim.compile_sim(args=['-s'])
-			subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
+
+			subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 		else:
 			subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
-	
-
-	
-
-
-	
 

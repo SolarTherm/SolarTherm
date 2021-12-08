@@ -9,7 +9,7 @@ model Reference_2_solstice
 	import FI = SolarTherm.Models.Analysis.Finances;
 	import SolarTherm.Types.Solar_angles;
 	import SolarTherm.Types.Currency;
-	import metadata = SolarTherm.Utilities.Metadata_Optics;
+	import metadata = SolarTherm.Utilities.Metadata_Optics_windy;
 	extends Modelica.Icons.Example;
 
 	// Input Parameters
@@ -36,7 +36,7 @@ model Reference_2_solstice
 
 	// Solstice related parameters
 	parameter String opt_file(fixed = false);
-	//parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
+	parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
 	parameter String field_type = "surround" "polar or surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
@@ -49,11 +49,11 @@ model Reference_2_solstice
 	parameter Real fb = 0.4 "factor to grow the field layout";
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
 	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+	parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-	parameter Real metadata_list[8] = metadata(opt_file);
+	parameter Real metadata_list[9] = metadata(opt_file);
 	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
 
 	// Field
@@ -191,8 +191,8 @@ model Reference_2_solstice
     parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
 
 
-	parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
-
+	//parameter SI.Area A_land = land_mult*A_field + 197434.207385281 "Land area";
+	parameter SI.Area A_land = metadata_list[9] "Land area";
 	parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
 	parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
 
@@ -220,8 +220,8 @@ model Reference_2_solstice
 	parameter Real r_disc = 0.07 "Real discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 
-	parameter Integer t_life = 27 "Lifetime of plant";
-	parameter Integer t_cons = 3 "Years of construction";
+	parameter Integer t_life(unit = "year") = 27 "Lifetime of plant";
+	parameter Integer t_cons(unit = "year") = 3 "Years of construction";
 
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
@@ -319,6 +319,7 @@ model Reference_2_solstice
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
 		lon = data.lon,
 		lat = data.lat,
+		psave =casefolder,
 		ele_min(displayUnit = "deg") = ele_min,
 		use_wind = use_wind,
 		Wspd_max = Wspd_max,

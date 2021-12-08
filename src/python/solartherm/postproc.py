@@ -221,25 +221,47 @@ class SimResultElec(SimResult):
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
 
-		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+		self.epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 		srev = rev_v[-1] # spot market revenue [$]
 		lcoe = None # Levelised cost of electricity
 		capf = None # Capacity factor
+
+		self.c_cap=cap_v[0] 
+		self.c_year=om_y_v[0] + om_p_v[0]*self.epy
+		self.r_discount=disc_v[0]
+		self.t_life=int(life_v[0])
+		self.t_cons=int(cons_v[0]) # time of construction
+		try:
+			self.C_contingency=self.mat.data('C_contingency')[0] # [$]
+		except:		
+			self.C_contingency=0 #contingency is not estimated in the system simulation
+
 		if close_to_year: 
 			if peaker:
 				tod_v=self.mat.data('TOD_W')
 				tod_factor=tod_v[-1]/eng_v[-1]
-				lcoe = fin.lcoe_p(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-						int(life_v[0]), int(cons_v[0]), epy, tod_factor)
+				lcoe = fin.lcoe_p(
+						c_cap=self.c_cap, 
+						c_year=self.c_year, 
+						r=self.r_discount, 
+						t_life=self.t_life, 
+						t_cons=self.t_cons, 
+						epy=self.epy, 
+						tod_factor=tod_factor)
 				capf = fin.capacity_factor(name_v[0], tod_v[-1])
 
 			else:
-				lcoe = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-						int(life_v[0]), int(cons_v[0]), epy)
-				capf = fin.capacity_factor(name_v[0], epy)
+				lcoe = fin.lcoe_r(
+						c_cap=self.c_cap, 
+						c_year=self.c_year, 
+						r=self.r_discount, 
+						t_life=self.t_life, 
+						t_cons=self.t_cons, 
+						epy=self.epy)
+				capf = fin.capacity_factor(name_v[0], self.epy)
 
 		# Convert to useful units
-		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
+		epy = self.epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year: 
 			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
@@ -272,7 +294,7 @@ class SimResultElec(SimResult):
 
 		C_cap = C_cap_v[0] * 1e-3 # Total capital investment (TCI) [k$]
 		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
-		C_year = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total operational costs [k$/year]
+		C_om_ann = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total O&M costs [k$/year]
 
 		C_cap_bd_n = ['Solar field', 'Tower', 'Receiver', 'Storage', 'PB', 'BOP', 'Land'] # Capital cost components name
 		C_cap_bd_u = 'k$' # Capital cost components unit
@@ -282,14 +304,66 @@ class SimResultElec(SimResult):
 		C_op_bd_u = 'k$/year' # Operational cost components unit
 		C_op_bd_v = [om_y_v[0]*1e-3, om_p_v[0]*epy*1e-3] # Operational cost breakdown [k$/year]
 
-		C_ann_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_ann_bd_n = ['Total Annualised capital investment', 'Total O&M'] # Annualised cost breakdown names
 		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
-		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [k$/year]
+		C_ann_bd_v = [C_cap_ann, C_om_ann] # Annualised cost breakdown [k$/year]
 
 		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
 
 	perf_n = ['epy', 'lcoe', 'capf', 'srev']
 	perf_u = ['MWh/year', '$/MWh', '%', '$']
+
+	def report_summary(self, var_n=[], savedir=None, suffix=''):
+		'''
+		matfile: str, directory of the mat file
+		var_n: list of strings, names of the parameters that are of interests
+		savedir: str, directory to save the results
+	 	suffix: str, suffix of the output file (i.e. summary_suffix.csv) 
+		'''
+		#try:
+		perf=self.calc_perf()
+		epy=perf[0]
+		lcoe=perf[1]
+		capf=perf[2]
+
+		C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v=self.cost_breakdown()	
+
+		summary=np.array([
+		['Name', suffix, 'Units', 'Description'], 
+		['lcoe', lcoe, 'USD/MWh', 'Levelised cost of electricity'],
+		['epy', epy, 'MWh/year', 'Electricity production per year'], 
+		['capf', capf, '%', 'Capacity factor'],
+		['C_cap', self.c_cap*1e-6, 'm$', 'Total captical cost'],
+		['C_field', C_cap_bd_v[0]*1e-3, 'm$', C_cap_bd_n[0]+'cost' ],
+		['C_tower', C_cap_bd_v[1]*1e-3, 'm$' , C_cap_bd_n[1]+'cost' ],
+		['C_receiver', C_cap_bd_v[2]*1e-3, 'm$',  C_cap_bd_n[2]+'cost' ],
+		['C_storage', C_cap_bd_v[3]*1e-3, 'm$' , C_cap_bd_n[3]+'cost' ],
+		['C_PB', C_cap_bd_v[4]*1e-3, 'm$' , C_cap_bd_n[4]+'cost' ],
+		['C_BOP', C_cap_bd_v[5]*1e-3, 'm$' , C_cap_bd_n[5]+'cost' ],
+		['C_land', C_cap_bd_v[6]*1e-3, 'm$' , C_cap_bd_n[6]+'cost' ],
+		[ 'OM_total', C_ann_bd_v[1]*1e-3, 'm$/year', 'Total O&M'],
+		['OM_fixed', C_op_bd_v[0]*1e-3, 'm$/year', C_op_bd_n[0]],
+		['OM_variable', C_op_bd_v[1]*1e-3, 'm$/year', C_op_bd_n[1]],
+		['r_discount', self.r_discount, '-', 'Discount rate'],
+		['t_life', self.t_life, 'y', 'Plant life time'],
+		['t_cons', self.t_cons, 'y', 'Construction time'],
+		['C_contingency', self.C_contingency*1e-6, 'm$', 'C_contingency (estimated)']])
+
+
+		if len(var_n)!=0:
+			for n in var_n:
+				v=self.mat.data(n)[0]
+				summary=np.append(summary, (n, v, '', ''))
+
+		summary=summary.reshape(int(len(summary)/4), 4)
+
+		#except:
+		#	summary=np.array(["mat file fault"])
+
+		if savedir!=None:
+			np.savetxt(savedir+'/summary_report_%s.csv'%suffix, summary, fmt='%s', delimiter=',')
+
+		return summary
 
 
 class SimResultFuel(SimResult):
@@ -376,7 +450,7 @@ class SimResultFuel(SimResult):
 		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [M$/year]
 		C_year = (C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1]) * 1e-6 # Total operational costs [M$/year]
 
-		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land'] # Capital cost components name
+		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land', 'Total captical'] # Capital cost components name
 		C_cap_bd_u = 'M$' # Capital cost components unit
 		C_cap_bd_v = [C_field_v[0]*1e-6, C_tower_v[0]*1e-6, C_rx_v[0]*1e-6, C_st_v[0]*1e-6, C_ft_v[0]*1e-6, C_land_v[0]*1e-6] # Capital cost breakdown [M$]
 
@@ -393,6 +467,8 @@ class SimResultFuel(SimResult):
 
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']
+
+		
 
 class DecisionMaker(object):
 	"""
