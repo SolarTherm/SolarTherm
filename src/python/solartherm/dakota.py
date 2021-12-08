@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ##
 # 
 # Introduction
@@ -735,7 +735,7 @@ def gen_interface_bb(casedir, contingency=False):
 	which will be excuted by DAKOTA	
 	'''
 	
-	bb='''#!/usr/bin/env python
+	bb='''#!/usr/bin/env python3
 # Dakota will execute this python script
 # The command line arguments will be extracted by the interface automatically.
 
