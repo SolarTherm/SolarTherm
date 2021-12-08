@@ -9,8 +9,8 @@ model AnnualOpticalBeamDown
 
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/AUS_WA.Newman.Airport.943170_RMY.motab");
   parameter Real metadata_list[10] = metadata(opt_file);
-  parameter nSI.Angle_deg lon = 120.70 "Longitude (+ve East)";
-  parameter nSI.Angle_deg lat = -27.85 "Latitude (+ve North)";
+  parameter nSI.Angle_deg lon = 119.8 "Longitude (+ve East)";
+  parameter nSI.Angle_deg lat = -23.42 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter String opt_file(fixed=false);
@@ -54,9 +54,11 @@ model AnnualOpticalBeamDown
   parameter SI.Length R1=15. "distance between the first row heliostat and the tower";
   parameter SI.Length W_helio = 6.1 "width of heliostat in m";
   parameter SI.Length H_helio = 6.1 "height of heliostat in m";
-  parameter SI.Angle slope_error_bd = 1e-3 "slope error of all reflective surfaces in mrad";
-  parameter SI.Efficiency rho_secref = 0.95 "reflectivity of the secondary reflector (hyperboloid)";
-  parameter SI.Efficiency rho_cpc = 0.95 "reflectivity of the CPC";
+  parameter SI.Angle slope_error_bd = 1.53e-3 "slope error of all reflective surfaces in mrad";
+  parameter SI.Efficiency slope_error = 1.53e-3 "slope error of the mirror";
+  parameter SI.Efficiency rho_secref = 0.9025 "reflectivity of the secondary reflector (hyperboloid)";
+  parameter SI.Efficiency rho_cpc = 0.9025 "reflectivity of the CPC";
+  parameter SI.Efficiency rho_helio = 0.9025 "reflectivity of the heliostat";
   parameter Real cpc_nfaces=4 "2D-crossed cpc with n faces";
 
   /*Optical parameters*/
@@ -227,6 +229,8 @@ model AnnualOpticalBeamDown
       slope_error_bd=slope_error_bd,
       rho_secref=rho_secref,
       rho_cpc=rho_cpc,
+      rho_helio=rho_helio,
+      slope_error=slope_error,
       cpc_nfaces=cpc_nfaces,
       n_H_rcv=n_H_rcv,
       psave=casefolder,
