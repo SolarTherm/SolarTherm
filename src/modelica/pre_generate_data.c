@@ -20,16 +20,16 @@ int main()
 {
 	double P_net[] = {5e6};
 	double par_fr = 0.1;
-    double T_in_ref_blk = 923.15;
-    double T_cold_set = 450 + 273.15;
+    double T_in_ref_blk = 943.15;
+    double T_cold_set = 470 + 273.15;
     double dT_PHX_cold_approach = 14.5;
-    double p_high = 25e6;
-    double eta_comp_main = 0.89;
-    double eta_comp_re = 0.89;
+    double p_high = 22e6;
+    double eta_comp_main = 0.825;
+    double eta_comp_re = 0.756;
+    double eta_isen_t = 0.902;
     double dT_mc_approach = 6;
-    double CIT = 41 + 273.15;
+    double CIT = 310.15;
     double blk_T_amb_des = CIT - dT_mc_approach;
-    double eta_isen_t;
     char* SolarTherm_path = "/home/philgun/solartherm-intermediate/SolarTherm";
     char* base_path = "/home/philgun/solartherm-intermediate/SolarTherm/Data/SurrogateModels/PowerBlock";
 
@@ -40,7 +40,7 @@ int main()
     for(size_t i=0;i<sizeof(P_net)/sizeof(P_net[0]);i++)
     {
         double P_gross = P_net[i] / (1-par_fr);
-
+		/*
         if(P_gross>3e7)
         {
             eta_isen_t = 0.93; //#   Weiland & Thimsen 2016
@@ -52,7 +52,7 @@ int main()
         {
             eta_isen_t = 0.85; //#   Assuming radial turbine
         }
-		
+		*/
 		
         initNRELPB(
             P_gross, 
