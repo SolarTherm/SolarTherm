@@ -4,7 +4,7 @@ model FlowPathStress
 	extends Modelica.Icons.Example;
 	import SI = Modelica.SIunits;
 	import Modelica.SIunits.Conversions.*;
-	import SolarTherm.Utilities.*;
+	import SolarTherm.Utilities.NASHTubeStress;
 	import nSI = Modelica.SIunits.Conversions.NonSIunits;
 	
 	// Parameters
@@ -77,33 +77,40 @@ model FlowPathStress
 	Real T_fluid_fpath6[N];
 
 	// Solar flux distribution along flowpath
-	parameter SI.HeatFlux solar_flux[N,fpath] = FlowpathFlux(fileName, N, fpath);
-	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include")
-		"Absolute path to the Python script";
-	parameter String pname = "run_interpolation"
-		"Name of the Python script";
-	parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo") "the directory for saving the results"; 
-	parameter Integer argc = 2 "Number of variables to be passed to the C function";
-	Integer tablefile_status;
+	SI.HeatFlux CG[N,fpath];
+
+	parameter String textfile = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/lookup.motab");
+	parameter String tableNames[N] = {"table2D_" + String(i) for i in 1:N};
+	
+	Modelica.Blocks.Tables.CombiTable2D fluxes[N](
+		each fileName = textfile, 
+		each tableOnFile = true, 
+		tableName = tableNames)  annotation(
+			Placement(visible = true, transformation(origin = {-50, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+	
+	Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(sun.dec)) annotation(
+	Placement(visible = true, transformation(origin = {-88, 16}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+	Modelica.Blocks.Sources.RealExpression u2(y = Modelica.SIunits.Conversions.to_deg(sun.hra)) annotation(
+	Placement(visible = true, transformation(origin = {-88, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 equation
+	for i in 1:N loop
+		connect(u1.y, fluxes[i].u1);
+		connect(u2.y, fluxes[i].u2);
+		for j in 1:6 loop
+			CG[i,j] = fluxes[i].y*1e3;
+		end for;
+	end for;
+
 	connect(DNI.y, sun.dni) annotation(
 	Line(points = {{-68, 80}, {-31, 80}}, color = {0, 0, 127}));
 
-	tablefile_status = FluxInterpolation(
-		ppath,
-		pname,
-		psave,
-		argc, 
-		{"dni","Tdry"}, 
-		{data.DNI, data.Tdry}
-		);
-
-	(T_crow_fpath1, T_fluid_fpath1, stress_fpath1) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,1]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	(T_crow_fpath2, T_fluid_fpath2, stress_fpath2) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,2]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	(T_crow_fpath3, T_fluid_fpath3, stress_fpath3) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,3]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	(T_crow_fpath4, T_fluid_fpath4, stress_fpath4) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,4]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	(T_crow_fpath5, T_fluid_fpath5, stress_fpath5) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,5]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	(T_crow_fpath6, T_fluid_fpath6, stress_fpath6) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, solar_flux[:,6]*1e3, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	annotation(experiment(StartTime=0.0, StopTime=86400, Interval=1800, Tolerance=1e-06));
+	(T_crow_fpath1, T_fluid_fpath1, stress_fpath1) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,1], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crow_fpath2, T_fluid_fpath2, stress_fpath2) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,2], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crow_fpath3, T_fluid_fpath3, stress_fpath3) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,3], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crow_fpath4, T_fluid_fpath4, stress_fpath4) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,4], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crow_fpath5, T_fluid_fpath5, stress_fpath5) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,5], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crow_fpath6, T_fluid_fpath6, stress_fpath6) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG[:,6], nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	annotation(experiment(StartTime=0.0, StopTime=31536000, Interval=1800, Tolerance=1e-06));
 end FlowPathStress;
