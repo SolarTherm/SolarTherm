@@ -105,35 +105,43 @@ if __name__=='__main__':
 	par_n_des=tree.filter_type(2) # 2 are the design parameters				
 
 	method_args={}	
+	nominals=[]
+	lbs=[]
+	ubs=[]
+	signs=[1]	
 	if args.sample=='moga-hybrid':
 		method='moga'
 		method_args['max_eval']=args.ns
-		method_args['pop_size']=args.np			
-		stdevs=None
+		method_args['pop_size']=args.np	
+		var_names=par_n_des
+
+		for n in par_n_des:
+			nominals.append(tree.get(n+'.nominal'))	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))
+		for n in par_n_perf:	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))	
+			signs.append(tree.get(n+'.sign'))						
+		res_names=['lcoe']+par_n_perf					
 		dists=None
 		
 	else:
 		method='uq'
 		method_args['sample_type']='lhs'
 		method_args['num_sample']=args.ns
-		stdevs=None
+		var_names=par_n_des+par_n_perf		
+		for n in par_n_des:
+			nominals.append(tree.get(n+'.nominal'))	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))
+		for n in par_n_perf:	
+			nominals.append(tree.get(n+'.nominal'))			
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))	
+						
+		res_names=['lcoe']
 		dists=['uniform']
-
-	var_names=par_n_des
-	nominals=[]
-	lbs=[]
-	ubs=[]
-	signs=[1]
-	for n in par_n_des:
-		nominals.append(tree.get(n+'.nominal'))	
-		lbs.append(tree.get(n+'.boundary1'))
-		ubs.append(tree.get(n+'.boundary2'))
-	for n in par_n_perf:	
-		lbs.append(tree.get(n+'.boundary1'))
-		ubs.append(tree.get(n+'.boundary2'))	
-		signs.append(tree.get(n+'.sign'))						
-	res_names=['lcoe']+par_n_perf
-
 
 	if args.samplefile==None:
 		# call dakota to sample the data
@@ -146,7 +154,7 @@ if __name__=='__main__':
 		
 		else:
 			print('Generating data sample by Dakota')		
-			dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
+			dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=None, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
 
 			subprocess.call('chmod a+x %s/interface_bb.py'%casedir, shell=True)
 	
