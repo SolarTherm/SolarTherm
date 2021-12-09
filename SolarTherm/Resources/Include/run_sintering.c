@@ -77,11 +77,11 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 
 	int status_run;
 
-	for(size_t file_index=1; file_index<27; file_index++){
+	for(size_t file_index=1; file_index<28; file_index++){
 		snprintf(fmfile, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_%zu.csv",solstice_wd, file_index);
 
 		/*Run ASCEND thru system call instead of using python C-API --> creates problem not sure why*/
-		int status_run = run_ascend_sintering_model_CLI(
+		status_run = run_ascend_sintering_model_CLI(
 			vars, solstice_wd, SolarTherm_path, iron_sample, "off_design", fmfile
 		);
 	}
