@@ -242,8 +242,23 @@ if __name__=='__main__':
 				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
-		print('	%s sample generated'%args.ns)									
+		print('	%s sample generated'%args.ns)	
+
+
+		summary=np.array([])
+		for i in range(1, args.ns+1):
+			fn=casedir+'/summary_report_%.0f.csv'%(i)
+			data=np.loadtxt(fn, dtype=str, delimiter=',')
+			if i==1:
+				summary=np.append(summary, (data[:,0],data[:,1]))
+			else:
+				summary=np.append(summary, data[:,1])
+
+		summary=summary.reshape(int(args.ns+1), int(len(summary)/(args.ns+1)))
 		summaryfile=casedir+'/summary_all.csv'
+		np.savetxt(summaryfile, summary, fmt='%s', delimiter=',')
+		
+
 	else:
 		print('Load data sample from file: %s'%args.samplefile)			
 		summaryfile=args.samplefile
@@ -259,6 +274,7 @@ if __name__=='__main__':
 		indices, tri_idx, f_lcoe=ct.front_tri()
 	elif args.sample=='lhs':				
 		indices, f_lcoe=ct.get_front(plot=args.plot)
+		tri_idx=None
 		
 	# new sample of uncertain parameters
 	num_ns=1000 # number of new samples
