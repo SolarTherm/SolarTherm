@@ -53,7 +53,7 @@ def run_simul(inputs={}):
         # create the environment and scene
         # =========
 
-        bd=BD(latitude=pm.lat, casedir=casedir)
+        bd=BD(latitude=pm.lat, casedir=casedir, nproc=int(pm.n_procs))
 
         bd.receiversystem(receiver=pm.rcv_type, rec_abs=float(pm.alpha_rcv), rec_w=float(pm.W_rcv), rec_l=float(pm.H_rcv), rec_z=float(pm.Z_rcv), rec_grid=int(pm.n_H_rcv), cpc_nfaces=int(pm.cpc_nfaces), cpc_theta_deg=float(pm.cpc_theta_deg), cpc_h_ratio=float(pm.cpc_h_ratio), cpc_nZ=float(pm.cpc_nZ),
         aperture_angle_x=float(pm.aperture_angle_x), aperture_angle_y=pm.aperture_angle_y, secref_offset=pm.secref_offset, aim_z=float(pm.H_tower), secref_inv_eccen=float(pm.secref_inv_eccen), tilt_secref=float(pm.tilt_secref), rho_secref=float(pm.rho_secref), rho_cpc=float(pm.rho_cpc), slope_error=float(pm.slope_error_bd))
