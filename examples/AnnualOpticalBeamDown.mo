@@ -70,6 +70,7 @@ model AnnualOpticalBeamDown
   parameter SI.Length Z_helio = 0.0 "heliostat center z location in m";
   parameter Real n_H_rcv=40 "rendering of flux map on receiver";
   parameter SI.Length Z_rcv=0 "Polygon receiver z position, 0 is on the ground";
+  parameter Integer n_procs = 1 "Number of processor to run solstice";
   
   //Environmental variables to run the interpolation functions
   parameter String ppath_sintering = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Include") "Path to the directory where the Python script is hosted";
@@ -241,7 +242,8 @@ model AnnualOpticalBeamDown
       lat=lat,
       wea_file = wea_file,
       sun_shape = sun_shape, 
-      circum_solar_ratio = circum_solar_ratio
+      circum_solar_ratio = circum_solar_ratio,
+      n_procs = n_procs
   );
   
   //Variable for optical
