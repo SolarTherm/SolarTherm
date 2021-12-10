@@ -66,7 +66,12 @@ void stress(
 		Temperature (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
 		C = specificHeatCapacityCp(Tf[k-1], coolant);
 		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
-		Tf[k] = Tf[k-1] + Q/m_flow/C;
+		if (m_flow > 0.0){
+			Tf[k] = Tf[k-1] + Q/m_flow/C;
+		}
+		else{
+			Tf[k] = Tf[k-1];
+		}
 		T_fluid[k-1] = Tf[k];
 		Tcrown_i[k-1] = Ti[0];
 		Tcrown_o[k-1] = To[0];
@@ -142,7 +147,12 @@ void stress2(
 		Temperature2 (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
 		C = specificHeatCapacityCp(Tf[k-1], coolant);
 		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
-		Tf[k] = Tf[k-1] + Q/m_flow/C;
+		if (m_flow > 0.0){
+			Tf[k] = Tf[k-1] + Q/m_flow/C;
+		}
+		else{
+			Tf[k] = Tf[k-1];
+		}
 		T_fluid[k-1] = Tf[k];
 		Tcrown_i[k-1] = Ti[0];
 		Tcrown_o[k-1] = To[0];
