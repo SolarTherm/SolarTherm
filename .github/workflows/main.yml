@@ -72,7 +72,7 @@ jobs:
         for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/${{ matrix.omc-version}} `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt update
-        sudo apt install build-essential gdb openmodelica omlib-modelica-${{ matrix.msl-version }} libglpk-dev libgsl-dev
+        sudo apt install build-essential gdb openmodelica omlib-modelica-${{ matrix.msl-version }} libglpk-dev glpk-utils libgsl-dev
 
     - name: Install Tensorflow C API
       run: |

@@ -67,7 +67,7 @@ jobs:
         echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ bionic release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
-        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.2 libglpk-dev libgsl-dev
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.2 libglpk-dev glpk-utils libgsl-dev
 
     - name: Install OpenModelica Latest OpenModelica on Ubuntu 20.04
       if: ${{ matrix.os == 'ubuntu-20.04' }}
@@ -75,7 +75,7 @@ jobs:
         for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
-        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev libgsl-dev
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev glpk-utils libgsl-dev
 
     - name: Install Tensorflow C API
       run: |
