@@ -352,8 +352,9 @@ class SimResultElec(SimResult):
 
 		if len(var_n)!=0:
 			for n in var_n:
-				v=self.mat.data(n)[0]
-				summary=np.append(summary, (n, v, '', ''))
+				if n!='casefolder':
+					v=self.mat.data(n)[0]
+					summary=np.append(summary, (n, v, '', ''))
 
 		summary=summary.reshape(int(len(summary)/4), 4)
 
