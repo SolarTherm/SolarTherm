@@ -7,7 +7,8 @@
 #include <time.h>
 #include <stdlib.h>
 
-//#define ST_SSCPB_DEBUG
+#define ST_SSCPB_DEBUG
+#define ST_ANN_DEBUG
 #ifdef ST_ANN_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 #else
@@ -72,10 +73,12 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	//Allocate memory for data inside the Input Tensor
 	size_t memdata = numData * sizeof(float); // memory allocation ~ numData * data_type. if we have 2by2 input, then we have 4 numdata
 
-	TF_Tensor* TensorIn = TF_NewTensor(TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocator, 0);
+	TF_Tensor* TensorIn = TF_NewTensor(
+		TF_FLOAT, dims, tensor_dimensionality, data, memdata, &NoOpDeallocator, 0
+	);
 
 	if (TensorIn == NULL){
-		ERR("Failed TF_NewTensor");
+		ERR("Failed TF_NewTensor\n");
 	}
 
 	InputValues[0] = TensorIn;
@@ -177,10 +180,13 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		    MSG("Start gathering %d off-design data points\n",numdata);
 		    clock_t begin = clock();
 		    if(PB_model==0){
+				/*CEA Power Block*/
 		        generateTrainingData(
 		            P_net, T_in_ref_blk, p_high, PR, pinch_PHX, dTemp_HTF_PHX, match_index, numdata, base_path, status_config,
-		            SolarTherm_path);
+		            SolarTherm_path
+				);
 		    }else if(PB_model==1){
+				/*SSC Power Block*/
 		        ssc_test();
 		        ssc_data_t NRELPBSimulationResult = runNRELPB(
 		            numdata, P_net, T_in_ref_blk, p_high,
@@ -188,7 +194,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		            eta_isen_mc, eta_isen_rc, eta_isen_t, dT_mc_approach, 
 		            HTF_name, htf_choice, trainingdir, SolarTherm_path, base_path, status_config, match_index, 
 					1, /*OD is simulated if this is one*/ 
-					0 /*Add this s.t. when test run is triggered, only three data points to run */
+					0 /*1 means test run only. Add this s.t. when test run is triggered, only three data points to run */
 		        );
 		        ssc_data_free(NRELPBSimulationResult);
 		    }else{
@@ -204,7 +210,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		status_config = 0;
 
 		/*Training ANN for predicting eta*/
-		/*int train_status_ANN = */trainingANN(filepath,trainingdir,which_ANN_model, SolarTherm_path);  
+		trainingANN(filepath,trainingdir,which_ANN_model, SolarTherm_path);  
 
 		/*Start validating the ANN model*/
 		//*************Reading scaler
@@ -231,6 +237,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		}
 
 		double* LB = NEW_ARRAY(double,inputsize+outputsize);
+
 		i = 0;
 		fgets(line,limitSize,fnmin);
 		while(!feof(fnmin)){
@@ -293,7 +300,8 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 
 		FILE* dump = fopen(filepathpredictionvalidation,"a");
 		fprintf(dump,"eta_gross_prediction,eta_Q_prediction\n");
-
+		
+		/*Read the test data, and put into the struct test_data*/
 		while(!feof(testfile)){
 		    sscanf(
 		        line,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
@@ -311,12 +319,20 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		    );
 
 		    /*Calculate the deviation from the on design parameter*/
-		    double raw_inputs[] = {test_data[i].load,test_data[i].T_HTF_in, test_data[i].T_amb_input};
 
-		    /*ESTIMATE EFFICIENCY*/          
+			/*Input to ANN*/
+		    double raw_inputs[] = {
+				test_data[i].load,
+				test_data[i].T_HTF_in,
+				test_data[i].T_amb_input
+			};
+
+		    /*Estimate efficiencies*/          
 		    double deviation_estimate_eta = predict_ANN(
-		            session, raw_inputs, which_ANN_model);
-
+	            session, raw_inputs, which_ANN_model
+			);
+			
+			/*Predicted efficiency, base value - deviation*/
 		    double estimate_eta = eta_base - deviation_estimate_eta;
 
 		    double delta_eta; 
@@ -324,13 +340,13 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		    if(which_ANN_model==0){
 		        delta_eta = estimate_eta - test_data[i].eta_gross; //************ deviation from the real model's value
 		    }else if(which_ANN_model==1){
-		        delta_eta = estimate_eta - test_data[i].eta_Q; 
+		        delta_eta = estimate_eta - test_data[i].eta_Q; //************ deviation from the real model's value
 		    }else{
 		        ERR("Invalid ANN choice. Valid choices are 0 for ANN PB, 1 for ANN HC. Your choice is %d",which_ANN_model);
 		        exit(EXIT_FAILURE);
 		    }            
 		
-		    squared_error_eta = squared_error_eta + (delta_eta*delta_eta);
+		    squared_error_eta = squared_error_eta + (delta_eta * delta_eta);
 
 		    absolute_error_eta += fabs(delta_eta);
 		    
@@ -378,11 +394,11 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		MSG("------------------------------------------------\n");
 		MSG("------------------------------------------------\n\n");
 
-		MSG("Sum of square error eff: %lf\nR squared eff: %lf\nMAE eff: %lf\n",squared_error_eta,R_squared_eta, MAE_eta);
+		MSG("MAE eff: %lf\n",MAE_eta);
 
 		/*Stop criterion*/
 		if(MAE_eta < tolerance){
-		    MSG("Model OK!\n");
+		    MSG("Model OK! Error: %lf is less than threshold value: %lf\n",MAE_eta, tolerance);
 		    stop = 1;
 		}else{
 		    MSG("Model is still not OK! Need more data!\n");
@@ -418,13 +434,9 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 }
 
 /*Function to load ANN model in C*/
-void *load_session(char* saved_model_dir, double* X_max
-		,double* X_min, double* y_max, double* y_min, int inputsize
-		,int outputsize, double load_base, double T_in_ref_blk, double T_amb_base
-){
-	//*********************Adjust the logging of tensorflow by setting a variable 
-	//*********************in the environment called TF_CPP_MIN_LOG_LEVEL
+void *load_session(char* saved_model_dir, double* X_max, double* X_min, double* y_max, double* y_min, int inputsize,int outputsize, double load_base, double T_in_ref_blk, double T_amb_base){
 
+	//*********************Adjust the logging of tensorflow by setting a variable in the environment called TF_CPP_MIN_LOG_LEVEL
 	char *var = "TF_CPP_MIN_LOG_LEVEL=0";
 	putenv(var);
 
@@ -442,7 +454,7 @@ void *load_session(char* saved_model_dir, double* X_max
 
 	TF_Session* Session = TF_LoadSessionFromSavedModel(SessionOpts, RunOpts
 			,saved_model_dir, &tags, ntags, Graph, NULL, Status
-		);
+	);
 
 	if(TF_GetCode(Status) == TF_OK){
 		MSG("TF Loading Pre-Trained Model : Complete!\n");

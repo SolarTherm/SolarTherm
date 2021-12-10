@@ -20,7 +20,7 @@ int main()
 {
 	double P_net[] = {5e6};
 	double par_fr = 0.1;
-    double T_in_ref_blk = 943.15;
+    double T_in_ref_blk = 953.15;
     double T_cold_set = 470 + 273.15;
     double dT_PHX_cold_approach = 14.5;
     double p_high = 22e6;

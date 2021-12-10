@@ -25,7 +25,7 @@ class NNModelSequential(object):
             self.fn_data,
             delimiter=',',
             skip_header=1
-            )
+        )
 
     def preprocessingInput(self, fn_data, input_dim, output_dim, scaling_method='MinMaxScaler',test_size=0.15,generalised_scaler=False):
         self.fn_data = fn_data
@@ -42,7 +42,7 @@ class NNModelSequential(object):
             self.X_raw, 
             self.y_raw,
             test_size=test_size
-            )
+        )
 
         if generalised_scaler==False:
             #Import the scaler
