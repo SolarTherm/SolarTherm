@@ -43,7 +43,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.4 pyDOE
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.6.2 pyDOE
         # FIXME move to pypi version of solsticepy ASAP...
         python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -79,7 +79,7 @@ jobs:
 
     - name: Install Tensorflow C API
       run: |
-        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.0.tar.gz"
+        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
         sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
         wc -l /usr/local/include/tensorflow/c/c_api.h
         
