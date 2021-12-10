@@ -8,8 +8,9 @@ function InterpolateSinteringThermalModel
   input Real declination;
   input Real sun_hour_angle;
   input Real flux_multiple_off;
+  input Real time_simul;
   output Real result;
-  external result = interpolate_sintering_thermal_model(ppath, pname, pfunc, modelica_wd, declination, sun_hour_angle, flux_multiple_off)
+  external result = interpolate_sintering_thermal_model(ppath, pname, pfunc, modelica_wd, declination, sun_hour_angle, flux_multiple_off, time_simul)
   annotation(Library="python2.7",
       IncludeDirectory="modelica://SolarTherm/Resources/Include",
       Include="

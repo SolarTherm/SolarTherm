@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <dirent.h>
+#include <time.h>
 
 #include "ascend_models/ascend_utils.h"
 
@@ -12,7 +13,7 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 
 double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* iron_sample, const char* opt_file, double* results);
 
-double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off);
+double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off, double time_simul);
 
 
 
@@ -106,9 +107,16 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 
 }
 
-double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* solstice_wd, double declination, double sun_hour_angle, double flux_multiple_off){
+double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* solstice_wd, double declination, double sun_hour_angle, double flux_multiple_off, double time_simul){
+	fprintf(stderr,"Simulation time: %lf seconds\n",time_simul);
+	clock_t start = clock();
+
 	double mdot_ore;
 	mdot_ore = run_interpolation(ppath, pname, pfunc, solstice_wd, declination, sun_hour_angle, flux_multiple_off);
-	//fprintf(stderr,"mdot_ore = %lf kg/s\n", mdot_ore);
+
+	clock_t end = clock();
+	double time_spent = (double)(end-start) / CLOCKS_PER_SEC;
+
+	fprintf(stderr,"It takes %lf seconds to call this C function\nmdot_ore = %lf kg/s\n\n", time_spent, mdot_ore);
 	return mdot_ore;
 }

@@ -13,6 +13,7 @@ import scipy
 from scipy.interpolate import interpn, griddata, LinearNDInterpolator
 import pandas as pd
 import math
+import time
 
 '''
 This function is a wrapper to run ASCEND model
@@ -365,6 +366,7 @@ def run_thermalSinteringModelOffDesign(inputs):
 			> flux --> flux multiplier at time t (DNI(t)/1000)
 '''
 def run_interpolate(inputs):
+	start = time.time()
 	solstice_wd = inputs["dir_save"]
 	declination = inputs["declination"]
 	sunhour = inputs["sunhour"]
@@ -399,6 +401,10 @@ def run_interpolate(inputs):
 	del X
 	del y
 	del interpolator
+
+	end = time.time()
+
+	sys.stderr.write("It takes %lf seconds to interpolate in Python\n"%(end-start))
 	
 	if math.isnan(value[0]):
 		return 0

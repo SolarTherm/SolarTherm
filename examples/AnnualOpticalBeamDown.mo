@@ -302,7 +302,7 @@ equation
 		        ppath_sintering, pname_sintering, 
 		        pfunc_sintering, 
 		        solstice_wd, declination_inDeg, 
-		        sun_hour_angle_inDeg, flux_multiple_off
+		        sun_hour_angle_inDeg, flux_multiple_off, time
 		  );
 	  end if;
   
