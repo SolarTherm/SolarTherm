@@ -105,15 +105,16 @@ if __name__=='__main__':
 	par_n_des=tree.filter_type(2) # 2 are the design parameters				
 
 	method_args={}	
+	nominals=[]
+	lbs=[]
+	ubs=[]
+	signs=[1]	
 	if args.sample=='moga-hybrid':
 		method='moga'
 		method_args['max_eval']=args.ns
-		method_args['pop_size']=args.np			
+		method_args['pop_size']=args.np	
 		var_names=par_n_des
-		nominals=[]
-		lbs=[]
-		ubs=[]
-		signs=[1]
+
 		for n in par_n_des:
 			nominals.append(tree.get(n+'.nominal'))	
 			lbs.append(tree.get(n+'.boundary1'))
@@ -122,106 +123,25 @@ if __name__=='__main__':
 			lbs.append(tree.get(n+'.boundary1'))
 			ubs.append(tree.get(n+'.boundary2'))	
 			signs.append(tree.get(n+'.sign'))						
-		res_names=['lcoe']+par_n_perf
-		stdevs=None
+		res_names=['lcoe']+par_n_perf					
 		dists=None
 		
 	else:
 		method='uq'
 		method_args['sample_type']='lhs'
 		method_args['num_sample']=args.ns
-		var_names=par_n
-		par_uniform=tree.filter_dist('uniform',var_names)
-		par_pert=tree.filter_dist('pert', var_names)			
-		par_normal=tree.filter_dist('normal', var_names)
-
-		dists=[]			
-		if len(par_uniform)>0:
-			dists.append('uniform')
-			lb_uniform=[]
-			ub_uniform=[]
-			for n in par_uniform:
-				b1=tree.get(n+'.boundary1')
-				b2=tree.get(n+'.boundary2')
-				lb_uniform.append(b1)
-				ub_uniform.append(b2)
-		if len(par_pert)>0:
-			dists.append('pert')
-			lb_pert=[]
-			ub_pert=[]
-			nominal_pert=[]
-			for n in par_pert:
-				nominal=tree.get(n+'.nominal')					
-				b1=tree.get(n+'.boundary1')
-				b2=tree.get(n+'.boundary2')
-				nominal_pert.append(nominal)
-				lb_pert.append(b1)
-				ub_pert.append(b2)				
-		if len(par_normal)>0:
-			dists.append('normal')
-			mean=[]
-			stdev=[]
-			for n in par_normal:
-				m=tree.get(n+'.nominal')
-				sd=tree.get(n+'.boundary1')
-				mean.append(m)
-				stdev.append(sd)
-		
-		if len(dists)==1:
-			if 'uniform' in dists:
-				var_names=par_uniform
-				lbs=lb_uniform
-				ubs=ub_uniform
-				nominals=None
-				stdevs=None					
-			elif 'pert' in dists:
-				# FIXME an issue has been found
-				# in dakota to sample a pert distribution
-				# need investigation
-				var_name=par_pert
-				nominals=nominal_pert
-				lbs=lb_pert
-				ubs=ub_pert
-				stdevs=None
-			elif 'normal' in dists:
-				var_name=par_normal
-				nominals=mean
-				stdevs=stdev
-				lbs=None
-				ubs=None
-				
-		elif len(dists)==2:
-			if 'normal' not in dists:
-				# uniform and pert distributions
-				var_names=[par_uniform, par_pert]
-				lbs=[lb_uniform, lb_pert]
-				ubs=[ub_uniform, ub_pert]
-				nominals=[[], nominal_pert]
-				stdevs=None
-			elif 'pert' not in dists:
-				# uniform and normal distributions
-				var_names=[par_uniform, par_normal]
-				lbs=[lb_uniform]
-				ubs=[ub_uniform]
-				nominals=[[],mean]
-				stdevs=stdev			
-			elif 'uniform' not in dists:
-				# pert and normal distributions
-				var_names=[par_normal, par_pert]
-				lbs=[[],lb_pert]
-				ubs=[[],ub_pert]
-				nominals=[mean, nominal_pert]
-				stdevs=stdev					
-							
-		elif len(dists)==3:
-				var_names=[par_uniform, par_normal, par_pert]
-				lbs=[lb_uniform, [], lb_pert]
-				ubs=[ub_uniform, [], ub_pert]
-				nominals=[[], mean, nominal_pert]
-				stdevs=stdev					
+		var_names=par_n_des+par_n_perf		
+		for n in par_n_des:
+			nominals.append(tree.get(n+'.nominal'))	
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))
+		for n in par_n_perf:	
+			nominals.append(tree.get(n+'.nominal'))			
+			lbs.append(tree.get(n+'.boundary1'))
+			ubs.append(tree.get(n+'.boundary2'))	
+						
 		res_names=['lcoe']
-		signs=[1]
-
+		dists=['uniform']
 
 	if args.samplefile==None:
 		# call dakota to sample the data
@@ -234,7 +154,7 @@ if __name__=='__main__':
 		
 		else:
 			print('Generating data sample by Dakota')		
-			dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
+			dkt=DakotaSampleIn(casedir=casedir, fn=fn, analysis_type=analysis_type, method=method, args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=None, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=res_names, signs=signs)
 
 			subprocess.call('chmod a+x %s/interface_bb.py'%casedir, shell=True)
 	
@@ -242,8 +162,23 @@ if __name__=='__main__':
 				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
-		print('	%s sample generated'%args.ns)									
+		print('	%s sample generated'%args.ns)	
+
+
+		summary=np.array([])
+		for i in range(1, args.ns+1):
+			fn=casedir+'/summary_report_%.0f.csv'%(i)
+			data=np.loadtxt(fn, dtype=str, delimiter=',')
+			if i==1:
+				summary=np.append(summary, (data[:,0],data[:,1]))
+			else:
+				summary=np.append(summary, data[:,1])
+
+		summary=summary.reshape(int(args.ns+1), int(len(summary)/(args.ns+1)))
 		summaryfile=casedir+'/summary_all.csv'
+		np.savetxt(summaryfile, summary, fmt='%s', delimiter=',')
+		
+
 	else:
 		print('Load data sample from file: %s'%args.samplefile)			
 		summaryfile=args.samplefile
@@ -259,6 +194,7 @@ if __name__=='__main__':
 		indices, tri_idx, f_lcoe=ct.front_tri()
 	elif args.sample=='lhs':				
 		indices, f_lcoe=ct.get_front(plot=args.plot)
+		tri_idx=None
 		
 	# new sample of uncertain parameters
 	num_ns=1000 # number of new samples

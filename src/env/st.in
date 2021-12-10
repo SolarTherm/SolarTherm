@@ -120,7 +120,7 @@ if os.environ.get('VERBOSE'):
 # run the requested action...
 
 cmds = ['env','python','simulate','optimise','inspect','plotmat'
-		,'cost','conv_sam_ourly','wea_to_mo']
+		,'cost','conv_sam_ourly','wea_to_mo','contingency','sensitivity']
 
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("'st' is a helper script for running SolarTherm tools. It should be")
