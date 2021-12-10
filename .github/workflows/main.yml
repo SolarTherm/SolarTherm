@@ -20,7 +20,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
         python-version: [3.8.12]
-	omc-version: [apt]
+        omc-version: [apt]
         msl-version: [3.2.3]
         include:
           - os: ubuntu-20.04
@@ -29,7 +29,7 @@ jobs:
             msl-version: [3.2.3]
           - os: ubuntu-18.04
             python-version: 3.6.9
-	    omc-version: omc/builds/linux/releases/1.14.2/
+            omc-version: omc/builds/linux/releases/1.14.2/
             msl-version: [3.2.2]
  
     env:
