@@ -22,7 +22,7 @@ def run():
 		
 	interface.run_st_model()
 	interface.get_st_res()
-	interface.cleanup()
+	#interface.cleanup()
 
 
 class Interface:
@@ -140,7 +140,43 @@ class Interface:
 			print('Result fn is loaded, fn=', self.sim.res_fn)					
 		except:			
 			print('Result fn cannot be open, fn=', self.sim.res_fn)	
-						
+
+
+		if self.analysis_type!='TEST':
+			if self.analysis_type=='FUEL':
+				resultclass = postproc.SimResultFuel(self.sim.res_fn)			
+
+			else:
+				print("result class 0')
+				resultclass = postproc.SimResultElec(self.sim.res_fn)	
+				print("result class 1')
+				if peaker:
+					perf = resultclass.calc_perf(perker=bool(peaker))
+				else:	
+					perf = resultclass.calc_perf()	
+				print("summary 0')
+				summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)		
+				print("summary 1')						
+					
+		solartherm_res=[]
+		for i in range(self.num_res):
+			sign=float(self.params.__getitem__("sign_%s"%(i+1)))
+			name=self.params.__getitem__("res_%s"%(i+1))
+			if name=='epy':
+				res=sign*perf[0]
+			elif name=='lcoe':
+				res=sign*perf[1]
+			elif name=='capf':
+				res=sign*perf[2]
+			elif name=='srev':
+				res=sign*perf[3]
+			else:
+				res=sign*res_fn.data(name)[0]					
+			solartherm_res.append(res)
+			print('objective %s: '%i, name, res)
+
+
+		'''				
 		try:	
 			
 			if self.analysis_type!='TEST':
@@ -183,7 +219,7 @@ class Interface:
 					error=0 
 				solartherm_res.append(sign*error)
 			print('Failed to process the results')
-
+		'''
 		print('')
 		# Return the results to Dakota
 		for i, r in enumerate(self.results.responses()):
