@@ -147,16 +147,16 @@ class Interface:
 				resultclass = postproc.SimResultFuel(self.sim.res_fn)			
 
 			else:
-				print("result class 0')
+				print("result class 0")
 				resultclass = postproc.SimResultElec(self.sim.res_fn)	
-				print("result class 1')
+				print("result class 1")
 				if peaker:
 					perf = resultclass.calc_perf(perker=bool(peaker))
 				else:	
 					perf = resultclass.calc_perf()	
-				print("summary 0')
+				print("summary 0")
 				summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)		
-				print("summary 1')						
+				print("summary 1")						
 					
 		solartherm_res=[]
 		for i in range(self.num_res):
