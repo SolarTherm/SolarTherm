@@ -8,6 +8,7 @@ from scipy import interpolate
 import DyMat
 from scipy.spatial import ConvexHull, Delaunay
 import time
+import sys
 
 class Contingency:
 
@@ -921,4 +922,8 @@ if __name__=="__main__":
 			np.savetxt('/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/newsample-%s_%s_%.0f.csv'%(mm1[j], mm2[j], sample[i]), res.T, fmt='%s', delimiter=',')
 			t1=time.time()
 			print('Time (total) %.2f s'%(t1-t0))
-			stop
+			sys.exit(0)
+
+
+
+
