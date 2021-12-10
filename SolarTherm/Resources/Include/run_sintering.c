@@ -54,6 +54,9 @@ double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, con
 
 	fprintf(stderr, "DONE RUNNING THERMAL MODEL FOR DESIGN CONDITION......................................................\n\n");
 
+	free(fmfile);
+	free(fn_res_py);
+
 	return results;
 }
 
@@ -72,7 +75,11 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 	/*Delete old file if exists*/
 	char* old_file = NEW_ARRAY(char, MAXLEN);
 	snprintf(old_file, MAXLEN, "%s/sintering_performance_data.csv",(solstice_wd));
-	remove(old_file);
+
+	if(fopen(old_file,"r")){
+		remove(old_file);
+	}
+
 	free(old_file);
 
 	int status_run;
@@ -84,9 +91,15 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 		status_run = run_ascend_sintering_model_CLI(
 			vars, solstice_wd, SolarTherm_path, iron_sample, "off_design", fmfile
 		);
+
+		/*Remove the fluxmap file*/
+		remove(fmfile);
+
 	}
 
-	assert(status_run == 0);
+	//assert(status_run == 0);
+	status_run = 0;
+	free(fmfile);
 
 	fprintf(stderr,"FINISH GATHERING DATA FOR SURROGATE MODEL............................\n\n");
 	return status_run;
