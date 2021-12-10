@@ -15,7 +15,7 @@ double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, con
 
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* modelica_wd, double declination, double sun_hour_angle, double flux_multiple_off, double time_simul);
 
-
+int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, int dummy_status_run);
 
 
 double* run_sintering_thermal_model_designpoint(const char* SolarTherm_path, const char* solstice_wd, const double vars[], char* iron_sample, const char* opt_file, double* results){
@@ -102,9 +102,47 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 	status_run = 0;
 	free(fmfile);
 
-	fprintf(stderr,"FINISH GATHERING DATA FOR SURROGATE MODEL............................\n\n");
+	fprintf(stderr,"FINISH GATHERING DATA FOR SURROGATE MODEL............................\n\nPOSTPROCESSING THE DATA.........\n");
 	return status_run;
 
+}
+
+int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, int dummy_status_run){
+	/*Post processing*/
+	char* fnres = NEW_ARRAY(char, MAXLEN);
+	snprintf(fnres, MAXLEN, "%s/sintering_performance_data.csv",solstice_wd);
+	
+	/*Build fnres*/
+	if(fopen(fnres,"r")==NULL){
+		fprintf(stderr,"%s not found\n",(fnres));
+	}
+	
+	char* cmd = NEW_ARRAY(char, MAXLEN);
+	
+	snprintf(cmd,MAXLEN,"python %s/Resources/Include/run_sintering_thermal_model.py --which_run postproc --fnres %s --solstice_wd %s",SolarTherm_path, fnres, solstice_wd);
+
+	//fprintf(stderr,"%s\n",cmd);
+	system(cmd);
+
+	char* test_file = NEW_ARRAY(char, MAXLEN);
+	snprintf(test_file, MAXLEN, "%s/flux_map_DNI_0.motab",solstice_wd);
+	fprintf(stderr, "testfile: %s\n", test_file);
+	
+	int status_run;
+
+	if(fopen(test_file,"r") == NULL){
+		status_run = 1;
+	}else{
+		status_run = 0;
+	}
+	
+	free(cmd);
+	free(fnres);
+	free(test_file);
+
+	assert(status_run==0);
+
+	return status_run;
 }
 
 double interpolate_sintering_thermal_model(const char* ppath, const char* pname, const char* pfunc, const char* solstice_wd, double declination, double sun_hour_angle, double flux_multiple_off, double time_simul){

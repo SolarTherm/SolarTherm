@@ -19,7 +19,7 @@ model AnnualOpticalBeamDown
   /*
 	 Boolean for the cost
   */
-  parameter Boolean low_cost = true "If false, HX and reactor cost is multiplied by a factor (roughly 2)"; 
+  parameter Boolean low_cost = false "If false, HX and reactor cost is multiplied by a factor (roughly 2)"; 
   
   /*
       Reading metadata from $casefolder/OELT_Solstice.motab
@@ -79,6 +79,13 @@ model AnnualOpticalBeamDown
   parameter String solstice_wd = Modelica.Utilities.Files.loadResource(casefolder) "Folder in which the CSVs storing flux map are located absolute p";
   parameter String SolarTherm_path = Modelica.Utilities.Files.loadResource("modelica://SolarTherm");
   
+  //Path to motab contains the system yield for each DNI level (for linear 3 d interpolation)
+  parameter String table_0(fixed=false); 
+  parameter String table_1(fixed=false); 
+  parameter String table_2(fixed=false); 
+  parameter String table_3(fixed=false); 
+  parameter String table_4(fixed=false); 
+  
   //Parameters to generate the training data
   parameter String thermal_model_name_parameters[:] = {
     "T_sky", "k_s", "alpha", "eps_r", "h_ext", "eps",
@@ -118,6 +125,7 @@ model AnnualOpticalBeamDown
     
   //status_run to launch the ASCEND model --> collecting training data
   parameter Integer status_run(fixed=false);
+  parameter Integer status_run_postproc(fixed=false);
   parameter Real design_point_result[3](each fixed=false);
   
   /*Design point calculation result*/
@@ -246,6 +254,46 @@ model AnnualOpticalBeamDown
       n_procs = n_procs
   );
   
+  //Tables for 3D interpolations
+  Modelica.Blocks.Types.ExternalCombiTable2D TABLE_0 = Modelica.Blocks.Types.ExternalCombiTable2D(
+    tableName = "yield", 
+    fileName = table_0, 
+    table = fill(0.0, 0, 2), 
+    smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+  );
+  
+  
+  Modelica.Blocks.Types.ExternalCombiTable2D TABLE_1 = Modelica.Blocks.Types.ExternalCombiTable2D(
+    tableName = "yield", 
+    fileName = table_1, 
+    table = fill(0.0, 0, 2), 
+    smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+  );
+  
+  
+  Modelica.Blocks.Types.ExternalCombiTable2D TABLE_2 = Modelica.Blocks.Types.ExternalCombiTable2D(
+    tableName = "yield", 
+    fileName = table_2, 
+    table = fill(0.0, 0, 2), 
+    smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+  );
+  
+  
+  Modelica.Blocks.Types.ExternalCombiTable2D TABLE_3 = Modelica.Blocks.Types.ExternalCombiTable2D(
+    tableName = "yield", 
+    fileName = table_3, 
+    table = fill(0.0, 0, 2), 
+    smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+  );
+  
+  
+  Modelica.Blocks.Types.ExternalCombiTable2D TABLE_4 = Modelica.Blocks.Types.ExternalCombiTable2D(
+    tableName = "yield", 
+    fileName = table_4, 
+    table = fill(0.0, 0, 2), 
+    smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+  );
+  
   //Variable for optical
   Real opt_eff;
   Real opt_ann_eff "annual optical efficiency";
@@ -254,13 +302,15 @@ model AnnualOpticalBeamDown
   nSI.Angle_deg declination_inDeg;
   nSI.Angle_deg sun_hour_angle_inDeg;
   Real flux_multiple_off;
-  SI.Mass M_ore "mass of ore accummulated thru out the year [kg]";
+  Real yield_array[5];
   
   //Analysis
   SI.Energy E_sun;
   SI.Energy E_rcv;
   SI.HeatFlowRate Q_sun;
   SI.HeatFlowRate Q_rcv;
+  SI.Mass M_ore "mass of ore accummulated thru out the year [kg]";
+  SI.MassFlowRate mdot_ore;
 
 initial equation
   /*Call Solstice to generate OELT*/
@@ -279,37 +329,72 @@ initial equation
   A_HX1 = design_point_result[2]; 
   A_HX2 = design_point_result[3];
   
-  /*Initialisation of the model*/
+  /*Generate the interpolation data*/
   if Q_in_rcv_from_OELT > Q_in_rcv then
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is enough\n\n");
       status_run = SolarTherm.Utilities.RunSinteringThermalModel(SolarTherm_path, solstice_wd, thermal_model_parameters, opt_file, iron_sample);
+      status_run_postproc = SolarTherm.Utilities.PostProcSinteringYield(solstice_wd, SolarTherm_path, opt_file, status_run);
   else
       Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is NOT enough\n\n");
       status_run = -1000;
+      status_run_postproc = -1000;
   end if;
+   
+  /*Get the table name after generating opt_file and finish postprocessing*/
+  table_0 = SolarTherm.Utilities.func_1(opt_file, status_run_postproc, casefolder, 0); 
+  table_1 = SolarTherm.Utilities.func_1(opt_file, status_run_postproc, casefolder, 1); 
+  table_2 = SolarTherm.Utilities.func_1(opt_file, status_run_postproc, casefolder, 2); 
+  table_3 = SolarTherm.Utilities.func_1(opt_file, status_run_postproc, casefolder, 3); 
+  table_4 = SolarTherm.Utilities.func_1(opt_file, status_run_postproc, casefolder, 4);  
 
 equation
   declination_inDeg = Modelica.SIunits.Conversions.to_deg(sun.dec);
   sun_hour_angle_inDeg = Modelica.SIunits.Conversions.to_deg(sun.hra);
   flux_multiple_off = data.DNI/1000;
   
-  if status_run > -500 then
+  if status_run > -500 and status_run_postproc > -500 then
 	  /*If heliostat field gives the adeuqate amount of heat at design point then the system is eligible to run*/
 	  if flux_multiple_off < 0.7 then
-		  der(M_ore) = 0;
+		  yield_array[1] = 0;
+		  yield_array[2] = 0;
+		  yield_array[3] = 0;
+		  yield_array[4] = 0;
+		  yield_array[5] = 0;
+		  mdot_ore = 0;
+		  
 	  else
-		  der(M_ore) = SolarTherm.Utilities.InterpolateSinteringThermalModel(
+          /*Populate yield array. Idx 1 is for DNI ratio 0.7 given 2 sun angles, Idx 2 is for DNI ratio 0.8 and so on*/
+		  yield_array[1] = SolarTherm.Utilities.PopulateArray(TABLE_0, declination_inDeg, sun_hour_angle_inDeg);
+		  yield_array[2] = SolarTherm.Utilities.PopulateArray(TABLE_1, declination_inDeg, sun_hour_angle_inDeg);
+		  yield_array[3] = SolarTherm.Utilities.PopulateArray(TABLE_2, declination_inDeg, sun_hour_angle_inDeg);
+		  yield_array[4] = SolarTherm.Utilities.PopulateArray(TABLE_3, declination_inDeg, sun_hour_angle_inDeg);
+		  yield_array[5] = SolarTherm.Utilities.PopulateArray(TABLE_4, declination_inDeg, sun_hour_angle_inDeg);
+		  
+		  mdot_ore = SolarTherm.Utilities.InterpolateYield(yield_array, flux_multiple_off);
+		  
+		  /*Interpolate*/
+		  
+		  
+		  /*mdot_ore = SolarTherm.Utilities.InterpolateSinteringThermalModel(
 		        ppath_sintering, pname_sintering, 
 		        pfunc_sintering, 
 		        solstice_wd, declination_inDeg, 
 		        sun_hour_angle_inDeg, flux_multiple_off, time
-		  );
+		  );*/
+		  		  
 	  end if;
   
   else
 	  /*If heliostat field could not provide the requested heat, then the yield is forced to be zero to cut computational time*/
-	  der(M_ore) = 0;
+      yield_array[1] = 0;
+      yield_array[2] = 0;
+      yield_array[3] = 0;
+      yield_array[4] = 0;
+      yield_array[5] = 0;
+	  mdot_ore = 0;
   end if;
+  
+  der(M_ore) = mdot_ore;
   
   opt_eff=lookuptable.nu;
   Q_sun=sun.dni*n_h*A_h;

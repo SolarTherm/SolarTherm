@@ -9,3 +9,7 @@ LinProgFunc
 RunSinteringThermalModel
 InterpolateSinteringThermalModel
 RunSinteringThermalModelDesignPoint
+PostProcSinteringYield
+PopulateArray
+func_1
+InterpolateYield
