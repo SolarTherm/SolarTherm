@@ -9,7 +9,7 @@ on:
   push:
     branches: [ $default-branch, master]
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch, master, particle-master-intermediate]
     #[ $default-branch, master-m ]
 
 jobs:
@@ -19,15 +19,24 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
+        python-version: [3.8.12]
+	omc-version: [apt]
+        msl-version: [3.2.3]
         include:
           - os: ubuntu-20.04
-            python-version: 3.8
+            python-version: 3.9.9
+            omc-version: apt
+            msl-version: [3.2.3]
           - os: ubuntu-18.04
-            python-version: 3.6
-
+            python-version: 3.6.9
+	    omc-version: omc/builds/linux/releases/1.14.2/
+            msl-version: [3.2.2]
+ 
     env:
-      DAKVER: 6.14.0
+      DAKVER: 6.14.0 # version of DAKOTA
+      SAMVER: 2020-11-12 # version of SAM
       PYTEST_ADDOPTS: --color=yes
+      TFVER: 2.6.2 # version of TensorFlow
 
     steps:
     - uses: actions/checkout@v2
@@ -41,7 +50,9 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro colorama
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==${{ env.TFVER }} pyDOE
+        # FIXME move to pypi version of solsticepy ASAP...
+        python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
 
@@ -58,11 +69,17 @@ jobs:
 
     - name: Install OpenModelica
       run: |
-        for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+        for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/${{ matrix.omc-version}} `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt update
-        sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev
+        sudo apt install build-essential gdb openmodelica omlib-modelica-${{ matrix.msl-version }} libglpk-dev libgsl-dev
 
+    - name: Install Tensorflow C API
+      run: |
+        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-${{ env.TFVER }}.tar.gz"
+        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
+        wc -l /usr/local/include/tensorflow/c/c_api.h
+        
     - name: Install Solstice
       run: |
         sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
@@ -107,6 +124,13 @@ jobs:
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"
 
+    - name: Install SAM Simulation Core
+      run: |
+        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+        ls /opt/SAM/${SAMVER//-/.}
+
     - name: Build SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
@@ -136,6 +160,23 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest
+        st python -m pytest -k "not test_particlesystem and not test_otf"
+
+    - name: Test OTF Surrogate
+      if: ${{ matrix.omc-version != 'apt' }}
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
+        echo $LD_LIBRARY_PATH
+        cd tests
+        st python -m pytest -vv -s test_otf.py
+
+    - name: Test Particle System 1D
+      if: ${{ matrix.omc-version != 'apt' }}
+      run: |
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+        cd tests
+        st python -m pytest -vv -s test_particlesystem1D_with_GDB.py
 
 # vim: ts=2:sw=2:et
