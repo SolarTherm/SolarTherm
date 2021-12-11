@@ -189,7 +189,7 @@ if __name__=='__main__':
 	# TODO in the current examples, no cost parameters are involved
 	# TO BE ADDED	
 	print('Postprocessing contingency')				
-	ct=Contingency(casedir=casedir, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
+	ct=Contingency(casedir=casedir, num_total_sample=args.ns, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
 	if args.sample=='moga-hybrid':
 		indices, tri_idx, f_lcoe=ct.front_tri()
 	elif args.sample=='lhs':				

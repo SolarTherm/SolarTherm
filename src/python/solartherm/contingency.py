@@ -12,29 +12,21 @@ import sys
 
 class Contingency:
 
-	def __init__(self, casedir, var_n_des=[], var_n_perf=[], var_n_cost=[], summaryfile=None, process_lcoe=False):
+	def __init__(self, casedir, num_total_sample, var_n_des=[], var_n_perf=[], var_n_cost=[], summaryfile=None, process_lcoe=False):
 
 		self.casedir=casedir
-		samplefile=self.casedir+'/sample.dat'
 		self.var_n_des=var_n_des
 		self.var_n_perf=var_n_perf
 		self.var_n_cost=var_n_cost
-		self.get_sample(samplefile, summaryfile, process_lcoe)
+		self.get_sample(num_total_sample, summaryfile, process_lcoe)
 	
 		#self.get_lcoe_contingency(fn='/media/yewang/Software/program/solartherm-contingency/examples/demo_sensitivity'+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
 		#self.plot_cdfs()
 		#self.plot_sensitivity()
 
 		
-	def get_sample(self, samplefile, summaryfile=None, process_lcoe=False):
-		try:
-			with open(samplefile) as f:
-				content= f.read().splitlines()
-			f.close()	
-		except:
-			print("Simulation not finished (sample.dat not found)")
+	def get_sample(self, num_total_sample, summaryfile=None, process_lcoe=False):
 
-		num_total_sample=len(content)-1
 		self.sample={}
 
 		if summaryfile==None:
