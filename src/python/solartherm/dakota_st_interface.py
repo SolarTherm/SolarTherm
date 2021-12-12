@@ -129,7 +129,11 @@ class Interface:
 		initStep = None if initStep == 'None' else str(initStep)
 		maxStep = None if maxStep == 'None' else str(maxStep)
 
-		self.sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)		
+		try:
+			self.sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)		
+		except:
+			print("Failed to run the simulation, case %s"%(self.suffix))
+
 
 	def get_st_res(self):
 	
@@ -181,7 +185,7 @@ class Interface:
 				else: # maxmisation
 					error=0 
 				solartherm_res.append(sign*error)
-			print('Failed to process the results')
+			print('Failed to process the results, case %s'%(self.suffix))
 	
 		print('')
 		# Return the results to Dakota
