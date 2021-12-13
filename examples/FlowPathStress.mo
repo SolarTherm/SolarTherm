@@ -63,20 +63,11 @@ model FlowPathStress
 	Modelica.Blocks.Sources.RealExpression DNI(y = dni_mflow_table.y[2]) annotation(
 	Placement(visible = false, transformation(origin = {-80, 80}, extent = {{-10, -10}, {10, 10}})));
 
-	// Thermo-elastic stress
-	Real stress_fpath[N];
-
-	// Surface temperature at tube crown
-	Real T_crown_fpath[N];
-
-	// Surface temperature at tube crown
-	Real T_fluid_fpath[N];
-
-	// Solar flux distribution along flowpath
-	SI.HeatFlux CG[N];
-
-	// Net flux
-	SI.HeatFlux qnet[nt,N];
+	SI.Stress stress_fpath[N] "Thermo-elastic stress";
+	SI.Temperature T_crown_fpath[N] "Surface temperature at tube crown";
+	SI.Temperature T_fluid_fpath[N] "Fluid temperature";
+	SI.HeatFlux CG[N] "Solar flux distribution along flowpath";
+	SI.HeatFlux qcoefs[N,8] "Coefficients for net flux";
 
 	// Flux files
 	parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
@@ -139,6 +130,6 @@ equation
 	connect(DNI.y, sun.dni);
 	m_flow_tb = n_tb_fp*dni_mflow_table.y[1]/n_tubes;
 
-	(T_crown_fpath, T_fluid_fpath, stress_fpath, qnet) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	(T_crown_fpath, T_fluid_fpath, stress_fpath, qcoefs) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
 	annotation(experiment(StartTime=0.0, StopTime=86400, Interval=1800, Tolerance=1e-06));
 end FlowPathStress;
