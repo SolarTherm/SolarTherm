@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     #
   push:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, particle-master-intermediate]
   pull_request:
     branches:  [ $default-branch, master, particle-master-intermediate]
     #[ $default-branch, master-m ]
@@ -136,7 +136,7 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons
+        scons SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Install SolarTherm
       run: |
@@ -144,7 +144,7 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install
+        scons install SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Test MPI
       run: |    
@@ -160,23 +160,23 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest -k "not test_particlesystem and not test_otf"
+        st python -m pytest -vv
 
-    - name: Test OTF Surrogate
-      if: ${{ matrix.omc-version != 'apt' }}
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
-        echo $LD_LIBRARY_PATH
-        cd tests
-        st python -m pytest -vv -s test_otf.py
+    #- name: Test OTF Surrogate
+    #  if: ${{ matrix.omc-version != 'apt' }}
+    #  run: |
+    #    export PATH=$PATH:/usr/local/bin:~/.local/bin
+    #    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
+    #    echo $LD_LIBRARY_PATH
+    #    cd tests
+    #    st python -m pytest -vv -s test_otf.py
 
-    - name: Test Particle System 1D
-      if: ${{ matrix.omc-version != 'apt' }}
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
-        cd tests
-        st python -m pytest -vv -s test_particlesystem1D_with_GDB.py
+    #- name: Test Particle System 1D
+    #  if: ${{ matrix.omc-version != 'apt' }}
+    #  run: |
+    #    export PATH=$PATH:/usr/local/bin:~/.local/bin
+    #    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+    #    cd tests
+    #    st python -m pytest -vv -s test_particlesystem1D_with_GDB.py
 
 # vim: ts=2:sw=2:et

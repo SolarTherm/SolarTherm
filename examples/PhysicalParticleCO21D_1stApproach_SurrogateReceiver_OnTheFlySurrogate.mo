@@ -41,6 +41,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean set_absolute_tower_cost = false "[H&T] False if tower cost is an absolute value, false means using SBP/SAM tower cost";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
+  parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
+  parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   parameter Boolean set_scheduler = false "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
   
   //****************************** Importing medium and external files
@@ -67,6 +69,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
   parameter String casefolder = "." "[H&T] Folder to which the OELT_Solstice look-up table will be stored";
   parameter Real metadata_list[9] = metadata(opt_file);
   parameter Solar_angles angles = Solar_angles.dec_hra "[SYS] Angles used in the lookup table file";
+  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";    
   parameter String field_type = "polar" "[H&T] Other options are : surround";
   parameter SI.Area A_helio = 144.375 "[H&T] Heliostat mirror area (m^2)";
   parameter Real AR_helio = 1 "[H&T] ratio between H_helio/W_helio";
@@ -692,6 +696,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate
       n_procs = n_procs, 
       psave = casefolder, 
       wea_file = wea_file,
+      sunshape=sunshape,
+      buie_csr=buie_csr,      
+	  optics_verbose=set_optics_verbose,
+	  optics_view_scene=set_optics_view_scene,
 	  get_optics_breakdown = get_optics_breakdown,
       set_swaying_optical_eff = set_swaying_optical_eff) annotation(
     Placement(transformation(extent = {{-88, 2}, {-56, 36}})));

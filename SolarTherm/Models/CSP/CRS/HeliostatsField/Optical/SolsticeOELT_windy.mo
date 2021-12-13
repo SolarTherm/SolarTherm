@@ -122,6 +122,14 @@ initial algorithm
   if set_swaying_optical_eff then windy_optics:=1;
   else windy_optics:=0;
   end if;
+  
+  if optics_verbose then verbose:=1;
+  else verbose:=0;
+  end if;
+
+  if optics_view_scene then gen_vtk:=1;
+  else gen_vtk:=0;
+  end if;
 
 initial equation
   tablefile_status = SolsticePyFunc(ppath, pname, psave, 
