@@ -20,8 +20,8 @@ def run():
 	else:
 		interface.update_st_params()
 		
-	interface.run_st_model()
-	interface.get_st_res()
+	simulation_state=interface.run_st_model()
+	interface.get_st_res(simulation_state)
 	interface.cleanup()
 
 
@@ -130,63 +130,80 @@ class Interface:
 		maxStep = None if maxStep == 'None' else str(maxStep)
 
 		try:
-			self.sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)		
-		except:
-			print("Failed to run the simulation, case %s"%(self.suffix))
+			self.sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
+			simulation_state=1		
+		except Exception as e:
+			print(str(e))
+			print("Failed to run the simulation, case %s\n"%(self.suffix))
+			simulation_state=0
 
-
-	def get_st_res(self):
+		return simulation_state
+			
+	def get_st_res(self,simulation_state):
 	
-		peaker=float(self.params.__getitem__("peaker"))
-		
-		try:
-			res_fn=DyMat.DyMatFile(self.sim.res_fn)	
-			print('Result fn is loaded, fn=', self.sim.res_fn)					
-		except:			
-			print('Result fn cannot be open, fn=', self.sim.res_fn)	
-			
-		try:	
-			
-			if self.analysis_type!='TEST':
-				if self.analysis_type=='FUEL':
-					resultclass = postproc.SimResultFuel(self.sim.res_fn)			
-
-				else:
-					resultclass = postproc.SimResultElec(self.sim.res_fn)	
-					if peaker:
-						perf = resultclass.calc_perf(perker=bool(peaker))
-					else:	
-						perf = resultclass.calc_perf()	
-					summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)								
-							
-			solartherm_res=[]
-			for i in range(self.num_res):
-				sign=float(self.params.__getitem__("sign_%s"%(i+1)))
-				name=self.params.__getitem__("res_%s"%(i+1))
-				if name=='epy':
-					res=sign*perf[0]
-				elif name=='lcoe':
-					res=sign*perf[1]
-				elif name=='capf':
-					res=sign*perf[2]
-				elif name=='srev':
-					res=sign*perf[3]
-				else:
-					res=sign*res_fn.data(name)[0]					
-				solartherm_res.append(res)
-				print('objective %s: '%i, name, res)
+		if simulation_state==1:
+			peaker=float(self.params.__getitem__("peaker"))
 				
-		except:
-			solartherm_res=[]
-			for i in range(self.num_res):	
-				sign=float(self.params.__getitem__("sign_%s"%(i+1)))
-				if sign>0: #minimisation
-					error=99999
-				else: # maxmisation
-					error=0 
-				solartherm_res.append(sign*error)
-			print('Failed to process the results, case %s'%(self.suffix))
-	
+			try:
+				res_fn=DyMat.DyMatFile(self.sim.res_fn)	
+				print('Result fn is loaded, fn=', self.sim.res_fn)					
+			except:			
+				print('Result fn cannot be open, fn=', self.sim.res_fn)	
+				
+			try:	
+				
+				if self.analysis_type!='TEST':
+					if self.analysis_type=='FUEL':
+						resultclass = postproc.SimResultFuel(self.sim.res_fn)			
+
+					else:
+						resultclass = postproc.SimResultElec(self.sim.res_fn)	
+						if peaker:
+							perf = resultclass.calc_perf(perker=bool(peaker))
+						else:	
+							perf = resultclass.calc_perf()	
+						summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)								
+								
+				solartherm_res=[]
+				for i in range(self.num_res):
+					sign=float(self.params.__getitem__("sign_%s"%(i+1)))
+					name=self.params.__getitem__("res_%s"%(i+1))
+					if name=='epy':
+						res=sign*perf[0]
+					elif name=='lcoe':
+						res=sign*perf[1]
+					elif name=='capf':
+						res=sign*perf[2]
+					elif name=='srev':
+						res=sign*perf[3]
+					else:
+						res=sign*res_fn.data(name)[0]					
+					solartherm_res.append(res)
+					print('objective %s: '%i, name, res)
+				
+			except:
+				solartherm_res=[]
+				for i in range(self.num_res):	
+					sign=float(self.params.__getitem__("sign_%s"%(i+1)))
+					if sign>0: #minimisation
+						error=99999
+					else: # maxmisation
+						error=0 
+					solartherm_res.append(sign*error)
+				print('Failed to process the results, case %s'%(self.suffix))
+			
+		else:		
+				solartherm_res=[]
+				for i in range(self.num_res):	
+					sign=float(self.params.__getitem__("sign_%s"%(i+1)))
+					if sign>0: #minimisation
+						error=88888
+					else: # maxmisation
+						error=0 
+					solartherm_res.append(sign*error)
+				print('Simulation was failed, case %s'%(self.suffix))		
+		
+		
 		print('')
 		# Return the results to Dakota
 		for i, r in enumerate(self.results.responses()):
