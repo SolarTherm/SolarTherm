@@ -486,12 +486,12 @@ class Contingency:
 		#TODO
 		# need to make an agreement of the name of the cost/finacial parameters
 		# between all the SolarTherm models
-		C_equipment=mat.data('C_cap_dir_tot')[0] # total equipment cost
-		#C_equipment=mat.data('C_cap_total')[0] # total equipment cost
+		#C_equipment=mat.data('C_cap_dir_tot')[0] # total equipment cost
+		C_equipment=mat.data('C_cap_total')[0] # total equipment cost
 		
-		#r_contingency_0=mat.data('r_contg')[0]
-		#C_contingency_0=r_contingency_0 * C_equipment
-		C_contingency_0=mat.data('C_contingency')[0]
+		r_contingency_0=mat.data('r_contg')[0]
+		C_contingency_0=r_contingency_0 * C_equipment
+		#C_contingency_0=mat.data('C_contingency')[0]
 		C_cap_0 =cap_v[0]-C_contingency_0
 
 		
