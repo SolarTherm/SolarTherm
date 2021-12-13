@@ -329,15 +329,18 @@ initial equation
   A_HX1 = design_point_result[2]; 
   A_HX2 = design_point_result[3];
   
-  /*Generate the interpolation data*/
   if Q_in_rcv_from_OELT > Q_in_rcv then
-      Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is enough\n\n");
+	  //**************** Generate interpolation data
       status_run = SolarTherm.Utilities.RunSinteringThermalModel(SolarTherm_path, solstice_wd, thermal_model_parameters, opt_file, iron_sample);
+
+	   //************** Clean files and generate motab for 3D interp
       status_run_postproc = SolarTherm.Utilities.PostProcSinteringYield(solstice_wd, SolarTherm_path, opt_file, status_run);
   else
-      Modelica.Utilities.Streams.print("Heat duty delivered by heliostat field is NOT enough\n\n");
+	  //**************** Don't generate off-design interp data
       status_run = -1000;
-      status_run_postproc = -1000;
+
+	  //**************** Clean files and generate dummy MOTAB data which will not be used at all
+      status_run_postproc = SolarTherm.Utilities.PostProcSinteringYield(solstice_wd, SolarTherm_path, opt_file, status_run);
   end if;
    
   /*Get the table name after generating opt_file and finish postprocessing*/
@@ -364,11 +367,40 @@ equation
 		  
 	  else
           /*Populate yield array. Idx 1 is for DNI ratio 0.7 given 2 sun angles, Idx 2 is for DNI ratio 0.8 and so on*/
-		  yield_array[1] = SolarTherm.Utilities.PopulateArray(TABLE_0, declination_inDeg, sun_hour_angle_inDeg);
-		  yield_array[2] = SolarTherm.Utilities.PopulateArray(TABLE_1, declination_inDeg, sun_hour_angle_inDeg);
-		  yield_array[3] = SolarTherm.Utilities.PopulateArray(TABLE_2, declination_inDeg, sun_hour_angle_inDeg);
-		  yield_array[4] = SolarTherm.Utilities.PopulateArray(TABLE_3, declination_inDeg, sun_hour_angle_inDeg);
-		  yield_array[5] = SolarTherm.Utilities.PopulateArray(TABLE_4, declination_inDeg, sun_hour_angle_inDeg);
+          if SolarTherm.Utilities.PopulateArray(TABLE_0, declination_inDeg, sun_hour_angle_inDeg) < 0 then
+              yield_array[1] = 0;
+          else
+              yield_array[1] = SolarTherm.Utilities.PopulateArray(TABLE_0, declination_inDeg, sun_hour_angle_inDeg);
+          end if;
+          
+          if SolarTherm.Utilities.PopulateArray(TABLE_1, declination_inDeg, sun_hour_angle_inDeg) < 0 then
+              yield_array[2] = 0;
+          else
+              yield_array[2] = SolarTherm.Utilities.PopulateArray(TABLE_1, declination_inDeg, sun_hour_angle_inDeg);
+          end if;
+          
+          if SolarTherm.Utilities.PopulateArray(TABLE_2, declination_inDeg, sun_hour_angle_inDeg) < 0 then
+              yield_array[3] = 0;
+          else
+              yield_array[3] = SolarTherm.Utilities.PopulateArray(TABLE_2, declination_inDeg, sun_hour_angle_inDeg);
+          end if;
+          
+          if SolarTherm.Utilities.PopulateArray(TABLE_3, declination_inDeg, sun_hour_angle_inDeg) < 0 then
+              yield_array[4] = 0;
+          else
+              yield_array[4] = SolarTherm.Utilities.PopulateArray(TABLE_3, declination_inDeg, sun_hour_angle_inDeg);
+          end if;
+          
+          if SolarTherm.Utilities.PopulateArray(TABLE_4, declination_inDeg, sun_hour_angle_inDeg) < 0 then
+              yield_array[5] = 0;
+          else
+              yield_array[5] = SolarTherm.Utilities.PopulateArray(TABLE_4, declination_inDeg, sun_hour_angle_inDeg);
+          end if;
+		  //yield_array[1] = SolarTherm.Utilities.PopulateArray(TABLE_0, declination_inDeg, sun_hour_angle_inDeg);
+		  //yield_array[2] = SolarTherm.Utilities.PopulateArray(TABLE_1, declination_inDeg, sun_hour_angle_inDeg);
+		  //yield_array[3] = SolarTherm.Utilities.PopulateArray(TABLE_2, declination_inDeg, sun_hour_angle_inDeg);
+		  //yield_array[4] = SolarTherm.Utilities.PopulateArray(TABLE_3, declination_inDeg, sun_hour_angle_inDeg);
+		  //yield_array[5] = SolarTherm.Utilities.PopulateArray(TABLE_4, declination_inDeg, sun_hour_angle_inDeg);
 		  
 		  mdot_ore = SolarTherm.Utilities.InterpolateYield(yield_array, flux_multiple_off);
 		  

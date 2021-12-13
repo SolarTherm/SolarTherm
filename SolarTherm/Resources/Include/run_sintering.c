@@ -97,6 +97,10 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 		remove(fmfile);
 
 	}
+	
+	/*Remove the fluxmap file*/
+	snprintf(fmfile, MAXLEN, "%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
+	remove(fmfile);
 
 	//assert(status_run == 0);
 	status_run = 0;
@@ -111,35 +115,100 @@ int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, in
 	/*Post processing*/
 	char* fnres = NEW_ARRAY(char, MAXLEN);
 	snprintf(fnres, MAXLEN, "%s/sintering_performance_data.csv",solstice_wd);
-	
-	/*Build fnres*/
-	if(fopen(fnres,"r")==NULL){
-		fprintf(stderr,"%s not found\n",(fnres));
-	}
-	
+
 	char* cmd = NEW_ARRAY(char, MAXLEN);
 	
-	snprintf(cmd,MAXLEN,"python %s/Resources/Include/run_sintering_thermal_model.py --which_run postproc --fnres %s --solstice_wd %s",SolarTherm_path, fnres, solstice_wd);
+	/*Build fnres and call the postproc script to generate interp3d motab file*/
+	snprintf(
+		cmd,MAXLEN,
+		"python %s/Resources/Include/run_sintering_thermal_model.py --which_run postproc --fnres %s --solstice_wd %s",
+		SolarTherm_path, 
+		fnres, solstice_wd
+	);
 
 	//fprintf(stderr,"%s\n",cmd);
 	system(cmd);
-
+	free(fnres);
+	free(cmd);
+		
+	/*Make sure the 3d Interp files (MOTAB) has been generated*/
 	char* test_file = NEW_ARRAY(char, MAXLEN);
 	snprintf(test_file, MAXLEN, "%s/flux_map_DNI_0.motab",solstice_wd);
 	fprintf(stderr, "testfile: %s\n", test_file);
-	
 	int status_run;
 
-	if(fopen(test_file,"r") == NULL){
-		status_run = 1;
+	if(fopen(test_file,"r")!=NULL){
+		fprintf(stderr,"Motab for 3d interp generated sucessfully!\n");
+		status_run=0;	
 	}else{
-		status_run = 0;
+		fprintf(stderr,"Failed generating motab for 3d interp!\n");
+		status_run=1;
 	}
-	
-	free(cmd);
-	free(fnres);
 	free(test_file);
 
+	/*Deleting yaml file*/
+	char* yaml_file = NEW_ARRAY(char, MAXLEN);
+	snprintf(yaml_file, MAXLEN, "%s/input.yaml",solstice_wd);
+	remove(yaml_file);
+	free(yaml_file);
+
+	/*Deleting pos and aiming .csv*/
+	//char* aiming_file = NEW_ARRAY(char, MAXLEN);
+	//snprintf(aiming_file, MAXLEN, "%s/pos_and_aiming.csv",solstice_wd);
+	//remove(aiming_file);
+	//free(aiming_file);
+
+	/*Deleting lookup_table.csv*/
+	char* lookuptable_file = NEW_ARRAY(char, MAXLEN);
+	snprintf(lookuptable_file, MAXLEN, "%s/lookup_table.csv",solstice_wd);
+	remove(lookuptable_file);
+	free(lookuptable_file);
+
+	/*Deleting testname.a4c*/
+	char* a4c_file = NEW_ARRAY(char, MAXLEN);
+	snprintf(a4c_file, MAXLEN, "%s/testname.a4c",solstice_wd);
+	remove(a4c_file);
+	free(a4c_file);
+
+	/*Deleting input-rcv.yaml*/
+	char* input_rcv_yaml = NEW_ARRAY(char, MAXLEN);
+	snprintf(input_rcv_yaml, MAXLEN, "%s/input-rcv.yaml",solstice_wd);
+	remove(input_rcv_yaml);
+	free(input_rcv_yaml);
+
+	/*Deleting table_view.csv*/
+	char* table_view_csv = NEW_ARRAY(char, MAXLEN);
+	snprintf(table_view_csv, MAXLEN, "%s/table_view.csv",solstice_wd);
+	remove(table_view_csv);
+	free(table_view_csv);
+
+	/*Deleting sintering_performance_data.csv*/
+	char* sintering_performance_data = NEW_ARRAY(char, MAXLEN);
+	snprintf(sintering_performance_data, MAXLEN, "%s/sintering_performance_data.csv",solstice_wd);
+	remove(sintering_performance_data);
+	free(sintering_performance_data);
+
+	/*Deleting fluxmap if the off-design run in skipped due to Q_RCV at design point < than 50 MWth*/
+	char* fmfile = NEW_ARRAY(char,MAXLEN);
+
+	/*Test file*/
+	snprintf(fmfile, MAXLEN, "%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
+
+	if(fopen(fmfile,"r")!=NULL){
+		/*All the flux maps are actually still there*/
+		for(size_t file_index=1; file_index<28; file_index++){
+			snprintf(fmfile, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_%zu.csv",solstice_wd, file_index);
+
+			/*Remove the fluxmap file*/
+			remove(fmfile);
+		}
+		/*Remove the fluxmap design point file*/
+		snprintf(fmfile, MAXLEN, "%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
+		remove(fmfile);
+	}
+
+	free(fmfile);
+	
 	assert(status_run==0);
 
 	return status_run;

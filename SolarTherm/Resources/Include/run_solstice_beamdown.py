@@ -47,7 +47,7 @@ def run_simul(inputs={}):
                 pm.aperture_angle_y=None
         else:
                 pm.aperture_angle_y=float(pm.aperture_angle_y)
-
+        pm.lat = -23.42
         pm.saveparam(casedir)
 
         # create the environment and scene

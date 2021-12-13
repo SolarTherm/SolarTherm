@@ -460,76 +460,94 @@ def post_proc(inputs):
 	fnres = inputs['fnres']
 	solstice_wd = inputs['solstice_wd']
 
-	df = pd.read_csv(fnres)
-
-	flux_unique = list(df['flux_multiple_off'].unique())
-	assert(isinstance(flux_unique,list))
+	if os.path.isfile(fnres):
+		df = pd.read_csv(fnres)
+		flux_unique = list(df['flux_multiple_off'].unique())
+		assert(isinstance(flux_unique,list))
 	
-	#Sort the list
-	flux_unique.sort()	
+		#Sort the list
+		flux_unique.sort()	
 	
-	#Separate the file into each flux
-	for i,flux in enumerate(flux_unique):
-		df_ = df[df['flux_multiple_off'] == flux]
+		#Separate the file into each flux
+		for i,flux in enumerate(flux_unique):
+			df_ = df[df['flux_multiple_off'] == flux]
 		
-		#Get the angles and sort
-		angle_1 = list(df_['angle_1'].unique())
-		angle_1.sort()
+			#Get the angles and sort
+			angle_1 = list(df_['angle_1'].unique())
+			angle_1.sort()
 
-		angle_2 = list(df_['angle_2'].unique())
-		angle_2.sort()
+			angle_2 = list(df_['angle_2'].unique())
+			angle_2.sort()
 
-		#Lets save it as a motab file in solstice_wd
-		fn_dest = "%s/flux_map_DNI_%s.motab"%(solstice_wd, i)
+			#Lets save it as a motab file in solstice_wd
+			fn_dest = "%s/flux_map_DNI_%s.motab"%(solstice_wd, i)
 
-		f = open(fn_dest,"w")
-		f.write("#1\n")
-		f.write("double yield(%s,%s)\n"%(
-				len(angle_1)+1, len(angle_2)+1
+			f = open(fn_dest,"w")
+			f.write("#1\n")
+			f.write("double yield(%s,%s)\n"%(
+					len(angle_1)+1, len(angle_2)+1
+				)
 			)
-		)
 
-		to_write = "0 "
+			to_write = "0 "
 		
-		################################################# first line of the motab (angle(2))
-		for idx in range(len(angle_2)):
-			angle = angle_2[idx]
+			################################################# first line of the motab (angle(2))
+			for idx in range(len(angle_2)):
+				angle = angle_2[idx]
 			
-			#Different write
-			if idx == len(angle_2)-1:
-				to_write += "%s\n"%(angle)
-			else:
-				to_write += "%s "%(angle)
-		################################################# first line done
-
-		f.write(to_write)
-		
-		################################################# Now second line and beyond
-		for ii in range(len(angle_1)):
-			a1 = angle_1[ii]
-			
-			to_write = "%s "%(a1)
-
-			for jj in range(len(angle_2)):
-				a2 = angle_2[jj]
-				try:
-					val = df_[
-						(df_.angle_1 == a1) & (df_.angle_2 == a2)
-					].reset_index()
-
-					val = val['res'].iloc[0]
-				except:
-					val = 0
-
-				if jj == len(angle_2) - 1:
-					to_write += "%s\n"%(val)
+				#Different write
+				if idx == len(angle_2)-1:
+					to_write += "%s\n"%(angle)
 				else:
-					to_write += "%s "%(val)
-			
+					to_write += "%s "%(angle)
+			################################################# first line done
+
 			f.write(to_write)
-		################################################## second line done
 		
-		f.close()
+			################################################# Now second line and beyond
+			for ii in range(len(angle_1)):
+				a1 = angle_1[ii]
+			
+				to_write = "%s "%(a1)
+
+				for jj in range(len(angle_2)):
+					a2 = angle_2[jj]
+					try:
+						val = df_[
+							(df_.angle_1 == a1) & (df_.angle_2 == a2)
+						].reset_index()
+
+						val = val['res'].iloc[0]
+					except:
+						val = 0
+
+					if jj == len(angle_2) - 1:
+						to_write += "%s\n"%(val)
+					else:
+						to_write += "%s "%(val)
+			
+				f.write(to_write)
+			################################################## second line done
+		
+			f.close()
+
+	else:
+		for i in range(5):
+			#Write bogus file
+			to_write = '''#1
+double yield(6,7)
+0 -94.286 -77.143 -60.0 -42.857 -25.714000000000002 -8.571
+-23.45 0.0 0.0 7.25070543038 8.441112487 9.186123723969999 9.522355468939999
+-11.725 0.0 0.0 0.0 8.026213065710001 8.83190184386 9.25597397766
+0.0 0 0.0 0.0 7.4053388484000005 8.28260392876 8.74038994833
+11.725 0 0.0 0.0 0.0 7.5336618873 7.9558228008
+23.45 0 0 0.0 0.0 0.0 6.90268838212'''
+			fn_dest = "%s/flux_map_DNI_%s.motab"%(solstice_wd, i)
+			f = open(fn_dest,"w")
+			f.write(to_write)
+			f.close()
+
+	
 		
 		
 		

@@ -242,7 +242,7 @@ class SimResultElec(SimResult):
 				de += eng_v/((1 + disc_v)**i)
 			
 			if de == 0:
-				LCO_Ore = 999999
+				LCO_Ore = 99999
 			else:
 				LCO_Ore = nu/de
 			
