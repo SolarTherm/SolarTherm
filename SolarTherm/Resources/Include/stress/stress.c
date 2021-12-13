@@ -124,7 +124,7 @@ int curve_fit(int cols, double dt, double mat[cols], double * C){
 }
 
 void Temperature (int coolant, double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
-				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To){
+				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To, double * Qnet){
 	// Flow and thermal variables
 	double hf;                          // Heat transfer coefficient due to internal forced-convection
 	double mu;                          // HTF dynamic viscosity (Pa-s)
@@ -178,6 +178,7 @@ void Temperature (int coolant, double Ri, double Ro, double m_flow, double Tf, d
 			c2 = (4.*pow(2./3.,1./3.))/pow(c1,1./3.) + pow(c1,1./3.)/(pow(2.,1./3.)*pow(3.,2./3.)*a);
 			To[j] = -0.5*sqrt(c2) + 0.5*sqrt((2.*b)/(a*sqrt(c2)) - c2);
 		Ti[j] = (To[j] + hf*Ri*log(Ro/Ri)/kp*Tf)/(1 + hf*Ri*log(Ro/Ri)/kp);
+		Qnet[j] = hf*(Ti[j] - Tf);
 	}
 
 	// Least-square curve-fit

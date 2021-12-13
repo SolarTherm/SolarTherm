@@ -75,6 +75,9 @@ model FlowPathStress
 	// Solar flux distribution along flowpath
 	SI.HeatFlux CG[N];
 
+	// Net flux
+	SI.HeatFlux qnet[nt,N];
+
 	// Flux files
 	parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
 	parameter String file_dni0 = 
@@ -136,6 +139,6 @@ equation
 	connect(DNI.y, sun.dni);
 	m_flow_tb = n_tb_fp*dni_mflow_table.y[1]/n_tubes;
 
-	(T_crown_fpath, T_fluid_fpath, stress_fpath) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
-	annotation(experiment(StartTime=0.0, StopTime=31536000, Interval=1800, Tolerance=1e-06));
+	(T_crown_fpath, T_fluid_fpath, stress_fpath, qnet) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
+	annotation(experiment(StartTime=0.0, StopTime=86400, Interval=1800, Tolerance=1e-06));
 end FlowPathStress;

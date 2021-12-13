@@ -22,11 +22,12 @@ void stress(
 	double nu,
 	double * Tcrown_o,
 	double * T_fluid,
-	double * stress
+	double * stress,
+	double * qnet
 	)
 	{
 
-	double BDp[3], BDpp[3], Ti[nt], To[nt], Tf[nz+1];
+	double BDp[3], BDpp[3], Ti[nt], To[nt], Tf[nz+1], Qnet[nt];
 	double Tcrown_i[nz];
 	double theta = 0.;
 	double C;
@@ -36,7 +37,7 @@ void stress(
 	double m = 0.5*E/(1+nu);
 
 	// Variables
-	int k;
+	int i,j,k;
 	double Q;
 	double stress_sec[5];
 	double strain_sec[1];
@@ -63,7 +64,7 @@ void stress(
 
 	Tf[0] = T_htf_in;
 	for(k=1; k<=nz; k++){
-		Temperature (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To);
+		Temperature (coolant, Ri, Ro, m_flow, Tf[k-1], Tamb, CG[k-1], nt, R_fouling, ab, em, kp, h_ext, BDp, BDpp, Ti, To, Qnet);
 		C = specificHeatCapacityCp(Tf[k-1], coolant);
 		Q = 2*pi*kp*dz*(BDpp[0] - BDp[0])/log(Ro/Ri);
 		if (m_flow > 0.0){
@@ -75,6 +76,9 @@ void stress(
 		T_fluid[k-1] = Tf[k];
 		Tcrown_i[k-1] = Ti[0];
 		Tcrown_o[k-1] = To[0];
+		for (j=0; j<nt; j++){
+			qnet[(k-1)*91 + j] = Qnet[j];
+		}
 		Thermoelastic(To[0], Ro, theta, Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress_sec, strain_sec);
 		stress[k-1] = stress_sec[4]/1e6;
 	}
