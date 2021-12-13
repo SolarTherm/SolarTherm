@@ -49,6 +49,7 @@ model PipeThermoMechanical
 	SI.Stress sigma[nz];
 	SI.Temperature Tcrown[nz];
 	SI.Temperature T_fluid[nz];
+	SI.HeatFlux qnet[nt, nz];
 
 protected
 	parameter Real factor[25] = 
@@ -72,7 +73,7 @@ equation
 
 	fluid_b.h_outflow = Medium.specificEnthalpy(state_out);
 	fluid_a.h_outflow = inStream(fluid_a.h_outflow);
-	(Tcrown, T_fluid, sigma) = NASHTubeStress(coolant, Ri,Ro,dz,fluid_a.m_flow,Tf,	Tamb,
+	(Tcrown, T_fluid, sigma, qnet) = NASHTubeStress(coolant, Ri,Ro,dz,fluid_a.m_flow,Tf,	Tamb,
 		CG,nt,nz,R_fouling,ab,em,kp,h_ext,alpha,E,nu);
 
 end PipeThermoMechanical;
