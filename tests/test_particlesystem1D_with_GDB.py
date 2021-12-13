@@ -13,7 +13,7 @@ import shutil
 import cleantest
 import subprocess as sp
 from DyMat import DyMatFile
-@pytest.mark.skip(reason="Broken?")
+@pytest.mark.skip(reason="Already tested in test_particlesystem1D_surrogate.py")
 
 class TestParticleSystem1DSurrogate(unittest.TestCase):
 	def setUp(self):

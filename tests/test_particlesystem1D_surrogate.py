@@ -10,7 +10,9 @@ from solartherm import postproc
 import os
 import shutil
 import cleantest
-#@pytest.mark.skip(reason="Broken?")
+import subprocess as sp
+
+@pytest.mark.skipif(sp.run(['omc','--version'], stdout = sp.PIPE, encoding='utf-8').stdout.split(".")[1] != '14', reason="Only works in omc 1.14")
 
 class TestParticleSystem1DSurrogate(unittest.TestCase):
 	def setUp(self):
