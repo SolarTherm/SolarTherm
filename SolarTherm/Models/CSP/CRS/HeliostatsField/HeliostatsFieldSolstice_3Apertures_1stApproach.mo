@@ -13,6 +13,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
   parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
   
   parameter SI.HeatFlowRate Q_in_rcv = 800e6;
+  parameter Real f_oversize = 1 "Oversizing factor for heliostt field design";
   
   parameter Boolean set_swaying_optical_eff = false "if true = optical efficiency will depend on the wind speed (swaying effect)";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
@@ -74,6 +75,7 @@ model HeliostatsFieldSolstice_3Apertures_1stApproach
       lat=lat, 
       method=method, 
       Q_in_rcv=Q_in_rcv, 
+ 	  f_oversize = f_oversize,     
       H_rcv_1=H_rcv_1, 
       H_rcv_2=H_rcv_2, 
       H_rcv_3=H_rcv_3, 

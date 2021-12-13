@@ -29,6 +29,8 @@ extends OpticalEfficiency_3Apertures;
   parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
   parameter Real n_helios=1000 "Number of heliostats";
   parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+  parameter Real f_oversize = 1 "Oversizing factor for heliostt field design";
+  
   parameter Integer num_aperture = 3 "number of apertures";
   parameter Real angular_range = 180 "Angular range of the multi-aperture configuration";
 
@@ -58,11 +60,14 @@ extends OpticalEfficiency_3Apertures;
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
   parameter Real n_procs = 0 "number of processors, 0 is using maximum available num cpu, 1 is 1 CPU,i.e run in series mode";
 
+  parameter SI.HeatFlowRate Q_in_rcv_eff(fixed=false "Effective incident power to receiver after considering the field oversizing factor");    
   parameter String tablefile(fixed=false);
   parameter Integer tablefile_status(fixed=false);  
   parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
   parameter Integer verbose(fixed=false) "save all the optical simulation details or not? 1 is yes, 0 is no";
   parameter Integer gen_vtk(fixed=false) "visualise the optical simulation scene or not? 1 is yes, 0 is no";
+  
+
 
   SI.Angle angle1;
   SI.Angle angle2;
@@ -74,6 +79,7 @@ extends OpticalEfficiency_3Apertures;
   SI.Efficiency nu_cosine_windy;
   SI.Efficiency nu_spil;
   SI.Efficiency nu_cosine;
+
 
   Modelica.Blocks.Tables.CombiTable2D nu_table_1(
     tableOnFile=true,
@@ -171,10 +177,12 @@ initial algorithm
 
 initial equation
 
+  Q_in_rcv_eff=Q_in_rcv*f_oversize;
+
   tablefile_status =  SolsticePyFunc(ppath, pname, psave, 
   	field_type, rcv_type, wea_file, sunshape, argc, 
   	{"method", "csr","num_aperture", "gamma","Q_in_rcv", "H_rcv_1", "W_rcv_1","H_rcv_2", "W_rcv_2","H_rcv_3", "W_rcv_3","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl", "slope_error", "slope_error_windy", "windy_optics",  "n_rays", "n_procs" ,"verbose", "gen_vtk","n_row_oelt","n_col_oelt"}, 
-  	{method, buie_csr, num_aperture, angular_range, Q_in_rcv, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk, n_row_oelt, n_col_oelt}
+  	{method, buie_csr, num_aperture, angular_range, Q_in_rcv_eff, H_rcv_1, W_rcv_1, H_rcv_2, W_rcv_2, H_rcv_3, W_rcv_3, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, slope_error_windy, windy_optics, n_rays, n_procs, verbose, gen_vtk, n_row_oelt, n_col_oelt}
   	); 
   
   tablefile = SolsticeStatusFunc(tablefile_status, psave);
