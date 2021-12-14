@@ -458,9 +458,8 @@ env['HAVE_GSL'] = envg['HAVE_GSL']
 #---------------------------------------------------------------------------------------------------
 
 # some tricks required for Ubuntu 18.04...
-import lsb_release
-system = lsb_release.get_lsb_information()
-ubuntu_ver = system['RELEASE'].split('.')[0]
+import distro
+ubuntu_ver = distro.version().split('.')[0]
 
 #Change PG
 if ubuntu_ver=='20':
