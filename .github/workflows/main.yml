@@ -58,7 +58,12 @@ jobs:
 
     - name: Show Python context
       run: |
+        echo "--------PIP LIST"
         python3 -m pip list
+        echo "--------PKG-CONFIG LIST"
+        pkg-config --list-all
+        echo "--------DPKG LIST"
+        dpkg -l "python*"
 
     - name: Lint with flake8
       run: |

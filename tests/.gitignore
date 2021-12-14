@@ -6,15 +6,22 @@ AO
 *_res.mat
 resources
 SimpleSystem
+SimpleSystem*.c
 FluidSystem
 TroughWagner
 Reference_1
 Reference_2
+Reference_2_solstice
+Reference_2_solstice*.c
 Reference_1_fluid
 TestTMY3WeatherFileChecker
 SolarFuelSystem
 SolarMethanolSystem
-<<<<<<< HEAD
+SolarMethanolSystem*.c
+NaSaltsCO2System
+NaSaltsCO2System*.c
+NaSaltSCO2System_modular*.c
+NaSaltSCO2System_modular
 SaltCO2System
 TestExternalC
 TestExternalPyStr
