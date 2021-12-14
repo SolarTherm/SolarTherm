@@ -458,10 +458,28 @@ env['HAVE_GSL'] = envg['HAVE_GSL']
 #---------------------------------------------------------------------------------------------------
 
 # some tricks required for Ubuntu 18.04...
+import lsb_release
+system = lsb_release.get_lsb_information()
+ubuntu_ver = system['RELEASE'].split('.')[0]
+
+#Change PG
+if ubuntu_ver=='20':
+	if env['PYVERSION'] == '3.8':
+		configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags
+	else:
+		configcmd = 'python$PYVERSION-config --ldflags --cflags'
+elif ubuntu_ver=='18':
+	configcmd = 'python$PYVERSION-config --ldflags --cflags'
+else:
+	configcmd = 'python$PYVERSION-config --ldflags --cflags'
+	
+	
+'''
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
 	if env['PYVERSION'] in ('3.6','3.7'):
 		configcmd = 'python$PYVERSION-config --ldflags --cflags'
+'''
 
 env['PKGCONFIGPYTHON'] = configcmd
 
