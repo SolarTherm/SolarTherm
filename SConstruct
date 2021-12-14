@@ -465,7 +465,7 @@ ubuntu_ver = system['RELEASE'].split('.')[0]
 #Change PG
 if ubuntu_ver=='20':
 	if env['PYVERSION'] == '3.8':
-		configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags
+		configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 	else:
 		configcmd = 'python$PYVERSION-config --ldflags --cflags'
 elif ubuntu_ver=='18':
