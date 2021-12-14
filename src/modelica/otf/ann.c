@@ -16,7 +16,14 @@
 #endif
 #define ERR(FMT,...) fprintf(stderr,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
 
+/*
+This C-code contains all the utilities function to support constructANN() in ../st_otf_surrogate.c
+*/
+
 //********************* SEQUENCE 3.2
+/*
+	predict_ANN is to use ANN session passed as a struct *sess to predict a value based on raw_input
+*/
 double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_model){
 	double* inputs = NEW_ARRAY(double,sess->inputsize);
 
@@ -118,7 +125,9 @@ double predict_ANN(Session_Props *sess, const double raw_input[], int which_ANN_
 	return res; 
 }
 
-/*=================================== STARTING FROM HERE IS ANN UTILITIES FUNCS ==============================*/
+/*
+	Void function, needed to load Tensor using C-API. Still unclear of what it does programmatically
+*/
 void NoOpDeallocator(void* data, size_t a, void* b){
     /* nothing here */
 }

@@ -27,16 +27,16 @@
 
 /*
 This C code is used to generate surrogate model for sCO2 PB on the fly. Choice of surrogate modelling techniques are Kriging interpolation and Artificial Neural Network (ANN).
-SolarTherm component passes a series of sCO2 PB parameters to construct the surrogate model. The code then check whether a surrogate model based on these parameters has been generated before, and load the surrogate model if it exists, otherwise, a new surrogate is generated. There are two power block model choices: 1) SAM Power Block and 2) CEA Power block. CEA Power block is still work in progress, implemented 100% in Modelica.
+SolarTherm component passes a series of sCO2 PB parameters to construct the surrogate model. The code then check whether a surrogate model based on these parameters has been generated before, and load the surrogate model if it exists, otherwise, a new surrogate is generated. There are two choices of the power block model: 1) SAM Power Block and 2) CEA Power block. CEA Power block is still work in progress, implemented 100% in Modelica.
 
-The generation of surrogate model makes use of SAM Simulation Core (SSC) sCO2 recompression cycle library, made available by SAM team https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run . Shall new surrogate is generated, this code will fire SSC based on the PB parameters, simulate the sCO2 PB module on- and off- design, gather the training data, train the model and return it as a pointer back to SolarTherm.
+The generation of surrogate model makes use of SAM Simulation Core (SSC) sCO2 recompression cycle library, made available by SAM team https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-2020-11-12.run =. Shall new surrogate is generated, this code will fire SSC based on the given PB parameters, simulate the sCO2 PB module on- and off- design, gather the training data, train the model and return it as a pointer to a struct back to SolarTherm.
 
 Lib dependency: tensorflow, GSL (GNU Scientific Library), Python 3, SSC
 */
 
 //******************** SEQUENCE 1
 /*
-Initialisation of SSC Power Block makes use of the initNREPB function. The function receives inputs from SolarTherm, and passes the input to SSC PB module. SSC then simulates the on-design sCO2 recup PB cycle.
+Initialisation of SSC Power Block makes use of the initNREPB() function. The function receives inputs from SolarTherm, and passes the input to SSC PB module. SSC then simulates the on-design sCO2 recup PB cycle.
 The function assign the on-design calculation result in `res` (pointer to double) and SolarTherm then grabs the values inside res for further use.
 
 @params:
@@ -47,12 +47,12 @@ The function assign the on-design calculation result in `res` (pointer to double
 	eta_isen_mc				: type double, main compressor isentropic efficiency at design point
 	eta_isen_rc				: type double, re-compressor isentropic efficiency at design point
 	eta_isen_t				: type double, turbine isentropic efficiency at design point
-	dT_mc_approach			: type double, design point temperature difference between ambient temperature and desired outlet temperature of CO2 after the mian cooler in K
+	dT_mc_approach			: type double, design point temperature difference between ambient temperature and desired outlet temperature of CO2 from main comp.
 	T_amb_base				: type double, temperature of the ambient at design point in K at design point
-	HTF_name				: type string, HTF name, shall HTF_choice == 50 (user choice), the code will look into the data base whether the requested HTF properies exist based on HTF_name. If does not exist, it will stop the simulation
+	HTF_name				: type string, HTF name, properies exist based on HTF_name. If does not exist, it will stop the simulation
 	HTF_choice				: type int, put 50 for user choice, 1 for solar salt (built in HTF properties within SSC). For more info look into SAM SSC github
-	SolarTherm_path			: type string, path where SolarTherm is located
-	T_HTF_cold_des			: type double, the target outlet temp. of HTF from the PHX at design point in K. Internal variable within SSC called dt_PHX_hot_approach is iterated.
+	SolarTherm_path			: type string, path where SolarTherm is located e.g. /$HOME/solartherm/SolarTherm
+	T_HTF_cold_des			: type double, the target outlet temp. of HTF from the PHX at design point in K. 
 	res						: type double*, array to store the on-design result
 
 	res indexing:

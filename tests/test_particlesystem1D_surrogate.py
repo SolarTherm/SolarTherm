@@ -11,6 +11,7 @@ import os
 import shutil
 import cleantest
 import subprocess as sp
+import pytest
 
 @pytest.mark.skipif(sp.run(['omc','--version'], stdout = sp.PIPE, encoding='utf-8').stdout.split(".")[1] != '14', reason="Only works in omc 1.14")
 
