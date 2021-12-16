@@ -43,7 +43,7 @@ int RunSolsticeFunc(const char* ppath, const char* pname
 	// shape the commands together
     char* cmd = (char*)malloc(sizeof(char)*MALLOC); 
     snprintf(cmd, MALLOC, 
-        "python3.8 %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %d --var_names %s --var_vals %s",
+        "python3 %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %d --var_names %s --var_vals %s",
         ppath, pname, psave, wea_file, field_type, rcv_type, sunshape, num_args, var_names, var_vals);
 
     free(var_tmp);
