@@ -20,12 +20,12 @@ int main()
 {
 	double P_net[] = {5e6};
 	double par_fr = 0.1;
-    double T_in_ref_blk = 953.15;
-    double T_cold_set = 470 + 273.15;
+    double T_in_ref_blk = 943.15;
+    double T_cold_set = 743.15;
     double dT_PHX_cold_approach = 14.5;
     double p_high = 22e6;
-    double eta_comp_main = 0.825;
     double eta_comp_re = 0.756;
+    double eta_comp_main = 0.825;
     double eta_isen_t = 0.902;
     double dT_mc_approach = 6;
     double CIT = 310.15;
@@ -106,7 +106,7 @@ int main()
         );
 
         destructKriging(Kriging_variables);*/
-		
+		/*
 		Session_Props* sess0 = constructANN(
 			P_gross, 
 			T_in_ref_blk, 
@@ -133,7 +133,7 @@ int main()
 			eta_isen_t,
 			dT_mc_approach,
     		"CarboHSP");
-			
+		*/
 		Session_Props* sess1 = constructANN(
 			P_gross, 
 			T_in_ref_blk, 
@@ -161,7 +161,7 @@ int main()
 			dT_mc_approach,
 			"CarboHSP");
 
-			destructANN(sess0);
+			//destructANN(sess0);
 			destructANN(sess1);
 		
 

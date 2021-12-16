@@ -186,7 +186,7 @@ Kriging_struct* buildKriging(double P_net, double T_in_ref_blk,double p_high, do
 	Kriging_struct* Kriging_variables; //**************** mallocing is done in the load_KrigingVariables function
 
 	//*************** initial number of training data
-	int numdata = 150;
+	int numdata = 500;
 
 	/*Name of files that will be created under trianingdir*/
 	char* name_prediction_validation_dump = "/validation_prediction.csv";

@@ -123,6 +123,7 @@ model SurrogatesCO2PB_OTF
   SI.Efficiency eta_cycle_net;
   SI.Power Q_HX;
   SI.Power W_gross;
+  SI.Power W_par_fixed_load;
   SI.Energy E_net(final start = 0, fixed = true, displayUnit = "MW.h");
   
   SI.SpecificEnthalpy h_in;
@@ -175,11 +176,12 @@ model SurrogatesCO2PB_OTF
   
   Q_HX = eta_Q * Q_HX_des;
   W_gross = eta_gross * Q_HX;
+  W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
   if ramping then
     W_net = 0;
   else
-    W_net = max(0,W_gross - (f_fixed_load*P_gross) - parasities);
+    W_net = max(0,W_gross - W_par_fixed_load);
   end if;
 
   der(E_net) = W_net;

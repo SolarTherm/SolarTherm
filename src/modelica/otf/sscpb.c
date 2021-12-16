@@ -44,19 +44,19 @@ void generateOffDesignFile(double T_in_ref_blk, double load_des, double T_amb_de
 		,char* trainingdir, char* SolarTherm_path, int numinputs, int numdata
 		,char* training_or_validation
 ){
-	double UB_1 = T_in_ref_blk + 20; //*************** Maximum temperature of the HTF at off design case [C]
-	double UB_2 = 1.5; //******************** maximum load
+	double UB_1 = T_in_ref_blk + 5; //*************** Maximum temperature of the HTF at off design case [C]
+	double UB_2 = 1.25; //******************** maximum load is se to be 125%
 	double UB_3 = 50; //******************* maximum ambient temperature [C]
 
-	double LB_1 = T_in_ref_blk - 50; //*************** Minimum temperature of the HTF at off design case [C]
-	double LB_2 = 0.45; //******************** minimum part load
+	double LB_1 = T_in_ref_blk - 70; //*************** Minimum temperature of the HTF at off design case [C]
+	double LB_2 = 0.3; //******************** minimum part load
 	double LB_3 = -20; //******************* minimum ambient temperature [C]
 
 	char* cmd = NEW_ARRAY(char,MAXLEN);
 	snprintf(
 		cmd,
 		MAXLEN, 
-		"python3 %s/Resources/Library/gen_OD_matrix.py --UB1 %lf --UB2 %lf --UB3 %lf --LB1 %lf --LB2 %lf --LB3 %lf --T_HTF_des %lf --load_des %lf --T_amb_des %lf --numinputs %d --numdata %d --trainingdir %s --type %s",
+		"python3.8 %s/Resources/Library/gen_OD_matrix.py --UB1 %lf --UB2 %lf --UB3 %lf --LB1 %lf --LB2 %lf --LB3 %lf --T_HTF_des %lf --load_des %lf --T_amb_des %lf --numinputs %d --numdata %d --trainingdir %s --type %s",
 		SolarTherm_path, UB_1, UB_2, UB_3, LB_1, LB_2, LB_3,T_in_ref_blk, load_des, T_amb_des, numinputs, numdata, trainingdir, training_or_validation
 	);
 
@@ -334,6 +334,18 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 				"LHS" 
 			);
 		}
+		else if(is_run_test_func == 2){
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, 
+				T_amb_base-273.15,
+				trainingdir, 
+				SolarTherm_path,  //Before it was base_path --> change to SolarTherm_path
+				3, 
+				2, //===> running test function for only 1 data point
+				"Test_Performance" 
+			);
+		}
 		else{
 			generateOffDesignFile(
 				T_in_ref_blk-273.15, 
@@ -529,7 +541,17 @@ ssc_data_t runNRELPB(int numdata,double P_net, double T_in_ref_blk, double p_hig
 				2, //===> running test function for only one data point
 				"LHS" 
 			);
-
+		}else if(is_run_test_func == 2){
+			generateOffDesignFile(
+				T_in_ref_blk-273.15, 
+				1, 
+				T_amb_base-273.15,
+				trainingdir, 
+				SolarTherm_path,  //Before it was base_path --> change to SolarTherm_path
+				3, 
+				2, //===> running test function for only 1 data point
+				"Test_Performance" 
+			);
 		}else{
 			generateOffDesignFile(
 				T_in_ref_blk-273.15, 

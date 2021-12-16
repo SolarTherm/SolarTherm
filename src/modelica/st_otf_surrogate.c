@@ -562,7 +562,7 @@ void* constructANN(double P_net, double T_in_ref_blk, double p_high, double PR,
 			fprintf(stderr,"Training data doesn't exist even though configuration exists.......Start gathering data.............\n");
 			clock_t begin = clock();
 
-			int initialnumdata = 150;
+			int initialnumdata = 500;
 
 			if(PB_model==0){
 				//*********** Run CEA Model

@@ -141,7 +141,7 @@ Session_Props* buildANN(double P_net, double T_in_ref_blk,double p_high, double 
 		double eta_isen_rc, double eta_isen_t, double dT_mc_approach, char* HTF_name
 ){
 	//*************** initial number of training data
-	int numdata = 150;
+	int numdata = 500;
 	Session_Props* session; //****************** mallocing will be done in the load_session func
 
 	MSG("User choice of surrogate = ANN\n");
