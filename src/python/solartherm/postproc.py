@@ -238,7 +238,7 @@ class SimResultElec(SimResult):
 					nu += (cap_v/cons_v)/((1 + disc_v)**i)
 
 			for i in range(cons_v+1, cons_v+t_life+1):
-				nu += om_y_v/((1 + disc_v)**i)
+				nu += (self.om_y_v+om_p_v)/((1 + disc_v)**i)
 				de += eng_v/((1 + disc_v)**i)
 			
 			if de == 0:

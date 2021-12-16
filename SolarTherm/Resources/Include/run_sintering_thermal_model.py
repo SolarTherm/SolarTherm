@@ -354,6 +354,7 @@ def run_thermalSinteringModelOffDesign(inputs):
 
 		f = open(fn_result,"a")
 		f.write("%s,%s,%s,%s\n"%(angle_1, angle_2, flux, mdot_ore))
+		f.write("%s,%s,%s,%s\n"%(angle_1, (angle_2*(-1.0)), flux, mdot_ore))
 		f.close()
 
 '''
@@ -468,7 +469,7 @@ def post_proc(inputs):
 		#Sort the list
 		flux_unique.sort()	
 	
-		#Separate the file into each flux
+		#Separate the file into each flux level
 		for i,flux in enumerate(flux_unique):
 			df_ = df[df['flux_multiple_off'] == flux]
 		
@@ -485,18 +486,29 @@ def post_proc(inputs):
 			f = open(fn_dest,"w")
 			f.write("#1\n")
 			f.write("double yield(%s,%s)\n"%(
-					len(angle_1)+1, len(angle_2)+1
+					#len(angle_1)+1, len(angle_2)+1
+					6,23
 				)
 			)
 
 			to_write = "0 "
+			test_angle = [
+					-180.0,-162.85714285714286,
+					-145.71428571428572,-128.57142857142856,
+					-111.42857142857143,-94.28571428571429,
+					-77.14285714285714,-60.0,-42.85714285714286,
+					-25.714285714285722,-8.571428571428584,8.571428571428555,
+					25.714285714285722,42.85714285714286,60.0,77.14285714285711,
+					94.28571428571428,111.42857142857144,128.57142857142856, 
+					145.71428571428572,162.85714285714283,180.0
+			]
 		
 			################################################# first line of the motab (angle(2))
-			for idx in range(len(angle_2)):
-				angle = angle_2[idx]
+			for idx in range(len(test_angle)):
+				angle = test_angle[idx]
 			
 				#Different write
-				if idx == len(angle_2)-1:
+				if idx == len(test_angle)-1:
 					to_write += "%s\n"%(angle)
 				else:
 					to_write += "%s "%(angle)
@@ -510,18 +522,19 @@ def post_proc(inputs):
 			
 				to_write = "%s "%(a1)
 
-				for jj in range(len(angle_2)):
-					a2 = angle_2[jj]
+				for jj in range(len(test_angle)):
+					a2 = test_angle[jj]
+					
 					try:
 						val = df_[
-							(df_.angle_1 == a1) & (df_.angle_2 == a2)
+							(df_.angle_1 == a1) & (df_.angle_2 >= a2-1) & (df_.angle_2 <= a2+1) #Homing in to the correct place based on HRA angle
 						].reset_index()
 
 						val = val['res'].iloc[0]
 					except:
-						val = 0
+						val = 0.0
 
-					if jj == len(angle_2) - 1:
+					if jj == len(test_angle) - 1:
 						to_write += "%s\n"%(val)
 					else:
 						to_write += "%s "%(val)

@@ -3,7 +3,7 @@ function DuffieBeckman_Algorithm "Sun position using Duffie and Beckman"
   extends SolarTherm.Models.Sources.SolarFunctions.solarPosition;
 
 protected
- nSI.Time_hour t_zone_int=sign(t_zone)*integer(abs(t_zone)) "Integer local time zone";
+ nSI.Time_hour t_zone_int=t_zone "(REVISED -- non-)Integer local time zone";
  constant Real ang_vel(quantity="AngularVelocity", unit="deg/h") = 360/24
     "Angular velocity of earth";
  SI.Angle B "Approximate angle of earth in its orbit";

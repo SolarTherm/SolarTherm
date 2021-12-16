@@ -94,13 +94,13 @@ int run_sintering_thermal_model_off_design(const char* SolarTherm_path, const ch
 		);
 
 		/*Remove the fluxmap file*/
-		remove(fmfile);
+		//remove(fmfile);
 
 	}
 	
 	/*Remove the fluxmap file*/
 	snprintf(fmfile, MAXLEN, "%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
-	remove(fmfile);
+	//remove(fmfile);
 
 	//assert(status_run == 0);
 	status_run = 0;
@@ -149,7 +149,7 @@ int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, in
 	/*Deleting yaml file*/
 	char* yaml_file = NEW_ARRAY(char, MAXLEN);
 	snprintf(yaml_file, MAXLEN, "%s/input.yaml",solstice_wd);
-	remove(yaml_file);
+	//remove(yaml_file);
 	free(yaml_file);
 
 	/*Deleting pos and aiming .csv*/
@@ -161,31 +161,31 @@ int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, in
 	/*Deleting lookup_table.csv*/
 	char* lookuptable_file = NEW_ARRAY(char, MAXLEN);
 	snprintf(lookuptable_file, MAXLEN, "%s/lookup_table.csv",solstice_wd);
-	remove(lookuptable_file);
+	//remove(lookuptable_file);
 	free(lookuptable_file);
 
 	/*Deleting testname.a4c*/
 	char* a4c_file = NEW_ARRAY(char, MAXLEN);
 	snprintf(a4c_file, MAXLEN, "%s/testname.a4c",solstice_wd);
-	remove(a4c_file);
+	//remove(a4c_file);
 	free(a4c_file);
 
 	/*Deleting input-rcv.yaml*/
 	char* input_rcv_yaml = NEW_ARRAY(char, MAXLEN);
 	snprintf(input_rcv_yaml, MAXLEN, "%s/input-rcv.yaml",solstice_wd);
-	remove(input_rcv_yaml);
+	//remove(input_rcv_yaml);
 	free(input_rcv_yaml);
 
 	/*Deleting table_view.csv*/
 	char* table_view_csv = NEW_ARRAY(char, MAXLEN);
 	snprintf(table_view_csv, MAXLEN, "%s/table_view.csv",solstice_wd);
-	remove(table_view_csv);
+	//remove(table_view_csv);
 	free(table_view_csv);
 
 	/*Deleting sintering_performance_data.csv*/
 	char* sintering_performance_data = NEW_ARRAY(char, MAXLEN);
 	snprintf(sintering_performance_data, MAXLEN, "%s/sintering_performance_data.csv",solstice_wd);
-	remove(sintering_performance_data);
+	//remove(sintering_performance_data);
 	free(sintering_performance_data);
 
 	/*Deleting fluxmap if the off-design run in skipped due to Q_RCV at design point < than 50 MWth*/
@@ -200,11 +200,11 @@ int post_processing(char* solstice_wd, char* SolarTherm_path, char* opt_file, in
 			snprintf(fmfile, MAXLEN,"%s/receiver_1D_FluxMap_sunpos_%zu.csv",solstice_wd, file_index);
 
 			/*Remove the fluxmap file*/
-			remove(fmfile);
+			//remove(fmfile);
 		}
 		/*Remove the fluxmap design point file*/
 		snprintf(fmfile, MAXLEN, "%s/receiver_1D_FluxMap_des_point.csv",solstice_wd);
-		remove(fmfile);
+		//remove(fmfile);
 	}
 
 	free(fmfile);
