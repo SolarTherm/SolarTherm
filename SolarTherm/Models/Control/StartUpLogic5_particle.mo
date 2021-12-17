@@ -66,7 +66,8 @@ equation
    else
       schedule = 1;
    end if;
-   on_charge= m_flow_in>0;
+   
+   on_charge = m_flow_in > 0;
 
    when level>level_on then
      on_discharge = true;

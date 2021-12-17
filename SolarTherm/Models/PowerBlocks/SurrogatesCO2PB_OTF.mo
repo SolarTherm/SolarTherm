@@ -79,6 +79,7 @@ model SurrogatesCO2PB_OTF
   parameter Boolean test_mode = true;
   parameter SI.Efficiency eta_motor = 0.95;
   parameter Real nu_min = 0.5;
+  parameter Real PB_output_scaling_factor = 1 "Scaling factor of PB output based on the user defined PB efficiency / PB_eff_from SSC";
   
   parameter MedRec.ThermodynamicState state_in_ref=MedRec.setState_pTX(1e5,T_in_ref_blk);
   parameter MedRec.ThermodynamicState state_out_ref=MedRec.setState_pTX(1e5,T_cold_set);
@@ -175,7 +176,7 @@ model SurrogatesCO2PB_OTF
 
   
   Q_HX = eta_Q * Q_HX_des;
-  W_gross = eta_gross * Q_HX;
+  W_gross = eta_gross * Q_HX * PB_output_scaling_factor "If user wants to have a specific PB gross efficiency value at design point, then the scaling factor is used to reduce the gross power";
   W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
   if ramping then
