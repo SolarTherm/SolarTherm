@@ -173,15 +173,15 @@ model SurrogatesCO2PB_OTF
   end if;
        
   load = mdot / m_HTF_des;
-
-  
-  Q_HX = eta_Q * Q_HX_des;
-  W_gross = eta_gross * Q_HX * PB_output_scaling_factor "If user wants to have a specific PB gross efficiency value at design point, then the scaling factor is used to reduce the gross power";
   W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
+  Q_HX = eta_Q * Q_HX_des;
   if ramping then
+    /*No production*/
+    W_gross = 0;
     W_net = 0;
   else
+    W_gross = eta_gross * Q_HX * PB_output_scaling_factor "If user wants to have a specific PB gross efficiency value at design point, then the scaling factor is used to reduce the gross power";
     W_net = max(0,W_gross - W_par_fixed_load);
   end if;
 

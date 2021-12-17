@@ -81,7 +81,7 @@ equation
    when not (on_charge or on_discharge) then
      t_off = time;
    end when;
-//20
+//
    when t_on-(t_off+t_standby)>0 then
      startup=true;
    elsewhen (time-t_on)>t_start then
@@ -106,12 +106,14 @@ equation
         m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max*schedule);
       end if;
     end if;
-  elseif standby then
-      m_flow=m_flow_standby;
-  elseif rampdown then
-      m_flow = if dispatch_optimiser == true then optimalMassFlow/2 else m_flow_startup;   
   else
+    if standby then
+      m_flow=m_flow_standby;
+    elseif rampdown then
+      m_flow = if dispatch_optimiser == true then optimalMassFlow/2 else m_flow_startup;   
+    else
       m_flow=0;
+    end if;
   end if;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
