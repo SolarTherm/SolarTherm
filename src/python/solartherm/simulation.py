@@ -355,7 +355,7 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', noEventEmit=True, args=[]):
 		"""Run simulation.
 
 		If running an optimisation then 'optimization' needs to be used as
@@ -381,8 +381,11 @@ class Simulator(object):
 			'-maxIntegrationOrder', integOrder,
 			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
-			'-r', self.res_fn,
+			'-r', self.res_fn,			
 			]
+		
+		if noEventEmit:
+			sim_args.append('-noEventEmit',)	
 
 		if initStep==None:
 			sim_args = [e for e in sim_args if e not in ('-initialStepSize', initStep)]
