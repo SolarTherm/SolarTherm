@@ -135,13 +135,15 @@ model SurrogatesCO2PB_OTF
   state = 0;
   
   algorithm
+  
   when mdot >= m_HTF_des * nu_min and state==0 then
     state := 1;
-  elsewhen mdot< 0.999 * m_HTF_des*nu_min and state==1 then
+  elsewhen mdot< 0.999 * m_HTF_des*nu_min and state == 1then
     state := 0;
   end when;
-  
-  equation
+
+  equation  
+    
   fluid_a.p = fluid_b.p;
   fluid_a.m_flow + fluid_b.m_flow = 0;
   fluid_a.h_outflow = 0;  

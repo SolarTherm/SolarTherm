@@ -18,16 +18,16 @@ model StartUpLogic5_particle
   parameter Real level_off=5;
   parameter Boolean dispatch_optimiser = false;
 
-  Boolean standby;
-  Boolean startup(start=false, fixed=true);
-  Boolean rampdown(start=false,fixed=true);
-  Boolean on_charge;
-  Boolean on_discharge;
+  //Boolean standby;
+  //Boolean startup(start=false, fixed=true);
+  //Boolean rampdown(start=false,fixed=true);
+  //Boolean on_charge ;
+  Boolean on_discharge "A boolean to sense whether it is actually OK to charge";
   
   Real optimalMassFlow;
 
-  discrete Modelica.SIunits.Time t_off;
-  discrete Modelica.SIunits.Time t_on;
+  //discrete Modelica.SIunits.Time t_off;
+  //discrete Modelica.SIunits.Time t_on;
   
   /*This part is only active when scheduler is on*/
   parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/simple_schedule.motab");
@@ -49,9 +49,9 @@ public
         extent={{-20,-20},{20,20}},
         rotation=-90,
         origin={0,104})));
-initial equation
-   pre(t_off) = 0;
-   pre(t_on) = 0;
+//initial equation
+   //pre(t_off) = 0;
+   //pre(t_on) = 0;
 initial equation
   on_discharge= (level>level_on) and
                              (level>level_off);
@@ -67,21 +67,29 @@ equation
       schedule = 1;
    end if;
    
-   on_charge = m_flow_in > 0;
 
    when level>level_on then
      on_discharge = true;
    elsewhen level<level_off then
      on_discharge = false;
    end when;
-
+   
+   if on_discharge then
+        m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max*schedule;
+   else 
+        m_flow =if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max*schedule);
+   end if;
+/*
+   //on_charge = m_flow_in > 0;
+   
+   //***************** Old controller code, too complex and barely succeeded
    when on_charge or on_discharge then
      t_on = time;
    end when;
    when not (on_charge or on_discharge) then
      t_off = time;
    end when;
-//
+   
    when t_on-(t_off+t_standby)>0 then
      startup=true;
    elsewhen (time-t_on)>t_start then
@@ -102,7 +110,7 @@ equation
     else
       if on_discharge then
         m_flow= if dispatch_optimiser == true then optimalMassFlow else m_flow_max*schedule;
-      else /*if on_charge*/
+      else 
         m_flow=if dispatch_optimiser == true then min(optimalMassFlow,m_flow_in) else min(m_flow_in,m_flow_max*schedule);
       end if;
     end if;
@@ -115,6 +123,7 @@ equation
       m_flow=0;
     end if;
   end if;
+  */
 
   annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
         coordinateSystem(preserveAspectRatio=false)),
