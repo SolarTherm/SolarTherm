@@ -74,7 +74,7 @@ class TestParticleSystem1DSurrogate(unittest.TestCase):
 		print("System result:\nEPY: %s , LCOE = %s , CF = %s"%(EPY, LCOE, CF))
 
 		assert(abs(round(LCOE,2) - 95.25) < 0.1) #LCOE
-		assert(abs(round(EPY,2) - 301417.02) < 1) #EPY
+		assert(abs(round(EPY,2) - 301419.74) < 1) #EPY
 		assert(abs(round(CF,2) - 34.40833577177072) < 0.5) #CF
 		cleantest.clean('PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate')
 #		self.assertAlmostEqual(self.perf[0], 349.78, 2) # epy
