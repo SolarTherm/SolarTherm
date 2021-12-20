@@ -13,6 +13,8 @@ model PowerBlockControl_particle
   //Boolean on;
   
   Boolean ramping;
+
+  Real PB_time_spend_ramping(start=0);
   
   //Zeb Ramping
   parameter SI.Time t_ramp_delay = 1800 "Half hour startup delay";
@@ -59,6 +61,8 @@ algorithm
 equation
   PB_ramp_fraction = min(1.0, (time - t_ramp_start) / (t_ramp_end - t_ramp_start));
   ramping = if PB_ramp_fraction < 0.99 then true else false;
+
+  der(PB_time_spend_ramping) = if ramping then 1 else 0;
   
   m_flow = logic.m_flow * PB_ramp_fraction;
 
