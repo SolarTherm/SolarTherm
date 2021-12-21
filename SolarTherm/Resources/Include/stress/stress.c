@@ -123,51 +123,6 @@ int curve_fit(int cols, double dt, double mat[cols], double * C){
 	return 0;
 }
 
-// Least-square curve-fit
-int curve_fit_net_heat(int cols, double dt, double mat[cols], double * C){
-	int i, j, pos, ndata;
-	double chisq, theta;
-	gsl_matrix *X, *cov;
-	gsl_vector *y, *w, *c;
-	ndata = 2*cols - 1;
-	X = gsl_matrix_alloc (ndata, 15);
-	y = gsl_vector_alloc (ndata);
-	w = gsl_vector_alloc (ndata);
-	c = gsl_vector_alloc (15);
-	cov = gsl_matrix_alloc (15, 15);
-	for(j=0;j<ndata;j++){
-		if(j<cols-1){
-			pos = cols-1-j;
-			theta = -pos*dt;
-		}
-		else{
-			pos = j-(cols-1);
-			theta = ((double) pos)*dt;
-		}
-		gsl_matrix_set (X, j, 0, 1);
-		for(i=1;i<8;i++){
-			gsl_matrix_set (X, j, 2*i-1, cos(((double) i)*theta));
-			gsl_matrix_set (X, j, 2*i,   sin(((double) i)*theta));
-		}
-		gsl_vector_set (y, j, mat[pos]);
-		gsl_vector_set (w, j, 1.0);
-	}
-	{
-		gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (ndata, 15);
-		gsl_multifit_linear (X, y, c, cov, &chisq, work);
-		gsl_multifit_linear_free (work);
-	}
-	for(j=0;j<15;j++){
-		C[j] = gsl_vector_get(c,j);
-	}
-	gsl_matrix_free(X);
-	gsl_vector_free(y);
-	gsl_vector_free(w);
-	gsl_vector_free(c);
-	gsl_matrix_free(cov);
-	return 0;
-}
-
 void Temperature (int coolant, double Ri, double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, 
 				  double h_ext, double * BDp, double * BDpp, double * Ti, double * To, double * Qnet){
 	// Flow and thermal variables

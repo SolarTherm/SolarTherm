@@ -6,6 +6,8 @@ import numpy as np
 import DyMat
 import time
 from scipy.interpolate import interp1d, RegularGridInterpolator
+import matplotlib.pyplot as plt
+import scipy.io as sio
 
 import sys
 sys.path.append('../..')
@@ -38,40 +40,23 @@ if __name__=="__main__":
     nz = 50                                         # Number of axial elements in the panel tube
 
     # Total flux function
-    inputs = os.path.dirname(os.getcwd())
-    coef_data = np.genfromtxt('%s/qcoefs_input.csv'%inputs,delimiter=',', skip_header=1)
-    t_data = coef_data[:,0]/3600.0                   # Extracting time data
-    z_data = np.linspace(0.0, 1.0, nz)               # Creating vector of axial positions
-    Theta = np.linspace(0.0, 2*np.pi, nt)            # Creating vector of circumferential positions
-    flux = np.zeros((t_data.shape[0],                # Instantiating a numpy array for the flux
-                     z_data.shape[0],
-                     Theta.shape[0]))
-    for i in range(t_data.shape[0]):                 # Sweeping time values
-        for j in range(z_data.shape[0]):             # Sweeping axial location
-            for k,theta in enumerate(Theta):
-                lb = 8*j + 1
-                ub = 8*j + 9
-                a = coef_data[i,lb:ub]
-                q = 0
-                for n,an in enumerate(a):
-                    q += an*np.cos(float(n)*theta)
-                    flux[i,j,k] = max(0,q/1e6)
+    mat = sio.loadmat('../srlife_input.mat')
+    t_data = mat['time'][0,:]/3600.
+    flux = mat['flux']/1e6
+    z_data = np.linspace(0, 1, flux.shape[2])
+    Theta = np.linspace(0, 2*np.pi, flux.shape[1])
     fflux = RegularGridInterpolator(
-        (t_data, z_data, Theta), 
-        flux, 
+        (t_data, Theta, z_data), 
+        flux,
         bounds_error=False, 
         fill_value=0)
     h_flux = lambda t, theta, z: fflux((t,
-                                        z/height, 
-                                        theta))
+                                        theta, 
+                                        z/height))
 
     # Fluid temperature function
-    temp_data = np.genfromtxt('%s/T_htf_input.csv'%inputs, delimiter=',', skip_header=1)
-    T_data = temp_data[:,1:]                        # Extracting temperatures. Time and axial positions are the same
+    T_data = mat['temperature']                     # Extracting temperatures. Time and axial positions are the same
     T_base = T_data[0,0]
-    print(t_data.shape)
-    print(z_data.shape)
-    print(T_data.shape)
     ftemps = RegularGridInterpolator((t_data, z_data), 
                                       T_data, bounds_error=False, 
                                       fill_value=T_base)
