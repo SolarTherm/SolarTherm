@@ -106,6 +106,7 @@ jobs:
         echo $PATH
         mpiexec
         mpicc --version
+        gcc --version
         cd tests
         python3 -m pytest test_stenv.py
 
