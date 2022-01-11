@@ -20,11 +20,7 @@ class Contingency:
 		self.var_n_cost=var_n_cost
 		self.get_sample(num_total_sample, summaryfile, process_lcoe)
 	
-		#self.get_lcoe_contingency(fn='/media/yewang/Software/program/solartherm-contingency/examples/demo_sensitivity'+'/Reference_2_res_3.mat', target_lcoe=None, likelihood=0.7)
-		#self.plot_cdfs()
-		#self.plot_sensitivity()
-
-		
+	
 	def get_sample(self, num_total_sample, summaryfile=None, process_lcoe=False):
 
 		self.sample={}
@@ -57,7 +53,12 @@ class Contingency:
 			for i in range(1, nn):
 				self.sample[data[0,i]]=data[1:][idx, i].astype(float)
 
-		
+		#FIXME C_contingency variable was not in the system model
+		# such that it could not be extracted
+		# need to make consistent naming structure in system models
+		# especially for the costs
+		self.sample['C_contingency']=(self.sample['C_field'].astype(float)+self.sample['C_receiver'].astype(float)+self.sample['C_storage'].astype(float)+self.sample['C_PB'].astype(float)+self.sample['C_BOP'].astype(float)+self.sample['C_field'].astype(float)*10./75.)*0.1
+
 		self.num_sample = len(self.sample['lcoe'])
 		self.epy=self.sample['epy'].astype(float) #MWh/year
 		self.C_cap=self.sample['C_cap'].astype(float)-self.sample['C_contingency'].astype(float) #mUSD
@@ -132,7 +133,7 @@ class Contingency:
 			#	print(self.var_n_perf[i], self.var_v_perf[i][idp])
 			
 			t0=time.time()	
-			norms, idx=get_bottom_hull(points.T, indicies=hull.simplices)
+			norms, idx=get_bottom_hull_2d(points.T, indicies=hull.simplices)
 			t1=time.time()
 			print('')
 			print('Time (bottom hull) %.2f s'%(t1-t0))
@@ -166,7 +167,7 @@ class Contingency:
 			
 					
 		else:
-			raise('\nNot yet available for number of uncertain parameters is larger than 2\nComing in the next stage\n')
+			raise('\nNot yet available when the number of uncertain parameters is larger than 2\n Future work\n')
 				
 		
 		return indices, f_lcoe
@@ -226,16 +227,19 @@ class Contingency:
 		num_par=len(names)						
 		points=np.vstack((values[0], values[1])) #(2, n)
 		points=points.T #(n, 2)		
+
+		# the new sample
+		num_des=len(self.var_n_des)
+		num_ns=len(newsample)
+		ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
+		ns_des={} # design of the new sample
+		ns_cap=np.zeros(num_ns) # total captical cost of the new sample
+		ns_epy=np.zeros(num_ns) # epy of the new sample		
+		for i in range(num_des):
+			ns_des[self.var_n_des[i]]=np.zeros(num_ns)
 		
 		if tri_idx is None:
-			# the new sample
-			num_des=len(self.var_n_des)
-			num_ns=len(newsample)
-			ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
-			ns_des={} # design of the new sample
-			for i in range(num_des):
-				ns_des[self.var_n_des[i]]=np.zeros(num_ns)
-
+		
 			num_tri=len(indices)
 			for i in range(num_tri):
 
@@ -246,6 +250,9 @@ class Contingency:
 				idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
 				if np.sum(idx)!=0:
 					ns_lcoe[idx]=(ka*self.lcoe[indices[i,0]]+kb*self.lcoe[indices[i,1]]+kc*self.lcoe[indices[i,2]])/k
+					ns_cap[idx]=(ka*self.C_cap[indices[i,0]]+kb*self.C_cap[indices[i,1]]+kc*self.C_cap[indices[i,2]])/k
+					ns_epy[idx]=(ka*self.epy[indices[i,0]]+kb*self.epy[indices[i,1]]+kc*self.epy[indices[i,2]])/k					
+					
 					for i in range(num_des):
 						name=self.var_n_des[i]
 						value=self.var_v_des[i]
@@ -279,13 +286,6 @@ class Contingency:
 				plt.show()
 				plt.close()
 		else:
-			# the new sample
-			num_des=len(self.var_n_des)
-			num_ns=len(newsample)
-			ns_lcoe=np.zeros(num_ns) # optimal lcoe of the new sample
-			ns_des={} # design of the new sample
-			for i in range(num_des):
-				ns_des[self.var_n_des[i]]=np.zeros(num_ns)
 
 			num_tri=len(tri_idx)
 			for i in range(num_tri):
@@ -297,6 +297,9 @@ class Contingency:
 				idx, ka, kb, kc, k=self.interp_tri_2d( A, B, C, newsample)
 				if np.sum(idx)!=0:
 					ns_lcoe[idx]=(ka*self.lcoe[indices][tri_idx[i,0]]+kb*self.lcoe[indices][tri_idx[i,1]]+kc*self.lcoe[indices][tri_idx[i,2]])/k
+					ns_cap[idx]=(ka*self.C_cap[indices][tri_idx[i,0]]+kb*self.C_cap[indices][tri_idx[i,1]]+kc*self.C_cap[indices][tri_idx[i,2]])/k
+					ns_epy[idx]=(ka*self.epy[indices][tri_idx[i,0]]+kb*self.epy[indices][tri_idx[i,1]]+kc*self.epy[indices][tri_idx[i,2]])/k
+										
 					for i in range(num_des):
 						name=self.var_n_des[i]
 						value=self.var_v_des[i]
@@ -329,7 +332,7 @@ class Contingency:
 				plt.show()
 				plt.close()				
 	
-		return ns_lcoe, ns_des
+		return ns_lcoe, ns_des, ns_epy, ns_cap
 
 			
 					
@@ -452,7 +455,7 @@ class Contingency:
 		return f_cdf, f_xs
 		
 
-	def get_lcoe_contingency(self, fn, target_lcoe=None, likelihood=None):
+	def get_lcoe_contingency(self, f_cdf, f_xs, fn, target_lcoe=None, likelihood=None):
 		'''
 		Obtain the rate of contingency with a given targeted LCOE or likelihood
 		Arguments:
@@ -468,7 +471,7 @@ class Contingency:
 		C_contingency: float, the amount of contingency budget (MUSD)
 		'''
 		
-		f_cdf, f_xs=self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', plot=False)			
+		#f_cdf, f_xs=self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', plot=False)			
 		
 		mat = DyMat.DyMatFile(fn)
 		
@@ -486,19 +489,26 @@ class Contingency:
 		#TODO
 		# need to make an agreement of the name of the cost/finacial parameters
 		# between all the SolarTherm models
-		#C_equipment=mat.data('C_cap_dir_tot')[0] # total equipment cost
-		C_equipment=mat.data('C_cap_total')[0] # total equipment cost
+		try:
+			C_equipment=mat.data('C_cap_total')[0] # total equipment cost
+		except:
+			C_equipment=mat.data('C_cap_dir_tot')[0] # total equipment cost	
 		
-		r_contingency_0=mat.data('r_contg')[0]
-		C_contingency_0=r_contingency_0 * C_equipment
-		#C_contingency_0=mat.data('C_contingency')[0]
+		try:
+			# if there was default contingency added in the system model		
+			r_contingency_0=mat.data('r_contg')[0]
+			C_contingency_0=r_contingency_0 * C_equipment
+			#C_contingency_0=mat.data('C_contingency')[0]
+		except:
+			C_contingency_0=0.
 		C_cap_0 =cap_v[0]-C_contingency_0
-
+		print('')
+		print('The initially allocated contingency:%.2f MUSD '%(C_contingency_0/1e6))
 		
 		# LCOE of the best case without contingency budget
-		#lcoe = fin.lcoe_r(C_cap_0, om_y_v[0] + om_p_v[0]*epy, disc_v[0],
-		#					int(life_v[0]), int(cons_v[0]), epy)
-
+		lcoe = fin.lcoe_r(C_cap_0, om_y_v[0] + om_p_v[0]*epy, disc_v[0],
+							int(life_v[0]), int(cons_v[0]), epy)
+		print('The default LCOE (without contingency): %.2f USD/MWhe '% (lcoe*1e6*3600.))
 		
 		if target_lcoe!=None and likelihood==None:
 			likelihood=f_cdf(target_lcoe) 
@@ -515,6 +525,7 @@ class Contingency:
 		i=0
 		r_contingency=0.
 		#while abs(lcoe-target_lcoe)>1e-2 and r_contingency<=1: 
+
 		while abs(lcoe_update-target_lcoe)>1e-2: 
 			C_contingency=C_equipment*r_contingency
 			#print target_lcoe, lcoe, c_cap/1e6, r_contingency, f_contg(c_cap/1e6)
@@ -528,21 +539,27 @@ class Contingency:
 
 			lcoe_update=lcoe_update*1e6*3600.
 			r_contingency+=0.000001
-				
+			if i==0:
+				if lcoe_update>target_lcoe:
+					raise ValueError("\n The target LCOE is lower than the LCOE of the default optimal design\n Either the LCOE default is too high (e.g. system not optimised) \n Or the target LCOE is set too low\n No additional contingency budget is required to be added")
+			i+=1
+			
+						
 		print('	Contingency cost %.4f MUSD'%(C_contingency/1e6))
 		print('	Rate of contingency over total capital %.2f%%'%(r_contingency*100))
 		
 		return r_contingency, C_contingency/1e6
 		
 		
-	def plot_sensitivity(self):
+	def plot_sensitivity(self, names, values, lcoe):
 		'''
 		Rank of impact
 		'''
 				
-		names=self.var_n_perf+self.var_n_cost
-		values=self.var_v_perf+self.var_v_cost
+		#names=self.var_n_perf+self.var_n_cost
+		#values=self.var_v_perf+self.var_v_cost
 		num_par=len(names)
+		num_sample=len(lcoe)
 
 		# satandardise the parameters
 		V_sd=np.array([])
@@ -557,13 +574,13 @@ class Contingency:
 			V_sd=np.append(V_sd,v_sd)
 			key=np.append(key, names[i])
 
-		V_sd=V_sd.reshape(num_par, self.num_sample)
+		V_sd=V_sd.reshape(num_par, num_sample)
 		V_sd=V_sd.T
 
 		# get the regression coefficient
 		from sklearn import linear_model
 		regr = linear_model.LinearRegression()
-		regr.fit(V_sd, self.lcoe)
+		regr.fit(V_sd, lcoe)
 		regr_coef=regr.coef_
 
 		#print('Intercept: \n', regr.intercept_)
@@ -648,18 +665,18 @@ class Contingency:
 		plt.show()
 		plt.close()	
 		
-	def plot_cdfs(self):
+	def plot_cdfs(self, lcoe, C_cap, epy):
 		print('')
 		print('Some Statistics')
-		self.get_cdf(x=self.lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', savename=self.casedir+'/CDF_lcoe.png', color='green', verbose=True)		#base=112
+		self.get_cdf(x=lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', savename=self.casedir+'/CDF_lcoe.png', color='green', verbose=True)		#base=112
 		
-		self.get_cdf(x=self.C_cap, num_bins=25, name='Total capital cost', unit='(M$\cdot$USD)', savename=self.casedir+'/CDF_capital.png', color='blue', verbose=True)
+		self.get_cdf(x=C_cap, num_bins=25, name='Total capital cost', unit='(M$\cdot$USD)', savename=self.casedir+'/CDF_capital.png', color='blue', verbose=True)
 
-		self.get_cdf(x=self.epy, num_bins=25, name='Energy production per year', unit='(MWh/year)', savename=self.casedir+'/CDF_epy.png', color='orange', verbose=True)	
+		self.get_cdf(x=epy, num_bins=25, name='Energy production per year', unit='(MWh/year)', savename=self.casedir+'/CDF_epy.png', color='orange', verbose=True)	
 
 
         
-def get_bottom_hull(points, indicies):
+def get_bottom_hull_2d(points, indicies):
 	'''
 	points is (3, n) array
 	indicies is (m,3) array, indicies of triangular mesh element
@@ -875,47 +892,64 @@ def plot_3dmesh(points, tri, centers, norms):
     ax.quiver(centers[:,0],centers[:,1],centers[:,2],norms[:,0],norms[:,1],norms[:,2],length=1., arrow_length_ratio=0.2)
     plt.show()  	
         
-if __name__=="__main__":
-		
-	var1=np.linspace(0.885, 0.9525, 10)
-	var2=np.linspace(2.6, 3.41, 10)
-	v1,v2=np.meshgrid(var1, var2)		
-	P=np.append(v1, v2) #(2, n)
-	P=P.reshape(2, int(len(P)/2))
-	P=P.T	
-	num_ns=int(len(P))
 
-	sample=np.r_[1000, 3000, 5000, 8000, 10000]	
-	var_n_des=['t_storage', 'tank_ar']
-	var_n_perf=['ab_rec', 'alpha']
-	mm1=['moga', 'moga', 'uniform'] 
-	mm2=['front', 'hull', 'hull']
+def pert_distribution(a, b, c, size, lamb=4):
+	'''
+	a is the lower bound
+	b is the nominal
+	c is the upper bound
+	size is the number of samles
+	'''
+	r = c - a
+	alpha = 1 + lamb * (b - a) / r
+	beta = 1 + lamb * (c - b) / r
+	return a + np.random.beta(alpha, beta, size=size) * r
 
-	for j in range(1,3):
-		for i in range(len(sample)):
-			print('')
-			print('Method', mm1[j], mm2[j], 'Sample', sample[i])
-			t0=time.time()
-
-			casedir='/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/%s_%.0f'%(mm1[j], sample[i])
-			ct=Contingency(casedir, var_n_des=var_n_des, var_n_perf=var_n_perf, var_n_cost=[])
-			if mm2[j]=='hull':
-				indices, f_lcoe=ct.get_front(plot=False)
-				tri_idx=None
-			elif mm2[j]=='front':
-				indices, tri_idx, f_lcoe=ct.front_tri()
+def generate_lhs(UB,LB, num_inputs, numdata, dist='uniform', Nominal=None):
+	import pyDOE
+	LHS = pyDOE.lhs(num_inputs,samples=numdata)
+	
+	if dist=='uniform':
+		for i in range(LHS.shape[0]):
+			for j in range(LHS.shape[1]):
+				val = LHS[i,j]
+				ub = UB[j]*0.99
+				lb = LB[j]*1.01
+				real_val = val * (ub - lb) + lb
+				LHS[i,j] = real_val
 				
-			ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, P, tri_idx=tri_idx, plot=False)
-			
-			title=np.array([var_n_perf[0], var_n_perf[1], var_n_des[0], var_n_des[1], 'sample lcoe'])
-			data=np.append(P[:,0], (P[:, 1], ns_des[var_n_des[0]], ns_des[var_n_des[1]], ns_lcoe))
-			data=data.reshape(5, num_ns)
-			res=np.hstack((title.reshape(5,1), data))
-			np.savetxt('/media/yewang/Data/Research/yewang/contingency/sample-reference2/samples/2D/newsample-%s_%s_%.0f.csv'%(mm1[j], mm2[j], sample[i]), res.T, fmt='%s', delimiter=',')
-			t1=time.time()
-			print('Time (total) %.2f s'%(t1-t0))
-			sys.exit(0)
+	elif dist=='pert':
+		# FIXME the pert distribution lhs is not available yet
+		pass
+		#LHS = lhs(num_inputs,samples=numdata)
+		
+		#alpha=1.+4.*(Nominal-LB)
+		#beta=1.+4.*(UB-Nominal)
+		#r=UB-LB
+		#LHS=beta(alpha, beta)
+		#LHS=norm(loc=0, scale=1).ppf(LHS)
+	return LHS
 
+ 
+        
+if __name__=="__main__":
 
+	pass
 
+	'''
+	import matplotlib.pyplot as plt
+	fts=14
+	a=1.
+	c=3.
+	b=2.
+	size=5000
+	s=pert_distribution(a, b, c, size, lamb=4)
 
+	n, bins, patches = plt.hist(x=s, bins='auto', color='#0504aa',
+                            alpha=0.7, rwidth=0.85)	
+	plt.ylabel('Frequence of occurence', fontsize=fts)
+	plt.xticks(fontsize=fts)
+	plt.yticks(fontsize=fts)
+	plt.savefig(open('sample.png', 'wb'), dpi=300, bbox_inches='tight')
+	plt.close()
+	'''		

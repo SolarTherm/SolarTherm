@@ -139,11 +139,12 @@ class DakotaSampleIn:
 		with open(self.casedir+'/sample.in', 'w') as f:
 			f.write(dktin)		
 		
-		if self.analysis_type=='CONTINGENCY':
-			contingency=True
+		if self.analysis_type=='gen_sample':
+			sample_only=True
 		else:
-			contingency=False
-		gen_interface_bb(self.casedir, contingency)
+			sample_only=False
+				
+		gen_interface_bb(self.casedir, sample_only)
 				
 	def dakota_environment(self):
 		dktin='''
@@ -729,13 +730,26 @@ class DakotaVariables(DakotaSampleIn):
 		return m
 
 	
-def gen_interface_bb(casedir, contingency=False):
+def gen_interface_bb(casedir, sample_only=False):
 	'''
 	This function generate the interface_bb.py file in the casedir
 	which will be excuted by DAKOTA	
 	'''
-	
-	bb='''#!/usr/bin/env python3
+	if sample_only:
+		bb='''#!/usr/bin/env python3
+#This is a dummy python file
+
+import dakota.interfacing as di	
+params, results = di.read_parameters_file()
+
+for i, r in enumerate(results.responses()):
+	if r.asv.function:
+	    r.function = 1
+
+results.write()	
+'''
+	else:
+		bb='''#!/usr/bin/env python3
 # Dakota will execute this python script
 # The command line arguments will be extracted by the interface automatically.
 

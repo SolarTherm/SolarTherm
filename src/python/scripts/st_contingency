@@ -1,6 +1,6 @@
 #! /bin/env python
 
-from solartherm.contingency import Contingency
+from solartherm.contingency import Contingency, generate_lhs
 from solartherm.dakota import DakotaSampleIn
 from solartherm import simulation
 from solartherm import params
@@ -11,6 +11,7 @@ import os
 import argparse
 import itertools
 import subprocess
+import re
 
 if __name__=='__main__':
 	parser = argparse.ArgumentParser()	
@@ -55,12 +56,18 @@ if __name__=='__main__':
 			help='plot the results')										
 	parser.add_argument('--excel', type=str, default=None,
 			help='the directry of the input excel data sheet')			
-	parser.add_argument('--sample', type=str, default='moga-hybrid',
-			help='sampling method, e.g. lhs or moga')			
+	parser.add_argument('--sample', type=str, default='lhs',
+			help='sampling method, e.g. lhs or moga-hybrid')			
 	parser.add_argument('--ns', type=int, default=10,
 			help='number of samples')
 	parser.add_argument('--samplefile', type=str, default=None,
-			help='directory of a csv file that has the summary of sample data for processing contingency analysis')			
+			help='directory of a csv file that has the summary of sample data for processing contingency analysis')	
+	parser.add_argument('--matfile_default_design', type=str, default=None,
+			help='directory of the default design .mat file, for analysing contingency costs ')	
+	parser.add_argument('--target_lcoe', type=float, default=None,
+			help='giving the target lcoe of interest, and the program will return the likelihood to achieve this lcoe')		
+	parser.add_argument('--target_likelihood', type=float, default=None,
+			help='giving the likelihood of interest, and the program will return the corresponding lcoe')										
 
 
 	args = parser.parse_args()
@@ -141,7 +148,7 @@ if __name__=='__main__':
 			ubs.append(tree.get(n+'.boundary2'))	
 						
 		res_names=['lcoe']
-		dists=['uniform']
+		dists=['uniform'] # for the data training sample
 
 	if args.samplefile==None:
 		# call dakota to sample the data
@@ -189,47 +196,97 @@ if __name__=='__main__':
 	# TODO in the current examples, no cost parameters are involved
 	# TO BE ADDED	
 	print('Postprocessing contingency')				
-	ct=Contingency(casedir=casedir, num_total_sample=args.ns, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile)
+	ct=Contingency(casedir=casedir, num_total_sample=args.ns, var_n_des=par_n_des, var_n_perf=par_n_perf, var_n_cost=par_n_cost, summaryfile=summaryfile,process_lcoe=True)
+	# obtain the convex hull
 	if args.sample=='moga-hybrid':
 		indices, tri_idx, f_lcoe=ct.front_tri()
 	elif args.sample=='lhs':				
 		indices, f_lcoe=ct.get_front(plot=args.plot)
 		tri_idx=None
 		
-	# new sample of uncertain parameters
-	num_ns=1000 # number of new samples
+	# generate new new sample of uncertain parameters
+	num_ns=2500 # number of new samples
 	num_perf=len(par_n_perf)
 	num_des=len(par_n_des)				
-	new_sample=np.array([])
-	for n in par_n_perf:	
-		lb=tree.get(n+'.boundary1')
-		ub=tree.get(n+'.boundary2')
-		v=np.random.uniform(low=lb*1.01, high=ub*0.99, size=num_ns)
-		new_sample=np.append(new_sample, v)	
-		
-	new_sample=new_sample.reshape(num_perf, num_ns)
-	new_sample=new_sample.T			
-	ns_lcoe, ns_des=ct.get_assessment(indices, f_lcoe, new_sample, tri_idx=tri_idx, plot=args.plot)
+	dists=[]
+	par_uniform=tree.filter_dist('uniform',par_n_perf)
+	par_pert=tree.filter_dist('pert', par_n_perf)	
+	
+	#uniform
+	if len(par_uniform)>0:
+		dists.append('uniform')
+		lb_uniform=[]
+		ub_uniform=[]
+		for n in par_uniform:
+			b1=tree.get(n+'.boundary1')
+			b2=tree.get(n+'.boundary2')
+			#FIXME the boundary should not be shrinked here
+			# should be enlarged in the training sample instead
+			lb_uniform.append(b1*1.05)
+			ub_uniform.append(b2*0.95) 
+		new_sample=generate_lhs(lb_uniform ,ub_uniform, num_inputs=len(par_uniform), numdata=num_ns, dist='uniform') # an array (num_perf by num_sample)
+
+	# pert
+	# FIXME currently the pert distribution is not available
+	if len(par_pert)>0:
+		dists.append('pert')			
+		nominal_pert=[]
+		lb_pert=[]
+		ub_pert=[]
+		for n in par_pert:
+			nominal=tree.get(n+'.nominal')	
+			b1=tree.get(n+'.boundary1')
+			b2=tree.get(n+'.boundary2')	
+			nominal_pert.append(nominal)
+			lb_pert.append(b1*1.01)
+			ub_pert.append(b2*0.99)
+		raise TypeError("\nThe pert distribution LHS has some issue and is not available") 
+		 	
+	
+	if args.plot:
+		# plot the distribution of the sample
+		import matplotlib.pyplot as plt	
+		fts=12	
+		for i in range(num_perf):
+			n, bins, patches = plt.hist(x=new_sample[:,i], bins='auto', color='#0504aa',
+				                    alpha=0.7, rwidth=0.85)	
+			plt.ylabel('Frequence of occurence', fontsize=fts)
+			plt.xticks(fontsize=fts)
+			plt.yticks(fontsize=fts)
+			plt.savefig(open('sample_%s.png'%par_n_perf[i], 'wb'), dpi=300, bbox_inches='tight')
+			plt.close()	
+				
+	ns_lcoe, ns_des, ns_epy, ns_cap=ct.get_assessment(indices, f_lcoe, new_sample, tri_idx=tri_idx, plot=args.plot)
+
+	idx=ns_lcoe>1e-3
+	ns_lcoe=ns_lcoe[idx]
+	ns_epy=ns_epy[idx]
+	ns_cap=ns_cap[idx]
+	for n in par_n_des:
+		ns_des[n]=ns_des[n][idx]
+	num_ns=len(ns_lcoe)
 	
 	title=np.array([])
 	data=np.array([])
 	for i in range(num_perf):
 		title=np.append(title, par_n_perf[i])
-		data=np.append(data, new_sample[:,i])
+		data=np.append(data, new_sample[idx,i])
 	for n in par_n_des:
 		title=np.append(title, n)
 		data=np.append(data, ns_des[n])
-	title=np.append(title, 'sample lcoe')
-	data=np.append(data, ns_lcoe)
+	title=np.append(title, np.array(['sample lcoe', 'sample cap', 'sample epy']))
+	data=np.append(data, (ns_lcoe, ns_cap, ns_epy))
 	
-	data=data.reshape(num_perf+num_des+1, num_ns)
-	res=np.hstack((title.reshape(num_perf+num_des+1,1), data))
+	data=data.reshape(num_perf+num_des+3, num_ns)
+	res=np.hstack((title.reshape(num_perf+num_des+3,1), data))
 	np.savetxt(casedir+'/res_contingency.csv', res.T, fmt='%s', delimiter=',')	
-	print('Results saved in the case directory:\n	%s'%casedir)		
+	print('Results saved in the case directory:\n	%s/res_contingency.csv'%casedir)		
 
-	ct.get_lcoe_contingency(fn='../Reference_2_res_0.mat', target_lcoe=None, likelihood=0.7)
-	ct.plot_cdfs()
-	ct.plot_sensitivity()
+	f_cdf, f_xs=ct.get_cdf(ns_lcoe, num_bins=25, name='LCOE', unit='(USD/MWh$\mathrm{_e}$)', plot=False)	
+
+	ct.get_lcoe_contingency(f_cdf, f_xs, fn=args.matfile_default_design, target_lcoe=args.target_lcoe, likelihood=args.target_likelihood)
+	ct.plot_cdfs(lcoe=ns_lcoe, C_cap=ns_cap, epy=ns_epy)
+	ct.plot_sensitivity(names=par_n_perf, values=new_sample[idx].T, lcoe=ns_lcoe)
 	
 	
 	
