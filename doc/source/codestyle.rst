@@ -10,7 +10,7 @@ Modelica code should use the following conventions:
 - ``function_names``
 - ``v_desc``, for example: ``Q_flow_in``, ``P_elec``, ``p_max``, ``epsilon_ext``
 - ``INNER_OUTER_CLASSES``
-.. - ``BIG_CONSTANTS``
+
 
 For common components, the following "acronyms" can be used in model names, model instances and packages:
 
