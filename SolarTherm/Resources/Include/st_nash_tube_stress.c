@@ -77,7 +77,7 @@ void stress(
 		Tcrown_i[k-1] = Ti[0];
 		Tcrown_o[k-1] = To[0];
 		for (j=0; j<nt; j++){
-			qnet[(k-1)*91 + j] = Qnet[j];
+			qnet[(k-1)*nt + j] = Qnet[j];
 		}
 		Thermoelastic(To[0], Ro, theta, Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress_sec, strain_sec);
 		stress[k-1] = stress_sec[4]/1e6;
