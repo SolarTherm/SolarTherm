@@ -7,6 +7,7 @@ function FluxInterpolation
 	input Real nu_124;
 	input Real ele;
 	input Real dni;
+	input Real ele_min;
 	output Real result;
 
 protected
@@ -18,10 +19,13 @@ protected
 	Real dni_clear = 1;
 	
 algorithm
-	if ele > 0 then
+	if ele > ele_min then
 		dni_clear:=1363*0.7^((1./cos(0.5*pi-ele))^0.678);
+		x:=dni/dni_clear;
+	else
+		dni_clear:=dni;
+		x:=0;
 	end if;    
-	x:=dni/dni_clear;
 	
 	if x >= cons4 then
 	   result := nu_124;

@@ -23,7 +23,7 @@ model FlowPathStressSalt
 	parameter SI.Length gap_tb = 1/1000 "Gap between tubes in a panel";
 	// Discretisation
 	parameter Integer nt = 91;
-	parameter Integer N = 100 "Number of tube segments in flowpath";
+	parameter Integer N = 450 "Number of tube segments in flowpath";
 	parameter Integer n_tb_fp = 9 "Number of tubes per flow path";
 	final parameter SI.Length dz = n_tb_fp*H_rec/N "Longitude of the pipe segment";
 	final parameter Integer n_tubes_pa = integer(R_rec*sin(2*pi/n_pa)/(tb_d_o + gap_tb)) "Number of tubes per panel";
@@ -59,30 +59,20 @@ model FlowPathStressSalt
 		year = 1996)
 	annotation(Placement(visible = false, transformation(origin = {-20, 80}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
-	Modelica.Blocks.Sources.RealExpression DNI(y = dni_mflow_table.y[2]) annotation(
+	Modelica.Blocks.Sources.RealExpression DNI(y = data.DNI) annotation(
 	Placement(visible = false, transformation(origin = {-80, 80}, extent = {{-10, -10}, {10, 10}})));
-
-	// Thermo-elastic stress
-	Real stress_fpath[N];
-
-	// Surface temperature at tube crown
-	Real T_crown_fpath[N];
-
-	// Surface temperature at tube crown
-	Real T_fluid_fpath[N];
 
 	// Solar flux distribution along flowpath
 	SI.HeatFlux CG[N];
-
-	// Net flux
-	SI.HeatFlux qnet[N,nt];
+	//Real dni_clear = 1363*0.7^((1./max(Modelica.Constants.small, cos(0.5*Modelica.Constants.pi-ele)))^0.678);
+	//Real ratio = if ele > 0.139626340159546 then data.DNI/(dni_clear+Modelica.Constants.small) else 0;
 
 	// Flux files
 	parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
-	parameter String file_dni0 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr0.motab");
-	parameter String file_dni1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr1.motab");
-	parameter String file_dni2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr2.motab");
-	parameter String file_dni3 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr3.motab");
+	parameter String file_dni0 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr3.motab");
+	parameter String file_dni1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr2.motab");
+	parameter String file_dni2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr1.motab");
+	parameter String file_dni3 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr0.motab");
 	
 	Modelica.Blocks.Tables.CombiTable2D flux_dni0[N](
 		each fileName = file_dni0, 
@@ -108,6 +98,7 @@ model FlowPathStressSalt
 	Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(sun.dec));
 	Modelica.Blocks.Sources.RealExpression u2(y = Modelica.SIunits.Conversions.to_deg(sun.hra));
 	SI.Angle ele;
+	parameter SI.Angle ele_min = Modelica.SIunits.Conversions.from_deg(8);
 	parameter String dni_mflow_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/dni_mflow_salt.motab");
 	Modelica.Blocks.Sources.CombiTimeTable dni_mflow_table(
 		columns = 2:3,
@@ -128,12 +119,12 @@ equation
 		connect(u2.y, flux_dni2[i].u2);
 		connect(u1.y, flux_dni3[i].u1);
 		connect(u2.y, flux_dni3[i].u2);
-		CG[i] = max(0, FluxInterpolation(flux_dni3[i].y*1e3, flux_dni2[i].y*1e3, flux_dni1[i].y*1e3, flux_dni0[i].y*1e3, ele, sun.dni));
+//		CG[i] = max(0, FluxInterpolation(flux_dni0[i].y*1e3, flux_dni1[i].y*1e3, flux_dni2[i].y*1e3, flux_dni3[i].y*1e3, ele, sun.dni, ele_min));
+		CG[i] = max(0, flux_dni2[i].y*1e3);
 	end for;
 
 	connect(DNI.y, sun.dni);
 	m_flow_tb = n_tb_fp*dni_mflow_table.y[1]/n_tubes;
 
-	(T_crown_fpath, T_fluid_fpath, stress_fpath, qnet) = NASHTubeStress(coolant, tb_r_i, tb_r_o, dz, m_flow_tb, T_rec_in, data.Tdry, CG, nt, N, R_fouling, ab, em, kp, h_ext, alpha, E, nu);
 	annotation(experiment(StartTime=0.0, StopTime=86400, Interval=1800, Tolerance=1e-06));
 end FlowPathStressSalt;
