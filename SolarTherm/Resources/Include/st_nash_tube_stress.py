@@ -142,6 +142,7 @@ if __name__=='__main__':
 	em = 0.88
 	kp = 21.0
 	h_ext = 30.0
+	dz = 10.5/50.
 
 	# Importing data from Modelica
 	folder = os.path.expanduser('~')
@@ -162,7 +163,7 @@ if __name__=='__main__':
 	for k in range(nz):
 		Qnet = Temperature(coolant, Ri, Ro, m_flow_tb, Tf[:,k], Tamb, CG[:,k], nt, R_fouling, ab, em, kp, h_ext,debug=False)
 		C = specificHeatCapacityCp(Tf[:,k], coolant)*m_flow_tb
-		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet,C,out=np.zeros_like(C), where=C!=0)
+		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet*dz,C,out=np.zeros_like(C), where=C!=0)
 	scipy.io.savemat('st_nash_tube_stress_vs_nz.mat',{
 					"Tf_vs_nz":Tf,
 					"CG":CG,
