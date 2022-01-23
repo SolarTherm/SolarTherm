@@ -5,6 +5,7 @@ model HeliostatFieldOperation
 	import SolarTherm.Utilities.*;
 	import SolarTherm.Models.Sources.SolarFunctions.*;
 	import Modelica.SIunits.Conversions.*;
+	import SolarTherm.Utilities.FluxInterpolation;
 	
 	parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)";
 	parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)";
@@ -15,7 +16,7 @@ model HeliostatFieldOperation
 	parameter SI.Area A_h=4 "Heliostat's Area";
 	parameter Real he_av=0.99 "Heliostat availability";
 
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Alice_Springs_Real2000_Created20130430.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gen3liq_sodium_dagget.motab");
 
 	replaceable model Optical = SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.Table "Total optical efficency"
@@ -33,8 +34,10 @@ model HeliostatFieldOperation
 	parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 	parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 	
+	parameter SI.Time t_start=3600 "Start-up traking delay";
 	parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
 	parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
+	parameter SI.HeatFlowRate Q_curtail=1e10 "Fixed heat flow rate for curtailment" annotation(min=0,Dialog(group="Operating strategy"));
 	
 	Optical optical(file = opt_file, hra=solar.hra, dec=solar.dec, lat=lat);
 	SI.HeatFlowRate Q_raw;
@@ -59,6 +62,7 @@ model HeliostatFieldOperation
 	SI.Power W_loss;
 	Real damping;
 	Boolean on_hf;
+	Boolean on_hf_forecast;
 	
 	// Variables and parameters for Operation Heuristics
 	parameter Real const_t = -dt;
@@ -72,8 +76,40 @@ model HeliostatFieldOperation
 	SI.Time t_forecast "Startup time forecast";
 	Real counter(start = const_t);
 
+	// Variables flux interpolation
+	Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(solar.dec));
+	Modelica.Blocks.Sources.RealExpression u2(y = Modelica.SIunits.Conversions.to_deg(solar.hra));
+	SI.HeatFlux CG[N];
+	parameter Integer N = 450 "Number of tube segments in flowpath";
+	parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
+	parameter String file_dni0 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr3.motab");
+	parameter String file_dni1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr2.motab");
+	parameter String file_dni2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr1.motab");
+	parameter String file_dni3 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr0.motab");
+	
+	Modelica.Blocks.Tables.CombiTable2D flux_dni0[N](
+		each fileName = file_dni0, 
+		each tableOnFile = true, 
+		each smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+		tableName = tableNames);
+	Modelica.Blocks.Tables.CombiTable2D flux_dni1[N](
+		each fileName = file_dni1, 
+		each tableOnFile = true, 
+		each smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+		tableName = tableNames);
+	Modelica.Blocks.Tables.CombiTable2D flux_dni2[N](
+		each fileName = file_dni2, 
+		each tableOnFile = true, 
+		each smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+		tableName = tableNames);
+	Modelica.Blocks.Tables.CombiTable2D flux_dni3[N](
+		each fileName = file_dni3, 
+		each tableOnFile = true, 
+		each smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+		tableName = tableNames);
+
 	Modelica.Blocks.Types.ExternalCombiTable1D wea_table = Modelica.Blocks.Types.ExternalCombiTable1D(
-		tableName = "weather",
+		tableName = "data",
 		fileName = wea_file,
 		table = fill(0.0, 0, 2),
 		columns = 1:9,
@@ -88,18 +124,17 @@ model HeliostatFieldOperation
 protected
 	SI.Power W_loss1;
 	SI.Power W_loss2;
-	parameter SI.Time t_start=3600 "Start-up traking delay";
 	discrete Modelica.SIunits.Time t_on(start=0, fixed=true) "Sunrise time instant";
 	Modelica.Blocks.Interfaces.BooleanInput on_internal "Needed to connect to conditional connector";
 	Modelica.Blocks.Interfaces.BooleanInput defocus_internal "Needed to connect to conditional connector";
 	Modelica.Blocks.Interfaces.RealInput Wspd_internal "Needed to connect to conditional connector";
-	parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
-	parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
-	parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-	parameter SI.HeatFlowRate Q_curtail=1e10 "Fixed heat flow rate for curtailment" annotation(min=0,Dialog(group="Operating strategy"));
+	final parameter SI.HeatFlowRate Q_start=nu_start*Q_design "Heliostat field start power" annotation(min=0,Dialog(group="Operating strategy"));
+	final parameter SI.HeatFlowRate Q_min=nu_min*Q_design "Heliostat field turndown power" annotation(min=0,Dialog(group="Operating strategy"));
+	final parameter SI.HeatFlowRate Q_defocus=nu_defocus*Q_design "Heat flow rate limiter at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
 
 initial equation
 	on_internal=Q_raw>Q_start;
+	on_hf_forecast = ele>ele_min;
 equation
 	if use_on then
 		connect(on,on_internal);
@@ -116,22 +151,52 @@ equation
 	end if;
 
 	on_hf=(ele>ele_min) and (Wspd_internal<Wspd_max);
-	Q_raw= if on_hf then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
+	Q_raw= if on_hf_forecast then max(he_av*n_h*A_h*solar.dni*optical.nu,0) else 0;
 
 	// Operation heuristics
 	der(counter) = 1;
 	when counter > 0 then
 		time_simul = floor(time);
 		for i in 1:horizon loop
-			(dec_horizon[i], hra_horizon[i]) = PSA_Algorithm(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, lon, lat, t_zone, year);
-			dni_horizon[i] = horizon_function(if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 3, wea_table);
-			eta_op_horizon[i] = opt_eff_horizon(to_deg(dec_horizon[i]), to_deg(hra_horizon[i]), opt_table);
+			(dec_horizon[i], hra_horizon[i]) = PSA_Algorithm(
+				if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 
+				lon, 
+				lat, 
+				t_zone, 
+				year);
+			dni_horizon[i] = horizon_function(
+				if time_simul + i * dt < 31536000 then time_simul + i * dt else time_simul + i * dt - 31536000, 
+				3, 
+				wea_table);
+			eta_op_horizon[i] = opt_eff_horizon(
+				to_deg(dec_horizon[i]), 
+				to_deg(hra_horizon[i]), 
+				opt_table);
 		end for;
 		reinit(counter,const_t);
 	end when;
 	t_forecast = if on_hf then ReceiverStartupTime(horizon, dni_horizon, eta_op_horizon, n_h*A_h, dt, Q_start) else 0;
+	when t_forecast>t_start and on_hf then
+		on_hf_forecast = true;
+	elsewhen not on_hf then
+		on_hf_forecast = false;
+	end when;
 	// End Operation heuristics
 
+	// Flux interpolation
+	for i in 1:N loop
+		connect(u1.y, flux_dni0[i].u1);
+		connect(u2.y, flux_dni0[i].u2);
+		connect(u1.y, flux_dni1[i].u1);
+		connect(u2.y, flux_dni1[i].u2);
+		connect(u1.y, flux_dni2[i].u1);
+		connect(u2.y, flux_dni2[i].u2);
+		connect(u1.y, flux_dni3[i].u1);
+		connect(u2.y, flux_dni3[i].u2);
+		// FluxInterpolation(nu_52, nu_76, nu_100, nu_124, ele, sun.dni, ele_min)
+		CG[i] = max(0, FluxInterpolation(flux_dni0[i].y*1e3, flux_dni1[i].y*1e3, flux_dni2[i].y*1e3, flux_dni3[i].y*1e3, ele, solar.dni, ele_min));
+	end for;
+	// End Flux interpolation 
 	when Q_raw>Q_start then
 		on_internal=true;
 	elsewhen Q_raw<Q_min then
