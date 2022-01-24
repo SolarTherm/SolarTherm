@@ -17,7 +17,7 @@ class TestFlowPathStress(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model(args=['-d=nonewInst'])
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='5m', solver='dassl', nls='homotopy')
+		sim.simulate(start=0, stop='25h', step='5m', solver='dassl', nls='homotopy')
 
 	def test_simple_system(self):
 		print('Simulation finished')

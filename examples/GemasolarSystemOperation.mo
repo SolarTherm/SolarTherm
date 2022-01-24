@@ -53,6 +53,7 @@ model GemasolarSystemOperation
 	// Receiver
 	parameter Integer N_pa_rec = 18 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
+	parameter Integer N_fp_rec = 2 "Number of panels in receiver";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 
 	parameter Real ar_rec = 18.67/15 "Height to diameter aspect ratio of receiver aperture";
@@ -309,6 +310,7 @@ model GemasolarSystemOperation
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		N_pa = N_pa_rec,
+		N_fp = N_fp_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,

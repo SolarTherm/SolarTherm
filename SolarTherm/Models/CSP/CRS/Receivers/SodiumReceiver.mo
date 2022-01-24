@@ -3,19 +3,14 @@ model SodiumReceiver "ReceiverSimple with convective losses"
   extends Interfaces.Models.ReceiverFluid;
 //  Medium.BaseProperties medium;
 
-  parameter SI.Length H_rcv=1 "Receiver height"
-                                               annotation(Dialog(group="Technical data"));
-  parameter SI.Diameter D_rcv=1 "Receiver diameter"
-                                                   annotation(Dialog(group="Technical data"));
-  parameter Integer N_pa = 1 "Number of panels" annotation(Dialog(group="Technical data"));
-  parameter SI.Diameter D_tb=1 "Tube outer diameter"
-                                                    annotation(Dialog(group="Technical data"));
-  parameter SI.Thickness t_tb=1 "Tube wall thickness"
-                                                     annotation(Dialog(group="Technical data"));
-  parameter SI.Efficiency ab=1 "Coating absortance"
-                                                   annotation(Dialog(group="Technical data"));
-  parameter SI.Efficiency em=1 "Coating Emitance"
-                                                 annotation(Dialog(group="Technical data"));
+  parameter SI.Length H_rcv=1 "Receiver height" annotation(Dialog(group="Technical data"));
+  parameter SI.Diameter D_rcv=1 "Receiver diameter" annotation(Dialog(group="Technical data"));
+  parameter Integer N_pa=1 "Number of panels" annotation(Dialog(group="Technical data"));
+  parameter Integer N_fp=1 "Number of flow paths" annotation(Dialog(group="Technical data"));
+  parameter SI.Diameter D_tb=1 "Tube outer diameter" annotation(Dialog(group="Technical data"));
+  parameter SI.Thickness t_tb=1 "Tube wall thickness" annotation(Dialog(group="Technical data"));
+  parameter SI.Efficiency ab=1 "Coating absortance" annotation(Dialog(group="Technical data"));
+  parameter SI.Efficiency em=1 "Coating Emitance" annotation(Dialog(group="Technical data"));
 
   SI.HeatFlowRate Q_emi;
   SI.HeatFlowRate Q_conv;
@@ -60,14 +55,15 @@ model SodiumReceiver "ReceiverSimple with convective losses"
 	parameter Real[4] C4L = {669.573988852,0.0551284588504,0.2445016803,-0.237843095521} "Coefs to calculate T4l";
 	parameter Real[5] CH = {0.00100914180763,-0.045717460056,0.728433523594,-0.971343416823,9.55891878337} "Coefs to calculate h_conv";
 
+	parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
+	SI.MassFlowRate m_flow_tb = fluid_a.m_flow/N_tb_pa/N_fp "Tube mass flow rate";
 protected
-  parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
-  parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";
-  parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
-  parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
-  parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
-  parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
-  parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
+	parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
+	parameter SI.Volume V_rcv=N_pa*N_tb_pa*H_rcv*pi*(D_tb/2-t_tb)^2;
+	parameter SI.Area A=N_pa*N_tb_pa*H_rcv*pi*D_tb/2 "Area";
+	parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
+	parameter SI.SpecificEnthalpy h_0=Medium.specificEnthalpy(state_0);
+	parameter SI.Temperature T_0=from_degC(290) "Start value of temperature";
 equation
 	T = T_in;
 	

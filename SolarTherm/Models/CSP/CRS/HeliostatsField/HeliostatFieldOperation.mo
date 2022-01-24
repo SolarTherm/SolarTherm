@@ -67,7 +67,6 @@ model HeliostatFieldOperation
 
   SI.Power W_loss;
   Real damping;
-//protected
   Boolean on_hf;
   Boolean on_hf_forecast;
   
@@ -84,8 +83,6 @@ model HeliostatFieldOperation
   Real counter(start = const_t);
 
   // Variables flux interpolation
-  Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(solar.dec));
-  Modelica.Blocks.Sources.RealExpression u2(y = Modelica.SIunits.Conversions.to_deg(solar.hra));
   SI.HeatFlux CG[N];
   parameter Integer N = 450 "Number of tube segments in flowpath";
   parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
@@ -93,7 +90,12 @@ model HeliostatFieldOperation
   parameter String file_dni1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr2.motab");
   parameter String file_dni2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr1.motab");
   parameter String file_dni3 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr0.motab");
-  
+
+protected  
+  // Variables flux interpolation
+  Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(solar.dec));
+  Modelica.Blocks.Sources.RealExpression u2(y = Modelica.SIunits.Conversions.to_deg(solar.hra));
+
   Modelica.Blocks.Tables.CombiTable2D flux_dni0[N](
     each fileName = file_dni0, 
     each tableOnFile = true, 
@@ -128,7 +130,7 @@ model HeliostatFieldOperation
     table = fill(0.0, 0, 2), 
     smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
 
-protected
+//protected
   SI.Power W_loss1;
   SI.Power W_loss2;
   discrete Modelica.SIunits.Time t_on(start=0, fixed=true) "Sunrise time instant";

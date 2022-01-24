@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-import DyMat
+import sys, math, scipy.io, scipy.optimize
 import os
 import time
 
@@ -10,6 +9,17 @@ import time
 #   ZAVOICO, Alexis B. Solar power tower design basis document, revision 0; Topical. Sandia National Labs., 2001.
 # Liquid sodium:
 #   FINK, J. K.; LEIBOWITZ, L. Thermodynamic and transport properties of sodium liquid and vapor. Argonne National Lab., 1995.
+
+strMatNormal = lambda a: [''.join(s).rstrip() for s in a]
+strMatTrans  = lambda a: [''.join(s).rstrip() for s in zip(*a)]
+sign = lambda x: math.copysign(1.0, x)
+
+def fourierTheta(theta, a0, *c):
+	""" Timoshenko & Goodier equation """
+	ret = a0 + np.zeros(len(theta))
+	for i in range(len(c)):
+		ret += c[i] * np.cos(i * theta)
+	return ret
 
 class receiver:
 	def __init__(self,coolant = 'salt', Ri = 57.93/2000, Ro = 60.33/2000, T_in = 290, T_out = 565,
@@ -41,6 +51,29 @@ class receiver:
 		#Auxiliary variables
 		cosines = np.cos(np.linspace(0.0, np.pi, nt))
 		self.cosines = np.maximum(cosines, np.zeros(nt))
+		self.theta = np.linspace(-np.pi, np.pi,self.nt*2-2)
+		self.n = 3
+
+	def import_mat(self,fileName):
+		mat = scipy.io.loadmat(fileName, chars_as_strings=False)
+		names = strMatTrans(mat['name']) # names
+		descr = strMatTrans(mat['description']) # descriptions
+		self.data = np.transpose(mat['data_2'])
+
+		self._vars = {}
+		self._blocks = []
+		for i in range(len(names)):
+			d = mat['dataInfo'][0][i] # data block
+			x = mat['dataInfo'][1][i]
+			c = abs(x)-1  # column
+			s = sign(x)   # sign
+			if c:
+				self._vars[names[i]] = (descr[i], d, c, s)
+				if not d in self._blocks:
+					self._blocks.append(d)
+				else:
+					absc = (names[i], descr[i])
+		del mat
 
 	def dynamicViscosity(self,T):
 		if self.coolant == 'salt':
@@ -63,7 +96,7 @@ class receiver:
 			C = 1000 * (1.6582 - 8.4790e-4 * T + 4.4541e-7 * pow(T,2) - 2992.6 * pow(T,-2))
 		return C
 
-	def Temperature(self, m_flow, Tf, Tamb, CG, h_ext):
+	def Temperature(self, m_flow, Tf, Tamb, CG, h_ext, k):
 		# Flow and thermal variables
 		"""
 			hf: Heat transfer coefficient due to internal forced-convection
@@ -85,6 +118,12 @@ class receiver:
 
 		m_flow,temp = np.meshgrid(np.ones(self.nt), m_flow)
 		m_flow = m_flow*temp
+
+		Tamb,temp = np.meshgrid(np.ones(self.nt), Tamb)
+		Tamb = Tamb*temp
+
+		h_ext,temp = np.meshgrid(np.ones(self.nt), h_ext)
+		h_ext = h_ext*temp
 
 		# HTF internal flow variables
 		Re = m_flow * self.d / (self.area * mu)    # HTF Reynolds number
@@ -111,8 +150,22 @@ class receiver:
 		To = -0.5*np.sqrt(c2) + 0.5*np.sqrt((2.*b)/(a*np.sqrt(c2)) - c2)
 		Ti = (To + hf*self.Ri*self.ln/self.kp*Tf)/(1 + hf*self.Ri*self.ln/self.kp)
 		qnet = hf*(Ti - Tf)
-		qnet = np.concatenate((np.flip(qnet[:,1:-1],axis=1),qnet),axis=1)
+		To = np.concatenate((np.flip(To[:,1:-1],axis=1),To),axis=1)
+		Ti = np.concatenate((np.flip(Ti[:,1:-1],axis=1),Ti),axis=1)
+		if k == -1:
+			plt.plot(np.linspace(-np.pi,np.pi,2*self.nt-2), To[120,:])
+			plt.show()
 		Qnet = qnet.sum(axis=1)*self.Ri*self.dt*self.dz
+
+		p0 = [1.0] * (1 + (self.n))
+		# Fourier coefficients
+		for t in range(Ti.shape[0]):
+			# inside:
+			popt1, pcov1 = scipy.optimize.curve_fit(fourierTheta, self.theta, Ti[t,:], p0)
+			Tbar_i = popt1[0]; BP = popt1[1]; DP = popt1[2];
+			# outside:
+			popt2, pcov2 = scipy.optimize.curve_fit(fourierTheta, self.theta, To[t,:], p0)
+			Tbar_o = popt2[0]; BPP = popt2[1]; DPP = popt2[2];
 
 		return Qnet
 
@@ -122,24 +175,20 @@ if __name__=='__main__':
 	model = receiver()
 
 	# Importing data from Modelica
-	folder = os.path.expanduser('~')
-	momat = scipy.io.loadmat('%s/solartherm/examples/FlowPathStressSalt_res.mat'%folder)
-	modata = np.transpose(momat['data_2'][0:model.nz+1,:])
-	times = modata[:,0]
-	CG = modata[:,1:model.nz+1]
-	del modata
-	data = DyMat.DyMatFile('%s/solartherm/examples/FlowPathStressSalt_res.mat'%folder)
-	m_flow_tb = data.data('m_flow_tb')
-	del data
+	fileName = '%s/solartherm/examples/GemasolarSystemOperation_res.mat'%(os.path.expanduser('~'))
+	model.import_mat(fileName)
+	times = model.data[:,0]
+	CG = model.data[:,model._vars['heliostatField.CG[1]'][2]:model._vars['heliostatField.CG[450]'][2]+1]
+	m_flow_tb = model.data[:,model._vars['receiver.m_flow_tb'][2]]
+	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
+	h_ext = model.data[:,model._vars['receiver.h_conv'][2]]
 
 	Tf = model.T_in*np.ones((times.shape[0],model.nz+1))
-	Tamb = 298.15
-	h_ext = 30.0
 	for k in range(model.nz):
-		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext)
+		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext, k)
 		C = model.specificHeatCapacityCp(Tf[:,k])*m_flow_tb
 		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet, C, out=np.zeros_like(C), where=C!=0)
-	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%folder,{
+	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
 					"Tf_vs_nz":Tf,
 					"CG":CG,
 					"m_flow_tb":m_flow_tb
