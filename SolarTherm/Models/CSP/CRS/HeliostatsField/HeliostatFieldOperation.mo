@@ -86,11 +86,19 @@ model HeliostatFieldOperation
   SI.HeatFlux CG[N];
   parameter Integer N = 450 "Number of tube segments in flowpath";
   parameter String tableNames[N] = {"flux_" + String(i) for i in 1:N};
+  parameter String tablemflowNames[4] = {"mflow_" + String(i-1) for i in 1:4};
   parameter String file_dni0 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr3.motab");
   parameter String file_dni1 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr2.motab");
   parameter String file_dni2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr1.motab");
   parameter String file_dni3 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/flux_a230_salt_FP1_DNIr0.motab");
+  parameter String file_mflow = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/mflow_a230_salt_FP1.motab");
 
+  Modelica.Blocks.Tables.CombiTable2D m_flow[4](
+    each fileName = file_mflow, 
+    each tableOnFile = true, 
+    each smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative,
+    tableName = tablemflowNames);
+  SI.MassFlowRate m_flow_tb;
 protected  
   // Variables flux interpolation
   Modelica.Blocks.Sources.RealExpression u1(y = Modelica.SIunits.Conversions.to_deg(solar.dec));
@@ -197,6 +205,11 @@ equation
     // FluxInterpolation(nu_52, nu_76, nu_100, nu_124, ele, sun.dni, ele_min)
     CG[i] = max(0, FluxInterpolation(flux_dni0[i].y*1e3, flux_dni1[i].y*1e3, flux_dni2[i].y*1e3, flux_dni3[i].y*1e3, ele, solar.dni, ele_min));
   end for;
+  for i in 1:4 loop
+    connect(u1.y, m_flow[i].u1);
+    connect(u2.y, m_flow[i].u2);
+  end for;
+  m_flow_tb = max(0, FluxInterpolation(m_flow[4].y, m_flow[3].y, m_flow[2].y, m_flow[1].y, ele, solar.dni, ele_min));
   // End Flux interpolation 
   when Q_raw>Q_start then
     on_internal=true;

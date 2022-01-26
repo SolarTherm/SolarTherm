@@ -22,20 +22,20 @@ algorithm
 	if ele > ele_min then
 		dni_clear:=1363*0.7^((1./cos(0.5*pi-ele))^0.678);
 		x:=dni/dni_clear;
+		if x >= cons4 then
+			result := nu_124;
+		elseif x >= cons3 and x<cons4 then
+			result := nu_100+(x-cons3)/(cons4-cons3)*(nu_124-nu_100);
+		elseif x >= cons2 and x<cons3 then
+			result := nu_76+(x-cons2)/(cons3-cons2)*(nu_100-nu_76);
+		elseif x >= cons1 and x<cons2 then
+			result := nu_52+(x-cons1)/(cons2-cons1)*(nu_76-nu_52);
+		elseif x < cons1 then
+			result := x/cons1*nu_52;
+		end if;
 	else
 		dni_clear:=dni;
 		x:=0;
-	end if;    
-	
-	if x >= cons4 then
-	   result := nu_124;
-	elseif x >= cons3 and x<cons4 then
-		result := nu_100+(x-cons3)/(cons4-cons3)*(nu_124-nu_100);
-	elseif x >= cons2 and x<cons3 then
-		result := nu_76+(x-cons2)/(cons3-cons2)*(nu_100-nu_76);
-	elseif x >= cons1 and x<cons2 then
-		result := nu_52+(x-cons1)/(cons2-cons1)*(nu_76-nu_52);
-	elseif x < cons1 then
-		result := nu_52;
+		result := 0;
 	end if;
 end FluxInterpolation;

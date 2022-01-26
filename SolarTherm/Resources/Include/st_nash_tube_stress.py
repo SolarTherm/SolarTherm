@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys, math, scipy.io, scipy.optimize
-import os
-import time
+import os, sys, math, scipy.io, scipy.optimize
+import time, ctypes
+from numpy.ctypeslib import ndpointer
 
 # Thermal and transport properties of nitrate salt and sodium (verified)
 # Nitrate salt:
@@ -14,17 +14,11 @@ strMatNormal = lambda a: [''.join(s).rstrip() for s in a]
 strMatTrans  = lambda a: [''.join(s).rstrip() for s in zip(*a)]
 sign = lambda x: math.copysign(1.0, x)
 
-def fourierTheta(theta, a0, *c):
-	""" Timoshenko & Goodier equation """
-	ret = a0 + np.zeros(len(theta))
-	for i in range(len(c)):
-		ret += c[i] * np.cos(i * theta)
-	return ret
-
 class receiver:
 	def __init__(self,coolant = 'salt', Ri = 57.93/2000, Ro = 60.33/2000, T_in = 290, T_out = 565,
-			nz = 450, nt = 91, R_fouling = 0.0, ab = 0.94, em = 0.88, kp = 21.0, H_rec = 10.5, D_rec = 8.5,
-			nbins = 50, debugfolder = os.path.expanduser('~'), debug = True):
+                      nz = 450, nt = 91, R_fouling = 0.0, ab = 0.94, em = 0.88, kp = 16.57, H_rec = 10.5, D_rec = 8.5,
+                      nbins = 50, alpha = 15.6e-6, Young = 186e9, poisson = 0.31,
+                      debugfolder = os.path.expanduser('~'), debug = False, verification = False):
 		self.coolant = coolant
 		self.Ri = Ri
 		self.Ro = Ro
@@ -41,6 +35,7 @@ class receiver:
 		self.dz = H_rec/nbins
 		self.debugfolder = debugfolder
 		self.debug = debug
+		self.verification = verification
 		self.sigma = 5.670374419e-8
 		# Discretisation parameters
 		self.dt = np.pi/(nt-1)
@@ -53,6 +48,21 @@ class receiver:
 		self.cosines = np.maximum(cosines, np.zeros(nt))
 		self.theta = np.linspace(-np.pi, np.pi,self.nt*2-2)
 		self.n = 3
+		self.l = alpha
+		self.E = Young
+		self.nu = poisson
+		l = self.E*self.nu/((1+self.nu)*(1-2*self.nu));
+		m = 0.5*self.E/(1+self.nu);
+		props = l*np.ones((3,3)) + 2*m*np.identity(3)
+		self.invprops = np.linalg.inv(props)
+		# Loading dynamic library
+		so_file = "%s/solartherm/SolarTherm/Resources/Include/stress/stress.so"%os.path.expanduser('~')
+		stress = ctypes.CDLL(so_file)
+		self.fun = stress.curve_fit
+		self.fun.argtypes = [ctypes.c_int,
+						ctypes.c_double,
+						ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),
+						ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
 
 	def import_mat(self,fileName):
 		mat = scipy.io.loadmat(fileName, chars_as_strings=False)
@@ -96,7 +106,7 @@ class receiver:
 			C = 1000 * (1.6582 - 8.4790e-4 * T + 4.4541e-7 * pow(T,2) - 2992.6 * pow(T,-2))
 		return C
 
-	def Temperature(self, m_flow, Tf, Tamb, CG, h_ext, k):
+	def Temperature(self, m_flow, Tf, Tamb, CG, h_ext):
 		# Flow and thermal variables
 		"""
 			hf: Heat transfer coefficient due to internal forced-convection
@@ -150,28 +160,74 @@ class receiver:
 		To = -0.5*np.sqrt(c2) + 0.5*np.sqrt((2.*b)/(a*np.sqrt(c2)) - c2)
 		Ti = (To + hf*self.Ri*self.ln/self.kp*Tf)/(1 + hf*self.Ri*self.ln/self.kp)
 		qnet = hf*(Ti - Tf)
-		To = np.concatenate((np.flip(To[:,1:-1],axis=1),To),axis=1)
-		Ti = np.concatenate((np.flip(Ti[:,1:-1],axis=1),Ti),axis=1)
-		if k == -1:
-			plt.plot(np.linspace(-np.pi,np.pi,2*self.nt-2), To[120,:])
-			plt.show()
 		Qnet = qnet.sum(axis=1)*self.Ri*self.dt*self.dz
 
-		p0 = [1.0] * (1 + (self.n))
 		# Fourier coefficients
-		for t in range(Ti.shape[0]):
-			# inside:
-			popt1, pcov1 = scipy.optimize.curve_fit(fourierTheta, self.theta, Ti[t,:], p0)
-			Tbar_i = popt1[0]; BP = popt1[1]; DP = popt1[2];
-			# outside:
-			popt2, pcov2 = scipy.optimize.curve_fit(fourierTheta, self.theta, To[t,:], p0)
-			Tbar_o = popt2[0]; BPP = popt2[1]; DPP = popt2[2];
-
+		self.s, self.e = self.stress(Ti,To)
 		return Qnet
 
-if __name__=='__main__':
-	tinit = time.time()
+	def Fourier(self,T):
+		coefs = np.empty(3)
+		self.fun(self.nt, self.dt, T, coefs)
+		return coefs
 
+	def stress(self, Ti, To):
+		stress = np.zeros(Ti.shape[0])
+		strain = np.zeros(Ti.shape[0])
+		for t in range(Ti.shape[0]):
+			BDp = self.Fourier(Ti[t,:])
+			BDpp = self.Fourier(To[t,:])
+			stress[t], strain[t] = self.Thermoelastic(To[t,0], self.Ro, 0., BDp, BDpp)
+		stress = np.array(stress)
+		strain = np.array(strain)
+		return stress,strain
+
+	def Thermoelastic(self, T, r, theta, BDp, BDpp):
+		Tbar_i = BDp[0]; BP = BDp[1]; DP = BDp[2];
+		Tbar_o = BDpp[0]; BPP = BDpp[1]; DPP = BDpp[2];
+		a = self.Ri; b = self.Ro; a2 = a*a; b2 = b*b; r2 = r*r; r4 = pow(r,4);
+
+		C = self.l*self.E/(2.*(1. - self.nu));
+		D = 1./(2.*(1. + self.nu));
+		kappa = (Tbar_i - Tbar_o)/np.log(b/a);
+		kappa_theta = r*a*b/(b2 - a2)*((BP*b - BPP*a)/(b2 + a2)*np.cos(theta) + (DP*b - DPP*a)/(b2 + a2)*np.sin(theta));
+		kappa_tau   = r*a*b/(b2 - a2)*((BP*b - BPP*a)/(b2 + a2)*np.sin(theta) - (DP*b - DPP*a)/(b2 + a2)*np.cos(theta));
+
+		T_theta = T - ((Tbar_i - Tbar_o) * np.log(b/r)/np.log(b/a)) - Tbar_o;
+
+		Qr = kappa*C*(0 -np.log(b/r) -a2/(b2 - a2)*(1 -b2/r2)*np.log(b/a) ) \
+					+ kappa_theta*C*(1 - a2/r2)*(1 - b2/r2);
+		Qtheta = kappa*C*(1 -np.log(b/r) -a2/(b2 - a2)*(1 +b2/r2)*np.log(b/a) ) \
+					+ kappa_theta*C*(3 -(a2 +b2)/r2 -a2*b2/r4);
+		Qz = kappa*self.nu*C*(1 -2*np.log(b/r) -2*a2/(b2 - a2)*np.log(b/a) ) \
+					+ kappa_theta*2*self.nu*C*(2 -(a2 + b2)/r2) -self.l*self.E*T_theta;
+		Qrtheta = kappa_tau*C*(1 -a2/r2)*(1 -b2/r2);
+
+		Q_Eq = np.sqrt(0.5*(pow(Qr -Qtheta,2) + pow(Qr -Qz,2) + pow(Qz -Qtheta,2)) + 6*pow(Qrtheta,2));
+		Q = np.zeros(3)
+		Q[0] = Qr; Q[1] = Qtheta; Q[2] = Qz;
+		e = np.dot(self.invprops, Q)
+		e_Eq = np.sqrt(2.)*D*np.sqrt(pow(e[0] - e[1],2) + pow(e[0] - e[2],2) + pow(e[2] - e[1],2));
+
+		if self.verification:
+			print "=============== NPS Sch. 5S 1\" S31609 at 450degC ==============="
+			print "Biharmonic coefficients:"
+			print "Tbar_i [K]:      749.6892       %4.4f"%Tbar_i
+			print "  B'_1 [K]:      45.1191        %4.4f"%BP
+			print "  D'_1 [K]:      -0.0000        %4.4f"%DP
+			print "Tbar_o [K]:      769.7119       %4.4f"%Tbar_o
+			print " B''_1 [K]:      79.4518        %4.4f"%BPP
+			print " D''_1 [K]:      0.0000         %4.4f\n"%DPP
+			print "Stress at outside tube crown:"
+			print 'Q_r [MPa]:       0.0000         %4.4f'%(Qr/1e6)
+			print 'Q_rTheta [MPa]:  0.0000         %4.4f'%(Qrtheta/1e6)
+			print 'Q_theta [MPa]:  -101.0056       %4.4f'%(Qtheta/1e6)
+			print 'Q_z [MPa]:      -389.5197       %4.4f'%(Qz/1e6)
+			print 'Q_Eq [MPa]:      350.1201       %4.4f'%(Q_Eq/1e6)
+
+		return Q_Eq,e_Eq
+
+def run_gemasolar():
 	model = receiver()
 
 	# Importing data from Modelica
@@ -179,20 +235,72 @@ if __name__=='__main__':
 	model.import_mat(fileName)
 	times = model.data[:,0]
 	CG = model.data[:,model._vars['heliostatField.CG[1]'][2]:model._vars['heliostatField.CG[450]'][2]+1]
-	m_flow_tb = model.data[:,model._vars['receiver.m_flow_tb'][2]]
+	m_flow_tb = model.data[:,model._vars['heliostatField.m_flow_tb'][2]]
 	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
 	h_ext = model.data[:,model._vars['receiver.h_conv'][2]]
 
+	stress = np.zeros((times.shape[0],model.nz))
 	Tf = model.T_in*np.ones((times.shape[0],model.nz+1))
 	for k in range(model.nz):
-		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext, k)
+		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext)
 		C = model.specificHeatCapacityCp(Tf[:,k])*m_flow_tb
 		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet, C, out=np.zeros_like(C), where=C!=0)
+		stress[:,k] = model.s/1e6
+
 	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
 					"Tf_vs_nz":Tf,
 					"CG":CG,
 					"m_flow_tb":m_flow_tb
 					})
 
-	print('%s'%str((time.time() - tinit)/60))
+	fig, axes = plt.subplots(2,2, figsize=(11,8))
+	# HTF temperature at several locations
+	for i in range(9):
+		pos = 25 + i*50 - 25
+		axes[0,0].plot(times/3600.,Tf[:,pos], label='z[%s]'%pos)
+	axes[0,0].set_ylabel('HTF temperature (K)')
+	axes[0,0].set_xlabel('Time [h]')
+	axes[0,0].legend(loc='best', frameon=False)
+	# Mass flow rate
+	axes[0,1].plot(times/3600.,m_flow_tb)
+	axes[0,1].set_ylabel('Mass flow rate (kg/s)')
+	axes[0,1].set_xlabel('Time [h]')
+	# Concentrated solar fluxes
+	for i in range(9):
+		pos = 25 + i*50 - 25
+		axes[1,0].plot(times/3600.,CG[:,pos], label='z[%s]'%pos)
+	axes[1,0].set_ylabel('CG (W/m2)')
+	axes[1,0].set_xlabel('Time [h]')
+	axes[1,0].legend(loc='best', frameon=False)
+	# Equivalent stress
+	for i in range(9):
+		pos = 25 + i*50 - 25
+		axes[1,1].plot(times/3600.,stress[:,pos], label='z[%s]'%pos)
+	axes[1,1].set_ylabel('Equivalent stress [MPa]')
+	axes[1,1].set_xlabel('Time [h]')
+	axes[1,1].legend(loc='best', frameon=False)
+	# Show
+	plt.savefig('%s/solartherm/examples/st_nash_tube_stress_fig.png'%os.path.expanduser('~'))
+
+def run_verification():
+	model = receiver(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
+                     R_fouling = 0.0, ab = 0.968, em = 0.870, kp = 21.0, H_rec = 10.5, D_rec = 8.5,
+                     nbins = 50, alpha = 20e-6, Young = 165e9, poisson = 0.31, verification = True)
+
+	# Importing data from Modelica
+	m_flow_tb = 5.
+	CG = 0.85e6
+	h_ext = 30.
+	Tamb = 293.15
+	Tf = 723.15
+	Qnet = model.Temperature(m_flow_tb, Tf, Tamb, CG, h_ext)
+
+if __name__=='__main__':
+	tinit = time.time()
+	run_gemasolar()
+	run_verification()
+	seconds = time.time() - tinit
+	m, s = divmod(seconds, 60)
+	h, m = divmod(m, 60)
+	print('Simulation time: {:d}:{:02d}:{:02d}'.format(int(h), int(m), int(s)))
 
