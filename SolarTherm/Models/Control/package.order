@@ -23,3 +23,5 @@ Interpolation3D
 StartUpLogic6
 ReactorControl
 PowerBlockControl_particle_WIP
+PowerBlockControl_PVCSP_Particle
+StartUpLogic5_PVCSP_particle
