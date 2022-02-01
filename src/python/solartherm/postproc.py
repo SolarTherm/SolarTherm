@@ -450,7 +450,7 @@ class SimResultFuel(SimResult):
 		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [M$/year]
 		C_year = (C_labor_v[0] + C_catalyst_v[0] + C_om_v[0] + C_op_v[-1]) * 1e-6 # Total operational costs [M$/year]
 
-		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land', 'Total captical'] # Capital cost components name
+		C_cap_bd_n = ['Solar field', 'Tower', 'Reactors', 'Storage', 'FT', 'Land'] # Capital cost components name
 		C_cap_bd_u = 'M$' # Capital cost components unit
 		C_cap_bd_v = [C_field_v[0]*1e-6, C_tower_v[0]*1e-6, C_rx_v[0]*1e-6, C_st_v[0]*1e-6, C_ft_v[0]*1e-6, C_land_v[0]*1e-6] # Capital cost breakdown [M$]
 

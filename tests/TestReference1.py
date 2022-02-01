@@ -24,9 +24,9 @@ class TestReference(unittest.TestCase):
 		# version.  They are not validated against anything or independently
 		# calculated.
 		print(self.perf)
-		self.assertTrue(abs(self.perf[0]- 400125.9)/400125.9<0.01) # epy
-		self.assertTrue(abs(self.perf[1]- 157.96)/157.96<0.01) # LCOE
-		self.assertTrue(abs(self.perf[2]- 45.67)/45.67<0.01) # Capacity factor
+		self.assertTrue(abs(self.perf[0]- 423819.05)/423819.05<0.01) # epy
+		self.assertTrue(abs(self.perf[1]- 149.4)/149.4<0.01) # LCOE
+		self.assertTrue(abs(self.perf[2]- 48.38)/48.38<0.01) # Capacity factor
 		os.system('rm Reference_1*')
 
 

@@ -459,7 +459,7 @@ try:
 		else:
 			perf = resultclass.calc_perf()
 			
-	summary=resultclass.report_summary(var_n=var_n, savedir='.', suffix=suffix)	
+		summary=resultclass.report_summary(var_n=var_n, savedir='.', suffix=suffix)	
 
 	solartherm_res=[]
 
@@ -468,8 +468,8 @@ try:
 
 		if system=='TEST':
 			name=params.__getitem__("index%s"%i)
-			solartherm_res.append(sign*res.data(name)[0])
-			print('objective %s: '%i, name, sign*res.data(name)[0])
+			solartherm_res.append(sign*res.data(name)[-1])
+			print('objective %s: '%i, name, sign*res.data(name)[-1])
 
 		else:
 			idx=int(params.__getitem__("index%s"%i))

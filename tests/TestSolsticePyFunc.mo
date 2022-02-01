@@ -1,26 +1,6 @@
 block TestSolsticePyFunc
 
-  function RunPyFunction
-    input String ppath;
-    input String pname;
-    input String pfunc;
-    input String psave;
-    input String field_type;
-    input String rcv_type;
-    input String wea_file;
-    input Integer argc;
-    input String varnames[:];
-    input Real vars[:];
-    output String result;
-    external result =RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
-      annotation(
-        Library="st_solsticepy"
-        ,LibraryDirectory="modelica://SolarTherm/Resources/Library"
-      );
-      //	IncludeDirectory="modelica://SolarTherm/Resources/Include",
-      //	Include="#include \"run_py_func.c\""
-      //	);
-  end RunPyFunction;
+  import SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticePyFunc;
 
   parameter String ppath = 
       Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library")
@@ -32,6 +12,7 @@ block TestSolsticePyFunc
   parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
   parameter String wea_file = 
       Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
+  parameter String fluxlimitpath = "None" "path to load the flux limit file (not used in this test)";  
   parameter Integer argc = 6 "Number of variables to be passed to the C function";
   parameter Integer n_helios=20 "Number of heliostats";
   parameter Real H_tower=200 "Tower height";
@@ -51,8 +32,8 @@ block TestSolsticePyFunc
   );
 
 initial algorithm
-  tablefile := RunPyFunction(ppath, pname, pfunc, psave
-    , field_type, rcv_type, wea_file, argc
+  tablefile := SolsticePyFunc(ppath, pname, pfunc, psave
+    , field_type, rcv_type, wea_file, fluxlimitpath, argc
     , {"n_helios","H_tower", "W_helio", "H_helio", "H_rcv", "W_rcv"}
     , {n_helios, H_tower, W_helio, H_helio, H_rcv, W_rcv}
   );

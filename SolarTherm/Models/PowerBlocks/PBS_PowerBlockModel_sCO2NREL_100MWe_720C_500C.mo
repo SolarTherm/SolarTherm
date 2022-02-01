@@ -60,7 +60,6 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
   SI.Energy E_net(final start=0, fixed=true, displayUnit="MW.h");
 
   Boolean logic;
-  Real eff_pb "Power Block Efficiency";
 
    Modelica.Blocks.Interfaces.RealInput parasities if external_parasities annotation (Placement(
         transformation(extent={{-12,-12},{12,12}},
@@ -138,7 +137,7 @@ equation
 
   //Q_flow/(cool.nu_q*Q_flow_ref*load)=k_q;
   //W_gross/(cool.nu_w*W_des*load)=k_w;
-	eff_pb = W_gross/max(1,Q_flow);
+
   der(E_gross)=W_gross;
   der(E_net)=W_net;
   W_loss=(1-nu_net)*W_gross+W_base+parasities_internal;

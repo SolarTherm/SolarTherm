@@ -30,6 +30,7 @@ model eNTUCorrelation
   parameter Modelica.SIunits.Temperature h_max = Fluid_Package.h_Tf(T_max, 1.0) "the maximum enthalpy of the storage medium";
   parameter Modelica.SIunits.Temperature h_min = Fluid_Package.h_Tf(T_min, 0.0) "the initial enthalpy of the storage medium";
 
+  parameter Real C_storage =32e6 "estimated storage cost";
 
   Modelica.SIunits.Temperature T_in;
   Modelica.SIunits.Temperature T_out;

@@ -45,10 +45,8 @@ model HeliostatsFieldSolstice
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 	// additional parameters for aiming strategy and thermal performance
-
-	parameter Boolean run_aiming = true "[H&T] Run aiming strategy or not";
-	parameter Boolean run_therm = true "[H&T] Run receiver thermal model or not";
-
+	parameter Boolean run_aiming = false "[H&T] Run aiming strategy or not";
+	parameter Boolean run_therm = false "[H&T] Run receiver thermal model or not";
     parameter Real f_oversize = 1 "[H&T] Field oversizing factor";
 	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
 	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";

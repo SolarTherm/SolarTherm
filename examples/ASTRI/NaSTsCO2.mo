@@ -33,10 +33,8 @@ model NaSTsCO2
   parameter Real he_av_design = 0.99 "[H&T] Helisotats availability";
   parameter SI.Area A_heliostat = 148.84 "[H&T] Area of one heliostat";
   parameter SI.Length H_tower = 188.567344 "[H&T] Height of the tower";
-
   parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 1.5e-3 "slope error of the heliostat in mrad";
-
   parameter Real[23] metadata_list = SolarTherm.Utilities.Metadata_Solstice_Optics_and_Therm(opt_file);
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(metadata_list[1]) "[H&T] Number of heliostats";
   parameter Real eff_opt_des = metadata_list[3];
@@ -62,27 +60,8 @@ model NaSTsCO2
   //parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
 
 
-    parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-    parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
-	// additional parameters for aiming strategy and thermal performance
-	parameter Real run_aiming = 1 "[H&T] Run aiming strategy or not, 1 run, 0 not run";
-	parameter Real run_therm = 1 "[H&T] Run receiver thermal model or not, 1 run, 0 not run";
-    parameter Real f_oversize = 1.245606 "[H&T] Field oversizing factor";
-	parameter Real delta_r2=0.871037 "[H&T] Field expanding for zone2";
-	parameter Real delta_r3=1.992501 "[H&T] Field expanding for zone3";
-	parameter Real num_rays=10000000 "[H&T] Number of rays in the optical simulations";
-	parameter String fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/sodium/fluxlimit") "[H&T]";
- 	//parameter Integer Nb=0 "Number of banks";
- 	//parameter Integer Nfp=0 "Number of flow paths";
- 	//parameter Real Do=0 "Tube outer diameter";
-    //parameter Real aim_pm1 = 0 "Parameter 1 in aiming strategy";
-    //parameter Real aim_pm2 = 0 "Parameter 2 in aiming strategy";
-
-
   // Receiver [RCV]
-
     parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";  
-
   parameter SI.Length H_recv = 19.810327 "[RCV] Receiver height";
   parameter SI.Length D_recv = 19.012482 "[RCV] Receiver diameter";
   parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "[RCV] Receiver area";
@@ -168,8 +147,8 @@ model NaSTsCO2
   parameter Integer t_life(unit = "year") = 30 "[FN] Lifetime of plant";
   parameter Integer t_cons(unit = "year") = 0 "[FN] Years of construction";
   parameter Real r_cur = 0.71 "[FN] The currency rate from AUD to USD valid for 2019. See https://www.rba.gov.au/";
-  parameter Real r_contg = 0.1 "[FN] Contingency rate";
-  parameter Real r_cons = 0.09 "[FN] Construction cost rate";
+  //parameter Real r_contg = 0.1 "[FN] Contingency rate";
+  //parameter Real r_cons = 0.09 "[FN] Construction cost rate";
 
   parameter FI.Money C_site = pri_site * A_field "[H&T] Site improvements cost";
   parameter FI.AreaPrice pri_site = 10.00 "[H&T] Site improvements cost per area [USD/m2 of heliostat]";

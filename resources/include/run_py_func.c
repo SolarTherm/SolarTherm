@@ -61,7 +61,8 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 				/* pValue reference stolen here: */
 				PyDict_SetItemString(inputs, varnames[i], pValue);
 
-				fprintf(stderr,"%s = %f \n",varnames[i], pValue);						
+				//printf("%s = %9.2f \n",varnames[i], pValue);
+				fprintf(stderr,"%s = %f \n",varnames[i], var[i]); 						
 			}
 
 			PyTuple_SetItem(pArgs, 0, inputs);
