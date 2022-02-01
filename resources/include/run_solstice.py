@@ -8,7 +8,6 @@ from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
 from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
 
-
 def set_param(inputs={}):
     '''
     set parameters
@@ -51,15 +50,17 @@ def run_simul(inputs={}):
         print('Load exsiting OELT')
 
     else:
+        start=time.time()
+
         if pm.aimingstrategy:
             tablefile=design_crs_aimingstrategy(pm)
         else:
-            start=time.time()
             tablefile=design_crs(pm)
-            end=time.time()
-            print('')
-            print('total time %.2f'%((end-start)/60.), 'min')
-            np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
+
+        end=time.time()
+        print('')
+        print('total time %.2f'%((end-start)/60.), 'min')
+        np.savetxt(casedir+'/time.csv', np.r_[pm.n_rays, end-start], fmt='%.4f', delimiter=',')
 
     tablefile=tablefile.encode('utf-8')
     return tablefile
@@ -160,9 +161,6 @@ def design_crs_aimingstrategy(pm):
 
 	return tablefile
 
-
-
-
 if __name__=='__main__':
 	case="test"
 	fluxlimitpath='../../SolarTherm/Data/Optics/sodium/fluxlimit'
@@ -175,15 +173,15 @@ if __name__=='__main__':
 	delta_r3=1.911979 # field expanding for zone3
 	oversizing=1.245606 # oversizing factor
 	SM=2.433404 # Solar multiple
-	num_rays=10000000
+	num_rays=500000
 	Q_in_rcv = 1000000.0
-	SM = 2.717882
 	R1 = 80.0
 	fb = 0.7
 	field_type = 'surround'
 	rcv_type = 'cylinder'
 
 	print(r_diameter,r_height,tower_h,delta_r2,delta_r3,oversizing,SM)
+
 
 	inputs={'casedir': case, 
 			'aimingstrategy':aimingstrategy, 

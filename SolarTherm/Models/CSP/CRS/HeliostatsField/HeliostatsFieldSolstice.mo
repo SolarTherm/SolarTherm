@@ -3,18 +3,25 @@ model HeliostatsFieldSolstice
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Solstice_Optics;
    parameter SolarTherm.Types.Solar_angles angles=SolarTherm.Types.Solar_angles.dec_hra
+
     "Table angles" annotation (Dialog(group="Table data interpretation"));    
      parameter Boolean set_soiling_model = true "[H&T] Set the cleaning strategy to true or false. If true, optical efficiency is multiplied by soiling factor";
     parameter String soiling_table =  Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Soiling/ave_soil_factor_2tr_7cl.motab");
+
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
     parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
 
+
+
+
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+
     parameter Real SM = 2.5 "[SYS] Real solar multiple";    
+
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -38,8 +45,10 @@ model HeliostatsFieldSolstice
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 	// additional parameters for aiming strategy and thermal performance
+
 	parameter Boolean run_aiming = true "[H&T] Run aiming strategy or not";
 	parameter Boolean run_therm = true "[H&T] Run receiver thermal model or not";
+
     parameter Real f_oversize = 1 "[H&T] Field oversizing factor";
 	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
 	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";
@@ -119,7 +128,6 @@ model HeliostatsFieldSolstice
 	//Nb=Nb, 
 	//Nfp=Nfp, 
 	//Do=Do
-
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

@@ -26,7 +26,9 @@ extends OpticalEfficiency;
     parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
     parameter Real n_helios=1000 "Number of heliostats";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+
     parameter Real SM = 2.5 "[SYS] Real solar multiple";    
+
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -46,7 +48,6 @@ extends OpticalEfficiency;
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
     parameter String tablefile(fixed=false);
-
 
 	// additional parameters for aiming strategy and thermal performance
 	parameter Boolean run_aiming = false "[H&T] Run aiming strategy or not";
@@ -80,6 +81,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,6},{-10,26}})));
   Modelica.Blocks.Sources.RealExpression angle1_input(y=to_deg(angle1))
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
+
 
 initial equation
 if run_aiming then aimingstrategy=1;
