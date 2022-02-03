@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import os, sys, math, scipy.io, scipy.optimize
 import time, ctypes
 from numpy.ctypeslib import ndpointer
-from neml import solvers, models, elasticity, drivers, surfaces, hardening, visco_flow, general_flow, parse, uniaxial
-from srlife import receiver, solverparams, library, thermal, structural, system, damage, managers
 
 # Thermal and transport properties of nitrate salt and sodium (verified)
 # Nitrate salt:
@@ -228,32 +226,6 @@ class receiver:
 			print("Q_Eq [MPa]:      350.1201       %4.4f"%(Q_Eq/1e6))
 
 		return Q_Eq,e_Eq
-
-def uniaxial_neml(strain, stress, Tcrown, times):
-	deformation_mat = library.load_deformation("A230", "base")
-	neml_model = deformation_mat.get_neml_model()
-	umodel = uniaxial.UniaxialModel(neml_model, verbose = False)
-
-	hn = umodel.init_store()
-	en = strain[0,0]; sn = stress[0,0]; Tn = Tcrown[0,0]; tn = times[0]
-	un = 0.0; pn = 0.0;
-	es = [en]; ss = [sn]
-
-	for enp1, Tnp1, tnp1 in zip(strain[1:,0],Tcrown[1:,0],times[1:]):
-		snp1, hnp1, Anp1, unp1, pnp1 = umodel.update(enp1, en, Tnp1, Tn, tnp1, tn, sn, hn, un, pn)
-		es.append(enp1)
-		ss.append(snp1)
-
-		sn = snp1
-		hn = np.copy(hnp1)
-		en = enp1
-		Tn = Tnp1
-		tn = tnp1
-		un = unp1
-		pn = pnp1
-
-	plt.plot(es, ss, 'k-')
-	plt.show()
 
 def run_gemasolar():
 	model = receiver()
