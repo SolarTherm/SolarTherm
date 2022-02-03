@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os, sys, math, scipy.io, scipy.optimize
 import time, ctypes
 from numpy.ctypeslib import ndpointer
+from neml import solvers, models, elasticity, drivers, surfaces, hardening, visco_flow, general_flow, parse, uniaxial
+from srlife import receiver, solverparams, library, thermal, structural, system, damage, managers
 
 # Thermal and transport properties of nitrate salt and sodium (verified)
 # Nitrate salt:
@@ -210,22 +212,48 @@ class receiver:
 		e_Eq = np.sqrt(2.)*D*np.sqrt(pow(e[0] - e[1],2) + pow(e[0] - e[2],2) + pow(e[2] - e[1],2));
 
 		if self.verification:
-			print "=============== NPS Sch. 5S 1\" S31609 at 450degC ==============="
-			print "Biharmonic coefficients:"
-			print "Tbar_i [K]:      749.6892       %4.4f"%Tbar_i
-			print "  B'_1 [K]:      45.1191        %4.4f"%BP
-			print "  D'_1 [K]:      -0.0000        %4.4f"%DP
-			print "Tbar_o [K]:      769.7119       %4.4f"%Tbar_o
-			print " B''_1 [K]:      79.4518        %4.4f"%BPP
-			print " D''_1 [K]:      0.0000         %4.4f\n"%DPP
-			print "Stress at outside tube crown:"
-			print 'Q_r [MPa]:       0.0000         %4.4f'%(Qr/1e6)
-			print 'Q_rTheta [MPa]:  0.0000         %4.4f'%(Qrtheta/1e6)
-			print 'Q_theta [MPa]:  -101.0056       %4.4f'%(Qtheta/1e6)
-			print 'Q_z [MPa]:      -389.5197       %4.4f'%(Qz/1e6)
-			print 'Q_Eq [MPa]:      350.1201       %4.4f'%(Q_Eq/1e6)
+			print("=============== NPS Sch. 5S 1\" S31609 at 450degC ===============")
+			print("Biharmonic coefficients:")
+			print("Tbar_i [K]:      749.6892       %4.4f"%Tbar_i)
+			print("  B'_1 [K]:      45.1191        %4.4f"%BP)
+			print("  D'_1 [K]:      -0.0000        %4.4f"%DP)
+			print("Tbar_o [K]:      769.7119       %4.4f"%Tbar_o)
+			print(" B''_1 [K]:      79.4518        %4.4f"%BPP)
+			print(" D''_1 [K]:      0.0000         %4.4f\n"%DPP)
+			print("Stress at outside tube crown:")
+			print("Q_r [MPa]:       0.0000         %4.4f"%(Qr/1e6))
+			print("Q_rTheta [MPa]:  0.0000         %4.4f"%(Qrtheta/1e6))
+			print("Q_theta [MPa]:  -101.0056       %4.4f"%(Qtheta/1e6))
+			print("Q_z [MPa]:      -389.5197       %4.4f"%(Qz/1e6))
+			print("Q_Eq [MPa]:      350.1201       %4.4f"%(Q_Eq/1e6))
 
 		return Q_Eq,e_Eq
+
+def uniaxial_neml(strain, stress, Tcrown, times):
+	deformation_mat = library.load_deformation("A230", "base")
+	neml_model = deformation_mat.get_neml_model()
+	umodel = uniaxial.UniaxialModel(neml_model, verbose = False)
+
+	hn = umodel.init_store()
+	en = strain[0,0]; sn = stress[0,0]; Tn = Tcrown[0,0]; tn = times[0]
+	un = 0.0; pn = 0.0;
+	es = [en]; ss = [sn]
+
+	for enp1, Tnp1, tnp1 in zip(strain[1:,0],Tcrown[1:,0],times[1:]):
+		snp1, hnp1, Anp1, unp1, pnp1 = umodel.update(enp1, en, Tnp1, Tn, tnp1, tn, sn, hn, un, pn)
+		es.append(enp1)
+		ss.append(snp1)
+
+		sn = snp1
+		hn = np.copy(hnp1)
+		en = enp1
+		Tn = Tnp1
+		tn = tnp1
+		un = unp1
+		pn = pnp1
+
+	plt.plot(es, ss, 'k-')
+	plt.show()
 
 def run_gemasolar():
 	model = receiver()
