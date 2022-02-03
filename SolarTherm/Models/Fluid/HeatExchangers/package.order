@@ -9,3 +9,6 @@ HX_designonly_Qs
 HX_standalone_noF
 test_HX
 Utilities
+HeatExchanger_ParticleGas
+ParticleGasHXCalculator
+HeatExchanger_ParticleGas_OperationOnly

@@ -43,6 +43,8 @@ model StartUpLogic5_PVCSP_particle
   //pre(t_on) = 0;
   Modelica.Blocks.Interfaces.RealInput PV_input annotation(
     Placement(visible = true, transformation(extent = {{-128, -48}, {-88, -8}}, rotation = 0), iconTransformation(extent = {{-128, -58}, {-88, -18}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput m_flow_HX_industrial annotation(
+    Placement(visible = true, transformation(extent = {{90, 20}, {130, 60}}, rotation = 0), iconTransformation(extent = {{90, 20}, {130, 60}}, rotation = 0)));
 initial equation
   on_discharge = level > level_on and level > level_off;
 equation
@@ -64,8 +66,10 @@ equation
   end when;
   if on_discharge then
     m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (CSP_duty/CSP_name_plate) * schedule;
+    m_flow_HX_industrial = 1600;
   else
     m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * schedule);
+    m_flow_HX_industrial = 0;
   end if;
 /*
    //on_charge = m_flow_in > 0;

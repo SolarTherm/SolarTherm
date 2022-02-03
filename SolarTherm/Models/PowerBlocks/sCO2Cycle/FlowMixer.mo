@@ -15,6 +15,6 @@ model FlowMixer "This model is useful for the recompression cycle cycle, as it a
     first_port_a.h_outflow=inStream(port_b.h_outflow);
     second_port_a.h_outflow=inStream(port_b.h_outflow);
     annotation(
-      Diagram(graphics = {Text(origin = {3, 13}, extent = {{-39, -17}, {39, 17}}, textString = "MIXER")}),
-      Icon(graphics = {Text(origin = {6, 14}, extent = {{-44, -28}, {44, 28}}, textString = "MIXER")}));
+      Diagram(graphics = {Text(origin = {3, 13}, extent = {{-39, -17}, {39, 17}}, textString = "MIXER")}, coordinateSystem(initialScale = 0.1)),
+      Icon(graphics = {Text(origin = {6, 14}, extent = {{-44, -28}, {44, 28}}, textString = "MIXER"), Rectangle(origin = {0, 10}, lineThickness = 1, extent = {{-80, 70}, {80, -70}})}, coordinateSystem(initialScale = 0.1)));
   end FlowMixer;

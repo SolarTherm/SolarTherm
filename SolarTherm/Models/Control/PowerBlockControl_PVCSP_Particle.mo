@@ -61,6 +61,8 @@ model PowerBlockControl_PVCSP_Particle
     Placement(visible = true, transformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0), iconTransformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput PV_input annotation(
     Placement(visible = true, transformation(origin = {-110, 2}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(extent = {{-128, -20}, {-88, 20}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput m_flow_HX annotation(
+    Placement(visible = true, transformation(extent = {{92, 16}, {132, 56}}, rotation = 0), iconTransformation(extent = {{92, 16}, {132, 56}}, rotation = 0)));
 algorithm
   when logic.m_flow > 1e-6 then
     t_ramp_start := time;
@@ -88,6 +90,8 @@ equation
           {0,50},{-108,50}}, color={0,0,127}));
   connect(logic.PV_input, PV_input) annotation(
     Line(points = {{-10, -4}, {-56, -4}, {-56, 2}, {-110, 2}, {-110, 2}}, color = {0, 0, 127}));
+  connect(logic.m_flow_HX_industrial, m_flow_HX) annotation(
+    Line(points = {{12, 4}, {42, 4}, {42, 36}, {112, 36}, {112, 36}}, color = {0, 0, 127}));
   annotation (Documentation(revisions="<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
