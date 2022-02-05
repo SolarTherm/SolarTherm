@@ -46,6 +46,27 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Show some Python config
+      run: |
+        echo "FIND .PC FILE LOCATIONS:------------------------"
+        find $pythonLocation -name "*.pc"
+        echo "FIND PYTHON-CONFIG LOCATIONS--------------------"
+        find $pythonLocation -name "python*-config"
+        echo "SHOW BUILTIN PKG_CONFIG_PATH----------------------------"
+        pkg-config --variable pc_path pkg-config
+        echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
+        echo $PKG_CONFIG_PATH
+        echo "====================UPDATE ENV=========================="
+        export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
+        echo "FIND .PC FILE LOCATIONS:------------------------"
+        find $pythonLocation -name "*.pc"
+        echo "FIND PYTHON-CONFIG LOCATIONS--------------------"
+        find $pythonLocation -name "python*-config"
+        echo "SHOW BUILTIN PKG_CONFIG_PATH----------------------------"
+        pkg-config --variable pc_path pkg-config
+        echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
+        echo $PKG_CONFIG_PATH
+        
     - name: Install Python dependencies
       run: |
         python3 -m pip install --upgrade pip 
