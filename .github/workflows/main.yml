@@ -19,16 +19,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
-        python-version: [3.8.12]
+        python-version: [3.8]
         omc-version: [apt]
         msl-version: [3.2.3]
         include:
           - os: ubuntu-20.04
-            python-version: 3.9.9
+            python-version: 3.9
             omc-version: apt
             msl-version: [3.2.3]
           - os: ubuntu-18.04
-            python-version: 3.6.9
+            python-version: 3.6
             omc-version: omc/builds/linux/releases/1.14.2/
             msl-version: [3.2.2]
  
@@ -70,6 +70,8 @@ jobs:
         echo $PKG_CONFIG_PATH
         echo "USE PKG-CONFIG------------------------------------------"
         pkg-config --list-all | grep python
+        echo "PKG-CONFIG DETAILS FOR THE ONE WE WANT------------------"
+        pkg-config python-${{ matrix.python-version }}-embed --libs --cflags || echo "***FAILED***"
         
     - name: Install Python dependencies
       run: |
