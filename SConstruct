@@ -125,20 +125,22 @@ vars.AddVariables(
 	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
 
-if platform.system()=="Windows":
-	env = Environment(variables=vars,tools=['default','mingw'])
-	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+def import_env_vars(vars):
+	for v in vars:
 		if v in os.environ:
 			env['ENV'][v] = os.environ[v]
+
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['default','mingw'])
+	import_env_vars(['PKG_CONFIG_PATH','PATH','TEMP'])
 elif platform.system()=="Linux":
 	import distro
 	env = Environment(variables=vars)
 	if distro.id()=="centos" or distro.id()=="rocky":
 		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
 		# for pkg-config to work correctly.
-		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
-			if v in os.environ:
-				env['ENV'][v] = os.environ[v]
+		import_env_vars(['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH'])
+
 Help(vars.GenerateHelpText(env))
 
 #---------------------------------------------------------------------------------------------------

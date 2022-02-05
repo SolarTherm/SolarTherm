@@ -25,3 +25,4 @@ src/python/wheel/*.whl
 SolarTherm/Resources
 .DS_Store
 cscope.*
+mytouch
