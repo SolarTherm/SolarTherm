@@ -56,6 +56,8 @@ jobs:
         pkg-config --variable pc_path pkg-config
         echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
         echo $PKG_CONFIG_PATH
+        echo "USE PKG-CONFIG------------------------------------------"
+        pkg-config --list-all | grep python
         echo "====================UPDATE ENV=========================="
         export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
         echo "FIND .PC FILE LOCATIONS:------------------------"
@@ -66,6 +68,8 @@ jobs:
         pkg-config --variable pc_path pkg-config
         echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
         echo $PKG_CONFIG_PATH
+        echo "USE PKG-CONFIG------------------------------------------"
+        pkg-config --list-all | grep python
         
     - name: Install Python dependencies
       run: |
