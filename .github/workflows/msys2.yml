@@ -57,12 +57,13 @@ jobs:
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma pytest openpyxl distro colorama tensorflow>=2.6.2 pyDOE
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma pytest openpyxl distro colorama tensorflow pyDOE
         # FIXME move to pypi version of solsticepy ASAP...
         python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"        
 # removed deap and scoop here...
+# FIXME check version of tensorflow (was 2.6.2)
 
     - name: Show Python context
       run: |
