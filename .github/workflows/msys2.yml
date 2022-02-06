@@ -76,8 +76,15 @@ jobs:
 
     - name: Install OpenModelica
       run: |
-        mkdir -p ~/.local
-        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
+        cd ~
+        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
+        cd omc-repo
+        echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
+        pacman -Sy mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        echo "REVIEW INSTALLED OMC VERSION..."
+        omc --version
+#        cd ~/.local
+#        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
     - name: Install Solstice
       run: |
