@@ -87,7 +87,7 @@ jobs:
         wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
         cd omc-repo
         echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
-        pacman -Sy mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
         echo "REVIEW INSTALLED OMC VERSION..."
         omc --version
 #        cd ~/.local
