@@ -5,13 +5,13 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch]
   push:
 
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, particle-master-intermediate]
 
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch]
 
 jobs:
   build:
