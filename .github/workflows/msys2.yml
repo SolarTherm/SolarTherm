@@ -87,6 +87,7 @@ jobs:
         
     - name: Install DAKOTA
       run: |
+        mkdir -p ~/.local
         export DAKPLAT=Windows.x64
         export PKGN=dakota-${DAKVER}-release-public-${DAKPLAT}-cli
         export DIRN=dakota-${DAKVER}.${DAKPLAT}
