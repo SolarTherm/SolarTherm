@@ -58,11 +58,21 @@ jobs:
         echo "WHICH PYTHON =" `which python`
         python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl colorama pytest
 
-    - name: Install OpenModelica
-      run: |
-        mkdir -p ~/.local
-        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
+#    - name: Install OpenModelica 1.14 (approx)
+#      run: |
+#        mkdir -p ~/.local
+#        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
+    - name: Install OpenModelica 1.19
+      run: |
+        cd ~
+        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
+        cd omc-repo
+        echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
+        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        echo "REVIEW INSTALLED OMC VERSION..."
+        omc --version
+        
     - name: Install Solstice
       run: |
         wget https://github.com/anustg/solstice-scripts/releases/download/v0.9.0-3/solstice-0.9.0.exe
