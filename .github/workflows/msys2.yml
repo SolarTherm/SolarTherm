@@ -90,7 +90,7 @@ jobs:
         pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
         echo "REVIEW INSTALLED OMC VERSION..."
         omc --version
-#        cd ~/.local
+#        mkdir -p ~/.local && cd ~/.local
 #        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
     - name: Install Solstice
@@ -107,6 +107,7 @@ jobs:
         
     - name: Install DAKOTA
       run: |
+        mkdir -p ~/.local
         export DAKPLAT=Windows.x64
         export PKGN=dakota-${DAKVER}-release-public-${DAKPLAT}-cli
         export DIRN=dakota-${DAKVER}.${DAKPLAT}
