@@ -120,28 +120,28 @@ jobs:
         export PATH=$PATH:~/.local/bin
         dakota --version
         
-
-    - name: Install Tensorflow C API
-      run: |
-        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
-        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
-        wc -l /usr/local/include/tensorflow/c/c_api.h
-
-
-    - name: Install SAM Simulation Core
-      run: |
-        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
-        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
-        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
-        ls /opt/SAM/${SAMVER//-/.}
-
-                
-    - name: Install SAM Simulation Core
-      run: |
-        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
-        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
-        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
-        ls /opt/SAM/${SAMVER//-/.}
+# suppress tensorflow... this obviously is for linux...
+#    - name: Install Tensorflow C API
+#      run: |
+#        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
+#        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
+#        wc -l /usr/local/include/tensorflow/c/c_api.h
+#
+#
+#    - name: Install SAM Simulation Core
+#      run: |
+#        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+#        ls /opt/SAM/${SAMVER//-/.}
+#
+#                
+#    - name: Install SAM Simulation Core
+#      run: |
+#        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+#        ls /opt/SAM/${SAMVER//-/.}
 
 
     - name: Build SolarTherm
@@ -149,15 +149,14 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons SSC_PREFIX=/opt/SAM/${SAMVER//-/.}        
+        scons
 
     - name: Install SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
-        
+        scons install 
 
     - name: Test SolarTherm st env
       run: |
@@ -169,14 +168,6 @@ jobs:
         cd tests
         python3 -m pytest test_stenv.py
 
-#    - name: Test SolarTherm dakota
-#      run: |
-#        export PATH=$PATH:~/.local/bin
-#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
-#        echo "WHICH ST? [" `which st` "]"
-#        cd tests
-#        st python -m pytest test_stopt.py
-
     - name: Test SolarTherm
       run: |
         export PATH=$PATH:~/.local/bin
@@ -184,16 +175,5 @@ jobs:
         mpiexec
         cd tests
         st python -m pytest
-
-    - name: Test OTF Surrogate
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
-        echo $LD_LIBRARY_PATH
-        cd tests
-        which st
-        st --version
-        solstice --version
-        st python -m pytest -vv -s test_otf.py
 
 # vim: ts=2:sw=2:et
