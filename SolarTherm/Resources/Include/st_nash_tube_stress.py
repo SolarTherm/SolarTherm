@@ -4,6 +4,10 @@ import os, sys, math, scipy.io, scipy.optimize
 import time, ctypes
 from numpy.ctypeslib import ndpointer
 
+sys.path.append('../..')
+
+from srlife import receiver, solverparams, library, thermal, structural, system, damage, managers
+
 # Thermal and transport properties of nitrate salt and sodium (verified)
 # Nitrate salt:
 #   ZAVOICO, Alexis B. Solar power tower design basis document, revision 0; Topical. Sandia National Labs., 2001.
@@ -14,7 +18,7 @@ strMatNormal = lambda a: [''.join(s).rstrip() for s in a]
 strMatTrans  = lambda a: [''.join(s).rstrip() for s in zip(*a)]
 sign = lambda x: math.copysign(1.0, x)
 
-class receiver:
+class receiver_cyl:
 	def __init__(self,coolant = 'salt', Ri = 57.93/2000, Ro = 60.33/2000, T_in = 290, T_out = 565,
                       nz = 450, nt = 46, R_fouling = 0.0, ab = 0.94, em = 0.88, kp = 16.57, H_rec = 10.5, D_rec = 8.5,
                       nbins = 50, alpha = 15.6e-6, Young = 186e9, poisson = 0.31,
@@ -22,6 +26,7 @@ class receiver:
 		self.coolant = coolant
 		self.Ri = Ri
 		self.Ro = Ro
+		self.thickness = Ro - Ri
 		self.T_in = T_in + 273.15
 		self.T_out = T_out + 273.15
 		self.nz = nz
@@ -228,8 +233,118 @@ class receiver:
 
 		return Q_Eq,e_Eq
 
+def setup_problem(Ro, th, H_rec, Nr, Nt, Nz, times, fluid_temp, h_flux, pressure, T_base):
+	# Setup the base receiver
+	period = 24.0                                                         # Loading cycle period, hours
+	days = 1                                                              # Number of cycles represented in the problem 
+	panel_stiffness = "disconnect"                                        # Panels are disconnected from one another
+	model = receiver.Receiver(period, days, panel_stiffness)              # Instatiating a receiver model
+
+	# Setup each of the two panels
+	tube_stiffness = "rigid"
+	panel_0 = receiver.Panel(tube_stiffness)
+	panel_1 = receiver.Panel(tube_stiffness)
+
+	# Basic receiver geometry (Updated to Gemasolar)
+	r_outer = Ro*1000                                                     # Panel tube outer radius (mm)
+	thickness = th*1000                                                   # Panel tube thickness (mm)
+	height = H_rec*1000                                                   # Panel tube height (mm)
+
+	# Tube discretization
+	nr = Nr                                                               # Number of radial elements in the panel tube cross-section
+	nt = Nt                                                               # Number of circumferential elements in the panel tube cross-section
+	nz = Nz                                                               # Number of axial elements in the panel tube
+
+	# Setup Tube 0 in turn and assign it to the correct panel
+	tube_0 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_0.set_times(times)
+	tube_0.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_0.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_0.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Tube 1
+	tube_1 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_1.set_times(times)
+	tube_1.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_1.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_1.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Tube 2
+	tube_2 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_2.set_times(times)
+	tube_2.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_2.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_2.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Tube 3
+	tube_3 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_3.set_times(times)
+	tube_3.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_3.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_3.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Assign to panel 0
+	panel_0.add_tube(tube_0, "tube0")
+	panel_0.add_tube(tube_1, "tube1")
+
+	# Assign to panel 1
+	panel_1.add_tube(tube_2, "tube2")
+	panel_1.add_tube(tube_3, "tube3")
+
+	# Assign the panels to the receiver
+	model.add_panel(panel_0, "panel0")
+	model.add_panel(panel_1, "panel1")
+
+	# Save the receiver to an HDF5 file
+	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
+	model.save(fileName)
+
+def run_problem():
+	# Load the receiver we previously saved
+	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
+	model = receiver.Receiver.load(fileName)
+
+	# Choose the material models
+	fluid_mat = library.load_fluid("nitratesalt", "base") # Sodium model
+	# Base 316H thermal and damage models, a simplified deformation model to 
+	# cut down on the run time of the 3D analysis
+	thermal_mat, deformation_mat, damage_mat = library.load_material("316H", "base", "base", "base")
+
+	# Cut down on run time for now by making the tube analyses 1D
+	# This is not recommended for actual design evaluation
+	for panel in model.panels.values():
+		for tube in panel.tubes.values():
+			tube.make_2D(tube.h/2)
+
+	# Setup some solver parameters
+	params = solverparams.ParameterSet()
+	params['progress_bars'] = True # Print a progress bar to the screen as we solve
+	params['nthreads'] = 4 # Solve will run in multithreaded mode, set to number of available cores
+	params['system']['atol'] = 1.0e-4 # During the standby very little happens, lower the atol to accept this result
+
+	# Choose the solvers, i.e. how we are going to solve the thermal,
+	# single tube, structural system, and damage calculation problems.
+	# Right now there is only one option for each
+	# Define the thermal solver to use in solving the heat transfer problem
+	thermal_solver = thermal.FiniteDifferenceImplicitThermalSolver(params["thermal"])
+	# Define the structural solver to use in solving the individual tube problems
+	structural_solver = structural.PythonTubeSolver(params["structural"])
+	# Define the system solver to use in solving the coupled structural system
+	system_solver = system.SpringSystemSolver(params["system"])
+	# Damage model to use in calculating life
+	damage_model = damage.TimeFractionInteractionDamage(params['damage'])
+
+	# The solution manager
+	solver = managers.SolutionManager(model, thermal_solver, thermal_mat, fluid_mat,
+		structural_solver, deformation_mat, damage_mat,
+		system_solver, damage_model, pset = params)
+
+	# Actually solve for life
+	life = solver.solve_life()
+	print("Best estimate life: %f daily cycles" % life)
+
 def run_gemasolar():
-	model = receiver()
+	model = receiver_cyl()
 
 	# Importing data from Modelica
 	fileName = '%s/solartherm/examples/GemasolarSystemOperation_res.mat'%(os.path.expanduser('~'))
@@ -246,7 +361,8 @@ def run_gemasolar():
 	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
 	h_ext = model.data[:,model._vars['receiver.h_conv'][2]]
 
-	times = times[index]
+	times = times[index]/3600.
+	times = times.flatten()
 	CG = CG[index,:]
 	m_flow_tb = m_flow_tb[index]
 	Tamb = Tamb[index]
@@ -260,9 +376,12 @@ def run_gemasolar():
 		C = model.specificHeatCapacityCp(Tf[:,k])*m_flow_tb
 		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet, C, out=np.zeros_like(C), where=C!=0)
 		stress[:,k] = model.s/1e6
-		qnet[:,:,k] = model.qnet
+		qnet[:,:,k] = model.qnet/1e6
 
 	pressure = np.where(m_flow_tb>0, 0.1, m_flow_tb)
+	pressure = pressure.flatten()
+	setup_problem(model.Ro, model.thickness, model.H_rec, 12, 91, 50, times, Tf[:,:50], qnet[:,:,:50], pressure, Tf[0,0])
+	run_problem()
 	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
 					"times":times/3600.,
 					"fluid_temp":Tf,
@@ -302,7 +421,7 @@ def run_gemasolar():
 	plt.savefig('%s/solartherm/examples/st_nash_tube_stress_fig.png'%os.path.expanduser('~'))
 
 def run_verification():
-	model = receiver(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
+	model = receiver_cyl(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
                      R_fouling = 0.0, ab = 0.968, em = 0.870, kp = 21.0, H_rec = 10.5, D_rec = 8.5,
                      nbins = 50, alpha = 20e-6, Young = 165e9, poisson = 0.31, verification = True)
 
