@@ -1,28 +1,20 @@
-#ifndef ST_TABLE_C
-#define ST_TABLE_C
-
 #include <stdlib.h>
 #include <errno.h>
 //#include <omc/c/ModelicaUtilities.h>
 #include <ModelicaUtilities.h>
 
-#include "solinterp/tables.h"
 #include "solinterp/symmetries.h"
 #include "solinterp/interpolation.h"
 
-//#include "solinterp/symmetries.c"
-//#include "solinterp/tables.c"
-//#include "solinterp/interpolation.c"
+#define ST_TABLES_DLL
+#include "st_tables.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-void *st_table_init(size_t nr, size_t nc);
-void *st_table_init_csv(const char *fn, const char *delim);
-//void *st_table_init_sym(const char *fn, const char *delim, size_t n, size_t m,
-//		const char *sym);
-void st_table_free(void *table);
-
-int st_table_grid_transform(void *table, size_t n, size_t m, const char *sym);
-double st_table_catrom_interp(const void *table, double x, double y,
-		double x_step, double y_step);
+void ModelicaError(const char *str){
+	fprintf(stderr,"ERROR: %s\n",str);
+	exit(1);
+}
 
 void *st_table_init(size_t nr, size_t nc)
 {
@@ -104,4 +96,3 @@ double st_table_catrom_interp(const void *table, double x, double y,
 	return catrom_interp(table, x, y, x_step, y_step);
 }
 
-#endif

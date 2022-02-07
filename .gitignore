@@ -19,7 +19,9 @@ Testing
 SolarTherm/Models/Control/reference_1.mat
 examples/*_res*.mat
 .scons*
+.sconf_temp
 doc/out/*
 src/python/wheel/*.whl
 SolarTherm/Resources
 .DS_Store
+cscope.*

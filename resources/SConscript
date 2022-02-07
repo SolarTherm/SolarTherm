@@ -1,7 +1,0 @@
-Import('env')
-
-env.SConscript(
-	['include/SConscript',]
-	,exports='env'
-)
-

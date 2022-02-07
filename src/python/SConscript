@@ -1,23 +1,35 @@
 Import('env')
+import sys
 
 setuppy = env.Substfile('setup.py.in')
 
+initpy = env.Substfile('solartherm/__init__.py.in')
+otherpy = Glob('scripts/*') + Glob('solartherm/*.py')
+
+# run 'pip' to build the SolarTherm package. we install it as a separate step.
 pipwheel = env.Command('mytouch','setup.py',[
 		Delete('wheel')
 		,Mkdir('wheel')
-		,'$PYTHON -m pip wheel --wheel-dir=wheel .'
-		,'touch ../mytouch'
+		,'%s -m pip wheel --wheel-dir=wheel .' % (sys.executable,)
+		,'touch mytouch'
 	],chdir=True
 )
+# FIXME the above chdir=True seems to break SCons parallel builds.
 
-wheel = env.Glob('wheel/*.whl')
+env.Depends(pipwheel,initpy)
+env.Depends(pipwheel,otherpy)
 
-env.Depends(wheel,'solartherm')
+wheel = env.Glob('wheel/solartherm-*.whl')
+
+env.Depends(wheel,pipwheel)
 
 pipinst = env.Command(
-	target = '$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py'
+	target = env.subst('$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py')
 	,source = wheel
-	,action = ['$PYTHON -m pip install --prefix=$PREFIX --upgrade $SOURCE']
+	,action = ['%s -m pip install --prefix=$PREFIX --upgrade $SOURCE'%(sys.executable,)]
 )
+
+# FIXME we still need to implement a smart way of *uninstall* the pip package.
+# for case of 'scons -c install'.
 
 # vim: ts=4:sw=4:noet:tw=80
