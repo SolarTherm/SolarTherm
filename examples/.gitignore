@@ -1,4 +1,5 @@
 *.png
+*.hdf5
 srlife_input*
 T_htf_input*
 qcoefs_input*
