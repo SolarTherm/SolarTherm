@@ -1,23 +1,37 @@
 Import('env')
 
+tenv = env.Clone()
+
+
+
+import platform
+if platform.system()=="Windows":
+	env.Program('testmpi',['testmpi.c'],CC='mpicc',tools=['default','mingw']
+)	
+else:
+	env.Program('testmpi',['testmpi.c'],CC='mpicc')
+	
+
 senv = env.Clone()
-senv.Append(
-	CPPPATH = ['$OM_CPPPATH']
-	,LIBS = env['OM_LIBS']
-	,LIBPATH = ['$OM_LIBPATH']
-)
+senv.Append(CPPPATH = ['/usr/include/omc/c'])
 
 lib1 = senv.SharedLibrary('st_test_ext',['st_test_ext.c'])
 
 # environment for libraries which link to Python
+
 penv = senv.Clone()
-penv.ParseConfig('pkg-config python-$PYVERSION-embed --libs --cflags')
+penv.ParseConfig('$PKGCONFIGPYTHON')
+if penv['PYVERSION'] == '3.6':
+	print('CPPFLAGS',penv['CPPFLAGS'])
+	print('LINKFLAGS',penv['LINKFLAGS'])
+	penv.Append(CFLAGS=['-fPIC'])
 
 lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
+
 lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
 
 
 # the file needs to be in tests/Resources/Library for OM to find it
 env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
 
-# vim: ts=4:sw=4:noet:tw=80
+# vim: ts=4:sw=4:noet:tw=80:syntax=python

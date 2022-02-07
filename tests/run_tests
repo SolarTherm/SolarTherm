@@ -6,4 +6,4 @@ for file in ./*.py; do
 	file=${file##*/}
 	MODULE_NAMES="$MODULE_NAMES ${file%.*}"
 done
-python -m unittest $MODULE_NAMES
+python3 -m unittest $MODULE_NAMES

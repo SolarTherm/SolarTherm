@@ -1,7 +1,7 @@
 block TestFileOE
 	import CN = Modelica.Constants;
 	import SolarTherm.Models.CSP.CRS.HeliostatsField.FileOE;
-	FileOE oeff(nelem=2, file="../resources/tests/opt_eff.motab");
+	FileOE oeff(nelem=2, file="Resources/tests/opt_eff.motab");
 initial equation
 	oeff.wbus.alt = 0.0;
 	oeff.wbus.azi = 0.0;

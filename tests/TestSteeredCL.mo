@@ -4,7 +4,7 @@ block TestSteeredCL
 	import SolarTherm.Models.CSP.CRS.HeliostatsField.IdealIncOE;
 	import SolarTherm.Models.Sources.Weather.WeatherSource;
 
-	parameter String file = "../resources/tests/weatherfile1.motab";
+	parameter String file = "Resources/tests/weatherfile1.motab";
 	WeatherSource wea(file=file);
 
 	SteeredCL conc(

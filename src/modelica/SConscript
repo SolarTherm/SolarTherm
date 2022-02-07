@@ -17,9 +17,6 @@ lib1 = senv.SharedLibrary('st_tables',[
 	,'solinterp/symmetries.c'
 	,'solinterp/tables.c'])
 
-lib4 = senv.SharedLibrary('st_motab',[
-	'st_motab.c'
-	,'parse.c'])
 
 penv = senv.Clone()
 
@@ -40,12 +37,14 @@ penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
+lib4 = penv.SharedLibrary('st_storage', ['run_storage_py.c'])
+
 # GLPK-linked bits...
 genv = senv.Clone()
 genv.Append(
 	CPPPATH = ['$GLPK_CPPPATH']
-	,LIBS = ['glpk','st_motab']
-	,LIBPATH=['.','$GLPK_LIBPATH']
+	,LIBS = ['glpk']
+	,LIBPATH=['$GLPK_LIBPATH']
 )
 conf= genv.Configure()
 if not conf.CheckHeader('glpk.h'):
@@ -56,76 +55,17 @@ else:
 
 genv = conf.Finish()
 
-
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
-genv.Depends(lib3,lib4)
 
-#Adding st_linprog_particle library for particle system - 17 October 2021 -- Philipe
-lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linprog_particle/linprog.c'])
-
-#Appending the libs
-shlibs = [lib1, lib4, lib2, lib3, lib6]
-
-if env['HAVE_TF']:
-	#Tensorflow linked bits 19 October 2021 -- Philipe
-	#Clone the standard + python environment
-	tenv = penv.Clone()
-
-	#Adding tensorflow
-	tenv.Append(
-		CPPPATH = ['$TF_CPPPATH']
-		,LIBS = ["tensorflow"]
-		,LIBPATH = ["$TF_LIBPATH"]
-	)
-
-	#Adding st_surrogate_single_output library for particle system - 19 October 2021 -- Philipe
-	lib7 = tenv.SharedLibrary('st_recv_surrogate_single_output',['st_recv_surrogate.c'])
-
-	tenv_mul = tenv.Clone()
-	lib8 = tenv.SharedLibrary('st_recv_surrogate_multi_output',['st_recv_surrogate_multi.c'])
-	shlibs += [lib7,lib8]
-
-	if env['HAVE_SSC']:
-		#On the fly surrogate bits 21 October 2021 -- Philipe
-		fenv = tenv.Clone() #Python + tensorflow already included
-		fenv.Append(
-			CPPPATH = ["$SSC_CPPPATH", '$TF_CPPPATH']
-			,LIBS = ["m","gsl","gslcblas","dl","ssc"] # plus the ones in tenv...
-			,LIBPATH = ["$SSC_LIBPATH","$TF_LIBPATH"]
-		)
-
-		lib9 = fenv.SharedLibrary('st_otf_surrogate',[
-			'st_otf_surrogate.c'
-			,'otf/kriging.c'
-			,'otf/ann.c'
-			,'otf/util.c'
-			,'otf/sscpb.c'
-		#	'otf-surrogate/otfreceiver.c
-			])
-
-		shlibs.append(lib9)
-
-pysrcs = [
-	'st_test_ext.py',
-	'run_solstice.py',
-	'run_solstice_windy.py',
-	'gatherdata.py',
-	'libgatherdata.py',
-	'gen_OD_matrix.py',
-	'python_lib.py',
-	'trainANN.py',
-	'gen_receiver_off_design.py',
-	'trainANNReceiver.py',
-	'libANN.py'
-]
+shlibs = [lib1,lib2,lib3,lib4]
+pysrcs = ['st_test_ext.py','run_solstice.py', 'run_storage.py']
 
 # this is the location that st_simulate etc will use
 env.Install('$INSTALL_OM_EXT',shlibs + pysrcs)
 
 # this is the location that you probably want to use with OMEdit
 # TODO examine option of placing these things in ~/.openmodelica/binaries ...?
-env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs) 
+env.Install('#/SolarTherm/Resources/Library',shlibs + pysrcs)
 
-
-# vim: ts=4:sw=4:noet:tw=123:syntax=python
+# vim: ts=4:sw=4:noet:tw=80

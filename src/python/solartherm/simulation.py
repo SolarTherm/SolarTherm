@@ -289,7 +289,6 @@ class Simulator(object):
 		else:
 			return fn
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
-
 		"""Compile modelica model in .mo file."""
 		call = ['omc', '-s', '-q', '-n='+str(n_proc)] + args + ['-i='+self.model, self.fn] + libs
 		if os.environ.get('ST_DEBUG',0):
@@ -388,7 +387,6 @@ class Simulator(object):
 		
 		if noEventEmit:
 			sim_args.append('-noEventEmit',)	
-
 
 		if initStep==None:
 			sim_args = [e for e in sim_args if e not in ('-initialStepSize', initStep)]
