@@ -14,8 +14,8 @@ model HeliostatsFieldSolstice
     parameter SI.Area A_h=W_helio*H_helio  "Heliostat's Area" annotation(Dialog(group="Technical data"));
     parameter Real he_av=0.99 "Heliostat availability" annotation(Dialog(group="Technical data"));
 
-
-
+    parameter String sunshape = "buie" "buie or pillbox sunshape";  
+    parameter Real sunshape_param = 0.02 "csr for buie sunshape or angular size for pillbox (in deg)";   
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
@@ -92,6 +92,8 @@ model HeliostatsFieldSolstice
 	hra=solar.hra, 
 	dec=solar.dec, 
 	lat=lat, 
+	sunshape=sunshape,
+	sunshape_param=sunshape_param,
 	method=method, 
 	Q_in_rcv=Q_in_rcv, 
 	SM=SM,	

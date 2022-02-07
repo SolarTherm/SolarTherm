@@ -3,8 +3,8 @@
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname
 	, const char *pfunc, const char *psave,  const char *field_type
-	, const char *rcv_type, const char *wea_file, const char *fluxlimitpath 
-	,int argc, const char *varnames[], const double var[]
+	, const char *rcv_type, const char *wea_file, const char *sunshape 
+	, const char *fluxlimitpath ,int argc, const char *varnames[], const double var[]
 ){
 	// ppath: path of the Python script
 	// pname: name of the Python script
@@ -40,7 +40,8 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 			PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
 			PyDict_SetItemString(inputs, "field_type", PyUnicode_FromString((char *)field_type));
 			PyDict_SetItemString(inputs, "rcv_type", PyUnicode_FromString((char *)rcv_type));
-			PyDict_SetItemString(inputs, "wea_file", PyUnicode_FromString((char *)wea_file));            
+			PyDict_SetItemString(inputs, "wea_file", PyUnicode_FromString((char *)wea_file));       
+			PyDict_SetItemString(inputs, "sunshape", PyUnicode_FromString((char *)sunshape));        
 			PyDict_SetItemString(inputs, "fluxlimitpath",PyUnicode_FromString((char *)fluxlimitpath));
 
 			fprintf(stderr,"Running python module '%s' from path '%s'...\n",pname,ppath);
@@ -48,6 +49,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 			fprintf(stderr,"rcv_type = %s\n",rcv_type);
 			fprintf(stderr,"wea_file = %s\n",wea_file);
 			fprintf(stderr,"field_type = %s\n",field_type);			
+			fprintf(stderr,"sunshape = %s\n",sunshape);		
 			
 			for (i = 0; i < argc; ++i) {
 

@@ -23,7 +23,8 @@ model NaSTsCO2
   parameter SI.Irradiance dni_des = SolarTherm.Utilities.DNI_Models.Meinel(abs(lat)) "[SYS] Design point DNI value";
   //arameter Real SM = Q_flow_rec_des / Q_flow_ref_blk "Real solar multiple";
   parameter Real SM = 2.717882 "[SYS] Real solar multiple";
-
+  parameter String sunshape = "buie" "buie or pillbox sunshape";  
+  parameter Real sunshape_param = 0.02 "csr for buie sunshape, or angular size for pillbox (in deg)";   
 
   // Heliostat Field and Tower [H&T]
   parameter String field_type = "surround" "[H&T] Type of the heliostat field, polar or surround";
@@ -331,6 +332,8 @@ model NaSTsCO2
 		angles=angles,
 		lat = data.lat, 
 		lon = data.lon,
+		sunshape=sunshape,
+		sunshape_param=sunshape_param,
 		SM=SM,
 		H_rcv=H_recv, 
 		W_rcv=D_recv, 	

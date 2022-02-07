@@ -91,7 +91,7 @@ def design_crs(pm):
     else:
         crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
 
-    crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+    crs.yaml(dni=1000, sunshape=pm.sunshape, sunshape_param=pm.sunshape_param)
 
     if pm.field_type[-3:]=='csv':
         oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))
@@ -149,6 +149,8 @@ def design_crs_aimingstrategy(pm):
 		hst_h=pm.H_helio,
 		mirror_reflectivity=pm.helio_refl,
 		slope_error=pm.slope_error,
+		sunshape=pm.sunshape,
+		sunshape_param=pm.sunshape_param,
 		num_rays=int(pm.n_rays),
 		latitude=pm.lat,
 		)
@@ -165,7 +167,7 @@ if __name__=='__main__':
 	case="test"
 	fluxlimitpath='../../SolarTherm/Data/Optics/sodium/fluxlimit'
 	wea_file='../../SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab'
-	aimingstrategy=0.
+	aimingstrategy=1
 	r_diameter=17.141475# receiver diameter
 	r_height=17.9903 # receiver height
 	tower_h=179.366918 # tower height
@@ -198,6 +200,8 @@ if __name__=='__main__':
 			'SM' : 2.717882,
 			'R1' : 80.0,
 			'fb' : 0.7	,	
+			'sunshape': 'pillbox',
+			'sunshape_param': 4.65e-3*180./np.pi,
 			'field_type' : 'surround',
 			'rcv_type' : 'cylinder',				
 			'n_rays':num_rays}

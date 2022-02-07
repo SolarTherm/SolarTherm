@@ -18,12 +18,14 @@ extends OpticalEfficiency;
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
     parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+    parameter String sunshape = "buie" "buie or pillbox sunshape";  
+    parameter Real sunshape_param = 0.02 "csr for buie sunshape or angular size for pillbox (in deg)";   
 
-    parameter Integer argc =25 "Number of variables to be passed to the C function";
+    parameter Integer argc =26 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
-    parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
+    parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter Real n_helios=1000 "Number of heliostats";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
 
@@ -92,7 +94,7 @@ if run_therm then therm=1;
 else therm=0;
 end if;
 
-tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file,fluxlimitpath, argc, {"method","Q_in_rcv", "SM", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "aimingstrategy", "therm", "f_oversize", "delta_r2", "delta_r3"}, {method, Q_in_rcv, SM, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, f_oversize, delta_r2, delta_r3}); 
+tablefile = SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file,sunshape,fluxlimitpath, argc, {"method","Q_in_rcv", "SM", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays", "aimingstrategy", "therm", "f_oversize", "delta_r2", "delta_r3","sunshape_param"}, {method, Q_in_rcv, SM, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl,slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, f_oversize, delta_r2, delta_r3,sunshape_param}); 
 
 
 equation

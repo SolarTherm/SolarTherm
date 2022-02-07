@@ -20,6 +20,8 @@ block TestSolsticePyFunc
   parameter Real H_helio=10 "Width of a heliostat";
   parameter Real H_rcv=24.789 "height of the receiver";
   parameter Real W_rcv=24.789 "width of the receiver";
+    parameter String sunshape = "buie" "buie or pillbox sunshape";  
+    parameter Real sunshape_param = 0.02 "csr for buie sunshape or angular size for pillbox (in deg)"; 
 
   parameter String tablefile(fixed=false);
   Real nu;
@@ -33,9 +35,9 @@ block TestSolsticePyFunc
 
 initial algorithm
   tablefile := SolsticePyFunc(ppath, pname, pfunc, psave
-    , field_type, rcv_type, wea_file, fluxlimitpath, argc
-    , {"n_helios","H_tower", "W_helio", "H_helio", "H_rcv", "W_rcv"}
-    , {n_helios, H_tower, W_helio, H_helio, H_rcv, W_rcv}
+    , field_type, rcv_type, wea_file, sunshape, fluxlimitpath, argc
+    , {"n_helios","H_tower", "W_helio", "H_helio", "H_rcv", "W_rcv", "sunshape_param"}
+    , {n_helios, H_tower, W_helio, H_helio, H_rcv, W_rcv, sunshape_param}
   );
 
 equation
