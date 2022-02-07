@@ -16,7 +16,7 @@ sign = lambda x: math.copysign(1.0, x)
 
 class receiver:
 	def __init__(self,coolant = 'salt', Ri = 57.93/2000, Ro = 60.33/2000, T_in = 290, T_out = 565,
-                      nz = 450, nt = 91, R_fouling = 0.0, ab = 0.94, em = 0.88, kp = 16.57, H_rec = 10.5, D_rec = 8.5,
+                      nz = 450, nt = 46, R_fouling = 0.0, ab = 0.94, em = 0.88, kp = 16.57, H_rec = 10.5, D_rec = 8.5,
                       nbins = 50, alpha = 15.6e-6, Young = 186e9, poisson = 0.31,
                       debugfolder = os.path.expanduser('~'), debug = False, verification = False):
 		self.coolant = coolant
@@ -161,6 +161,7 @@ class receiver:
 		Ti = (To + hf*self.Ri*self.ln/self.kp*Tf)/(1 + hf*self.Ri*self.ln/self.kp)
 		qnet = hf*(Ti - Tf)
 		Qnet = qnet.sum(axis=1)*self.Ri*self.dt*self.dz
+		self.qnet = np.concatenate((qnet[:,1:],qnet[:,::-1]),axis=1)
 
 		# Fourier coefficients
 		self.s, self.e = self.stress(Ti,To)
@@ -234,23 +235,41 @@ def run_gemasolar():
 	fileName = '%s/solartherm/examples/GemasolarSystemOperation_res.mat'%(os.path.expanduser('~'))
 	model.import_mat(fileName)
 	times = model.data[:,0]
+	index = []
+	for i in range(len(times)):
+		if i==0:
+			index.append(i)
+		elif times[i]%1800.==0 and times[i]>times[i-1]:
+			index.append(i)
 	CG = model.data[:,model._vars['heliostatField.CG[1]'][2]:model._vars['heliostatField.CG[450]'][2]+1]
 	m_flow_tb = model.data[:,model._vars['heliostatField.m_flow_tb'][2]]
 	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
 	h_ext = model.data[:,model._vars['receiver.h_conv'][2]]
 
+	times = times[index]
+	CG = CG[index,:]
+	m_flow_tb = m_flow_tb[index]
+	Tamb = Tamb[index]
+	h_ext = h_ext[index]
+
 	stress = np.zeros((times.shape[0],model.nz))
 	Tf = model.T_in*np.ones((times.shape[0],model.nz+1))
+	qnet = np.zeros((times.shape[0],2*model.nt-1,model.nz))
 	for k in range(model.nz):
 		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext)
 		C = model.specificHeatCapacityCp(Tf[:,k])*m_flow_tb
 		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet, C, out=np.zeros_like(C), where=C!=0)
 		stress[:,k] = model.s/1e6
+		qnet[:,:,k] = model.qnet
 
+	pressure = np.where(m_flow_tb>0, 0.1, m_flow_tb)
 	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
-					"Tf_vs_nz":Tf,
+					"times":times/3600.,
+					"fluid_temp":Tf,
 					"CG":CG,
-					"m_flow_tb":m_flow_tb
+					"m_flow_tb":m_flow_tb,
+					"pressure":pressure,
+					"h_flux":qnet/1e6
 					})
 
 	fig, axes = plt.subplots(2,2, figsize=(11,8))

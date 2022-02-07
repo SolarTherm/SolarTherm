@@ -39,56 +39,13 @@ if __name__=="__main__":
     nt = 91                                         # Number of circumferential elements in the panel tube cross-section
     nz = 50                                         # Number of axial elements in the panel tube
 
-    # Total flux function
-    mat = sio.loadmat('srlife_input_salt.mat')
-    t_data = mat['time'][0,:]/3600.
-    flux = mat['flux']/1e6
-    z_data = np.linspace(0, 1, flux.shape[2])
-    Theta = np.linspace(0, 2*np.pi, flux.shape[1])
-    fflux = RegularGridInterpolator(
-        (t_data, Theta, z_data), 
-        flux,
-        bounds_error=False, 
-        fill_value=0)
-    h_flux = lambda t, theta, z: fflux((t,
-                                        theta, 
-                                        z/height))
-
-    # Fluid temperature function
-    T_data = mat['temperature']                     # Extracting temperatures. Time and axial positions are the same
-    T_base = T_data[0,0]
-    ftemps = RegularGridInterpolator((t_data, z_data), 
-                                      T_data, bounds_error=False, 
-                                      fill_value=T_base)
-    fluid_temp = lambda t, z: ftemps((t, z/height))
-
-    # ID pressure history
-    p_max = 0.1    # MPa
-    p_data = []
-    for i in T_data[:,-1]:
-        if i > T_base:
-            p_data.append(1.0)
-        else:
-            p_data.append(0.0)
-    funp = interp1d(t_data, 
-                    p_data,
-                    bounds_error=False,
-                    fill_value=0)
-    pressure = lambda t: p_max*funp(t)
-
-    # Time increments throughout the 24 hour day
-    times = np.linspace(0,24,24*2+1)
-
-    # A mesh over the times and height (for the fluid temperatures)
-    time_h, z_h = np.meshgrid(times, 
-                              np.linspace(0,height,nz), 
-                              indexing='ij')
-
-    # A surface mesh over the outer surface (for the flux)
-    time_s, theta_s, z_s = np.meshgrid(times, 
-                                       np.linspace(0,2*np.pi,nt+1)[:nt], 
-                                       np.linspace(0,height,nz), 
-                                       indexing = 'ij')
+    # Import BCs
+    mat = sio.loadmat('../st_nash_tube_stress_res.mat')
+    fluid_temp = mat['fluid_temp'][:,0:nz]
+    h_flux = mat['h_flux'][:,:,0:nz]
+    times = mat['times'].flatten()
+    pressure = mat['pressure'].flatten()
+    T_base = fluid_temp[0,0]
 
     # Setup Tube 0 in turn and assign it to the correct panel
     tube_0 = receiver.Tube(r_outer,
@@ -104,7 +61,7 @@ if __name__=="__main__":
                               height,
                               nz,
                               times,
-                              fluid_temp(time_h,z_h)),
+                              fluid_temp),
         "inner")
     tube_0.set_bc(
         receiver.HeatFluxBC(r_outer,
@@ -112,11 +69,11 @@ if __name__=="__main__":
                             nt,
                             nz,
                             times,
-                            h_flux(time_s, theta_s, z_s)),
+                            h_flux),
         "outer")
     tube_0.set_pressure_bc(
         receiver.PressureBC(times,
-                            pressure(times)))
+                            pressure))
 
     # Tube 1
     tube_1 = receiver.Tube(r_outer,
@@ -132,18 +89,18 @@ if __name__=="__main__":
                               height,
                               nz,
                               times,
-                              fluid_temp(time_h,z_h)),
+                              fluid_temp),
         "inner")
     tube_1.set_bc(
         receiver.HeatFluxBC(r_outer, height,
                             nt,
                             nz,
                             times,
-                            h_flux(time_s, theta_s, z_s)),
+                            h_flux),
         "outer")
     tube_1.set_pressure_bc(
         receiver.PressureBC(times,
-                            pressure(times)))
+                            pressure))
 
     # Tube 2
     tube_2 = receiver.Tube(r_outer, 
@@ -159,7 +116,7 @@ if __name__=="__main__":
                               height, 
                               nz, 
                               times, 
-                              fluid_temp(time_h,z_h)), 
+                              fluid_temp), 
         "inner")
     tube_2.set_bc(
         receiver.HeatFluxBC(r_outer,
@@ -167,11 +124,11 @@ if __name__=="__main__":
                             nt,
                             nz,
                             times,
-                            h_flux(time_s, theta_s, z_s)),
+                            h_flux),
         "outer")
     tube_2.set_pressure_bc(
         receiver.PressureBC(times, 
-                            pressure(times)))
+                            pressure))
 
     # Tube 3
     tube_3 = receiver.Tube(r_outer, 
@@ -187,7 +144,7 @@ if __name__=="__main__":
                               height,
                               nz,
                               times,
-                              fluid_temp(time_h,z_h)),
+                              fluid_temp),
         "inner")
     tube_3.set_bc(
         receiver.HeatFluxBC(r_outer,
@@ -195,11 +152,11 @@ if __name__=="__main__":
                             nt,
                             nz,
                             times,
-                            h_flux(time_s, theta_s, z_s)),
+                            h_flux),
         "outer")
     tube_3.set_pressure_bc(
         receiver.PressureBC(times, 
-                            pressure(times)))
+                            pressure))
 
     # Assign to panel 0
     panel_0.add_tube(tube_0, "tube0")
