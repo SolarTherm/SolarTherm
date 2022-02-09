@@ -299,7 +299,7 @@ def setup_problem(Ro, th, H_rec, Nr, Nt, Nz, times, fluid_temp, h_flux, pressure
 	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
 	model.save(fileName)
 
-def run_problem():
+def run_problem(zpos,nz):
 	# Load the receiver we previously saved
 	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
 	model = receiver.Receiver.load(fileName)
@@ -308,18 +308,18 @@ def run_problem():
 	fluid_mat = library.load_fluid("nitratesalt", "base") # Sodium model
 	# Base 316H thermal and damage models, a simplified deformation model to 
 	# cut down on the run time of the 3D analysis
-	thermal_mat, deformation_mat, damage_mat = library.load_material("316H", "base", "base", "base")
+	thermal_mat, deformation_mat, damage_mat = library.load_material("A230", "base", "base", "base")
 
 	# Cut down on run time for now by making the tube analyses 1D
 	# This is not recommended for actual design evaluation
 	for panel in model.panels.values():
 		for tube in panel.tubes.values():
-			tube.make_2D(tube.h/2)
+			tube.make_2D(tube.h/nz*zpos)
 
 	# Setup some solver parameters
 	params = solverparams.ParameterSet()
 	params['progress_bars'] = True # Print a progress bar to the screen as we solve
-	params['nthreads'] = 4 # Solve will run in multithreaded mode, set to number of available cores
+	params['nthreads'] = 8 # Solve will run in multithreaded mode, set to number of available cores
 	params['system']['atol'] = 1.0e-4 # During the standby very little happens, lower the atol to accept this result
 
 	# Choose the solvers, i.e. how we are going to solve the thermal,
@@ -341,7 +341,8 @@ def run_problem():
 
 	# Actually solve for life
 	life = solver.solve_life()
-	print("Best estimate life: %f daily cycles" % life)
+	print("Best estimate life: %f daily cycles" % life[0])
+	return life
 
 def run_gemasolar():
 	model = receiver_cyl()
@@ -380,8 +381,31 @@ def run_gemasolar():
 
 	pressure = np.where(m_flow_tb>0, 0.1, m_flow_tb)
 	pressure = pressure.flatten()
-	setup_problem(model.Ro, model.thickness, model.H_rec, 12, 91, 50, times, Tf[:,:50], qnet[:,:,:50], pressure, Tf[0,0])
-	run_problem()
+	tube = 1
+	lb = 50*(tube-1)
+	ub = lb + 50
+	setup_problem(model.Ro, model.thickness, model.H_rec, 9, 91, 50, times, Tf[:,lb:ub], qnet[:,:,lb:ub], pressure, Tf[0,0])
+	lifeName = '%s/solartherm/examples/st_nash_tube_stress_res_%s.txt'%(os.path.expanduser('~'),tube)
+	import datetime
+	dt = datetime.datetime.now()
+	ds = dt.strftime("%Y-%m-%d-%H:%M:%S %p")
+	if not os.path.isfile(lifeName):
+		f = open(lifeName,'a')
+		f.write('Simulation: %s\n'%ds)
+		f.write('Section,life,Dc,Df\n')
+		f.close()
+	else:
+		f = open(lifeName,'a')
+		f.write('Simulation: %s\n'%ds)
+		f.close()
+	for i in range(50):
+		f = open(lifeName,'a')
+		try:
+			life = run_problem(i+1,50)
+			f.write('%s,%s,%s,%s\n'%(i,life[0],life[1],life[2]))
+		except RuntimeError:
+			pass
+		f.close()
 	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
 					"times":times/3600.,
 					"fluid_temp":Tf,
