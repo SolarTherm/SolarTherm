@@ -48,7 +48,7 @@ if platform.system()=="Windows" and os.environ.get('MSYSTEM') == 'MINGW64':
 	def bash_which(exe):
 		try:
 			res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
-		except CalledProcessError as e:
+		except sp.CalledProcessError as e:
 			return None
 		return res.stdout.strip()
 	def bash_parseconfig(env,cmd):
