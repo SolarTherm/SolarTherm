@@ -1,4 +1,4 @@
-import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
+import re, os, sys, platform, shutil, colorama, shlex; from pathlib import Path, PurePath
 import subprocess as sp
 colorama.init()
 
@@ -44,9 +44,27 @@ if shutil.which('glpsol'):
 else:
 	default_glpk_prefix = default_prefix
 
-if shutil.which('gsl-config'):
-	default_gsl_config = Path(shutil.which('gsl-config'))
+if platform.system()=="Windows" and os.environ.get('MSYSTEM') == 'MINGW64':			
+	def bash_which(exe):
+		try:
+			res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
+		except CalledProcessError as e:
+			print("ERROR")
+			return None
+		return res.stdout.strip()
+	def bash_parseconfig(env,cmd):
+		env.ParseConfig('bash -c ' + shlex.quote(cmd))
 else:
+	def bash_which(exe):
+		return shutil.which(exe)
+	def bash_parsecomfig(env,cmd):
+		env.ParseConfig(cmd)
+
+if bash_which('gsl-config'):
+	print("FOUND")
+	default_gsl_config = Path(bash_which('gsl-config'))
+else:
+	print("FALLBACK GSL-CONFIG")
 	default_gsl_config = 'gsl-config'
 
 if shutil.which('omc'):
@@ -321,7 +339,7 @@ int main() {
 	return 0;
 }
 	'''
-	res = ct.TryCompile(src,'.c')
+	res = ct.TryLink(src,'.c')
 	ct.env['HAVE_SSC'] = bool(res)
 	ct.Result(res)
 	restore_env(ct.env)
@@ -437,8 +455,10 @@ if not conf.PATH():
 env = conf.Finish()
 
 envg = env.Clone()
-if shutil.which(env['GSL_CONFIG']):
-	envg.ParseConfig('$GSL_CONFIG --libs --cflags')
+if bash_which(env['GSL_CONFIG']):
+	bash_parseconfig(envg,'$GSL_CONFIG --libs --cflags')
+else:
+	confmsg(env,"Unable to locate GSL: gsl-config not found in path")
 def check_gsl(ct):
 	ct.Message('Checking for GSL... ')
 	src = """#include <gsl/gsl_sf_bessel.h>
