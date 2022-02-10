@@ -243,7 +243,6 @@ def setup_problem(Ro, th, H_rec, Nr, Nt, Nz, times, fluid_temp, h_flux, pressure
 	# Setup each of the two panels
 	tube_stiffness = "rigid"
 	panel_0 = receiver.Panel(tube_stiffness)
-	panel_1 = receiver.Panel(tube_stiffness)
 
 	# Basic receiver geometry (Updated to Gemasolar)
 	r_outer = Ro*1000                                                     # Panel tube outer radius (mm)
@@ -269,31 +268,12 @@ def setup_problem(Ro, th, H_rec, Nr, Nt, Nz, times, fluid_temp, h_flux, pressure
 	tube_1.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
 	tube_1.set_pressure_bc(receiver.PressureBC(times, pressure))
 
-	# Tube 2
-	tube_2 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
-	tube_2.set_times(times)
-	tube_2.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
-	tube_2.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
-	tube_2.set_pressure_bc(receiver.PressureBC(times, pressure))
-
-	# Tube 3
-	tube_3 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
-	tube_3.set_times(times)
-	tube_3.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
-	tube_3.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
-	tube_3.set_pressure_bc(receiver.PressureBC(times, pressure))
-
 	# Assign to panel 0
 	panel_0.add_tube(tube_0, "tube0")
 	panel_0.add_tube(tube_1, "tube1")
 
-	# Assign to panel 1
-	panel_1.add_tube(tube_2, "tube2")
-	panel_1.add_tube(tube_3, "tube3")
-
 	# Assign the panels to the receiver
 	model.add_panel(panel_0, "panel0")
-	model.add_panel(panel_1, "panel1")
 
 	# Save the receiver to an HDF5 file
 	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
