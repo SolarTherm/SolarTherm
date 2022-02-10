@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os, sys, math, scipy.io, scipy.optimize
+import os, sys, math, scipy.io, scipy.optimize, argparse
 import time, ctypes
 from numpy.ctypeslib import ndpointer
+from functools import partial
+from multiprocessing import Pool
 
 sys.path.append('../..')
 
@@ -38,6 +40,7 @@ class receiver_cyl:
 		self.H_rec = H_rec
 		self.D_rec = D_rec
 		self.dz = H_rec/nbins
+		self.nbins=nbins
 		self.debugfolder = debugfolder
 		self.debug = debug
 		self.verification = verification
@@ -298,8 +301,8 @@ def run_problem(zpos,nz):
 
 	# Setup some solver parameters
 	params = solverparams.ParameterSet()
-	params['progress_bars'] = True # Print a progress bar to the screen as we solve
-	params['nthreads'] = 8 # Solve will run in multithreaded mode, set to number of available cores
+	params['progress_bars'] = False # Print a progress bar to the screen as we solve
+	params['nthreads'] = 4 # Solve will run in multithreaded mode, set to number of available cores
 	params['system']['atol'] = 1.0e-4 # During the standby very little happens, lower the atol to accept this result
 
 	# Choose the solvers, i.e. how we are going to solve the thermal,
@@ -320,11 +323,16 @@ def run_problem(zpos,nz):
 		system_solver, damage_model, pset = params)
 
 	# Actually solve for life
-	life = solver.solve_life()
-	print("Best estimate life: %f daily cycles" % life[0])
-	return life
+	try:
+		life = solver.solve_life()
+	except RuntimeError:
+		life = np.empty(3)
+		life[:] = np.NaN
+	print("Best estimate life position %d: %f daily cycles" % (zpos,life[0]))
+	result = np.append(life,zpos)
+	return result
 
-def run_gemasolar():
+def run_gemasolar(panel):
 	model = receiver_cyl()
 
 	# Importing data from Modelica
@@ -361,11 +369,21 @@ def run_gemasolar():
 
 	pressure = np.where(m_flow_tb>0, 0.1, m_flow_tb)
 	pressure = pressure.flatten()
-	tube = 1
-	lb = 50*(tube-1)
-	ub = lb + 50
-	setup_problem(model.Ro, model.thickness, model.H_rec, 9, 91, 50, times, Tf[:,lb:ub], qnet[:,:,lb:ub], pressure, Tf[0,0])
-	lifeName = '%s/solartherm/examples/st_nash_tube_stress_res_%s.txt'%(os.path.expanduser('~'),tube)
+	lb = model.nbins*(panel-1)
+	ub = lb + model.nbins
+	setup_problem(
+		model.Ro,
+		model.thickness,
+		model.H_rec,
+		9,
+		2*model.nt-1,
+		model.nbins,
+		times,
+		Tf[:,lb:ub],
+		qnet[:,:,lb:ub],
+		pressure,
+		Tf[0,0])
+	lifeName = '%s/solartherm/examples/st_nash_tube_stress_res_%s.txt'%(os.path.expanduser('~'),panel)
 	import datetime
 	dt = datetime.datetime.now()
 	ds = dt.strftime("%Y-%m-%d-%H:%M:%S %p")
@@ -378,51 +396,56 @@ def run_gemasolar():
 		f = open(lifeName,'a')
 		f.write('Simulation: %s\n'%ds)
 		f.close()
-	for i in range(50):
-		f = open(lifeName,'a')
-		try:
-			life = run_problem(i+1,50)
-			f.write('%s,%s,%s,%s\n'%(i,life[0],life[1],life[2]))
-		except RuntimeError:
-			pass
-		f.close()
-	scipy.io.savemat('%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~'),{
-					"times":times/3600.,
-					"fluid_temp":Tf,
-					"CG":CG,
-					"m_flow_tb":m_flow_tb,
-					"pressure":pressure,
-					"h_flux":qnet/1e6
-					})
 
-	fig, axes = plt.subplots(2,2, figsize=(11,8))
-	# HTF temperature at several locations
-	for i in range(9):
-		pos = 25 + i*50 - 25
-		axes[0,0].plot(times/3600.,Tf[:,pos], label='z[%s]'%pos)
-	axes[0,0].set_ylabel('HTF temperature (K)')
-	axes[0,0].set_xlabel('Time [h]')
-	axes[0,0].legend(loc='best', frameon=False)
-	# Mass flow rate
-	axes[0,1].plot(times/3600.,m_flow_tb)
-	axes[0,1].set_ylabel('Mass flow rate (kg/s)')
-	axes[0,1].set_xlabel('Time [h]')
-	# Concentrated solar fluxes
-	for i in range(9):
-		pos = 25 + i*50 - 25
-		axes[1,0].plot(times/3600.,CG[:,pos], label='z[%s]'%pos)
-	axes[1,0].set_ylabel('CG (W/m2)')
-	axes[1,0].set_xlabel('Time [h]')
-	axes[1,0].legend(loc='best', frameon=False)
-	# Equivalent stress
-	for i in range(9):
-		pos = 25 + i*50 - 25
-		axes[1,1].plot(times/3600.,stress[:,pos], label='z[%s]'%pos)
-	axes[1,1].set_ylabel('Equivalent stress [MPa]')
-	axes[1,1].set_xlabel('Time [h]')
-	axes[1,1].legend(loc='best', frameon=False)
-	# Show
-	plt.savefig('%s/solartherm/examples/st_nash_tube_stress_fig.png'%os.path.expanduser('~'))
+	fun = partial(run_problem, nz=model.nbins)
+	with Pool(4) as p:
+		lives = p.map(fun, np.linspace(1,model.nbins,num=model.nbins,dtype=int))
+	f = open(lifeName,'a')
+	for i in lives:
+		f.write('%s,%s,%s,%s\n'%(int(i[3]-1),i[0],i[1],i[2]))
+	f.close()
+
+	matName = '%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~')
+	if not os.path.isfile(matName):
+		scipy.io.savemat(matName,{
+						"times":times/3600.,
+						"fluid_temp":Tf,
+						"CG":CG,
+						"m_flow_tb":m_flow_tb,
+						"pressure":pressure,
+						"h_flux":qnet/1e6
+						})
+
+	figName = '%s/solartherm/examples/st_nash_tube_stress_fig.png'%os.path.expanduser('~')
+	if not os.path.isfile(figName):
+		fig, axes = plt.subplots(2,2, figsize=(11,8))
+		# HTF temperature at several locations
+		for i in range(9):
+			pos = i*model.nbins
+			axes[0,0].plot(times/3600.,Tf[:,pos], label='z[%s]'%pos)
+		axes[0,0].set_ylabel('HTF temperature (K)')
+		axes[0,0].set_xlabel('Time [h]')
+		axes[0,0].legend(loc='best', frameon=False)
+		# Mass flow rate
+		axes[0,1].plot(times/3600.,m_flow_tb)
+		axes[0,1].set_ylabel('Mass flow rate (kg/s)')
+		axes[0,1].set_xlabel('Time [h]')
+		# Concentrated solar fluxes
+		for i in range(9):
+			pos = i*model.nbins
+			axes[1,0].plot(times/3600.,CG[:,pos], label='z[%s]'%pos)
+		axes[1,0].set_ylabel('CG (W/m2)')
+		axes[1,0].set_xlabel('Time [h]')
+		axes[1,0].legend(loc='best', frameon=False)
+		# Equivalent stress
+		for i in range(9):
+			pos = i*model.nbins
+			axes[1,1].plot(times/3600.,stress[:,pos], label='z[%s]'%pos)
+		axes[1,1].set_ylabel('Equivalent stress [MPa]')
+		axes[1,1].set_xlabel('Time [h]')
+		axes[1,1].legend(loc='best', frameon=False)
+		# Show
+		plt.savefig(figName)
 
 def run_verification():
 	model = receiver_cyl(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
@@ -438,9 +461,12 @@ def run_verification():
 	Qnet = model.Temperature(m_flow_tb, Tf, Tamb, CG, h_ext)
 
 if __name__=='__main__':
+	parser = argparse.ArgumentParser(description='Estimates average damage of a representative tube in a receiver panel')
+	parser.add_argument('--panel', type=int, default=1, help='Panel to be simulated. Default=1')
+	args = parser.parse_args()
+
 	tinit = time.time()
-	run_gemasolar()
-	run_verification()
+	run_gemasolar(args.panel)
 	seconds = time.time() - tinit
 	m, s = divmod(seconds, 60)
 	h, m = divmod(m, 60)
