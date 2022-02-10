@@ -49,7 +49,6 @@ if platform.system()=="Windows" and os.environ.get('MSYSTEM') == 'MINGW64':
 		try:
 			res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
 		except CalledProcessError as e:
-			print("ERROR")
 			return None
 		return res.stdout.strip()
 	def bash_parseconfig(env,cmd):
@@ -57,14 +56,12 @@ if platform.system()=="Windows" and os.environ.get('MSYSTEM') == 'MINGW64':
 else:
 	def bash_which(exe):
 		return shutil.which(exe)
-	def bash_parsecomfig(env,cmd):
+	def bash_parseconfig(env,cmd):
 		env.ParseConfig(cmd)
 
 if bash_which('gsl-config'):
-	print("FOUND")
 	default_gsl_config = Path(bash_which('gsl-config'))
 else:
-	print("FALLBACK GSL-CONFIG")
 	default_gsl_config = 'gsl-config'
 
 if shutil.which('omc'):
@@ -347,7 +344,7 @@ int main() {
 
 
 def check_path(ct):
-	ct.Message('Checking PATH.... ')
+	ct.Message('Checking PATH... ')
 	pp = os.environ.get('PATH','').split(os.pathsep)
 	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
