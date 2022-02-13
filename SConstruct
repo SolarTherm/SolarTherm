@@ -60,6 +60,10 @@ else:
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
 	default_mpirun = 'mpirun'
+	def bash_which(exe):
+		return shutil.which(exe)
+	def bash_parseconfig(env,cmd):
+		return env.ParseConfig(cmd)
 
 if shutil.which('dakota'):
 	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
