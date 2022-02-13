@@ -51,6 +51,7 @@ jobs:
           mingw-w64-x86_64-python-matplotlib
           mingw-w64-x86_64-glpk
           mingw-w64-x86_64-msmpi
+          mingw-w64-x86_64-gsl
 
     - uses: actions/checkout@v2
 

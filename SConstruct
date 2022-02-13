@@ -74,7 +74,6 @@ else:
 if bash_which('gsl-config'):
 	default_gsl_config = Path(bash_which('gsl-config'))
 else:
-	print("FALLBACK GSL-CONFIG")
 	default_gsl_config = 'gsl-config'
 
 if shutil.which('omc'):
@@ -357,7 +356,7 @@ int main() {
 
 
 def check_path(ct):
-	ct.Message('Checking PATH.... ')
+	ct.Message('Checking PATH... ')
 	pp = os.environ.get('PATH','').split(os.pathsep)
 	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
