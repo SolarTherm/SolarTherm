@@ -1,4 +1,4 @@
-import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
+import re, os, sys, platform, shutil, colorama, shlex; from pathlib import Path, PurePath
 import subprocess as sp
 colorama.init()
 
@@ -19,20 +19,51 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_tf_prefix = default_prefix
-		default_ssc_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
 		default_mpirun = 'mpiexec'
+		def find_sam():
+			"""Locate the path to most recently installed SAM, which will be the version
+			associated with .sam files in the Windows registry. If you want to specify another
+			version, use `scons SSC_PREFIX=/c/SAM/2020.12.02/x64` (path to sam.exe)"""
+			import winreg as wr
+			iconreg = None
+			try:
+				rk = wr.OpenKey(wr.HKEY_LOCAL_MACHINE,r'SOFTWARE\Classes\NREL.SAM3\DefaultIcon')
+				_reg1,valtype = wr.QueryValueEx(rk,None)
+				assert valtype == wr.REG_SZ
+				iconreg,_i = _reg1.split(",")
+			except Exception as e:
+				return default_prefix
+			return Path(iconreg).parents[0]
+		default_ssc_prefix = find_sam()
+		default_ssc_cpppath = '$SSC_PREFIX/../runtime'
+		default_ssc_libpath = '$SSC_PREFIX'
+		def bash_which(exe):
+			try:
+				res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
+			except CalledProcessError as e:
+				print("ERROR")
+				return None
+			return res.stdout.strip()
+		def bash_parseconfig(env,cmd):
+			env.ParseConfig('bash -c ' + shlex.quote(cmd))
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
 	default_tf_prefix = default_prefix
 	default_ssc_prefix = Path(os.environ['HOME'])/'SAM'/'2020.11.12'
+	default_ssc_libpath = "$SSC_PREFIX/linux_64"
+	default_ssc_cpppath = default_ssc_libpath
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
 	default_mpirun = 'mpirun'
+	def bash_which(exe):
+		return shutil.which(exe)
+	def bash_parseconfig(env,cmd):
+		return env.ParseConfig(cmd)
 
 if shutil.which('dakota'):
 	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
@@ -44,8 +75,8 @@ if shutil.which('glpsol'):
 else:
 	default_glpk_prefix = default_prefix
 
-if shutil.which('gsl-config'):
-	default_gsl_config = Path(shutil.which('gsl-config'))
+if bash_which('gsl-config'):
+	default_gsl_config = Path(bash_which('gsl-config'))
 else:
 	default_gsl_config = 'gsl-config'
 
@@ -109,8 +140,8 @@ vars.AddVariables(
 	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib",PathVariable.PathAccept)
 	,PathVariable('SSC_PREFIX'
 		,"Installation prefix for SAM Simulation Core",default_ssc_prefix,PathVariable.PathAccept)
-	,PathVariable('SSC_CPPPATH' ,"Location where SAM SSC headers are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
-	,PathVariable('SSC_LIBPATH' ,"Location where SAM SSC libraries are located" ,"$SSC_PREFIX/linux_64",PathVariable.PathAccept)
+	,PathVariable('SSC_CPPPATH' ,"Location where SAM SSC headers are located" ,default_ssc_cpppath, PathVariable.PathAccept)
+	,PathVariable('SSC_LIBPATH' ,"Location where SAM SSC libraries are located" ,default_ssc_libpath, PathVariable.PathAccept)
 	,PathVariable('GSL_CONFIG',"Location of 'gsl-config' tool for GSL installation info.",default_gsl_config,PathVariable.PathAccept)
 	,PathVariable(
 		'DAKOTA_PREFIX'
@@ -125,20 +156,22 @@ vars.AddVariables(
 	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
 
-if platform.system()=="Windows":
-	env = Environment(variables=vars,tools=['default','mingw'])
-	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+def import_env_vars(vars):
+	for v in vars:
 		if v in os.environ:
 			env['ENV'][v] = os.environ[v]
+
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['default','mingw'])
+	import_env_vars(['PKG_CONFIG_PATH','PATH','TEMP'])
 elif platform.system()=="Linux":
 	import distro
 	env = Environment(variables=vars)
 	if distro.id()=="centos" or distro.id()=="rocky":
 		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
 		# for pkg-config to work correctly.
-		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
-			if v in os.environ:
-				env['ENV'][v] = os.environ[v]
+		import_env_vars(['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH'])
+
 Help(vars.GenerateHelpText(env))
 
 #---------------------------------------------------------------------------------------------------
@@ -319,7 +352,7 @@ int main() {
 	return 0;
 }
 	'''
-	res = ct.TryCompile(src,'.c')
+	res = ct.TryLink(src,'.c')
 	ct.env['HAVE_SSC'] = bool(res)
 	ct.Result(res)
 	restore_env(ct.env)
@@ -327,7 +360,7 @@ int main() {
 
 
 def check_path(ct):
-	ct.Message('Checking PATH.... ')
+	ct.Message('Checking PATH... ')
 	pp = os.environ.get('PATH','').split(os.pathsep)
 	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
@@ -435,8 +468,10 @@ if not conf.PATH():
 env = conf.Finish()
 
 envg = env.Clone()
-if shutil.which(env['GSL_CONFIG']):
-	envg.ParseConfig('$GSL_CONFIG --libs --cflags')
+if bash_which(env['GSL_CONFIG']):
+	bash_parseconfig(envg,'$GSL_CONFIG --libs --cflags')
+else:
+	confmsg(env,"Unable to locate GSL: gsl-config not found in path")
 def check_gsl(ct):
 	ct.Message('Checking for GSL... ')
 	src = """#include <gsl/gsl_sf_bessel.h>

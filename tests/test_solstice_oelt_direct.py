@@ -49,7 +49,7 @@ class TestSolsticePyFunc(unittest.TestCase):
 		var_names="method,csr,num_aperture,gamma,Q_in_rcv,H_rcv_1,H_rcv_2,H_rcv_3,W_rcv_1,W_rcv_2,W_rcv_3,n_H_rcv,n_W_rcv,tilt_rcv,W_helio,H_helio,H_tower,R_tower,R1,fb,helio_refl,slope_error,slope_error_windy,windy_optics,n_rays,n_procs,verbose,gen_vtk,n_row_oelt,n_col_oelt,"
 		var_values="%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"%(method,csr,num_aperture,gamma,Q_in_rcv,H_rcv_1,H_rcv_2,H_rcv_3,W_rcv_1,W_rcv_2,W_rcv_3,n_H_rcv,n_W_rcv,tilt_rcv,W_helio,H_helio,H_tower,R_tower,R1,fb,helio_refl,slope_error,slope_error_windy,windy_optics,n_rays,n_procs,verbose,gen_vtk,n_row_oelt,n_col_oelt,)
 		
-		os.system('python %s --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %s --var_names %s --var_vals %s'%(fn, self.casedir, wea_file, field_type, rcv_type, sunshape, num_args, var_names, var_values))
+		os.system('python3 %s --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %s --var_names %s --var_vals %s'%(fn, self.casedir, wea_file, field_type, rcv_type, sunshape, num_args, var_names, var_values))
 
 
 	def test_touching(self):

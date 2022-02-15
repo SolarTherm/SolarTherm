@@ -1,15 +1,16 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# DISABLED -- let's migrate back to main.yml
 
 name: SolarTherm Particle-Master Intermediate Branch
 
 on:
   workflow_dispatch:
     #
-  push:
-    branches: [ $default-branch, particle-master-intermediate]
-  pull_request:
-    branches:  [ $default-branch, particle-master-intermediate]
+  #push:
+    #branches: [ $default-branch, particle-master-intermediate]
+  #pull_request:
+    #branches:  [ $default-branch, particle-master-intermediate]
     #[ $default-branch, master-m ]
 
 jobs:

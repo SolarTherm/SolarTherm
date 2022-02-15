@@ -5,13 +5,13 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch]
   push:
 
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, particle-master-intermediate]
 
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch]
 
 jobs:
   build:
@@ -51,18 +51,26 @@ jobs:
           mingw-w64-x86_64-python-matplotlib
           mingw-w64-x86_64-glpk
           mingw-w64-x86_64-msmpi
+          mingw-w64-x86_64-gsl
 
     - uses: actions/checkout@v2
 
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==2.6.2 pyDOE
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma pytest openpyxl distro colorama pyDOE
         # FIXME move to pypi version of solsticepy ASAP...
         python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
-        python3 -c "import DyMat; print(DyMat.__version__)"        
+        python3 -c "import DyMat; print(DyMat.__version__)"
 
+# removed deap and scoop here...
+# FIXME check version of tensorflow (was 2.6.2)
+
+    - name: NO TENSORFLOW ON MSYS2...
+      run: |
+        echo TODO # we might have to switch to Windows' native Python to get Tensorflow...
+    
     - name: Show Python context
       run: |
         python3 -m pip list
@@ -76,8 +84,15 @@ jobs:
 
     - name: Install OpenModelica
       run: |
-        mkdir -p ~/.local
-        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
+        cd ~
+        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
+        cd omc-repo
+        echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
+        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        echo "REVIEW INSTALLED OMC VERSION..."
+        omc --version
+#        mkdir -p ~/.local && cd ~/.local
+#        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
     - name: Install Solstice
       run: |
@@ -93,6 +108,7 @@ jobs:
         
     - name: Install DAKOTA
       run: |
+        mkdir -p ~/.local
         export DAKPLAT=Windows.x64
         export PKGN=dakota-${DAKVER}-release-public-${DAKPLAT}-cli
         export DIRN=dakota-${DAKVER}.${DAKPLAT}
@@ -105,28 +121,28 @@ jobs:
         export PATH=$PATH:~/.local/bin
         dakota --version
         
-
-    - name: Install Tensorflow C API
-      run: |
-        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
-        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
-        wc -l /usr/local/include/tensorflow/c/c_api.h
-
-
-    - name: Install SAM Simulation Core
-      run: |
-        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
-        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
-        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
-        ls /opt/SAM/${SAMVER//-/.}
-
-                
-    - name: Install SAM Simulation Core
-      run: |
-        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
-        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
-        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
-        ls /opt/SAM/${SAMVER//-/.}
+# suppress tensorflow... this obviously is for linux...
+#    - name: Install Tensorflow C API
+#      run: |
+#        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
+#        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
+#        wc -l /usr/local/include/tensorflow/c/c_api.h
+#
+#
+#    - name: Install SAM Simulation Core
+#      run: |
+#        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+#        ls /opt/SAM/${SAMVER//-/.}
+#
+#                
+#    - name: Install SAM Simulation Core
+#      run: |
+#        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+#        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+#        ls /opt/SAM/${SAMVER//-/.}
 
 
     - name: Build SolarTherm
@@ -134,15 +150,14 @@ jobs:
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons SSC_PREFIX=/opt/SAM/${SAMVER//-/.}        
+        scons
 
     - name: Install SolarTherm
       run: |
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
-        
+        scons install 
 
     - name: Test SolarTherm st env
       run: |
@@ -154,14 +169,6 @@ jobs:
         cd tests
         python3 -m pytest test_stenv.py
 
-#    - name: Test SolarTherm dakota
-#      run: |
-#        export PATH=$PATH:~/.local/bin
-#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
-#        echo "WHICH ST? [" `which st` "]"
-#        cd tests
-#        st python -m pytest test_stopt.py
-
     - name: Test SolarTherm
       run: |
         export PATH=$PATH:~/.local/bin
@@ -169,16 +176,5 @@ jobs:
         mpiexec
         cd tests
         st python -m pytest
-
-    - name: Test OTF Surrogate
-      run: |
-        export PATH=$PATH:/usr/local/bin:~/.local/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
-        echo $LD_LIBRARY_PATH
-        cd tests
-        which st
-        st --version
-        solstice --version
-        st python -m pytest -vv -s test_otf.py
 
 # vim: ts=2:sw=2:et
