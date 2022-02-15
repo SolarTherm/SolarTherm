@@ -56,6 +56,12 @@ jobs:
 
     - uses: actions/checkout@v2
 
+    - name: Install SAM
+      run: |
+        mkdir -p ~/sam-${{ env.SAMVER }}
+        wget -P~ https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
+        cd ~/sam-${{ env.SAMVER }} && innoextract ~/sam-windows-${{ env.SAMVER }}.exe -e -I app
+
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
@@ -130,11 +136,6 @@ jobs:
 #        wc -l /usr/local/include/tensorflow/c/c_api.h
 #
 #
-    - name: Install SAM
-      run: |
-        mkdir -p ~/sam-${{ env.SAMVER }}
-        wget -P~ https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
-        cd ~/sam-${{ env.SAMVER }} && innoextract ~/sam-windows-${{ env.SAMVER }}.exe -e -I app
 
     - name: Build SolarTherm
       run: |
