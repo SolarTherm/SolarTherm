@@ -11,7 +11,7 @@ model ParticleGasHXCalculator
   replaceable package Med_AIR = Modelica.Media.Air.ReferenceAir.Air_ph;
     
   /*Particle thermophysical properties*/
-  parameter SI.Length D_particle = 5e-3 "Particle diameter in m";
+  parameter SI.Length D_particle = 0.00035 "Particle diameter in m";
   parameter SI.Efficiency eta_particle = 0.403 * (D_particle * 100)^0.14 "Particle volume fraction as a function of DP (source: P45 report)";
   parameter SI.Volume V_particle = 4/3 * CN.pi * (D_particle/2) ^3 "Particle volume m3";
   parameter SI.Volume A_particle = 4 * CN.pi * (D_particle/2) ^2 "Particle surface area m2";
@@ -20,21 +20,18 @@ model ParticleGasHXCalculator
   parameter Integer num_seg = 6 "Segmentation of heat exchanger";
   parameter SI.Pressure p_working = 1e5 "Working pressure in Pa";
   
-  parameter SI.Length W_HX = 8 "Heat exchanger air manifold width in m";
-  parameter SI.Length H_HX = 8 "Heat exchanger air manifold height in m";
-  
+  parameter SI.Length W_HX = 6.4942578200676 "Heat exchanger air manifold width in m";
+  parameter SI.Length H_HX = 6.4942578200676 "Heat exchanger air manifold height in m";
   parameter SI.Temperature T_in_AIR_DP = 25 + 273.15 "Air inlet temperature at design point (K)";
-  parameter SI.Temperature T_out_AIR_DP = 500 + 273.15 "Air outlet temperature at design point (K)";
-  parameter SI.MassFlowRate m_dot_AIR_DP = 1000 "Desired mass flow rate of air at design point (kg/s)";
-  
-  parameter SI.Temperature T_in_PCL_DP = 1073.15 "Particles inlet temperature at design point (K)";
-  parameter SI.Temperature T_out_PCL_DP = 550 + 273.15 "Particles outlet temperature at design point (K). Equals to the cold tank target temperature";
+  parameter SI.Temperature T_out_AIR_DP = 828.505745884826 "Air outlet temperature at design point (K)";
+  parameter SI.MassFlowRate m_dot_AIR_DP = 1860.71496128477 "Desired mass flow rate of air at design point (kg/s)";
+  parameter SI.Temperature T_in_PCL_DP = 1153.25160972278 "Particles inlet temperature at design point (K)";
+  parameter SI.Temperature T_out_PCL_DP = 950.658597989703 "Particles outlet temperature at design point (K). Equals to the cold tank target temperature";
   
   /*Calculated parameters*/
   parameter SI.Power Q_HX_DP(fixed=false) "HX thermal rating (W)";
   parameter SI.MassFlowRate m_dot_PCL_DP(fixed=false) "Particles mass flow rate at design point (kg/s)";
-  parameter SI.Velocity U_air_DP(fixed=false) "Air velocity in m/s";
-  
+    
   parameter SI.Temperature[num_seg+1] T_AIR_DP(
       each fixed=false
   ) "Temperature of the air across the HX at design point";
@@ -61,10 +58,17 @@ model ParticleGasHXCalculator
   parameter Real[num_seg] Pr_DP(each fixed=false) "Prandtl number at each HX segment";
   parameter Real[num_seg] Re_DP(each fixed=false) "Reynolds number at each HX segment";
   parameter SI.Density[num_seg] rho_air_DP(each fixed=false) "Air density at each HX segment kg/m3";
+  parameter SI.Velocity[num_seg] U_air_DP(each fixed=false) "Air velocity in m/s";
   parameter SI.DynamicViscosity[num_seg] mu_air_DP(each fixed=false) "Air DynamicViscosity at each HX segment Pa.s";
   parameter SI.SpecificHeatCapacity[num_seg] cp_air_DP(each fixed=false) "Air specific heat at each HX segment J/kg.K";
   parameter SI.ThermalConductivity[num_seg] k_air_DP(each fixed=false) "Air thermal conductivity W/m.K";
   parameter SI.CoefficientOfHeatTransfer[num_seg] U_HX_DP(each fixed=false) "Coefficient of heat transfer U-value in W m^-2 K^-1";
+
+
+initial equation
+/*
+  DESIGN POINT CALCULATION
+*/
 
 initial equation
 
@@ -74,10 +78,6 @@ Q_HX_DP = m_dot_AIR_DP * (
 
 m_dot_PCL_DP = Q_HX_DP / (
     PCL.h_T(T_in_PCL_DP) - PCL.h_T(T_out_PCL_DP)
-);
-
-U_air_DP = m_dot_AIR_DP/(
-    AIR.rho_pT(p_working, 0.5 * (T_in_AIR_DP + T_out_AIR_DP)) * W_HX * H_HX
 );
 
 
@@ -107,6 +107,9 @@ end for;
 
 //Loop over each HX segment -  index 1 is at the particle inlet port (air outlet port)
 for i in 1:num_seg loop
+    U_air_DP[i] = m_dot_AIR_DP/(
+        AIR.rho_pT(p_working, 0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1])) * W_HX * H_HX
+    );
     //Let's calculate the U_air_DP[i] -- all air properties are evaluated at the average temperature
     rho_air_DP[i] = AIR.rho_pT(p_working, 0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1]));
     
@@ -124,7 +127,7 @@ for i in 1:num_seg loop
         0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1])      
     );
     
-    Re_DP[i] =  rho_air_DP[i]* U_air_DP * V_particle / ((1-eta_particle) * A_particle * mu_air_DP[i]);
+    Re_DP[i] =  rho_air_DP[i]* U_air_DP[i] * V_particle / ((1-eta_particle) * A_particle * mu_air_DP[i]);
     
     Pr_DP[i] = cp_air_DP[i] * mu_air_DP[i] / k_air_DP[i];
     
@@ -134,12 +137,19 @@ for i in 1:num_seg loop
     
     U_HX_DP[i] = Nu_DP[i] * k_air_DP[i] / D_particle;
     
+    m_dot_AIR_DP * (h_AIR_DP[i]- h_AIR_DP[i+1]) = m_dot_PCL_DP * (h_PCL_DP[i] - h_PCL_DP[i+1]) "Energy balance";
+    
+    //A_HX_dis[i] = (Q_HX_DP / num_seg) / (U_HX_DP[i] * 0.5 * ((T_PCL_DP[i] - T_AIR_DP[i]) + (T_PCL_DP[i+1] - T_AIR_DP[i+1])));   
+    
+    m_dot_AIR_DP * (h_AIR_DP[i]- h_AIR_DP[i+1]) = U_HX_DP[i] * A_HX_dis[i] * 0.5 * ((T_PCL_DP[i] - T_AIR_DP[i]) + (T_PCL_DP[i+1] - T_AIR_DP[i+1]));
+    
     /*Calculate the required area*/
     //A_HX_dis[i] = (Q_HX_DP / num_seg) / (U_HX_DP[i] * 0.5 * ((T_PCL_DP[i] - T_AIR_DP[i]) + (T_PCL_DP[i+1] - T_AIR_DP[i+1]))) "Simmon Kamerling said that LMTD gives the same result as average delta temp";
-    A_HX_dis[i] = (Q_HX_DP / num_seg) / (U_HX_DP[i] * 0.5 * ((T_PCL_DP[i] - T_AIR_DP[i]) + (T_PCL_DP[i+1] - T_AIR_DP[i+1])));   
 end for;
 
 A_HX = sum(A_HX_dis);
+
+
 
 
 end ParticleGasHXCalculator;

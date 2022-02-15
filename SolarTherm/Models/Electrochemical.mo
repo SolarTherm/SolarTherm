@@ -59,7 +59,7 @@ package Electrochemical
 
   model AEL_Electrolyser
   /*
-    The electrolyser model is based on: http://dx.doi.org/10.1016/j.energy.2017.07.053 . Polarisation curve is extracted, fitted as CombiTable2D where the inputs are: delivered power to the
+    The electrolyser model is based on: https://doi.org/10.1016/j.ijhydene.2019.12.027 . Polarisation curve is extracted, fitted as CombiTable2D where the inputs are: delivered power to the
     electrolyser (W) and working temperature of the electrolyser (K). Model limitation:
     
     1. The polarisation curve is based on curve-fit experimental data of 15kW AEL electrolyser testbed unit 
@@ -167,12 +167,18 @@ package Electrochemical
     
     eta_f = (i / 1e-4) ^ 2 / (f11 + f12 * T_AEL + (i / 1e-4) ^ 2) * (f21 + f22 * T_AEL) "Calculating Faraday eff.";
     
-    
-    n_H2 = eta_f * (i * A_electrolyser) / (2 * F) * N_cells;
-    n_O2 = 1 / 2 * n_H2;
-    n_H2O = n_H2;
-    H2_vol = n_H2 * 2.016 / 1000 / 0.09 * 3600;
-    
+    if W_electrolyser >  0 then
+        n_H2 = eta_f * (i * A_electrolyser) / (2 * F) * N_cells;
+        n_O2 = 1 / 2 * n_H2;
+        n_H2O = n_H2;
+        H2_vol = n_H2 * 2.016 / 1000 / 0.09 * 3600;
+    else
+        n_H2 = 0;
+        n_O2 = 0;
+        n_H2O = 0;
+        H2_vol = 0; 
+    end if;
+      
     
   //Calculate reversible voltage using Nernst equation
   //V_rev = V_0 + (T_electrolyser - 298.15) * (-0.9e-3) + (R * T_electrolyser) / (2 * F) * MATH.log(
@@ -199,9 +205,10 @@ package Electrochemical
     import MATH = Modelica.Math;
     
     //Parameters
-    parameter SI.Power P_electro = 15e3 "Name plate of one unit of electrolyser (after stacking the cells)";
+    parameter SI.Power P_electro = 15e3 "Name plate of one unit of electrolyser (after stacking the cells) as per literature";
     parameter SI.Power P_electro_requested = 15e3 "How big is the electrolyser";
-    parameter Real N_unit = ceil(P_electro_requested/P_electro) "Number of electrolyser unit";  
+    parameter Real N_unit(fixed=false)  "Number of electrolyser unit";
+    // = ceil(P_electro_requested/P_electro) "Number of electrolyser unit";
     parameter String fn_curve = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/ElectrolyserCurve/AEL_Polarisation_Curve.motab");
     parameter SI.Pressure p_electrolyser = 7e5 "Operating pressure of in Pa";
     parameter SI.Temperature T_electrolyser = 80 + 273.15 "Operating temperature of in K";
@@ -215,11 +222,80 @@ package Electrochemical
     Modelica.Blocks.Interfaces.RealOutput H2_out annotation(
       Placement(visible = true, transformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Real H2O_in;
+    SI.Mass H2_mass "Accummulated mass of H2";
+    SI.Mass H2O_mass "Accummulated mass of H2O";
+  initial equation
+    N_unit = ceil(P_electro_requested/P_electro); 
   equation
     electrolyser.W_electrolyser = W_electrolyser/N_unit;
-    H2_out = electrolyser.n_H2 * N_unit "Mol flux of H2 production mol/s";
-    H2O_in = electrolyser.n_H2O * N_unit "Required hydrogen production in mol/s";
+    if W_electrolyser > 10 then
+        H2_out = electrolyser.n_H2 * N_unit "Mol flux of H2 production mol/s";
+        H2O_in = electrolyser.n_H2O * N_unit "Required hydrogen production in mol/s";
+        der(H2O_mass) = H2O_in * 18e-3 "Mass of h2o needed";
+    else
+        H2_out = 0;
+        H2O_in = 0;
+        der(H2O_mass) = 0;
+    end if;
+    der(H2_mass) = H2_out * 2e-3 "Mass flow rate of H2 in kg/s"; 
   
   annotation(
       Icon(graphics = {Rectangle(origin = {0, 1}, lineThickness = 3, extent = {{-98, 61}, {98, -61}}), Rectangle(origin = {0, -20}, fillColor = {85, 255, 255}, fillPattern = FillPattern.Vertical, extent = {{-98, 40}, {98, -40}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {62, -2}, fillColor = {0, 255, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {71, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Cathode"), Line(origin = {-35, 66}, points = {{-31, -26}, {-31, 20}, {31, 20}, {31, 20}}, thickness = 1), Line(origin = {6, 86}, points = {{-10, 4}, {-10, -4}, {-10, -4}}, thickness = 1), Line(origin = {31.12, 63.5}, points = {{-31, 22.5}, {31, 22.5}, {31, -23.5}, {31, -21.5}, {31, -21.5}}, thickness = 1), Line(origin = {0, 85}, points = {{0, 3}, {0, -1}, {0, -1}}, thickness = 1), Line(origin = {9.19, 66}, points = {{-79.1874, -26}, {-79.1874, 26}, {56.8126, 26}, {56.8126, -26}, {56.8126, -26}, {56.8126, -26}}, pattern = LinePattern.Dash, thickness = 1), Polygon(origin = {66, 43}, fillPattern = FillPattern.Solid, points = {{-2, 3}, {0, -3}, {2, 3}, {2, 3}, {-4, 3}, {-2, 3}}), Text(origin = {-78, 52}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-78, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-38, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {42, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 54}, extent = {{-6, 8}, {6, -8}}, textString = "e-")}, coordinateSystem(initialScale = 0.1)));end Simple_Electrolyser;
+
+  model ElectrolyserCalculator
+  
+  import SI = Modelica.SIunits;
+  import nSI = Modelica.Units.NonSI;
+  import CN = Modelica.Constants;
+  import CONV = Modelica.SIunits.Conversions;
+  import MATH = Modelica.Math;
+    
+    
+  //Some constants
+  parameter SI.FaradayConstant F = CN.F "Faraday constant";
+  parameter Real R = CN.R "Molar gas constant (J/[mol.K])";
+  
+  parameter SI.MassFlowRate H2_target = 0.5 * 1e6 * 1e3 / (8760 *3600) "Hydrogen annual target production per second";
+  parameter Real H2_mol_target = H2_target * 1000 / 2 / 35;
+  parameter SI.Power P_nameplate_AEL = 15e3 "Nameplate per unit of AEL";
+  parameter SI.Temperature T_electrolyser = 80 + 273.15;
+  
+  parameter Integer N_cells = 12 "Number of cells of the electrolyser";
+  parameter Real A_electrolyser = 1000 "Total electrode area in cm^2";
+  
+  parameter String fn_curve = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/ElectrolyserCurve/AEL_Polarisation_Curve.motab");
+  parameter Real T_AEL = T_electrolyser - 273.15;
+  //CombiTable2D instantiation for reading Polarisation Curve
+  Modelica.Blocks.Tables.CombiTable2D p_curve(
+      tableOnFile = true, 
+      tableName = "polarisation_curve", 
+      smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = fn_curve
+  );
+  
+  /*Faraday efficiency*/
+  parameter Real f11 = 478645.74 "A^2/m^4";
+  parameter Real f12 = -2953.15 "A^2/(m^4.C)";
+  parameter Real f21 = 1.03960;
+  parameter Real f22 = -0.00104 "C^-1";
+  
+  
+  Real i(fixed=false);
+  Real eta_f(fixed=false);
+  Real nH2;
+  SI.MassFlowRate m_H2;
+  Real MW_total;
+  
+  initial equation
+  
+  equation
+    p_curve.u1 = P_nameplate_AEL;
+    p_curve.u2= T_electrolyser;
+    i = p_curve.y;
+    eta_f = (i / 1e-4) ^ 2 / (f11 + f12 * T_AEL + (i / 1e-4) ^ 2) * (f21 + f22 * T_AEL) "Calculating Faraday eff.";
+    nH2 = eta_f * (i * A_electrolyser) / (2 * F) * N_cells * (100e6/P_nameplate_AEL);
+    m_H2 = nH2 * 2/1000;
+    MW_total = H2_target/m_H2 * P_nameplate_AEL;
+
+  end ElectrolyserCalculator;
+ 
 end Electrochemical;

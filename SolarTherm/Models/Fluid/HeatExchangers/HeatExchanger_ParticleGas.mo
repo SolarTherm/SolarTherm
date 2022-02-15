@@ -21,6 +21,37 @@ function LMTD
     
 end LMTD;
 
+import SolarTherm.Utilities.SurrogateModelsSingleOutput.*;
+
+/*Neural Network*/
+parameter String saved_model_dir = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/SurrogateModels/ParticleGasHX/surrogate_model");
+parameter Boolean use_neural_network = true;
+parameter Integer inputsize = 11;
+parameter Integer outputsize = 1;
+parameter Real[inputsize] X_max = {14.9807997423875,14.9807997423875,298.15,972.5555659639,1996.67581024453,1272.96858290273,972.378508161418,1999.30167647194,1282.52244184563,323.149752495861,1034.01381489696};
+parameter Real[inputsize] X_min = {3.00012982940802,3.00012982940802,298.15,573.664546017781,255.355206431462,878.079631577602,723.293883223611,501.177597091302,779.729330767114,243.151089536449,443.712776411833};
+parameter Real out_max = 2993.06526355177;
+parameter Real out_min = 252.136593278538;
+
+STNeuralNetwork session = STNeuralNetwork(saved_model_dir) if use_neural_network == true
+"Initialise neural network session if use_neural_network == true";
+/*
+Real[inputsize] X = {
+    W_HX,
+    H_HX,
+    T_in_AIR_DP,
+    T_out_AIR_DP,
+    m_dot_AIR_DP,
+    T_in_PCL_DP,
+    T_out_PCL_DP,
+    m_dot_PCL_DP,
+    T_in_pcl, --> from hot tank
+    T_in_air, --> ambient temp
+    T_out_air --> what we want
+}
+*/
+
+
 /*HTF properties*/
 replaceable package PCL = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
 replaceable package AIR = Modelica.Media.Air.ReferenceAir.Air_Utilities;
@@ -53,9 +84,11 @@ parameter SI.Temperature T_in_PCL_DP = 1073.15 "Particles inlet temperature at d
 parameter SI.Temperature T_out_PCL_DP = 550 + 273.15 "Particles outlet temperature at design point (K). Equals to the cold tank target temperature";
 
 /*Calculated parameters*/
-parameter SI.Power Q_HX_DP(fixed=false) "HX thermal rating (W)";
-parameter SI.MassFlowRate m_dot_PCL_DP(fixed=false) "Particles mass flow rate at design point (kg/s)";
-parameter SI.Velocity U_air_DP(fixed=false) "Air velocity in m/s";
+parameter SI.Power Q_HX_DP = m_dot_AIR_DP * (AIR.h_pT(p_working, T_out_AIR_DP) - AIR.h_pT(p_working, T_in_AIR_DP)) "HX thermal rating (W)";
+    
+parameter SI.MassFlowRate m_dot_PCL_DP = Q_HX_DP / (PCL.h_T(T_in_PCL_DP) - PCL.h_T(T_out_PCL_DP)) "Particles mass flow rate at design point (kg/s)";
+
+parameter SI.Velocity[num_seg] U_air_DP(fixed=false) "Air velocity in m/s";
 
 parameter SI.Temperature[num_seg+1] T_AIR_DP(
     each fixed=false
@@ -88,12 +121,12 @@ parameter SI.SpecificHeatCapacity[num_seg] cp_air_DP(each fixed=false) "Air spec
 parameter SI.ThermalConductivity[num_seg] k_air_DP(each fixed=false) "Air thermal conductivity W/m.K";
 parameter SI.CoefficientOfHeatTransfer[num_seg] U_HX_DP(each fixed=false) "Coefficient of heat transfer U-value in W m^-2 K^-1";
 
+/*Parameter boolean*/
+parameter Boolean HX_always_off = false;
 
 /*Off design variables*/
-SI.Temperature T_in_pcl = 1073.15 "Later on this will be the temperature inlet from hot tank";
-SI.Temperature T_in_air = 25 + 273.15 "Later on this will be the air inlet temp.";
-SI.Temperature T_out_air = 500 + 273.15 "Later on this will be the air inlet temp.";
-SI.MassFlowRate m_dot_air;// = 1000 "Desired mass flow rate at operation";
+SI.Temperature T_out_air "Later on this will be the air inlet temp.";
+SI.MassFlowRate m_dot_air "Desired mass flow rate of air at operation";
 
 //SI.Velocity U_air "Air flow speed";
 //SI.Temperature T_out_pcl "The one that we calculate";
@@ -115,6 +148,8 @@ SI.SpecificEnthalpy h_air_out;
 SI.Temperature T_pcl_in;
 SI.Temperature T_pcl_out;
 SI.Power Q_HX "Heat duty HX";
+Real[inputsize] X "input to neural network";
+SI.MassFlowRate m_dot_pcl "mass flow rate of pcl at operation";
 
 /*
 SI.Temperature[num_seg+1] T_air(
@@ -155,19 +190,6 @@ initial equation
 */
 on = L_hot_tank > level_on and L_hot_tank > level_off;
 
-Q_HX_DP = m_dot_AIR_DP * (
-    AIR.h_pT(p_working, T_out_AIR_DP) - AIR.h_pT(p_working, T_in_AIR_DP)
-);
-
-m_dot_PCL_DP = Q_HX_DP / (
-    PCL.h_T(T_in_PCL_DP) - PCL.h_T(T_out_PCL_DP)
-);
-
-U_air_DP = m_dot_AIR_DP/(
-    AIR.rho_pT(p_working, 0.5 * (T_in_AIR_DP + T_out_AIR_DP)) * W_HX * H_HX
-);
-
-
 /*Boundary condition*/
 h_PCL_DP[1] = PCL.h_T(T_in_PCL_DP);
 h_PCL_DP[num_seg+1] = PCL.h_T(T_out_PCL_DP);
@@ -194,6 +216,10 @@ end for;
 
 //Loop over each HX segment -  index 1 is at the particle inlet port (air outlet port)
 for i in 1:num_seg loop
+    U_air_DP[i] = m_dot_AIR_DP/(
+        AIR.rho_pT(p_working, 0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1])) * W_HX * H_HX
+    );
+
     //Let's calculate the U_air_DP[i] -- all air properties are evaluated at the average temperature
     rho_air_DP[i] = AIR.rho_pT(p_working, 0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1]));
     
@@ -211,7 +237,7 @@ for i in 1:num_seg loop
         0.5 * (T_AIR_DP[i] + T_AIR_DP[i+1])      
     );
     
-    Re_DP[i] =  rho_air_DP[i]* U_air_DP * V_particle / ((1-eta_particle) * A_particle * mu_air_DP[i]);
+    Re_DP[i] =  rho_air_DP[i]* U_air_DP[i] * V_particle / ((1-eta_particle) * A_particle * mu_air_DP[i]);
     
     Pr_DP[i] = cp_air_DP[i] * mu_air_DP[i] / k_air_DP[i];
     
@@ -238,24 +264,61 @@ elsewhen L_hot_tank < level_off then
     on = false;
 end when;
 
+h_pcl_in = inStream(particle_port_in.h_outflow);
 
+T_pcl_in = PCL.T_h(h_pcl_in);
+
+T_out_air = T_out_AIR_DP;
 m_dot_air = m_dot_AIR_DP;
 h_air_in = AIR.h_pT(p_working,T_amb);
 h_air_out = AIR.h_pT(p_working,T_out_air);
-Q_HX = m_dot_air * ( h_air_out- h_air_in);
+Q_HX = m_dot_air * (h_air_out- h_air_in);
 
-h_pcl_in = inStream(particle_port_in.h_outflow);
-
-if on then
-    h_pcl_out = h_pcl_in - Q_HX/particle_port_in.m_flow;
+if use_neural_network then
+    X = {    
+        W_HX,
+        H_HX,
+        T_in_AIR_DP,
+        T_out_AIR_DP,
+        m_dot_AIR_DP,
+        T_in_PCL_DP,
+        T_out_PCL_DP,
+        m_dot_PCL_DP,
+        T_pcl_in,
+        T_amb,
+        T_out_air
+  };
+    
 else
-    h_pcl_out = PCL.h_T(T_out_PCL_DP);
+    X = fill(0,inputsize);
 end if;
 
-T_pcl_in = PCL.T_h(h_pcl_in);
+if on then
+  if HX_always_off then
+    m_dot_pcl = 0;
+    h_pcl_out = PCL.h_T(T_out_PCL_DP);
+  else
+      if use_neural_network then
+          m_dot_pcl = predict(
+              session, X, inputsize, X_max, X_min, out_max, out_min
+          );
+      else
+          m_dot_pcl = m_dot_PCL_DP "Mass flow rate of particle at design point";
+      end if;
+      h_pcl_out = h_pcl_in - Q_HX/particle_port_in.m_flow;
+  end if;
+    
+else
+    m_dot_pcl = 0 "Shut down the HX";
+    h_pcl_out = PCL.h_T(T_out_PCL_DP);
+
+end if;
+
 T_pcl_out = PCL.T_h(h_pcl_out);
 
 /*Connection equations*/
+particle_port_in.m_flow = m_dot_pcl;
+
 particle_port_in.p = particle_port_out.p;
 
 particle_port_in.m_flow + particle_port_out.m_flow = 0 "Mass balance";
@@ -263,6 +326,7 @@ particle_port_in.m_flow + particle_port_out.m_flow = 0 "Mass balance";
 particle_port_in.h_outflow = inStream(particle_port_out.h_outflow);
 
 particle_port_out.h_outflow = h_pcl_out;
+
 
 
 //Boundary condition

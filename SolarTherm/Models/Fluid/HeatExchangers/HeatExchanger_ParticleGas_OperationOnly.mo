@@ -51,6 +51,7 @@ parameter SI.MassFlowRate m_dot_AIR_DP = 1000 "Desired mass flow rate of air at 
 
 parameter SI.Temperature T_in_PCL_DP = 1073.15 "Particles inlet temperature at design point (K)";
 parameter SI.Temperature T_out_PCL_DP = 550 + 273.15 "Particles outlet temperature at design point (K). Equals to the cold tank target temperature";
+parameter SI.MassFlowRate m_dot_PCL_DP = 1603 "Design mass flow rate of pcl at design point (kg/s)";
 
 parameter SI.CoefficientOfHeatTransfer[num_seg] U_HX_DP(each fixed=false) "Coefficient of heat transfer U-value in W m^-2 K^-1";
 parameter SI.Area A_HX = 800 "Total heat transfer area";
@@ -75,12 +76,12 @@ SI.ThermalConductivity[num_seg] k_air(each fixed=false) "Air thermal conductivit
 SI.CoefficientOfHeatTransfer[num_seg] U_HX(each fixed=false) "Coefficient of heat transfer U-value in W m^-2 K^-1";
 */
 
-SI.SpecificEnthalpy h_pcl_in;
-SI.SpecificEnthalpy h_pcl_out;
-SI.SpecificEnthalpy h_air_in;
-SI.SpecificEnthalpy h_air_out;
+SI.SpecificEnthalpy h_pcl_in(start=PCL.h_T(T_in_PCL_DP), nominal=PCL.h_T(T_in_PCL_DP));
+SI.SpecificEnthalpy h_pcl_out(start=PCL.h_T(T_out_PCL_DP)), nominal=PCL.h_T(T_out_PCL_DP);
+SI.SpecificEnthalpy h_air_in(start=AIR.h_pT(p_working, T_in_AIR_DP), nominal=AIR.h_pT(p_working, T_in_AIR_DP));
+SI.SpecificEnthalpy h_air_out(start=AIR.h_pT(p_working, T_out_AIR_DP), nominal=AIR.h_pT(p_working, T_out_AIR_DP));
 SI.Temperature T_pcl_in;
-SI.Temperature T_pcl_out;
+SI.Temperature T_pcl_out(start=T_out_PCL_DP, nominal=T_out_PCL_DP);
 SI.Power Q_HX "Heat duty HX";
 
 SI.Velocity U_air;
@@ -145,57 +146,92 @@ elsewhen L_hot_tank < level_off then
     on = false;
 end when;
 
-m_dot_air = m_dot_AIR_DP;
-h_air_in = AIR.h_pT(p_working,T_amb);
-h_air_out = AIR.h_pT(p_working,T_out_air);
-
-
-h_pcl_in = inStream(particle_port_in.h_outflow);
-T_pcl_in = PCL.T_h(h_pcl_in);
-
-U_air = m_dot_air/(
-    AIR.rho_pT(p_working, 0.5 * (T_amb + T_out_air)) * W_HX * H_HX
-);
-
-rho_air = AIR.rho_pT(p_working, 0.5 * (T_amb + T_out_air));
-
-mu_air = AIR.Transport.eta_dT(
-        rho_air,
-        0.5 * (T_amb + T_out_air)
-);
-
-cp_air = AIR.cp_dT(
-        rho_air,
-        0.5 * (T_amb + T_out_air)
-);
-
-k_air = AIR.Transport.lambda_dT(
-        rho_air,
-        0.5 * (T_amb + T_out_air)      
-);
-
-Re = rho_air* U_air * V_particle / ((1-eta_particle) * A_particle * mu_air);
-
-Pr = cp_air * mu_air / k_air;
-
-Nu = 8.74 + 9.34 * (
-        6 * (1-eta_particle)^0.2 * Re^0.2 * Pr^(1/3)
-);
-
-U_HX = Nu * k_air / D_particle;
-
-m_dot_air * (h_air_out- h_air_in) = particle_port_in.m_flow * (h_pcl_in - h_pcl_out) "Energy balance";
-
-//m_dot_air * (h_air_out- h_air_in) = U_HX * A_HX * LMTD(T_pcl_in, T_pcl_out, T_amb, T_out_air);
-
-m_dot_air * (h_air_out- h_air_in) = U_HX * A_HX * 0.5 * ((T_pcl_in - T_out_air) + (T_pcl_out - T_amb));
-
-
-if on then
+if particle_port_in.m_flow > 0 then
+    m_dot_air = m_dot_AIR_DP;
+    h_air_in = AIR.h_pT(p_working,T_amb);
+    h_air_out = AIR.h_pT(p_working,T_out_air);
+    
+    h_pcl_in = inStream(particle_port_in.h_outflow);
+    T_pcl_in = PCL.T_h(h_pcl_in);
+    
+    U_air = m_dot_air/(
+        AIR.rho_pT(p_working, 0.5 * (T_amb + T_out_air)) * W_HX * H_HX
+    );
+    
+    rho_air = AIR.rho_pT(p_working, 0.5 * (T_amb + T_out_air));
+    
+    mu_air = AIR.Transport.eta_dT(
+            rho_air,
+            0.5 * (T_amb + T_out_air)
+    );
+    
+    cp_air = AIR.cp_dT(
+            rho_air,
+            0.5 * (T_amb + T_out_air)
+    );
+    
+    k_air = AIR.Transport.lambda_dT(
+            rho_air,
+            0.5 * (T_amb + T_out_air)      
+    );
+    
+    Re = rho_air* U_air * V_particle / ((1-eta_particle) * A_particle * mu_air);
+    
+    Pr = cp_air * mu_air / k_air;
+    
+    Nu = 8.74 + 9.34 * (
+            6 * (1-eta_particle)^0.2 * Re^0.2 * Pr^(1/3)
+    );
+    
+    U_HX = Nu * k_air / D_particle;
+    
+    m_dot_air * (h_air_out- h_air_in) = particle_port_in.m_flow * (h_pcl_in - h_pcl_out) "Energy balance";
+    
+    //m_dot_air * (h_air_out- h_air_in) = U_HX * A_HX * LMTD(T_pcl_in, T_pcl_out, T_amb, T_out_air);
+    
+    m_dot_air * (h_air_out- h_air_in) = U_HX * A_HX * 0.5 * ((T_pcl_in - T_out_air) + (T_pcl_out - T_amb));
+    
     h_pcl_out = h_pcl_in - Q_HX/particle_port_in.m_flow;
+    
 else
-    h_pcl_out = PCL.h_T(T_out_PCL_DP);
+    m_dot_air = 0;
+    h_air_in = AIR.h_pT(p_working,T_amb);
+    h_air_out = h_air_in;
+    
+    h_pcl_in = inStream(particle_port_in.h_outflow);
+    T_pcl_in = PCL.T_h(h_pcl_in);
+    
+    U_air = 0;
+    
+    rho_air = 0;
+    
+    mu_air = 0;
+    
+    cp_air = 0;
+    
+    k_air = 0;
+    
+    Re = 0;
+    
+    Pr = 0;
+    
+    Nu = 0;
+    
+    U_HX = 0;
+    
+    h_pcl_out = h_pcl_in;
+    
+    Q_HX = 0;
+    
+    T_pcl_out = T_pcl_in;
+    
 end if;
+
+//if on then
+//    h_pcl_out = h_pcl_in - Q_HX/particle_port_in.m_flow;
+//else
+//    h_pcl_out = PCL.h_T(T_out_PCL_DP);
+//end if;
 
 T_pcl_out = PCL.T_h(h_pcl_out);
 
