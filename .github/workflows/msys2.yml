@@ -26,7 +26,7 @@ jobs:
     env:
       PYTEST_ADDOPTS: --color=yes
       DAKVER: 6.14.0
-      SAMVER: "2020-11-12" # version of SAM      
+      SAMVER: "2021-12-02" # version of SAM      
 
     steps:
     - uses: msys2/setup-msys2@v2
