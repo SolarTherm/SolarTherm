@@ -26,7 +26,7 @@ jobs:
     env:
       PYTEST_ADDOPTS: --color=yes
       DAKVER: 6.14.0
-      SAMVER: 2020-11-12 # version of SAM      
+      SAMVER: "2020-11-12" # version of SAM      
 
     steps:
     - uses: msys2/setup-msys2@v2
@@ -132,7 +132,7 @@ jobs:
 #
     - name: Install SAM
       run: |
-        mkdir -P ~/sam-${{ env.SAMVER }}
+        mkdir -p ~/sam-${{ env.SAMVER }}
         wget -P~ https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
         cd ~/sam-${{ env.SAMVER }} && innoextract ~/sam-windows-${{ env.SAMVER }}.exe -e -I app
 
