@@ -36,10 +36,10 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 				iconreg,_i = _reg1.split(",")
 			except Exception as e:
 				return default_prefix
-			return Path(iconreg).parents[0]
+			return Path(iconreg).parents[1]
 		default_ssc_prefix = find_sam()
-		default_ssc_cpppath = '$SSC_PREFIX/../runtime'
-		default_ssc_libpath = '$SSC_PREFIX'
+		default_ssc_cpppath = '$SSC_PREFIX/runtime'
+		default_ssc_libpath = '$SSC_PREFIX/x64'
 		def bash_which(exe):
 			try:
 				res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
