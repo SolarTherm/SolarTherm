@@ -59,8 +59,10 @@ jobs:
     - name: Install SAM
       run: |
         mkdir -p ~/sam-${{ env.SAMVER }}
-        wget -P~ https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
+        cd ~ && wget https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
         cd ~/sam-${{ env.SAMVER }} && innoextract ~/sam-windows-${{ env.SAMVER }}.exe -e -I app
+        echo "LIST SAM FILES"
+        ls ~/sam-${{ env.SAMVER }}
 
     - name: Install Python dependencies
       run: |
