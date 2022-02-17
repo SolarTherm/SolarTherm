@@ -366,6 +366,162 @@ class SimResultElec(SimResult):
 
 		return summary
 
+class SimResultH2(SimResult):
+	def calc_perf(self):
+		"""Calculate Solar-H2 plant's peformance"""
+		
+		varnames = self.get_names()
+		
+		assert('H2_mass' in varnames), "For a H2_calc calculation, it is expected to see H2_mass variable in the result file!"
+		
+		eng_t = self.mat.abscissa('H2_mass', valuesOnly=True) #Time [s]
+		eng_v = self.mat.data('H2_mass') #Cummulative of H2 production in kg
+		
+		#Cost
+		cap_v = self.mat.data('C_cap') # Total capital costs [$]
+		
+		om_y_v = self.mat.data('C_year') # O&M fixed costs per year of producing electricity [$/year]
+		om_p_v = self.mat.data('C_prod') # O&M costs per electricity production per year [$/J/year]
+		
+		NG_consumption = self.mat.data('NaturalGas') #Natural gas consumption annually [kg]
+		
+		H2O_consumption_SMR = self.mat.data('H2O_mass_SMR') #H2O consumed by the SMR [kg]
+		
+		H2O_consumption_electrolyser = self.mat.data('H2O_mass_electrolyser') #H2O consumed by the electrolyser [kg]
+		
+		pri_NG = self.mat.data('pri_natural_gas') #Natural gas per kg [$/kg]
+		
+		om_y_v_H2 = self.mat.data('pri_h2') #Variable to produce a kg of H2 $/kg
+		
+		om_y_v_H2O_SMR = self.mat.data('pri_water_SMR') #Variable to provide a kg of H2O to SMR $/kg
+		
+		om_y_v_H2O_Electrolyser = self.mat.data('pri_water_ele') #Variable to provide a kg of H2O to electrolyser $/kg
+		
+		H2_production_electrolyser = self.mat.data('H2_mass_electrolyser') #H2 produced by electrolyser in kg
+		
+		e_elec = self.mat.data('E_elec')
+		
+		#Financial parameters
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = self.mat.data('t_cons') # Construction time [year]
+		name_v = self.mat.data('H2_mdot_target') # System nameplate measured in kg/s hydrogen
+		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+		
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
+		# Only provide certain metrics if runtime is a multiple of a year
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+		self.epy =  fin.energy_per_year(dur, e_elec[-1]) # Energy expected in a year [J] converted from MWh
+		
+		srev = rev_v[-1] # spot market revenue [$]
+		
+		lco_H2 = None # Levelised cost of electricity
+		
+		capf = None # Capacity factor
+
+		self.c_cap=cap_v[0] 
+		self.c_year=om_y_v[0] + om_p_v[0]*self.epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2[0] * eng_t[-1] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
+		self.r_discount=disc_v[0]
+		self.t_life=int(life_v[0])
+		self.t_cons=int(cons_v[0]) # time of construction
+		try:
+			self.C_contingency=self.mat.data('C_contingency')[0] # [$]
+		except:		
+			self.C_contingency=0 #contingency is not estimated in the system simulation
+
+		if close_to_year: 
+			lco_H2 = fin.lcoe_r(
+					c_cap=self.c_cap, 
+					c_year=self.c_year, 
+					r=self.r_discount, 
+					t_life=self.t_life, 
+					t_cons=self.t_cons, 
+					epy=eng_v[-1])
+			capf = H2_production_electrolyser[-1] / (name_v[0] * 8760 * 3600)
+
+		# Convert to useful units
+		if close_to_year: 
+			capf = 100*capf
+		print([eng_v[-1], lco_H2, capf, srev,])
+		return [eng_v[-1], lco_H2, capf, srev,]
+		
+	def cost_breakdown(self):
+		"""Calculate costs breakdown for the solar power plant"""
+		eng_t = self.mat.abscissa('H2_mass', valuesOnly=True) #Time [s]
+		eng_v = self.mat.data('H2_mass') #Cummulative of H2 production in kg
+		disc_v = self.mat.data('r_disc') # Discount rate [-]
+		life_v = self.mat.data('t_life') # Plant lifetime [year]
+
+		C_field_v = self.mat.data('C_field') # Solar field capital cost [$]
+		C_tower_v = self.mat.data('C_tower') # Tower capital cost [$]
+		C_receiver_v = self.mat.data('C_receiver') # Receiver capital cost [$]
+		C_storage_v = self.mat.data('C_storage') # Storage tanks capital cost [$]
+		C_block_v = self.mat.data('C_block') # Power block capital cost [$]
+		C_bop_v = self.mat.data('C_bop') # Balance of plant cost [$]
+		C_land_v = self.mat.data('C_land') # Land cos [$]
+		C_SMR_v = self.mat.data('C_SMR') # SMR cost [$]
+		try:
+			C_PV_v = self.mat.data('C_PV') # SMR cost [$]
+		except:
+			C_PV_v = [0]
+		C_Electrolyser_v = self.mat.data('C_electrolyser') # SMR cost [$]
+		
+		NG_consumption = self.mat.data('NaturalGas') #Natural gas consumption annually [kg]
+		
+		H2O_consumption_SMR = self.mat.data('H2O_mass_SMR') #H2O consumed by the SMR [kg]
+		
+		H2O_consumption_electrolyser = self.mat.data('H2O_mass_electrolyser') #H2O consumed by the electrolyser [kg]
+		
+		pri_NG = self.mat.data('pri_natural_gas') #Natural gas per kg [$/kg]
+		
+		om_y_v_H2 = self.mat.data('pri_h2') #Variable to produce a kg of H2 $/kg
+		
+		om_y_v_H2O_SMR = self.mat.data('pri_water_SMR') #Variable to provide a kg of H2O to SMR $/kg
+		
+		om_y_v_H2O_Electrolyser = self.mat.data('pri_water_ele') #Variable to provide a kg of H2O to electrolyser $/kg
+		
+		H2_production_electrolyser = self.mat.data('H2_mass_electrolyser') #H2 produced by electrolyser in kg
+		
+		e_elec = self.mat.data('E_elec')
+		
+		try:
+			C_PV_v = self.mat.data('C_PV') # PV cost [$]
+		except:
+			C_PV_v = [0]
+		C_electrolyser_v = self.mat.data('C_SMR') # C_electrolyser cost [$]
+		C_land_v = self.mat.data('C_land') # Land cos [$]
+
+		C_cap_v = self.mat.data('C_cap') # Capital costs [$]
+
+		om_y_v = self.mat.data('C_year') # Fixed O&M costs per year [$/year]
+		om_p_v = self.mat.data('C_prod') # Variable O&M costs per production per year [$/J/year]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		epy =  fin.energy_per_year(dur, e_elec[-1])
+
+		C_cap = C_cap_v[0] * 1e-3 # Total capital investment (TCI) [k$]
+		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
+		
+		C_om_ann = (om_y_v[0] + om_p_v[0]*epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2[0] * eng_t[-v] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]) * 1e-3 # Total O&M costs [k$/year]
+
+		C_cap_bd_n = ['Solar field', 'Tower', 'Receiver', 'Storage', 'PB', 'BOP', 'Land', 'SMR', "PV", "Electrolyser"] # Capital cost components name
+		C_cap_bd_u = 'k$' # Capital cost components unit
+		C_cap_bd_v = [C_field_v[0]*1e-3, C_tower_v[0]*1e-3, C_receiver_v[0]*1e-3, C_storage_v[0]*1e-3, C_block_v[0]*1e-3, C_bop_v[0]*1e-3, C_land_v[0]*1e-3, C_SMR_v[0]*1e-3,C_PV_v[0]*1e-3,C_Electrolyser_v[0]*1e-3] # Capital cost breakdown [k$]
+
+		C_op_bd_n = ['Fixed O&M', 'variable O&M'] # Operational cost components name
+		C_op_bd_u = 'k$/year' # Operational cost components unit
+		C_op_bd_v = [om_y_v[0]*1e-3, (om_p_v[0]*epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2[0] * eng_t[-v] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1])*1e-3] # Operational cost breakdown [k$/year]
+
+		C_ann_bd_n = ['Total Annualised capital investment', 'Total O&M'] # Annualised cost breakdown names
+		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
+		C_ann_bd_v = [C_cap_ann, C_om_ann] # Annualised cost breakdown [k$/year]
+
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
+
+	perf_n = ['H2_yield', 'lco_H2', 'capf', 'srev']
+	perf_u = ['kg/year', '$/kg', '%', '$']
 
 class SimResultFuel(SimResult):
 	def calc_perf(self):

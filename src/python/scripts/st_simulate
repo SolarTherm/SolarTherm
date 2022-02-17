@@ -130,6 +130,8 @@ if __name__ == '__main__':
 			help='set or sweep parameters, e.g.: p1=val1,val2 p2=val3')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
+	parser.add_argument('--h2', action='store_true',
+			help='run post-processing calculations for levelised cost of h2')
 	parser.add_argument('--fuse', action='store_true',
 			help='disable use of unionfs-fuse to clean temporary files')
 	parser.add_argument('--excel', type=str, default=None,
@@ -184,6 +186,8 @@ if __name__ == '__main__':
 
 	if args.fuel:
 		resultclass = postproc.SimResultFuel
+	elif args.h2:
+		resultclass = postproc.SimResultH2
 	else:
 		resultclass = postproc.SimResultElec
 

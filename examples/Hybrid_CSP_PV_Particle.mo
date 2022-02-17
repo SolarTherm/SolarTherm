@@ -460,9 +460,41 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_storage = if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
   //******************************* Cost of BOP
   parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
-  //******************************* Cost of O&M (fixed + varied)
-  parameter FI.MoneyPerYear C_year = if set_detail_field_om then P_name * pri_om_name + C_om_field + C_washing else P_name * pri_om_name "Fixed O&M cost per year + OnM field + Cost of washing the field";
   parameter FI.Money C_prod = pri_om_prod "Variable O&M cost per production per year";
+  
+  //******************************* PV capital and OM cost
+  parameter Real pri_PV = 760 "Cost of PV per $/kWe";
+  parameter Real pri_om_PV = 14.08 "OnM cost for PV in USD/kWe installed capacity";
+  parameter FI.Money C_PV = PV_Target/1e3 * pri_PV "PV cost in $";
+  parameter FI.MoneyPerYear C_year_PV = pri_om_PV * PV_Target/1e3 "Fixed OM cost for PV";
+  
+  //******************************* Capital cost of SMR
+  parameter Real pri_SMR = 117232000 * 1.58 "cost of SMR component. 117232000 Euro per 2.5 kg/s H2 plant, scalled linearly. Exchange rate 1.58 AUD/euro";
+  parameter Real scaler_n = 0.7;
+  parameter FI.Money C_SMR = pri_SMR * (H2_mdot_target/2.5)^ scaler_n;
+  
+  //******************************* Captial and OM cost of Electrolyser
+  parameter Real pri_electrolyser = 827 "Electrolyser price USD/kWe https://doi.org/10.3390/en14123437";
+  parameter Real pri_om_electrolyser = 0.035 "Fraction of electrolyser OnM based on C_electrolyser https://doi.org/10.3390/en14123437";
+  parameter FI.Money C_electrolyser = P_hybrid_system / 1000 * pri_electrolyser "cost of electrolyser";
+  parameter FI.MoneyPerYear C_year_electrolyser = C_electrolyser * pri_om_electrolyser "Fixed OM cost for electrolyser in USD/year";
+  
+  //******************************* Cost per kg of Natural gas consumed by SMR
+  parameter Real pri_natural_gas = 6 * 0.0465 * 0.72 "Cost of natural gas USD per kg. Cost is 6 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104), LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf). Exchange rate is 0.72 ";
+  
+  //******************************* Cost per kg of water consumed by SMR
+  parameter Real pri_water_SMR = 3 * 0.72 "Cost of water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104. 0.72 is the exchange rate from AUD to USD";
+  
+  //******************************* Cost per kg of water consumed by Electrolyser
+  parameter Real pri_water_ele = 3 * 0.72 "Cost of water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104. 0.72 is the exchange rate from AUD to USD";
+  
+  //******************************* Cost per kg of H2 production
+  parameter Real pri_h2 = 0.0 "Variable cost to produce H2 $/kg";
+  
+  
+  //******************************* Cost of O&M (fixed + varied)
+  parameter FI.MoneyPerYear C_year = if set_detail_field_om then (P_name) * pri_om_name + C_om_field + C_washing + C_year_PV + C_year_electrolyser else (P_name) * pri_om_name + C_year_PV + C_year_electrolyser "Fixed O&M cost per year (PV, CSP, Electrolyser)";
+  
   //******************************* Total cost calculation
   parameter FI.Money C_cap_total(fixed = false) "equipment cost";
   parameter FI.Money C_direct(fixed = false) "Direct capital costs";
@@ -646,11 +678,25 @@ model Hybrid_CSP_PV_Particle
   SI.Angle slope_error_runtime[integer(horizon / dt)] "Slope error as a function of wind speed during runtime";
   Real pri_horizon[integer(horizon / dt)] "Price for the next horizon";
   Real DNI_horizon[integer(horizon / dt)] "DNI for the next horizon";
-  SI.Mass H2_mass "Accummulate mass of hydrogen";
-  SI.Volume H2_volume "Accummulated H2 volumen in m3";
-  SI.Mass NaturalGas "Accummulated backup natural gas used annually";
+  
+  SI.Mass H2_mass "Accummulate mass of hydrogen produed by the plant";
+  
+  SI.Volume H2_volume "Accummulated H2 volumen in m3 produced by the plant";
+  
+  SI.Mass NaturalGas "Accummulated backup natural gas used annually consumed by SMR";
+  
+  SI.Mass H2_mass_SMR "Accummulated H2 mass produced by SMR";
+  
+  SI.Mass H2O_mass_SMR "Acummulated H2O mass consumed by the SMR";
+  
+  SI.Mass H2_mass_electrolyser "Accummulated H2 mass produced by Electrolyser";
+  
+  SI.Mass H2O_mass_electrolyser "Acummulated H2O mass consumed by the electrolyser";
+  
   replaceable package MedH2 = Modelica.Media.IdealGases.SingleGases.H2;
+  
   MedH2.ThermodynamicState state_H2;
+  
   SI.Mass M_hot_air(start = 0) "Accummulated hot air mass for the industry";
 algorithm
   if time > 31449600 then
@@ -767,7 +813,7 @@ initial equation
     C_block = -1;
   end if;
 //************************************ Capital Cost Calculation
-  C_cap_total = C_field + C_site + C_receiver + C_storage + C_block + C_bop "Total equipment cost";
+  C_cap_total = C_field + C_site + C_receiver + C_storage + C_PV + C_block + C_bop + C_SMR + C_electrolyser "Total equipment cost";
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
@@ -783,6 +829,14 @@ equation
   else
     der(M_hot_air) = if heatExchanger_ParticleGas.on then heatExchanger_ParticleGas.m_dot_air else 0;
   end if;
+  
+  der(H2_mass_SMR) = SMR.H2_SMR "Accummulated H2 mass produced by SMR";
+  
+  der(H2O_mass_SMR) = der(SMR.H2O_SMR)  "Acummulated H2O mass consumed by the SMR";
+  
+  der(H2_mass_electrolyser) = der(electrolyser.H2_mass) "Accummulated H2 mass produced by Electrolyser";
+  
+  der(H2O_mass_electrolyser) = der(electrolyser.H2O_mass) "Acummulated H2O mass consumed by the electrolyser";
 //************************************ Sankey diagram calculation
   der(E_solars) = max(sun.dni * n_helios * A_helio, 0.0);
   der(E_loss_curtailments) = if heliostatsField.on_internal == false then max(sun.dni * n_helios * A_helio, 0.0) else 0;
