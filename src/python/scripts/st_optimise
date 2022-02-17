@@ -114,8 +114,6 @@ if __name__ == '__main__':
 			help='parameters with bounds and optional starting value in form PNAME=LOW,HIGH[,START]')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')
-	parser.add_argument('--h2', action='store_true',
-			help='run post-processing calculations for levelised cost of h2')
 	parser.add_argument('--test', action='store_true',
 			help='run the simulation in the test mode, i.e. without post-processing calculations for levelised cost')
 	#parser.add_argument('--framework', type=str, default='soo_min',
@@ -171,9 +169,6 @@ if __name__ == '__main__':
 		if args.fuel:
 			system='FUEL'
 			resultclass = postproc.SimResultFuel
-		elif args.h2:
-			system='H2'
-			resultclass = postproc.SimResultH2
 		else:
 			system='ELECTRICITY'
 			resultclass = postproc.SimResultElec
