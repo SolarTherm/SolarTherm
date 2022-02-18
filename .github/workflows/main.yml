@@ -191,6 +191,7 @@ jobs:
     - name: Install SolarTherm
       run: |
         # scons install
+        export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
