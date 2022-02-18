@@ -19,7 +19,8 @@ tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_mot
 tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
 
 if env['HAVE_SSC'] and env['HAVE_TF'] and env['HAVE_GSL']:
-	tenv.ParseConfig('$GSL_CONFIG --libs --cflags')
+	#tenv.ParseConfig('$GSL_CONFIG --libs --cflags')
+	tenv.AppendUnique(LIBS=env['GSL_LIBS'],LIBPATH=env['GSL_LIBPATH'],CPPPATH=env['GSL_CPPPATH'])
 	tenv.AppendUnique(LIBS=['tensorflow','st_otf_surrogate','ssc'])
 	tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'])
 

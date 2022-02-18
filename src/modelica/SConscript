@@ -70,7 +70,6 @@ lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linpro
 shlibs = [lib1, lib4, lib2, lib3, lib6]
 
 if env['HAVE_TF']:
-	#Tensorflow linked bits 19 October 2021 -- Philipe
 	#Clone the standard + python environment
 	tenv = penv.Clone()
 
@@ -88,14 +87,14 @@ if env['HAVE_TF']:
 	lib8 = tenv.SharedLibrary('st_recv_surrogate_multi_output',['st_recv_surrogate_multi.c'])
 	shlibs += [lib7,lib8]
 
-	if env['HAVE_SSC']:
-		#On the fly surrogate bits 21 October 2021 -- Philipe
+	if env['HAVE_SSC'] and env['HAVE_GSL']:
 		fenv = tenv.Clone() #Python + tensorflow already included
 		fenv.Append(
 			CPPPATH = ["$SSC_CPPPATH", '$TF_CPPPATH']
-			,LIBS = ["m","gsl","gslcblas","dl","ssc"] # plus the ones in tenv...
+			,LIBS = env['GSL_LIBS'] + ["ssc"] # plus the ones in tenv...
 			,LIBPATH = ["$SSC_LIBPATH","$TF_LIBPATH"]
 		)
+		# FIXME add 'dl' lib for Linux?
 
 		lib9 = fenv.SharedLibrary('st_otf_surrogate',[
 			'st_otf_surrogate.c'

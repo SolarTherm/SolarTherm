@@ -469,6 +469,7 @@ env = conf.Finish()
 
 envg = env.Clone()
 if bash_which(env['GSL_CONFIG']):
+	print("RUNNING")
 	bash_parseconfig(envg,'$GSL_CONFIG --libs --cflags')
 else:
 	confmsg(env,"Unable to locate GSL: gsl-config not found in path")
@@ -489,6 +490,10 @@ if not confg.GSL():
 	confmsg(env,"Warning: unable to locate GSL. Some components will not be built.")
 envg = confg.Finish()
 env['HAVE_GSL'] = envg['HAVE_GSL']
+env['GSL_LIBS'] = envg['LIBS']
+env['GSL_CPPPATH'] = envg['CPPPATH']
+env['GSL_LIBPATH'] = envg['LIBPATH']
+print("GSL_LIBS = ",env['GSL_LIBS'])
 
 #---------------------------------------------------------------------------------------------------
 
