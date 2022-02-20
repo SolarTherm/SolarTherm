@@ -8,6 +8,7 @@ from solartherm import postproc
 from solartherm import simulation
 import DyMat
 import numpy as np
+import sys
 
 def run():
 
@@ -146,20 +147,23 @@ class Interface:
 				
 			try:
 				res_fn=DyMat.DyMatFile(self.sim.res_fn)	
-				print('Result fn is loaded, fn=', self.sim.res_fn)					
+				sys.stderr.write('Result fn is loaded, fn= %s\n'%(self.sim.res_fn))					
 			except:			
-				print('Result fn cannot be open, fn=', self.sim.res_fn)	
+				sys.stderr.write('Result fn cannot be open, fn= %s\n'%(self.sim.res_fn))
 				
 			try:	
 				
 				if self.analysis_type!='TEST':
 					if self.analysis_type=='FUEL':
 						resultclass = postproc.SimResultFuel(self.sim.res_fn)			
-
+					elif self.analysis_type=='H2':
+						sys.stderr.write("Calculating performance of H2 system\n\n")
+						resultclass = postproc.SimResultH2(self.sim.res_fn)
+						perf = resultclass.calc_perf()
 					else:
 						resultclass = postproc.SimResultElec(self.sim.res_fn)	
 						if peaker:
-							perf = resultclass.calc_perf(perker=bool(peaker))
+							perf = resultclass.calc_perf(peaker=bool(peaker))
 						else:	
 							perf = resultclass.calc_perf()	
 						summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)								
@@ -168,9 +172,10 @@ class Interface:
 				for i in range(self.num_res):
 					sign=float(self.params.__getitem__("sign_%s"%(i+1)))
 					name=self.params.__getitem__("res_%s"%(i+1))
-					if name=='epy':
+					
+					if name=='epy' or name=='H2_yield':
 						res=sign*perf[0]
-					elif name=='lcoe':
+					elif name=='lcoe' or name=='lco_H2':
 						res=sign*perf[1]
 					elif name=='capf':
 						res=sign*perf[2]
@@ -179,9 +184,9 @@ class Interface:
 					else:
 						res=sign*res_fn.data(name)[0]					
 					solartherm_res.append(res)
-					print('objective %s: '%i, name, res)
+					sys.stderr.write('objective %s: %s %s\n'%(i, name, res))
 				
-			except:
+			except Exception as e:
 				solartherm_res=[]
 				for i in range(self.num_res):	
 					sign=float(self.params.__getitem__("sign_%s"%(i+1)))
@@ -190,7 +195,8 @@ class Interface:
 					else: # maxmisation
 						error=0 
 					solartherm_res.append(sign*error)
-				print('Failed to process the results, case %s'%(self.suffix))
+				sys.stderr.write('%s\n'%())
+				sys.stderr.write('Failed to process the results, case %s\n'%(self.suffix))
 			
 		else:		
 				solartherm_res=[]
@@ -201,10 +207,11 @@ class Interface:
 					else: # maxmisation
 						error=0 
 					solartherm_res.append(sign*error)
-				print('Simulation was failed, case %s'%(self.suffix))		
+				sys.stderr.write('Simulation was failed, case %s\n'%(self.suffix))		
 		
 		
 		print('')
+		sys.stderr.write('%s\n'%(solartherm_res))
 		# Return the results to Dakota
 		for i, r in enumerate(self.results.responses()):
 			if r.asv.function:
