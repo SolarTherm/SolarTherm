@@ -89,7 +89,8 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   //****************************** Design condition of the Hybrid Plant
   parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
-  parameter Real PV_fraction = 0.1 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction=0.1 "Fraction of the hybrid system that is PV nameplate";
+
   //****************************** Design condition of the CSP plant
   parameter SI.Power P_net = P_hybrid_system * (1-PV_fraction) "[PB] Power block net rating at design point";
   parameter SI.MassFlowRate H2_mdot_target = 0.5 * 1e6 * 1e3 / (8760 * 3600) / 35 "Hydrogen annual target production per second, modularised into 35 plants";
@@ -579,8 +580,8 @@ model Hybrid_CSP_PV_Particle
   SolarTherm.Models.PowerBlocks.sCO2PB_ConstantEfficiency powerBlock(P_gross = P_gross, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_amb_base = blk_T_amb_des, htf_choice = htf_choice, dT_PHX_hot_approach = dT_PHX_hot_approach, dT_PHX_cold_approach = dT_PHX_cold_approach, eta_isen_mc = eta_comp_main, eta_isen_rc = eta_comp_re, eta_isen_t = eta_turb, dT_mc_approach = dT_mc_approach, which_PB_model = which_PB_model, load_base = 1, eta_gross_base = eta_gross_base, eta_Q_base = eta_Q_base, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, base_path = base_path, SolarTherm_path = SolarTherm_path, inputsize = inputsize_PB, outputsize = outputsize_PB, tolerance_kriging = tolerance_kriging, tolerance_ANN = tolerance_ANN, which_surrogate = which_surrogate, test_mode = false, eta_motor = 1, f_fixed_load = f_fixed_load, external_parasities = set_external_parasities) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //*********************Power Block Calculator
-  SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
-    Placement(visible = true, transformation(origin = {-176, 110}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
+  //SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
+  //  Placement(visible = true, transformation(origin = {-176, 110}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //********************* PV Array
   SolarTherm.Models.PV.PVarray PVArray(PV_Target = PV_Target, azi_s = azi_s, ele_s = ele_s, lat = lat, ele_min = ele_min) annotation(
     Placement(visible = true, transformation(origin = {-68, -86}, extent = {{-22, -22}, {22, 22}}, rotation = 0)));
@@ -735,13 +736,13 @@ initial equation
 //********************* Retrieve the PB design points result from the PB model intialisation
   if which_PB_model == 0 then
 //********************* CEA - Power Block
-    eta_gross_base = sCO2PBDesignPointCalculator.eta_gross;
-    eta_Q_base = sCO2PBDesignPointCalculator.eta_Q;
-    Q_flow_des = sCO2PBDesignPointCalculator.powerBlock.Q_HX_des;
-    etaG = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    eff_blk = sCO2PBDesignPointCalculator.powerBlock.eta_net_design;
-    m_flow_blk = sCO2PBDesignPointCalculator.m_HTF_des;
-    UA_HX = sCO2PBDesignPointCalculator.powerBlock.exchanger.UA;
+    eta_gross_base = -1;
+    eta_Q_base = -1;
+    Q_flow_des = -1;
+    etaG = -1;
+    eff_blk = -1;
+    m_flow_blk = -1;
+    UA_HX = -1;
   elseif which_PB_model == 1 then
 //********************* NREL Power Block - Initialisation
     NREL_PB_configurations = SolarTherm.Utilities.designNRELPB(P_gross, T_in_ref_blk, p_high, dT_PHX_cold_approach, eta_comp_main, eta_comp_re, eta_turb, dT_mc_approach, blk_T_amb_des, HTF_name, htf_choice, SolarTherm_path, T_cold_set);
