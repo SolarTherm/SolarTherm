@@ -144,7 +144,8 @@ package Electrochemical
     Modelica.Blocks.Tables.CombiTable2D p_curve(
         tableOnFile = true, 
         tableName = "polarisation_curve", 
-        smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, fileName = fn_curve
+        smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, 
+        fileName = fn_curve
     );
     
     
@@ -156,7 +157,6 @@ package Electrochemical
     SI.Efficiency eta_f "Faraday efficiency";
     Real i(min = 0) "Current density in A/m^2";
     Real H2_vol;
-     
     
   equation
     //der(W_electrolyser) = 1;
@@ -208,10 +208,15 @@ package Electrochemical
     parameter SI.Power P_electro = 15e3 "Name plate of one unit of electrolyser (after stacking the cells) as per literature";
     parameter SI.Power P_electro_requested = 15e3 "How big is the electrolyser";
     parameter Real N_unit(fixed=false)  "Number of electrolyser unit";
-    // = ceil(P_electro_requested/P_electro) "Number of electrolyser unit";
     parameter String fn_curve = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/ElectrolyserCurve/AEL_Polarisation_Curve.motab");
     parameter SI.Pressure p_electrolyser = 7e5 "Operating pressure of in Pa";
     parameter SI.Temperature T_electrolyser = 80 + 273.15 "Operating temperature of in K";
+    
+    //Calculated parameters
+    parameter SI.MassFlowRate H2_mdot_design_point(fixed=false) "Given the size of the electricity generator, what would be H2 mdot at design point [kg/s]";
+    parameter Real i_electrolyser_design_point(fixed=false) "Current density of electrolyser at design point [A/cm2]";
+    parameter Real eta_farad_design_point(fixed=false) "Faraday eff. at design point [-]";
+    parameter Real n_H2_design_point(fixed=false) "Molar flow rate of H2 at design point given the size of the generators (mol/s)";
     
     //Model instantiation
     SolarTherm.Models.Electrochemical.AEL_Electrolyser electrolyser(fn_curve = fn_curve, T_electrolyser = T_electrolyser, p_electrolyser = p_electrolyser);
@@ -226,10 +231,32 @@ package Electrochemical
     SI.Mass H2O_mass "Accummulated mass of H2O";
     SI.Power W_electrolyser_final "Final power sent to the electrolyser after dumping (if necessary)";
     SI.Energy E_dumped(start=0) "Accummulated dumped electricity [J]";
+    
+    //*********** External Combitable 2D
+    Modelica.Blocks.Types.ExternalCombiTable2D polarisation_curve =  Modelica.Blocks.Types.ExternalCombiTable2D(
+        tableName = "polarisation_curve", 
+        fileName = fn_curve, 
+        table = fill(0.0, 0, 2), 
+        smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
+    ) "2D table for polarisation curve";
+    
     Modelica.Blocks.Interfaces.RealOutput W_dumped annotation(
       Placement(visible = true, transformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   initial equation
     N_unit = ceil(P_electro_requested/P_electro); 
+    i_electrolyser_design_point = SolarTherm.Utilities.electrolyser_current_density(
+        P_electro, 
+        T_electrolyser, 
+        polarisation_curve
+    );
+    
+    eta_farad_design_point = (i_electrolyser_design_point / 1e-4) ^ 2 / (electrolyser.f11 + electrolyser.f12 * (T_electrolyser-273.15) + (i_electrolyser_design_point / 1e-4) ^ 2) * (electrolyser.f21 + electrolyser.f22 * (T_electrolyser-273.15)) "Calculating Faraday eff.";
+    
+    
+    n_H2_design_point = eta_farad_design_point * (i_electrolyser_design_point * electrolyser.A_electrolyser) / (2 * Modelica.Constants.F) * electrolyser.N_cells * N_unit;
+    
+    H2_mdot_design_point = n_H2_design_point * 2e-3;
+    
   equation
     /*W electrolyser has to be dumped shall it exceeds the nameplate*/
     if W_electrolyser > P_electro_requested then

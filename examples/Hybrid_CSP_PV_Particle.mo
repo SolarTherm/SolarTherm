@@ -42,6 +42,7 @@ model Hybrid_CSP_PV_Particle
   parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   parameter Boolean set_scheduler = false "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
+  parameter Boolean HX_always_off = true "Whether to use industrial HX to draw heat from TES";
   //****************************** Importing medium and external files
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -91,21 +92,23 @@ model Hybrid_CSP_PV_Particle
   //parameter SI.Power P_net = P_hybrid_system * (1-PV_fraction) "[PB] Power block net rating at design point";
   //parameter SI.Power PV_Target = P_hybrid_system * PV_fraction "PV array nameplate in W";
   //parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
-  /*FIXME: make the simulation works even though P_net or PV_Target = 0*/
-  parameter SI.Power P_net = 100e6 "[PB] Power block net rating at design point";
-  parameter Real PV_fraction = 0.1 "Fraction of the hybrid system that is PV nameplate";
-  parameter SI.Power PV_Target = PV_fraction * P_net "PV array nameplate in W";
-  parameter SI.Power P_hybrid_system = P_net + PV_Target "Hybrid system nameplate";
+  parameter SI.Power P_CSP = 100e6 "[PB] Power block net rating at design point";
+  parameter Real PV_fraction = 0. "Fraction of the hybrid system that is PV nameplate";
+  parameter SI.Power PV_Target = PV_fraction * P_CSP "PV array nameplate in W";
+  parameter SI.Power P_hybrid_system = P_CSP + PV_Target "Hybrid system nameplate";
 
   //****************************** Design condition of the CSP plant
-  parameter SI.MassFlowRate H2_mdot_target = 0.5 * 1e6 * 1e3 / (8760 * 3600) / 35 "Hydrogen annual target production per second, modularised into 35 plants";
+  //parameter SI.MassFlowRate H2_mdot_target = 0.5 * 1e6 * 1e3 / (8760 * 3600) / 35 "Hydrogen annual target production per second, modularised into 35 plants [kg/s]";
+  parameter SI.MassFlowRate H2_mdot_target(fixed=false) "Hydrogen annual target production per second, modularised into 35 plants [kg/s]";
   parameter Real SMR_reaction_conversion = 1 "Steam methane reforming conversion extent";
-  parameter Real H2_mol_target = H2_mdot_target * 1000 / 2 "Mol target of per second";
+  parameter Real H2_mol_target = H2_mdot_target * 1000 / 2 "Mol target of per second [mol/s]";
   parameter SI.HeatFlowRate Q_in_rcv = (P_gross / eff_blk + Q_HX_industrial) / eta_rcv_assumption * SM "Incident heat flow rate to the receiver at design point [Wth]";
   parameter String rcv_type = "particle" "[RCV] other options are : flat, cylindrical, stl";
   parameter SI.Area A_rcv(fixed = false) "Receiver aperture area is calculated during the initialisation";
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
   parameter Real SM = 2.5 "[SYS] Solar multiple";
+  parameter SI.Power P_net_default_value = 12345678 "Default value to handle P_net = 0";
+  parameter SI.Power P_net = if P_CSP > 5e5 then P_CSP else P_net_default_value "Power of the CSP to size the components [W]";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
@@ -133,7 +136,6 @@ model Hybrid_CSP_PV_Particle
   parameter SI.MassFlowRate m_dot_AIR_DP = 1e-5 "Desired mass flow rate of air at design point (kg/s)";
   parameter SI.MassFlowRate m_dot_PCL_industrial(fixed = false);
   parameter SI.Area A_HX_industrial(fixed = false);
-  parameter Boolean HX_always_off = true;
   parameter SI.Power Q_HX_industrial = if HX_always_off then 0 else m_dot_AIR_DP * (AIR.h_pT(1e5, T_out_AIR_DP) - AIR.h_pT(1e5, T_in_AIR_DP)) "Industrial heat exchanger Heat Duty at design point";
   //****************************** Design condiction of the Electrolyser
   parameter SI.Temperature T_electrolyser = 80 + 273.15 "Working temperature of the electrolyser";
@@ -324,7 +326,7 @@ model Hybrid_CSP_PV_Particle
   parameter SI.MassFlowRate m_flow_rec_max = 1.5 * m_flow_fac "Maximum mass flow rate to receiver";
   parameter SI.MassFlowRate m_flow_rec_start = 0.8 * m_flow_fac "Initial https://pubs.acs.org/doi/pdf/10.1021/jp206115por guess value of mass flow rate to receiver in the feedback controller";
   parameter SI.MassFlowRate m_flow_blk(fixed = false);
-  parameter SI.Power P_name = P_net "Nameplate rating of power block";
+  parameter SI.Power P_name = if abs(P_net - P_net_default_value) < 1 then 0 else P_net "Nameplate rating of power block";
   //******************************* Financial parameters
   parameter Currency currency = Currency.USD "[FN] Currency used for cost analysis 2 is USD 1 is AUD";
   parameter Real r_i = 0.025 "[FN] Inflation rate";
@@ -406,9 +408,9 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_washing = (omega_twister * pri_washing_twister_method + omega_deluge * pri_washing_deluge_method) * A_field "Washing cost [USD/year]";
   parameter FI.Money C_om_field = pri_om_field * A_field "OnM field exclude washing cost [USD/year]";
   //******************************* Cost of solar field calculation
-  parameter FI.Money C_field = A_field * pri_field "Field cost";
-  parameter FI.Money C_site = A_field * pri_site "Site improvements cost";
-  parameter FI.Money C_land = A_land * pri_land "Land cost";
+  parameter FI.Money C_field = if abs(P_net - P_net_default_value) < 1 then 0 else A_field * pri_field "Field cost";
+  parameter FI.Money C_site = if abs(P_net - P_net_default_value) < 1 then 0 else A_field * pri_site "Site improvements cost";
+  parameter FI.Money C_land = if abs(P_net - P_net_default_value) < 1 then 0 else A_land * pri_land "Land cost";
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
@@ -416,7 +418,10 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_extra_structure(fixed = false);
   parameter FI.Money C_tower_absolute = 83060926 "Absolute tower cost [USD]";
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
-  parameter FI.Money C_tower = if set_SAM_tower_cost then C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) - 28000 * Euro_to_USD_exchange_rate * H_tower + 1573 * H_tower else C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + (0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 37204 * H_tower - 731236) * Euro_to_USD_exchange_rate + 1573 * H_tower "Cost of tower based on J.Sment (Sandia) email to G3P3 Team at Sat 05/12/2020 05:48
+  parameter FI.Money C_tower = if abs(P_net - P_net_default_value) < 1 then 0 else if set_SAM_tower_cost then 
+        C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + pri_tower_fix_SAM * Modelica.Math.exp(pri_tower_scalar_exp_SAM * (H_tower + 0.5 * H_helio - H_rcv / 2)) - 28000 * Euro_to_USD_exchange_rate * H_tower + 1573 * H_tower 
+                              else 
+        C_extra_structure - 1.992 * H_tower ^ 2.747 + 523100 + (0.7452 * H_tower ^ 3 - 148.25 * H_tower ^ 2 + 37204 * H_tower - 731236) * Euro_to_USD_exchange_rate + 1573 * H_tower "Cost of tower based on J.Sment (Sandia) email to G3P3 Team at Sat 05/12/2020 05:48
                                                         > Tim Harvey structure only cost model is a function of tower height [H_tower] and maximum particle mass in one storage tank [m_max]
                                                               - Regression model for Tim Harvey cost : 
                                                                 ----> online tool https://stats.blue/Stats_Suite/multiple_linear_regression_calculator.html:
@@ -443,18 +448,18 @@ model Hybrid_CSP_PV_Particle
   //==================> SBP Material Cost
   //======> SBP no pipe cost
   //======> Ducting Cost
-  parameter FI.Money C_fpr = pri_receiver * A_rcv "Falling particle receiver cost";
-  parameter FI.Money C_lift_rec = pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
-  parameter FI.Money C_receiver = if set_absolute_tower_cost == true then C_fpr + C_tower_absolute + C_lift_rec else C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
+  parameter FI.Money C_fpr = if abs(P_net - P_net_default_value) < 1 then 0 else pri_receiver * A_rcv "Falling particle receiver cost";
+  parameter FI.Money C_lift_rec = if abs(P_net - P_net_default_value) < 1 then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
+  parameter FI.Money C_receiver = if abs(P_net - P_net_default_value) < 1 then 0 else if set_absolute_tower_cost == true then C_fpr + C_tower_absolute + C_lift_rec else C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
   //******************************* Cost of storage sub-system (bins + cold tank lift + particles + PHX lift + insulation)
-  parameter FI.Money C_lift_cold = if set_external_storage then pri_lift * dh_LiftCold * m_flow_blk else 0 "Cold storage tank lift cost";
+  parameter FI.Money C_lift_cold = if abs(P_net - P_net_default_value) < 1 then 0 else if set_external_storage then pri_lift * dh_LiftCold * m_flow_blk else 0 "Cold storage tank lift cost";
   //******************************* Storage bin cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7
-  parameter FI.Money C_bins = if set_new_storage_calc then 750 * CN.pi * (D_storage - 1 - 1) * H_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage;
+  parameter FI.Money C_bins = if abs(P_net - P_net_default_value) < 1 then 0 else if set_new_storage_calc then 750 * CN.pi * (D_storage - 1 - 1) * H_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage;
   //******************************* Storage bin cost calculation based on Jeremy Sment of Sandia study (g3p3 project)
-  parameter FI.Money C_bins_dome = if set_external_storage then SolarTherm.Utilities.G3P3StorageCostFunction(Th_refractory_hot_tank, H_storage, D_storage, D_outlet, t_storage, m_max, c_storage) + SolarTherm.Utilities.G3P3StorageCostFunction(Th_refractory_cold_tank, H_storage, D_storage, D_outlet, t_storage, m_max, c_storage) else SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(Th_refractory_cold_tank, H_tower, R_tower * 2, m_max, D_outlet, packing_factor, c_storage) + SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(Th_refractory_hot_tank, H_tower, R_tower * 2, m_max, D_outlet, packing_factor, c_storage) "Storage bin for dome storage --> based on the type of storage";
-  parameter FI.Money C_insulation = if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 0 else SA_storage * (131.0426 / U_value_hot_tank + 23.18) + SA_storage * (131.0426 / U_value_cold_tank + 23.18) "Insulation cost based on Kevin Albrecht 2019 https://is.gd/3VN0O7";
-  parameter FI.Money C_particles = (1 + NS_particle) * pri_particle * m_max "Cost of particles";
-  parameter FI.Money C_lift_hx = if set_external_storage then pri_lift * dh_liftHX * m_flow_blk else 0 "Heat exchanger lift cost";
+  parameter FI.Money C_bins_dome = if abs(P_net - P_net_default_value) < 1 then 0 else if set_external_storage then SolarTherm.Utilities.G3P3StorageCostFunction(Th_refractory_hot_tank, H_storage, D_storage, D_outlet, t_storage, m_max, c_storage) + SolarTherm.Utilities.G3P3StorageCostFunction(Th_refractory_cold_tank, H_storage, D_storage, D_outlet, t_storage, m_max, c_storage) else SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(Th_refractory_cold_tank, H_tower, R_tower * 2, m_max, D_outlet, packing_factor, c_storage) + SolarTherm.Utilities.G3P3StorageCostFunction_Integrated(Th_refractory_hot_tank, H_tower, R_tower * 2, m_max, D_outlet, packing_factor, c_storage) "Storage bin for dome storage --> based on the type of storage";
+  parameter FI.Money C_insulation = if abs(P_net - P_net_default_value) < 1 then 0 else if U_value_hot_tank == 0 and U_value_cold_tank == 0 then 0 else SA_storage * (131.0426 / U_value_hot_tank + 23.18) + SA_storage * (131.0426 / U_value_cold_tank + 23.18) "Insulation cost based on Kevin Albrecht 2019 https://is.gd/3VN0O7";
+  parameter FI.Money C_particles = if abs(P_net - P_net_default_value) < 1 then 0 else (1 + NS_particle) * pri_particle * m_max "Cost of particles";
+  parameter FI.Money C_lift_hx = if abs(P_net - P_net_default_value) < 1 then 0 else if set_external_storage then pri_lift * dh_liftHX * m_flow_blk else 0 "Heat exchanger lift cost";
   /******************************************************************************************************
                                                               FIXME: There are 2 u_values now, implement it in the tuffcrete x microporous analysis
                                                               (131.0426 / U_value + 23.18) ======> cost function insulation of Tuffcrete, Microporous and Concrete
@@ -464,10 +469,10 @@ model Hybrid_CSP_PV_Particle
                                                               parameter SI.Length t_mp = 0.32368 / (U_value_hot_tank + U_value_cold_tank) - 0.146096;
                                                               parameter SI.Length t_tuffcrete47 = 0.01;
     ******************************************************************************************************/
-  parameter FI.Money C_storage = if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
+  parameter FI.Money C_storage = if abs(P_net - P_net_default_value) < 1 then 0 else if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
   //******************************* Cost of BOP
-  parameter FI.Money C_bop = P_gross * pri_bop "Balance of plant cost";
-  parameter FI.Money C_prod = pri_om_prod "Variable O&M cost per production per year";
+  parameter FI.Money C_bop = if abs(P_net - P_net_default_value) < 1 then 0 else P_gross * pri_bop "Balance of plant cost";
+  parameter FI.Money C_prod = if abs(P_net - P_net_default_value) < 1 then 0 else pri_om_prod "Variable O&M cost per production per year";
   
   //******************************* PV capital and OM cost
   parameter Real pri_PV = 760 "Cost of PV per $/kWe";
@@ -581,7 +586,7 @@ model Hybrid_CSP_PV_Particle
   SolarTherm.Models.Control.PowerBlockControl_PVCSP_Particle controlHot(m_flow_on = m_flow_blk, L_on = hot_tnk_empty_ub, L_off = hot_tnk_empty_lb, L_df_on = hot_tnk_full_ub, L_df_off = hot_tnk_full_lb, logic.dispatch_optimiser = set_dispatch_optimiser, logic.set_scheduler = set_scheduler, P_net = P_hybrid_system, CSP_name_plate = P_net) annotation(
     Placement(transformation(extent = {{48, 72}, {60, 58}})));
   //********************* Power block
-  SolarTherm.Models.PowerBlocks.sCO2PB_ConstantEfficiency powerBlock(P_gross = P_gross, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_amb_base = blk_T_amb_des, htf_choice = htf_choice, dT_PHX_hot_approach = dT_PHX_hot_approach, dT_PHX_cold_approach = dT_PHX_cold_approach, eta_isen_mc = eta_comp_main, eta_isen_rc = eta_comp_re, eta_isen_t = eta_turb, dT_mc_approach = dT_mc_approach, which_PB_model = which_PB_model, load_base = 1, eta_gross_base = eta_gross_base, eta_Q_base = eta_Q_base, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, base_path = base_path, SolarTherm_path = SolarTherm_path, inputsize = inputsize_PB, outputsize = outputsize_PB, tolerance_kriging = tolerance_kriging, tolerance_ANN = tolerance_ANN, which_surrogate = which_surrogate, test_mode = false, eta_motor = 1, f_fixed_load = f_fixed_load, external_parasities = set_external_parasities) annotation(
+  SolarTherm.Models.PowerBlocks.sCO2PB_ConstantEfficiency powerBlock(P_gross = P_gross, T_in_ref_blk = T_hot_set, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_amb_base = blk_T_amb_des, htf_choice = htf_choice, dT_PHX_hot_approach = dT_PHX_hot_approach, dT_PHX_cold_approach = dT_PHX_cold_approach, eta_isen_mc = eta_comp_main, eta_isen_rc = eta_comp_re, eta_isen_t = eta_turb, dT_mc_approach = dT_mc_approach, which_PB_model = which_PB_model, load_base = 1, eta_gross_base = eta_gross_base, eta_Q_base = eta_Q_base, Q_HX_des = Q_flow_des, m_HTF_des = m_flow_blk, base_path = base_path, SolarTherm_path = SolarTherm_path, inputsize = inputsize_PB, outputsize = outputsize_PB, tolerance_kriging = tolerance_kriging, tolerance_ANN = tolerance_ANN, which_surrogate = which_surrogate, test_mode = false, eta_motor = 1, f_fixed_load = f_fixed_load, external_parasities = set_external_parasities, P_net=P_net, P_net_default_value=P_net_default_value) annotation(
     Placement(transformation(extent = {{88, 4}, {124, 42}})));
   //*********************Power Block Calculator
   //SolarTherm.Models.PowerBlocks.sCO2PBCalculator_Using_JPidea sCO2PBDesignPointCalculator(redeclare package Medium = Medium, P_net = P_net, T_in_ref_blk = T_in_ref_blk, p_high = p_high, PR = PR, pinch_PHX = pinch_exchanger, dTemp_HTF_PHX = dTemp_HTF_PHX, T_HTF_in = T_in_ref_blk, T_amb_input = blk_T_amb_des, load = 1, f_fixed_load = f_fixed_load, blk_T_amb_des = blk_T_amb_des, T_low = T_low, nu_min_blk = nu_min_blk, N_exch_parameter = N_exch_parameter, N_LTR_parameter = N_LTR_parameter, pri_recuperator = pri_recuperator, pri_turbine = pri_turbine, pri_compressor = pri_compressor, pri_cooler = pri_cooler, pri_generator = pri_generator, pri_exchanger = pri_exchanger, eta_motor = 1, pinch_recuperator = pinch_recuperator, par_fr = par_fr, test_mode = true, external_parasities = set_external_parasities) annotation(
@@ -721,6 +726,7 @@ algorithm
     E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
   end if;
 initial equation
+  H2_mdot_target = electrolyser.H2_mdot_design_point;
   m_dot_PCL_industrial = heatExchanger_ParticleGas.m_dot_PCL_DP;
   A_HX_industrial = heatExchanger_ParticleGas.A_HX;
   N_paralel_final_PV = PVArray.N_parallel_final;
@@ -808,21 +814,22 @@ initial equation
 //********************* Power Block Cost Calculation
   if which_PB_model == 0 then
     if set_simple_PB_cost then
-      C_block = pri_block * P_gross / 1000 + C_exchanger;
+      C_block = if abs(P_net - P_net_default_value) < 1 then  0 else pri_block * P_gross / 1000 + C_exchanger;
     else
-      C_block = sCO2PBDesignPointCalculator.powerBlock.C_PB;
+      C_block = if abs(P_net - P_net_default_value) < 1 then  0 else sCO2PBDesignPointCalculator.powerBlock.C_PB;
     end if;
   elseif which_PB_model == 1 then
     if set_simple_PB_cost then
-      C_block = pri_block * P_gross / 1000 + C_exchanger;
+      C_block = if abs(P_net - P_net_default_value) < 1 then  0 else pri_block * P_gross / 1000 + C_exchanger;
     else
-      C_block = C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
+      C_block = if abs(P_net - P_net_default_value) < 1 then  0 else C_HTR + C_LTR + C_turbine + C_mainCompressor + C_reCompressor + C_cooler + C_exchanger + C_generator;
     end if;
   else
-    C_block = -1;
+    C_block = if abs(P_net - P_net_default_value) < 1 then  0 else -1;
   end if;
-//************************************ Capital Cost Calculation
+//************************************ CapitalCost Calculation
   C_cap_total = C_field + C_site + C_receiver + C_storage + C_PV + C_block + C_bop + C_SMR + C_electrolyser "Total equipment cost";
+  
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;

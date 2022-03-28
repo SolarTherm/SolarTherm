@@ -32,6 +32,8 @@ model sCO2PB_ConstantEfficiency
   //******************************** Parameters -- for initalisation of the OTF object
   //******************************** CEA Power Block Parameters
   parameter SI.Power P_gross = 3e7;
+  parameter SI.Power P_net = 2e7;
+  parameter SI.Power P_net_default_value = 12345678;
   parameter SI.ThermodynamicTemperature T_in_ref_blk = 1243.27;
   parameter SI.Pressure p_high = 22707266.48;
   parameter Real PR = 2.98;
@@ -153,7 +155,12 @@ model sCO2PB_ConstantEfficiency
     W_net = 0;
   else
     W_gross = eta_gross * Q_HX * PB_output_scaling_factor "If user wants to have a specific PB gross efficiency value at design point, then the scaling factor is used to reduce the gross power";
-    W_net = max(0,W_gross - W_par_fixed_load);
+    if abs(P_net - P_net_default_value) < 1 then 
+        // Power block size is zero
+        W_net = 0;
+    else
+        W_net = max(0,W_gross - W_par_fixed_load);
+    end if;
   end if;
 
   der(E_net) = W_net;

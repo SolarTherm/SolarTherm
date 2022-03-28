@@ -34,3 +34,4 @@ opt_eff_horizon
 wind_speed_horizon
 DNI_horizon
 pri_horizon
+electrolyser_current_density
