@@ -54,9 +54,8 @@ model PowerBlockControl_PVCSP_Particle
     level_off=L_off,
     m_flow_standby=0,
     P_net = P_net,
-    CSP_name_plate = CSP_name_plate,
-    PV_name_plate = PV_name_plate)
-    annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+    CSP_name_plate = CSP_name_plate
+  ) annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
   Modelica.Blocks.Interfaces.BooleanOutput rampingout annotation(
     Placement(visible = true, transformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0), iconTransformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput PV_input annotation(

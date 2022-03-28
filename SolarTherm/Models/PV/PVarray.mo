@@ -13,11 +13,17 @@ model PVarray
 	final parameter SI.Angle lat_rad = CV.from_deg(lat);
 	final parameter SI.Angle d = CN.pi / 180 "Radians to deg conversion factor";
 	final parameter SI.Angle beta = 30.49 * d;
+	
+	
 	// Plant design
 	parameter Real Cable_Loss = 0.97 "Cable losses" annotation(Dialog(group = "Plant design"));
 	parameter Real SM1 = 0.9 "Lower safety margin" annotation(Dialog(group = "Plant design"));
 	parameter Real SM2 = 0.05 "Upper safety margin" annotation(Dialog(group = "Plant design"));
-	parameter SI.Power PV_Target = 16558080 "Nameplate capacity of plant" annotation(Dialog(group = "Plant design"));
+	parameter Real PV_Target_default_value = 16558080 "Default dummy value";
+	
+	
+	parameter SI.Power PV_Target = 6e6 "Nameplate capacity of plant" annotation(Dialog(group = "Plant design"));
+	parameter SI.Power PV_Target_final = if PV_Target > 5e5 then PV_Target else PV_Target_default_value "PV target can be 0. This variable is to handle PV Target = 0";
 	parameter SI.Power f_soil = 0.95 "External shading and soil factor" annotation(Dialog(group = "Plant design"));
 	parameter SI.Angle ele_min = 0.0872665 "Minimum elevation angle below which the PV will shut down (in radian)";
 
@@ -36,8 +42,9 @@ model PVarray
 	parameter Real Ci1 = 2.3e-05 "Sandia Inverter model coefficient";
 	parameter Real Ci2 = 0.000675 "Sandia Inverter model coefficient";
 	parameter Real Ci3 = 0.000753 "Sandia Inverter model coefficient";
+	
 	parameter Boolean sizing_method_1 = true "Sizing number of inverters";
-	final parameter Integer N_inv = integer(PV_Target/P_ac_max_inv) "Number of inverters";
+	final parameter Integer N_inv =integer(PV_Target_final/P_ac_max_inv) "Number of inverters";
 	final parameter Integer N_module = integer(DC_AC_ratio*N_inv*P_ac_max_inv/P_module) "Number of modules";
 	final parameter Real DC_AC_ratio_calc = (N_module*P_module)/(N_inv*P_ac_max_inv) "Calculated DC to AC ratio"; //DC to AC ratio needs to be between 0.8 to 1.25 times inverter rated AC power
 	final parameter Integer Nstr_max = integer(floor(I_Inv_max / Isc)) "Maximum number of strings based on I_Inv_max";
@@ -338,8 +345,8 @@ model PVarray
 	end if;
 
 	P_rated = P_module*N_parallel_final*N_series*N_inv; // PV rated power
-	der(E_gen) = P_net;
-	W_net = P_net;
+	W_net = if abs(PV_Target_default_value - PV_Target_final) < 1e-2 then 0.0 else P_net "If PV Target value == PV_Target_default_value then the system is simulating PV = 0 W therefore, the output from PV model is always 0";
+	der(E_gen) = W_net;
 
 	annotation(
 	Icon(graphics = {
