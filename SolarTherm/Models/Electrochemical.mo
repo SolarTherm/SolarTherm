@@ -224,10 +224,25 @@ package Electrochemical
     Real H2O_in;
     SI.Mass H2_mass "Accummulated mass of H2";
     SI.Mass H2O_mass "Accummulated mass of H2O";
+    SI.Power W_electrolyser_final "Final power sent to the electrolyser after dumping (if necessary)";
+    SI.Energy E_dumped(start=0) "Accummulated dumped electricity [J]";
+    Modelica.Blocks.Interfaces.RealOutput W_dumped annotation(
+      Placement(visible = true, transformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   initial equation
     N_unit = ceil(P_electro_requested/P_electro); 
   equation
-    electrolyser.W_electrolyser = W_electrolyser/N_unit;
+    /*W electrolyser has to be dumped shall it exceeds the nameplate*/
+    if W_electrolyser > P_electro_requested then
+        W_electrolyser_final = P_electro_requested;
+        W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W]";
+    else
+        W_electrolyser_final = W_electrolyser;
+        W_dumped = 0 "Dumped electricity due to overshoot [W]";
+    end if;
+    
+    der(E_dumped) = W_dumped "Integrating W_dumped to get E_dumped";
+    
+    electrolyser.W_electrolyser = W_electrolyser_final/N_unit;
     if W_electrolyser > 10 then
         H2_out = electrolyser.n_H2 * N_unit "Mol flux of H2 production mol/s";
         H2O_in = electrolyser.n_H2O * N_unit "Required hydrogen production in mol/s";

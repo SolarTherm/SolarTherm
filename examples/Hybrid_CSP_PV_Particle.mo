@@ -88,11 +88,16 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Efficiency helio_uncertain_factor = 1 "[H&T] Uncertainty multiplier to the effective heliostat reflectance. The uncertain range is made by making the effective reflectance in the range of 0.8 to 0.95";
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   //****************************** Design condition of the Hybrid Plant
-  parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
-  parameter Real PV_fraction=0.1 "Fraction of the hybrid system that is PV nameplate";
+  //parameter SI.Power P_net = P_hybrid_system * (1-PV_fraction) "[PB] Power block net rating at design point";
+  //parameter SI.Power PV_Target = P_hybrid_system * PV_fraction "PV array nameplate in W";
+  //parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
+  /*FIXME: make the simulation works even though P_net or PV_Target = 0*/
+  parameter SI.Power P_net = 100e6 "[PB] Power block net rating at design point";
+  parameter Real PV_fraction = 0.1 "Fraction of the hybrid system that is PV nameplate";
+  parameter SI.Power PV_Target = PV_fraction * P_net "PV array nameplate in W";
+  parameter SI.Power P_hybrid_system = P_net + PV_Target "Hybrid system nameplate";
 
   //****************************** Design condition of the CSP plant
-  parameter SI.Power P_net = P_hybrid_system * (1-PV_fraction) "[PB] Power block net rating at design point";
   parameter SI.MassFlowRate H2_mdot_target = 0.5 * 1e6 * 1e3 / (8760 * 3600) / 35 "Hydrogen annual target production per second, modularised into 35 plants";
   parameter Real SMR_reaction_conversion = 1 "Steam methane reforming conversion extent";
   parameter Real H2_mol_target = H2_mdot_target * 1000 / 2 "Mol target of per second";
@@ -113,7 +118,6 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Velocity Wspd_max = 15.65 if set_use_wind "[CTRL] Wind stow speed - based on DOE suggestion (m/s)";
   parameter SI.Efficiency packing_factor = 0.6 "[RCV] Based on EES model by Sandia / Luis";
   //****************************** Design condiction of the PV array
-  parameter SI.Power PV_Target = P_hybrid_system * PV_fraction "PV array nameplate in W";
   parameter nSI.Angle_deg azi_s = 180 "Surface azimuth angle";
   parameter nSI.Angle_deg ele_s = 30 "Surface elevation angle";
   parameter Integer N_paralel_final_PV(fixed = false) "Number of PV - Inverter unit";
