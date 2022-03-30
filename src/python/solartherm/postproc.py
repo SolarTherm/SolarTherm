@@ -351,12 +351,14 @@ class SimResultElec(SimResult):
 
 
 		if len(var_n)!=0:
+			add_on=np.array([])
 			for n in var_n:
 				if n!='casefolder':
 					v=self.mat.data(n)[0]
-					summary=np.append(summary, (n, v, '', ''))
+					add_on=np.append(add_on, (n, v, '', ''))
+			add_on=add_on.reshape(int(len(add_on)/4), 4)
+			summary=np.vstack((summary, add_on))
 
-		summary=summary.reshape(int(len(summary)/4), 4)
 
 		#except:
 		#	summary=np.array(["mat file fault"])
