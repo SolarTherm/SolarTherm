@@ -211,6 +211,8 @@ package Electrochemical
     parameter String fn_curve = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/ElectrolyserCurve/AEL_Polarisation_Curve.motab");
     parameter SI.Pressure p_electrolyser = 7e5 "Operating pressure of in Pa";
     parameter SI.Temperature T_electrolyser = 80 + 273.15 "Operating temperature of in K";
+    parameter Real H2_molar_mass = 2e-3 "Molar mass of H2 in kg/mol";
+    parameter Real H2O_molar_mass = 18e-3 "Molar mass of H2 in kg/mol";
     
     //Calculated parameters
     parameter SI.MassFlowRate H2_mdot_design_point(fixed=false) "Given the size of the electricity generator, what would be H2 mdot at design point [kg/s]";
@@ -224,10 +226,9 @@ package Electrochemical
     //Input and output
     Modelica.Blocks.Interfaces.RealInput W_electrolyser annotation(
       Placement(visible = true, transformation(origin = {-116, 1}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-118, 1}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
-    Modelica.Blocks.Interfaces.RealOutput H2_out annotation(
+    Modelica.Blocks.Interfaces.RealOutput H2_mdot_out "Mass flow rate of H2 produced by electrolyser" annotation(
       Placement(visible = true, transformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Real H2O_in;
-    SI.Mass H2_mass "Accummulated mass of H2";
     SI.Mass H2O_mass "Accummulated mass of H2O";
     SI.Power W_electrolyser_final "Final power sent to the electrolyser after dumping (if necessary)";
     SI.Energy E_dumped(start=0) "Accummulated dumped electricity [J]";
@@ -271,15 +272,14 @@ package Electrochemical
     
     electrolyser.W_electrolyser = W_electrolyser_final/N_unit;
     if W_electrolyser > 10 then
-        H2_out = electrolyser.n_H2 * N_unit "Mol flux of H2 production mol/s";
+        H2_mdot_out = electrolyser.n_H2 * N_unit * H2_molar_mass  "Mass flow rate of H2 production kg/s";
         H2O_in = electrolyser.n_H2O * N_unit "Required hydrogen production in mol/s";
-        der(H2O_mass) = H2O_in * 18e-3 "Mass of h2o needed";
+        der(H2O_mass) = H2O_in * H2O_molar_mass "Mass of water needed";
     else
-        H2_out = 0;
+        H2_mdot_out = 0;
         H2O_in = 0;
         der(H2O_mass) = 0;
     end if;
-    der(H2_mass) = H2_out * 2e-3 "Mass flow rate of H2 in kg/s"; 
   
   annotation(
       Icon(graphics = {Rectangle(origin = {0, 1}, lineThickness = 3, extent = {{-98, 61}, {98, -61}}), Rectangle(origin = {0, -20}, fillColor = {85, 255, 255}, fillPattern = FillPattern.Vertical, extent = {{-98, 40}, {98, -40}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {62, -2}, fillColor = {0, 255, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {71, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Cathode"), Line(origin = {-35, 66}, points = {{-31, -26}, {-31, 20}, {31, 20}, {31, 20}}, thickness = 1), Line(origin = {6, 86}, points = {{-10, 4}, {-10, -4}, {-10, -4}}, thickness = 1), Line(origin = {31.12, 63.5}, points = {{-31, 22.5}, {31, 22.5}, {31, -23.5}, {31, -21.5}, {31, -21.5}}, thickness = 1), Line(origin = {0, 85}, points = {{0, 3}, {0, -1}, {0, -1}}, thickness = 1), Line(origin = {9.19, 66}, points = {{-79.1874, -26}, {-79.1874, 26}, {56.8126, 26}, {56.8126, -26}, {56.8126, -26}, {56.8126, -26}}, pattern = LinePattern.Dash, thickness = 1), Polygon(origin = {66, 43}, fillPattern = FillPattern.Solid, points = {{-2, 3}, {0, -3}, {2, 3}, {2, 3}, {-4, 3}, {-2, 3}}), Text(origin = {-78, 52}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-78, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-38, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {42, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 54}, extent = {{-6, 8}, {6, -8}}, textString = "e-")}, coordinateSystem(initialScale = 0.1)));end Simple_Electrolyser;
