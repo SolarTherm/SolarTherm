@@ -354,7 +354,7 @@ class SimResultElec(SimResult):
 			add_on=np.array([])
 			for n in var_n:
 				if n!='casefolder':
-					v=self.mat.data(n)[0]
+					v=self.mat.data(n)[-1]
 					add_on=np.append(add_on, (n, v, '', ''))
 			add_on=add_on.reshape(int(len(add_on)/4), 4)
 			summary=np.vstack((summary, add_on))
