@@ -11,6 +11,7 @@ CH4 + H2O  ---> 3H2 + CO
 parameter Real CH4_reaction_extent = 1;
 parameter Real CH4_molar_weight = 16e-3 "Molar weight of CH4 in kg/mol";
 parameter Real H2O_molar_weight = 18e-3 "Water molar weight in kg/mol";
+parameter Real CO2_molar_weight = 44e-3 "CO2 molar weight in kg/mol";
 parameter Real H2_molar_weight = 2e-3 "H2 molar weight in kg/mol";
 parameter Real H2_mol_target = 20 "Mol target production in mol/s";
 parameter Real H2_mdot_target = 1 "mass flow target of H2 [kg/s]";
@@ -24,7 +25,7 @@ Modelica.Blocks.Interfaces.RealInput H2_electrolyser "H2 production in kg/s from
 Modelica.Blocks.Interfaces.RealOutput H2_SMR "Mass flow of H2 produced by the SMR" annotation(
     Placement(visible = true, transformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 SI.Energy E_elec_SMR(start=0) "Electricity consumed by the SMR [J]";
-
+SI.Mass CO2_mass(start=0) "Mass of CO2";
 equation
 
 if H2_electrolyser < H2_mdot_target then
@@ -33,11 +34,13 @@ if H2_electrolyser < H2_mdot_target then
     der(CH4_SMR) = 1/3 * (delta_target/H2_molar_weight) * CH4_molar_weight / CH4_reaction_extent;
     der(H2O_SMR) = 1/3 * (delta_target/H2_molar_weight) * H2O_molar_weight / CH4_reaction_extent;
     H2_SMR = (delta_target/H2_molar_weight) * H2_molar_weight;
+    der(CO2_mass) = 1/3 * (delta_target/H2_molar_weight) * CO2_molar_weight / CH4_reaction_extent;
 else
     delta_target = 0;
     der(CH4_SMR) = 0;
     der(H2O_SMR) = 0;
     H2_SMR = 0;
+    der(CO2_mass) = 0;
 end if;
 
 der(E_elec_SMR) = W_consumption * H2_SMR/H2_mdot_target;
