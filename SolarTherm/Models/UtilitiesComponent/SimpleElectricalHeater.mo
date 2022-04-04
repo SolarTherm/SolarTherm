@@ -12,6 +12,10 @@ import CN = Modelica.Constants;
 replaceable package Medium_Utilities = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
 replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph;
 
+/*Parameter for controller*/
+parameter Real cold_tnk_empty_lb = 5 "[CTRL] Hot tank empty trigger lower bound";
+parameter Real cold_tnk_empty_ub = 10 "[CTRL] Hot tank trigger to start dispatching";
+
 /*Parameters*/
 parameter SI.Temperature T_hot_tank_target = 800 + 273.15 "Target temperature of the hot tank [K]";
 parameter SI.SpecificEnthalpy h_out = Medium_Utilities.h_T(T_hot_tank_target) "Enthalpy of the pcl at outlet stream [J/kg]";
@@ -20,6 +24,10 @@ parameter SI.SpecificEnthalpy h_out = Medium_Utilities.h_T(T_hot_tank_target) "E
 parameter SI.Power W_dumped = 1e6 "Electrical power supply at design point [W]";
 parameter SI.Efficiency eta = 0.9 "Electric to thermal efficiency of the heater";
 parameter SI.Power Q_heater_rating = W_dumped * eta "Thermal rating of the heater at design point [W]";
+
+/*How deep partload operation that your electrical heater has to endure?*/
+parameter Real eta_part_load = 0.5 "How deep the allowed partload operation";
+parameter SI.Power W_on = if W_dumped < 1 and W_dumped >=0 then 1e9 else eta_part_load * W_dumped "Minimum threshold supplied power above which the heater is on. If W_dumped == 0 then sett W_on to a very large value, else follow the calculation [W]";
 
 /*Fluid Connection*/
 Modelica.Fluid.Interfaces.FluidPort_b particle_port_out(redeclare package Medium = Medium) annotation(
@@ -30,10 +38,13 @@ Modelica.Fluid.Interfaces.FluidPort_a particle_port_in(redeclare package Medium 
   
 /*Real connection*/
 Modelica.Blocks.Interfaces.RealInput W_electric annotation(
-    Placement(visible = true, transformation(origin = {-1, 49}, extent = {{-9, -9}, {9, 9}}, rotation = -90), iconTransformation(origin = {-1, 49}, extent = {{-9, -9}, {9, 9}}, rotation = -90)));
+    Placement(visible = true, transformation(origin = {-23, 47}, extent = {{-9, -9}, {9, 9}}, rotation = -90), iconTransformation(origin = {-23, 47}, extent = {{-9, -9}, {9, 9}}, rotation = -90)));
+Modelica.Blocks.Interfaces.RealInput L annotation(
+    Placement(visible = true, transformation(origin = {29, 49}, extent = {{-9, -9}, {9, 9}}, rotation = -90), iconTransformation(origin = {25, 47}, extent = {{-9, -9}, {9, 9}}, rotation = -90)));
 
 /*Control*/
 Boolean on "State of operation of the heater based on W_electric";
+Boolean on_discharge "Can we draw particle from Cold Tank?";
 
 /*Variables*/
 SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
@@ -42,13 +53,19 @@ SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the co
 equation
 
 /*Fluid connection equations*/
-particle_port_in.p = particle_port_out.p "Pressure balance";
+//particle_port_in.p = particle_port_out.p "Pressure balance"; --> need not to have this EQ since it already has one more equation (mass flow)
 particle_port_in.m_flow + particle_port_out.m_flow = 0 "Mass flow balance";
 particle_port_in.h_outflow = inStream(particle_port_out.h_outflow);
 particle_port_out.h_outflow = h_out "outlet port's h_outflow will always be at T = T_hot_tank_target";
 particle_port_in.m_flow = mdot_pcl;
 
-on = W_electric > 100;
+when L > cold_tnk_empty_ub then
+    on_discharge = true;
+elsewhen L < cold_tnk_empty_lb then
+    on_discharge = false;
+end when;
+
+on = W_electric > W_on and on_discharge;
 
 h_in = inStream(particle_port_in.h_outflow);
 

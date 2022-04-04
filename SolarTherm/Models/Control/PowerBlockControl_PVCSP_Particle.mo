@@ -63,7 +63,7 @@ model PowerBlockControl_PVCSP_Particle
   Modelica.Blocks.Interfaces.RealOutput m_flow_HX annotation(
     Placement(visible = true, transformation(extent = {{92, 16}, {132, 56}}, rotation = 0), iconTransformation(extent = {{92, 16}, {132, 56}}, rotation = 0)));
 algorithm
-  when logic.m_flow > 1e-6 then
+  when logic.m_flow > 10 then
     t_ramp_start := time;
     t_ramp_end := time + t_ramp_delay;
   end when;

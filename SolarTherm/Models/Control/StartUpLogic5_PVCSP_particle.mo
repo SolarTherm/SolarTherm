@@ -65,10 +65,10 @@ equation
     on_discharge = false;
   end when;
   if on_discharge then
-    m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (CSP_duty/CSP_name_plate) * schedule;
+    m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
     m_flow_HX_industrial = 1600;
   else
-    m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (CSP_duty/CSP_name_plate) * schedule);
+    m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
     m_flow_HX_industrial = 0;
   end if;
 /*
