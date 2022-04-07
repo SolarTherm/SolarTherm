@@ -25,7 +25,7 @@ model StartUpLogic5_PVCSP_particle
   //Boolean standby;
   //Boolean startup(start=false, fixed=true);
   //Boolean rampdown(start=false,fixed=true);
-  //Boolean on_charge ;
+  Boolean on_charge ;
   Boolean on_discharge "A boolean to sense whether it is actually OK to charge";
   Real optimalMassFlow;
   //discrete Modelica.SIunits.Time t_off;
@@ -64,13 +64,23 @@ equation
   elsewhen level < level_off then
     on_discharge = false;
   end when;
-  if on_discharge then
-    m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
-    m_flow_HX_industrial = 1600;
+  
+  on_charge = m_flow_in > 0;
+  
+  if on_discharge and on_discharge then
+    if on_discharge then
+        m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
+        m_flow_HX_industrial = 1600;
+    else
+        m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
+        m_flow_HX_industrial = 0;
+    end if;
   else
-    m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
+    m_flow = 0;
     m_flow_HX_industrial = 0;
   end if;
+  
+
 /*
    //on_charge = m_flow_in > 0;
    

@@ -49,7 +49,8 @@ Boolean on_discharge "Can we draw particle from Cold Tank?";
 /*Variables*/
 SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
 SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the cold tank [kg/s]";
-
+Modelica.Blocks.Interfaces.RealOutput mdot_heater annotation(
+    Placement(visible = true, transformation(origin = {6, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90), iconTransformation(origin = {2, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
 equation
 
 /*Fluid connection equations*/
@@ -75,6 +76,8 @@ else
     mdot_pcl = 0;
 end if;
 
+mdot_heater = if mdot_pcl < 1 then Modelica.Constants.small else mdot_pcl "signal to PB controller";
+
 
 
 
@@ -82,5 +85,5 @@ end if;
 
 annotation(
     Diagram(graphics = {Rectangle(origin = {0, 9}, extent = {{-70, 33}, {70, -33}}), Text(origin = {1, 8}, extent = {{-37, 12}, {37, -12}}, textString = "Electrical Heater", fontSize = 26), Line(origin = {0, 20}, points = {{-70, 0}, {70, 0}}), Line(origin = {0, -4}, points = {{-70, 0}, {70, 0}})}, coordinateSystem(initialScale = 0.1)),
-    Icon(graphics = {Rectangle(origin = {0, 2}, lineThickness = 1, extent = {{-70, 38}, {70, -38}}), Line(origin = {0, 20}, points = {{-70, 0}, {70, 0}}, pattern = LinePattern.Dash, thickness = 1), Line(origin = {0, -20}, points = {{-70, 0}, {70, 0}}, pattern = LinePattern.Dash, thickness = 1), Text(origin = {1, -1}, extent = {{-57, 15}, {57, -15}}, textString = "Simple Electrical Heater")}));
+    Icon(graphics = {Rectangle(origin = {0, 2}, lineThickness = 1, extent = {{-70, 38}, {70, -38}}), Line(origin = {0, 20}, points = {{-70, 0}, {70, 0}}, pattern = LinePattern.Dash, thickness = 1), Line(origin = {0, -20}, points = {{-70, 0}, {70, 0}}, pattern = LinePattern.Dash, thickness = 1), Text(origin = {1, -1}, extent = {{-57, 15}, {57, -15}}, textString = "Simple Electrical Heater")}, coordinateSystem(initialScale = 0.1)));
 end SimpleElectricalHeater;
