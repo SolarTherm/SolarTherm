@@ -51,6 +51,10 @@ SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
 SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the cold tank [kg/s]";
 Modelica.Blocks.Interfaces.RealOutput mdot_heater annotation(
     Placement(visible = true, transformation(origin = {6, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90), iconTransformation(origin = {2, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
+
+initial equation
+on_discharge = L > cold_tnk_empty_ub;
+
 equation
 
 /*Fluid connection equations*/

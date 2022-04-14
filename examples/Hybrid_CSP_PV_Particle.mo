@@ -88,15 +88,17 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Efficiency helio_soil = 0.95 "[H&T] Heliostat soiling factor. 0.95 is the default value in SolarPILOT";
   parameter SI.Efficiency helio_uncertain_factor = 1 "[H&T] Uncertainty multiplier to the effective heliostat reflectance. The uncertain range is made by making the effective reflectance in the range of 0.8 to 0.95";
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
+  
   //****************************** Design condition of the Hybrid Plant
   //parameter SI.Power P_net = P_hybrid_system * (1-PV_fraction) "[PB] Power block net rating at design point";
   //parameter SI.Power PV_Target = P_hybrid_system * PV_fraction "PV array nameplate in W";
   //parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
   parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate [W]";
-  parameter Real CSP_fraction = 1 "Fraction of the hybrid sytem that is CSP nameplate";
+  parameter Real CSP_fraction = 0 "Fraction of the hybrid system that is CSP nameplate";
   parameter Real CSP_fraction_final(fixed = false);
-  parameter Real PV_fraction = 1 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction = 1.5 "Fraction of the hybrid system that is PV nameplate";
   parameter SI.Power P_CSP = CSP_fraction_final * P_hybrid_system "[PB] Power block net rating at design point [W]";
+  parameter Boolean on_CSP = if P_CSP > 0  then true else false "Boolean to control CSP block";
   parameter SI.Power PV_Target = PV_fraction * P_hybrid_system "PV array nameplate in W";
   parameter SI.Power P_heater = P_CSP + PV_Target - P_hybrid_system "Rating of the electrical heater [W]";
   parameter SI.Efficiency eta_heater = 0.99 "Heater electric to thermal efficiency https://doi.org/10.3390/en14123437";
@@ -112,7 +114,14 @@ model Hybrid_CSP_PV_Particle
   parameter nSI.Angle_deg tilt_rcv = 0 "[RCV] tilt of receiver in degree relative to tower axis";
   parameter Real SM = 2.5 "[SYS] Solar multiple";
   parameter SI.Power P_net_default_value = 123456789 "Default value to handle P_net = 0 [W]";
-  parameter SI.Power P_net = if P_CSP > 5e5 then P_CSP else P_net_default_value "Power of the CSP to size the components [W]";
+  parameter SI.Power P_net = if P_CSP > 5e5 then 
+                      P_CSP 
+                else  
+                      if P_heater > 5e5 then
+                          P_heater
+                      else
+                          P_net_default_value 
+  "Power of the CSP to size the components [W]";
   parameter SI.Power P_gross = P_net / (1 - par_fr) "The mechanical power of the PB (Turbine power - all of compressors) before cooling and parasities losses";
   parameter SI.Efficiency eff_blk(fixed = false) "Power block efficiency at design point";
   parameter SI.Temperature T_in_rec = T_cold_set "Particle inlet temperature to particle receiver at design";
@@ -265,7 +274,21 @@ model Hybrid_CSP_PV_Particle
                                                                            so the simulation wont crash at t=0, since the control logic use t_on - t_start etc";
   parameter SI.Density rho_cold_set = Particle_Package.rho_T(T_cold_set) "Cold particles density at design";
   parameter SI.Density rho_hot_set = Particle_Package.rho_T(T_hot_set) "Hot particles density at design";
-  parameter SI.Energy E_max = if P_heater >= 0 then t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_heater * eta_heater) else t_storage * 3600 * (Q_flow_des + Q_HX_industrial) "Maximum tank stored energy [J]";
+  parameter SI.Energy E_max = if P_CSP > 5e5 then
+                                  // There is CSP
+                                  if P_heater >= 0 then
+                                      t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_heater * eta_heater + P_CSP) 
+                                  else 
+                                      t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_CSP) 
+                                      
+                              else
+                                  // There is no CSP
+                                  if P_heater >= 0 then
+                                      t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_heater * eta_heater) 
+                                  else 
+                                      t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_CSP) "Maximum tank stored energy [J]";
+  
+  //parameter SI.Energy E_max = if P_heater >= 0 then t_storage * 3600 * (Q_flow_des + Q_HX_industrial + P_heater * eta_heater) else t_storage * 3600 * (Q_flow_des + Q_HX_industrial) "Maximum tank stored energy [J]";
   parameter SI.Mass m_max = E_max / (h_hot_set - h_cold_set) "Max particles mass in tanks [kg]";
   parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
   parameter Real tank_ar = 1.17 "[ST] storage aspect ratio";
@@ -417,7 +440,8 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_field_total = C_field + C_site "Heliostat field plus site preparation costs";
   //******************************* Cost of tower sub-system (receiver + tower + receiver lift)
   //******************************* As per December 7 2020, the tower cost function is changed to the Latest Tower Cost Function
-  parameter Real Euro_to_USD_exchange_rate = 1.21 "[USD/Euro]";
+  parameter Real Euro_to_USD_exchange_rate = 1.09 "[USD/Euro] Google, accessed 8 April 2022";
+  parameter Real AUD_to_USD_exchange_rate = 0.75 "[USD/AUD] Google, accessed 8 April 2022";
   parameter FI.Money C_extra_structure(fixed = false);
   parameter FI.Money C_tower_absolute = 83060926 "Absolute tower cost [USD]";
   /*Latest Tower Cost Function Based on the email by J.Sment (Sandia) Sat 05/12/2020 05:48 */
@@ -474,29 +498,29 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_bop = if abs(P_net - P_net_default_value) < 1 then 0 else P_gross * pri_bop "Balance of plant cost";
   parameter FI.Money C_prod = if abs(P_net - P_net_default_value) < 1 then 0 else pri_om_prod "Variable O&M cost per production per year";
   //******************************* PV capital and OM cost
-  parameter Real pri_PV = 760 "Cost of PV per $/kWe";
-  parameter Real pri_om_PV = 14.08 "OnM cost for PV in USD/kWe installed capacity";
+  parameter Real pri_PV = 340 "TIC cost of PV per $/kWe 2030 [340 - 834] https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2019/Nov/IRENA_Future_of_Solar_PV_2019.pdf";
+  parameter Real pri_om_PV = 14.08 "OnM cost for PV in USD/kWe installed capacity in 2030 ---> depends on the capacity factor https://ec.europa.eu/energy/sites/ener/files/documents/2018_06_27_technology_pathways_-_finalreportmain2.pdf page 45";
   parameter FI.Money C_PV = PV_Target / 1e3 * pri_PV "PV cost in $";
-  parameter FI.MoneyPerYear C_year_PV = pri_om_PV * PV_Target / 1e3 "Fixed OM cost for PV";
+  parameter FI.MoneyPerYear C_year_PV = 0 "Added later in the post processing since the PV OM depends on the PV CF";//pri_om_PV * PV_Target / 1e3 "Fixed OM cost for PV";
   //******************************* Industrial electric heater cost
-  parameter Real pri_heater = 110 "Price of electric heater from Alibaba (2000W) in USD/W https://www.alibaba.com/product-detail/Heater-Electric-Electric-2000w-Portable-New_1600462066784.html?spm=a2700.pccps_detail.normal_offer.d_title.477817e2mwzG3M&s=p";
-  parameter FI.Money C_heater = if P_heater <= 0 then 0 else pri_heater * (P_heater / 2000) ^ scaler_n "Price of electric heater using scaling formula [USD]";
+  parameter Real pri_heater = 347 * Euro_to_USD_exchange_rate "Euro /KWth 2030 [UB] https://doi.org/10.1080/15567249.2020.1843565 table 1. Other values are 140 USD/kWe TIC https://doi.org/10.1016/j.energy.2020.118472; 220 USD/kWe https://doi.org/10.1016/j.enconman.2020.113779";
+  parameter FI.Money C_heater = if P_heater <= 0 then 0 else pri_heater * P_heater/1e3 "Price of electric heater using scaling formula [USD]";
   //******************************* Capital cost of SMR
-  parameter Real pri_SMR = 117232000 * 1.1 "cost of SMR component for 'Standalone (Merchant) H2 plant' as per https://ieaghg.org/exco_docs/2017-02.pdf.         
+  parameter Real pri_SMR = 117232000 * Euro_to_USD_exchange_rate "cost of SMR component for 'Standalone (Merchant) H2 plant' as per https://ieaghg.org/exco_docs/2017-02.pdf.         
                       It is scalled using scaler with exchange rate 1.1 USD/euro (Google, accessed on 29 March 2022)";
   parameter Real scaler_n = 0.7;
   parameter FI.Money C_SMR = pri_SMR * (H2_mdot_target / (8994 / 3600)) ^ scaler_n;
   //******************************* Captial and OM cost of Electrolyser
-  parameter Real pri_electrolyser = 827 "Electrolyser price USD/kWe https://doi.org/10.3390/en14123437";
+  parameter Real pri_electrolyser = 817 "Electrolyser price 2030 in (317 - 817) USD/kWe https://doi.org/10.3390/en14123437";
   parameter Real pri_om_electrolyser = 0.035 "Fraction of electrolyser OnM based on C_electrolyser https://doi.org/10.3390/en14123437";
   parameter FI.Money C_electrolyser = if CSP_fraction < 1e-3 and PV_fraction < 1e-3 then 0 else P_hybrid_system / 1000 * pri_electrolyser "cost of electrolyser";
   parameter FI.MoneyPerYear C_year_electrolyser = C_electrolyser * pri_om_electrolyser "Fixed OM cost for electrolyser in USD/year";
   //******************************* Cost per kg of Natural gas consumed by SMR
-  parameter Real pri_natural_gas = 8 * 0.0465 * 0.72 "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf). Exchange rate is 0.72 ";
+  parameter Real pri_natural_gas = 8 * 0.0465 * AUD_to_USD_exchange_rate "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf)";
   //******************************* Cost per kg of water consumed by SMR
-  parameter Real pri_water_SMR = 0.003 * 0.75 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104. 0.75 is the exchange rate from AUD to USD (Google, accessed on 29 March 2022)";
+  parameter Real pri_water_SMR = 0.003 * AUD_to_USD_exchange_rate "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of water consumed by Electrolyser
-  parameter Real pri_water_ele = 0.003 * 0.75 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104. 0.75 is the exchange rate from AUD to USD (Google, accessed on 29 March 2022)";
+  parameter Real pri_water_ele = 0.003 * AUD_to_USD_exchange_rate "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of H2 production
   parameter Real pri_h2 = 0.0 "Variable cost to produce H2 $/kg";
   //******************************* Cost of Carbon
@@ -524,7 +548,7 @@ model Hybrid_CSP_PV_Particle
     Placement(visible = true, transformation(origin = {139, 80}, extent = {{19, -10}, {-19, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Wspd_input(y = data.Wspd) annotation(
     Placement(transformation(extent = {{-140, 20}, {-114, 40}})));
-  Modelica.Blocks.Sources.BooleanExpression always_on(y = true) annotation(
+  Modelica.Blocks.Sources.BooleanExpression always_on(y = on_CSP) annotation(
     Placement(visible = true, transformation(origin = {-128, -4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Wind_dir(y = data.Wdir) annotation(
     Placement(visible = true, transformation(origin = {-129, 51}, extent = {{-11, -13}, {11, 13}}, rotation = 0)));
@@ -708,17 +732,35 @@ model Hybrid_CSP_PV_Particle
     Placement(visible = true, transformation(origin = {24, 38}, extent = {{-6, -6}, {6, 6}}, rotation = 90)));
 algorithm
   if time > 31449600 then
-    eta_curtail_off := E_helio_incident / E_resource;
-    eta_optical := E_resource_after_optical_eff / E_resource;
-    eta_he_av := he_av_design;
-    eta_curtail_defocus := E_helio_net / E_helio_raw;
-    eta_recv_abs := E_recv_incident / E_helio_net;
-    eta_recv_thermal := E_recv_net / E_recv_incident;
-    eta_storage := E_pb_input / E_recv_net;
-    eta_pb_gross := E_pb_gross / E_pb_input;
-    eta_pb_net := E_pb_net / E_pb_input;
-    eta_solartoelec := E_pb_net / E_resource;
-    E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
+    if on_CSP then
+        eta_curtail_off := E_helio_incident / E_resource;
+        eta_optical := E_resource_after_optical_eff / E_resource;
+        eta_he_av := he_av_design;
+        eta_curtail_defocus := E_helio_net / E_helio_raw;
+        eta_recv_abs := E_recv_incident / E_helio_net;
+        eta_recv_thermal := E_recv_net / E_recv_incident;
+        eta_storage := E_pb_input / E_recv_net;
+        eta_pb_gross := E_pb_gross / E_pb_input;
+        eta_pb_net := E_pb_net / E_pb_input;
+        eta_solartoelec := E_pb_net / E_resource;
+        E_check := E_resource - E_losses_availability - E_losses_curtailment - E_losses_defocus - E_losses_optical - E_helio_net;
+    else
+        eta_curtail_off := 0;
+        eta_optical := 0;
+        eta_he_av := 0;
+        eta_curtail_defocus := 0;
+        eta_recv_abs := 0;
+        eta_recv_thermal := 0;
+        eta_storage := 0;
+        eta_pb_gross := 0;
+        if E_pb_input > 1000  then
+            eta_pb_net := E_pb_net / E_pb_input;
+        else
+            eta_pb_net:= 0 ;
+        end if;
+        eta_solartoelec := 0;
+        E_check := 0;
+    end if;
   end if;
 initial equation
   CSP_fraction_final = CSP_fraction;
