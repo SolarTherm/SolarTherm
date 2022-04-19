@@ -72,7 +72,7 @@ elsewhen L < cold_tnk_empty_lb then
 end when;
 
 
-on = W_electric > W_on and on_discharge;
+on = W_electric > 0 and on_discharge;
 
 h_in = inStream(particle_port_in.h_outflow);
 
