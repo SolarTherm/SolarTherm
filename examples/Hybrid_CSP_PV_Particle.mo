@@ -43,6 +43,7 @@ model Hybrid_CSP_PV_Particle
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
   parameter Boolean set_scheduler = false "if true dispatched is scheduled (not optimised) based on the time alone. Must be OFF when dispatch optimiser is on";
   parameter Boolean HX_always_off = true "Whether to use industrial HX to draw heat from TES";
+  parameter Boolean set_SMR_always_off = true "Whether SMR is on or off";
   //****************************** Importing medium and external files
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   replaceable package Medium = SolarTherm.Media.SolidParticles.CarboHSP_ph "Medium props for Carbo HSP 40/70";
@@ -94,9 +95,9 @@ model Hybrid_CSP_PV_Particle
   //parameter SI.Power PV_Target = P_hybrid_system * PV_fraction "PV array nameplate in W";
   //parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate";
   parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate [W]";
-  parameter Real CSP_fraction = 0 "Fraction of the hybrid system that is CSP nameplate";
+  parameter Real CSP_fraction = 1 "Fraction of the hybrid system that is CSP nameplate";
   parameter Real CSP_fraction_final(fixed = false);
-  parameter Real PV_fraction = 1.5 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction = 1 "Fraction of the hybrid system that is PV nameplate";
   parameter SI.Power P_CSP = CSP_fraction_final * P_hybrid_system "[PB] Power block net rating at design point [W]";
   parameter Boolean on_CSP = if P_CSP > 0  then true else false "Boolean to control CSP block";
   parameter SI.Power PV_Target = PV_fraction * P_hybrid_system "PV array nameplate in W";
@@ -503,28 +504,28 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_PV = PV_Target / 1e3 * pri_PV "PV cost in $";
   parameter FI.MoneyPerYear C_year_PV = 0 "Added later in the post processing since the PV OM depends on the PV CF";//pri_om_PV * PV_Target / 1e3 "Fixed OM cost for PV";
   //******************************* Industrial electric heater cost
-  parameter Real pri_heater = 347 * Euro_to_USD_exchange_rate "Euro /KWth 2030 [UB] https://doi.org/10.1080/15567249.2020.1843565 table 1. Other values are 140 USD/kWe TIC https://doi.org/10.1016/j.energy.2020.118472; 220 USD/kWe https://doi.org/10.1016/j.enconman.2020.113779";
+  parameter Real pri_heater = 140 "Euro /KWth 2030 [UB] https://doi.org/10.1080/15567249.2020.1843565 table 1. Other values are 140 USD/kWe TIC https://doi.org/10.1016/j.energy.2020.118472; 220 USD/kWe https://doi.org/10.1016/j.enconman.2020.113779";
   parameter FI.Money C_heater = if P_heater <= 0 then 0 else pri_heater * P_heater/1e3 "Price of electric heater using scaling formula [USD]";
   //******************************* Capital cost of SMR
   parameter Real pri_SMR = 117232000 * Euro_to_USD_exchange_rate "cost of SMR component for 'Standalone (Merchant) H2 plant' as per https://ieaghg.org/exco_docs/2017-02.pdf.         
                       It is scalled using scaler with exchange rate 1.1 USD/euro (Google, accessed on 29 March 2022)";
   parameter Real scaler_n = 0.7;
-  parameter FI.Money C_SMR = pri_SMR * (H2_mdot_target / (8994 / 3600)) ^ scaler_n;
+  parameter FI.Money C_SMR = if set_SMR_always_off then 0 else pri_SMR * (H2_mdot_target / (8994 / 3600)) ^ scaler_n;
   //******************************* Captial and OM cost of Electrolyser
-  parameter Real pri_electrolyser = 817 "Electrolyser price 2030 in (317 - 817) USD/kWe https://doi.org/10.3390/en14123437";
+  parameter Real pri_electrolyser = 317 "Electrolyser price 2030 in (317 - 817) USD/kWe https://doi.org/10.3390/en14123437";
   parameter Real pri_om_electrolyser = 0.035 "Fraction of electrolyser OnM based on C_electrolyser https://doi.org/10.3390/en14123437";
   parameter FI.Money C_electrolyser = if CSP_fraction < 1e-3 and PV_fraction < 1e-3 then 0 else P_hybrid_system / 1000 * pri_electrolyser "cost of electrolyser";
   parameter FI.MoneyPerYear C_year_electrolyser = C_electrolyser * pri_om_electrolyser "Fixed OM cost for electrolyser in USD/year";
   //******************************* Cost per kg of Natural gas consumed by SMR
-  parameter Real pri_natural_gas = 8 * 0.0465 * AUD_to_USD_exchange_rate "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf)";
+  parameter Real pri_natural_gas = 0.279 "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf)";
   //******************************* Cost per kg of water consumed by SMR
-  parameter Real pri_water_SMR = 0.003 * AUD_to_USD_exchange_rate "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
+  parameter Real pri_water_SMR = 0.00375 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of water consumed by Electrolyser
-  parameter Real pri_water_ele = 0.003 * AUD_to_USD_exchange_rate "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
+  parameter Real pri_water_ele = 0.00375 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of H2 production
   parameter Real pri_h2 = 0.0 "Variable cost to produce H2 $/kg";
   //******************************* Cost of Carbon
-  parameter Real pri_carbon_tax = 60 * Euro_to_USD_exchange_rate "Euro per kg Carbon";
+  parameter Real pri_carbon_tax = 78.5 * Euro_to_USD_exchange_rate "Euro per kg Carbon";
   //******************************* Cost of O&M (fixed + varied)
   parameter FI.MoneyPerYear C_year = if set_detail_field_om then P_name * pri_om_name + C_om_field + C_washing + C_year_PV + C_year_electrolyser else P_name * pri_om_name + C_year_PV + C_year_electrolyser "Fixed O&M cost per year (PV, CSP, Electrolyser)";
   //******************************* Total cost calculation
@@ -624,7 +625,7 @@ model Hybrid_CSP_PV_Particle
   SolarTherm.Models.Electrochemical.Simple_Electrolyser electrolyser(P_electro_requested = P_hybrid_system) annotation(
     Placement(visible = true, transformation(origin = {218, -56}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
   //Steam methane reformer
-  SolarTherm.Models.ChemicalComponent.Simple_SMR SMR(CH4_reaction_extent = SMR_reaction_conversion, H2_mol_target = H2_mol_target, H2_mdot_target = H2_mdot_target, W_consumption = W_consumption_SMR) annotation(
+  SolarTherm.Models.ChemicalComponent.Simple_SMR SMR(CH4_reaction_extent = SMR_reaction_conversion, H2_mol_target = H2_mol_target, H2_mdot_target = H2_mdot_target, W_consumption = W_consumption_SMR, set_SMR_always_off=set_SMR_always_off) annotation(
     Placement(visible = true, transformation(origin = {131, -143}, extent = {{-33, -33}, {33, 33}}, rotation = 0)));
   //********************* Price
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Table(file = pri_file)) annotation(
@@ -865,11 +866,11 @@ initial equation
     C_block = if abs(P_net - P_net_default_value) < 1 then 0 else -1;
   end if;
 //************************************ CapitalCost Calculation
-  C_cap_CSP = C_field + C_site + C_receiver + C_storage + C_block + C_bop + C_heater;
-  C_cap_PV = C_PV;
+  C_cap_CSP = C_field + C_site + C_receiver + C_storage + C_block + C_bop + C_heater/(1+r_contg + r_cons) "Converting heater from TCI to bare module";
+  C_cap_PV = C_PV/(1+r_contg + r_cons) "Converting TCI to bare module";
   C_cap_SMR = C_SMR;
   C_cap_electrolyser = C_electrolyser;
-  C_cap_total = C_field + C_site + C_receiver + C_storage + C_PV + C_block + C_bop + C_SMR + C_electrolyser + C_heater "Total equipment cost";
+  C_cap_total = C_field + C_site + C_receiver + C_storage + C_cap_PV + C_block + C_bop + C_SMR + C_electrolyser + C_heater/(1+r_contg + r_cons) "Total equipment cost";
   C_direct = (1 + r_contg) * C_cap_total;
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;

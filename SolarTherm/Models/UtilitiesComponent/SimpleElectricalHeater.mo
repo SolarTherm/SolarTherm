@@ -49,6 +49,7 @@ Boolean on_discharge "Can we draw particle from Cold Tank?";
 /*Variables*/
 SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
 SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the cold tank [kg/s]";
+SI.Energy E_dumped_electricity "Electricity dumped by the system. Happens when no heater but over producing electricity";
 Modelica.Blocks.Interfaces.RealOutput mdot_heater annotation(
     Placement(visible = true, transformation(origin = {6, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90), iconTransformation(origin = {2, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
 
@@ -70,14 +71,17 @@ elsewhen L < cold_tnk_empty_lb then
     on_discharge = false;
 end when;
 
+
 on = W_electric > W_on and on_discharge;
 
 h_in = inStream(particle_port_in.h_outflow);
 
 if on then
     mdot_pcl = W_electric * eta / (h_out-h_in);
+    der(E_dumped_electricity) = 0;
 else
     mdot_pcl = 0;
+    der(E_dumped_electricity) = W_electric;
 end if;
 
 mdot_heater = if mdot_pcl < 1 then Modelica.Constants.small else mdot_pcl "signal to PB controller";

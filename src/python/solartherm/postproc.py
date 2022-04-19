@@ -372,16 +372,61 @@ class SimResultH2(SimResult):
 		
 		varnames = self.get_names()
 		
+		pb_nameplate = self.mat.data('P_net')[0]
+		if abs(pb_nameplate - 123456789)<1:
+			pb_nameplate = 0
+		
+		pv_nameplate = self.mat.data('PV_Target')[0]
+		
+		euro_to_usd_exchange = self.mat.data('Euro_to_USD_exchange_rate')[0]
+		
 		assert('H2_mass' in varnames), "For a H2_calc calculation, it is expected to see H2_mass variable in the result file!"
 		
-		eng_t = self.mat.abscissa('H2_mass', valuesOnly=True) #Time [s]
-		eng_v = self.mat.data('H2_mass') #Cummulative of H2 production in kg
+		#Renewable H2
+		eng_t = self.mat.abscissa('H2_mass_electrolyser', valuesOnly=True) #Time [s]
+		eng_v = self.mat.data('H2_mass_electrolyser') #Cummulative of H2 production in kg
 		
-		#Cost
+		#Determining OM fix cost for PV
+		
+		e_elec = self.mat.data('E_elec')
+		
+		e_pb = self.mat.data('E_pb_net')
+		
+		e_pv = e_elec[-1] - e_PB[-1]
+		
+		
+		if pv_nameplate < 1:
+			pv_cf = 0
+		else:
+			pv_cf = e_pv/(pv_nameplate * 8760 * 3600)
+			
+		if pb_nameplate == 0:
+			pb_cf = 0
+		else:
+			pb_cf = e_pb/(pb_nameplate * 8760 * 3600)
+			
+		if pv_cf >=0.1 and pv_cf < 0.12:
+			#low
+			c_pv_year = pv_nameplate/1000 * 15 * euro_to_usd_exchange
+		elif pv_cf >= 0.12 and pv_cf < 0.16:
+			#med
+			c_pv_year = pv_nameplate/1000 * 10.8 * euro_to_usd_exchange
+		elif pv_cf >= 0.16 and pv_cf < 0.21:
+			#high
+			c_pv_year = pv_nameplate/1000 * 12.2 * euro_to_usd_exchange
+		elif pv_cf >= 0.21:
+			#very high
+			c_pv_year = pv_nameplate/1000 * 13.5 * euro_to_usd_exchange
+		else:
+			c_pv_year = 0
+			
+		
+		#OM cost component
 		cap_v = self.mat.data('C_cap') # Total capital costs [$]
 		
-		om_y_v = self.mat.data('C_year') # O&M fixed costs per year of producing electricity [$/year]
-		om_p_v = self.mat.data('C_prod') # O&M costs per electricity production per year [$/J/year]
+		om_y_v = self.mat.data('C_year') # O&M fixed costs per year of producing electricity before PV [$/year]
+		
+		om_p_v = self.mat.data('C_prod') # O&M costs per electricity production per year from PB alone [$/J/year]
 		
 		NG_consumption = self.mat.data('NaturalGas') #Natural gas consumption annually [kg]
 		
@@ -397,16 +442,21 @@ class SimResultH2(SimResult):
 		
 		om_y_v_H2O_Electrolyser = self.mat.data('pri_water_ele') #Variable to provide a kg of H2O to electrolyser $/kg
 		
-		H2_production_electrolyser = self.mat.data('H2_mass_electrolyser') #H2 produced by electrolyser in kg
+		om_y_v_carbon = self.mat.data('pri_carbon_tax')
 		
-		e_elec = self.mat.data('E_elec')
-		
+		H2_mdot_nameplate = self.mat.data('H2_mdot_target')
+
 		#Financial parameters
 		disc_v = self.mat.data('r_disc') # Discount rate [-]
 		life_v = self.mat.data('t_life') # Plant lifetime [year]
 		cons_v = self.mat.data('t_cons') # Construction time [year]
 		name_v = self.mat.data('H2_mdot_target') # System nameplate measured in kg/s hydrogen
 		rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+		
+		#Annuity factor
+		r_disc_real = disc_v[0]
+		t_life = life_v[0]
+		f_annuity = (r_disc_real * (1+r_disc_real)**t_life)/((1+r_disc_real)**t_life -1)
 		
 		dur = eng_t[-1] - eng_t[0] # Time duration [s]
 		years = dur/31536000 # number of years of simulation [year]
@@ -417,12 +467,13 @@ class SimResultH2(SimResult):
 		
 		srev = rev_v[-1] # spot market revenue [$]
 		
-		lco_H2 = None # Levelised cost of electricity
+		lco_H2 = None # Levelised cost of h2
 		
-		capf = None # Capacity factor
-
+		capf = None # H2 from RE/nameplate of the hybrid plant
+		
+		#LCOH2 calculation
 		self.c_cap=cap_v[0] 
-		self.c_year=om_y_v[0] + om_p_v[0]*self.epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2[0] * eng_t[-1] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
+		self.c_year=om_y_v[0] + c_pv_year + om_p_v[0]*self.epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
 		self.r_discount=disc_v[0]
 		self.t_life=int(life_v[0])
 		self.t_cons=int(cons_v[0]) # time of construction
@@ -432,14 +483,8 @@ class SimResultH2(SimResult):
 			self.C_contingency=0 #contingency is not estimated in the system simulation
 
 		if close_to_year: 
-			lco_H2 = fin.lcoe_r(
-					c_cap=self.c_cap, 
-					c_year=self.c_year, 
-					r=self.r_discount, 
-					t_life=self.t_life, 
-					t_cons=self.t_cons, 
-					epy=eng_v[-1])
-			capf = H2_production_electrolyser[-1] / (name_v[0] * 8760 * 3600)
+			lco_H2 = (f_annuity * self.c_cap + self.c_year)/eng_t[-1]
+			capf = eng_t[-1] / (H2_mdot_nameplate[0] * 8760 * 3600)
 
 		# Convert to useful units
 		if close_to_year: 

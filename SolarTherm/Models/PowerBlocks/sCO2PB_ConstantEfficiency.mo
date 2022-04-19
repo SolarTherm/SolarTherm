@@ -13,6 +13,7 @@ model sCO2PB_ConstantEfficiency
   import SolarTherm.Utilities.ANN_OnTheFly.*;
   replaceable package MedPB = SolarTherm.Media.CO2.CO2_ph;
   replaceable package MedRec = SolarTherm.Media.SolidParticles.CarboHSP_ph;
+  replaceable package RecUtils = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
   extends Icons.PowerBlock;
  
   Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = MedRec) annotation(
@@ -94,7 +95,6 @@ model sCO2PB_ConstantEfficiency
   //Real deviation_eta_Q;
   Real[inputsize] raw_input;
   //Boolean m_sup "Disconnect the production of electricity when the mass flow rate of the HTF to the HX is not enough";
-  Real load "mass flow fraction of the exchanger compared to design condition";
   Integer state "1 means PB on, 0 means PB off"; 
   
   SI.Efficiency eta_gross;
@@ -109,6 +109,13 @@ model sCO2PB_ConstantEfficiency
   SI.SpecificEnthalpy h_out;
   SI.MassFlowRate mdot;
   
+  
+  SI.Efficiency eta_gross_rel "Relative eta gross at off design to on-design. Curve fit using data from SSC PB";
+  SI.Efficiency eta_Q_rel "Relative eta HX at off design to on-design. Curve fit using data from SSC PB";
+  Real load "mass flow fraction of the exchanger compared to design condition";
+  SI.Temperature T_amb_input "Ambient temperature [K]";
+  SI.Temperature T_HTF_in "Inlet temperature of the HTF to the PHX [K]";
+  
   initial equation
   state = 0;
   
@@ -120,32 +127,55 @@ model sCO2PB_ConstantEfficiency
     state := 0;
   end when;
 
-  equation  
-    
+  equation      
   fluid_a.p = fluid_b.p;
   fluid_a.m_flow + fluid_b.m_flow = 0;
   fluid_a.h_outflow = 0;  
   
   mdot = fluid_a.m_flow;
+  load = mdot / m_HTF_des;
   
   h_in = inStream(fluid_a.h_outflow);
-  h_out = fluid_b.h_outflow;
+  
+  T_amb_input = T_amb;
+  T_HTF_in = RecUtils.T_h(h_in);
     
   if state == 1 then
-    eta_gross = eta_gross_base ;
-    eta_Q = eta_Q_base;
+    eta_gross_rel = 0.0 * 1 + 2.5186574179060797 * load + 
+                          0.009846440644255819 * T_HTF_in + 0.034264872568813436 * T_amb_input -
+                              0.46544551085786523 * load^2 -0.001452829932478892 * load * T_HTF_in -
+                                  0.00012626460110771271 * load * T_amb_input -3.795546134277572e-06 * T_HTF_in^2 +
+                                      1.6292947568885552e-07 * T_HTF_in * T_amb_input -6.218512691180678e-05 * T_amb_input^2 -
+                                          10.366416875721718
+    "Polynomial regression based on SSC data for several PB size";
+    
+    eta_Q_rel = 0.0 * 1 -66.57060845518882 * load -0.1374114144109395 * T_HTF_in -0.8233953713385406 * T_amb_input +
+                  7.642182367588854 * load^2 +0.06722925996807498 * load * T_HTF_in +0.18003794919671742 * load * T_amb_input +
+                      3.419955811844901e-05 * T_HTF_in^2 +
+                          0.0005980045204103023 * T_HTF_in * T_amb_input +0.001610847141891492 * T_amb_input^2-
+                          0.273717277237845 * load^3 -0.004298115457827474 * load^2 * T_HTF_in -
+                              0.009306782674819556 * load^2 * T_amb_input -1.6371884564076564e-05 * load * T_HTF_in^2 -
+                                  8.357471171740734e-05 * load * T_HTF_in * T_amb_input -0.00014238191523090394 * load * T_amb_input^2 -
+                                      1.8734586797934383e-09 * T_HTF_in^3 -7.08336767019091e-08 * T_HTF_in^2 * T_amb_input -
+                                          7.052553185893373e-07 * T_HTF_in * T_amb_input^2 -9.22688277782413e-07 * T_amb_input^3 +
+                                              137.3962200057798
+    "Polynomial regression based on SSC data for several PB size";
+                    
+    eta_gross = eta_gross_base * eta_gross_rel;
+    eta_Q = eta_Q_base * eta_Q_rel;
     h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
     eta_cycle_net = W_net / Q_HX;
   else// mdot< 0.999 * m_HTF_des*nu_min then
+    eta_gross_rel = 0.0;
+    eta_Q_rel = 0.0;
     eta_gross=0;
     eta_Q=0;
     h_out=h_out_ref;
     eta_cycle_net=0;
   end if;
   
+  h_out = fluid_b.h_outflow;
   Q_HX = eta_Q * Q_HX_des;
-       
-  load = mdot / m_HTF_des;
   W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
   
