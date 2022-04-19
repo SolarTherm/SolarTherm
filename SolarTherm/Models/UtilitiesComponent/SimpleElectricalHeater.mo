@@ -84,7 +84,7 @@ else
     der(E_dumped_electricity) = W_electric;
 end if;
 
-mdot_heater = if mdot_pcl < 1 then Modelica.Constants.small else mdot_pcl "signal to PB controller";
+mdot_heater = mdot_pcl "signal to PB controller";
 
 
 

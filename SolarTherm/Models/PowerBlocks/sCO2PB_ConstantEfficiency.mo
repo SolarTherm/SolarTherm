@@ -123,7 +123,7 @@ model sCO2PB_ConstantEfficiency
   
   when mdot >= m_HTF_des * nu_min and state==0 then
     state := 1;
-  elsewhen mdot< 0.999 * m_HTF_des*nu_min and state == 1then
+  elsewhen mdot< 0.999 * m_HTF_des*nu_min and state == 1 then
     state := 0;
   end when;
 
