@@ -392,7 +392,7 @@ class SimResultH2(SimResult):
 		
 		e_pb = self.mat.data('E_pb_net')
 		
-		e_pv = e_elec[-1] - e_PB[-1]
+		e_pv = e_elec[-1] - e_pb[-1]
 		
 		
 		if pv_nameplate < 1:
@@ -483,8 +483,8 @@ class SimResultH2(SimResult):
 			self.C_contingency=0 #contingency is not estimated in the system simulation
 
 		if close_to_year: 
-			lco_H2 = (f_annuity * self.c_cap + self.c_year)/eng_t[-1]
-			capf = eng_t[-1] / (H2_mdot_nameplate[0] * 8760 * 3600)
+			lco_H2 = (f_annuity * self.c_cap + self.c_year)/eng_v[-1]
+			capf = eng_v[-1] / (H2_mdot_nameplate[0] * 8760 * 3600)
 
 		# Convert to useful units
 		if close_to_year: 
