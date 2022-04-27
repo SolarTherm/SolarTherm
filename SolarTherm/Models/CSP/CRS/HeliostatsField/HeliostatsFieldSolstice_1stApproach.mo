@@ -2,6 +2,7 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice_1stApproach
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Optics_windy;
+    parameter Boolean on_CSP = true "Boolean that informs whether the system has CSP loop or not";
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -55,7 +56,9 @@ model HeliostatsFieldSolstice_1stApproach
     parameter String opt_file(fixed=false);
     parameter Real metadata_list[9] = metadata(opt_file);
 
+
     SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT_windy optical(
+        on_CSP = on_CSP,
         hra=solar.hra, 
         dec=solar.dec, 
         lat=lat, 
@@ -149,6 +152,7 @@ model HeliostatsFieldSolstice_1stApproach
 initial equation
    on_internal=Q_raw>Q_start;
    opt_file=optical.tablefile;
+      
 equation
   if use_on then
     connect(on,on_internal);

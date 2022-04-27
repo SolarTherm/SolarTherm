@@ -27,7 +27,7 @@ parameter SI.Power Q_heater_rating = W_dumped * eta "Thermal rating of the heate
 
 /*How deep partload operation that your electrical heater has to endure?*/
 parameter Real eta_part_load = 0.5 "How deep the allowed partload operation";
-parameter SI.Power W_on = if W_dumped < 1 and W_dumped >=0 then 1e9 else eta_part_load * W_dumped "Minimum threshold supplied power above which the heater is on. If W_dumped == 0 then sett W_on to a very large value, else follow the calculation [W]";
+parameter SI.Power W_on = if W_dumped < 1 and W_dumped >=0 then 1e10 else 0 "Minimum threshold supplied power above which the heater is on. If W_dumped == 0 then sett W_on to a very large value, else follow the calculation [W]";
 
 /*Fluid Connection*/
 Modelica.Fluid.Interfaces.FluidPort_b particle_port_out(redeclare package Medium = Medium) annotation(
@@ -72,7 +72,7 @@ elsewhen L < cold_tnk_empty_lb then
 end when;
 
 
-on = W_electric > 0 and on_discharge;
+on = W_electric > W_on and on_discharge;
 
 h_in = inStream(particle_port_in.h_outflow);
 

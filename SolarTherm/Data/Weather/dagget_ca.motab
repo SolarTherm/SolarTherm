@@ -1,6 +1,7 @@
 #1
 double data(8760,11)
-#time,ghi,dni,dhi,dry,dew,rhum,p,wspd,wdir,albedo
+#Data from SAM 2020.11.29 Dagget
+#time,ghi,dni,dhi,dry,dew,rhum,p,wspd,wdir,albedo 
 0,0,0,0,-1,-11,99,950,3.4,182.5,0.216
 3600,0,0,0,-1,-11,99,950,3.1,180.9,0.216
 7200,0,0,0,-1,-11,99,950,3,180.7,0.216
