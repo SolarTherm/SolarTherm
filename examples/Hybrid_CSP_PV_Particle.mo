@@ -91,16 +91,16 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Efficiency helio_refl = helio_rho * helio_sf_ratio * helio_soil * helio_uncertain_factor "The effective heliostat reflectance (product of helio_soil, helio_sf_ratio and helio_rho and the helio_uncertain_factor)";
   //****************************** Design condition of the Hybrid Plant
   parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate [W]";
-  parameter Real CSP_fraction = 1 "Fraction of the hybrid system that is CSP nameplate";
+  parameter Real CSP_fraction = 0 "Fraction of the hybrid system that is CSP nameplate";
   parameter Real CSP_fraction_final(fixed = false);
-  parameter Real PV_fraction = 1 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction = 41.07940106 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction_final(fixed=false);
   parameter SI.Power P_CSP = CSP_fraction_final * P_hybrid_system "[PB] Power block net rating at design point [W]";
   parameter Boolean on_CSP = if P_CSP > 0 then true else false "Boolean to control CSP block";
-  parameter SI.Power PV_Target = PV_fraction * P_hybrid_system "PV array nameplate in W";
+  parameter SI.Power PV_Target = PV_fraction_final * P_hybrid_system "PV array nameplate in W";
   parameter SI.Power P_heater = PV_Target - P_hybrid_system "Rating of the electrical heater [W]";
   parameter SI.Efficiency eta_heater = 0.99 "Heater electric to thermal efficiency https://doi.org/10.3390/en14123437";
   //****************************** Design condition of the CSP plant
-  //parameter SI.MassFlowRate H2_mdot_target = 0.5 * 1e6 * 1e3 / (8760 * 3600) / 35 "Hydrogen annual target production per second, modularised into 35 plants [kg/s]";
   parameter SI.MassFlowRate H2_mdot_target(fixed = false) "Hydrogen annual target production per second, calculated using initial equation in AEL [kg/s]";
   parameter Real SMR_reaction_conversion = 1 "Steam methane reforming conversion extent";
   parameter Real W_consumption_SMR = 1492000 * (H2_mdot_target / (8994 / 3600)) ^ scaler_n "Electricity needs to be fed to the SMR [W]";
@@ -264,7 +264,7 @@ model Hybrid_CSP_PV_Particle
   //****************************** Storage Parameters
   parameter SI.ThermalInsulance U_value_hot_tank = 0.25 "[ST] Desired U_value for the tanks";
   parameter SI.ThermalInsulance U_value_cold_tank = 0.25 "[ST] Desired U value for the tanks";
-  parameter Real t_storage(unit = "h") = 30 "[ST] Storage capacity";
+  parameter Real t_storage(unit = "h") = 3.863660478 "[ST] Storage capacity";
   parameter Real NS_particle = 0.05 "[ST] Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set = 550 + 273.15 "[ST] Cold tank target temperature ==  HTF outlet temperature from PB at design point (K)";
   parameter SI.Temperature T_hot_set = 1073.15 "[ST] Hot tank target temperature == HTF inlet temperature to the PB at design point (K)";
@@ -752,6 +752,7 @@ algorithm
   end if;
 initial equation
   CSP_fraction_final = CSP_fraction;
+  PV_fraction_final = PV_fraction;
   H2_mdot_target = electrolyser.H2_mdot_design_point;
   m_dot_PCL_industrial = heatExchanger_ParticleGas.m_dot_PCL_DP;
   A_HX_industrial = heatExchanger_ParticleGas.A_HX;
