@@ -204,6 +204,7 @@ package Electrochemical
     import CONV = Modelica.SIunits.Conversions;
     import MATH = Modelica.Math;
     
+    
     //Parameters
     parameter SI.Power P_electro = 15e3 "Name plate of one unit of electrolyser (after stacking the cells) as per literature";
     parameter SI.Power P_electro_requested = 15e3 "How big is the electrolyser";
@@ -232,6 +233,7 @@ package Electrochemical
     SI.Mass H2O_mass "Accummulated mass of H2O";
     SI.Power W_electrolyser_final "Final power sent to the electrolyser after dumping (if necessary)";
     SI.Energy E_dumped(start=0) "Accummulated dumped electricity [J]";
+    Real N_unit_final "Number of electrolyser unit that is opearting full load";
     
     //*********** External Combitable 2D
     Modelica.Blocks.Types.ExternalCombiTable2D polarisation_curve =  Modelica.Blocks.Types.ExternalCombiTable2D(
@@ -257,7 +259,7 @@ package Electrochemical
     n_H2_design_point = eta_farad_design_point * (i_electrolyser_design_point * electrolyser.A_electrolyser) / (2 * Modelica.Constants.F) * electrolyser.N_cells * N_unit;
     
     H2_mdot_design_point = n_H2_design_point * 2e-3;
-    
+  
   equation
     /*W electrolyser has to be dumped shall it exceeds the nameplate*/
     if W_electrolyser > P_electro_requested then
@@ -268,14 +270,25 @@ package Electrochemical
         W_dumped = 0 "Dumped electricity due to overshoot [W]";
     end if;
     
+      
     der(E_dumped) = W_dumped "Integrating W_dumped to get E_dumped";
     
-    electrolyser.W_electrolyser = W_electrolyser_final/N_unit;
+    if W_electrolyser_final > P_electro then
+        // AEL Stack is always opearting at full-load at 15 kWe
+        electrolyser.W_electrolyser = P_electro;
+    else
+        // AEL Stack operates at part load
+        electrolyser.W_electrolyser = W_electrolyser_final;
+    end if;
+        
+        
     if W_electrolyser > 10 then
-        H2_mdot_out = electrolyser.n_H2 * N_unit * H2_molar_mass  "Mass flow rate of H2 production kg/s";
-        H2O_in = electrolyser.n_H2O * N_unit "Required hydrogen production in mol/s";
+        N_unit_final = W_electrolyser_final/P_electro_requested * N_unit "only several units are operating full load";
+        H2_mdot_out = electrolyser.n_H2 * max(1,N_unit_final) * H2_molar_mass  "Mass flow rate of H2 production kg/s";
+        H2O_in = electrolyser.n_H2O * max(1,N_unit_final) "Required hydrogen production in mol/s";
         der(H2O_mass) = H2O_in * H2O_molar_mass "Mass of water needed";
     else
+        N_unit_final = 0;
         H2_mdot_out = 0;
         H2O_in = 0;
         der(H2O_mass) = 0;
