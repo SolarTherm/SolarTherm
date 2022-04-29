@@ -394,16 +394,20 @@ class SimResultH2(SimResult):
 		
 		e_pv = e_elec[-1] - e_pb[-1]
 		
+		print(e_pb[-1])
+		
 		
 		if pv_nameplate < 1:
-			pv_cf = 0
+			self.pv_cf = 0
 		else:
-			pv_cf = e_pv/(pv_nameplate * 8760 * 3600)
-			
+			self.pv_cf = e_pv/(pv_nameplate * 8760 * 3600)
+		
+		pv_cf = self.pv_cf
+		
 		if pb_nameplate == 0:
 			pb_cf = 0
 		else:
-			pb_cf = e_pb/(pb_nameplate * 8760 * 3600)
+			pb_cf = e_pb[-1]/(pb_nameplate * 8760 * 3600)
 			
 		if pv_cf >=0.1 and pv_cf < 0.12:
 			#low
@@ -420,6 +424,7 @@ class SimResultH2(SimResult):
 		else:
 			c_pv_year = 0
 			
+		self.c_pv_year = c_pv_year
 		
 		#OM cost component
 		cap_v = self.mat.data('C_cap') # Total capital costs [$]
@@ -456,7 +461,8 @@ class SimResultH2(SimResult):
 		#Annuity factor
 		r_disc_real = disc_v[0]
 		t_life = life_v[0]
-		f_annuity = (r_disc_real * (1+r_disc_real)**t_life)/((1+r_disc_real)**t_life -1)
+		self.f_annuity = (r_disc_real * (1+r_disc_real)**t_life)/((1+r_disc_real)**t_life -1)
+		f_annuity = self.f_annuity
 		
 		dur = eng_t[-1] - eng_t[0] # Time duration [s]
 		years = dur/31536000 # number of years of simulation [year]
@@ -473,7 +479,14 @@ class SimResultH2(SimResult):
 		
 		#LCOH2 calculation
 		self.c_cap=cap_v[0] 
-		self.c_year=om_y_v[0] + c_pv_year + om_p_v[0]*self.epy + NG_consumption[-1] * pri_NG[0] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
+		
+		self.vv = self.mat.data('E_pb_net')[-1] < 1
+		
+		#If no PB electricity
+		if self.vv == True:
+			self.c_year=om_y_v[0] + c_pv_year + 0 + NG_consumption[-1] * pri_NG[0] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
+		else: 
+			self.c_year=om_y_v[0] + c_pv_year + om_p_v[0]*self.mat.data('E_pb_net')[-1] + NG_consumption[-1] * pri_NG[0] + om_y_v_H2O_SMR[0] * H2O_consumption_SMR[-1] + om_y_v_H2O_Electrolyser[0] * H2O_consumption_electrolyser[-1]
 		self.r_discount=disc_v[0]
 		self.t_life=int(life_v[0])
 		self.t_cons=int(cons_v[0]) # time of construction
