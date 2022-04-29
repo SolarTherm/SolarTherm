@@ -71,6 +71,7 @@ model ParabolicTrough
 	SI.Angle zen "Solar zenith angle";
 	SI.Angle inc "Solar incidence angle";
 	Real IAM "Incidence angle modifier";
+	Real cosinc = cos(inc) "Cosine of incidence angle";
 
 	SI.HeatFlowRate Qabs;
 	SI.HeatFlowRate Qf;
@@ -85,7 +86,7 @@ equation
 
 	inc = Modelica.Math.acos(((cos(zen))^2 + (cos(dec))^2*(sin(hra))^2)^0.5);
 
-	IAM = cos(inc);
+	IAM = min(1,(cos(inc) + 0.000884*to_deg(inc) - 0.0000537*(to_deg(inc))^2)/cos(inc))*cos(inc);
 
 	eta_opt = rho_cl*Alpha_t*tau_g*IAM;
 
