@@ -164,15 +164,10 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 	stcompile(wd)
 
 	# Defining the variables to sweep
-	if iron_ore == 1:
-		sol_multi = np.linspace(3.75,4.25,51)
-		t_storage = np.linspace(22,24,21)
-	elif iron_ore == 2:
-		sol_multi = np.linspace(4.25,4.75,51)
-		t_storage = np.linspace(31,33,21)
-
-	#sol_multi = np.append(sol_multi, xopt[0])
-	#t_storage = np.append(t_storage, xopt[1])
+	sol_multi = np.linspace(1,5,17)
+	t_storage = np.linspace(1,40,40)
+	sol_multi = np.append(sol_multi, xopt[0])
+	t_storage = np.append(t_storage, xopt[1])
 	par_v = []
 	if expensive_storage:
 		kroger = 'true'
