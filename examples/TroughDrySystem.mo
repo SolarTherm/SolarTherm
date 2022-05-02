@@ -151,6 +151,10 @@ model TroughDrySystem
 	Real fr_ramp_blk (min=0.0, max=1.0) "ramping transition rate for the power block";
 
 	SI.Energy E(min=0, max=E_max) "Stored energy";
+	SI.Energy E_sf_out "Cumulative field energy output";
+	SI.Energy E_sf_loss "Cumulative field energy loss";
+	SI.Energy E_abs "Cumulative absorbed energy";
+	
 	SI.HeatFlowRate Q_flow_sched "Discharge schedule";
 
 	Integer con_state(min=1, max=5) "Concentrator state";
@@ -351,6 +355,9 @@ equation
 	Q_flow_chg = Q_flow_rec;
 
 	der(E) = Q_flow_chg - Q_flow_dis;
+	der(E_abs) = collectors.Qabs;
+	der(E_sf_out) = Q_flow_rec;
+	der(E_sf_loss) = collectors.Ql;
 
 	if con_state <= 1 then
 		Q_flow_rec = 0;
