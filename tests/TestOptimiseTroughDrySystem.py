@@ -129,6 +129,18 @@ def optimizar(index,io):
 	txt.close()
 	return None
 
+def optimizar_Qbp(io):
+	wd = '../examples'
+	os.chdir(wd)
+	txt = open('results_io_%s.txt'%io,'w+')
+	estor = True
+	optpar = [[io,100e6,1,1,1,1,1],[io,200e6,1,1,1,1,1],[io,300e6,1,1,1,1,1],[io,400e6,1,1,1,1,1],[io,500e6,1,1,1,1,1],[io,600e6,1,1,1,1,1]]
+	for i,vals in enumerate(optpar):
+		res = optimise(estor, i, vals)
+		simulation_callback(txt,vals[0],estor,i,res)
+	txt.close()
+	return None
+
 if __name__=='__main__':
 	#IO1
 	optimizar(0,1)
@@ -142,3 +154,6 @@ if __name__=='__main__':
 	optimizar(2,2)
 	optimizar(3,2)
 	optimizar(4,2)
+	#LCOD vs Qpb
+	optimizar_Qbp(1)
+	optimizar_Qbp(2)
