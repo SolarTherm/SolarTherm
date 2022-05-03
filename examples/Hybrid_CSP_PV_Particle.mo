@@ -93,7 +93,7 @@ model Hybrid_CSP_PV_Particle
   parameter SI.Power P_hybrid_system = 100e6 "Hybrid system nameplate [W]";
   parameter Real CSP_fraction = 0 "Fraction of the hybrid system that is CSP nameplate";
   parameter Real CSP_fraction_final(fixed = false);
-  parameter Real PV_fraction = 41.07940106 "Fraction of the hybrid system that is PV nameplate";
+  parameter Real PV_fraction = 1.5 "Fraction of the hybrid system that is PV nameplate";
   parameter Real PV_fraction_final(fixed=false);
   parameter SI.Power P_CSP = CSP_fraction_final * P_hybrid_system "[PB] Power block net rating at design point [W]";
   parameter Boolean on_CSP = if P_CSP > 0 then true else false "Boolean to control CSP block";
@@ -115,8 +115,24 @@ model Hybrid_CSP_PV_Particle
                       parameter SI.Power P_net = if P_CSP > 5e5 then 
                                                       P_CSP 
                                                  else if P_heater > 5e5 then P_heater else P_net_default_value "Power of the PB to size the components [W]";
-                      */
-  parameter SI.Power P_net = if CSP_fraction > 0 then P_CSP else if P_heater > 0 then if P_heater < P_hybrid_system then P_heater else P_hybrid_system else P_net_default_value "Power of the PB to size the components [W]";
+                      */ 
+  parameter Real PB_fraction = 0.0;
+  parameter Real PB_fraction_final(fixed=false);                                        
+  parameter SI.Power P_net = if PB_fraction_final < 1e-3 then
+                                  P_net_default_value
+                             else
+                                  PB_fraction_final * P_hybrid_system;
+  /*
+            if CSP_fraction > 0 then 
+                  P_CSP 
+            else 
+                  if P_heater > 0 then 
+                        if P_heater*0.5 < P_hybrid_system then 
+                              P_heater*0.5  
+                        else P_hybrid_system 
+                  else 
+                        P_net_default_value
+"Power of the PB to size the components [W] ---> if the PB size is the result of oversizing PV, then the size of the PB has to be divided by two since the eff. of the PB is around 0.4";*/
   //********************* PB size == CSP size since CSP size >0
   //********************* If CSP size == 0 (No CSP)
   //********************* There is heater, therefore must have PB to harness the power
@@ -264,7 +280,7 @@ model Hybrid_CSP_PV_Particle
   //****************************** Storage Parameters
   parameter SI.ThermalInsulance U_value_hot_tank = 0.25 "[ST] Desired U_value for the tanks";
   parameter SI.ThermalInsulance U_value_cold_tank = 0.25 "[ST] Desired U value for the tanks";
-  parameter Real t_storage(unit = "h") = 3.863660478 "[ST] Storage capacity";
+  parameter Real t_storage(unit = "h") = 12 "[ST] Storage capacity";
   parameter Real NS_particle = 0.05 "[ST] Fraction of additional non-storage particles";
   parameter SI.Temperature T_cold_set = 550 + 273.15 "[ST] Cold tank target temperature ==  HTF outlet temperature from PB at design point (K)";
   parameter SI.Temperature T_hot_set = 1073.15 "[ST] Hot tank target temperature == HTF inlet temperature to the PB at design point (K)";
@@ -463,7 +479,7 @@ model Hybrid_CSP_PV_Particle
   parameter FI.Money C_lift_rec = if CSP_fraction < 1e-3 then 0 else pri_lift * dh_liftRC * m_flow_fac "Receiver lift cost";
   parameter FI.Money C_receiver = if CSP_fraction < 1e-3 then 0 else if set_absolute_tower_cost == true then C_fpr + C_tower_absolute + C_lift_rec else C_fpr + C_tower + C_lift_rec "Total receiver sub-system cost";
   //******************************* Cost of storage sub-system (bins + cold tank lift + particles + PHX lift + insulation)
-  parameter FI.Money C_lift_cold = if CSP_fraction < 1e-3 then 0 else if set_external_storage then pri_lift * dh_LiftCold * m_flow_blk else 0 "Cold storage tank lift cost";
+  parameter FI.Money C_lift_cold = if abs(P_net - P_net_default_value) < 1 then 0 else if set_external_storage then pri_lift * dh_LiftCold * m_flow_blk else 0 "Cold storage tank lift cost";
   //******************************* Storage bin cost calculation based on Kevin Albrect, 2019 https://is.gd/3VN0O7
   parameter FI.Money C_bins = if abs(P_net - P_net_default_value) < 1 then 0 else if set_new_storage_calc then 750 * CN.pi * (D_storage - 1 - 1) * H_storage else pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_hot_set - 600) / 400) * SA_storage + pri_bin_multiplier * (pri_bin + pri_bin_linear * (T_cold_set - 600) / 400) * SA_storage;
   //******************************* Storage bin cost calculation based on Jeremy Sment of Sandia study (g3p3 project)
@@ -480,7 +496,7 @@ model Hybrid_CSP_PV_Particle
                                                               parameter SI.Length t_mp = 0.32368 / (U_value_hot_tank + U_value_cold_tank) - 0.146096;
                                                               parameter SI.Length t_tuffcrete47 = 0.01;
                                                                 ******************************************************************************************************/
-  parameter FI.Money C_storage = if abs(P_net - P_net_default_value) < 1 then 0 else if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 1.753e10 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
+  parameter FI.Money C_storage = if abs(P_net - P_net_default_value) < 1 then 0 else if set_dome_storage then C_bins_dome + C_particles + C_lift_hx + C_lift_cold + 0 + f_loss * t_life * pri_particle * 0 else C_bins + C_particles + C_lift_hx + C_lift_cold + C_insulation + f_loss * t_life * pri_particle * 1.753e10 "Total storage cost. Dome storage bin cost calculation already considers insulation (refractory) s.t. C_insulation = 0";
   //******************************* Cost of BOP
   parameter FI.Money C_bop = if abs(P_net - P_net_default_value) < 1 then 0 else P_gross * pri_bop "Balance of plant cost";
   parameter FI.Money C_prod = if abs(P_net - P_net_default_value) < 1 then 0 else pri_om_prod "Variable O&M cost per production per year";
@@ -751,6 +767,7 @@ algorithm
     end if;
   end if;
 initial equation
+  PB_fraction_final = PB_fraction;
   CSP_fraction_final = CSP_fraction;
   PV_fraction_final = PV_fraction;
   H2_mdot_target = electrolyser.H2_mdot_design_point;
