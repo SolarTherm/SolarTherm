@@ -147,14 +147,14 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 		C_fbd_ref = '24255986.0'
 		C_bcs_ref = '13491551.0'
 		pri_om_flow_iron = '438.1'
-		xopt = [4.00522682227,26.5064327098]
+		xopt = [4.1,31.3]
 	elif iron_ore == 2:
 		eff_conv = '6.2e-6'
 		C_hx_ref = '110970925.0'
 		C_fbd_ref = '32088823.0'
 		C_bcs_ref = '17060409.0'
 		pri_om_flow_iron = '633.2'
-		xopt = [4.29224644906,29.3016912893]
+		xopt = [4.53,39.7]
 
 	Q_bp_des = str(Q_fbd_des)
 
@@ -236,7 +236,7 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 
 if __name__=="__main__":
 	tinit = time()
-	#parameter_sweep(1,True,50e6)
+	parameter_sweep(1,True,50e6)
 	parameter_sweep(2,True,50e6)
 	seconds = time() - tinit
 	m, s = divmod(seconds, 60)
