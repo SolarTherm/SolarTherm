@@ -163,7 +163,12 @@ model sCO2PB_ConstantEfficiency
                     
     eta_gross = eta_gross_base * eta_gross_rel;
     eta_Q = eta_Q_base * eta_Q_rel;
-    h_out = (fluid_a.m_flow*h_in - Q_HX) / fluid_a.m_flow;
+    if mdot > 1 then
+        h_out = (mdot*h_in - Q_HX)/mdot;
+    else
+        h_out = h_out_ref;
+    end if;
+        
     eta_cycle_net = W_net / Q_HX;
   else// mdot< 0.999 * m_HTF_des*nu_min then
     eta_gross_rel = 0.0;
@@ -184,7 +189,7 @@ model sCO2PB_ConstantEfficiency
     W_gross = 0;
     W_net = 0;
   else
-    W_gross = eta_gross * Q_HX * PB_output_scaling_factor "If user wants to have a specific PB gross efficiency value at design point, then the scaling factor is used to reduce the gross power";
+    W_gross = eta_gross * Q_HX * PB_output_scaling_factor;
     if abs(P_net - P_net_default_value) < 1 then 
         // Power block size is zero
         W_net = 0;

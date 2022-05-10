@@ -225,8 +225,11 @@ package Electrochemical
     SolarTherm.Models.Electrochemical.AEL_Electrolyser electrolyser(fn_curve = fn_curve, T_electrolyser = T_electrolyser, p_electrolyser = p_electrolyser);
     
     //Input and output
-    Modelica.Blocks.Interfaces.RealInput W_electrolyser annotation(
-      Placement(visible = true, transformation(origin = {-116, 1}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-118, 1}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+    Modelica.Blocks.Interfaces.RealInput W_electrolyser_PV annotation(
+      Placement(visible = true, transformation(origin = {-116, -19}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-124, -15}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+      
+    Modelica.Blocks.Interfaces.RealInput W_electrolyser_PB annotation(
+    Placement(visible = true, transformation(origin = {-116, 31}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-122, 41}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
     Modelica.Blocks.Interfaces.RealOutput H2_mdot_out "Mass flow rate of H2 produced by electrolyser" annotation(
       Placement(visible = true, transformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
     Real H2O_in;
@@ -242,6 +245,10 @@ package Electrochemical
         table = fill(0.0, 0, 2), 
         smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative
     ) "2D table for polarisation curve";
+    
+    SI.Power W_electrolyser;
+    SI.Power W_dumped_PV;
+    SI.Power W_dumped_PB;
     
     Modelica.Blocks.Interfaces.RealOutput W_dumped annotation(
       Placement(visible = true, transformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -261,15 +268,26 @@ package Electrochemical
     H2_mdot_design_point = n_H2_design_point * 2e-3;
   
   equation
+    W_electrolyser = W_electrolyser_PB + W_electrolyser_PV;
     /*W electrolyser has to be dumped shall it exceeds the nameplate*/
     if W_electrolyser > P_electro_requested then
         W_electrolyser_final = P_electro_requested;
         W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W]";
+        if W_electrolyser_PV < P_electro_requested then
+            W_dumped_PV = 0;
+            W_dumped_PB = W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV);
+        else
+            W_dumped_PV = W_dumped;
+            W_dumped_PB = 0;
+        end if;
+        
     else
         W_electrolyser_final = W_electrolyser;
         W_dumped = 0 "Dumped electricity due to overshoot [W]";
+        W_dumped_PV = 0 "Portion of dumped energy from PV [W]";
+        W_dumped_PB = 0 "Portion of dumped power from PB [W]";
     end if;
-    
+     
       
     der(E_dumped) = W_dumped "Integrating W_dumped to get E_dumped";
     
