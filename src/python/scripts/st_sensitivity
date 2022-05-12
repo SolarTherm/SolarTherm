@@ -40,6 +40,8 @@ if __name__=='__main__':
 			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
 	parser.add_argument('--fuel', action='store_true',
 			help='run post-processing calculations for levelised cost of fuel')	
+	parser.add_argument('--h2', action='store_true',
+			help='run post-processing calculations for levelised cost of h2')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
 			help='number of processes (set to 0 or 1 for serial mode)')	
 	parser.add_argument('--excel', type=str, default=None,
@@ -70,6 +72,8 @@ if __name__=='__main__':
 
 	if args.fuel:
 		system='FUEL'
+	elif args.h2:
+		system='H2'
 	else:
 		system='ELECTRICITY'
 
@@ -242,7 +246,7 @@ if __name__=='__main__':
 
 	method_args={'sample_type':'lhs', 'num_sample': args.ns}
 
-	dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method='uq', args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=['lcoe'], signs=[1])
+	dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method='uq', args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names= ['lco_h2','capf'] if args.h2 else ['lcoe'], signs=[1,1] if args.h2 else [1])
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 
