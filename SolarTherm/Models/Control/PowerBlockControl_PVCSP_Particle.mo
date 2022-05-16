@@ -17,6 +17,8 @@ model PowerBlockControl_PVCSP_Particle
   parameter Real P_net = 1e8 "Nameplate for the Hybrid System [W]";
   parameter Real CSP_name_plate = 1e8 "Nameplate of the CSP [W]";
   parameter Real PV_name_plate = 0.2e8 "Nameplate of the PV system [W]";
+  parameter Real Q_HX_des = 0.2e8 "PHX thermal rating at design point[W]";
+  parameter Real eta_gross_base = 0.5 "PB cycle thermal eff (after HX eff) at design point";
   
   Real PB_time_spend_ramping(start=0);
   
@@ -54,7 +56,9 @@ model PowerBlockControl_PVCSP_Particle
     level_off=L_off,
     m_flow_standby=0,
     P_net = P_net,
-    CSP_name_plate = CSP_name_plate
+    CSP_name_plate = CSP_name_plate,
+    Q_HX_des = Q_HX_des,
+    eta_gross_base = eta_gross_base
   ) annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
   Modelica.Blocks.Interfaces.BooleanOutput rampingout annotation(
     Placement(visible = true, transformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0), iconTransformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
@@ -62,6 +66,10 @@ model PowerBlockControl_PVCSP_Particle
     Placement(visible = true, transformation(origin = {-110, 2}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(extent = {{-128, -20}, {-88, 20}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput m_flow_HX annotation(
     Placement(visible = true, transformation(extent = {{92, 16}, {132, 56}}, rotation = 0), iconTransformation(extent = {{92, 16}, {132, 56}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealInput T_mea annotation(
+    Placement(visible = true, transformation(origin = {-44, 106}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-44, 106}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput T_amb_input annotation(
+    Placement(visible = true, transformation(origin = {12, 106}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {12, 106}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 algorithm
   when logic.m_flow > 10 then
     t_ramp_start := time;
@@ -75,8 +83,9 @@ equation
   
   m_flow = logic.m_flow * PB_ramp_fraction;
 
-
-  connect(rampingout,ramping);
+  connect(T_amb_input,logic.T_amb_input) "Extra connection to connect T_amb with logic.T_amb_input";
+  connect(T_mea, logic.T_HTF_in) "Extra connection to connect T_mea with logic.T_HTF_in";
+  connect(rampingout,ramping) "Extra connection to connect ramping with logic.ramping";
   connect(defocus_logic.level_ref, L_mea) annotation (Line(points={{
           -4.44089e-016,-34},{0,-34},{0,-20},{-38,-20},{-38,-50},{-108,-50}},
         color={0,0,127}));
