@@ -14,96 +14,64 @@ import DyMat
 import math
 import numpy as np
 
-class clean_st_files:
-	def __init__(self):
-		os.system('rm -rf /home/arfontalvo/.local/lib/omlibrary/SolarTherm/')
-		os.system('cd /home/arfontalvo/solartherm/; cmake -DCMAKE_INSTALL_PREFIX=/home/arfontalvo/.local; make -j4 install')
-
 class stcompile:
 	def __init__(self,wd):
-		os.system('export OPENMODELICALIBRARY="/home/arfontalvo/.openmodelica/libraries:/home/arfontalvo/.local/lib/omlibrary:/usr/lib/omlibrary:/usr/local/lib/omlibrary"')
-
-		if not os.path.exists(wd):
-			os.makedirs(wd)
-
-		# Changing working directory
-		os.chdir(wd)
-
-		mcargs = ['-d=nonewInst']
-
-		# Compilation of the modelica model
-		sim = simulation.Simulator('%s/TroughDrySystem.mo'%(wd))
+		os.chdir(wd)                                                                 # Changing working directory
+		sim = simulation.Simulator('%s/TroughDrySystem.mo'%(wd))                     # Compilation of the modelica model
 		print('Compiling model')
+		mcargs = ['-d=nonewInst']
 		sim.compile_model(args=mcargs)
 		sim.compile_sim(args=['-s'])
-
-		# Generating the xml file
-		sim.load_init()
+		sim.load_init()                                                              # Generating the xml file
 
 def simulate(wd, par_n, i, par_v):
-	if not os.path.exists(wd):
-		os.makedirs(wd)
-
-	# Changing working directory
-	os.chdir(wd)
-
-	# Create simulator
-	sim = simulation.Simulator('%s/TroughDrySystem.mo'%(wd), suffix=str(i))
+	os.chdir(wd)                                                                     # Changing working directory
+	sim = simulation.Simulator('%s/TroughDrySystem.mo'%(wd), suffix=str(i))          # Create simulator
 	sim.load_init()
-
-	# Parameters to update
-	sim.update_pars(par_n,par_v)
-
-	# Simulation of the model
-	sim.simulate(start=0, stop='1y', step='300s',solver='dassl', nls='homotopy')
+	sim.update_pars(par_n,par_v)                                                     # Parameters to update
+	sim.simulate(start=0, stop='1y', step='300s',solver='dassl', nls='homotopy')     # Simulation of the model
 	res = postprocess(wd,i)
 	return res
 
 class postprocess:
 	def __init__(self,wd,i):
-		# Loading result file
-		mat = DyMat.DyMatFile('%s/TroughDrySystem_res_%s.mat'%(wd,i))
+		mat = DyMat.DyMatFile('%s/TroughDrySystem_res_%s.mat'%(wd,i))                # Loading result file
+		self.solar_mult = mat.data('SM')[0]                                          # Solar multiple
+		self.t_storage = mat.data('t_storage')[0]                                    # Full load hours of storage
+		self.pri_storage = mat.data('pri_storage')[0]                                # Price of storage
+		self.eff_conv = mat.data('eff_conv')[0]*3.6                                  # tph per input W
+		self.Q_bp_des = mat.data('Q_bp_des')[0]                                      # Beneficiation process heat input
+		self.C_cap = mat.data('C_cap')[0]                                            # Capital expenditures
+		self.A_field = mat.data('A_field')[0]                                        # Field area
+		self.E_max = mat.data('E_max')[0]/1e3/3600                                   # Storage capacity (J)
+		self.C_field = mat.data('C_field')[0]                                        # Field cost
+		self.C_site = mat.data('C_site')[0]                                          # Site improvement cost
+		self.C_storage = mat.data('C_storage')[0]                                    # Storage cost
+		self.C_hx = mat.data('C_hx')[0]                                              # Heat exchanger cost
+		self.C_fbd = mat.data('C_fbd')[0]                                            # Fluidised bed cost
+		self.C_bcs = mat.data('C_bcs')[0]                                            # Blower, cyclone and separator cost
+		self.kroger = mat.data('kroger')[0]                                          # Use rock bed TES from Kroger
+		self.C_hx_ref = mat.data('C_hx_ref')[0]                                      # Heat exchanger reference cost
+		self.C_fbd_ref = mat.data('C_fbd_ref')[0]                                    # Fluidised bed reference cost
+		self.C_bcs_ref = mat.data('C_bcs_ref')[0]                                    # Blower, cyclone and separator reference cost
+		self.tpy = mat.data('m')[-1]/1000                                            # Extracting the total production of iron ore (tpy)
+		self.tpd = self.tpy/365                                                      # Average daily production (tons/day)
+		self.toh = self.tpy/(self.eff_conv*self.Q_bp_des)                            # Total operation hours
+		self.pri_elec = mat.data('pri_om_flow_iron')[0]                              # Price of electricitiy (O&M)
+		self.capf = self.tpy/(8760*self.eff_conv*self.Q_bp_des)*100                  # Calculating capacity factor
+		r = mat.data('r_disc')[0]                                                    # Real discount rate
+		n = mat.data('t_life')[0]                                                    # Plant life
+		crf = r*(1+r)**n/((1+r)**n-1)                                                # Calculating the capital recovery factor (crf)
 
-		# Obtaining parameters and cost at design
-		self.solar_mult = mat.data('SM')[0]
-		self.t_storage = mat.data('t_storage')[0]
-		self.pri_storage = mat.data('pri_storage')[0]
-		self.eff_conv = mat.data('eff_conv')[0]*3.6 #tons/h per input W
-		self.Q_bp_des = mat.data('Q_bp_des')[0]
-		self.C_cap = mat.data('C_cap')[0]
-		self.A_field = mat.data('A_field')[0]
-		self.E_max = mat.data('E_max')[0]/1e3/3600
-		self.C_field = mat.data('C_field')[0]
-		self.C_site = mat.data('C_site')[0]
-		self.C_storage = mat.data('C_storage')[0]
-		self.C_hx = mat.data('C_hx')[0]
-		self.C_fbd = mat.data('C_fbd')[0]
-		self.C_bcs = mat.data('C_bcs')[0]
-		self.kroger = mat.data('kroger')[0]
-		self.C_hx_ref = mat.data('C_hx_ref')[0]
-		self.C_fbd_ref = mat.data('C_fbd_ref')[0]
-		self.C_bcs_ref = mat.data('C_bcs_ref')[0]
-
-		self.tpy = mat.data('m')[-1]/1000 #Extracting the total production of iron ore (tons/year)
-		self.tpd = self.tpy/365 #Average daily production (tons/day)
-		self.toh = self.tpy/(self.eff_conv*self.Q_bp_des) #Total operation hours
-		self.pri_elec = mat.data('pri_om_flow_iron')[0]
-
-		self.capf = self.tpy/(8760*self.eff_conv*self.Q_bp_des)*100
-
-		# Calculating the capital recovery factor (crf)
-		r = mat.data('r_disc')[0] #Real discount rate
-		n = mat.data('t_life')[0] #Plant life
-		crf = r*(1+r)**n/((1+r)**n-1)
-
-		self.c_fix_year = math.ceil(self.tpd/100)*2*139000*0.7285 + 0.02*self.C_cap + 0.02*self.C_cap
-		self.c_var_year = self.toh*self.pri_elec
-		self.c_cap_year = crf*self.C_cap
+		self.c_labour_year = math.ceil(self.tpd/100)*2*139000*0.7285                 # Labour cost per year
+		self.c_fix_year = self.c_labour_year + 0.02*self.C_cap + 0.02*self.C_cap     # Fixed cost per year
+		self.c_var_year = self.toh*self.pri_elec                                     # Variable cost per year
+		self.c_cap_year = crf*self.C_cap                                             # Annualised cost per year
 		self.E_elec = self.c_var_year/0.182
 
 		self.lcod = (self.c_fix_year + self.c_var_year + self.c_cap_year)/(self.tpy)
-		print self.solar_mult,self.t_storage,self.lcod,self.capf
-		#os.system('rm -rf %s/TroughDrySystem_res_%s.mat'%(wd,i))
+		print('%s\t %s\t %s\t %s\t'%(self.solar_mult,self.t_storage,self.lcod,self.capf))
+		os.system('rm -rf %s/TroughDrySystem_res_%s.mat'%(wd,i))
 
 def simulation_callback(i,worksheet,res):
 	k = 0
@@ -147,27 +115,18 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 		C_fbd_ref = '24255986.0'
 		C_bcs_ref = '13491551.0'
 		pri_om_flow_iron = '438.1'
-		xopt = [4.1,31.3]
 	elif iron_ore == 2:
 		eff_conv = '6.2e-6'
 		C_hx_ref = '110970925.0'
 		C_fbd_ref = '32088823.0'
 		C_bcs_ref = '17060409.0'
 		pri_om_flow_iron = '633.2'
-		xopt = [4.53,39.7]
 
 	Q_bp_des = str(Q_fbd_des)
-
 	wd = '../examples'
-
-	# Compiling and initialising the simulation
-	stcompile(wd)
-
-	# Defining the variables to sweep
-	sol_multi = np.linspace(1,5,17)
-	t_storage = np.linspace(1,40,40)
-	sol_multi = np.append(sol_multi, xopt[0])
-	t_storage = np.append(t_storage, xopt[1])
+	stcompile(wd)                                                                    # Compiling and initialising the simulation
+	sol_multi = np.linspace(1,5,41)                                                  # Defining solar multiple to sweep
+	t_storage = np.linspace(1,40,40)                                                 # Defining storage hours to sweep
 	par_v = []
 	if expensive_storage:
 		kroger = 'true'
@@ -189,47 +148,44 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 	par_n = ['SM','t_storage','kroger','eff_conv','C_hx_ref','C_fbd_ref','C_bcs_ref','pri_om_flow_iron','Q_bp_des']
 	objfunc = functools.partial(simulate, wd, par_n)
 
-	# Writting results in text and xlsx files
-	workbook = xlsxwriter.Workbook('iron_ore_%s_%s_storage.xlsx'%(iron_ore,storage))
+	workbook = xlsxwriter.Workbook('iron_ore_%s_%s_storage.xlsx'%(iron_ore,storage)) # Writting results in text and xlsx files
 	worksheet = workbook.add_worksheet()
 	col = 0
-	worksheet.write(0,col,'Solar multiple'); col = col + 1
-	worksheet.write(0,col,'Full load hours of storage'); col = col + 1
-	worksheet.write(0,col,'LCOD ($/ton)'); col = col + 1
-	worksheet.write(0,col,'capf (%)'); col = col + 1
-	worksheet.write(0,col,'kroger'); col = col + 1
-	worksheet.write(0,col,'Total operation time (h/year)'); col = col + 1
-	worksheet.write(0,col,'Total production per year (ton/year)'); col = col + 1
-	worksheet.write(0,col,'Field area (m2)'); col = col + 1
-	worksheet.write(0,col,'Storage capacity (kWh)'); col = col + 1
-	worksheet.write(0,col,'Electricity consumption (kWh/year)'); col = col + 1
-	worksheet.write(0,col,'Cost of field ($)'); col = col + 1
-	worksheet.write(0,col,'Cost of site ($)'); col = col + 1
-	worksheet.write(0,col,'Cost of storage ($)'); col = col + 1
-	worksheet.write(0,col,'Cost of hx ($)'); col = col + 1
-	worksheet.write(0,col,'Cost of fbd ($)'); col = col + 1
-	worksheet.write(0,col,'Cost of bcs ($)'); col = col + 1
-	worksheet.write(0,col,'Capital Cost ($)'); col = col + 1
-	worksheet.write(0,col,'Fix cost per year ($)'); col = col + 1
-	worksheet.write(0,col,'Variable cost per year ($)'); col = col + 1
-	worksheet.write(0,col,'eff_conv'); col = col + 1
-	worksheet.write(0,col,'C_hx_ref'); col = col + 1
-	worksheet.write(0,col,'C_fbd_ref'); col = col + 1
-	worksheet.write(0,col,'C_bcs_ref'); col = col + 1
-	worksheet.write(0,col,'pri_om_flow_iron'); col = col + 1
-	worksheet.write(0,col,'Q_bp_des'); col = col + 1
+	worksheet.write(0,col,'Solar multiple'); col += 1
+	worksheet.write(0,col,'Full load hours of storage'); col += 1
+	worksheet.write(0,col,'LCOD ($/ton)'); col += 1
+	worksheet.write(0,col,'capf (%)'); col += 1
+	worksheet.write(0,col,'kroger'); col += 1
+	worksheet.write(0,col,'Total operation time (h/year)'); col += 1
+	worksheet.write(0,col,'Total production per year (ton/year)'); col += 1
+	worksheet.write(0,col,'Field area (m2)'); col += 1
+	worksheet.write(0,col,'Storage capacity (kWh)'); col += 1
+	worksheet.write(0,col,'Electricity consumption (kWh/year)'); col += 1
+	worksheet.write(0,col,'Cost of field ($)'); col += 1
+	worksheet.write(0,col,'Cost of site ($)'); col += 1
+	worksheet.write(0,col,'Cost of storage ($)'); col += 1
+	worksheet.write(0,col,'Cost of hx ($)'); col += 1
+	worksheet.write(0,col,'Cost of fbd ($)'); col += 1
+	worksheet.write(0,col,'Cost of bcs ($)'); col += 1
+	worksheet.write(0,col,'Capital Cost ($)'); col += 1
+	worksheet.write(0,col,'Fix cost per year ($)'); col += 1
+	worksheet.write(0,col,'Variable cost per year ($)'); col += 1
+	worksheet.write(0,col,'eff_conv'); col += 1
+	worksheet.write(0,col,'C_hx_ref'); col += 1
+	worksheet.write(0,col,'C_fbd_ref'); col += 1
+	worksheet.write(0,col,'C_bcs_ref'); col += 1
+	worksheet.write(0,col,'pri_om_flow_iron'); col += 1
+	worksheet.write(0,col,'Q_bp_des'); col += 1
 
 	pool = mp.Pool(processes=mp.cpu_count())
-
 	t = time()
-	print 'solar mult.(-), t storage (h), lcod ($/ton), capf (%)'
-
+	print('solar mult.(-)\t t storage (h)\t lcod ($/ton)\t capf (%)')
 	for i,vals in enumerate(par_v):
 		pool.apply_async(objfunc, args=(i, vals), callback=functools.partial(simulation_callback, i, worksheet))
 	pool.close()
 	pool.join()
 
-	print "Simulation time: %fs"%(time()-t)
+	print('Simulation time: %fs'%(time()-t))
 	workbook.close()
 	clean_comp_files(wd)
 	return None
@@ -237,7 +193,7 @@ def parameter_sweep(iron_ore,expensive_storage,Q_fbd_des):
 if __name__=="__main__":
 	tinit = time()
 	parameter_sweep(1,True,50e6)
-	parameter_sweep(2,True,50e6)
+	#parameter_sweep(2,True,50e6)
 	seconds = time() - tinit
 	m, s = divmod(seconds, 60)
 	h, m = divmod(m, 60)
