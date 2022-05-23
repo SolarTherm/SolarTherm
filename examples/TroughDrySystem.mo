@@ -202,6 +202,9 @@ model TroughDrySystem
 
 	SolarTherm.Models.CSP.CRS.ParabolicTrough collectors(
 		lat = lat,
+		rho_cl = eta_refl,
+		Alpha_t = eta_ab,
+		tau_g = eta_tr,
 		n_col = n_col,
 		A_col = A_col,
 		L_col = L_col)

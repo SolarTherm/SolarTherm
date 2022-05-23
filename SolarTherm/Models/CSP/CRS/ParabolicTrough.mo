@@ -33,10 +33,10 @@ model ParabolicTrough
 		"Internal volume of the metal tube";
 	
 	/***************** Optical parameters *****************/
-	parameter Real rho_cl = 0.89 "Mirror reflectivity";
-	parameter Real Alpha_t=0.97 "Tube Absorptivity";
-	parameter Real tau_g=0.91 "Glass transmissivity: from Soponova data sheet";
-	
+	parameter Real rho_cl = 0.935 "Mirror reflectivity";
+	parameter Real Alpha_t = 0.96 "Tube Absorptivity";
+	parameter Real tau_g = 0.963 "Glass transmissivity";
+
 	/******************** Parameters for longitudinal incidence angle modifier  *******************************/
 	parameter Real A0 = 4.05;
 	parameter Real A1 = 0.247;
