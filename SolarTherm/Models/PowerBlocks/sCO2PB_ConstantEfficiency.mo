@@ -81,7 +81,7 @@ model sCO2PB_ConstantEfficiency
   parameter Boolean external_parasities = true;
   parameter Boolean test_mode = true;
   parameter SI.Efficiency eta_motor = 0.95;
-  parameter Real nu_min = 0.5;
+  parameter Real nu_min = 0.2;
   parameter Real PB_output_scaling_factor = 1 "Scaling factor of PB output based on the user defined PB efficiency / PB_eff_from SSC";
   
   parameter MedRec.ThermodynamicState state_in_ref=MedRec.setState_pTX(1e5,T_in_ref_blk);
