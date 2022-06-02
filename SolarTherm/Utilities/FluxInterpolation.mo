@@ -11,10 +11,10 @@ function FluxInterpolation
 	output Real result;
 
 protected
-	Real cons1 = 0.52;
-	Real cons2 = 0.76;
+	Real cons1 = 0.56;
+	Real cons2 = 0.87;
 	Real cons3 = 1.0;
-	Real cons4 = 1.24;
+	Real cons4 = 1.39;
 	Real x = 1;
 	Real dni_clear = 1;
 	

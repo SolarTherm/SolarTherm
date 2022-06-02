@@ -71,16 +71,17 @@ double specificHeatCapacityCp(double T, int coolant){
 
 // Least-square curve-fit
 int curve_fit(int cols, double dt, double mat[cols], double * C){
-	int j, pos, ndata;
+	int j, pos, ndata, coef;
 	double chisq, theta;
+	int ncoefs = 21;
 	gsl_matrix *X, *cov;
 	gsl_vector *y, *w, *c;
 	ndata = 2*cols - 1;
-	X = gsl_matrix_alloc (ndata, 3);
+	X = gsl_matrix_alloc (ndata, ncoefs);
 	y = gsl_vector_alloc (ndata);
 	w = gsl_vector_alloc (ndata);
-	c = gsl_vector_alloc (3);
-	cov = gsl_matrix_alloc (3, 3);
+	c = gsl_vector_alloc (ncoefs);
+	cov = gsl_matrix_alloc (ncoefs, ncoefs);
 	for(j=0;j<ndata;j++){
 		if(j<cols-1){
 			pos = cols-1-j;
@@ -91,19 +92,20 @@ int curve_fit(int cols, double dt, double mat[cols], double * C){
 			theta = pos*dt;
 		}
 		gsl_matrix_set (X, j, 0, 1);
-		gsl_matrix_set (X, j, 1, cos(theta));
-		gsl_matrix_set (X, j, 2, sin(theta));
+		for(coef=1;coef<ncoefs;coef++){
+			gsl_matrix_set (X, j, coef, cos(coef*theta));
+		}
 		gsl_vector_set (y, j, mat[pos]);
 		gsl_vector_set (w, j, 1.0);
 	}
 	{
-		gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (ndata, 3);
+		gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (ndata, ncoefs);
 		gsl_multifit_linear (X, y, c, cov, &chisq, work);
 		gsl_multifit_linear_free (work);
 	}
-	C[0] = gsl_vector_get(c,0);
-	C[1] = gsl_vector_get(c,1);
-	C[2] = gsl_vector_get(c,2);
+	for(coef=0;coef<ncoefs;coef++){
+		C[coef] = gsl_vector_get(c,coef);
+	}
 	#define COV(i,j) (gsl_matrix_get(cov,(i),(j)))
 	bool verbose = false;
 	if(verbose){

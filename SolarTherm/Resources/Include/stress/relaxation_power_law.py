@@ -1,10 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os, sys, math, scipy.io
-from scipy.interpolate import interp1d, RegularGridInterpolator
-import time, ctypes, argparse
+import os, sys, math, scipy.io, scipy.optimize, argparse
+import time, ctypes
 from numpy.ctypeslib import ndpointer
-from tqdm import tqdm
+from functools import partial
+from multiprocessing import Pool
+
+sys.path.append('../..')
+
+from srlife import receiver, solverparams, library, thermal, structural, system, damage, managers
 
 # Thermal and transport properties of nitrate salt and sodium (verified)
 # Nitrate salt:
@@ -212,14 +216,7 @@ class receiver_cyl:
 		Ti = (To + hf*self.Ri*self.ln/self.kp*Tf)/(1 + hf*self.Ri*self.ln/self.kp)
 		qnet = hf*(Ti - Tf)
 		Qnet = qnet.sum(axis=1)*self.Ri*self.dt*self.dz
-		net_zero = np.where(Qnet<0)[0]
-		Qnet[net_zero] = 0.0
-		_qnet = np.concatenate((qnet[:,1:],qnet[:,::-1]),axis=1)
-		_qnet[net_zero,:] = 0.0
-		self.qnet = _qnet
-
-		for t in range(Ti.shape[0]):
-			BDp = self.Fourier(Ti[t,:])
+		self.qnet = np.concatenate((qnet[:,1:],qnet[:,::-1]),axis=1)
 
 		# Fourier coefficients
 		self.s, self.e, self.r = self.stress(Ti,To,self.times)
@@ -315,26 +312,115 @@ class receiver_cyl:
 
 		return Q_Eq,e_Eq
 
-def run_gemasolar(panel,position,days,clearSky):
-	# Instantiating receiver model
-	model = receiver_cyl(Ri = 20.0/2000, Ro = 22.4/2000)
+def setup_problem(Ro, th, H_rec, Nr, Nt, Nz, times, fluid_temp, h_flux, pressure, T_base):
+	# Setup the base receiver
+	period = 24.0                                                         # Loading cycle period, hours
+	days = 1                                                              # Number of cycles represented in the problem 
+	panel_stiffness = "disconnect"                                        # Panels are disconnected from one another
+	model = receiver.Receiver(period, days, panel_stiffness)              # Instatiating a receiver model
+
+	# Setup each of the two panels
+	tube_stiffness = "rigid"
+	panel_0 = receiver.Panel(tube_stiffness)
+
+	# Basic receiver geometry (Updated to Gemasolar)
+	r_outer = Ro*1000                                                     # Panel tube outer radius (mm)
+	thickness = th*1000                                                   # Panel tube thickness (mm)
+	height = H_rec*1000                                                   # Panel tube height (mm)
+
+	# Tube discretization
+	nr = Nr                                                               # Number of radial elements in the panel tube cross-section
+	nt = Nt                                                               # Number of circumferential elements in the panel tube cross-section
+	nz = Nz                                                               # Number of axial elements in the panel tube
+
+	# Setup Tube 0 in turn and assign it to the correct panel
+	tube_0 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_0.set_times(times)
+	tube_0.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_0.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_0.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Tube 1
+	tube_1 = receiver.Tube(r_outer, thickness, height, nr, nt, nz, T0 = T_base)
+	tube_1.set_times(times)
+	tube_1.set_bc(receiver.ConvectiveBC(r_outer-thickness, height, nz, times, fluid_temp), "inner")
+	tube_1.set_bc(receiver.HeatFluxBC(r_outer, height, nt, nz, times, h_flux), "outer")
+	tube_1.set_pressure_bc(receiver.PressureBC(times, pressure))
+
+	# Assign to panel 0
+	panel_0.add_tube(tube_0, "tube0")
+	panel_0.add_tube(tube_1, "tube1")
+
+	# Assign the panels to the receiver
+	model.add_panel(panel_0, "panel0")
+
+	# Save the receiver to an HDF5 file
+	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
+	model.save(fileName)
+
+def run_problem(zpos,nz):
+	# Load the receiver we previously saved
+	fileName = '%s/solartherm/examples/model.hdf5'%(os.path.expanduser('~'))
+	model = receiver.Receiver.load(fileName)
+
+	# Choose the material models
+	fluid_mat = library.load_fluid("nitratesalt", "base") # Sodium model
+	# Base 316H thermal and damage models, a simplified deformation model to 
+	# cut down on the run time of the 3D analysis
+	thermal_mat, deformation_mat, damage_mat = library.load_material("A230", "base", "base", "base")
+
+	# Cut down on run time for now by making the tube analyses 1D
+	# This is not recommended for actual design evaluation
+	for panel in model.panels.values():
+		for tube in panel.tubes.values():
+			tube.make_2D(tube.h/nz*zpos)
+
+	# Setup some solver parameters
+	params = solverparams.ParameterSet()
+	params['progress_bars'] = False # Print a progress bar to the screen as we solve
+	params['nthreads'] = 4 # Solve will run in multithreaded mode, set to number of available cores
+	params['system']['atol'] = 1.0e-4 # During the standby very little happens, lower the atol to accept this result
+
+	# Choose the solvers, i.e. how we are going to solve the thermal,
+	# single tube, structural system, and damage calculation problems.
+	# Right now there is only one option for each
+	# Define the thermal solver to use in solving the heat transfer problem
+	thermal_solver = thermal.FiniteDifferenceImplicitThermalSolver(params["thermal"])
+	# Define the structural solver to use in solving the individual tube problems
+	structural_solver = structural.PythonTubeSolver(params["structural"])
+	# Define the system solver to use in solving the coupled structural system
+	system_solver = system.SpringSystemSolver(params["system"])
+	# Damage model to use in calculating life
+	damage_model = damage.TimeFractionInteractionDamage(params['damage'])
+
+	# The solution manager
+	solver = managers.SolutionManager(model, thermal_solver, thermal_mat, fluid_mat,
+		structural_solver, deformation_mat, damage_mat,
+		system_solver, damage_model, pset = params)
+
+	# Actually solve for life
+	try:
+		life = solver.solve_life()
+	except RuntimeError:
+		life = np.empty(3)
+		life[:] = np.NaN
+	print("Best estimate life position %d: %f daily cycles" % (zpos,life[0]))
+	result = np.append(life,zpos)
+	return result
+
+def run_gemasolar(panel):
+	model = receiver_cyl()
 
 	# Importing data from Modelica
 	fileName = '%s/solartherm/examples/GemasolarSystemOperationCS_res.mat'%(os.path.expanduser('~'))
 	model.import_mat(fileName)
 	times = model.data[:,0]
-
-	# Filtering times
 	index = []
-	_times = []
-	time_lb = days[0]*86400
-	time_ub = days[1]*86400+3600
 	for i in range(len(times)):
-		if times[i]%1800.==0 and times[i] not in _times and time_lb<=times[i] and times[i]<time_ub:
+		if i==0:
 			index.append(i)
-			_times.append(times[i])
-
-	# Importing flux
+		elif times[i]%1800.==0 and times[i]>times[i-1]:
+			index.append(i)
 	CG = model.data[:,model._vars['heliostatField.CG[1]'][2]:model._vars['heliostatField.CG[450]'][2]+1]
 	m_flow_tb = model.data[:,model._vars['heliostatField.m_flow_tb'][2]]
 	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
@@ -353,69 +439,105 @@ def run_gemasolar(panel,position,days,clearSky):
 	m_flow_tb[bump] = 0.0
 	CG[bump,:] = 0.0
 
+	times = times[index]/3600.
+	times = times.flatten()
+	CG = CG[index,:]
+	m_flow_tb = m_flow_tb[index]
+	Tamb = Tamb[index]
+	h_ext = h_ext[index]
+
 	stress = np.zeros((times.shape[0],model.nz))
 	Tf = model.T_in*np.ones((times.shape[0],model.nz+1))
-	strain = np.zeros((times.shape[0],model.nz))
-	relax = np.zeros((times.shape[0],model.nz))
-	Tcrown = np.zeros((times.shape[0],model.nz))
-	hf = np.zeros((times.shape[0],model.nz))
-	model.times = times
-
-	for k in tqdm(range(model.nz)):
+	qnet = np.zeros((times.shape[0],2*model.nt-1,model.nz))
+	for k in range(model.nz):
 		Qnet = model.Temperature(m_flow_tb, Tf[:,k], Tamb, CG[:,k], h_ext)
 		C = model.specificHeatCapacityCp(Tf[:,k])*m_flow_tb
 		Tf[:,k+1] = Tf[:,k] + np.divide(Qnet, C, out=np.zeros_like(C), where=C!=0)
 		stress[:,k] = model.s/1e6
-		Tcrown[:,k] = model.Tcrown
-		strain[:,k] = model.e
-		relax[:,k] = model.r/1e6
+		qnet[:,:,k] = model.qnet/1e6
 
-	lb = model.nbins*(panel-1) + int(position)
+	pressure = np.where(m_flow_tb>0, 0.1, m_flow_tb)
+	pressure = pressure.flatten()
+	lb = model.nbins*(panel-1)
+	ub = lb + model.nbins
+	setup_problem(
+		model.Ro,
+		model.thickness,
+		model.H_rec,
+		9,
+		2*model.nt-1,
+		model.nbins,
+		times,
+		Tf[:,lb:ub],
+		qnet[:,:,lb:ub],
+		pressure,
+		Tf[0,0])
+	lifeName = '%s/solartherm/examples/st_nash_tube_stress_res_%s.txt'%(os.path.expanduser('~'),panel)
+	import datetime
+	dt = datetime.datetime.now()
+	ds = dt.strftime("%Y-%m-%d-%H:%M:%S %p")
+	if not os.path.isfile(lifeName):
+		f = open(lifeName,'a')
+		f.write('Simulation: %s\n'%ds)
+		f.write('Section,life,Dc,Df\n')
+		f.close()
+	else:
+		f = open(lifeName,'a')
+		f.write('Simulation: %s\n'%ds)
+		f.close()
 
-	scipy.io.savemat(
-        'results.mat',{
-        'Tf_vs_nz':Tf,
-        'CG':CG,
-        'm_flow_tb':m_flow_tb,
-        'relax':relax,
-        'stress':stress,
-        'Tcrown':Tcrown,
-        'strain':strain
-        })
+	fun = partial(run_problem, nz=model.nbins)
+	with Pool(4) as p:
+		lives = p.map(fun, np.linspace(1,model.nbins,num=model.nbins,dtype=int))
+	f = open(lifeName,'a')
+	for i in lives:
+		f.write('%s,%s,%s,%s\n'%(int(i[3]-1),i[0],i[1],i[2]))
+	f.close()
 
-	fig, axes = plt.subplots(2,2, figsize=(11,8))
-	# HTF temperature at several locations
-	axes[0,0].plot(times,Tf[:,lb])
-	axes[0,0].set_ylabel('HTF temperature (K)')
-	axes[0,0].set_xlabel('Time [h]')
-	axe00 = axes[0,0].twinx()
-	axe00.plot(times,Tcrown[:,lb],'r')
-	axe00.set_ylabel('Crown temperature (K)')
-	# Mass flow rate
-	axes[0,1].plot(times,m_flow_tb)
-	axes[0,1].set_ylabel('Mass flow rate (kg/s)')
-	axes[0,1].set_xlabel('Time [h]')
-	# Concentrated solar fluxes
-	axes[1,0].plot(times,CG[:,lb]/1e6)
-	axes[1,0].set_ylabel('CG (MW/m2)')
-	axes[1,0].set_xlabel('Time [h]')
-	# Equivalent stress
-	axes[1,1].plot(times,relax[:,lb])
-	#axes[1,1].plot(times,stress[:,lb],'r')
-	axes[1,1].set_ylabel('Relaxed stress [MPa]')
-	axes[1,1].set_xlabel('Time [h]')
-	# Show
-	plt.tight_layout()
-	plt.savefig('results.png')
+	matName = '%s/solartherm/examples/st_nash_tube_stress_res.mat'%os.path.expanduser('~')
+	if not os.path.isfile(matName):
+		scipy.io.savemat(matName,{
+						"times":times/3600.,
+						"fluid_temp":Tf,
+						"CG":CG,
+						"m_flow_tb":m_flow_tb,
+						"pressure":pressure,
+						"h_flux":qnet/1e6
+						})
 
-#	fig, axes = plt.subplots()
-#	axes.plot(es, ss, 'r-')
-#	axes.set_ylabel('Stress [MPa]')
-#	axes.set_xlabel('Strain [mm/mm]')
-#	plt.savefig('uniaxial_neml.png')
+	figName = '%s/solartherm/examples/st_nash_tube_stress_fig.png'%os.path.expanduser('~')
+	if not os.path.isfile(figName):
+		fig, axes = plt.subplots(2,2, figsize=(11,8))
+		# HTF temperature at several locations
+		for i in range(9):
+			pos = i*model.nbins
+			axes[0,0].plot(times/3600.,Tf[:,pos], label='z[%s]'%pos)
+		axes[0,0].set_ylabel('HTF temperature (K)')
+		axes[0,0].set_xlabel('Time [h]')
+		axes[0,0].legend(loc='best', frameon=False)
+		# Mass flow rate
+		axes[0,1].plot(times/3600.,m_flow_tb)
+		axes[0,1].set_ylabel('Mass flow rate (kg/s)')
+		axes[0,1].set_xlabel('Time [h]')
+		# Concentrated solar fluxes
+		for i in range(9):
+			pos = i*model.nbins
+			axes[1,0].plot(times/3600.,CG[:,pos], label='z[%s]'%pos)
+		axes[1,0].set_ylabel('CG (W/m2)')
+		axes[1,0].set_xlabel('Time [h]')
+		axes[1,0].legend(loc='best', frameon=False)
+		# Equivalent stress
+		for i in range(9):
+			pos = i*model.nbins
+			axes[1,1].plot(times/3600.,stress[:,pos], label='z[%s]'%pos)
+		axes[1,1].set_ylabel('Equivalent stress [MPa]')
+		axes[1,1].set_xlabel('Time [h]')
+		axes[1,1].legend(loc='best', frameon=False)
+		# Show
+		plt.savefig(figName)
 
 def run_verification():
-	model = receiver(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
+	model = receiver_cyl(Ri = 30.098/2e3, Ro = 33.4/2e3, T_in = 290, T_out = 565, nz = 450, nt = 91,
                      R_fouling = 0.0, ab = 0.968, em = 0.870, kp = 21.0, H_rec = 10.5, D_rec = 8.5,
                      nbins = 50, alpha = 20e-6, Young = 165e9, poisson = 0.31, verification = True)
 
@@ -430,14 +552,10 @@ def run_verification():
 if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='Estimates average damage of a representative tube in a receiver panel')
 	parser.add_argument('--panel', type=int, default=1, help='Panel to be simulated. Default=1')
-	parser.add_argument('--position', type=float, default=1, help='Panel position to be simulated. Default=1')
-	parser.add_argument('--days', nargs=2, type=int, default=[0,1], help='domain of days to simulate')
-	parser.add_argument('--clearSky', type=bool, default=False, help='Run clear sky DNI (requires to have the solartherm results)')
 	args = parser.parse_args()
 
 	tinit = time.time()
-	run_gemasolar(args.panel,args.position,args.days,args.clearSky)
-	#run_verification()
+	run_gemasolar(args.panel)
 	seconds = time.time() - tinit
 	m, s = divmod(seconds, 60)
 	h, m = divmod(m, 60)
