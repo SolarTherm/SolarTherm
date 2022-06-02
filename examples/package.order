@@ -11,9 +11,6 @@ SimpleSystemOptimalDispatch
 SimpleSystemMIPDispatch
 Sodium_MS_System
 SodiumReceiverStress
-FlowPathStress
-FlowPathStressSalt
 GemasolarSystem
 GemasolarSystemOperation
 TroughDrySystem
-ReceiverAnnualFluxInterpolation
