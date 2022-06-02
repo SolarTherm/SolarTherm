@@ -282,7 +282,7 @@ model GemasolarSystem
 			Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
-	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatFieldOperation heliostatField(
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,

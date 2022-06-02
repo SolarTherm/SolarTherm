@@ -33,10 +33,10 @@ model ParabolicTrough
 		"Internal volume of the metal tube";
 	
 	/***************** Optical parameters *****************/
-	parameter Real rho_cl = 0.89 "Mirror reflectivity";
-	parameter Real Alpha_t=0.97 "Tube Absorptivity";
-	parameter Real tau_g=0.91 "Glass transmissivity: from Soponova data sheet";
-	
+	parameter Real rho_cl = 0.935 "Mirror reflectivity";
+	parameter Real Alpha_t = 0.96 "Tube Absorptivity";
+	parameter Real tau_g = 0.963 "Glass transmissivity";
+
 	/******************** Parameters for longitudinal incidence angle modifier  *******************************/
 	parameter Real A0 = 4.05;
 	parameter Real A1 = 0.247;
@@ -71,6 +71,7 @@ model ParabolicTrough
 	SI.Angle zen "Solar zenith angle";
 	SI.Angle inc "Solar incidence angle";
 	Real IAM "Incidence angle modifier";
+	Real cosinc = cos(inc) "Cosine of incidence angle";
 
 	SI.HeatFlowRate Qabs;
 	SI.HeatFlowRate Qf;
@@ -85,7 +86,7 @@ equation
 
 	inc = Modelica.Math.acos(((cos(zen))^2 + (cos(dec))^2*(sin(hra))^2)^0.5);
 
-	IAM = cos(inc);
+	IAM = min(1,(cos(inc) + 0.000884*to_deg(inc) - 0.0000537*(to_deg(inc))^2)/cos(inc))*cos(inc);
 
 	eta_opt = rho_cl*Alpha_t*tau_g*IAM;
 

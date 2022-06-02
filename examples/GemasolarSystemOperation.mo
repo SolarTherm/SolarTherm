@@ -26,13 +26,13 @@ model GemasolarSystemOperation
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
 
 	// Weather data
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/seville_spain_37.558_-5.326_60_tmy_2005_2014.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 
-	parameter nSI.Angle_deg lon = -116.780 "Longitude (+ve East)";
-	parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
-	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
-	parameter Integer year = 2008 "Meteorological year";
+	parameter nSI.Angle_deg lon = -5.326 "Longitude (+ve East)";
+	parameter nSI.Angle_deg lat = 37.558 "Latitude (+ve North)";
+	parameter nSI.Time_hour t_zone = 1 "Local time zone (UCT=0)";
+	parameter Integer year = 2006 "Meteorological year";
 
 	// Field
 	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
@@ -47,13 +47,14 @@ model GemasolarSystemOperation
 	parameter Real he_av_design = 0.99 "Helisotats availability";
 
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
-	parameter SI.Irradiance dni_des = 980 "DNI at design point";
+	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 
 
 	// Receiver
 	parameter Integer N_pa_rec = 18 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
-	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
+	parameter Integer N_fp_rec = 2 "Number of panels in receiver";
+	parameter SI.Diameter D_tb_rec = 22.4e-3 "Receiver tube outer diameter";
 
 	parameter Real ar_rec = 18.67/15 "Height to diameter aspect ratio of receiver aperture";
 
@@ -286,6 +287,7 @@ model GemasolarSystemOperation
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
+		t_zone = data.t_zone,
 		ele_min(displayUnit = "deg") = ele_min,
 		use_wind = use_wind,
 		Wspd_max = Wspd_max,
@@ -309,6 +311,7 @@ model GemasolarSystemOperation
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
 		N_pa = N_pa_rec,
+		N_fp = N_fp_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
