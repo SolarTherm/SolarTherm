@@ -20,8 +20,6 @@ double specificHeatCapacityCp(double T, int coolant);
 
 int curve_fit(int cols, double dt, double mat[cols], double * C);
 
-int curve_fit_net_heat(int cols, double dt, double mat[cols], double * C);
-
 void Temperature (int coolant, double Ri,double Ro, double m_flow, double Tf, double Tamb, double CG, int nt, double R_fouling, double ab, double em, double kp, double h_ext, 
 						double * BDp, double * BDpp, double * Ti, double * To, double * Qnet);
 

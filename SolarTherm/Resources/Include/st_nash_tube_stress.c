@@ -23,11 +23,11 @@ void stress(
 	double * Tcrown_o,
 	double * T_fluid,
 	double * stress,
-	double * qcoefs
+	double * qnet
 	)
 	{
 
-	double BDp[3], BDpp[3], Ti[nt], To[nt], Tf[nz+1], Qnet[nt], coefs[15];
+	double BDp[3], BDpp[3], Ti[nt], To[nt], Tf[nz+1], Qnet[nt];
 	double Tcrown_i[nz];
 	double theta = 0.;
 	double C;
@@ -41,7 +41,6 @@ void stress(
 	double Q;
 	double stress_sec[5];
 	double strain_sec[1];
-	double dt = pi/(nt-1);
 
 	// GSL matrix inverse
 	gsl_matrix *props = gsl_matrix_alloc(3, 3);         // Elasticity tensor
@@ -77,13 +76,11 @@ void stress(
 		T_fluid[k-1] = Tf[k];
 		Tcrown_i[k-1] = Ti[0];
 		Tcrown_o[k-1] = To[0];
-		curve_fit_net_heat(nt, dt, Qnet, coefs);
-		qcoefs[(k-1)*8] = coefs[0];
-		for (j=1; j<=7; j++){
-			qcoefs[(k-1)*8 + j] = coefs[2*j-1];
+		for (j=0; j<nt; j++){
+			qnet[(k-1)*nt + j] = Qnet[j];
 		}
 		Thermoelastic(To[0], Ro, theta, Ro, Ri, alpha, E, nu, BDp, BDpp, invprop, stress_sec, strain_sec);
-		stress[k-1] = stress_sec[4];
+		stress[k-1] = stress_sec[4]/1e6;
 	}
 
 	return;
