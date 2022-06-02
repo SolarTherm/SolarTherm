@@ -71,6 +71,11 @@ class receiver_cyl:
 						ctypes.c_double,
 						ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),
 						ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+		self.data = np.genfromtxt('A230.csv', delimiter=',',skip_header=1)
+		self.fun_n = interp1d(self.data[:,0], self.data[:,2], bounds_error=False, fill_value=(self.data[0,2],self.data[-1,2]))
+		self.fun_s0 = interp1d(self.data[:,0], self.data[:,1], bounds_error=False, fill_value=(self.data[0,1],self.data[-1,1]))
+		self.times = np.empty(1)
+		self.Tcreep = self.data[0,0]
 
 	def import_mat(self,fileName):
 		mat = scipy.io.loadmat(fileName, chars_as_strings=False)
@@ -93,6 +98,13 @@ class receiver_cyl:
 					absc = (names[i], descr[i])
 		del mat
 
+	def density(self,T):
+		if self.coolant == 'salt':
+			d = 2090.0 - 0.636 * (T - 273.15)
+		else:
+			d = 219.0 + 275.32 * (1.0 - T / 2503.7) + 511.58 * np.sqrt(1.0 - T / 2503.7)
+		return d
+
 	def dynamicViscosity(self,T):
 		if self.coolant == 'salt':
 			eta = 0.001 * (22.714 - 0.120 * (T - 273.15) + 2.281e-4 * pow((T - 273.15),2) - 1.474e-7 * pow((T - 273.15),3))
@@ -113,6 +125,41 @@ class receiver_cyl:
 		else:
 			C = 1000 * (1.6582 - 8.4790e-4 * T + 4.4541e-7 * pow(T,2) - 2992.6 * pow(T,-2))
 		return C
+
+	def htfs(self, v_flow, Tf):
+		# Flow and thermal variables
+		"""
+			hf: Heat transfer coefficient due to internal forced-convection
+			mu: HTF dynamic viscosity (Pa-s)
+			kf: HTF thermal conductivity (W/m-K)
+			C:  HTF specific heat capacity (J/kg-K)
+			Re: HTF Reynolds number
+			Pr: HTF Prandtl number
+			Nu: Nusselt number due to internal forced convection
+		"""
+
+		# HTF thermo-physical properties
+		mu = self.dynamicViscosity(Tf)                 # HTF dynamic viscosity (Pa-s)
+		kf = self.thermalConductivity(Tf)              # HTF thermal conductivity (W/m-K)
+		C = self.specificHeatCapacityCp(Tf)            # HTF specific heat capacity (J/kg-K)
+		rho = self.density(Tf)                         # HTF specific heat capacity (J/kg-K)
+
+		# HTF internal flow variables
+		Re = rho * v_flow * self.d/ mu                 # HTF Reynolds number
+		Pr = mu * C / kf                               # HTF Prandtl number
+
+		if self.coolant == 'salt':
+			Nu = 0.023 * pow(Re, 0.8) * pow(Pr, 0.4)
+		else:
+			Nu = 5.6 + 0.0165 * pow(Re*Pr, 0.85) * pow(Pr, 0.01);
+
+		# HTF internal heat transfer coefficient
+		if self.R_fouling==0:
+			hf = Nu * kf / self.d
+		else:
+			hf = Nu * kf / self.d / (1. + Nu * kf / self.d * self.R_fouling)
+
+		return hf
 
 	def Temperature(self, m_flow, Tf, Tamb, CG, h_ext):
 		# Flow and thermal variables
@@ -172,24 +219,51 @@ class receiver_cyl:
 		self.qnet = np.concatenate((qnet[:,1:],qnet[:,::-1]),axis=1)
 
 		# Fourier coefficients
-		self.s, self.e = self.stress(Ti,To)
+		self.s, self.e, self.r = self.stress(Ti,To,self.times)
+		self.Tcrown = To[:,0]
 		return Qnet
 
 	def Fourier(self,T):
-		coefs = np.empty(3)
+		coefs = np.empty(21)
 		self.fun(self.nt, self.dt, T, coefs)
 		return coefs
 
-	def stress(self, Ti, To):
-		stress = np.zeros(Ti.shape[0])
-		strain = np.zeros(Ti.shape[0])
+	def stress(self, Ti, To, times):
+		se = np.zeros(Ti.shape[0])
+		et = np.zeros(Ti.shape[0])
+		sr = np.zeros(Ti.shape[0])
+		ecr = 0
 		for t in range(Ti.shape[0]):
 			BDp = self.Fourier(Ti[t,:])
 			BDpp = self.Fourier(To[t,:])
-			stress[t], strain[t] = self.Thermoelastic(To[t,0], self.Ro, 0., BDp, BDpp)
-		stress = np.array(stress)
-		strain = np.array(strain)
-		return stress,strain
+			se[t], et[t] = self.Thermoelastic(To[t,0], self.Ro, 0., BDp, BDpp)
+			dt = times[t]-times[t-1]
+#			if t>0:
+			sr[t] = max(se[t] - self.E*ecr,0)
+			ecr += self.relaxation(sr[t],To[t,0],dt)
+#				sr[t] = self.relaxation(se[t],To[t,0],dt,sr[t-1],ecr)
+#				ecr += (se[t] - sr[t])/self.E
+		return se,et,sr
+
+	def relaxation(self,sr_n,Tn1,dt):
+		n = self.fun_n(Tn1)
+		s_0 = self.fun_s0(Tn1)*1e6
+		if Tn1>self.Tcreep:
+			de_r = dt*pow(sr_n/994.3e6,7.799)
+		else:
+			de_r = 0.
+		return de_r
+#	def relaxation(self,se_n,Tn1,dt,sr_n,er_n):
+#		n = self.fun_n(Tn1)
+#		s_0 = self.fun_s0(Tn1)
+#		if Tn1>self.Tcreep:
+#			if er_n == 0:
+#				sr_n1 = s_0*pow(pow(se_n/s_0,1.-n) - self.E/s_0*(1.-n)*dt,1./(1.-n))
+#			else:
+#				sr_n1 = s_0*pow(pow(se_n/s_0,1.-n) - self.E/s_0*(1.-n)*dt,1./(1.-n))
+#		else:
+#			sr_n1 = se_n
+#		return sr_n1
 
 	def Thermoelastic(self, T, r, theta, BDp, BDpp):
 		Tbar_i = BDp[0]; BP = BDp[1]; DP = BDp[2];
@@ -214,9 +288,11 @@ class receiver_cyl:
 
 		Q_Eq = np.sqrt(0.5*(pow(Qr -Qtheta,2) + pow(Qr -Qz,2) + pow(Qz -Qtheta,2)) + 6*pow(Qrtheta,2));
 		Q = np.zeros(3)
-		Q[0] = Qr; Q[1] = Qtheta; Q[2] = Qz;
-		e = np.dot(self.invprops, Q)
-		e_Eq = np.sqrt(2.)*D*np.sqrt(pow(e[0] - e[1],2) + pow(e[0] - e[2],2) + pow(e[2] - e[1],2));
+		Q[0] = Qr; Q[1] = Qtheta; Q[2] = Qz
+		e = np.zeros(3)
+		e[0] = 1/self.E*(Qr - self.nu*(Qtheta + Qz))
+		e[1] = 1/self.E*(Qtheta - self.nu*(Qr + Qz))
+		e_Eq = np.sqrt(2.)*D*np.sqrt(pow(e[0] - e[1],2) + pow(e[0] - e[2],2) + pow(e[2] - e[1],2))
 
 		if self.verification:
 			print("=============== NPS Sch. 5S 1\" S31609 at 450degC ===============")
@@ -336,7 +412,7 @@ def run_gemasolar(panel):
 	model = receiver_cyl()
 
 	# Importing data from Modelica
-	fileName = '%s/solartherm/examples/GemasolarSystemOperation_res.mat'%(os.path.expanduser('~'))
+	fileName = '%s/solartherm/examples/GemasolarSystemOperationCS_res.mat'%(os.path.expanduser('~'))
 	model.import_mat(fileName)
 	times = model.data[:,0]
 	index = []
@@ -349,6 +425,19 @@ def run_gemasolar(panel):
 	m_flow_tb = model.data[:,model._vars['heliostatField.m_flow_tb'][2]]
 	Tamb = model.data[:,model._vars['receiver.Tamb'][2]]
 	h_ext = model.data[:,model._vars['receiver.h_conv'][2]]
+	ele = model.data[:,model._vars['heliostatField.ele'][2]]
+
+	# Getting inputs based on filtered times
+	times = times[index]/3600.
+	times = times.flatten()
+	CG = CG[index,:]
+	m_flow_tb = m_flow_tb[index]
+	Tamb = Tamb[index]
+	h_ext = h_ext[index]
+	ele = ele[index]
+	bump = np.where(ele==0)[0]
+	m_flow_tb[bump] = 0.0
+	CG[bump,:] = 0.0
 
 	times = times[index]/3600.
 	times = times.flatten()
