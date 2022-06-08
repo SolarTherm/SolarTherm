@@ -4,6 +4,7 @@ within SolarTherm.Utilities;
 // FIXME place this in a folder near other dispatch strategy routines...
 
 function LinProgFunc
+
     import SolarTherm.Utilities.Tables.STMotab;
 
     input STMotab.STMotab wea_motab;

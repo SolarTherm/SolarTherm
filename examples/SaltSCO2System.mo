@@ -193,8 +193,8 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.044 "Real discount rate"; //Calculated to obtain a nominal discount rate of 0.0701, based on Downselect Criteria, Table 2
 	parameter Real r_i = 0.025 "Inflation rate"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_life(unit = "year") = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
-	parameter Integer t_cons(unit = "year") = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
+	parameter Integer t_life = 30 "Lifetime of plant"; //Based on Downselect Criteria, Table 2
+	parameter Integer t_cons = 0 "Years of construction"; //Based on Downselect Criteria, Table 2 it should be 3, but for LCOE simple calculation is set to 0
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 	parameter FI.AreaPrice pri_field = if currency == Currency.USD then 75 else 75 / r_cur "Field cost per design aperture area";
@@ -247,36 +247,36 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		t_zone = t_zone,
 		year = year,
 		file = wea_file) annotation(
-											Placement(visible = true, transformation(extent = {{-132, -56}, {-102, -28}}, rotation = 0)));
+			Placement(visible = true, transformation(extent = {{-132, -56}, {-102, -28}}, rotation = 0)));
 
 	//DNI_input
 	Modelica.Blocks.Sources.RealExpression DNI_input(
 		y = data.DNI) annotation(
-									Placement(transformation(extent = {{-140, 60}, {-120, 80}})));
+			Placement(transformation(extent = {{-140, 60}, {-120, 80}})));
 
 	//Tamb_input
 	Modelica.Blocks.Sources.RealExpression Tamb_input(
 		y = data.Tdry) annotation(
-									Placement(transformation(extent = {{140, 70}, {120, 90}})));
+			Placement(transformation(extent = {{140, 70}, {120, 90}})));
 
 	//WindSpeed_input
 	Modelica.Blocks.Sources.RealExpression Wspd_input(
 		y = data.Wspd) annotation(
-									Placement(transformation(extent = {{-140, 20}, {-114, 40}})));
+			Placement(transformation(extent = {{-140, 20}, {-114, 40}})));
 
 	//pressure_input
 	Modelica.Blocks.Sources.RealExpression Pres_input(
 		y = data.Pres) annotation(
-									Placement(transformation(extent = {{76, 18}, {56, 38}})));
+			Placement(transformation(extent = {{76, 18}, {56, 38}})));
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
 		y = heliostatsField.W_loss + pumpHot.W_loss + tankHot.W_loss + tankCold.W_loss + receiver.W_dot_pump + controlHot.W_loss) annotation(
-																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
+			Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
 	Modelica.Blocks.Logical.Or or1 annotation(
-												Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
+			Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
 
 	//Sun
 	SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -285,7 +285,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		t_zone = data.t_zone,
 		year = data.year,
 		redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
-																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
+			Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSAM heliostatsField(
@@ -304,7 +304,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		nu_start = nu_start,
 		Q_design = Q_rec_out,
 		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
-																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+			Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.ChlorideSaltReceiver receiver(
@@ -318,7 +318,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		ab = ab_rec,
 		m_flow_rec_des = m_flow_fac,
 		const_alpha = true) annotation(
-								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
+			Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
 	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
@@ -333,13 +333,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		use_L = true,
 		W_max = W_heater_hot,
 		T_set = T_hot_aux_set) annotation(
-												Placement(transformation(extent = {{16, 54}, {36, 74}})));
+			Placement(transformation(extent = {{16, 54}, {36, 74}})));
 
 	// Pump hot
 	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_hot) annotation(
-																				Placement(transformation(extent = {{66, 38}, {78, 50}})));
+			Placement(transformation(extent = {{66, 38}, {78, 50}})));
 
 	// Cold tank
 	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
@@ -354,13 +354,13 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		use_L = true,
 		W_max = W_heater_cold,
 		T_set = T_cold_aux_set) annotation(
-												Placement(transformation(extent = {{64, -28}, {44, -8}})));
+			Placement(transformation(extent = {{64, -28}, {44, -8}})));
 
 	// Pump cold
 	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_cold) annotation(
-										Placement(transformation(extent = {{10, -30}, {-2, -18}})));
+			Placement(transformation(extent = {{10, -30}, {-2, -18}})));
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
@@ -371,7 +371,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
 		L_df_off = hot_tnk_full_lb) annotation(
-																								Placement(transformation(extent = {{48, 72}, {60, 58}})));
+			Placement(transformation(extent = {{48, 72}, {60, 58}})));
 
 	// ReceiverControl
 	SolarTherm.Models.Control.ReceiverControl controlCold(
@@ -384,7 +384,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		L_on = cold_tnk_crit_ub,
 		Ti = Ti,
 		Kp = Kp) annotation(
-									Placement(transformation(extent = {{24, -10}, {10, 4}})));
+			Placement(transformation(extent = {{24, -10}, {10, 4}})));
 
 	// Power block
 	SolarTherm.Models.PowerBlocks.sCO2CycleNREL powerBlock(
@@ -400,12 +400,12 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 		T_in_ref = T_in_ref_blk,
 		T_out_ref = T_out_ref_blk,
 		Q_flow_ref = Q_flow_des) annotation(
-										Placement(transformation(extent = {{88, 4}, {124, 42}})));
+			Placement(transformation(extent = {{88, 4}, {124, 42}})));
 
 	// Price
 	SolarTherm.Models.Analysis.Market market(
 		redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
-																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
+			Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
 	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
 	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
@@ -417,7 +417,7 @@ model SaltSCO2System "High temperature salt-sCO2 system"
 
 initial equation
 	if fixed_field then
-		P_gross = Q_flow_des * eff_cyc;
+		P_gross = Q_flow_des * eff_blk;
 	else
 		R_des = if match_sam then SM*Q_flow_des*(1 + rec_fr) else SM*Q_flow_des/(1 - rec_fr);
 	end if;

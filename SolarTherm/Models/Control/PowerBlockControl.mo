@@ -77,9 +77,10 @@ equation
   m_flow = logic.m_flow * PB_ramp_fraction;
 //End Zeb Ramping
 
-  annotation (Documentation(revisions="<html>
+  annotation (Documentation(revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Text(origin = {0, 140}, lineColor = {24, 5, 250}, extent = {{-120, 19}, {120, -19}}, textString = "%name")}));
 end PowerBlockControl;

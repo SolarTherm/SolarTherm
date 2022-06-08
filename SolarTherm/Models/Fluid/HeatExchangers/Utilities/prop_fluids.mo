@@ -29,8 +29,10 @@ function prop_fluids
   output SI.SpecificEntropy s_MS2 "Molten Salt specific entropy @outlet temperature";
   
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
-  protected
+  replaceable package Medium2 = Media.MoltenSalt.MoltenSalt_ph
+	constrainedby Modelica.Media.Interfaces.PartialMedium"Medium props for Molten Salt";
+
+protected
   Medium1.ThermodynamicState state_mean_Na;
   Medium1.ThermodynamicState state_input_Na;
   Medium1.ThermodynamicState state_output_Na;

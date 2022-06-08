@@ -220,8 +220,8 @@ model Reference_2_solstice
 	parameter Real r_disc = 0.07 "Real discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
 
-	parameter Integer t_life = 27 "Lifetime of plant";
-	parameter Integer t_cons = 3 "Years of construction";
+	parameter Integer t_life(unit = "year") = 27 "Lifetime of plant";
+	parameter Integer t_cons(unit = "year") = 3 "Years of construction";
 
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD"; // Valid for 2019. See https://www.rba.gov.au/
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";

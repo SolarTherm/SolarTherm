@@ -22,3 +22,12 @@ Small_SolarSalt
 NaSaltSCO2System_modular
 NaGraphiteCO2System
 SimpleSystemOptimalDispatch
+SimpleSystemOperation
+SimpleSystemMIPDispatch
+Sodium_MS_System
+SodiumReceiverStress
+GemasolarSystem
+GemasolarSystemOperation
+TroughDrySystem
+NaSaltsCO2System
+NaSaltsCO2SystemOperation

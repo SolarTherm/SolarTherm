@@ -119,8 +119,8 @@ model Reference_2
 	parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
 	parameter SI.AbsolutePressure p_blk = 10e6 "Power block operating pressure";
 
-	parameter SI.Temperature blk_T_amb_des = 316.15 "Ambient temperature at design for power block";
-	parameter SI.Temperature par_T_amb_des = 298.15 "Ambient temperature at design point";
+	parameter SI.Temperature blk_T_amb_des = from_degC(43) "Ambient temperature at design for power block";
+	parameter SI.Temperature par_T_amb_des = from_degC(25) "Ambient temperature at design point";
 
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
 	parameter SI.Temperature T_in_ref_blk = from_degC(574) "HTF inlet temperature to power block at design";
@@ -249,36 +249,36 @@ model Reference_2
 		t_zone = t_zone,
 		year = year,
 		file = wea_file) annotation(
-											Placement(visible = true, transformation(extent = {{-132, -56}, {-102, -28}}, rotation = 0)));
+			Placement(visible = true, transformation(extent = {{-132, -56}, {-102, -28}}, rotation = 0)));
 
 	//DNI_input
 	Modelica.Blocks.Sources.RealExpression DNI_input(
 		y = data.DNI) annotation(
-									Placement(transformation(extent = {{-140, 60}, {-120, 80}})));
+			Placement(transformation(extent = {{-140, 60}, {-120, 80}})));
 
 	//Tamb_input
 	Modelica.Blocks.Sources.RealExpression Tamb_input(
 		y = data.Tdry) annotation(
-									Placement(transformation(extent = {{140, 70}, {120, 90}})));
+			Placement(transformation(extent = {{140, 70}, {120, 90}})));
 
 	//WindSpeed_input
 	Modelica.Blocks.Sources.RealExpression Wspd_input(
 		y = data.Wspd) annotation(
-									Placement(transformation(extent = {{-140, 20}, {-114, 40}})));
+			Placement(transformation(origin = {-130, 29.54}, extent = {{-10, -10}, {10, 10}})));
 
 	//pressure_input
 	Modelica.Blocks.Sources.RealExpression Pres_input(
 		y = data.Pres) annotation(
-									Placement(transformation(extent = {{76, 18}, {56, 38}})));
+			Placement(transformation(extent = {{76, 18}, {56, 38}})));
 
 	//parasitic inputs
 	Modelica.Blocks.Sources.RealExpression parasities_input(
-		y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
-																														Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
+		y = heliostatField.W_loss + pumpHot.W_loss + pumpCold.W_loss + tankHot.W_loss + tankCold.W_loss) annotation(
+			Placement(transformation(extent = {{-13, -10}, {13, 10}}, rotation = -90, origin = {109, 60})));
 
 	// Or block for defocusing
 	Modelica.Blocks.Logical.Or or1 annotation(
-												Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
+			Placement(transformation(extent = {{-102, 4}, {-94, 12}})));
 
 	//Sun
 	SolarTherm.Models.Sources.SolarModel.Sun sun(
@@ -287,10 +287,10 @@ model Reference_2
 		t_zone = data.t_zone,
 		year = data.year,
 		redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
-																										Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
+			Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
-	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatField(
 		n_h = n_heliostat,
 		lon = data.lon,
 		lat = data.lat,
@@ -306,7 +306,7 @@ model Reference_2
 		Q_design = Q_flow_defocus,
 		nu_start = nu_start,
 		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
-																																									Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+			Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.ReceiverSimple receiver(
@@ -318,7 +318,7 @@ model Reference_2
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec) annotation(
-								Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
+			Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
 
 	// Hot tank
 	SolarTherm.Models.Storage.Tank.Tank tankHot(
@@ -333,13 +333,13 @@ model Reference_2
 		use_L = true,
 		W_max = W_heater_hot,
 		T_set = T_hot_aux_set) annotation(
-												Placement(transformation(extent = {{16, 54}, {36, 74}})));
+			Placement(transformation(extent = {{16, 54}, {36, 74}})));
 
 	// Pump hot
 	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_hot) annotation(
-																				Placement(transformation(extent = {{66, 38}, {78, 50}})));
+			Placement(transformation(extent = {{66, 38}, {78, 50}})));
 
 	// Cold tank
 	SolarTherm.Models.Storage.Tank.Tank tankCold(
@@ -354,18 +354,18 @@ model Reference_2
 		use_L = true,
 		W_max = W_heater_cold,
 		T_set = T_cold_aux_set) annotation(
-												Placement(transformation(extent = {{64, -28}, {44, -8}})));
+			Placement(transformation(extent = {{64, -28}, {44, -8}})));
 
 	// Pump cold
 	SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(
 		redeclare package Medium = Medium,
 		k_loss = k_loss_cold) annotation(
-										Placement(transformation(extent = {{10, -30}, {-2, -18}})));
+			Placement(transformation(extent = {{10, -30}, {-2, -18}})));
 
 	// Temperature sensor
 	SolarTherm.Models.Fluid.Sensors.Temperature temperature(
 		redeclare package Medium = Medium) annotation(
-																					Placement(transformation(extent = {{-14, 74}, {-4, 64}})));
+			Placement(transformation(extent = {{-14, 74}, {-4, 64}})));
 
 	// PowerBlockControl
 	SolarTherm.Models.Control.PowerBlockControl controlHot(
@@ -374,7 +374,7 @@ model Reference_2
 		L_off = hot_tnk_empty_lb,
 		L_df_on = hot_tnk_full_ub,
 		L_df_off = hot_tnk_full_lb) annotation(
-																								Placement(transformation(extent = {{48, 72}, {60, 58}})));
+			Placement(transformation(extent = {{48, 72}, {60, 58}})));
 
 	// ReceiverControl
 	SolarTherm.Models.Control.ReceiverControl controlCold(
@@ -387,7 +387,7 @@ model Reference_2
 		L_on = cold_tnk_crit_ub,
 		Ti = Ti,
 		Kp = Kp) annotation(
-									Placement(transformation(extent = {{24, -10}, {10, 4}})));
+			Placement(transformation(origin = {20, 0}, extent = {{10, -10}, {-10, 10}})));
 
 	// Power block
 	SolarTherm.Models.PowerBlocks.PowerBlockModel powerBlock(
@@ -404,12 +404,12 @@ model Reference_2
 		T_out_ref = T_out_ref_blk,
 		Q_flow_ref = Q_flow_des,
 		redeclare model Cooling = Cooling(T_des=blk_T_amb_des)) annotation(
-										Placement(transformation(extent = {{88, 4}, {124, 42}})));
+			Placement(transformation(extent = {{88, 4}, {124, 42}})));
 
 	// Price
 	SolarTherm.Models.Analysis.Market market(
 		redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
-																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
+			Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
 	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
 	// SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
@@ -434,76 +434,76 @@ initial equation
 			// SAM 2018 cost data: 1.09025e6 * (603.1/318.4) * exp(0.00879 * H_tower)
 	end if;
 
-	equation
+equation
 	//Connections from data
 	connect(DNI_input.y, sun.dni) annotation(
-												Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
-	connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-																Line(points = {{-112.7, 30}, {-100, 30}, {-100, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+	connect(Wspd_input.y, heliostatField.Wspd) annotation(
+		Line(points = {{-120, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(Pres_input.y, tankCold.p_top) annotation(
-														Line(points = {{55, 28}, {49.5, 28}, {49.5, 20}, {49.5, -8.3}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{55, 28}, {49.5, 28}, {49.5, 20}, {49.5, -8.3}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(Pres_input.y, tankHot.p_top) annotation(
-														Line(points = {{55, 28}, {46, 28}, {8, 28}, {8, 78}, {30.5, 78}, {30.5, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{55, 28}, {46, 28}, {8, 28}, {8, 78}, {30.5, 78}, {30.5, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(Tamb_input.y, powerBlock.T_amb) annotation(
-															Line(points = {{119, 80}, {102.4, 80}, {102.4, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{119, 80}, {102.4, 80}, {102.4, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(Tamb_input.y, tankHot.T_amb) annotation(
-														Line(points = {{119, 80}, {68, 80}, {21.9, 80}, {21.9, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{119, 80}, {68, 80}, {21.9, 80}, {21.9, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(receiver.Tamb, tankHot.T_amb) annotation(
-														Line(points = {{-28, 36.04}, {-28, 80}, {21.9, 80}, {21.9, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{-28, 36.04}, {-28, 80}, {21.9, 80}, {21.9, 73.7}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(tankCold.T_amb, powerBlock.T_amb) annotation(
-															Line(points = {{58.1, -8.3}, {58.1, 20}, {90, 20}, {92, 20}, {92, 42}, {102.4, 42}, {102.4, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{58.1, -8.3}, {58.1, 20}, {90, 20}, {92, 20}, {92, 42}, {102.4, 42}, {102.4, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
 	// Fluid connections
 	connect(pumpCold.fluid_a, tankCold.fluid_b) annotation(
-																Line(points = {{10, -24.12}, {10, -24.12}, {10, -25}, {44, -25}}, color = {0, 127, 255}));
+		Line(points = {{10, -24.12}, {10, -24.12}, {10, -25}, {44, -25}}, color = {0, 127, 255}));
 	connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
-																Line(points = {{-24.4, 5.8}, {-14.2, 5.8}, {-14.2, -24}, {-2, -24}}, color = {0, 127, 255}));
+		Line(points = {{-24.4, 5.8}, {-14.2, 5.8}, {-14.2, -24}, {-2, -24}}, color = {0, 127, 255}));
 	connect(receiver.fluid_b, temperature.fluid_a) annotation(
-																	Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {-14, 69}}, color = {0, 127, 255}));
+		Line(points = {{-21.88, 30.64}, {-21.88, 30}, {-20, 30}, {-16, 30}, {-16, 69}, {-14, 69}}, color = {0, 127, 255}));
 	connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-																Line(points = {{-4, 69}, {-4, 69}, {16, 69}}, color = {0, 127, 255}));
+		Line(points = {{-4, 69}, {-4, 69}, {16, 69}}, color = {0, 127, 255}));
 	connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
-															Line(points = {{36, 57}, {36, 52}, {36, 44}, {48, 44}, {48, 43.88}, {66, 43.88}}, color = {0, 127, 255}));
+		Line(points = {{36, 57}, {36, 52}, {36, 44}, {48, 44}, {48, 43.88}, {66, 43.88}}, color = {0, 127, 255}));
 	connect(pumpHot.fluid_b, powerBlock.fluid_a) annotation(
-																Line(points = {{78, 44}, {86, 44}, {86, 29.46}, {98.08, 29.46}}, color = {0, 127, 255}));
+		Line(points = {{78, 44}, {86, 44}, {86, 29.46}, {98.08, 29.46}}, color = {0, 127, 255}));
 	connect(powerBlock.fluid_b, tankCold.fluid_a) annotation(
-																Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
+		Line(points = {{95.56, 14.64}, {78, 14.64}, {78, -13}, {64, -13}}, color = {0, 127, 255}));
 
 	// controlCold connections
 	connect(temperature.T, controlCold.T_mea) annotation(
-															Line(points = {{-9, 63.9}, {-10, 63.9}, {-10, 24}, {38, 24}, {38, 1.2}, {24.7, 1.2}}, color = {0, 0, 127}));
+		Line(points = {{-9, 63.9}, {-10, 63.9}, {-10, 24}, {38, 24}, {38, 1.2}, {24.7, 1.2}}, color = {0, 0, 127}));
 	connect(tankCold.L, controlCold.L_mea) annotation(
-															Line(points = {{24.56, -3}, {38, -3}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
-	connect(heliostatsField.on, controlCold.sf_on) annotation(
-																	Line(points = {{-72, 2}, {-72, 2}, {-72, -36}, {28, -36}, {28, -6}, {24.7, -6}, {24.7, -7.2}}, color = {255, 0, 255}));
+		Line(points = {{32, 0}, {38, 0}, {38, -13.6}, {43.8, -13.6}}, color = {0, 0, 127}));
+	connect(heliostatField.on, controlCold.sf_on) annotation(
+		Line(points = {{-72, 2}, {-72, 2}, {-72, -36}, {35, -36}, {35, -6}, {32, -6}}, color = {255, 0, 255}));
 	connect(controlCold.m_flow, pumpCold.m_flow) annotation(
-																Line(points = {{9.16, -3}, {4, -3}, {4, -18.84}}, color = {0, 0, 127}));
+		Line(points = {{9.16, 0}, {4, 0}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlCold.defocus, or1.u2) annotation(
-														Line(points = {{17, -10.98}, {17, -32}, {-106, -32}, {-106, 4.8}, {-102.8, 4.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+		Line(points = {{20, -10.98}, {20, -32}, {-106, -32}, {-106, 4.8}, {-102.8, 4.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 	// controlHot connections
 	connect(tankHot.L, controlHot.L_mea) annotation(
-														Line(points = {{36.2, 68.4}, {40, 68.4}, {40, 68.5}, {47.52, 68.5}}, color = {0, 0, 127}));
+		Line(points = {{36.2, 68.4}, {40, 68.4}, {40, 68.5}, {47.52, 68.5}}, color = {0, 0, 127}));
 	connect(pumpCold.m_flow, controlHot.m_flow_in) annotation(
-																	Line(points = {{47.52, 61.5}, {39.52, 61.5}, {39.52, 30}, {4, 30}, {4, -18.84}}, color = {0, 0, 127}));
+		Line(points = {{47.52, 61.5}, {39.52, 61.5}, {39.52, 30}, {4, 30}, {4, -18.84}}, color = {0, 0, 127}));
 	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
-																Line(points = {{60.72, 65}, {72, 65}, {72, 49.16}}, color = {0, 0, 127}));
+		Line(points = {{60.72, 65}, {72, 65}, {72, 49.16}}, color = {0, 0, 127}));
 	connect(controlHot.defocus, or1.u1) annotation(
-														Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+		Line(points = {{54, 72.98}, {54, 72.98}, {54, 86}, {-106, 86}, {-106, 8}, {-102.8, 8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 	//Solar field connections i.e. solar.heat port and control
-	connect(sun.solar, heliostatsField.solar) annotation(
-															Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
-	connect(heliostatsField.heat, receiver.heat) annotation(
-																Line(points = {{-55.68, 27.5}, {-54.82, 27.5}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
-	connect(or1.y, heliostatsField.defocus) annotation(
-															Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+	connect(sun.solar, heliostatField.solar) annotation(
+		Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
+	connect(heliostatField.heat, receiver.heat) annotation(
+		Line(points = {{-55.68, 27.5}, {-54.82, 27.5}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
+	connect(or1.y, heliostatField.defocus) annotation(
+		Line(points = {{-93.6, 8}, {-92, 8}, {-92, 8.8}, {-87.68, 8.8}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 	//PowerBlock connections
 	connect(parasities_input.y, powerBlock.parasities) annotation(
-																		Line(points = {{109, 45.7}, {109, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+		Line(points = {{109, 45.7}, {109, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(powerBlock.W_net, market.W_net) annotation(
-															Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
+		Line(points = {{115.18, 22.05}, {119.59, 22.05}, {119.59, 22}, {128, 22}}, color = {0, 0, 127}));
 
 	P_elec = powerBlock.W_net;
 	E_elec = powerBlock.E_net;
@@ -511,20 +511,7 @@ initial equation
 
 	annotation(
 	Diagram(
-		coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1),
-		graphics = {
-			Text(lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9),
-			Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9),
-			Text(origin = {2, 2}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {12, 4}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {-4, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 6, fontName = "CMU Serif"),
-			Text(extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {4, -2}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {6, 0}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {2, 4}, extent = {{-6, 20}, {42, 0}}, textString = "Receiver Control", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {2, 32}, extent = {{30, 62}, {78, 42}}, textString = "Power Block Control", fontSize = 6, fontName = "CMU Serif"),
-			Text(origin = {8, -26}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 7, fontName = "CMU Serif")}),
+		coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1)),
 	Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
 	experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60),
 	__Dymola_experimentSetupOutput,

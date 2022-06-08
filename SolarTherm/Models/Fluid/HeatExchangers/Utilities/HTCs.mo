@@ -5,7 +5,8 @@ function HTCs
   import MA = Modelica.Math;
   import SolarTherm.{Models,Media};
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";
-  replaceable package Medium2 = Media.ChlorideSalt.ChlorideSalt_pT "Medium props for Molten Salt";
+  replaceable package Medium2 = Media.MoltenSalt.MoltenSalt_ph
+	constrainedby Modelica.Media.Interfaces.PartialMedium"Medium props for Molten Salt";
   
   input SI.Length d_o "Outer Tube diameter";
   input Integer N_p "Number of tube-passes";
@@ -121,7 +122,7 @@ algorithm
   Re_Na:=M_Na*d_i/mu_Na;
   Pr_Na:=mu_Na*cp_Na/k_Na;
   Pe_Na:=Re_Na*Pr_Na;
-  if (Re_Na>0) then
+  if (Pe_Na>0) then
       if Pe_Na<=1000 then
         A:=4.5;
       elseif Pe_Na>=2000  then
@@ -141,7 +142,7 @@ algorithm
   v_max_MS:=m_flow_MS/rho_MS/S_m;
   Re_MS:=rho_MS*d_o*v_max_MS/mu_MS;
   Pr_MS:=mu_MS*cp_MS/k_MS;
-  if (Re_MS>0)  then
+  if (Re_MS>0) and (Pr_MS>0) then
       if layout==1  then
           if (Re_MS<=300) then 
               aa:=0.742;
