@@ -63,7 +63,8 @@ def trainANN(fn_data,prefix_res,count):
     if count==0:
         network_layout = [50,50,50,50,50,50]
     elif count==1:
-        network_layout = [50,50,50]
+        #This value was obtained by running Bayesian optimisation, and then we hard-coded in this script
+        network_layout = [20,15,10,5,2,1]
 
     #Hyper Parameter
     lr = 0.001
@@ -87,7 +88,7 @@ def trainANN(fn_data,prefix_res,count):
         scaling_method='MinMaxScaler',
         test_size=0.2,
         generalised_scaler=True
-        )
+    )
 
     #Training my NN
     model.training_NN(

@@ -5,13 +5,13 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch]
   push:
 
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, molten-salt-Rankine]
 
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch]
 
 jobs:
   build:
@@ -26,6 +26,7 @@ jobs:
     env:
       PYTEST_ADDOPTS: --color=yes
       DAKVER: 6.14.0
+      SAMVER: "2021-12-02" # version of SAM      
 
     steps:
     - uses: msys2/setup-msys2@v2
@@ -50,17 +51,62 @@ jobs:
           mingw-w64-x86_64-python-matplotlib
           mingw-w64-x86_64-glpk
           mingw-w64-x86_64-msmpi
+          mingw-w64-x86_64-gsl
+          mingw-w64-x86_64-innoextract
 
     - uses: actions/checkout@v2
+
+    - name: Install SAM
+      run: |
+        mkdir -p ~/sam-${{ env.SAMVER }}
+        cd ~ && wget https://samrepo.nrelcloud.org/beta-releases/sam-windows-${{ env.SAMVER }}.exe
+        cd ~/sam-${{ env.SAMVER }} && innoextract ~/sam-windows-${{ env.SAMVER }}.exe -e -I app
+        echo "LIST SAM FILES"
+        ls ~/sam-${{ env.SAMVER }}
 
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl colorama pytest
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma pytest openpyxl distro colorama pyDOE
+        # FIXME move to pypi version of solsticepy ASAP...
+        python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
+        # if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+        python3 -c "import DyMat; print(DyMat.__version__)"
 
+# removed deap and scoop here...
+# FIXME check version of tensorflow (was 2.6.2)
+
+    - name: NO TENSORFLOW ON MSYS2...
+      run: |
+        echo TODO # we might have to switch to Windows' native Python to get Tensorflow...
+    
+    - name: Show Python context
+      run: |
+        python3 -m pip list
+        
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 src/python --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore=W191        
+
+<<<<<<< HEAD
 #    - name: Install OpenModelica 1.14 (approx)
 #      run: |
 #        mkdir -p ~/.local
+=======
+    - name: Install OpenModelica
+      run: |
+        cd ~
+        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
+        cd omc-repo
+        echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
+        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        echo "REVIEW INSTALLED OMC VERSION..."
+        omc --version
+#        mkdir -p ~/.local && cd ~/.local
+>>>>>>> remotes/origin/particle-master-intermediate
 #        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
     - name: Install OpenModelica 1.19
@@ -99,16 +145,29 @@ jobs:
         cp -R $DIRN/* ~/.local/
         export PATH=$PATH:~/.local/bin
         dakota --version
+        
+# suppress tensorflow... this obviously is for linux...
+#    - name: Install Tensorflow C API
+#      run: |
+#        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.6.2.tar.gz"
+#        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
+#        wc -l /usr/local/include/tensorflow/c/c_api.h
+#
+#
 
     - name: Build SolarTherm
       run: |
-        export PATH=$PATH:~/.local/bin
-        scons
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        scons SSC_PREFIX=~/sam-${{ env.SAMVER }}/app
 
     - name: Install SolarTherm
       run: |
-        export PATH=$PATH:~/.local/bin
-        scons install
+        export PATH=$PATH:/usr/local/bin:~/.local/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
+        scons install SSC_PREFIX=~/sam-${{ env.SAMVER }}/app
 
     - name: Test SolarTherm st env
       run: |
@@ -120,14 +179,6 @@ jobs:
         gcc --version
         cd tests
         python3 -m pytest test_stenv.py
-
-#    - name: Test SolarTherm dakota
-#      run: |
-#        export PATH=$PATH:~/.local/bin
-#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
-#        echo "WHICH ST? [" `which st` "]"
-#        cd tests
-#        st python -m pytest test_stopt.py
 
     - name: Test SolarTherm
       run: |

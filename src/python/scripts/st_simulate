@@ -17,7 +17,7 @@ from time import time
 # TODO: Save separate results files
 # TODO: Pull together relevant results
 
-def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, args, par_n, resultclass, reuse, peaker, i, par_v):
+def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integOrder, solver, nls, lv, noEventEmit, args, par_n, resultclass, reuse, peaker, i, par_v):
 	"""This small function is called from the mp.Pool for parallel simulations"""
 
 	sim = simulation.Simulator(fn, suffix=str(i))
@@ -27,7 +27,7 @@ def simulation_worker(fn, start, stop, step, tolerance, initStep, maxStep, integ
 	sim.update_pars(par_n, par_v)
 
 	sim.simulate(start=start, stop=stop, step=step, tolerance=tolerance, initStep=initStep, maxStep=maxStep,
-		integOrder=integOrder, solver=solver, nls=nls, lv=lv, args=args)
+		integOrder=integOrder, solver=solver, nls=nls, lv=lv, noEventEmit=noEventEmit, args=args)
 	res = resultclass(sim.res_fn)
 	perf = res.calc_perf(peaker)
 	return perf
@@ -94,6 +94,8 @@ if __name__ == '__main__':
 			help='simulation maximum integration order used by dassl and ida methods: <number>')
 	parser.add_argument('--lv', type=str, default='-LOG_SUCCESS,-stdout',
 			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
+	parser.add_argument('--EventEmit', action='store_true',
+			help='store variables at events')			
 	parser.add_argument('--plot', type=str, default=None,
 			help='plot given quantity (at most 2 parameter dimensions)')
 	parser.add_argument('--plot3d', action='store_true',
@@ -112,8 +114,8 @@ if __name__ == '__main__':
 			help='use text rendering With LaTeX')
 	parser.add_argument('--unicode', action='store_true',
 			help='use usetex with unicode')
-	parser.add_argument('--mcargs', nargs=1, type=str, default=[],
-			help='model compilation arguments')
+	#parser.add_argument('--mcargs', nargs=1, type=str, default=[],
+	#		help='model compilation arguments')
 	parser.add_argument('--sargs', type=str, default=None,
 			help='simulation arguments')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
@@ -175,20 +177,22 @@ if __name__ == '__main__':
 			sim.compile_model()
 		if not args.nosc:
 			print('Compiling simulator')
-			sim.compile_sim(args=([] if args.v else ['-s']))
+			compile_args = ['-s'] # silent
+			if args.v or os.environ.get('ST_DEBUG',0):
+				compile_args=[] # verbose
+			sim.compile_sim(args=compile_args)
 
 	if args.fuel:
 		resultclass = postproc.SimResultFuel
 	else:
 		resultclass = postproc.SimResultElec
 
-
 	if args.excel!=None:
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		#TODO check the units of the loaded parameters
 		# convert the units if nessary using simulation.parse_var_val
-		params.load_values_from_excel(args.excel, tree)	
+		tree=params.load_values_from_excel(args.excel, tree)	
 		tree.write_xml(input_xml)
 
 	sim.load_init()
@@ -218,12 +222,18 @@ if __name__ == '__main__':
 
 	logger = LoggerPerf(resultclass)
 	perfs = [None]*len(var_vals)
+	
+	if args.EventEmit:
+		noEventEmit=False
+	else:
+		noEventEmit=True
+	
 	if not args.nosim:
 		t = time()
 		logger.header()
 		worker_enc = partial(simulation_worker, args.file, args.start,
 				args.stop, args.step, args.tolerance, args.initStep, args.maxStep, args.integOrder,
-				args.solver, args.nls, args.lv, sargs, par_n, resultclass, fuse_dirs, args.peaker)
+				args.solver, args.nls, args.lv, noEventEmit, sargs, par_n, resultclass, fuse_dirs, args.peaker)
 		if args.np:
 			pool = mp.Pool(processes=args.np)
 			# use apply_async in loop (not map_async) so callback runs 1x per sim.
@@ -317,3 +327,4 @@ if __name__ == '__main__':
 			print('Cannot plot problem with ' + str(len(dims)) + ' dimensions')
 
 # vim: ts=4:sw=4:noet:syntax=python
+

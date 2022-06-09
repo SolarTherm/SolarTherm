@@ -1,0 +1,17 @@
+import os
+env = Environment()
+
+env['SSC_PATH'] = os.path.expanduser("~/SAM/2020.11.12/linux_64")
+
+env.Append(
+	LIBPATH = '$SSC_PATH'
+)
+
+env.Program('test',['underdevelopment.c']
+	,LIBS = ['ssc','dl','m','python2.7','gsl','gslcblas','tensorflow']
+)
+
+def SymLink(target, source, env):
+    os.symlink(os.path.abspath(str(source[0])), os.path.abspath(str(target[0])))
+
+env.Command("$SSC_PATH/libssc.so","$SSC_PATH/ssc.so",SymLink)

@@ -1,4 +1,4 @@
-import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
+import re, os, sys, platform, shutil, colorama, shlex; from pathlib import Path, PurePath
 import subprocess as sp
 colorama.init()
 
@@ -18,26 +18,67 @@ default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 if platform.system()=="Windows" or "MINGW" in platform.system():
 	if os.environ.get('MSYSTEM') == "MINGW64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
-		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
 		default_om_libs = ['SimulationRuntimeC','omcgc']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
 		default_mpirun = 'mpiexec'
+		def find_sam():
+			"""Locate the path to most recently installed SAM, which will be the version
+			associated with .sam files in the Windows registry. If you want to specify another
+			version, use `scons SSC_PREFIX=/c/SAM/2020.12.02/x64` (path to sam.exe)"""
+			import winreg as wr
+			iconreg = None
+			try:
+				rk = wr.OpenKey(wr.HKEY_LOCAL_MACHINE,r'SOFTWARE\Classes\NREL.SAM3\DefaultIcon')
+				_reg1,valtype = wr.QueryValueEx(rk,None)
+				assert valtype == wr.REG_SZ
+				iconreg,_i = _reg1.split(",")
+			except Exception as e:
+				return default_prefix
+			return Path(iconreg).parents[1]
+		default_ssc_prefix = find_sam()
+		default_ssc_cpppath = '$SSC_PREFIX/runtime'
+		default_ssc_libpath = '$SSC_PREFIX/x64'
+		def bash_which(exe):
+			try:
+				res = sp.run(['which',exe],shell=True,capture_output=True,check=True,encoding='utf-8')
+			except CalledProcessError as e:
+				print("ERROR")
+				return None
+			return res.stdout.strip()
+		def bash_parseconfig(env,cmd):
+			env.ParseConfig('bash -c ' + shlex.quote(cmd))
 	else:
 		raise RuntimeError("On Windows, you must use MSYS2 in 64-bit mode.")
 else:
-	default_glpk_prefix = "/usr"
 	default_tf_prefix = default_prefix
+	default_ssc_prefix = Path(os.environ['HOME'])/'SAM'/'2020.11.12'
+	default_ssc_libpath = "$SSC_PREFIX/linux_64"
+	default_ssc_cpppath = default_ssc_libpath
 	default_om_libpath = None
 	default_om_libs = []
 	default_install_omlibrary = Path(os.environ['HOME'])/'.openmodelica'/'libraries'#'$PREFIX/lib/omlibrary'
 	default_mpirun = 'mpirun'
+	def bash_which(exe):
+		return shutil.which(exe)
+	def bash_parseconfig(env,cmd):
+		return env.ParseConfig(cmd)
 
 if shutil.which('dakota'):
 	default_dakota_prefix = Path(shutil.which('dakota')).parent.parent
 else:
 	default_dakota_prefix = default_prefix
+
+if shutil.which('glpsol'):
+	default_glpk_prefix = Path(shutil.which('glpsol')).parent.parent
+else:
+	default_glpk_prefix = default_prefix
+
+if bash_which('gsl-config'):
+	default_gsl_config = Path(bash_which('gsl-config'))
+else:
+	default_gsl_config = 'gsl-config'
 
 if shutil.which('omc'):
 	default_om_prefix = Path(shutil.which('omc')).parent.parent
@@ -48,6 +89,8 @@ default_om_modelicapath = '$OM_PREFIX/lib/omlibrary' # location of MSL, eg Model
 default_colors='auto'
 if sys.stdout.isatty():
 	default_colors = 'yes'
+def ORANGEWARN(msg):
+	return(colorama.Fore.YELLOW+colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)
 def REDWARN(msg):
 	return(colorama.Fore.RED+colorama.Style.BRIGHT + msg + colorama.Style.RESET_ALL)
 
@@ -76,24 +119,30 @@ vars.AddVariables(
 	,('PYVERSION','Version of Python to use',default_pyversion)
 	,('PYTHON','Python executable','python%s'%(sys.version_info[0]))
 	,('PYTHON_SHEBANG','Python as named in the `st` shebang',"/usr/bin/env $PYTHON")
-	,PathVariable(
-		'OM_PREFIX'
-		,"Installation prefix for location where OpenModelica is installed"
+	,PathVariable('OM_PREFIX',"Installation prefix for location where OpenModelica is installed"
 		,default_om_prefix,PathVariable.PathAccept)
-	,PathVariable( 'OM_CPPPATH' ,"Location where OM C runtime headers are located","$OM_PREFIX/include/omc/c",PathVariable.PathAccept)
+	,PathVariable( 'OM_CPPPATH' ,"Location where OM C runtime headers are located"
+		,"$OM_PREFIX/include/omc/c",PathVariable.PathAccept)
 	,('OM_LIBS',"Libraries to link when building external functions",default_om_libs)
-	,('OM_BIN',"Libraries to link when building external functions",'$OM_PREFIX/bin')
-	,('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular",default_om_libpath)
-	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries',default_om_modelicapath,PathVariable.PathAccept)
-	,PathVariable(
-		'GLPK_PREFIX'
-		,"Installation prefix for GLPK",default_glpk_prefix,PathVariable.PathAccept)
+	,PathVariable('OM_BIN',"Location of OM executables"
+		,'$OM_PREFIX/bin',PathVariable.PathAccept)
+	,PathVariable('OM_LIBPATH',"Location of OpenModelicaRuntimeC in particular"
+		,default_om_libpath, PathVariable.PathAccept)
+	,PathVariable('OM_MODELICAPATH','Location of Modelica standard libraries'
+		,default_om_modelicapath,PathVariable.PathAccept)
+	,PathVariable('GLPK_PREFIX',"Installation prefix for GLPK"
+		,default_glpk_prefix,PathVariable.PathAccept)
 	,PathVariable('GLPK_CPPPATH' ,"Location where GLPK headers are located" ,"$GLPK_PREFIX/include")
 	,PathVariable('GLPK_LIBPATH' ,"Location where GLPK libraries are located" ,"$GLPK_PREFIX/lib")
 	,PathVariable('TF_PREFIX'
 		,"Installation prefix for TensorFlow",default_tf_prefix,PathVariable.PathAccept)
 	,PathVariable('TF_CPPPATH' ,"Location where TensorFlow C headers are located" ,"$TF_PREFIX/include",PathVariable.PathAccept)
 	,PathVariable('TF_LIBPATH' ,"Location where TensorFlow C libraries are located" ,"$TF_PREFIX/lib",PathVariable.PathAccept)
+	,PathVariable('SSC_PREFIX'
+		,"Installation prefix for SAM Simulation Core",default_ssc_prefix,PathVariable.PathAccept)
+	,PathVariable('SSC_CPPPATH' ,"Location where SAM SSC headers are located" ,default_ssc_cpppath, PathVariable.PathAccept)
+	,PathVariable('SSC_LIBPATH' ,"Location where SAM SSC libraries are located" ,default_ssc_libpath, PathVariable.PathAccept)
+	,PathVariable('GSL_CONFIG',"Location of 'gsl-config' tool for GSL installation info.",default_gsl_config,PathVariable.PathAccept)
 	,PathVariable(
 		'DAKOTA_PREFIX'
 		,"Installation prefix for GLPK"
@@ -107,25 +156,42 @@ vars.AddVariables(
 	,BoolVariable('DEBUG',"Add data for GDB during compilation",False)
 )
 
-if platform.system()=="Windows":
-	env = Environment(variables=vars,tools=['default','mingw'])
-	for v in ['PKG_CONFIG_PATH','PATH','TEMP']:
+def import_env_vars(vars):
+	for v in vars:
 		if v in os.environ:
 			env['ENV'][v] = os.environ[v]
+
+if platform.system()=="Windows":
+	env = Environment(variables=vars,tools=['default','mingw'])
+	import_env_vars(['PKG_CONFIG_PATH','PATH','TEMP'])
 elif platform.system()=="Linux":
 	import distro
 	env = Environment(variables=vars)
-	if distro.id()=="centos":
+	if distro.id()=="centos" or distro.id()=="rocky":
 		# for centos specifically (eg the NCI supercomputer, Gadi) we need this
 		# for pkg-config to work correctly.
-		for v in ['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH']:
-			if v in os.environ:
-				env['ENV'][v] = os.environ[v]
+		import_env_vars(['PKG_CONFIG_PATH','PATH','LD_LIBRARY_PATH'])
+
 Help(vars.GenerateHelpText(env))
 
 #---------------------------------------------------------------------------------------------------
 # CHECK FOR DAKOTA, SOLSTICE, OPENMODELICA, OPENMPI/MSMPI, correct PATH.
 
+def check_solsticepy(ct):
+	ct.Message('Checking for solsticepy... ')
+	try:
+		import solsticepy
+	except Exception as e:
+		ct.Result(str(e))
+		return False
+
+	try:
+		from solsticepy.output_motab import output_metadata_motab
+	except ImportError as e:
+		ct.Result(str(e))
+		return False
+	ct.Result("yes")
+	return True
 def check_solstice(ct):
 	ct.Message('Checking for solstice... ')
 	try:
@@ -209,7 +275,7 @@ def check_omc(ct):
 		)
 	return True
 def check_omlibrary(ct):
-	ct.Message("Checking for Modelica Standard Library...")
+	ct.Message("Checking for Modelica Standard Library... ")
 	try:
 		p = Path(ct.env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
@@ -265,8 +331,36 @@ def check_mpi(ct):
 	ct.Result(str(mpirun))
 	return True
 
+
+def check_ssc(ct):
+	ct.Message('Checking SSC... ')
+	cv = {}
+	for v in ['CPPPATH','LIBPATH','LIBS','ENV']:
+		cv[v] = ct.env.get(v)
+	def restore_env(env):
+		for v in cv:
+			if cv[v] is None:
+				del env[v]
+			else:
+				env[v] = cv[v]
+	ct.env.Append(CPPPATH=['$SSC_CPPPATH'],LIBPATH=['$SSC_LIBPATH'],LIBS=['ssc'])
+	src = '''
+#include <sscapi.h>
+#include <stdio.h>
+int main() {
+	fprintf(stdout,"%s\\n",ssc_build_info());
+	return 0;
+}
+	'''
+	res = ct.TryLink(src,'.c')
+	ct.env['HAVE_SSC'] = bool(res)
+	ct.Result(res)
+	restore_env(ct.env)
+	return res
+
+
 def check_path(ct):
-	ct.Message('Checking PATH...')
+	ct.Message('Checking PATH... ')
 	pp = os.environ.get('PATH','').split(os.pathsep)
 	ib = os.path.normpath(ct.env.subst('$INSTALL_BIN'))
 	for p in pp:
@@ -328,7 +422,8 @@ int main() {
 		return False
 
 conf = env.Configure(custom_tests={
-	'CS':check_solstice
+	'CSP':check_solsticepy
+	,'CS':check_solstice
 	, 'DAK':check_dakota
 	,'DAKPY':check_dakota_python
 	,'OMC':check_omc
@@ -336,30 +431,78 @@ conf = env.Configure(custom_tests={
 	,'MPI':check_mpi
 	,'PATH':check_path
 	,'TF':check_tensorflow
+	,'SSC':check_ssc
 })
+
+CONFFAIL=1
+def confmsg(env,msg,fail=0):
+	if fail:
+		print(REDWARN(msg))
+		Exit(1)
+	else:
+		print(ORANGEWARN(msg))
+
+if not conf.CSP():
+	confmsg(env,"Missing or wrong version of 'solsticepy'",CONFFAIL)
 if not conf.CS():
-	print(REDWARN("Unable to locate 'solstice'"))
-	Exit(1)
+	confmsg(env,"Unable to locate 'solstice'",CONFFAIL)
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
-conf.TF()
+
+if conf.TF():
+	env.AppendUnique(ST_LIBPATH=['$TF_LIBPATH'])
+else:
+	confmsg(env,"Warning: TensorFlow was not found, some components will not be built.")
+if conf.SSC():
+	env.AppendUnique(ST_LIBPATH=['$SSC_LIBPATH'])
+else:
+	confmsg(env,"Warning: SSC was not found, some components will not be built.")
+
 if not conf.OMC() or not conf.OMLib():
-	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
-	Exit(1)
+	confmsg(env,"Unable to locate OpenModelica. Unable to continue.",CONFFAIL)
 if not conf.MPI():
-	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
+	# FIXME can we make MPI optional?
+	confmsg(env,"Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN']),CONFFAIL)
 if not conf.PATH():
-	print(REDWARN("Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),)))
+	confmsg(env,"Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),))
 env = conf.Finish()
+
+envg = env.Clone()
+if bash_which(env['GSL_CONFIG']):
+	print("RUNNING")
+	bash_parseconfig(envg,'$GSL_CONFIG --libs --cflags')
+else:
+	confmsg(env,"Unable to locate GSL: gsl-config not found in path")
+def check_gsl(ct):
+	ct.Message('Checking for GSL... ')
+	src = """#include <gsl/gsl_sf_bessel.h>
+int main(void){
+	double y = gsl_sf_bessel_J0(5);
+	return 0;
+}
+"""
+	res = ct.TryLink(src,'.c')
+	ct.Result(res)
+	ct.env['HAVE_GSL'] = res
+	return res
+confg = envg.Configure(custom_tests={'GSL':check_gsl})
+if not confg.GSL():
+	confmsg(env,"Warning: unable to locate GSL. Some components will not be built.")
+envg = confg.Finish()
+env['HAVE_GSL'] = envg['HAVE_GSL']
+env['GSL_LIBS'] = envg['LIBS']
+env['GSL_CPPPATH'] = envg['CPPPATH']
+env['GSL_LIBPATH'] = envg['LIBPATH']
+print("GSL_LIBS = ",env['GSL_LIBS'])
 
 #---------------------------------------------------------------------------------------------------
 
 # some tricks required for Ubuntu 18.04...
 configcmd = 'pkg-config python-$PYVERSION-embed --libs --cflags'
 if platform.system()=="Linux":
-	import distro
-	if distro.id() == 'ubuntu' and distro.version() == '18.04':
-		configcmd = 'python$PYVERSION-config --libs --cflags'
+	if env['PYVERSION'] in ('3.6','3.7'):
+		configcmd = 'python$PYVERSION-config --ldflags --cflags'
+
 env['PKGCONFIGPYTHON'] = configcmd
 
 #print("os.environ['PATH']=",os.environ.get('PATH'))
@@ -369,9 +512,15 @@ env['PKGCONFIGPYTHON'] = configcmd
 
 env.AppendUnique(
 	ST_PATH=[env.subst('$INSTALL_BIN')]
+	,ST_LIBPATH=[]
 	,ST_PYTHONPATH=[env.subst('$PREFIX/lib/python$PYVERSION/site-packages')]	
 	,ST_MODELICAPATH=[env.subst('$OM_MODELICAPATH'),env.subst('$INSTALL_OMLIBRARY')]
 )
+
+# Note: ST_PATH, ST_LIBPATH and ST_PYTHONPATH contain paths that will be added to PATH,
+# LD_LIBRARY_PATH and PYTHONPATH (Linux) or just PATH and PYTHONPATH (Windows) when the 'st' script
+# is run, to reduce the risks of runtime configuration errors. The components will only be added
+# if not already in the relevant path.
 
 env['VERSION'] = '0.2'
 env['SUBST_DICT'] = {
@@ -380,6 +529,7 @@ env['SUBST_DICT'] = {
 	,'@PREFIX@' : '$PREFIX'
 	,'@PYTHON_SHEBANG@' : '$PYTHON_SHEBANG'
 	,'@ST_PATH@' : os.pathsep.join(env['ST_PATH'])
+	,'@ST_LIBPATH@' : os.pathsep.join(env['ST_LIBPATH'])
 	,'@ST_PYTHONPATH@' : os.pathsep.join(env['ST_PYTHONPATH'])
 	,'@ST_MODELICAPATH@' : os.pathsep.join(env['ST_MODELICAPATH'])
 	,'@ST_MPIRUN@' : env.subst('$MPIRUN')
@@ -396,10 +546,12 @@ elif env['COLORS'] == 'no':
 		,LINKFLAGS=['-fdiagnostics-color=never']
 	)
 
+env.Append(CPPFLAGS=['-Wall'])
+
 if env['DEBUG']:
 	env.Append(
-		CPPFLAGS = "-g"
-		,LDFLAGS = "-g"
+		CPPFLAGS =["-g"]
+		,LDFLAGS =["-g"]
 	)
 
 
@@ -415,7 +567,7 @@ env.SConscript(
 # Install (nearly) all files in 'SolarTherm' folder
 
 stfiles = []
-fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order)$')
+fre = re.compile(r'^(.*)\.(mo|motab|csv|CSV|txt|order|pb|index|data.*|index)$') #Update this to include *pb *index etc.
 #print("test.mo:",fre.match('test.mo'))
 #sys.exit(1)
 def fmatch(root,fns):
@@ -432,5 +584,6 @@ env.Alias('install',['#','$PREFIX','$INSTALL_OMLIBRARY'])
 #env.SConscript('resources')
 
 # TODO install SolarTherm directory
+#
 
 # vim: ts=4:noet:sw=4:tw=100:syntax=python

@@ -63,6 +63,7 @@ def inpath(path,envvar):
 	return False
 
 def append_if_missing(path,var):
+	if path == '': return
 	for p in path.split(os.pathsep):
 		p1 = CYG(p)
 		if not inpath(p,var):
@@ -90,9 +91,12 @@ NEWENV['ST_MPIRUN'] = CYG('@ST_MPIRUN@')
 #-------------------------------------------------------------------------------
 # adding path components if required
 
-# needed paths as identified by SCons at installation time:
+libpathpath = 'PATH' if platform.system()=="Windows" else 'LD_LIBRARY_PATH'
+
+# needed paths as identified by SCons at installation time, add them if missing
 st_paths = {
 	'PATH':"@ST_PATH@"
+	,libpathpath:"@ST_LIBPATH@"
 	, 'PYTHONPATH':"@ST_PYTHONPATH@"
 	, 'OPENMODELICALIBRARY':"@ST_MODELICAPATH@"
 }
@@ -116,7 +120,7 @@ if os.environ.get('VERBOSE'):
 # run the requested action...
 
 cmds = ['env','python','simulate','optimise','inspect','plotmat'
-		,'cost','conv_sam_ourly','wea_to_mo']
+		,'cost','conv_sam_ourly','wea_to_mo','contingency','sensitivity']
 
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
 	print("'st' is a helper script for running SolarTherm tools. It should be")

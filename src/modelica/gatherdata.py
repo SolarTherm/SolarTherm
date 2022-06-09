@@ -374,8 +374,41 @@ def simulation_engine(LHS,fn,modelicavarname,mofile,P_net,T_in_ref_blk,p_high,PR
 	f.close()
 		
 if __name__ == "__main__":
-	preprocessinginputs = {"fntrain":"./training_data/configNREL1/training_data.csv","resdir":"./training_data/configNREL1"}
-	processing_data(preprocessinginputs)
+	P_net = 2e7
+	T_in_ref_blk = 1243.27
+	p_high = 22707266.48
+	PR = 2.98
+	pinch_PHX = 23.67
+	dTemp_HTF_PHX = 238.45
+	numdata = 10
+	dirres = "."
+	new_config = 0
+	
+	inputs = {
+		"P_net":P_net,"T_in_ref_blk":T_in_ref_blk,"p_high":p_high,"PR":PR,"pinch_PHX":pinch_PHX,"dTemp_HTF_PHX":dTemp_HTF_PHX,
+		"numdata":numdata,"dirres":dirres,"status_config":new_config
+		}
+	gather_data(inputs)
+
+
+
+	'''
+	if OAT==True:
+		#OAT variables
+		loads = np.linspace(0.5,1.2,5)
+		T_HTF_in = np.linspace(T_in_ref_blk-20,T_in_ref_blk+10,5)
+		T_amb = [263,286.57,320.0]
+		LHS = []
+
+		for load in loads:
+			for T_in in T_HTF_in:
+				for T_amb_in in T_amb:
+					offs = []
+					offs.append(load)
+					offs.append(T_in)
+					offs.append(T_amb_in)
+					LHS.append(offs)
+	'''
 
 
 

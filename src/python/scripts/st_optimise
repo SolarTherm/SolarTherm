@@ -4,7 +4,7 @@ from solartherm import postproc
 from solartherm import simulation
 from solartherm import params
 from solartherm.optimisation import *
-from solartherm.dakota import gen_dakota_in, gen_interface_bb, OptimisationDakotaIn
+from solartherm.dakota import DakotaSampleIn
 
 import argparse, platform, os, functools, time, subprocess, colorama
 import DyMat
@@ -90,6 +90,8 @@ if __name__ == '__main__':
 			help='simulation stop time: <number>[,y,d,m,s]')
 	parser.add_argument('--step', type=str, default='5m',
 			help='simulation time step: <number>[,y,d,m,s]')
+	parser.add_argument('--tolerance', type=str, default='1e-04',
+			help='simulation tolerance: <number>')			
 	parser.add_argument('--initStep', type=str, default=None,
 			help='simulation initial step size used by dassl and ida methods: <number>[,y,d,m,s]')
 	parser.add_argument('--maxStep', type=str, default=None,
@@ -103,7 +105,7 @@ if __name__ == '__main__':
 	parser.add_argument('--lv', type=str, default='-LOG_SUCCESS,-stdout',
 			help='a comma-separated String list specifing which logging levels to enable, e.g. LOG_DASSL,LOG_SOLVER etc')
 	parser.add_argument('--method', type=str, default='Nelder-Mead',
-			help='pso,  cma, ga1, ga2, nsga2 or one of the scipy optimisation methods (e.g. COBYLA, SLSQP, TNC, L-BFGS-B)')
+			help='dakota_soga, dakota_moga, pso,  cma, ga1, ga2, nsga2 or one of the scipy optimisation methods (e.g. COBYLA, SLSQP, TNC, L-BFGS-B)')
 	parser.add_argument('--maxiter', type=int, default=20,
 			help='maximum number of iterations (not necessarily number of simulations)')
 	parser.add_argument('--objective', type=str, default='lcoe',
@@ -129,9 +131,18 @@ if __name__ == '__main__':
 	parser.add_argument('--wd', type=str, default=os.getcwd(),
 			help='the working directory')
 	parser.add_argument('--np', type=int, default=mp.cpu_count(),
-			help='number of processes (for DAKOTA) (set to 0 for serial mode)')	
+			help='number of processes (for DAKOTA) (set to 0 or 1 for serial mode)')	
 	parser.add_argument('--restart', type=str, default=None,
-			help='restart an optimisation by continuing the last simulation (available now only via dakota), given the directory of the optimisation')
+			help='restart an optimisation by continuing the last simulation (available now only via dakota), given the directory where dakota.rst is located')
+	parser.add_argument('--max_eval', type=int, default=2000,
+			help='the maximal evaluation in dakota_soga or dakota_moga method')				
+	parser.add_argument('--pop_size', type=int, default=48,
+			help='population size in dakota_soga or dakota_moga method')				
+	parser.add_argument('--num_generations', type=int, default=100,
+			help='number of generations in dakota_soga or dakota_moga method')				
+	parser.add_argument('--seed', type=int, default=10983,
+			help='sample seed in dakota_soga or dakota_moga method')				
+		
 
 	t_start = time.time()
 
@@ -175,7 +186,7 @@ if __name__ == '__main__':
 	mat_fn = sim.model + '_res.mat'
 
 
-	print("Objective          method: ", args.method)
+	print("Optimisation       method: ", args.method)
 	obj_collect = args.objective.split(",") # A list of objective(s) name in string
 	obj_sign=[] # sign for the optimisation, 1 is to minimise, -1 is to maximise
 	obj_n=[] # names of the objectives, e.g. lcoe, capf etc
@@ -210,7 +221,7 @@ if __name__ == '__main__':
 
 	# FIXME this should be in src/python/solartherm...
 	if args.excel!=None:
-
+		excel_file=os.path.abspath(args.excel)
 		tree=params.Tree()
 		tree.load_xml(input_xml)
 		params.load_values_from_excel(args.excel, tree)	
@@ -219,9 +230,6 @@ if __name__ == '__main__':
 
 		par_n=tree.filter_type(2) # names, 2 to get names for optimisation
 		par_0=[] # start
-
-		#lb=[]
-		#ub=[]
 
 		par_b = [] # bounds
 		nominals=[] # nominal values for DAKOTA inputs
@@ -286,11 +294,9 @@ if __name__ == '__main__':
 
 	# FIXME check that some independent variables have been selected by the user
 
-	if args.restart!=None:
-		print("Restart the previous DAKOTA optimisation in the working direcotry:")
-		print("   ", args.restart, '\n')
-	else:
-		print("Optimisation parameter(s): ", par_n, "\n")
+	print("Optimisation parameter(s): ")
+	for n in par_n:
+		print('	', n)
 
 	objfunc = functools.partial(objective_function, sim, mat_fn,
 			(args.start, args.stop, args.step), args.initStep,
@@ -387,74 +393,44 @@ You need to install DAKOTA to run this optimisation algorithm
     https://dakota.sandia.gov/
 
 """)
-
-#		if args.np:
-#			mpirun = os.environ.get('ST_MPIRUN','mpirun')
-#			if platform.system()=='Windows':
-#				mpirun_call = [mpirun,'-n',str(args.np)]
-#			else:
-#				mpirun_call = [mpirun,'-np',str(args.np),'--use-hwthread-cpus']
-#		
-#		dakota_input = 'sample.in'3
-#		dakota_call = ['dakota','-input',dakota_input,'-output','sample.out']
-#		restart_args = ['-read_restart','dakota.rst']
 		
 		if args.restart!=None:
+			print("Restart the previous DAKOTA optimisation in the working direcotry:")
+			print("   ", args.restart, '\n')
+			
 			os.chdir(args.restart)
-			if args.np!=0:
+			if args.np>1:
 				if not os.path.exists(mn):
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
-				subprocess.call('mpirun -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
-#				call = mpirun_call + dakota_call + restart_args
+
+				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst'%args.np, shell=True)
+
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout -read_restart dakota.rst', shell=True)
-#				call = dakota_call + restart_args
+
 		else:
-			opt=OptimisationDakotaIn()
-			# at the moment, all the setting are default
-			# TODO FIXME implement parameters to change the settings
 		
-			if args.method=='dakota_moga':
-				opt.moga()
-			elif args.method=='dakota_soga':
-				opt.soga()
+			method_args={'max_eval': args.max_eval,'pop_size': args.pop_size, 'num_generations': args.num_generations, 'seed':args.seed }	
 
-			method=opt.method
-			response=opt.response(num_obj=num_obj)
-
-			variables=opt.variables(var_names=par_n, nominals=nominals, 
-			maximum=UB, minimum=LB, mofn=fn, perf_i=perf_i, perf_name=obj_n, 		
-			perf_sign=obj_sign, system=system, start=args.start, stop=args.stop, 
-			step=args.step, initStep=args.initStep, maxStep=args.maxStep, 
-			integOrder=args.integOrder, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=args.runsolstice, peaker=args.peaker)
-
-			gen_dakota_in(response=response, method=method, variables=variables,savedir=savedir)
-			gen_interface_bb(savedir)
+	
+			dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method=args.method, args=method_args, var_names=par_n, nominals=nominals, lbs=LB, ubs=UB, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names=obj_n, signs=obj_sign)
 
 			# FIXME this will not work on Windows
-			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
+			subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)		
 
-			if args.np!=0:
+			if args.np>1:
 				if not os.path.exists(mn):
 					sim = simulation.Simulator(fn=fn, fusemount=False)
 					sim.compile_model()
 					sim.compile_sim(args=['-s'])
 				subprocess.call('mpirun --use-hwthread-cpus -np %s dakota -i sample.in -o sample.out > sample.stdout'%args.np, shell=True)
-#				call = mpirun_call + dakota_call
+
 			else:
 				subprocess.call('dakota -i sample.in -o sample.out > sample.stdout', shell=True)
 
-#				call = dakota_call
-#		print("CWD =",os.getcwd())
-#		print(BLUE(" ".join(call)))
-#		assert (Path(savedir)/dakota_input).exists()
-#		subprocess.run(
-#			call
-##			, shell=True
-#			, check = True
-#		)
+
 		if args.method=='dakota_moga':
 			summary={}
 			for i in range(num_obj):
@@ -528,8 +504,6 @@ You need to install DAKOTA to run this optimisation algorithm
 
 			print('Optimum %s: %s\n\n'%(obj_n[0], l[-1]))
 
-			
-
 
 		else:
 			print("Optimal design parameters: ", cand)
@@ -545,3 +519,4 @@ You need to install DAKOTA to run this optimisation algorithm
 	t_end=time.time()
 	print('Total time (s)', t_end-t_start)
 # vim: ts=4:sw=4:tw=80
+

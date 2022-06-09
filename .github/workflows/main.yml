@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     #
   push:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, particle-master-intermediate]
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch, master, particle-master-intermediate]
     #[ $default-branch, master-m ]
 
 jobs:
@@ -19,15 +19,24 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
+        python-version: [3.8]
+        omc-version: [apt]
+        msl-version: [3.2.3]
         include:
           - os: ubuntu-20.04
-            python-version: 3.8
+            python-version: 3.9
+            omc-version: apt
+            msl-version: [3.2.3]
           - os: ubuntu-18.04
             python-version: 3.6
-
+            omc-version: omc/builds/linux/releases/1.14.2/
+            msl-version: [3.2.2]
+ 
     env:
-      DAKVER: 6.14.0
+      DAKVER: 6.14.0 # version of DAKOTA
+      SAMVER: 2020-11-12 # version of SAM
       PYTEST_ADDOPTS: --color=yes
+      TFVER: 2.6.2 # version of TensorFlow
 
     steps:
     - uses: actions/checkout@v2
@@ -37,17 +46,51 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Show some Python config
+      run: |
+        echo "FIND .PC FILE LOCATIONS:------------------------"
+        find $pythonLocation -name "*.pc"
+        echo "FIND PYTHON-CONFIG LOCATIONS--------------------"
+        find $pythonLocation -name "python*-config"
+        echo "SHOW BUILTIN PKG_CONFIG_PATH----------------------------"
+        pkg-config --variable pc_path pkg-config
+        echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
+        echo $PKG_CONFIG_PATH
+        echo "USE PKG-CONFIG------------------------------------------"
+        pkg-config --list-all | grep python
+        echo "====================UPDATE ENV=========================="
+        export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
+        echo "FIND .PC FILE LOCATIONS:------------------------"
+        find $pythonLocation -name "*.pc"
+        echo "FIND PYTHON-CONFIG LOCATIONS--------------------"
+        find $pythonLocation -name "python*-config"
+        echo "SHOW BUILTIN PKG_CONFIG_PATH----------------------------"
+        pkg-config --variable pc_path pkg-config
+        echo "SHOW CURRENT ENV VAR PKG_CONFIG_PATH--------------------"
+        echo $PKG_CONFIG_PATH
+        echo "USE PKG-CONFIG------------------------------------------"
+        pkg-config --list-all | grep python
+        echo "PKG-CONFIG DETAILS FOR THE ONE WE WANT------------------"
+        pkg-config python-${{ matrix.python-version }}-embed --libs --cflags || echo "***FAILED***"
+        
     - name: Install Python dependencies
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro colorama
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest openpyxl distro colorama tensorflow==${{ env.TFVER }} pyDOE
+        # FIXME move to pypi version of solsticepy ASAP...
+        python3 -m pip install git+https://github.com/anustg/solstice-scripts.git@dev
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
 
     - name: Show Python context
       run: |
+        echo "--------PIP LIST"
         python3 -m pip list
+        echo "--------PKG-CONFIG LIST"
+        pkg-config --list-all
+        echo "--------DPKG LIST"
+        dpkg -l "python*"
 
     - name: Lint with flake8
       run: |
@@ -56,13 +99,36 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Install OpenModelica
+    #- name: Install OpenModelica
+    #  run: |
+    #    for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/${{ matrix.omc-version}} `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+    #    wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
+    #    sudo apt update
+    #    sudo apt install build-essential gdb openmodelica omlib-modelica-${{ matrix.msl-version }} libglpk-dev glpk-utils libgsl-dev
+
+    - name: Install OpenModelica 1.14.2 for Ubuntu 18.04
+      if: ${{ matrix.os == 'ubuntu-18.04' }}
+      run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3A59B53664970947 
+        echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ bionic release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
+        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
+        sudo apt-get update
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.2 libglpk-dev glpk-utils libgsl-dev
+
+    - name: Install Latest OpenModelica on Ubuntu 20.04
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
         for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
-        sudo apt update
-        sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev
+        sudo apt-get update
+        sudo apt-get install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev glpk-utils libgsl-dev
 
+    - name: Install Tensorflow C API
+      run: |
+        export TFURL="https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-${{ env.TFVER }}.tar.gz"
+        sudo tar zxv -C /usr/local < <(wget "$TFURL" -q -O-)
+        wc -l /usr/local/include/tensorflow/c/c_api.h
+        
     - name: Install Solstice
       run: |
         sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
@@ -107,20 +173,29 @@ jobs:
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
         python3 -c "import dakota.interfacing;print(dakota.interfacing.__file__)"
 
+    - name: Install SAM Simulation Core
+      run: |
+        wget -P ../ https://samrepo.nrelcloud.org/beta-releases/sam-beta-linux-${{ env.SAMVER }}.run
+        sudo chmod +x ../sam-beta-linux-${{ env.SAMVER }}.run
+        sudo ../sam-beta-linux-${{ env.SAMVER }}.run
+        ls /opt/SAM/${SAMVER//-/.}
+
     - name: Build SolarTherm
       run: |
+        export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons
+        scons SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Install SolarTherm
       run: |
         # scons install
+        export PKG_CONFIG_PATH=$pythonLocation/lib/pkgconfig
         export PATH=$PATH:/usr/local/bin:~/.local/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
         export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
-        scons install
+        scons install SSC_PREFIX=/opt/SAM/${SAMVER//-/.}
 
     - name: Test MPI
       run: |    
@@ -136,6 +211,23 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest
+        st python -m pytest -vv
+
+    #- name: Test OTF Surrogate
+    #  if: ${{ matrix.omc-version != 'apt' }}
+    #  run: |
+    #    export PATH=$PATH:/usr/local/bin:~/.local/bin
+    #    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/SAM/${SAMVER//-/.}/linux_64:/usr/local/lib # this is only needed on 18.04
+    #    echo $LD_LIBRARY_PATH
+    #    cd tests
+    #    st python -m pytest -vv -s test_otf.py
+
+    #- name: Test Particle System 1D
+    #  if: ${{ matrix.omc-version != 'apt' }}
+    #  run: |
+    #    export PATH=$PATH:/usr/local/bin:~/.local/bin
+    #    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # this is only needed on 18.04
+    #    cd tests
+    #    st python -m pytest -vv -s test_particlesystem1D_with_GDB.py
 
 # vim: ts=2:sw=2:et

@@ -290,6 +290,8 @@ class Simulator(object):
 	def compile_model(self, n_proc=0, libs=['Modelica', 'SolarTherm'], args=['-d=nonewInst']):
 		"""Compile modelica model in .mo file."""
 		call = ['omc', '-s', '-q', '-n='+str(n_proc)] + args + ['-i='+self.model, self.fn] + libs
+		if os.environ.get('ST_DEBUG',0):
+			call += ['--debug=gendebugsymbols'] # add debug flags
 		sp_run(call)
 			
 		#TODO solve the issue of linker flags in the latest msys2 (v20210228), ASLR enabled by default
@@ -353,7 +355,7 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', noEventEmit=True, args=[]):
 		"""Run simulation.
 
 		If running an optimisation then 'optimization' needs to be used as
@@ -379,8 +381,11 @@ class Simulator(object):
 			'-maxIntegrationOrder', integOrder,
 			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
-			'-r', self.res_fn,
+			'-r', self.res_fn,			
 			]
+		
+		if noEventEmit:
+			sim_args.append('-noEventEmit',)	
 
 		if initStep==None:
 			sim_args = [e for e in sim_args if e not in ('-initialStepSize', initStep)]
@@ -398,3 +403,4 @@ class Simulator(object):
 		assert os.access(self.res_fn,os.R_OK)
 
 # vim: ts=4:sw=4:noet:tw=80
+

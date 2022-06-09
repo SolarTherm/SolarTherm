@@ -1,0 +1,9 @@
+VariableNames,UB,LB
+H_drop_design,45,2
+ar_rec,0.25,3.25
+T_out_design,1223.15,873.15
+m_design,3500,50
+T_in_design,848.15,673.15
+T_amb_design,313.15,253.15
+Wspd_design,40,0
+Wspd_dir,360,0

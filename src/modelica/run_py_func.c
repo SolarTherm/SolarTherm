@@ -1,89 +1,60 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdio.h>
 
-const char* RunSolsticeFunc(const char *ppath, const char *pname
-	, const char *pfunc, const char *psave,  const char *field_type
-	, const char *rcv_type, const char *wea_file, int argc
+#define MALLOC 2048
+ 
+int RunSolsticeFunc(const char* ppath, const char* pname 
+	, const char *psave,  const char *field_type
+	, const char *rcv_type, const char *wea_file, const char *sunshape, int num_args
 	, const char *varnames[], const double var[]
 ){
 	// ppath: path of the Python script
 	// pname: name of the Python script
-	// pfunc: name of the Python function
-	// psave: directory of saving the results from mcrt
-
-	const char *tablefile = NULL; //the file of the lookup table
-	PyObject *pName, *pModule, *pFunc;
-	PyObject *pArgs, *pValue, *inputs;
-	int i;
-
-	Py_Initialize(); /*  Initialize Interpreter  */
-
-	// add the path of the Python function file to the system path
-	PyObject *sys_path = PySys_GetObject("path");
-	PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
-
-	// name of the Python file
-	pName = PyUnicode_FromString(pname);
-	/* Error checking of pName left out */
-
-	pModule = PyImport_Import(pName);
-	Py_DECREF(pName);
-
-	if(pModule != NULL){
-		pFunc = PyObject_GetAttrString(pModule, pfunc);
-		/* pFunc is a new reference */
-
-		pArgs =PyTuple_New(1);
-
-		if (pFunc && PyCallable_Check(pFunc)){
-			inputs = PyDict_New();
-			PyDict_SetItemString(inputs, "casedir", PyUnicode_FromString((char *)psave));
-			PyDict_SetItemString(inputs, "field_type", PyUnicode_FromString((char *)field_type));
-			PyDict_SetItemString(inputs, "rcv_type", PyUnicode_FromString((char *)rcv_type));
-			PyDict_SetItemString(inputs, "wea_file", PyUnicode_FromString((char *)wea_file));
-			for (i = 0; i < argc; ++i) {
-
-				pValue = PyFloat_FromDouble(var[i]);
-
-				if(!pValue){
-					Py_DECREF(pArgs);
-					Py_DECREF(pModule);
-					fprintf(stderr, "Cannot convert argument\n");
-				}
-				/* pValue reference stolen here: */
-				PyDict_SetItemString(inputs, varnames[i], pValue);
-			}
-
-			PyTuple_SetItem(pArgs, 0, inputs);
-
-			pValue = PyObject_CallObject(pFunc, pArgs);
-
-			tablefile=PyBytes_AsString(pValue);
-
-
-			Py_DECREF(pArgs);
-			Py_DECREF(inputs);
-			if(pValue != NULL) {
-				Py_DECREF(pValue);
-			}else{
-				Py_DECREF(pFunc);
-				Py_DECREF(pModule);
-				PyErr_Print();
-				fprintf(stderr,"Call failed\n");
-			}
-		}else{
-			if(PyErr_Occurred())PyErr_Print();
-			fprintf(stderr, "Cannot find function \"%s\"\n", pfunc);
-		}
-		Py_XDECREF(pFunc);
-		Py_DECREF(pModule);
-	}else{
-		PyErr_Print();
-		fprintf(stderr, "Failed to load \"%s\"\n", pname);
-	}
+	// psave: directory to save the results 
+	// varnames: a list of variable names
+	// var: a list of variable values (all float numbers) corresponding to varnames
 	
-	return tablefile;
-	Py_Finalize();
+	
+	int i;
+	char* var_tmp =  malloc(sizeof(char)*MALLOC); // a temperary string
+	
+	// convert the list `varnames' to a string `var_names' 
+	// to form one parts of the command        	       
+	char* var_names = malloc(sizeof(char)*MALLOC); 	
+	strcpy(var_names, "");
+	for (i = 0; i < num_args; ++i) {
+	   snprintf(var_tmp, MALLOC, 
+		    "%s,", varnames[i]);
+	   strcat(var_names, var_tmp);    
+	}
+
+	// convert the list `var' to a string `var_vals' 
+	// to form one parts of the command   
+	char* var_vals =   (char*)malloc(sizeof(char)*MALLOC);
+	strcpy(var_vals, "");	
+	for (i = 0; i < num_args; ++i) {
+	   snprintf(var_tmp, MALLOC, 
+		    "%lf,", var[i]);
+	   strcat(var_vals, var_tmp);	 		    
+	}
+	fprintf(stderr,"%s\n\n",var_vals);	
+
+	// shape the commands together
+    char* cmd = (char*)malloc(sizeof(char)*MALLOC); 
+    snprintf(cmd, MALLOC, 
+        "python3 %s/%s.py --casedir %s --wea_file %s --field_type %s --rcv_type %s --sunshape %s --num_args %d --var_names %s --var_vals %s",
+        ppath, pname, psave, wea_file, field_type, rcv_type, sunshape, num_args, var_names, var_vals);
+
+    free(var_tmp);
+    free(var_names);
+    free(var_vals);
+    
+    // system call the command
+    fprintf(stderr,"%s\n\n",cmd);    
+    system(cmd);
+    free(cmd);
+    return 1;
 }
 
 // vim: ts=4:sw=4:tw=80:noet
