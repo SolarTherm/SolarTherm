@@ -8,18 +8,20 @@ package SurrogateModelsMultiOutput
       input String saved_model_dir "Path to pre-trained Neural Network (saved in SavedModel template)";
       output STNeuralNetwork session "Session variable with Graph, Status, SessionOptions, RunOptions objects";
       external "C" session = load_session_multi_output(saved_model_dir) 
-                annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-                Include="#include \"tf.c\"",
-                Library = "tensorflow");
+      annotation(Library="st_recv_surrogate_multi_output");
+                //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+                //Include="#include \"tf.c\"",
+                //Library = "tensorflow");
     end constructor;
   
     function destructor
-     input STNeuralNetwork session;
-     external "C" free_surrogate_multi_output(session)
-      annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-                Include="#include \"tf.c\"",
-                Library = "tensorflow");
-  
+      input STNeuralNetwork session;
+      external "C" free_surrogate_multi_output(session)
+      annotation(Library="st_recv_surrogate_multi_output");
+     //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+     //           Include="#include \"tf.c\"",
+     //           Library = "tensorflow");
+
     end destructor;
   end STNeuralNetwork;
 
@@ -44,9 +46,9 @@ package SurrogateModelsMultiOutput
       Y_min,
       out
       )
-      
-    annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-              Include="#include \"tf.c\"",
-              Library = "tensorflow");
+    annotation(Library="st_recv_surrogate_multi_output");
+    //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+    //          Include="#include \"tf.c\"",
+    //          Library = "tensorflow");
   end predict;
 end SurrogateModelsMultiOutput;

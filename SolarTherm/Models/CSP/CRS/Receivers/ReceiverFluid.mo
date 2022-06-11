@@ -64,15 +64,20 @@ equation
 
   heat.T=medium.T;
   fluid_b.m_flow=-fluid_a.m_flow;
+
+  // no pressure drops
   fluid_a.p=medium.p;
   fluid_b.p=medium.p;
 
+  // 
   V_rcv*(medium.d/2)*(der(h_in)+der(h_out))=ab*heat.Q_flow+Q_pip+Q_loss+fluid_a.m_flow*(h_in-h_out);
+
+  // heat supplied to the working fluid
   Q_rcv=fluid_a.m_flow*(h_out-h_in);
 
   if on then
-    Q_pip=-L_tot*C_pip;
-    Q_loss=-A*sigma*em*(medium.T^4-Tamb^4);
+    Q_pip=-L_tot*C_pip; // piping loss on a per-total-length-of-pipe basis
+    Q_loss=-A*sigma*em*(medium.T^4-Tamb^4); // radiative losses assumes medium temp == outer wall temp
   else
     Q_pip=0;
     Q_loss=V_rcv*(medium.d/2)*der(h_in);

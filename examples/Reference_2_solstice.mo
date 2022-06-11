@@ -36,12 +36,12 @@ model Reference_2_solstice
 
 	// Solstice related parameters
 	parameter String opt_file(fixed = false);
-	//parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
+	parameter String casefolder =Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
 	parameter String field_type = "surround" "polar or surround";
 	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
 	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
 
-	parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
 	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
 	//parameter SI.Length H_tower = 150 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
@@ -49,7 +49,7 @@ model Reference_2_solstice
 	parameter Real fb = 0.4 "factor to grow the field layout";
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
 	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-	parameter Real n_col_oelt = 22 "number of columns of the lookup table (simulated hours per day)";
+	parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
@@ -319,6 +319,7 @@ model Reference_2_solstice
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatsField(
 		lon = data.lon,
 		lat = data.lat,
+		psave =casefolder,
 		ele_min(displayUnit = "deg") = ele_min,
 		use_wind = use_wind,
 		Wspd_max = Wspd_max,
@@ -342,7 +343,7 @@ model Reference_2_solstice
 		R_tower = R_tower,
 		R1 = R1,
 		fb = fb,
-		rho_helio = rho_helio,
+		helio_refl = helio_refl,
 		slope_error = slope_error,
 		n_row_oelt = n_row_oelt,
 		n_col_oelt = n_col_oelt,
@@ -455,7 +456,7 @@ model Reference_2_solstice
 																					Placement(visible = true, transformation(extent = {{128, 12}, {148, 32}}, rotation = 0)));
 
 	// TODO Needs to be configured in instantiation if not const_dispatch. See SimpleResistiveStorage model
-	SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
+	//SolarTherm.Models.Sources.Schedule.Scheduler sch if not const_dispatch;
 
 	// Variables:
 	SI.Power P_elec "Output power of power block";
@@ -584,3 +585,4 @@ initial equation
 
 	</html>"));
 end Reference_2_solstice;
+

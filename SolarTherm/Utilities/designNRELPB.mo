@@ -34,7 +34,10 @@ function designNRELPB
     out
     );
     
-    annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+    /*annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
                 Include="#include \"st_on_the_fly_surrogate.c\"",
-                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"});
+                Library = {"m","gsl","gslcblas","python2.7","tensorflow","dl","ssc"},
+                LibraryDirectory="modelica://SolarTherm/Resources/SSC"
+                );*/
+	annotation(Library = "st_otf_surrogate");
 end designNRELPB;

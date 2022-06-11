@@ -1,13 +1,14 @@
 #! /bin/env python
 
 from __future__ import division
-import unittest
+import pytest
 import cleantest
 import os, platform, subprocess
 import multiprocessing as mp	
 
+import distro
 
-
+@pytest.mark.skipif(distro.id()=="rocky", reason="unable to test MPI on Gadi")
 def test_cmpi():
 	'''
 	Use mpirun to run a pre-compiled C program (testmpi.c)
@@ -38,5 +39,3 @@ def test_cmpi():
 	assert n_mpi==n_cpu
 	os.unlink('hello_world.txt')
 		
-if __name__ == '__main__':
-	unittest.main()

@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     #
   push:
-    branches: [ $default-branch, master, particle-master-intermediate]
+    branches: [ $default-branch, master]
   pull_request:
-    branches:  [ $default-branch, master, particle-master-intermediate]
+    branches:  [ $default-branch, master]
     #[ $default-branch, master-m ]
 
 jobs:

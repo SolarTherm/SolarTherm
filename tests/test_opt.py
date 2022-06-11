@@ -2,8 +2,15 @@
 from __future__ import division
 import os, platform
 import pytest
+import subprocess as sp
 
-@pytest.mark.skipif(platform.system()=="Windows", reason="strange behaviour with Optimica on MSYS2")
+omc_14 = sp.run(
+	['omc','--version'], stdout = sp.PIPE, encoding='utf-8'
+).stdout.split(".")[1] == '14'
+
+windows = platform.system()=="Windows"
+
+@pytest.mark.skipif(omc_14 | windows, reason="strange behaviour with Optimica on MSYS2 or in OMC 1.14.2 it gives different result")
 def test_optimum():
 	from solartherm import simulation
 	from solartherm import postproc

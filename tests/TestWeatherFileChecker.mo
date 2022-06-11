@@ -1,5 +1,6 @@
 block TestWeatherFileChecker
 	import SolarTherm.Models.Sources.Weather.weatherFileChecker;
+
 	parameter String fn1 = weatherFileChecker("Resources/tests/weatherfile1.motab");
 	parameter String fn2 = weatherFileChecker("Resources/tests/weatherfile2.csv");
 	parameter Boolean fn1_correct = fn1 == "Resources/tests/weatherfile1.motab";

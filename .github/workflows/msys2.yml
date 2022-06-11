@@ -91,11 +91,6 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore=W191        
 
-<<<<<<< HEAD
-#    - name: Install OpenModelica 1.14 (approx)
-#      run: |
-#        mkdir -p ~/.local
-=======
     - name: Install OpenModelica
       run: |
         cd ~
@@ -106,18 +101,8 @@ jobs:
         echo "REVIEW INSTALLED OMC VERSION..."
         omc --version
 #        mkdir -p ~/.local && cd ~/.local
->>>>>>> remotes/origin/particle-master-intermediate
 #        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
 
-    - name: Install OpenModelica 1.19
-      run: |
-        cd ~
-        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
-        cd omc-repo
-        echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
-        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
-        echo "REVIEW INSTALLED OMC VERSION..."
-        omc --version
         
     - name: Install Solstice
       run: |

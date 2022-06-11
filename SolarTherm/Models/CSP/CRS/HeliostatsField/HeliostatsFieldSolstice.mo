@@ -21,13 +21,14 @@ model HeliostatsFieldSolstice
     parameter SI.Length R_tower = 0.01 "Tower diameter";
     parameter SI.Length R1=80 "distance between the first row heliostat and the tower";
     parameter Real fb=0.7 "factor to grow the field layout";
-    parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
+    parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";
     parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
     parameter Real n_row_oelt = 3 "number of rows of the look up table (simulated days in a year)";
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo") "the directory for saving the results";  
+
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
@@ -52,7 +53,7 @@ model HeliostatsFieldSolstice
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_refl=helio_refl,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

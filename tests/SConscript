@@ -6,16 +6,23 @@ tenv = env.Clone()
 #tenv.Command("ModelicaExternalTables.c","$OM_MSL_RES_INC/ModelicaExternalTables.c",Copy("$TARGET","$SOURCE"))
 
 tenv.Append(
-	CPPPATH = ['#/src/modelica/']
-	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH']
+	CPPPATH = ['#/src/modelica/','$SSC_CPPPATH']
+	,LIBPATH = ['#/src/modelica/','$GLPK_LIBPATH', '$TF_LIBPATH', '$SSC_LIBPATH']
 )
-tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
+
+prog1 = tenv.Program('trysttable',['trysttable.c'],LIBS=['st_tables'])
 
 tenv.Program('testmotab',['testmotab.c',],LIBS=['st_motab'])
 
 tenv.Program('testdispatch',['testdispatch.c'],LIBS=['glpk','st_linprog','st_motab'])
 
 tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_motab'])
+
+if env['HAVE_SSC'] and env['HAVE_TF'] and env['HAVE_GSL']:
+	#tenv.ParseConfig('$GSL_CONFIG --libs --cflags')
+	tenv.AppendUnique(LIBS=env['GSL_LIBS'],LIBPATH=env['GSL_LIBPATH'],CPPPATH=env['GSL_CPPPATH'])
+	tenv.AppendUnique(LIBS=['tensorflow','st_otf_surrogate','ssc'])
+	tenv.Program('testOTFsurrogate', ['testOTFsurrogate.c'])
 
 import platform
 if platform.system()=="Windows":
@@ -25,6 +32,7 @@ else:
 	env.Program('testmpi',['testmpi.c'],CC='mpicc')
 	
 
+env.Depends(target=prog1,dependency=['#/SolarTherm/Resources/Library'])
 
 senv = env.Clone()
 senv.Append(CPPPATH = ['/usr/include/omc/c'])
@@ -32,11 +40,26 @@ senv.Append(CPPPATH = ['/usr/include/omc/c'])
 lib1 = senv.SharedLibrary('st_test_ext',['st_test_ext.c'])
 
 # environment for libraries which link to Python
+
 penv = senv.Clone()
 penv.ParseConfig('$PKGCONFIGPYTHON')
+if penv['PYVERSION'] == '3.6':
+	print('CPPFLAGS',penv['CPPFLAGS'])
+	print('LINKFLAGS',penv['LINKFLAGS'])
+	penv.Append(CFLAGS=['-fPIC'])
+
 lib2 = penv.SharedLibrary('st_test_ext_py_func',['st_test_ext_py_func.c'])
 
 lib3 = penv.SharedLibrary('st_test_ext_py_str',['st_test_ext_py_str.c'])
+
+
+ppenv = penv.Clone()
+ppenv.Append(LIBS=['crypto','ssl'])
+
+lib4 = ppenv.Program('testembednumpy',['testembednumpy.c']) # no install needed
+
+
+
 
 # the file needs to be in tests/Resources/Library for OM to find it
 env.Install('#/tests/Resources/Library',[lib1,lib2,lib3])
