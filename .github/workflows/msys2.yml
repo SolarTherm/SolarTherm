@@ -5,10 +5,10 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch]
+    #
   push:
 
-    branches: [ $default-branch, molten-salt-Rankine]
+    branches: [ $default-branch]
 
   pull_request:
     branches:  [ $default-branch]
