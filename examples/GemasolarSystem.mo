@@ -9,7 +9,7 @@ model GemasolarSystem
 	import FI = SolarTherm.Models.Analysis.Finances;
 	import SolarTherm.Types.Solar_angles;
 	import SolarTherm.Types.Currency;
-	import metadata = SolarTherm.Utilities.Metadata_Optics;
+	import metadata = SolarTherm.Utilities.Metadata_Optics_with_RELT;
 	extends Modelica.Icons.Example;
 
 	// Input Parameters

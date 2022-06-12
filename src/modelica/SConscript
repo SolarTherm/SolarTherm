@@ -41,6 +41,9 @@ if not conf.CheckLib(penv['LIBS'],"Py_Initialize",'#include <Python.h>',autoadd=
 penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
+lib_rcv_starttime = penv.SharedLibrary('st_receiver_startup_time',['st_receiver_startup_time.c'])
+lib_rcv_starten = penv.SharedLibrary('st_receiver_startup_energy',['st_receiver_startup_energy.c'])
+
 
 # GLPK-linked bits...
 genv = senv.Clone()
@@ -66,8 +69,9 @@ genv.Depends(lib3,lib4)
 #Adding st_linprog_particle library for particle system - 17 October 2021 -- Philipe
 lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linprog_particle/linprog.c'])
 
+
 #Appending the libs
-shlibs = [lib1, lib4, lib2, lib3, lib6]
+shlibs = [lib1, lib4, lib2, lib3, lib6, lib_rcv_starttime, lib_rcv_starten]
 
 if env['HAVE_TF']:
 	#Clone the standard + python environment

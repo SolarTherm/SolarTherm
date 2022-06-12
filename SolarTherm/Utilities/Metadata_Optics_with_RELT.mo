@@ -1,6 +1,6 @@
 within SolarTherm.Utilities;
 
-function Metadata_optics_with_RELT
+function Metadata_Optics_with_RELT
     import Modelica.Utilities.Streams;
     import Modelica.Utilities.Strings;
     input String file;
@@ -16,4 +16,4 @@ function Metadata_optics_with_RELT
     for i in 1:23 loop
       (meta[i], j) := Strings.scanReal(line, j+1, message="Metadata cannot be read " + file);
     end for;
-end Metadata_optics_with_RELT;
+end Metadata_Optics_with_RELT;

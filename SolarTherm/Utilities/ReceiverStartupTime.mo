@@ -9,8 +9,8 @@ function ReceiverStartupTime
 	input Real Q_min;
 	output Real t;
 	external "C" t = energy(dni, eta_op, A_field, dt, nsteps, Q_min);
-                                  
- annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
-            Include="#include \"st_receiver_startup_time.c\"");
+      annotation(Library="st_receiver_startup_time");                                  
+ //annotation(IncludeDirectory="modelica://SolarTherm/Resources/Include",
+  //          Include="#include \"st_receiver_startup_time.c\"");
 
 end ReceiverStartupTime;
