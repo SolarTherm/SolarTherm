@@ -61,7 +61,7 @@ equation
   eta_rel = CSP_duty/(eta_gross_base*eta_HX_base * Q_HX_des);
   
   /*Polynomial to calculate the load as a function of T_HTF_in, eta_rel, T_amb_input*/
-  load_curvefit = 2769.6949617292476-0.00017169946438564605 * 1 +0.03015652530273176 * eta_rel -7.472152724516921 * T_HTF_in -12.00342644413723 * T_amb_input -0.6531344587751696 * eta_rel^2 -0.9391527546046186 * eta_rel*T_HTF_in +3.721870172798862 * eta_rel*T_amb_input +0.010423277572580292 * T_HTF_in^2 +0.004800277934745278 * T_HTF_in*T_amb_input +0.05213314156649744 * T_amb_input^2 -1.0506405067602818 * eta_rel^3 +0.11234159476764632 * eta_rel^2*T_HTF_in -0.41797097209511436 * eta_rel^2*T_amb_input +0.0007385147411058729 * eta_rel*T_HTF_in^2 +0.00041972152170860705 * eta_rel*T_HTF_in*T_amb_input -0.01325468478015788 * eta_rel*T_amb_input^2 -6.827970954129838e-06 * T_HTF_in^3 -1.2792065761764756e-07 * T_HTF_in^2*T_amb_input -1.7179705441180666e-05 * T_HTF_in*T_amb_input^2 -9.481050800094418e-05 * T_amb_input^3 -0.38139149635750785 * eta_rel^4 +0.0032984787322013777 * eta_rel^3*T_HTF_in -0.003769577132381243 * eta_rel^3*T_amb_input -7.328223869053223e-05 * eta_rel^2*T_HTF_in^2 +0.00012542788571932658 * eta_rel^2*T_HTF_in*T_amb_input +0.000536486546361981 * eta_rel^2*T_amb_input^2 -1.2512199200480572e-07 * eta_rel*T_HTF_in^3 -7.991285196830205e-07 * eta_rel*T_HTF_in^2*T_amb_input +1.9600186806112595e-06 * eta_rel*T_HTF_in*T_amb_input^2 +1.2634986124796368e-05 * eta_rel*T_amb_input^3 +1.6785050364228606e-09 * T_HTF_in^4 -2.1876967145517315e-10 * T_HTF_in^3*T_amb_input +2.329939109593691e-09 * T_HTF_in^2*T_amb_input^2 +1.3229428070171342e-08 * T_HTF_in*T_amb_input^3 +6.677448401176287e-08 * T_amb_input^4;
+  load_curvefit = max(0,2769.6949617292476-0.00017169946438564605 * 1 +0.03015652530273176 * eta_rel -7.472152724516921 * T_HTF_in -12.00342644413723 * T_amb_input -0.6531344587751696 * eta_rel^2 -0.9391527546046186 * eta_rel*T_HTF_in +3.721870172798862 * eta_rel*T_amb_input +0.010423277572580292 * T_HTF_in^2 +0.004800277934745278 * T_HTF_in*T_amb_input +0.05213314156649744 * T_amb_input^2 -1.0506405067602818 * eta_rel^3 +0.11234159476764632 * eta_rel^2*T_HTF_in -0.41797097209511436 * eta_rel^2*T_amb_input +0.0007385147411058729 * eta_rel*T_HTF_in^2 +0.00041972152170860705 * eta_rel*T_HTF_in*T_amb_input -0.01325468478015788 * eta_rel*T_amb_input^2 -6.827970954129838e-06 * T_HTF_in^3 -1.2792065761764756e-07 * T_HTF_in^2*T_amb_input -1.7179705441180666e-05 * T_HTF_in*T_amb_input^2 -9.481050800094418e-05 * T_amb_input^3 -0.38139149635750785 * eta_rel^4 +0.0032984787322013777 * eta_rel^3*T_HTF_in -0.003769577132381243 * eta_rel^3*T_amb_input -7.328223869053223e-05 * eta_rel^2*T_HTF_in^2 +0.00012542788571932658 * eta_rel^2*T_HTF_in*T_amb_input +0.000536486546361981 * eta_rel^2*T_amb_input^2 -1.2512199200480572e-07 * eta_rel*T_HTF_in^3 -7.991285196830205e-07 * eta_rel*T_HTF_in^2*T_amb_input +1.9600186806112595e-06 * eta_rel*T_HTF_in*T_amb_input^2 +1.2634986124796368e-05 * eta_rel*T_amb_input^3 +1.6785050364228606e-09 * T_HTF_in^4 -2.1876967145517315e-10 * T_HTF_in^3*T_amb_input +2.329939109593691e-09 * T_HTF_in^2*T_amb_input^2 +1.3229428070171342e-08 * T_HTF_in*T_amb_input^3 +6.677448401176287e-08 * T_amb_input^4);
 
   der(idx) = 1;
   if set_scheduler == true then
@@ -79,11 +79,12 @@ equation
   
   if on_discharge and on_discharge then
     if on_discharge then
-        m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1.25,load_curvefit)) * schedule;
+        m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
+        //m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1.25,load_curvefit)) * schedule;
         m_flow_HX_industrial = 1600;
     else
-        m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1.25,load_curvefit)) * schedule);
-        //m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
+        //m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1.25,load_curvefit)) * schedule);
+        m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
         m_flow_HX_industrial = 0;
     end if;
   else
