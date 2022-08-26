@@ -44,7 +44,7 @@ algorithm
     else
       i := N - 1; //Start from element -2
       while i > 2 loop
-        if T_data[i] < T_high then //we know the z_low is between i and i-1
+        if T_data[i] < T_high then //we know the z_low is between i and i+1
           z_high := z_data[i] + (T_high-T_data[i])*(z_data[i+1]-z_data[i])/(T_data[i+1]-T_data[i]);
           break;
         else

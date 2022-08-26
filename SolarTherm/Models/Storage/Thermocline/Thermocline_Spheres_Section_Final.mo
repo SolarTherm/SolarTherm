@@ -141,6 +141,9 @@ model Thermocline_Spheres_Section_Final
   parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
   //Filler mass-liquid fraction
   Real f_p[N_f, N_p](start=fill(fill(0.0,N_p),N_f)) "Mass liquid fraction of filler";
+  
+  //Measured outlet temperature
+  Real T_outlet_degC "Outlet temperature in degrees Celcius";
 
   
 protected  
@@ -381,6 +384,14 @@ equation
   //Analyics
   der(E_stored) = abs(m_flow) * (h_in - h_out) - Q_loss_total;
   Level = E_stored / E_max;
+  
+  if m_flow > 1.0e-3 then //Discharging, outlet is the top
+    T_outlet_degC = T_f[N_f] - 273.15;
+  elseif m_flow < -1.0e-3 then //Charging, outlet is the bottom
+    T_outlet_degC = T_f[1] - 273.15;
+  else //No flow, output reference temperature
+    T_outlet_degC = 25.0;
+  end if;
   
   annotation (Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>
