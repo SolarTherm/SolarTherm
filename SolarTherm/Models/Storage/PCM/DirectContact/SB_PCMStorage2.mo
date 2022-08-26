@@ -102,7 +102,7 @@ model SB_PCMStorage2
   //Optimisation throws out results where x_HTF < 0 (compressed liquid) and x_HTF > 1 (superheated vapor)
   SI.ThermodynamicTemperature T_HTF;//(start = T_start) "Temperature of HTF, K";
   Modelica.Blocks.Interfaces.RealOutput T_storage annotation(
-    Placement(visible = true, transformation(origin = {108, 90}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {0, -108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
+    Placement(visible = true, transformation(origin = {110, 84}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {2, -108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
   //SI.AbsolutePressure p_HTF "Absolute pressure of HTF, Pa";
   SI.SpecificVolume v_liq "Specific volume of sat. sodium liquid at current temperature, m3/kg";
   //SI.SpecificVolume v_gas "Specific volume of sat. sodium gas at current temperature, m3/kg";
@@ -174,14 +174,10 @@ protected
   //SI.SpecificEnthalpy h_tank (start = Tank_Package.h_Tf(T_start,0.0));
   
   //Heat lost to surroundings
-  Modelica.Blocks.Interfaces.RealInput T_amb annotation (Placement(
+  Modelica.Blocks.Interfaces.RealInput T_amb annotation(Placement(visible = true,
         transformation(
-        extent={{-16,-16},{16,16}},
-        rotation=-90,
-        origin={0,118}), iconTransformation(
-        extent={{-11,-11},{11,11}},
-        rotation=-90,
-        origin={-41,97})));
+        origin={-4, 114},extent={{-16,-16},{16,16}},
+        rotation=-90), iconTransformation(origin = {86, 108}, extent = {{-18, -18}, {18, 18}}, rotation = -90)));
   //SI.ThermodynamicTemperature T_amb;
   //For pump calculations
   //SI.SpecificEnthalpy h_fg;
@@ -356,5 +352,6 @@ equation
 //der(m_HTF_dynamic) = fluid_bp.m_flow + fluid_ap.m_flow + fluid_br.m_flow + fluid_ar.m_flow;
   assert(h_HTF > 0.0, "Invalid Enthalpy", level = AssertionLevel.error);
   annotation(
-    Icon(graphics = {Text(origin = {2, -1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-125, 69}, extent = {{-53, 21}, {53, -21}}, textString = "RO", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-129.68, -47}, extent = {{-42.32, 7}, {49.68, -11}}, textString = "RI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {139.3, 65}, extent = {{-51.3, 11}, {24.7, -3}}, textString = "PI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {130.38, -51.89}, extent = {{-48.38, 15.89}, {37.62, -10.11}}, textString = "PO", fontSize = 14, fontName = "Liberation Serif")}, coordinateSystem(initialScale = 0.1)));
+    Icon(graphics = {Text(origin = {2, 1}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{68, -41}, {-68, 41}}, textString = "PCM"), Text(origin = {-129, 71}, extent = {{-53, 21}, {53, -21}}, textString = "RO", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-129.68, -47}, extent = {{-42.32, 7}, {49.68, -11}}, textString = "RI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {139.3, 65}, extent = {{-51.3, 11}, {24.7, -3}}, textString = "PI", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {130.38, -51.89}, extent = {{-48.38, 15.89}, {37.62, -10.11}}, textString = "PO", fontSize = 14, fontName = "Liberation Serif")}, coordinateSystem(initialScale = 0.1)),
+    Diagram(coordinateSystem(initialScale = 0.1)));
 end SB_PCMStorage2;

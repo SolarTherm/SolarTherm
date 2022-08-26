@@ -72,10 +72,15 @@ model sCO2NREL_100MWe_720C_500C "SCO2 cycle based on regression of NREL PB, Sodi
     parameter Real eta_w_des = 0.476106 "Design Cycle efficiency";
     parameter Real eta_gross_des = 0.451793 "Design gross efficiency, product of eta_q and eta_w";
     */
+//algorithm
+    //k_q := sum(a_array.*w_array);
+    //k_w := sum(b_array.*x_array);
 equation
     //Note that k_q and k_w get passed as eta_Q and eta_gross
     t_in = T_in/T_in_ref;
     t_amb = T_amb/T_amb_ref;
+    //k_q = 0.98;
+    //k_w = 0.45;
     k_q = sum(a_array.*w_array);
     k_w = sum(b_array.*x_array);
     /*

@@ -1,60 +1,38 @@
-within SolarTherm.Systems.Publications.Thermocline.Effectiveness_Outlet_Study;
+within SolarTherm.Systems.P23_PackedBedStorage.MultiTank_Comparison;
 
-model MgO_TrainingData
-  //Part one of the baseline comparisons, this one is just the base case.
+model Part1_Baseline
+  //Baseline MgO case with spherical filler, ideal packing factor
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Sodium.Sodium_pT;
-  //Do not change
   package Fluid_Package = SolarTherm.Materials.Sodium_Table;
-  //Do not change
   package Filler_Package = SolarTherm.Materials.MgO_Constant;
-  
+  //Design Parameters
   //Fixed
   parameter Integer Correlation = 3 "Conservative";
-  
-  //Training Data Parameters
-  
-  parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature"; //L6
-  parameter SI.Temperature T_PB_start = 700 + 273.15 "Minimum tolerated outlet temperature to PB"; //L5
-  parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB"; //L4
-  parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv"; //L3
-  parameter SI.Temperature T_Recv_start = 525 + 273.15 "Maximum tolerated outlet temperature to recv"; //L2
-  parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature"; //L1
-  
-  //Logged values
-  Real L_recv_max(start=0.0); //L4
-  Real L_recv_start(start=0.0); //L3
-  Real L_PB_start(start=0.0); //L2
-  Real L_PB_min(start=0.0); //L1
-
-  Real t_stop_charge(start = 0.0);
-  Real t_stop_discharge(start = 0.0);
-
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
-  parameter SI.Power P_gross = 100.0e6 "Nameplate power block";
-  parameter Real eff_PB = 0.51 "Power block heat to electricity conversion efficiency";
-  
-  //Design Parameters
+  parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eta = 0.26 "Porosity";
+  parameter Real ar = 2.0 "Tank aspect ratio";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 50 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
-  parameter SI.Energy E_max = 7.09597e12 "FIXED Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
-  
-  parameter SI.Time t_charge = t_storage * 3600.0 "Charging period";
+  parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
+  parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
+  parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
   parameter SI.Length d_p = 0.10 "Filler diameter";
   //Optimise
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
-  
-  parameter SI.Time t_discharge = t_storage * 3600.0 "Discharging period";
-  parameter Real ar = 2.0 "Tank aspect ratio";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
+  parameter SI.Power P_name = 100.0e6 * (t_charge / t_discharge) "Nameplate power block";
+  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
   //Derived
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
@@ -118,20 +96,10 @@ model MgO_TrainingData
   SI.Energy numerator(start = 0.0);
   //Real der_numerator "rate of change of the numerator for eff_storage calculations";
   Real eff_storage(start = 0.0) "Storage efficiency";
-  
   //Thermocline Analysis
   Real W "Nondimensional thermocline width";
-  Real der_W "Rate of change of W";
-  Real L "Tank Level";
-  Real der_L "Rate of change of L";
-  Real M "nondimensional mass flow rate";
-  Real e_out "outlet effectiveness";
-  Real e_bot "outlet effectiveness";
-  Real e_top "outlet effectiveness";
-  
-  //Real T_bot_ND "Nondimensional bot temperature";
-  //Real T_top_ND "Nondimensional top temperature";
 algorithm
+  //Timed Schedule
   when rem(time, t_cycle) > 1e-6 then
     m_Recv_signal := m_charge;
     m_PB_signal := 0.0;
@@ -144,74 +112,30 @@ algorithm
     m_Recv_signal := 0.0;
     m_PB_signal := 0.0;
   end when;
-  
-  when thermocline_Tank.T_bot_measured > T_Recv_max then//stop charge
+  //Temperature cut-offs
+  when thermocline_Tank.T_bot_measured > T_Recv_max then
     m_Recv_signal := 0.0;
-    if time > t_cycle*5.0 then //Log this level
-      L_recv_max := L;
-	  t_stop_charge := time; //Log stop charge time
-    end if;
   end when;
-  when thermocline_Tank.T_top_measured < T_PB_min then//stop discharge
+  when thermocline_Tank.T_top_measured < T_PB_min then
     m_PB_signal := 0.0;
-    if time > t_cycle*5.0 then //Log this level
-      L_PB_min := L;
-	  t_stop_discharge := time; //Log stop charge time
-    end if;
   end when;
 
-  when thermocline_Tank.T_bot_measured > T_Recv_start then
-    if time > t_cycle*5.0 and time < t_cycle*5.0 + t_charge then
-      L_recv_start := L;
-    end if;
-  end when;
-  
-  when thermocline_Tank.T_top_measured < T_PB_start then
-    if time > t_cycle*5.0 + t_charge and time < t_cycle*5.0 + t_charge + t_discharge then
-      L_PB_start := L;
-    end if;
-  end when;  
-/*
-  if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
-    der_numerator := PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
-  else
-    der_numerator := 0.0;
-  end if;
-*/
 equation
-  W = Utilities.Thermocline.Degradation_Width(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95)/thermocline_Tank.Tank_A.H_tank;
-  der_W = der(W);
-  L = thermocline_Tank.Level;
-  der_L = der(L);
-  M = 3600.0*thermocline_Tank.Tank_A.m_flow*(h_f_max-h_f_min)/E_max;
-  e_top = (thermocline_Tank.T_top_measured - T_min)/(T_max-T_min);
-  e_bot = (T_max - thermocline_Tank.T_bot_measured)/(T_max-T_min);
-  
-  if thermocline_Tank.Tank_A.m_flow > 1e-6 then //discharge
-    e_out = (thermocline_Tank.T_top_measured - T_min)/(T_max-T_min);
-  elseif thermocline_Tank.Tank_A.m_flow < -1e-6 then //charge
-    e_out = (T_max - thermocline_Tank.T_bot_measured)/(T_max-T_min);
-  else
-    e_out = 0.0;
-  end if;
-  //der(numerator) = der_numerator;
+  //Degradation Width
+  W = SolarTherm.Utilities.Thermocline.Degradation_Width_2(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95,T_min,T_max)/thermocline_Tank.Tank_A.H_tank;
   if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
     der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
   else
     der(numerator) = 0.0;
   end if;
-  
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
-  if thermocline_Tank.Tank_A.m_flow > 1e-3 then
-//dicharging
+  if thermocline_Tank.Tank_A.m_flow > 1e-3 then //discharging
     T_outlet_degC = T_top_degC;
-  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then
-//charging
+  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then //charging
     T_outlet_degC = T_bot_degC;
-  else
-    T_outlet_degC = 25.0;
-//reference value
+  else //No flow
+    T_outlet_degC = 25.0; //reference value
   end if;
   
 //efficiency
@@ -277,5 +201,7 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end MgO_TrainingData;
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
+    Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
+end Part1_Baseline;

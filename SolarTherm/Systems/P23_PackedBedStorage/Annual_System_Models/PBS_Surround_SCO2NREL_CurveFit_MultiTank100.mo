@@ -1,6 +1,6 @@
 within SolarTherm.Systems.P23_PackedBedStorage.Annual_System_Models;
 
-model PBS_Surround_SCO2NREL_CurveFit
+model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   function opt_file_naming
     input String prefix;
     //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
@@ -78,13 +78,13 @@ model PBS_Surround_SCO2NREL_CurveFit
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   //Controller Levels
-  parameter Real L_recv_max = 0.819596;
+  parameter Real L_recv_max = 0.92896;
   //L_4
-  parameter Real L_recv_start = 0.751136;
+  parameter Real L_recv_start = 0.900619;
   //L_3
-  parameter Real L_PB_start = 0.27261;
+  parameter Real L_PB_start = 0.119226;
   //L_2
-  parameter Real L_PB_min = 0.203387;
+  parameter Real L_PB_min = 0.09406;
   //L_1
   //parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase";
   //parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
@@ -262,42 +262,42 @@ model PBS_Surround_SCO2NREL_CurveFit
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-                              //Analytics
-                              //Accumulated energy
-                              SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-                              SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-                              SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-                              SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-                              SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-                              SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-                              SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-                              SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-                              SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-                              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                              Real eta_shading;
-                              Real eta_cosine;
-                              Real eta_reflection;
-                              Real eta_blocking;
-                              Real eta_attenuation;
-                              Real eta_intercept;
-                              //Annual efficiencies
-                              Real eta_curtail_off "Curtailment: Heliostat off";
-                              Real eta_he_av "Heliostat Availability";
-                              Real eta_optical "Field optical efficiency including spillage";
-                              Real eta_curtail_defocus "Curtailment: Full Storage";
-                              Real eta_recv_abs "Receiver Absorptivity";
-                              Real eta_recv_thermal "Receiver thermal efficiency";
-                              Real eta_storage "Storage thermal efficiency";
-                              Real eta_pb_gross "Power block gross efficiency";
-                              Real eta_pb_net "Power block net efficiency";
-                              Real eta_solartoelec "Solar to electric";
-                            */
+                                  //Analytics
+                                  //Accumulated energy
+                                  SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+                                  SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+                                  SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+                                  SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+                                  SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+                                  SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+                                  SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+                                  SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+                                  SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+                                  Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                  Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                                  Real eta_shading;
+                                  Real eta_cosine;
+                                  Real eta_reflection;
+                                  Real eta_blocking;
+                                  Real eta_attenuation;
+                                  Real eta_intercept;
+                                  //Annual efficiencies
+                                  Real eta_curtail_off "Curtailment: Heliostat off";
+                                  Real eta_he_av "Heliostat Availability";
+                                  Real eta_optical "Field optical efficiency including spillage";
+                                  Real eta_curtail_defocus "Curtailment: Full Storage";
+                                  Real eta_recv_abs "Receiver Absorptivity";
+                                  Real eta_recv_thermal "Receiver thermal efficiency";
+                                  Real eta_storage "Storage thermal efficiency";
+                                  Real eta_pb_gross "Power block gross efficiency";
+                                  Real eta_pb_net "Power block net efficiency";
+                                  Real eta_solartoelec "Solar to electric";
+                                */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
@@ -313,7 +313,7 @@ model PBS_Surround_SCO2NREL_CurveFit
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
   SolarTherm.Models.Control.PBS_Controller_PBLimit_Level pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max, t_wait = t_PB_wait) annotation(
     Placement(visible = true, transformation(origin = {38, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Table_Final thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage * Q_flow_ref_blk * 3600.0, T_max = T_max, T_min = T_min, L_start = 0.0) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Table_MultiTank100_Final thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage * Q_flow_ref_blk * 3600.0, T_max = T_max, T_min = T_min, L_start = 0.0) annotation(
     Placement(visible = true, transformation(origin = {26, 38}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
@@ -481,4 +481,4 @@ protected
 	</ul>
 
 	</html>"));
-end PBS_Surround_SCO2NREL_CurveFit;
+end PBS_Surround_SCO2NREL_CurveFit_MultiTank100;

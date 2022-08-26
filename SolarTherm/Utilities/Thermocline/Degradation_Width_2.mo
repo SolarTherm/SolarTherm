@@ -18,8 +18,8 @@ protected
   Real z_high;
   Integer i;
 algorithm
-  if (T_data[N] - T_data[1]) < 1.0 then
-    L_degrade := 0.0; //Just assume to be zero because thermocline is invalid
+  if abs(T_data[N] - T_data[1]) <= T_low - T_min then
+    L_degrade := 0.0; //Top and bottom are within 5% degrees of each other
   else
     //Set the worst case scenario first
     z_low := z_data[1];
@@ -32,7 +32,7 @@ algorithm
       while i < N-1 loop
         if T_data[i] > T_low then //we know the z_low is between i and i-1
           z_low := z_data[i-1] + (T_low-T_data[i-1])*(z_data[i]-z_data[i-1])/(T_data[i]-T_data[i-1]);
-        break;
+          break;
         else
           i := i + 1;
         end if;
@@ -52,8 +52,8 @@ algorithm
         end if;
       end while;
     end if;
+    L_degrade := abs(z_high - z_low);
   end if;
-  L_degrade := z_high - z_low;
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)));
 end Degradation_Width_2;

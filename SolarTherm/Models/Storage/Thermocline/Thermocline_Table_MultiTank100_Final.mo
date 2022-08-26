@@ -1,9 +1,9 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Table_Final
+model Thermocline_Table_MultiTank100_Final
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   
-  parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/SingleTank_Nf100.motab");
+  parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/MultiTank_Nf100.motab");
   Tables.CombiTable1Ds Table_Charging (tableOnFile=true, tableName="table_charging", columns=2:2, fileName=table_file);
   Tables.CombiTable1Ds Table_Discharging (tableOnFile=true, tableName="table_discharging", columns=2:2, fileName=table_file);
   
@@ -106,4 +106,4 @@ equation
 
   annotation(
     Icon(graphics = {Text(origin = {1, 4}, extent = {{-27, 32}, {27, -32}}, textString = "Reg")}));
-end Thermocline_Table_Final;
+end Thermocline_Table_MultiTank100_Final;

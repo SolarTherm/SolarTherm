@@ -20,9 +20,9 @@ model Part1_Baseline
   parameter Real ar = 2.0 "Tank aspect ratio";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 320 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 20 "Number of fluid CVs in main tank";
   //Study this
-  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.50 "Power block heat to electricity conversion efficiency";
@@ -96,8 +96,10 @@ model Part1_Baseline
   SI.Energy numerator(start = 0.0);
   //Real der_numerator "rate of change of the numerator for eff_storage calculations";
   Real eff_storage(start = 0.0) "Storage efficiency";
+  
   //Thermocline Analysis
-  Real W "Nondimensional thermocline width";
+  //Degradation Width calculation
+  Real W "Non-dimensional thermocline degradation width";
 algorithm
   //Timed Schedule
   when rem(time, t_cycle) > 1e-6 then
@@ -122,7 +124,7 @@ algorithm
 
 equation
   //Degradation Width
-  W = Utilities.Thermocline.Degradation_Width(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95)/thermocline_Tank.Tank_A.H_tank;
+  W = SolarTherm.Utilities.Thermocline.Degradation_Width(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95)/thermocline_Tank.Tank_A.H_tank;
   if time > t_cycle * 5.0 and time < t_cycle * 6.0 then
     der(numerator) = PB_Sink.port_a.m_flow * (thermocline_Tank.fluid_top.h - h_f_min);
   else

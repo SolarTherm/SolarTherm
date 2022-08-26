@@ -70,15 +70,15 @@ model PBS_Surround_SCO2NREL
   parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_min = 500.0 + 273.15 "Ideal low temperature of the storage";
   //Additional Power Block design temperature
-  parameter SI.Temperature T_PB_in_des = 700.0 + 273.15 "Power Block design inlet temperature";
+  parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
-  parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase";
-  parameter Integer N_p = 5 "Number of discretizations in radial filler phase";
+  parameter Integer N_f = 100 "Number of discretizations in vertical fluid phase";
+  parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
   parameter Real ar = 2.0 "Aspect ratio (H/D) of tank";
@@ -244,7 +244,7 @@ model PBS_Surround_SCO2NREL
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";

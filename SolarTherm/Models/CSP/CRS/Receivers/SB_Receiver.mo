@@ -123,7 +123,7 @@ equation
     else //Cylindrical External
       Re = Air_State_Film.rho*max(0.0,Wspd_tower)*D_rcv/Air_State_Film.mu; //x-scale, Film Temperature
       Pr = Air_State_Film.cp*Air_State_Film.mu/Air_State_Film.k; //x-scale, Film Temperature
-      Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(D_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient Temperature
+      Gr = (9.81*(1/Tamb)*(HTF_in.T-Tamb)*(H_rcv^3))/((Air_State_Amb.mu/Air_State_Amb.rho)^2); //y-scale, Ambient Temperature
       h_cn = (k_air/H_rcv)*0.098*(Gr^(1/3))*((HTF_in.T/Tamb)^(-0.14)); //y-scale, Ambient temperature
       h_cf = (k_air/D_rcv)*(0.3+0.488*(Re^0.5)*((1.0+((Re/282000)^0.625)))^0.8); //x-scale, Film temperature, smooth cylinder
       h_c = (h_cn^3.2+h_cf^3.2)^(1/3.2);

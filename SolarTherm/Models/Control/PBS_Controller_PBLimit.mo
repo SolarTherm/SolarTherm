@@ -65,8 +65,8 @@ algorithm
     Chg := true;
   end when;
 
-  when m_flow_PB <= 100.0*m_0 then //take this as shutdown
-    PB := false; //start the cooldown
+  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
+    //PB := false; //start the cooldown
     t_threshold := time + t_wait;
   end when;
   when time > t_threshold then

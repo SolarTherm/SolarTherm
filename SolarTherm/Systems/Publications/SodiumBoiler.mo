@@ -293,20 +293,20 @@ package SodiumBoiler
     SI.Energy E_pb_gross(start = 0);
     SI.Energy E_pb_net(start = 0);
     /*
-                                                                                                      Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                                                                                      Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                                                                                                      Real eta_shading;
-                                                                                                      Real eta_cosine;
-                                                                                                      Real eta_reflection;
-                                                                                                      Real eta_blocking;
-                                                                                                      Real eta_attenuation;
-                                                                                                      Real eta_intercept;
-                                                                                                      */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_shading;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_cosine;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_reflection;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_blocking;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_attenuation;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              Real eta_intercept;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              */
     Real eta_curtail_off(start = 0);
     Real eta_optical(start = 0);
     Real eta_he_av(start = 0);
@@ -695,47 +695,47 @@ package SodiumBoiler
     // *********************
     //Weather data
     SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
-      Placement(visible = true, transformation(origin = {-123, 102}, extent = {{-11, -10}, {11, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-109, 102}, extent = {{-11, -10}, {11, 10}}, rotation = 0)));
     //DNI_input
     Modelica.Blocks.Sources.RealExpression DNI_input(y = data.DNI) annotation(
-      Placement(visible = true, transformation(extent = {{-136, 60}, {-116, 80}}, rotation = 0)));
+      Placement(visible = true, transformation(extent = {{-128, 60}, {-108, 80}}, rotation = 0)));
     //Tamb_input
     Modelica.Blocks.Sources.RealExpression Tamb_input(y = data.Tdry) annotation(
-      Placement(visible = true, transformation(origin = {127, 80}, extent = {{11, -10}, {-11, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {119, 80}, extent = {{11, -10}, {-11, 10}}, rotation = 0)));
     //WindSpeed_input
     Modelica.Blocks.Sources.RealExpression Wspd_input(y = data.Wspd) annotation(
-      Placement(visible = true, transformation(extent = {{-136, 38}, {-110, 58}}, rotation = 0)));
+      Placement(visible = true, transformation(extent = {{-128, 38}, {-102, 58}}, rotation = 0)));
     //pressure_input
     //parasitic inputs
     Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss) annotation(
-      Placement(visible = true, transformation(origin = {129, 60}, extent = {{-13, -10}, {13, 10}}, rotation = 180)));
+      Placement(visible = true, transformation(origin = {125, 66}, extent = {{-17, -10}, {17, 10}}, rotation = 180)));
     // Or block for defocusing
     //Sun
     SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
-      Placement(visible = true, transformation(extent = {{-92, 60}, {-72, 80}}, rotation = 0)));
+      Placement(visible = true, transformation(extent = {{-88, 60}, {-68, 80}}, rotation = 0)));
     // Solar heliostat field
     SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_flow_defocus, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table_Full(angles = angles, file = opt_file)) annotation(
-      Placement(visible = true, transformation(origin = {-82, 24}, extent = {{-14, -16}, {14, 16}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-78, 24}, extent = {{-14, -16}, {14, 16}}, rotation = 0)));
     // Hot Pump (power block)
     SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium, k_loss = k_loss_hot) annotation(
-      Placement(visible = true, transformation(origin = {69, 9}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {63, 11}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
     // Cold pump (receiver)
     SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium, k_loss = k_loss_cold) annotation(
-      Placement(visible = true, transformation(origin = {-11, 9}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-9, 11}, extent = {{5, -5}, {-5, 5}}, rotation = 0)));
     //Market
     SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
-      Placement(visible = true, transformation(origin = {146, 18}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {126, 20}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
     //Receiver
     SolarTherm.Models.CSP.CRS.Receivers.SB_Receiver receiver(redeclare package Medium = Medium, concept = if field_type == "polar" then "Billboard" else "Cylindrical", convection = "Siebers", H_tower = H_tower, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_PCM_melt, h_c_const = h_conv_recv, T_super = T_superheat) annotation(
       Placement(visible = true, transformation(origin = {-40, 26}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
     //Storage
     SolarTherm.Models.Storage.PCM.DirectContact.SB_PCMStorage2 tankHot(z_tank = z_tank, d_tank = d_tank, t_tank = 10e-3, z_tray = z_tray, d_tray = d_tray, t_tray = 10e-3, N_tray = N_tray, z_PCM = z_PCM, m_HTF = m_HTF, n = nodes, growth_ratio = growth_ratio, T_max = T_up_u, T_min = T_low_l, T_start = T_low_l, U_loss_tank = U_loss_tank, Q_flow_ref_blk = Q_flow_ref_blk, redeclare package PCM_Package = PCM, redeclare package HTF_Package = HTF, redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {28, 24}, extent = {{-22, -22}, {22, 22}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {27, 25}, extent = {{-19, -19}, {19, 19}}, rotation = 0)));
     //Loop Breakers
     SolarTherm.Models.Fluid.HeatExchangers.loop_breaker loop_breaker1(redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {-21, 35}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {-17, 35}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
     SolarTherm.Models.Fluid.HeatExchangers.loop_breaker loop_breaker2(redeclare package Medium = Medium) annotation(
-      Placement(visible = true, transformation(origin = {71, 35}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {67, 35}, extent = {{-11, -11}, {11, 11}}, rotation = 0)));
     //Cold Controller (Receiver)
     SolarTherm.Models.Control.SB_ReceiverControl controlCold(T_df_on = T_up_u, T_df_off = T_up_l, Q_flow_recv_des = Q_flow_rec_des, m_flow_recv_des = m_flow_recv_des) annotation(
       Placement(visible = true, transformation(origin = {-39, -25}, extent = {{7, -7}, {-7, 7}}, rotation = 0)));
@@ -744,7 +744,7 @@ package SodiumBoiler
       Placement(visible = true, transformation(origin = {63, -25}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
     //Power Block
     SolarTherm.Models.PowerBlocks.SB_StirlingPowerBlockModel powerBlock(redeclare package Medium = Medium, P_name = P_name_des, nu_net = 0.9, T_in_ref = T_PCM_melt, T_out_ref = T_PCM_melt, T_cool_des = T_pb_cool_des, engine_brand = engine_brand, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des) annotation(
-      Placement(visible = true, transformation(origin = {104, 19}, extent = {{-24, -23}, {24, 23}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {94, 21}, extent = {{-24, -23}, {24, 23}}, rotation = 0)));
     //Annual Simulation variables
     SI.Power P_elec "Output power of power block";
     SI.Energy E_elec(start = 0, fixed = true, displayUnit = "MW.h") "Generate electricity";
@@ -788,7 +788,7 @@ package SodiumBoiler
     Real eta_solartoelec "Solar to electric";
     //End Analytics
     Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
-      Placement(visible = true, transformation(origin = {127, 96}, extent = {{11, -10}, {-11, 10}}, rotation = 0)));
+      Placement(visible = true, transformation(origin = {119, 96}, extent = {{11, -10}, {-11, 10}}, rotation = 0)));
   algorithm
     if time > 60.0 then
       if tankHot.m_avail < 1.0e-6 then
@@ -868,65 +868,65 @@ package SodiumBoiler
     end if;
 //Connections from data
     connect(DNI_input.y, sun.dni) annotation(
-      Line(points = {{-115, 70}, {-93, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-107, 70}, {-89, 70}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-      Line(points = {{-109, 48}, {-100.35, 48}, {-100.35, 34}, {-96, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-101, 48}, {-96.35, 48}, {-96.35, 34}, {-92, 34}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 // Fluid connections
 // controlCold connections
 // controlHot connections
 //Solar field connections i.e. solar.heat port and control
     connect(sun.solar, heliostatsField.solar) annotation(
-      Line(points = {{-82, 60}, {-82, 40}}, color = {255, 128, 0}));
+      Line(points = {{-78, 60}, {-78, 40}}, color = {255, 128, 0}));
 //PowerBlock connections
     P_elec = powerBlock.W_net;
     E_elec = powerBlock.E_net;
     R_spot = market.profit;
     connect(heliostatsField.heat, receiver.heat) annotation(
-      Line(points = {{-68, 32}, {-58, 32}, {-58, 31}}, color = {191, 0, 0}));
+      Line(points = {{-64, 32}, {-58, 32}, {-58, 31}}, color = {191, 0, 0}));
     connect(tankHot.fluid_br, pumpCold.fluid_a) annotation(
-      Line(points = {{6, 9}, {-6, 9}}, color = {0, 127, 255}));
+      Line(points = {{8, 12}, {1, 12}, {1, 11}, {-4, 11}}, color = {0, 127, 255}));
     connect(pumpCold.fluid_b, receiver.fluid_a) annotation(
-      Line(points = {{-16, 9}, {-23.5, 9}, {-23.5, 10}, {-36, 10}}, color = {0, 127, 255}));
+      Line(points = {{-14, 11}, {-23.5, 11}, {-23.5, 10}, {-36, 10}}, color = {0, 127, 255}));
     connect(receiver.fluid_b, loop_breaker1.port_a) annotation(
-      Line(points = {{-34, 35}, {-24, 35}}, color = {0, 127, 255}));
+      Line(points = {{-34, 35}, {-21, 35}}, color = {0, 127, 255}));
     connect(loop_breaker1.port_b, tankHot.fluid_ar) annotation(
-      Line(points = {{-19, 35}, {6, 35}}, color = {0, 127, 255}));
+      Line(points = {{-14, 35}, {-6.5, 35}, {-6.5, 34.5}, {8, 34.5}}, color = {0, 127, 255}));
     connect(receiver.Q_recv_in, controlCold.Q_recv_in) annotation(
       Line(points = {{-35.5, 26}, {-26, 26}, {-26, -21}, {-31, -21}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(tankHot.T_storage, controlCold.T_stor) annotation(
-      Line(points = {{28, 0}, {0, 0}, {0, -29}, {-31, -29}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{27, 4}, {0, 4}, {0, -29}, {-31, -29}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(tankHot.T_storage, controlHot.T_stor) annotation(
-      Line(points = {{28, 0}, {52, 0}, {52, -25}, {56, -25}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{27, 4}, {52, 4}, {52, -25}, {56, -25}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(pumpHot.fluid_b, tankHot.fluid_ap) annotation(
-      Line(points = {{64, 9}, {50, 9}}, color = {0, 127, 255}));
+      Line(points = {{58, 11}, {56, 11}, {56, 12}, {46, 12}}, color = {0, 127, 255}));
     connect(tankHot.fluid_bp, loop_breaker2.port_a) annotation(
-      Line(points = {{50, 35}, {68, 35}}, color = {0, 127, 255}));
+      Line(points = {{46, 34.5}, {59, 34.5}, {59, 35}, {63, 35}}, color = {0, 127, 255}));
     connect(controlHot.m_flow_PB, pumpHot.m_flow) annotation(
-      Line(points = {{71, -25}, {84, -25}, {84, 20}, {69, 20}, {69, 13}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{71, -25}, {76, -25}, {76, 20}, {63, 20}, {63, 15}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(controlCold.m_flow_recv, pumpCold.m_flow) annotation(
-      Line(points = {{-47, -21}, {-55, -21}, {-55, -6}, {-17, -6}, {-17, 24}, {-11, 24}, {-11, 13}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-47, -21}, {-55, -21}, {-55, -6}, {-17, -6}, {-17, 24}, {-9, 24}, {-9, 15}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(powerBlock.T_amb, Tamb_input.y) annotation(
-      Line(points = {{99, 33}, {99, 80}, {115, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{89, 35}, {89, 80}, {107, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(loop_breaker2.port_b, powerBlock.fluid_a) annotation(
-      Line(points = {{73, 35}, {85, 35}, {85, 27}, {93, 27}}, color = {0, 127, 255}));
+      Line(points = {{70, 35}, {83, 35}, {83, 29}}, color = {0, 127, 255}));
     connect(pumpHot.fluid_a, powerBlock.fluid_b) annotation(
-      Line(points = {{74, 9}, {90, 9}}));
+      Line(points = {{68, 11}, {80, 11}}));
     connect(powerBlock.W_net, market.W_net) annotation(
-      Line(points = {{116, 18}, {134, 18}}, color = {0, 0, 127}));
+      Line(points = {{106, 20}, {114, 20}}, color = {0, 0, 127}));
     connect(Tamb_input.y, receiver.Tamb) annotation(
-      Line(points = {{115, 80}, {-36, 80}, {-36, 40}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{107, 80}, {-36, 80}, {-36, 40}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(Wspd_input.y, receiver.Wspd) annotation(
-      Line(points = {{-109, 48}, {-44, 48}, {-44, 40}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{-101, 48}, {-44, 48}, {-44, 40}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(Tamb_input.y, tankHot.T_amb) annotation(
-      Line(points = {{115, 80}, {19, 80}, {19, 45}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{107, 80}, {43, 80}, {43, 46}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     connect(receiver.net_gain, controlCold.net_gain) annotation(
       Line(points = {{-35.5, 19}, {-22, 19}, {-22, -25}, {-31, -25}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
     connect(controlCold.defocus, heliostatsField.defocus) annotation(
-      Line(points = {{-48, -30}, {-112, -30}, {-112, 14}, {-96, 14}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+      Line(points = {{-48, -30}, {-112, -30}, {-112, 14}, {-92, 14}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
     connect(parasities_input.y, powerBlock.parasities) annotation(
-      Line(points = {{115, 60}, {108, 60}, {108, 32}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+      Line(points = {{106, 66}, {103.5, 66}, {103.5, 35}, {99, 35}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
     annotation(
-      Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {-12, 4}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {4, 8}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-26, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {6, -31}, extent = {{0, 29}, {46, 19}}, textString = "Storage Tank", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {2, -8}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {10, -12}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {2, 122}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-64, -84}, extent = {{0, 58}, {54, 38}}, textString = "Receiver Control", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {40, -84}, extent = {{0, 58}, {48, 38}}, textString = "PB Control", fontSize = 14, fontName = "Liberation Serif")}),
+      Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {-12, 4}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {4, 8}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-22, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {6, -39}, extent = {{0, 29}, {46, 19}}, textString = "Storage Tank", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-10, -6}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-8, -10}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {14, 122}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {-64, -84}, extent = {{0, 58}, {54, 38}}, textString = "Receiver Control", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {40, -84}, extent = {{0, 58}, {48, 38}}, textString = "PB Control", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {22, 31}, extent = {{0, 29}, {46, 19}}, textString = "T_amb", fontSize = 14, fontName = "Liberation Serif"), Text(origin = {6, -29}, extent = {{0, 29}, {46, 19}}, textString = "T_stor", fontSize = 14, fontName = "Liberation Serif")}),
       Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),
       experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.0001, Interval = 60, maxStepSize = 60, initialStepSize = 60),
       __Dymola_experimentSetupOutput,

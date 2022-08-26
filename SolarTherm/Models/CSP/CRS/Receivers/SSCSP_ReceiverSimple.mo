@@ -1,6 +1,6 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 model SSCSP_ReceiverSimple
-  extends Interfaces.Models.ReceiverFluid;
+  extends Interfaces.Models.ReceiverFluid_Dish;
   Medium.BaseProperties medium;
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out( start=h_0);
@@ -19,19 +19,19 @@ model SSCSP_ReceiverSimple
   parameter SI.Efficiency em=1 "Coating Emitance"
                                                  annotation(Dialog(group="Technical data"));
   Modelica.Blocks.Interfaces.RealOutput Q_rcv_raw annotation(
-    Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {25, -25}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {-99, -63}, extent = {{-7, -7}, {7, 7}}, rotation = 0)));
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rcv;
   Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
-        transformation(
-        extent={{-12,-12},{12,12}},
-        rotation=-90,
-        origin={0,84}), iconTransformation(
-        extent={{-6,-6},{6,6}},
-        rotation=-90,
-        origin={0,78})));
+        visible = true,transformation(
+        
+        origin={0,84},extent={{-12,-12},{12,12}},
+        rotation=-90), iconTransformation(
+        
+        origin={-2, 98},extent={{-6,-6},{6,6}},
+        rotation=-90)));
   Modelica.Blocks.Interfaces.BooleanInput defocus annotation (Placement(
-        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-44, -36}, {-20, -12}}, rotation = 0)));
+        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-110, -36}, {-86, -12}}, rotation = 0)));
 protected
   parameter SI.Length w_pa=D_rcv*pi/N_pa "Panel width"; //w_pa=D_rcv*sin(pi/N_pa)
   parameter Real N_tb_pa=div(w_pa,D_tb) "Number of tubes";

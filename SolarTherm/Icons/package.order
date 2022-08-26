@@ -36,3 +36,5 @@ Turbine
 ThermoclineModel
 PCMshortIcon
 StorageModel_TwoTanks
+DishModel
+ReceiverDishModel

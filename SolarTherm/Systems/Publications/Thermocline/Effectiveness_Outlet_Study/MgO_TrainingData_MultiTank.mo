@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Publications.Thermocline.Effectiveness_Outlet_Study;
 
-model MgO_TrainingData
+model MgO_TrainingData_MultiTank
   //Part one of the baseline comparisons, this one is just the base case.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -45,7 +45,7 @@ model MgO_TrainingData
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
-  parameter SI.Energy E_max = 7.09597e12 "FIXED Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
+  parameter SI.Energy E_max = 7.09597e12 "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   
   parameter SI.Time t_charge = t_storage * 3600.0 "Charging period";
   parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge "Standby period between discharge and charge";
@@ -54,7 +54,7 @@ model MgO_TrainingData
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   
   parameter SI.Time t_discharge = t_storage * 3600.0 "Discharging period";
-  parameter Real ar = 2.0 "Tank aspect ratio";
+  parameter Real ar = 2.0 * (2.0 ^ 0.5) "Tank aspect ratio";
   //Derived
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby;
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
@@ -66,8 +66,13 @@ model MgO_TrainingData
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Control
+  /*
   SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar = ar, eta = eta, d_p = d_p, U_loss_tank = U_loss_tank, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+  */  
+    SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_2P_MixedFlow_Strat2 thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 1.0/2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_set = T_Recv_max, T_PB_set = 0.5*(T_max+T_PB_min), Correlation = Correlation) annotation(
+    Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+    
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
@@ -120,11 +125,11 @@ model MgO_TrainingData
   Real eff_storage(start = 0.0) "Storage efficiency";
   
   //Thermocline Analysis
-  Real W "Nondimensional thermocline width";
-  Real der_W "Rate of change of W";
+  //Real W "Nondimensional thermocline width";
+  //Real der_W "Rate of change of W";
   Real L "Tank Level";
-  Real der_L "Rate of change of L";
-  Real M "nondimensional mass flow rate";
+  //Real der_L "Rate of change of L";
+  //Real M "nondimensional mass flow rate";
   Real e_out "outlet effectiveness";
   Real e_bot "outlet effectiveness";
   Real e_top "outlet effectiveness";
@@ -179,18 +184,18 @@ algorithm
   end if;
 */
 equation
-  W = Utilities.Thermocline.Degradation_Width(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95)/thermocline_Tank.Tank_A.H_tank;
-  der_W = der(W);
+  //W = Utilities.Thermocline.Degradation_Width(thermocline_Tank.Tank_A.z_f,thermocline_Tank.Tank_A.T_f,0.05,0.95)/thermocline_Tank.Tank_A.H_tank;
+  //der_W = der(W);
   L = thermocline_Tank.Level;
-  der_L = der(L);
-  M = 3600.0*thermocline_Tank.Tank_A.m_flow*(h_f_max-h_f_min)/E_max;
-  e_top = (thermocline_Tank.T_top_measured - T_min)/(T_max-T_min);
-  e_bot = (T_max - thermocline_Tank.T_bot_measured)/(T_max-T_min);
+  //der_L = der(L);
+  //M = 3600.0*thermocline_Tank.Tank_A.m_flow*(h_f_max-h_f_min)/E_max;
+  e_top = (thermocline_Tank.fluid_top.T - T_min)/(T_max-T_min);
+  e_bot = (T_max - thermocline_Tank.fluid_bot.T)/(T_max-T_min);
   
-  if thermocline_Tank.Tank_A.m_flow > 1e-6 then //discharge
-    e_out = (thermocline_Tank.T_top_measured - T_min)/(T_max-T_min);
-  elseif thermocline_Tank.Tank_A.m_flow < -1e-6 then //charge
-    e_out = (T_max - thermocline_Tank.T_bot_measured)/(T_max-T_min);
+  if thermocline_Tank.fluid_b.m_flow > 1e-6 then //discharge
+    e_out = (thermocline_Tank.fluid_top.T - T_min)/(T_max-T_min);
+  elseif thermocline_Tank.fluid_b.m_flow < -1e-6 then //charge
+    e_out = (T_max - thermocline_Tank.fluid_bot.T)/(T_max-T_min);
   else
     e_out = 0.0;
   end if;
@@ -203,12 +208,12 @@ equation
   
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
-  if thermocline_Tank.Tank_A.m_flow > 1e-3 then
+  if thermocline_Tank.fluid_b.m_flow > 1e-3 then
 //dicharging
-    T_outlet_degC = T_top_degC;
-  elseif thermocline_Tank.Tank_A.m_flow < (-1e-3) then
+    T_outlet_degC = thermocline_Tank.fluid_top.T - 273.15;
+  elseif thermocline_Tank.fluid_b.m_flow < (-1e-3) then
 //charging
-    T_outlet_degC = T_bot_degC;
+    T_outlet_degC = thermocline_Tank.fluid_bot.T - 273.15;
   else
     T_outlet_degC = 25.0;
 //reference value
@@ -278,4 +283,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end MgO_TrainingData;
+end MgO_TrainingData_MultiTank;

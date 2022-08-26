@@ -51,7 +51,7 @@ model Part4_Parallel_Assisted
   SI.Energy numerator(start = 0.0);
   Real eff_storage(start = 0.0) "Storage efficiency";
   //COntrol
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A2_Slave_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 2.0/3.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_max = T_Recv_max, T_PB_min = T_PB_des, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_Parallel_A2_Slave_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, frac_1 = 1.0/2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_max = T_Recv_max, T_PB_min = T_PB_des, Correlation = Correlation) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-120, -36}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
