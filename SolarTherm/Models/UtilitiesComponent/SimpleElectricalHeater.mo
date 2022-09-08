@@ -50,9 +50,15 @@ Boolean on_discharge "Can we draw particle from Cold Tank?";
 SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
 SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the cold tank [kg/s]";
 SI.Energy E_dumped_electricity "Electricity dumped by the system. Happens when no heater but over producing electricity";
+SI.Mass M_pcl_heater_PB "Mass of particle generated from PB elec";
+SI.Mass M_pcl_heater_PV "Mass of particle generated from PV elec";
+
 Modelica.Blocks.Interfaces.RealOutput mdot_heater annotation(
     Placement(visible = true, transformation(origin = {6, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90), iconTransformation(origin = {2, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
-
+Modelica.Blocks.Interfaces.RealInput W_PB annotation(
+    Placement(visible = true, transformation(origin = {49, 53}, extent = {{-11, -11}, {11, 11}}, rotation = -90), iconTransformation(origin = {46, 48}, extent = {{-8, -8}, {8, 8}}, rotation = -90)));
+Modelica.Blocks.Interfaces.RealInput W_PV annotation(
+    Placement(visible = true, transformation(origin = {65, 53}, extent = {{-11, -11}, {11, 11}}, rotation = -90), iconTransformation(origin = {70, 48}, extent = {{-8, -8}, {8, 8}}, rotation = -90)));
 initial equation
 on_discharge = L > cold_tnk_empty_ub;
 
@@ -78,14 +84,17 @@ h_in = inStream(particle_port_in.h_outflow);
 
 if on then
     mdot_pcl = W_electric * eta / (h_out-h_in);
+    der(M_pcl_heater_PB) = W_PB * eta / (h_out-h_in);
+    der(M_pcl_heater_PV) = W_PV * eta / (h_out-h_in);
     der(E_dumped_electricity) = 0;
 else
     mdot_pcl = 0;
+    der(M_pcl_heater_PB) = 0;
+    der(M_pcl_heater_PV) = 0;
     der(E_dumped_electricity) = W_electric;
 end if;
 
 mdot_heater = mdot_pcl "signal to PB controller";
-
 
 
 

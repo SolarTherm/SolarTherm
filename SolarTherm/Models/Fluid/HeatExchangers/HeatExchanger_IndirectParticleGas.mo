@@ -14,8 +14,17 @@ replaceable package MedGas2 = Modelica.Media.IdealGases.Common.SingleGasNasa(
   mediumName="Hydrogen",
   fluidConstants={Modelica.Media.IdealGases.Common.FluidData.H2}
 );
-replaceable package H2_data = Modelica.Media.IdealGases.SingleGases.H2;
+
+/*
+replaceable package MedGas2 = Modelica.Media.IdealGases.Common.SingleGasNasa(
+  data=Modelica.Media.IdealGases.Common.SingleGasesData.O2,
+  mediumName="Hydrogen",
+  fluidConstants={Modelica.Media.IdealGases.Common.FluidData.O2}
+);
+*/
+//replaceable package H2_data = Modelica.Media.IdealGases.SingleGases.H2;
 parameter Modelica.Media.IdealGases.Common.DataRecord gas_data = Modelica.Media.IdealGases.Common.SingleGasesData.H2;
+//parameter Modelica.Media.IdealGases.Common.DataRecord gas_data = Modelica.Media.IdealGases.Common.SingleGasesData.O2;
 
 parameter Modelica.Blocks.Types.ExternalCombiTable2D tableIDh_p_T = Modelica.Blocks.Types.ExternalCombiTable2D(
         tableName = "Enthalpy",fileName= Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/CO2/Props_from_P_T.txt"),table=fill(0.0, 0, 2),smoothness=Modelica.Blocks.Types.Smoothness.LinearSegments);
@@ -30,7 +39,7 @@ parameter SI.Length d_pcl = 350e-6 "Diameter of the particle [m]";
 /*Pre-determined parameters*/
 parameter SI.Temperature T_in_gas_DP = 550+273.15 "Inlet gas temperature at design point [K]";
 parameter SI.Temperature T_out_gas_DP = 700+273.15 "Outlet gas temperature at design point [K]";
-parameter SI.MassFlowRate m_dot_gas_DP = 0.0238 / 0.0155826 * 0.02 "Mass flow rate of the gas at design point [kg/s]";
+parameter SI.MassFlowRate m_dot_gas_DP = 0.46;// 0.0238 / 0.0155826 * 0.02 "Mass flow rate of the gas at design point [kg/s]";
 parameter SI.MassFlowRate p_gas_DP = 7e5 "Pressure of the gas at design point [Pa]";
 
 parameter SI.Temperature T_in_pcl_DP = 800 + 273.15 "Inlet particle temperature at design point [K]";
@@ -105,8 +114,8 @@ parameter SI.Temperature T_gas_DP[N_disc](
 parameter SI.Area A_HX(fixed=false);
 
 /*Off-design variables*/
-parameter SI.MassFlowRate m_dot_pcl_off = 0.26 "Mass flow rate of the pcl at off-design condition";
-parameter SI.MassFlowRate m_dot_gas_off = 0.0238 / 0.0155826 * 0.02 "Mass flow rate of the g at off-design condition";
+parameter SI.MassFlowRate m_dot_pcl_off = 0.46 "Mass flow rate of the pcl at off-design condition";
+parameter SI.MassFlowRate m_dot_gas_off = 0.46;//0.0238 / 0.0155826 * 0.02 "Mass flow rate of the g at off-design condition";
 parameter SI.Temperature T_in_pcl_off = 790 + 273.15 "Off design inlet temperature of the particle";
 parameter SI.Temperature T_in_gas_off = 500 + 273.15 "Off design inlet temperature of the gas";
 SI.Temperature T_out_pcl_off (start= T_in_gas_off + 50) "Off design outlet temperature of the particle";

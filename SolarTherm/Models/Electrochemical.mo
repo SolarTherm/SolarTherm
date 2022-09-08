@@ -213,10 +213,12 @@ package Electrochemical
     parameter SI.Pressure p_electrolyser = 7e5 "Operating pressure of in Pa";
     parameter SI.Temperature T_electrolyser = 80 + 273.15 "Operating temperature of in K";
     parameter Real H2_molar_mass = 2e-3 "Molar mass of H2 in kg/mol";
+    parameter Real O2_molar_mass = 16e-3 "Molar mass of H2 in kg/mol";
     parameter Real H2O_molar_mass = 18e-3 "Molar mass of H2 in kg/mol";
     
     //Calculated parameters
     parameter SI.MassFlowRate H2_mdot_design_point(fixed=false) "Given the size of the electricity generator, what would be H2 mdot at design point [kg/s]";
+    parameter SI.MassFlowRate O2_mdot_design_point(fixed=false) "Given the size of the electricity generator, what would be O2 mdot at design point [kg/s]";
     parameter Real i_electrolyser_design_point(fixed=false) "Current density of electrolyser at design point [A/cm2]";
     parameter Real eta_farad_design_point(fixed=false) "Faraday eff. at design point [-]";
     parameter Real n_H2_design_point(fixed=false) "Molar flow rate of H2 at design point given the size of the generators (mol/s)";
@@ -250,8 +252,22 @@ package Electrochemical
     SI.Power W_dumped_PV;
     SI.Power W_dumped_PB;
     
+    Boolean on_electrolyser;
+    parameter Boolean with_storage=false;
+    SI.Mass H2_dumped;
+    SI.Mass O2_dumped;
+    
     Modelica.Blocks.Interfaces.RealOutput W_dumped annotation(
       Placement(visible = true, transformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Interfaces.RealOutput W_d_PB annotation(
+      Placement(visible = true, transformation(origin = {102, 62}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {108, 58}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Interfaces.RealOutput W_d_PV annotation(
+      Placement(visible = true, transformation(origin = {100, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {108, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Modelica.Blocks.Interfaces.RealOutput O2_mdot_out annotation(
+      Placement(visible = true, transformation(origin = {106, 86}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {106, 86}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  
+  Modelica.Blocks.Interfaces.BooleanInput H2_tank_charging annotation(
+      Placement(visible = true, transformation(origin = {22, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {22, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   initial equation
     N_unit = ceil(P_electro_requested/P_electro); 
     i_electrolyser_design_point = SolarTherm.Utilities.electrolyser_current_density(
@@ -266,29 +282,44 @@ package Electrochemical
     n_H2_design_point = eta_farad_design_point * (i_electrolyser_design_point * electrolyser.A_electrolyser) / (2 * Modelica.Constants.F) * electrolyser.N_cells * N_unit;
     
     H2_mdot_design_point = n_H2_design_point * 2e-3;
+    O2_mdot_design_point = n_H2_design_point * 0.5 * 16e-3;
   
   equation
     W_electrolyser = W_electrolyser_PB + W_electrolyser_PV;
-    /*W electrolyser has to be dumped shall it exceeds the nameplate*/
-    if W_electrolyser > P_electro_requested then
-        W_electrolyser_final = P_electro_requested;
-        W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W]";
-        if W_electrolyser_PV < P_electro_requested then
-            W_dumped_PV = 0;
-            W_dumped_PB = W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV);
+    
+    on_electrolyser = H2_tank_charging;
+    
+    if on_electrolyser then
+    /*If one of the tanks need to be charged then turn on the electrolyser*/
+        if W_electrolyser > P_electro_requested then
+          /*If power input overshoot, has to be dumped shall it exceeds the nameplate*/
+            W_electrolyser_final = P_electro_requested "The final electricity send to the electrolyser == nameplate, rest is dumped";
+            W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W], charge the tank";
+            if W_electrolyser_PV < P_electro_requested then
+                W_dumped_PV = 0;
+                W_dumped_PB = W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV);
+            else
+                W_dumped_PV = W_dumped;
+                W_dumped_PB = 0;
+            end if;
+            
         else
-            W_dumped_PV = W_dumped;
-            W_dumped_PB = 0;
+            W_electrolyser_final = W_electrolyser;
+            W_dumped = 0 "Dumped electricity due to overshoot [W]";
+            W_dumped_PV = 0 "Portion of dumped energy from PV [W]";
+            W_dumped_PB = 0 "Portion of dumped power from PB [W]";
         end if;
-        
     else
-        W_electrolyser_final = W_electrolyser;
-        W_dumped = 0 "Dumped electricity due to overshoot [W]";
-        W_dumped_PV = 0 "Portion of dumped energy from PV [W]";
+        /*If all tanks are full, need not to turn on the electrolyser, all the electricity goes to the resistive heater*/
+        W_electrolyser_final = 0;
+        W_dumped = W_electrolyser_PV "Dumped electricity due to overshoot [W]";
+        W_dumped_PV = W_electrolyser_PV "Portion of dumped energy from PV [W]";
         W_dumped_PB = 0 "Portion of dumped power from PB [W]";
     end if;
-     
-      
+    
+    W_d_PB = W_dumped_PB; 
+    W_d_PV = W_dumped_PV;
+         
     der(E_dumped) = W_dumped "Integrating W_dumped to get E_dumped";
     
     if W_electrolyser_final > P_electro then
@@ -298,20 +329,35 @@ package Electrochemical
         // AEL Stack operates at part load
         electrolyser.W_electrolyser = W_electrolyser_final;
     end if;
-        
-        
-    if W_electrolyser > 10 then
-        N_unit_final = W_electrolyser_final/P_electro_requested * N_unit "only several units are operating full load";
-        H2_mdot_out = electrolyser.n_H2 * max(1,N_unit_final) * H2_molar_mass  "Mass flow rate of H2 production kg/s";
-        H2O_in = electrolyser.n_H2O * max(1,N_unit_final) "Required hydrogen production in mol/s";
-        der(H2O_mass) = H2O_in * H2O_molar_mass "Mass of water needed";
+    
+    if on_electrolyser then
+        if W_electrolyser > 10 then
+            N_unit_final = W_electrolyser_final/P_electro_requested * N_unit "only several units are operating full load";
+            der(H2O_mass) = H2O_in * H2O_molar_mass "Mass of water needed";
+            H2O_in = electrolyser.n_H2O * max(1,N_unit_final) "Required hydrogen production in mol/s";
+            H2_mdot_out = if H2_tank_charging then electrolyser.n_H2 * max(1,N_unit_final) * H2_molar_mass else 0 "Mass flow rate of H2 production kg/s";
+            O2_mdot_out = electrolyser.n_O2 * max(1,N_unit_final) * O2_molar_mass "Mass flow rate of O2 production kg/s"; 
+            der(H2_dumped) = if H2_tank_charging then 0 else electrolyser.n_H2 * max(1,N_unit_final) * H2_molar_mass "Dumped H2 ";
+            der(O2_dumped) = 0 "Dumped 02 ";
+        else
+            N_unit_final = 0;
+            H2_mdot_out = 0;
+            H2O_in = 0;
+            der(H2O_mass) = 0;
+            O2_mdot_out = 0;
+            der(H2_dumped) = 0;
+            der(O2_dumped) = 0;
+        end if;
     else
         N_unit_final = 0;
         H2_mdot_out = 0;
         H2O_in = 0;
         der(H2O_mass) = 0;
+        O2_mdot_out = 0;
+        der(H2_dumped) = 0;
+        der(O2_dumped) = 0;
     end if;
-  
+    
   annotation(
       Icon(graphics = {Rectangle(origin = {0, 1}, lineThickness = 3, extent = {{-98, 61}, {98, -61}}), Rectangle(origin = {0, -20}, fillColor = {85, 255, 255}, fillPattern = FillPattern.Vertical, extent = {{-98, 40}, {98, -40}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {62, -2}, fillColor = {0, 255, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {71, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Cathode"), Line(origin = {-35, 66}, points = {{-31, -26}, {-31, 20}, {31, 20}, {31, 20}}, thickness = 1), Line(origin = {6, 86}, points = {{-10, 4}, {-10, -4}, {-10, -4}}, thickness = 1), Line(origin = {31.12, 63.5}, points = {{-31, 22.5}, {31, 22.5}, {31, -23.5}, {31, -21.5}, {31, -21.5}}, thickness = 1), Line(origin = {0, 85}, points = {{0, 3}, {0, -1}, {0, -1}}, thickness = 1), Line(origin = {9.19, 66}, points = {{-79.1874, -26}, {-79.1874, 26}, {56.8126, 26}, {56.8126, -26}, {56.8126, -26}, {56.8126, -26}}, pattern = LinePattern.Dash, thickness = 1), Polygon(origin = {66, 43}, fillPattern = FillPattern.Solid, points = {{-2, 3}, {0, -3}, {2, 3}, {2, 3}, {-4, 3}, {-2, 3}}), Text(origin = {-78, 52}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-78, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-38, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {42, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 54}, extent = {{-6, 8}, {6, -8}}, textString = "e-")}, coordinateSystem(initialScale = 0.1)));end Simple_Electrolyser;
 
