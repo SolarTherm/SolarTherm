@@ -24,11 +24,14 @@ model PBS_Controller_PBLimit
   parameter SI.MassFlowRate m_0 = 1e-8 "Minimum mass flow rate through any pipe";
   parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start"; //used to be 1e-7 for both
   
+  Modelica.Blocks.Interfaces.RealInput Level "Tank Storage Level 0-100"
+    annotation (Placement(visible = true, transformation(extent = {{-126, -4}, {-86, 36}}, rotation = 0), iconTransformation(extent = {{-126, 6}, {-86, 46}}, rotation = 0)));
+  
   Modelica.Blocks.Interfaces.RealInput T_top_tank "Temperature of the top of HTF in storage"
-    annotation (Placement(visible = true, transformation(extent = {{-126, -20}, {-86, 20}}, rotation = 0), iconTransformation(extent = {{-126, -8}, {-86, 32}}, rotation = 0)));
+    annotation (Placement(visible = true, transformation(extent = {{-126, -30}, {-86, 10}}, rotation = 0), iconTransformation(extent = {{-126, -36}, {-86, 4}}, rotation = 0)));
     
   Modelica.Blocks.Interfaces.RealInput T_bot_tank "Temperature of the bottom of HTF in storage"
-    annotation (Placement(visible = true, transformation(extent = {{-126, -60}, {-86, -20}}, rotation = 0), iconTransformation(extent = {{-126, -60}, {-86, -20}}, rotation = 0)));
+    annotation (Placement(visible = true, transformation(extent = {{-126, -60}, {-86, -20}}, rotation = 0), iconTransformation(extent = {{-126, -78}, {-86, -38}}, rotation = 0)));
     
   Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start=0.0) "Power block mass flow?" annotation (Placement(visible = true, transformation(extent = {{90, -20}, {130, 20}}, rotation = 0), iconTransformation(extent = {{90, -12}, {130, 28}}, rotation = 0))) ;
   
@@ -49,7 +52,21 @@ model PBS_Controller_PBLimit
 
   SI.MassFlowRate m_guess(start=0.0) "Guess required flow rate of recv";
   parameter SI.Time t_wait = 2.0*3600 "Waiting time between turning off PB and being able to turn on";
-  SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
+  //SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
+  
+  //New model input parameters
+  parameter SI.Energy E_max = 1200.0*3600.0e6 "theoretical storage capacity"; 
+  parameter Real eff_storage_des = 0.60 "design storage utilisation";
+  parameter SI.Time t_stor_startPB = 2.0*3600.0 "minimum hours of storage available to startup PB"; 
+  
+  //New calculated parameters
+  parameter SI.Time t_stor_cap = E_max/Q_des_blk "design storage capacity in seconds of design PB operation";
+  parameter Real L_startPB = t_stor_startPB/t_stor_cap + 0.5*(1.0-eff_storage_des) "Minimum tank level to start PB to ensure the required time of stored energy available";
+
+initial algorithm
+  if Level <= L_startPB then
+    PB := false;
+  end if;
 
 algorithm
   //Changing Storage State
@@ -64,14 +81,27 @@ algorithm
   elsewhen T_bot_tank < T_recv_start then
     Chg := true;
   end when;
+  
+//Old controls: PB triggered by shutdown and re-enabled after threshold time
+//  when m_flow_PB < 0.1 * m_flow_PB_des then
+//    PB := false;
+//    t_threshold := time + t_wait;
+//  end when;
+//take this as shutdown
+//start the cooldown
+//  when time > t_threshold then
+//    PB := true;
+//  end when;
+//End Old controls
 
-  when m_flow_PB <= 2.0*m_0 then //take this as shutdown
-    //PB := false; //start the cooldown
-    t_threshold := time + t_wait;
+//New controls: PB triggered by shutdown and re-enabled after tank level increases past a certain value
+  when m_flow_PB < 0.2 * m_flow_PB_des then
+    PB := false;
   end when;
-  when time > t_threshold then
+  when Level > L_startPB then
     PB := true;
   end when;
+
 equation
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
   //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
@@ -149,7 +179,7 @@ equation
       if PB == true then
         Control_State = 4;
       else
-        Control_State = 6;
+        Control_State = 1;
       end if;
     else
       if Chg == true then

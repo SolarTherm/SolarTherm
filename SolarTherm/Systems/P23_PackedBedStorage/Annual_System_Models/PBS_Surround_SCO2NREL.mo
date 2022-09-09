@@ -1,5 +1,5 @@
 within SolarTherm.Systems.P23_PackedBedStorage.Annual_System_Models;
-
+//This is a Gen3 inspired annual system model with two towers for and equivalent of 100 MWe
 model PBS_Surround_SCO2NREL
   function opt_file_naming
     input String prefix;
@@ -25,7 +25,7 @@ model PBS_Surround_SCO2NREL
     SM_string := String(SM);
     HT_pct_string := String(HT_pct);
     f_recv_string := String(f_recv);
-    opt_file := Modelica.Utilities.Files.loadResource(prefix + SM_string + "dSM/isp_designpt/" + phi_pct_string + "%phi_" + HT_pct_string + "%HT_" + f_recv_string + "%Arecv_optics.motab");
+    opt_file := Modelica.Utilities.Files.loadResource(prefix + SM_string + "dSM/isp_optimised/" + phi_pct_string + "%phi_" + HT_pct_string + "%HT_" + f_recv_string + "%Arecv_optics.motab");
   end opt_file_naming;
 
   function round
@@ -64,26 +64,29 @@ model PBS_Surround_SCO2NREL
   parameter SI.TemperatureDifference T_tol_PB = 40.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Temperature controls
   parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
+  parameter SI.Temperature T_PB_start = T_max - T_tol_PB + 10.0 "Temperature at top of tank where PB can start";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
   parameter SI.Temperature T_recv_max = T_min + T_tol_recv "Maximum temperature at bottom of tank when it can no longer be pumped into the receiver";
-  parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
+  parameter SI.Temperature T_recv_start = T_min + T_tol_recv - 10.0 "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_min = 500.0 + 273.15 "Ideal low temperature of the storage";
   //Additional Power Block design temperature
   parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
+  //Controller Parameters
+  parameter Real eff_storage_des = 0.60 "design storage utilisation";
+  parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
-  parameter Integer N_f = 100 "Number of discretizations in vertical fluid phase";
+  parameter Integer N_f = 360 "Number of discretizations in vertical fluid phase";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
   parameter Real ar = 2.0 "Aspect ratio (H/D) of tank";
   parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.00 "Heat loss coefficient of all tanks";
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.10 "Heat loss coefficient of all tanks";
   //Weather Data (Alice Springs)
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
   parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
@@ -94,14 +97,14 @@ model PBS_Surround_SCO2NREL
   //Optical Model Parameters
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "surround";
-  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/100MWe/4510c%/883K/1000kWpm2/";
-  parameter String phi_pct_string = "124";
-  parameter Real SM_guess = 2.2;
+  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/surround/50MWe/4555c%/883K/1000kWpm2/";
+  parameter String phi_pct_string = "100";
+  parameter Real SM_guess = 2.4;
   parameter Real HT_pct_guess = 100;
   parameter Real f_recv = 1.0;
   parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
   parameter String SM_string = String(2 * SolarTherm.Utilities.Round(SM_guess * 5)) "Solar Multiple rounded to the nearest 0.2, multiplied by 10 and converted to string";
-  parameter Real he_av_design = 0.99 "Helisotats availability";
+  parameter Real he_av_design = 1.00 "Helisotats availability";
   parameter SI.Energy helio_E_start = 90e3 * A_heliostat / 144.375 "Heliostat startup energy consumption";
   parameter SI.Power helio_W_track = 0.0553 * A_heliostat / 144.375 "Heliostat tracking power";
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
@@ -116,18 +119,18 @@ model PBS_Surround_SCO2NREL
   parameter Real eff_opt_des = MetaA[3];
   parameter SI.Length H_recv = MetaA[4];
   parameter SI.Length D_recv = MetaA[5];
-  parameter SI.Length H_tower = MetaA[6] "Height of the tower";
-  parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
+  parameter SI.Length H_tower = MetaA[6] "Height of the tower"; //One tower
+  parameter SI.Area A_field = A_heliostat * n_heliostat * 2.0 "Area of the entire field (reflective area)"; //Two-tower system
   parameter SI.Area A_land = land_mult * A_field "Land area occupied by the plant";
   //Receiver Parameters
-  parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "Receiver area";
-  parameter Integer N_pa_recv = 20 "Number of panels in receiver";
-  parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
-  parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
-  parameter SI.Efficiency ab_recv = 0.961 "Receiver coating absorptance";
-  parameter SI.Efficiency em_recv = 0.92 "Receiver coating emissivity";
-  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "W/m2K";
-  //parameter SI.Temperature T_4avg_recv = (0.20*(T_min^4 + (T_min^3)*(T_max) + (T_min^2)*(T_max^2) + (T_min)*(T_max^3) + T_max^4))^0.25;
+  parameter SI.Area A_recv = if field_type == "polar" then 2.0 * H_recv * D_recv else 2.0 * H_recv * D_recv * CN.pi "Total Receiver area"; //Two-tower system
+  //parameter Integer N_pa_recv = 20 "Number of panels in receiver";
+  //parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
+  //parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
+  parameter SI.Efficiency ab_recv = 0.9872 "Receiver coating absorptance";
+  parameter SI.Efficiency em_recv = 0.9408 "Receiver coating emissivity";
+  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 20.0 "W/m2K";
+  parameter SI.Temperature T_4avg_recv = (0.20*(T_min^4 + (T_min^3)*(T_max) + (T_min^2)*(T_max^2) + (T_min)*(T_max^3) + T_max^4))^0.25;
   parameter SI.Temperature T_avg_recv = 0.50 * (T_min + T_max);
   parameter SI.Temperature T_amb_recv_des = 25.0 + 273.15 "Design ambient temperature (K)";
   // Power block
@@ -136,7 +139,7 @@ model PBS_Surround_SCO2NREL
   parameter SI.Temperature T_pb_cool_des = 35.0 + 273.15 "Design cooling temperature ambient of PB, is 6 degrees below 41 degC";
   parameter SI.Efficiency eff_net_des = 0.90 "Power block net efficiency rating";
   parameter SI.Efficiency eff_blk_des = 0.450960 "Power block efficiency at design point";
-  parameter SI.Time t_PB_wait = 2.0 * 3600.0 "Wait time between shutdown and turning back on";
+  parameter SI.Time t_PB_wait = 1.0 * 3600.0 "Wait time between shutdown and turning back on";
   //Pumping and Parasitics
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
   parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
@@ -150,7 +153,7 @@ model PBS_Surround_SCO2NREL
   parameter SI.SpecificEnthalpy h_out_ref_recv = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_max)) "Specific enthalpy of sodium leaving receiver at design pt";
   //Heat Flow Rates
   parameter SI.HeatFlowRate Q_flow_ref_blk = P_gross_des / eff_blk_des "design heat input rate into the PB";
-  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * (T_avg_recv ^ 4 - T_amb_recv_des ^ 4) + h_conv_recv * A_recv * (T_avg_recv - T_amb_recv_des) "Receiver design heat loss rate";
+  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * (T_4avg_recv ^ 4 - T_amb_recv_des ^ 4) + h_conv_recv * A_recv * (T_avg_recv - T_amb_recv_des) "Receiver design heat loss rate";
   parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * ab_recv - Q_flow_rec_loss_des "Receiver Thermal power output at design";
   parameter SI.HeatFlowRate Q_flow_defocus = (Q_flow_ref_blk + Q_flow_rec_loss_des) / ab_recv "Solar field thermal power at defocused state (not used)";
   //Mass flow rates
@@ -161,8 +164,8 @@ model PBS_Surround_SCO2NREL
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter Real land_mult = 5.0 "Land area multiplier";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = 0.07 "Real discount rate";
-  parameter Real r_i = 0.03 "Inflation rate";
+  parameter Real r_disc = 0.044 "Real discount rate";
+  parameter Real r_i = 0.00 "Inflation rate";
   parameter Integer t_life = 27 "Lifetime of plant";
   parameter Integer t_cons = 3 "Years of construction";
   parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
@@ -175,30 +178,30 @@ model PBS_Surround_SCO2NREL
   //parameter FI.EnergyPrice pri_storage = if currency == Currency.USD then 37 / (1e3 * 3600) else 37 / (1e3 * 3600) / r_cur "Storage cost per energy capacity";
   // SAM 2018 cost data: 22 / (1e3 * 3600)
   //parameter FI.PowerPrice pri_block = if currency == Currency.USD then 1040.00 / 1e3 else 1040.00 / 1e3 / r_cur "Power block cost per gross rated power";
-  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total/P_gross_des;
+  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total / P_gross_des;
   // SAM 2018 cost data: 1040
-  parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0.29 else 0.29 "Balance of plant cost per gross rated power";
+  parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0.29 else 0.29 "Balance of plant cost per gross rated power"; //not used
   //SAM 2018 cost data: 290
-  parameter FI.AreaPrice pri_land = if currency == Currency.USD then 2.47 else 2.47 "Land cost per area";
-  parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 66.00 / 1e3 else 66.00 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
+  parameter FI.AreaPrice pri_land = if currency == Currency.USD then 2.471 else 2.471 "Land cost per area";
+  parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40.0 / 1e3 else 40.0 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   //SAM 2018 cost data: 66
-  parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3.50 / (1e6 * 3600) else 3.50 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
+  parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3.0 / (1e6 * 3600) else 3.0 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
   //SAM 2018 cost data: 3.5
   parameter FI.Money C_field = pri_field * A_field "Field cost";
   parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-  parameter FI.Money C_tower = 3000000.0 * exp(0.0113 * H_tower) "Tower cost";
-  parameter FI.Money C_receiver = 71112 * A_recv "Receiver cost";
+  parameter FI.Money C_tower = 3000000.0 * exp(0.0113 * H_tower) * 2.0 "Tower cost"; //two-tower system
+  parameter FI.Money C_receiver = (4780420.0 + 21480230.0*(D_recv/14.0)*(H_recv/14.5)^0.6)*2.0 "Receiver cost";//two-tower system
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
   parameter FI.Money C_storage = Tank.C_total;
   //tankHot.C_Storage "Storage cost";
   //parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
   parameter FI.Money C_block = powerBlock.C_PB_total "Power block cost";
-  parameter FI.Money C_bop = pri_bop * P_gross_des "Balance of plant cost";
+  parameter FI.Money C_bop = 16216995.0*(P_name/100e6) + 11919765.0*(2.0*H_tower/300.0) "Balance of plant cost";
   parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";
   // i.e. purchased equipment costs
-  parameter FI.Money C_contingency = 0.07 * C_cap_dir_sub "Contingency costs";
+  parameter FI.Money C_contingency = 0.10 * C_cap_dir_sub "Contingency costs";
   parameter FI.Money C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
-  parameter FI.Money C_EPC = 0.11 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
+  parameter FI.Money C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
   // SAM 2018 cost data: 0.13
   parameter FI.Money C_land = pri_land * A_land "Land cost";
   parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
@@ -237,14 +240,14 @@ model PBS_Surround_SCO2NREL
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
     Placement(visible = true, transformation(origin = {144, 20}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   //Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, A_recv = A_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-28, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   //Storage
   //Loop Breakers
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, enable_losses = true, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
@@ -253,64 +256,64 @@ model PBS_Surround_SCO2NREL
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-                        //Analytics
-                        //Accumulated energy
-                        SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-                        SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-                        SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-                        SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-                        SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-                        SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-                        SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-                        SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-                        SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-                        Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                        Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                        Real eta_shading;
-                        Real eta_cosine;
-                        Real eta_reflection;
-                        Real eta_blocking;
-                        Real eta_attenuation;
-                        Real eta_intercept;
-                        //Annual efficiencies
-                        Real eta_curtail_off "Curtailment: Heliostat off";
-                        Real eta_he_av "Heliostat Availability";
-                        Real eta_optical "Field optical efficiency including spillage";
-                        Real eta_curtail_defocus "Curtailment: Full Storage";
-                        Real eta_recv_abs "Receiver Absorptivity";
-                        Real eta_recv_thermal "Receiver thermal efficiency";
-                        Real eta_storage "Storage thermal efficiency";
-                        Real eta_pb_gross "Power block gross efficiency";
-                        Real eta_pb_net "Power block net efficiency";
-                        Real eta_solartoelec "Solar to electric";
-                      */
+                              //Analytics
+                              //Accumulated energy
+                              SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+                              SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+                              SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+                              SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+                              SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+                              SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+                              SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+                              SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+                              SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+                              Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                              Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                              Real eta_shading;
+                              Real eta_cosine;
+                              Real eta_reflection;
+                              Real eta_blocking;
+                              Real eta_attenuation;
+                              Real eta_intercept;
+                              //Annual efficiencies
+                              Real eta_curtail_off "Curtailment: Heliostat off";
+                              Real eta_he_av "Heliostat Availability";
+                              Real eta_optical "Field optical efficiency including spillage";
+                              Real eta_curtail_defocus "Curtailment: Full Storage";
+                              Real eta_recv_abs "Receiver Absorptivity";
+                              Real eta_recv_thermal "Receiver thermal efficiency";
+                              Real eta_storage "Storage thermal efficiency";
+                              Real eta_pb_gross "Power block gross efficiency";
+                              Real eta_pb_net "Power block net efficiency";
+                              Real eta_solartoelec "Solar to electric";
+                            */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
   /*SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 10, N_f_B = 30, N_f_C = 10, N_p_A = 5, N_p_B = 5, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta, frac_1 = 0.1, frac_2 = 0.1) annotation(
-                      Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-                    */
+                            Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                          */
   SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p, eta = eta) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   /*
-          SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
-            Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-          */
+                SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
+                  Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                */
   /*
-        SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 15, N_p_A = 5, N_f_B = 70, N_p_B = 5, N_f_C = 15, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar_A = ar, d_p_A = d_p_A, eta_A = eta, frac_1 = 0.15) annotation(
-          Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-        */
+              SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 15, N_p_A = 5, N_f_B = 70, N_p_B = 5, N_f_C = 15, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar_A = ar, d_p_A = d_p_A, eta_A = eta, frac_1 = 0.15) annotation(
+                Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+              */
   /*
-          SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
-            Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-          */
+                SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
+                  Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                */
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 13}, extent = {{-10, -9}, {10, 9}}, rotation = 180)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_top(redeclare package Medium = Medium) annotation(
@@ -319,8 +322,11 @@ model PBS_Surround_SCO2NREL
     Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-  SolarTherm.Models.Control.PBS_Controller_PBLimit Control(redeclare package HTF = Medium, T_recv_max = T_recv_max, T_PB_min = T_PB_min, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_recv_start = T_recv_start, T_PB_start = T_PB_start, t_wait = t_PB_wait) annotation(
-    Placement(visible = true, transformation(origin = {60, -16}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+  SolarTherm.Models.Control.PBS_Controller_PBLimit Control(redeclare package HTF = Medium, T_recv_max = T_recv_max, T_PB_min = T_PB_min, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_recv_start = T_recv_start, T_PB_start = T_PB_start, t_wait = t_PB_wait, eff_storage_des = eff_storage_des, t_stor_startPB = t_stor_startPB, E_max = Tank.E_max) annotation(
+    Placement(visible = true, transformation(origin = {60, -18}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+    
+    //Analytics
+    Real W_1 "Non-dimensional degradation width of Tank A"; 
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
     if time > 432000 then //after 5 days
@@ -383,6 +389,7 @@ algorithm
 */
 //Optics
 equation
+    W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f,Tank.Tank_A.T_f,0.05,0.95,T_min,T_max)/Tank.Tank_A.H_tank;
 /*
 //Analytics
 //Cumulative heat
@@ -462,23 +469,25 @@ equation
   connect(Splitter_top.fluid_c, Tank.fluid_a) annotation(
     Line(points = {{26, 54}, {26, 49}}, color = {0, 127, 255}));
   connect(receiver.Q_rcv_raw, Control.Q_rcv_raw) annotation(
-    Line(points = {{-24, 20}, {10, 20}, {10, -11}, {52, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{-24, 20}, {10, 20}, {10, -13}, {52, -13}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
-    Line(points = {{69, -11}, {70, -11}, {70, -2}, {14, -2}, {14, 14}, {-2, 14}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{69, -13}, {70, -13}, {70, -2}, {14, -2}, {14, 14}, {-2, 14}, {-2, 10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
-    Line(points = {{69, -15}, {76, -15}, {76, 76}, {66, 76}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{69, -17}, {76, -17}, {76, 76}, {66, 76}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.defocus, receiver.defocus) annotation(
-    Line(points = {{69, -19}, {70, -19}, {70, -26}, {-38, -26}, {-38, 20}, {-34, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+    Line(points = {{69, -21}, {70, -21}, {70, -26}, {-38, -26}, {-38, 20}, {-34, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
   connect(Tank.h_bot_outlet, Control.h_tank_outlet) annotation(
-    Line(points = {{22, 26}, {22, 18}, {56, 18}, {56, -7}, {57, -7}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{22, 26}, {22, 18}, {56, 18}, {56, -9}, {57, -9}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(powerBlock.h_out_signal, Control.h_PB_outlet) annotation(
-    Line(points = {{84, 4}, {64, 4}, {64, -8}, {64, -8}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{84, 4}, {64, 4}, {64, -9}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.Q_defocus, receiver.Q_defocus) annotation(
-    Line(points = {{52, -24}, {-18, -24}, {-18, 16}, {-24, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{51, -25}, {-18, -25}, {-18, 16}, {-24, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tank.T_top_measured, Control.T_top_tank) annotation(
-    Line(points = {{34, 44}, {48, 44}, {48, -16}, {52, -16}, {52, -16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{34, 44}, {48, 44}, {48, -19}, {52, -19}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tank.T_bot_measured, Control.T_bot_tank) annotation(
-    Line(points = {{34, 28}, {44, 28}, {44, -20}, {52, -20}, {52, -20}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{34, 28}, {44, 28}, {44, -23}, {52, -23}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Tank.Level, Control.Level) annotation(
+    Line(points = {{34, 38}, {46, 38}, {46, -16}, {52, -16}, {52, -16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-42, -34}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
