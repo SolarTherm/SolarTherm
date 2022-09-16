@@ -34,6 +34,8 @@ model Tank_H2
     Placement(visible = true, transformation(origin = {102, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {102, 8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.BooleanOutput discharging annotation(
     Placement(visible = true, transformation(origin = {104, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {104, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.BooleanInput on_discharge_TES annotation(
+    Placement(visible = true, transformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 initial equation
   on_discharge = L_tank > h2_tnk_empty_ub;
   on_charge = L_tank < h2_tnk_full_ub;
@@ -50,14 +52,14 @@ equation
     on_charge = true;
   end when;
   
-  charging = on_charge; discharging = on_discharge;
+  charging = on_charge; discharging = on_discharge and on_discharge_TES;
   
-  H2_out = if on_discharge then H2_demand else 0;  
+  H2_out = if discharging then H2_demand else 0;  
   
   der(E_tank) = H2_in * LHV_H2 - H2_out * LHV_H2 "dE/dt of the H2 tank";
   L_tank = E_tank/E_tank_capacity *100 "Level of the tank";
   L = L_tank "Signal out of the level of the tank";
 
 annotation(
-    Icon(graphics = {Rectangle(origin = {-8, 16}, extent = {{-92, 84}, {108, -116}}), Text(origin = {-68, 24}, extent = {{-2, 2}, {144, -66}}, textString = "Tank H2 Simple")}));
+    Icon(graphics = {Rectangle(origin = {-8, 16}, extent = {{-92, 84}, {108, -116}}), Text(origin = {-68, 24}, extent = {{-2, 2}, {144, -66}}, textString = "Tank H2 Simple")}, coordinateSystem(initialScale = 0.1)));
 end Tank_H2;

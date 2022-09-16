@@ -24,24 +24,8 @@ model HeatExchanger_ParticleGasIndirect
   parameter Boolean use_neural_network = true;
   parameter Integer inputsize = 14;
   parameter Integer outputsize = 1;
-  parameter Real[inputsize] X_max = {
-        353.1470666728751, 973.136415157254, 
-        9.99989300901777, 1073.135375340895, 
-        823.1488443601027, 0.0049982434608095, 
-        0.0599889501544534, 0.0099985253043193, 
-        0.9999758193269492, 9.999433304010232, 
-        1073.140341535585, 353.1499808634883, 
-        1016.8881815988534, 1072.2531304063823
-  };
-  parameter Real[inputsize] X_min = {
-        343.1507218714416, 823.1631592504178, 
-        0.50046924794229, 1023.1510490314196, 
-        773.1502816172183, 0.0001003545952207, 
-        0.0020011338910917, 0.000500120796042, 
-        0.050052042052682, 0.5005396146048189, 
-        973.1794965849724, 353.0500167803593, 
-        353.05006906450353, 359.18953610315253
-  };
+  parameter Real[inputsize] X_max = {873.147608736259, 1261.78929155903, 4.99874743580914, 1273.13856914357, 973.140145246266, 0.004999810880909, 0.059989212153262, 0.009999872519837, 0.999594690837943, 4.99848048118983, 1273.12769197071, 873.148855294655, 9528.33599417378, 3344.86768214966};
+  parameter Real[inputsize] X_min = {863.152208048605, 883.216016729446, 0.300902007162029, 1023.35331623183, 773.22731757903, 0.000100141721352, 0.002038008911878, 0.000501216437113, 0.050087863490287, 0.301800982674091, 1023.19701709183, 863.151268150423, 34.633804858446, 176.628395023518};
   parameter Real out_max = 99.99579509501083;
   parameter Real out_min = 1.008158779023168;
   STNeuralNetwork session = STNeuralNetwork(saved_model_dir) if use_neural_network == true 
@@ -51,6 +35,7 @@ model HeatExchanger_ParticleGasIndirect
   parameter SI.Temperature T_in_gas_DP = 80 + 273.15 "Design inlet temperature of the gas [K]";
   parameter SI.Temperature T_out_gas_DP = 600 + 273.15 "Design outlet temperature of the gas [K]";
   parameter SI.MassFlowRate m_dot_gas_DP = 0.46 "Design mass flow rate of the gas [kg/s]";
+  parameter SI.MassFlowRate m_dot_gas_recycle = 1 "Recycled gas to push Fe production";
   parameter SI.Temperature T_in_pcl_DP = 800 + 273.15 "Design inlet temperature of the particle [K]";
   parameter SI.Temperature T_out_pcl_DP = 550 + 273.15 "Design outlet temperature of the pcl [K]";
   parameter SI.Length d_gas_pipe = 0.5e-3;
@@ -63,6 +48,7 @@ model HeatExchanger_ParticleGasIndirect
   parameter SI.Temperature T_out_pcl_off = 550 + 273.15 "Outlet temperature of the particle [K]";
   parameter SI.Temperature T_out_gas_off = T_out_gas_DP "Design inlet temperature of the gas [K]";
   parameter SI.Area A_HX(fixed = false) "A HX [m2]"; 
+  parameter SI.MassFlowRate m_dot_pcl_DP(fixed=false) "HX design heat rating";
   SI.Temperature T_in_pcl_off "Inlet temperature of the particle [K]";
   
   /*Calculated parameters*/
@@ -98,6 +84,7 @@ model HeatExchanger_ParticleGasIndirect
 
 initial equation
   A_HX = designPoint.A_HX;
+  m_dot_pcl_DP = designPoint.m_dot_pcl_DP;
 
 equation
   if on_discharge then

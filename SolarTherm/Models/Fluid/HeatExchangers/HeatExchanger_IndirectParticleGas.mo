@@ -105,10 +105,19 @@ parameter SI.ThermalConductivity k_pcl_nw_DP[N_disc-1](each fixed=false) "Partic
 parameter SI.Efficiency ew_DP[N_disc-1](each fixed=false) "Near-wall voidage at design point";
 
 parameter SI.Temperature T_pcl_DP[N_disc](
-    each fixed=false, start=fill(linspace(T_in_pcl_DP,T_out_pcl_DP,N_disc)), each min=298.15
+    each fixed=false, 
+    start=linspace(T_in_pcl_DP,T_out_pcl_DP,N_disc), 
+    each min=T_out_pcl_DP, 
+    nominal = linspace(T_in_pcl_DP,T_out_pcl_DP,N_disc), 
+    max = fill(T_in_pcl_DP, N_disc)
 ) "Particle temperature distribution at design point";
+
 parameter SI.Temperature T_gas_DP[N_disc](
-    each fixed=false, start=fill(linspace(T_out_gas_DP,T_in_gas_DP,N_disc))
+    each fixed=false, 
+    start=linspace(T_out_gas_DP,T_in_gas_DP,N_disc), 
+    each min = T_in_gas_DP, 
+    nominal = linspace(T_out_gas_DP,T_in_gas_DP,N_disc),
+    max = fill(T_out_gas_DP, N_disc)
 ) "Gas temperature distribution at design point";
 
 parameter SI.Area A_HX(fixed=false);

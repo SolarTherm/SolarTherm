@@ -113,7 +113,7 @@ double run_surrogate(const Session_Props_Static_ANN *sess
 		    data[i] = 0;
 		}else{
 		    data[i] = (raw_input[i] - X_min[i]) / (X_max[i]-X_min[i]);
-		}
+		}		
 	}
 
 	//Allocate memory for data inside the Input Tensor
