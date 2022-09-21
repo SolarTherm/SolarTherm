@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-model PBS_Controller_PBLimit
+model PBS_Controller_PBLimit_v2
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Sodium.Sodium_pT;
   parameter SI.Temperature T_recv_max = 550.0 + 273.15 "Maximum tolerated receiver input temperature";
@@ -62,6 +62,10 @@ model PBS_Controller_PBLimit
   //New calculated parameters
   parameter SI.Time t_stor_cap = E_max/Q_des_blk "design storage capacity in seconds of design PB operation";
   parameter Real L_startPB = t_stor_startPB/t_stor_cap + 0.5*(1.0-eff_storage_des) "Minimum tank level to start PB to ensure the required time of stored energy available";
+  
+  //Relative flow magnitude State
+  Integer Flow_State(start = 0); //0 if receiver < 0, 1 if recv between 0 and PB, 2 if recv greater than PB
+  parameter SI.MassFlowRate m_tol = 0.0001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
 
 initial algorithm
   if Level <= L_startPB then
@@ -81,6 +85,31 @@ algorithm
   elsewhen T_bot_tank < T_recv_start then
     Chg := true;
   end when;
+  
+  //New parts
+  when m_guess > m_tol then
+    if m_guess < m_flow_PB_des + m_tol then //no overshoot
+      Flow_State := 1;
+    else //overshot
+      Flow_State := 2;
+    end if;
+  end when;
+  when m_guess < m_min then
+    Flow_State := 0;
+  end when;
+  
+  when m_guess > m_flow_PB_des + m_tol then
+    Flow_State := 2;
+  end when;
+  when m_guess < m_flow_PB_des then
+    if m_guess > m_tol then //no overshoot
+      Flow_State := 1;
+    else
+      Flow_State := 0;
+    end if;
+  end when;
+
+  
   
 //Old controls: PB triggered by shutdown and re-enabled after threshold time
 //  when m_flow_PB < 0.1 * m_flow_PB_des then
@@ -172,7 +201,7 @@ equation
     end if;
   end if;
   */
-  if m_guess < m_min then
+  if Flow_State == 0 then
     if Disch == true then
       if PB == true then
         Control_State = 2;
@@ -182,7 +211,7 @@ equation
     else
       Control_State = 6;
     end if;
-  elseif m_guess >= m_min and m_guess <= m_flow_PB_des then 
+  elseif Flow_State == 1 then
     if Disch == true then
       if PB == true then
         Control_State = 4;
@@ -196,7 +225,7 @@ equation
         Control_State = 6;
       end if;
     end if;
-  else
+  else //Flow_State == 2
     if Chg == true then
       if PB == true then
         Control_State = 5;
@@ -260,4 +289,4 @@ equation
 		</html>",info="<html>
 		<p>This component determines the mass flow rates of both the receiver and power block mass flow rates. The variable m_guess calculates the required receiver mass flow to achieve target outlet temperature T_target based on inlet enthalpy from either storage bottom outlet, PB outlet or a combination of both. Depending on whether the storage is allowed to charge, discharge and relative size of m_guess wrt minimum flowrate and PB design flowrate, one of the 6 operating states is chosen.</p>
 		</html>"));
-end PBS_Controller_PBLimit;
+end PBS_Controller_PBLimit_v2;

@@ -61,6 +61,11 @@ model PBS_Receiver
   SI.Temperature T_in;
   SI.Temperature T_out;
   parameter SI.SpecificEnthalpy h_out_ref = Medium.specificEnthalpy(Medium.setState_pTX(1e5,T_max));
+
+algorithm
+  T_4avg := (0.20*(T_in^4 + (T_in^3)*(T_out) + (T_in^2)*(T_out^2) + (T_in)*(T_out^3) + T_out^4))^0.25;
+  T_avg := 0.5*(T_in+T_out);
+  
 equation
   
   h_in=inStream(fluid_a.h_outflow);
@@ -82,8 +87,8 @@ equation
   medium.h=0.5*(h_in+h_out);
   
   //New
-  T_4avg = (0.20*(T_in^4 + (T_in^3)*(T_out) + (T_in^2)*(T_out^2) + (T_in)*(T_out^3) + T_out^4))^0.25;
-  T_avg = 0.5*(T_in+T_out);
+  //T_4avg = (0.20*(T_in^4 + (T_in^3)*(T_out) + (T_in^2)*(T_out^2) + (T_in)*(T_out^3) + T_out^4))^0.25;
+  //T_avg = 0.5*(T_in+T_out);
   Q_rad = A_recv*sigma*em*((T_4avg^4)-(Tamb^4));
   Q_conv = A_recv*h_conv*(T_avg-Tamb);
   //End New

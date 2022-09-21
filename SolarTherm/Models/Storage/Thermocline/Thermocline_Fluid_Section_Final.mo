@@ -1,6 +1,7 @@
 within SolarTherm.Models.Storage.Thermocline;
 
 model Thermocline_Fluid_Section_Final
+  //Just a tank purely filled with fluid.
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;

@@ -80,6 +80,7 @@ model PBS_Surround_SCO2NREL
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
+  parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
   parameter Integer N_f = 360 "Number of discretizations in vertical fluid phase";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
@@ -114,13 +115,13 @@ model PBS_Surround_SCO2NREL
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
-  parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
+  parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) * 2 "Number of heliostats"; //Two-tower system
   parameter SI.Area A_heliostat = MetaA[2] "Area of one heliostat";
   parameter Real eff_opt_des = MetaA[3];
   parameter SI.Length H_recv = MetaA[4];
   parameter SI.Length D_recv = MetaA[5];
   parameter SI.Length H_tower = MetaA[6] "Height of the tower"; //One tower
-  parameter SI.Area A_field = A_heliostat * n_heliostat * 2.0 "Area of the entire field (reflective area)"; //Two-tower system
+  parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
   parameter SI.Area A_land = land_mult * A_field "Land area occupied by the plant";
   //Receiver Parameters
   parameter SI.Area A_recv = if field_type == "polar" then 2.0 * H_recv * D_recv else 2.0 * H_recv * D_recv * CN.pi "Total Receiver area"; //Two-tower system
@@ -138,7 +139,7 @@ model PBS_Surround_SCO2NREL
   parameter SI.Power P_name = 100e6;
   parameter SI.Temperature T_pb_cool_des = 35.0 + 273.15 "Design cooling temperature ambient of PB, is 6 degrees below 41 degC";
   parameter SI.Efficiency eff_net_des = 0.90 "Power block net efficiency rating";
-  parameter SI.Efficiency eff_blk_des = 0.450960 "Power block efficiency at design point";
+  parameter SI.Efficiency eff_blk_des = 0.4555 "Power block efficiency at design point";
   parameter SI.Time t_PB_wait = 1.0 * 3600.0 "Wait time between shutdown and turning back on";
   //Pumping and Parasitics
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
@@ -300,7 +301,7 @@ model PBS_Surround_SCO2NREL
   /*SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 10, N_f_B = 30, N_f_C = 10, N_p_A = 5, N_p_B = 5, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta, frac_1 = 0.1, frac_2 = 0.1) annotation(
                             Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
                           */
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p, eta = eta) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = E_max, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p, eta = eta) annotation(
     Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   /*
                 SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(

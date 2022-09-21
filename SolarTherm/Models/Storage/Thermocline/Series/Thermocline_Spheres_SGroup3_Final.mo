@@ -30,7 +30,7 @@ model Thermocline_Spheres_SGroup3_Final
   parameter Real eta_B = eta_A "Porosity";
   parameter Real eta_C = eta_A "Porosity";
     //Filler diameter of materials
-  parameter Real d_p_A = 0.3 "Filler diameter";
+  parameter Real d_p_A = 0.1 "Filler diameter";
   parameter Real d_p_B = d_p_A "Filler diameter";
   parameter Real d_p_C = d_p_A "Filler diameter";
     //Discretization settings

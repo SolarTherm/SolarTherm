@@ -1,7 +1,7 @@
 within SolarTherm.Models.Storage.Thermocline;
 
 model Thermocline_Spheres_Section_LC_Final
-  //Lumped Capacitance
+  //Lumped Capacitance Model, suitable for air fluid - rock filler systems
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;

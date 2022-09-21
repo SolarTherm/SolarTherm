@@ -11,10 +11,8 @@ model Thermocline_Spheres_SGroup2_Final
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_A = SolarTherm.Materials.PartialMaterial; //Bot
   replaceable package Filler_Package_B = SolarTherm.Materials.PartialMaterial; //Mid
-  replaceable package Filler_Package_C = SolarTherm.Materials.PartialMaterial; //Top
   replaceable package Encapsulation_Package_A = Filler_Package_A; //Defaults to filler material
   replaceable package Encapsulation_Package_B = Filler_Package_B; //Defaults to filler material
-  replaceable package Encapsulation_Package_C = Filler_Package_C; //Defaults to filler material
   //Storage Parameter Settings
   parameter Integer Correlation = 3 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
     //Storage Cpacity and Fractions
@@ -27,7 +25,7 @@ model Thermocline_Spheres_SGroup2_Final
   parameter Real eta_A = 0.26 "Porosity";
   parameter Real eta_B = eta_A "Porosity";
     //Filler diameter of materials
-  parameter Real d_p_A = 0.3 "Filler diameter";
+  parameter Real d_p_A = 0.1 "Filler diameter";
   parameter Real d_p_B = d_p_A "Filler diameter";
     //Discretization settings
   parameter Integer N_f_A = 10 "Number of fluid CVs in Tank_A";
@@ -41,8 +39,8 @@ model Thermocline_Spheres_SGroup2_Final
   parameter SI.CoefficientOfHeatTransfer U_loss_tank_A = 0.1 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank_B = U_loss_tank_A "W/m2K";
     //Temperature settings
-  parameter SI.Temperature T_min = CV.from_deg(515) "Minimum temperature (design) also starting T";
-  parameter SI.Temperature T_max = CV.from_deg(715) "Maximum design temperature (design)";
+  parameter SI.Temperature T_min = CV.from_deg(500) "Minimum temperature (design) also starting T";
+  parameter SI.Temperature T_max = CV.from_deg(720) "Maximum design temperature (design)";
   
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)" annotation (Placement(visible = true,transformation(

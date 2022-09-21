@@ -1,6 +1,7 @@
 within SolarTherm.Models.Storage.Thermocline;
 
 model Thermocline_Spheres_Section_VD_Final
+  //Variable fluid density model, extremely slow and does not work with steady-mass-flow components
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;

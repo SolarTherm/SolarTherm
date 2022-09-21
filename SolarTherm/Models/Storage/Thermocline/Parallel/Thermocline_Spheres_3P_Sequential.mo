@@ -1,7 +1,7 @@
 within SolarTherm.Models.Storage.Thermocline.Parallel;
 
-model Thermocline_Spheres_3P_MixedFlow_Strat2
-  //A2 Refers to A: Charge 1-2, Discharge 2-1; 2: 2-Tanks
+model Thermocline_Spheres_3P_Sequential
+  //Three-tank system in parallel sequential Charging C-B-A, Discharging A-B-C
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -31,7 +31,7 @@ model Thermocline_Spheres_3P_MixedFlow_Strat2
   parameter Real eta_B = eta_A "Porosity";
   parameter Real eta_C = eta_A "Porosity";
     //Filler diameter of materials
-  parameter Real d_p_A = 0.3 "Filler diameter";
+  parameter Real d_p_A = 0.1 "Filler diameter";
   parameter Real d_p_B = d_p_A "Filler diameter";
   parameter Real d_p_C = d_p_A "Filler diameter";
     //Encapsulation thickness
@@ -53,24 +53,10 @@ model Thermocline_Spheres_3P_MixedFlow_Strat2
   parameter SI.Temperature T_min = CV.from_deg(515) "Minimum temperature (design) also starting T";
   parameter SI.Temperature T_max = CV.from_deg(715) "Maximum design temperature (design)";
     //Internal control for temperature
-  parameter SI.Temperature T_recv_set = 273.15 + 570.0 "Temperature of T_05 at which it switches to the next tank during charging";
-  parameter SI.Temperature T_PB_set = 273.15 + 680.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
-  //Internal Controls
-  //Integer Active_Tank(start = 1) "Which tank is in use currently";
-  Real f_chg_guess_1(start=0.0) "Fraction of mass flow of secondary tank during charging";
-  Real f_disch_guess_1(start=0.0) "Fraction of mass flow of secondary tank during discharging";
-  
-  Real f_chg_guess_2(start=0.0) "Fraction of mass flow of secondary tank during charging";
-  Real f_disch_guess_2(start=0.0) "Fraction of mass flow of secondary tank during discharging";
-  
-  Real f_chg(start=0.0) "Fraction of mass flow of secondary tank during charging";
-  Real f_disch(start=0.0) "Fraction of mass flow of secondary tank during discharging";
-  
-  Integer Charge_State(start=1) "1 = Only A, 2 = B assists A, 3 = Only B";
-  Integer Discharge_State(start=1) "1 = Only A, 2 = B assists A, 3 = Only B";
-  
-  parameter SI.SpecificEnthalpy h_recv_set = Fluid_Package.h_Tf(T_recv_set,0.0);
-  parameter SI.SpecificEnthalpy h_PB_set = Fluid_Package.h_Tf(T_PB_set,0.0);
+  parameter SI.Temperature T_bot_high = 273.15 + 520.0 "Temperature of T_05 at which it switches to the next tank during charging";
+  parameter SI.Temperature T_top_low = 273.15 + 695.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
+
+  Integer Active_Tank(start = 3) "Which tank is in use currently";
   
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)" annotation(
@@ -103,6 +89,7 @@ model Thermocline_Spheres_3P_MixedFlow_Strat2
   Modelica.Blocks.Interfaces.RealOutput Level "Level of the entire storage" annotation(
     Placement(visible = true, transformation(extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {45, 21}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
 
+
     //Tank Non-dimensionalized vertical axis
   parameter Real ZDH_A[N_f_A] = Tank_A.ZDH;
   parameter Real ZDH_B[N_f_B] = Tank_B.ZDH;
@@ -111,7 +98,6 @@ model Thermocline_Spheres_3P_MixedFlow_Strat2
   Real T_f_A_degC[N_f_A](start = fill(T_min, N_f_A));
   Real T_f_B_degC[N_f_B](start = fill(T_min, N_f_B));
   Real T_f_C_degC[N_f_C](start = fill(T_min, N_f_C));
-    //Tank temperature at 5% and 95% vertical positions
 
   parameter SI.MassFlowRate m_0 = 1.0e-7 "Minimum mass flow rate, just to avoid zero";
   
@@ -121,161 +107,32 @@ model Thermocline_Spheres_3P_MixedFlow_Strat2
   
 algorithm
 
-  //Tank A assists Tank B during charging, therefore when Tank B needs help, modify the chargestate boolean
-  when Tank_C.T_f[1] > T_recv_set then //Bottom of C too hot, need help from B
-    if Charge_State == 1 then
-      Charge_State := 2;
-    end if;
-  elsewhen Tank_B.T_f[1] > T_recv_set then //Bottom of B too hot, need help from A
-    if Charge_State == 2 or Charge_State == 3 then 
-      Charge_State := 4;
-    end if; 
-  elsewhen Tank_B.T_f[1] < T_recv_set - 1 then //Bottom of B now cold enough to charge by itself
-    if Charge_State == 4 or Charge_State == 5 then
-      Charge_State := 3;
-    end if;
-  elsewhen Tank_C.T_f[1] < T_recv_set - 1 then //Bottom of C now cold enough to charge by itself
-    if Charge_State == 2 or Charge_State == 3 then
-      Charge_State := 1;
+  when Tank_C.T_f[1] > T_bot_high then
+    if Active_Tank == 3 then
+      Active_Tank := 2;
     end if;
   end when;
-  
-  when f_chg_guess_2 > 1.0 then //Tank A no longer able to assist B, proceeds to charge by itself
-    if Charge_State == 4 then
-      Charge_State := 5;
+  when Tank_B.T_f[1] > T_bot_high then
+    if Active_Tank == 2 then
+      Active_Tank := 1;
     end if;
   end when;
-  when f_chg_guess_1 > 1.0 then //Tank B no longer able to assist C, proceeds to charge itself if below set T
-    if Charge_State == 2 then //new
-      if Tank_B.T_f[1] < T_recv_set - 1 then
-        Charge_State := 3;
-      else
-        Charge_State := 4; //new
-      end if;
+  when Tank_A.T_f[N_f_C] < T_top_low then
+    if Active_Tank == 1 then
+      Active_Tank := 2;
     end if;
   end when;
-  when f_chg_guess_1 < 0.99 then //Tank B now able to assist C
-    if Charge_State == 3 then //new
-      Charge_State := 2; //new
+  when Tank_B.T_f[N_f_B] < T_top_low then
+    if Active_Tank == 2 then
+      Active_Tank := 3;
     end if;
-  end when;
-  when f_chg_guess_2 < 0.99 then //Tank A now able to assist B
-    if Charge_State == 5 then
-      Charge_State := 4;
-    end if;
-  end when;
-
-
-  //Tank C assists Tank B during discharge
-  
-  when Tank_A.T_f[N_f_A] < T_PB_set then //top of A is too cold, need help from B
-    if Discharge_State == 1 then
-      Discharge_State := 2;
-    end if;
-  elsewhen Tank_B.T_f[N_f_B] < T_PB_set then //top of B is too cold, need help from C
-    if Discharge_State == 2 or Discharge_State == 3 then 
-      Discharge_State := 4;
-    end if;
-  elsewhen Tank_B.T_f[N_f_B] > T_PB_set + 1 then //top of B is hot enough to discharge by itself
-    if Discharge_State == 4 or Discharge_State == 5 then
-      Discharge_State := 3;
-    end if;
-  elsewhen Tank_A.T_f[N_f_A] > T_PB_set + 1 then //Top of A is hot enough to discharge by itself
-    if Discharge_State == 2 or Discharge_State == 3 then
-      Discharge_State := 1;
-    end if;
-  end when;
-  
-  when f_disch_guess_2 > 1.0 then //Tank C no longer able to assist B, proceeds to discharge by itself 
-    if Discharge_State == 4 then
-      Discharge_State := 5;
-    end if;
-  end when;
-  when f_disch_guess_1 > 1.0 then //Tank B no longer able to assist A, proceeds to discharge by itself if above set T
-    if Discharge_State == 2 then //new
-      if Tank_B.T_f[N_f_B] > T_PB_set + 1 then
-        Discharge_State := 3; //new
-      else
-        Discharge_State := 4; //new
-      end if;
-    end if;
-  end when;
-  
-  when f_disch_guess_1 < 0.99 then //Tank B is now able to assist A
-    if Discharge_State == 3 then //new
-      Discharge_State := 2; //new
-    end if;
-  end when;
-  
-  when f_disch_guess_2 < 0.99 then //Tank C is now able to assist B
-    if Discharge_State == 5 then
-      Discharge_State := 4;
-    end if;
-  end when;
-  
-  //The assisting tank gets measured
+  end when; 
+  //Measured temperatures at the bottom and top
   T_bot_measured := Tank_A.T_f[1];
   T_top_measured := Tank_C.T_f[N_f_C];
-
   
 
 equation
-  //Figure out assisted mass fraction
-  //Tank B assists A discharging, Tank C assist B discharging
-  //Discharge
-    if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] + 100.0 then
-      f_disch_guess_1 = (h_PB_set - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]);
-    else //Cannot Assist
-      f_disch_guess_1 = 0.0;
-    end if;
-
-    if Tank_C.h_f[N_f_C] > Tank_B.h_f[N_f_B] + 100.0 then
-      f_disch_guess_2 = (h_PB_set - Tank_B.h_f[N_f_B]) / (Tank_C.h_f[N_f_C] - Tank_B.h_f[N_f_B]);
-    else //Cannot Assist
-      f_disch_guess_2 = 0.0;
-    end if;
-
-  //Tank A assists B charging, Tank B assists C charging
-  //Charge
-    if Tank_A.h_f[1] < Tank_B.h_f[1] - 100.0 then
-      f_chg_guess_2 = (h_recv_set - Tank_B.h_f[1]) / (Tank_A.h_f[1] - Tank_B.h_f[1] );
-    else
-      f_chg_guess_2 = 0.0;
-    end if;
-
-    if Tank_B.h_f[1] < Tank_C.h_f[1] - 100.0 then
-      f_chg_guess_1 = (h_recv_set - Tank_C.h_f[1]) / (Tank_B.h_f[1] - Tank_C.h_f[1] );
-    else
-      f_chg_guess_1 = 0.0;
-    end if;
-
-  
-  //End points (need review)
-  if Charge_State == 1 then
-    f_chg = 0.0;
-  elseif Charge_State == 2 then
-    f_chg = f_chg_guess_1;
-  elseif Charge_State == 3 then
-    f_chg = 0.0;
-  elseif Charge_State == 4 then
-    f_chg = f_chg_guess_2;
-  else
-    f_chg = 1.0;
-  end if;
-  
-  if Discharge_State == 1 then
-    f_disch = 0.0;
-  elseif Discharge_State == 2 then
-    f_disch = f_disch_guess_1;
-  elseif Discharge_State == 3 then
-    f_disch = 0.0;
-  elseif Discharge_State == 4 then
-    f_disch = f_disch_guess_2;
-  else
-    f_disch = 1.0;
-  end if;
-  
-  
   //Determine inlet/outlet fluid state for plotting only. If mass flow is close to zero, return 298.15K temperature.
   if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
@@ -294,7 +151,6 @@ equation
   //Calculate tank energy level
   Level = frac_1 * Tank_A.Level + frac_2 * Tank_B.Level + (1 - frac_1 - frac_2) * Tank_C.Level;
   //Determine tank outlet enthalpy used by external control system
-  /*
   if Active_Tank == 1 then 
     h_bot_outlet = Tank_A.h_f[1];
   elseif Active_Tank == 2 then
@@ -302,66 +158,68 @@ equation
   else
     h_bot_outlet = Tank_C.h_f[1];
   end if;
-  */
 
-  //Charging
+  //Figure out which tanks need which equations and connections
   if fluid_a.m_flow > 0.0 then //Charging
-      if Charge_State > 2 then
-        Tank_C.m_flow = 0.0;
-        Tank_B.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_chg);
-        Tank_A.m_flow = -1.0 * fluid_a.m_flow * f_chg;
-        
-        Tank_A.h_in = inStream(fluid_a.h_outflow);
-        Tank_B.h_in = inStream(fluid_a.h_outflow);
-        Tank_C.h_in = inStream(fluid_a.h_outflow);
-      
-        fluid_a.h_outflow = Tank_B.h_in * (1.0 - f_chg) + Tank_A.h_in * (f_chg);
-        fluid_b.h_outflow = Tank_B.h_out * (1.0 - f_chg) + Tank_A.h_out * (f_chg);
-      
-        h_bot_outlet = (1.0 - f_chg)*Tank_B.h_f[1] + f_chg*Tank_A.h_f[1];
-      else
-        Tank_C.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_chg);
-        Tank_B.m_flow = -1.0 * fluid_a.m_flow * f_chg;
-        Tank_A.m_flow = 0.0;
-        
-        Tank_A.h_in = inStream(fluid_a.h_outflow);
-        Tank_B.h_in = inStream(fluid_a.h_outflow);
-        Tank_C.h_in = inStream(fluid_a.h_outflow);
-      
-        fluid_a.h_outflow = Tank_C.h_in * (1.0 - f_chg) + Tank_B.h_in * (f_chg);
-        fluid_b.h_outflow = Tank_C.h_out * (1.0 - f_chg) + Tank_B.h_out * (f_chg);
-      
-        h_bot_outlet = (1.0 - f_chg)*Tank_C.h_f[1] + f_chg*Tank_B.h_f[1];
-      end if;
+    if Active_Tank == 1 then
+      Tank_A.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_A.h_in = inStream(fluid_a.h_outflow);
+      fluid_a.h_outflow = Tank_A.h_in;
+      fluid_b.h_outflow = Tank_A.h_out;
+      Tank_B.m_flow = 0.0;
+      Tank_B.h_in = inStream(fluid_a.h_outflow);
+      Tank_C.m_flow = 0.0;
+      Tank_C.h_in = inStream(fluid_a.h_outflow);
+    elseif Active_Tank == 2 then
+      Tank_B.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_B.h_in = inStream(fluid_a.h_outflow);
+      fluid_a.h_outflow = Tank_B.h_in;
+      fluid_b.h_outflow = Tank_B.h_out;
+      Tank_A.m_flow = 0.0;
+      Tank_A.h_in = inStream(fluid_a.h_outflow);
+      Tank_C.m_flow = 0.0;
+      Tank_C.h_in = inStream(fluid_a.h_outflow);
+    else
+      Tank_C.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_C.h_in = inStream(fluid_a.h_outflow);
+      fluid_a.h_outflow = Tank_C.h_in;
+      fluid_b.h_outflow = Tank_C.h_out;
+      Tank_A.m_flow = 0.0;
+      Tank_A.h_in = inStream(fluid_a.h_outflow);
+      Tank_B.m_flow = 0.0;
+      Tank_B.h_in = inStream(fluid_a.h_outflow);
+    end if;
   else //Discharging
-      if Discharge_State < 3 then
-        Tank_A.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_disch);
-        Tank_B.m_flow = -1.0 * fluid_a.m_flow * f_disch;
-        Tank_C.m_flow = 0.0;
-      
-        Tank_A.h_in = inStream(fluid_b.h_outflow);
-        Tank_B.h_in = inStream(fluid_b.h_outflow);
-        Tank_C.h_in = inStream(fluid_b.h_outflow);
-      
-        fluid_a.h_outflow = Tank_A.h_out * (1.0 - f_disch) + Tank_B.h_out * (f_disch);
-        fluid_b.h_outflow = Tank_A.h_in * (1.0 - f_disch) + Tank_B.h_in * (f_disch);
-      
-        h_bot_outlet = (1.0 - f_disch)*Tank_A.h_f[1] + f_disch*Tank_B.h_f[1];
-      else
-        Tank_A.m_flow = 0.0;
-        Tank_B.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_disch);
-        Tank_C.m_flow = -1.0 * fluid_a.m_flow * f_disch;
-        
-        Tank_A.h_in = inStream(fluid_b.h_outflow);
-        Tank_B.h_in = inStream(fluid_b.h_outflow);
-        Tank_C.h_in = inStream(fluid_b.h_outflow);
-      
-        fluid_a.h_outflow = Tank_B.h_out * (1.0 - f_disch) + Tank_C.h_out * (f_disch);
-        fluid_b.h_outflow = Tank_B.h_in * (1.0 - f_disch) + Tank_C.h_in * (f_disch);
-      
-        h_bot_outlet = (1.0 - f_disch)*Tank_B.h_f[1] + f_disch*Tank_C.h_f[1];
-      end if;
+    if Active_Tank == 1 then
+      Tank_A.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_A.h_in = inStream(fluid_b.h_outflow);
+      fluid_a.h_outflow = Tank_A.h_out;
+      fluid_b.h_outflow = Tank_A.h_in;
+      Tank_B.m_flow = 0.0;
+      Tank_B.h_in = inStream(fluid_b.h_outflow);
+      Tank_C.m_flow = 0.0;
+      Tank_C.h_in = inStream(fluid_b.h_outflow);
+    elseif Active_Tank == 2 then
+      Tank_B.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_B.h_in = inStream(fluid_b.h_outflow);
+      fluid_a.h_outflow = Tank_B.h_out;
+      fluid_b.h_outflow = Tank_B.h_in;
+      Tank_A.m_flow = 0.0;
+      Tank_A.h_in = inStream(fluid_b.h_outflow);
+      Tank_C.m_flow = 0.0;
+      Tank_C.h_in = inStream(fluid_b.h_outflow);
+    else
+      Tank_C.m_flow = -1.0 * fluid_a.m_flow;
+      Tank_C.h_in = inStream(fluid_b.h_outflow);
+      fluid_a.h_outflow = Tank_C.h_out;
+      fluid_b.h_outflow = Tank_C.h_in;
+      Tank_A.m_flow = 0.0;
+      Tank_A.h_in = inStream(fluid_b.h_outflow);
+      Tank_B.m_flow = 0.0;
+      Tank_B.h_in = inStream(fluid_b.h_outflow);
+    end if;
   end if;
+  
   //Connect pressure and ambient temp
   fluid_a.p = p_amb;
   fluid_a.p = fluid_b.p;
@@ -373,4 +231,4 @@ equation
   fluid_a.m_flow = -1.0 * fluid_b.m_flow;
   annotation(
     Icon(graphics = {Rectangle(origin = {9, 49}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-49, 11}, {31, -109}}), Text(origin = {-35, 37}, extent = {{-5, 5}, {5, -7}}, textString = "A"), Text(origin = {-7, 37}, extent = {{-5, 5}, {5, -7}}, textString = "B"), Rectangle(origin = {1, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {1, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {-7, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {-5, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {1, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {1, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {-5, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {21, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {27, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {27, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {19, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {27, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {21, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {27, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Line(origin = {-26, -34}, points = {{0, -12}, {0, 12}, {0, 12}}), Line(origin = {-26, 38}, points = {{0, 8}, {0, -8}, {0, -8}}), Line(origin = {-15.5, 46}, points = {{-10.5, 0}, {11.5, 0}, {9.5, 0}}), Line(origin = {-11, 38}, points = {{-11, 8}, {11, 8}, {11, -8}, {11, -8}}), Line(origin = {0, 53}, points = {{0, 7}, {0, -7}, {0, -7}}), Line(origin = {0, -53}, points = {{0, -7}, {0, 7}, {0, 7}}), Line(origin = {-15, -46}, points = {{-11, 0}, {11, 0}, {11, 0}}), Line(origin = {-11, -34}, points = {{11, 12}, {11, -12}, {-11, -12}, {-11, -12}}), Ellipse(origin = {-5, -41}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Ellipse(origin = {-5, 51}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Rectangle(origin = {47, 23}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-31, 7}, {-11, 3}}), Rectangle(origin = {45, 19}, fillColor = {184, 184, 184}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 3}}), Rectangle(origin = {53, 15}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 11}, fillColor = {124, 124, 124}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 7}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, 3}, fillColor = {104, 104, 104}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -5}, fillColor = {89, 89, 89}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -9}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {53, -13}, fillColor = {66, 66, 66}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 3}}), Rectangle(origin = {47, -9}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {47, -13}, fillColor = {31, 31, 31}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Rectangle(origin = {47, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -5}}), Line(origin = {13, 38}, points = {{-13, 8}, {13, 8}, {13, -8}, {13, -8}}),  Text(origin = {21, 37}, extent = {{-5, 5}, {5, -7}}, textString = "C"), Line(origin = {13, -34}, points = {{-13, -12}, {13, -12}, {13, 12}, {13, 12}}), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {59, 66}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {50, 35.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {50, -10}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {50, -26.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {62, -63}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {-52, -65}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {-62, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb")}, coordinateSystem(initialScale = 0.1)));
-end Thermocline_Spheres_3P_MixedFlow_Strat2;
+end Thermocline_Spheres_3P_Sequential;
