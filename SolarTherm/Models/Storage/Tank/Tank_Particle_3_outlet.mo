@@ -23,6 +23,7 @@ model Tank_Particle_3_outlet
   parameter Real m_tot = 2e6;
   parameter Real D_outlet = 0.21;
   parameter Real t_storage = 13;
+  parameter Real t_storage_threshold = 3;
   
   parameter SI.ThermalResistance[2] R_hemisphere = 
         if external_storage then 
@@ -206,7 +207,7 @@ equation
   der(E_losses_total)= Q_losses_before_radiation  + Q_loss_radiation;
     
   V=(m/medium.d)/packing_factor;
-  L_internal=V / V_t * 100;
+  L_internal= V / V_t * 100;
   A=2*CN.pi*(D/2)*H*(L_internal/100) + CN.pi*(D/2)^2;
 
   if medium.T<T_set then

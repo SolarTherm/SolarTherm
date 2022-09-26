@@ -10,6 +10,9 @@ model PowerBlockControl_PVCSP_Particle_H2O2Storage
 
   parameter Real L_df_on=99 "Level of start defocus";
   parameter Real L_df_off=96 "Level of stop defocus";
+  
+  parameter Real t_storage_threshold = 3;
+  parameter Real t_storage = 3;
   //Boolean on;
   
   Boolean ramping;
@@ -87,6 +90,9 @@ equation
   der(PB_time_spend_ramping) = if ramping then 1 else 0;
   
   m_flow = if H2_tank_charging then logic.m_flow * PB_ramp_fraction else 0;
+  
+
+  
   on_discharge = logic.on_discharge;
 
   connect(T_amb_input,logic.T_amb_input) "Extra connection to connect T_amb with logic.T_amb_input";

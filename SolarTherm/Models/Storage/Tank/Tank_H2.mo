@@ -15,11 +15,14 @@ model Tank_H2
   parameter Real h2_tnk_full_lb = 93 "[CTRL] Hot tank full trigger lower bound";
   parameter Real h2_tnk_full_ub = 95 "[CTRL] Hot tank full trigger upper bound";
   
+  parameter Real t_storage_threshold = 3;
+  
   Real L_tank(start=L_start);
   SI.Energy E_tank(start=L_start/100 * E_tank_capacity);
   Boolean on_discharge;
   Boolean on_charge;
   
+  parameter Real t_storage = 20;
   
   /*Connections*/
   Modelica.Blocks.Interfaces.RealInput H2_in annotation(
@@ -37,9 +40,15 @@ model Tank_H2
   Modelica.Blocks.Interfaces.BooleanInput on_discharge_TES annotation(
     Placement(visible = true, transformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 initial equation
-  on_discharge = L_tank > h2_tnk_empty_ub;
-  on_charge = L_tank < h2_tnk_full_ub;
+  if t_storage >= t_storage_threshold then
+    on_discharge = L_tank > h2_tnk_empty_ub;
+    on_charge = L_tank < h2_tnk_full_ub;
+  else
+    on_discharge = true;
+    on_charge = true;
+  end if;
 equation
+  //if t_storage > 0.5 then
   when L_tank > h2_tnk_empty_ub then
     on_discharge = true;
   elsewhen L_tank < h2_tnk_empty_lb then
@@ -51,13 +60,23 @@ equation
   elsewhen L_tank < h2_tnk_full_lb then
     on_charge = true;
   end when;
+  //else
+  //    on_charge = true;
+  //    on_discharge = true;
+  //end if;
   
   charging = on_charge; discharging = on_discharge and on_discharge_TES;
   
-  H2_out = if discharging then H2_demand else 0;  
+  if t_storage >= t_storage_threshold then
+      H2_out = if discharging then H2_demand else 0;  
+  else
+      H2_out = H2_in;
+  end if;
+  
+  //
   
   der(E_tank) = H2_in * LHV_H2 - H2_out * LHV_H2 "dE/dt of the H2 tank";
-  L_tank = E_tank/E_tank_capacity *100 "Level of the tank";
+  L_tank = if t_storage < t_storage_threshold then 50 else E_tank/E_tank_capacity *100 "Level of the tank";
   L = L_tank "Signal out of the level of the tank";
 
 annotation(

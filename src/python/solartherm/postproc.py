@@ -368,6 +368,8 @@ class SimResultElec(SimResult):
 
 class SimResultH2(SimResult):
 	def calc_perf(self):
+		print("Calculate Solar-H2 plant's peformance")
+	
 		"""Calculate Solar-H2 plant's peformance"""
 		
 		varnames = self.get_names()
@@ -385,6 +387,7 @@ class SimResultH2(SimResult):
 		#Renewable H2
 		eng_t = self.mat.abscissa('H2_mass_electrolyser', valuesOnly=True) #Time [s]
 		eng_v = self.mat.data('H2_mass_electrolyser') #Cummulative of H2 production in kg
+		self.eng_v = eng_v
 		
 		#Determining OM fix cost for PV
 		
@@ -393,9 +396,6 @@ class SimResultH2(SimResult):
 		e_pb = self.mat.data('E_pb_net')
 		
 		e_pv = e_elec[-1] - e_pb[-1]
-		
-		print(e_pb[-1])
-		
 		
 		if pv_nameplate < 1:
 			self.pv_cf = 0
@@ -409,25 +409,13 @@ class SimResultH2(SimResult):
 		else:
 			pb_cf = e_pb[-1]/(pb_nameplate * 8760 * 3600)
 			
-		if pv_cf >=0.1 and pv_cf < 0.12:
-			#low
-			c_pv_year = pv_nameplate/1000 * 15 * euro_to_usd_exchange
-		elif pv_cf >= 0.12 and pv_cf < 0.16:
-			#med
-			c_pv_year = pv_nameplate/1000 * 10.8 * euro_to_usd_exchange
-		elif pv_cf >= 0.16 and pv_cf < 0.21:
-			#high
-			c_pv_year = pv_nameplate/1000 * 12.2 * euro_to_usd_exchange
-		elif pv_cf >= 0.21:
-			#very high
-			c_pv_year = pv_nameplate/1000 * 13.5 * euro_to_usd_exchange
-		else:
-			c_pv_year = 0
+		c_pv_year = pv_nameplate/1000 * self.mat.data("pri_om_PV")[0]
 			
 		self.c_pv_year = c_pv_year
 		
 		#OM cost component
 		cap_v = self.mat.data('C_cap') # Total capital costs [$]
+		self.cap_v = cap_v
 		
 		om_y_v = self.mat.data('C_year') # O&M fixed costs per year of producing electricity before PV [$/year]
 		
@@ -468,6 +456,20 @@ class SimResultH2(SimResult):
 		years = dur/31536000 # number of years of simulation [year]
 		# Only provide certain metrics if runtime is a multiple of a year
 		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+		
+		#Breakdown of yearly OM 
+		self.om_helio_labour = self.mat.data('C_year_heliostat_labour')[-1]
+		self.om_plant_labour = self.mat.data('C_year_pb_labour')[-1]
+		
+		self.om_helio_wear_and_tear = self.mat.data('C_year_heliostat_wear_and_tear')[-1]
+		self.om_helio_eq = self.mat.data('C_year_heliostat_equipment')[-1]
+		self.om_helio_water = self.mat.data('C_year_heliostat_cleaning_water')[-1]
+		
+		self.om_water_electrolyser = H2O_consumption_electrolyser[-1] * om_y_v_H2O_Electrolyser[0]
+		self.om_fix_electrolyser = self.mat.data('C_year_electrolyser')[-1]
+		
+		self.om_var_pb = om_p_v[0]*self.mat.data('E_pb_net')[-1]
+		
 
 		self.epy =  fin.energy_per_year(dur, e_elec[-1]) # Energy expected in a year [J] converted from MWh
 		
