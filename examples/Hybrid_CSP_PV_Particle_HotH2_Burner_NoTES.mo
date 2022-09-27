@@ -405,10 +405,11 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoTES
   parameter Real const_t = -dt * 3600;
   //****************************** H2 and O2 tank parameters
   parameter Real t_storage_H2(unit = "h") = 2 "[ST] H2 Storage capacity";
+  parameter Real t_storage_H2_final(unit = "h",fixed=false) "[ST] H2 Storage capacity";
   parameter Real t_storage_H2_threshold(unit = "h") = 3 "[ST] H2 Storage capacity";
   parameter Real t_storage_O2(unit = "h") = 10.0 "[ST] O2 Storage capacity";
-  parameter SI.Energy E_H2_tank = H2_mdot_tank * t_storage_H2 * 3600 * LHV_H2 "Capacity of the energy-based H2 tank [J]";
-  parameter SI.Mass M_H2_tank = H2_mdot_tank * t_storage_H2 * 3600 "Total mass of the hydrogen contained in the H2 tank [kg]";
+  parameter SI.Energy E_H2_tank = H2_mdot_tank * t_storage_H2_final * 3600 * LHV_H2 "Capacity of the energy-based H2 tank [J]";
+  parameter SI.Mass M_H2_tank = H2_mdot_tank * t_storage_H2_final * 3600 "Total mass of the hydrogen contained in the H2 tank [kg]";
   parameter SI.Mass M_O2_tank = O2_mdot_target * t_storage_O2 * 3600 "Capacity of the mass-based O2 tank [kg]";
   //******************************* Other Parameters
   parameter SI.HeatFlowRate Q_flow_des(fixed = false) "Heat to power block at design--> result of PB initialisation (W)";
@@ -879,6 +880,7 @@ algorithm
     end if;
   end if;
 initial equation
+  t_storage_H2_final = t_storage_H2;
   m_dot_pcl_DP_H2_HX = -1;
   A_HX_H2 = -1;
   Q_HX_H2 = -1;
