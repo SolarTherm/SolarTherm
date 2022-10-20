@@ -8,6 +8,7 @@ model Tank_H2
   10.8 MJ/m3 with density 0.09 kg/m3";
   parameter SI.Energy E_tank_capacity = 0.4606 * 3600 * 10 * LHV_H2 "Tank energy capacity in Joule";
   parameter Real H2_demand = 5 "demand of H2 in kg/s";
+  parameter Real H2_demand_emergency = 5 "demand of H2 in kg/s";
   
   parameter Real L_start = 3 "Level of the tank in % at the start";
   parameter Real h2_tnk_empty_lb = 5 "[CTRL] Hot tank empty trigger lower bound";
@@ -21,6 +22,7 @@ model Tank_H2
   SI.Energy E_tank(start=L_start/100 * E_tank_capacity);
   Boolean on_discharge;
   Boolean on_charge;
+  Boolean emergency_burner;
   
   parameter Real t_storage = 20;
   
@@ -65,12 +67,28 @@ equation
   //    on_discharge = true;
   //end if;
   
-  charging = on_charge; discharging = on_discharge and on_discharge_TES;
+  charging = on_charge; //discharging = on_discharge and on_discharge_TES;
   
   if t_storage >= t_storage_threshold then
-      H2_out = if discharging then H2_demand else 0;  
+      if on_discharge then
+          if on_discharge_TES then
+              H2_out = H2_demand;
+              emergency_burner = false;
+              discharging = true;
+          else
+              H2_out = H2_demand_emergency "TES is not enough but we can operate the burner by discharging H2";
+              emergency_burner = true;
+              discharging = true;
+          end if;
+       else
+              H2_out = 0;
+              emergency_burner = false;
+              discharging = false;
+       end if;
   else
       H2_out = H2_in;
+      emergency_burner = false;
+      discharging = false;
   end if;
   
   //

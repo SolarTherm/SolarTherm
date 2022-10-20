@@ -5,3 +5,6 @@ SimpleExchanger
 H2_splitter
 H2_recycle
 IdealRecuperator
+CompressorTrainH2
+DecompressingUnit
+ReactorRecuperator
