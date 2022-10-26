@@ -485,8 +485,8 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoH2Stg2
   parameter FI.PowerPrice pri_block = 600 "sCO2 PB cost USD per kWe net based on the G3P3 Roadmap Report";
   //******************************* O&M & Washing Heliostat Specific Cost
   // Source : Heliostat Cost Reduction Study Gregory J. Kolb, page 138 Table 1
-  parameter Real pri_om_name(unit = "$/W/year") = 40 / 1e3 "Fixed O&M cost per nameplate per year";
-  parameter Real pri_om_prod(unit = "$/J/year") = 0.003 / (1e6 * 3.6) "Variable O&M cost per production per year";
+  parameter Real pri_om_name(unit = "$/W/year") = 40 / 1e3 * upstreammultiplier "Fixed O&M cost per nameplate per year";
+  parameter Real pri_om_prod(unit = "$/J/year") = 0.003 / (1e6 * 3.6) * upstreammultiplier "Variable O&M cost per production per year";
   parameter Real C1_washing = 98 "[H&T] cleanliness of the mirror after 1 cleaning pass for method 1 (%)";
   parameter Real C2_washing = 96.5 "[H&T] cleanliness of the mirror after 1 cleaning pass for method 2 (%)";
   parameter Real C_target = helio_rho * 100 "annual reflectivity target";
@@ -602,9 +602,9 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoH2Stg2
   parameter FI.Money C_bop = if abs(P_net - P_net_default_value) < 1 then 0 else P_gross * pri_bop * upstreammultiplier "Balance of plant cost";
   parameter FI.Money C_prod = if abs(P_net - P_net_default_value) < 1 then 0 else pri_om_prod "Variable O&M cost per production per year";
   //******************************* PV capital and OM cost
-  parameter Real pri_PV = 340 "TIC cost of PV per $/kWe 2030 [340 - 834] https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2019/Nov/IRENA_Future_of_Solar_PV_2019.pdf";
-  parameter Real pri_om_PV = 12.682 "OnM cost for PV in USD/kWe installed capacity in 2030 ---> depends on the capacity factor https://ec.europa.eu/energy/sites/ener/files/documents/2018_06_27_technology_pathways_-_finalreportmain2.pdf page 45";
-  parameter FI.Money C_PV = PV_Target / 1e3 * pri_PV * upstreammultiplier "PV cost in $";
+  parameter Real pri_PV = 340  * upstreammultiplier "TIC cost of PV per $/kWe 2030 [340 - 834] https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2019/Nov/IRENA_Future_of_Solar_PV_2019.pdf";
+  parameter Real pri_om_PV = 12.682 * upstreammultiplier "OnM cost for PV in USD/kWe installed capacity in 2030 ---> depends on the capacity factor https://ec.europa.eu/energy/sites/ener/files/documents/2018_06_27_technology_pathways_-_finalreportmain2.pdf page 45";
+  parameter FI.Money C_PV = PV_Target / 1e3 * pri_PV  "PV cost in $";
   parameter FI.MoneyPerYear C_year_PV = 0 "Added later in the post processing since the PV OM depends on the PV CF";
   //pri_om_PV * PV_Target / 1e3 "Fixed OM cost for PV";
   //******************************* Industrial electric heater cost
@@ -616,16 +616,16 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoH2Stg2
   parameter Real scaler_n = 0.7;
   parameter FI.Money C_SMR = if set_SMR_always_off then 0 else pri_SMR * (H2_mdot_target / (8994 / 3600)) ^ scaler_n;
   //******************************* Captial and OM cost of Electrolyser
-  parameter Real pri_electrolyser = 317 "Electrolyser price 2030 in (317 - 817) USD/kWe https://doi.org/10.3390/en14123437";
+  parameter Real pri_electrolyser = 317 * upstreammultiplier "Electrolyser price 2030 in (317 - 817) USD/kWe https://doi.org/10.3390/en14123437";
   parameter Real pri_om_electrolyser = 0.035 "Fraction of electrolyser OnM based on C_electrolyser https://doi.org/10.3390/en14123437";
   parameter FI.Money C_electrolyser = if CSP_fraction < 1e-3 and PV_fraction < 1e-3 then 0 else P_hybrid_system_final / 1000 * pri_electrolyser "cost of electrolyser";
   parameter FI.MoneyPerYear C_year_electrolyser = C_electrolyser * pri_om_electrolyser * upstreammultiplier "Fixed OM cost for electrolyser in USD/year";
   //******************************* Cost per kg of Natural gas consumed by SMR
-  parameter Real pri_natural_gas = 0.279 "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf)";
+  parameter Real pri_natural_gas = 0.279 * upstreammultiplier "Cost of natural gas USD per kg. Cost is 8 AUD/GJ (https://doi.org/10.1016/j.ijhydene.2021.04.104) NSW price, LHV is 46.5 MJ/kg (https://ieaghg.org/exco_docs/2017-02.pdf)";
   //******************************* Cost per kg of water consumed by SMR
-  parameter Real pri_water_SMR = 0.00375 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
+  parameter Real pri_water_SMR = 0.00375 * upstreammultiplier "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of water consumed by Electrolyser
-  parameter Real pri_water_ele = 0.00375 "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
+  parameter Real pri_water_ele = 0.00375 * upstreammultiplier "Cost of processed water per kg consumed by Electrolyser https://doi.org/10.1016/j.ijhydene.2021.04.104";
   //******************************* Cost per kg of H2 production
   parameter Real pri_h2 = 0.0 "Variable cost to produce H2 $/kg";
   //******************************* Cost of Carbon
@@ -638,12 +638,12 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoH2Stg2
   parameter Real labour_PB = 15 "Number of labour for operating PB (constant at 25 according to Sargent and Lundy)";
   parameter Real labour_mirror = if A_field >= 231000 then ceil(1.75965439123334 * (A_field / 1e6) ^ 2 + 9.32364996575522 * A_field / 1e6 + 5.7523399399) else max(A_field / 231000 * 8, 1);
   parameter SI.Volume heliostat_cleaning_water = 0.022 * A_field "Water consumed to clean the heliostat per year";
-  parameter Real pri_om_labour = if on_CSP == false then 71000 else if A_field < 71100 then 71000 else max(2.11549413053375e-9 * A_field ^ 2 - 0.014387055541508 * A_field + 65188.593, 42000);
-  parameter Real pri_om_helio_wear_and_tear = 0.243 "USD/m2, wear and tear of the heliostat";
-  parameter Real pri_om_helio_utilities = if A_field >= 231000 then 1.0535e-7 * A_field + 0.09432704889 else A_field / 231000 * 0.12 "Utilities and eequipment cost to operate heliostat, spread over 5 years of equipment lifetime";
-  parameter Real pri_om_cleaning_water = 0.32 "Cleaning water cost per m3";
-  parameter FI.MoneyPerYear C_year_heliostat_labour = if CSP_fraction < 1e-3 then 0 else labour_mirror * pri_om_labour * 1.58;
-  parameter FI.MoneyPerYear C_year_heliostat_wear_and_tear = if CSP_fraction < 1e-3 then 0 else pri_om_helio_wear_and_tear * A_field * 289.4 / 132;
+  parameter Real pri_om_labour = if on_CSP == false then 71000 else if A_field < 71100 then 71000 * upstreammultiplier else max((2.11549413053375e-9 * A_field ^ 2 - 0.014387055541508 * A_field + 65188.593)* upstreammultiplier , 42000* upstreammultiplier);
+  parameter Real pri_om_helio_wear_and_tear = 0.243 * upstreammultiplier "USD/m2, wear and tear of the heliostat";
+  parameter Real pri_om_helio_utilities = if A_field >= 231000 then (1.0535e-7 * A_field + 0.09432704889)*upstreammultiplier else (A_field / 231000 * 0.12) * upstreammultiplier "Utilities and eequipment cost to operate heliostat, spread over 5 years of equipment lifetime";
+  parameter Real pri_om_cleaning_water = 0.32 * upstreammultiplier "Cleaning water cost per m3";
+  parameter FI.MoneyPerYear C_year_heliostat_labour = if CSP_fraction < 1e-3 then 0 else labour_mirror * pri_om_labour * 1.58 * upstreammultiplier;
+  parameter FI.MoneyPerYear C_year_heliostat_wear_and_tear = if CSP_fraction < 1e-3 then 0 else pri_om_helio_wear_and_tear * A_field * 289.4 / 132 ;
   parameter FI.MoneyPerYear C_year_heliostat_equipment = if CSP_fraction < 1e-3 then 0 else pri_om_helio_utilities * t_life / 5 * A_field * 289.4 / 132;
   parameter FI.MoneyPerYear C_year_heliostat_cleaning_water = if CSP_fraction < 1e-3 then 0 else pri_om_cleaning_water * heliostat_cleaning_water;
   parameter FI.MoneyPerYear C_year_pb_labour = labour_PB * pri_om_labour * 1.58;

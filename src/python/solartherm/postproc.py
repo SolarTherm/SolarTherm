@@ -204,7 +204,7 @@ class SimResultElec(SimResult):
 		"""
 		var_names = self.get_names()
 		assert('E_elec' in var_names), "For a levelised cost of electricity calculation, It is expected to see E_elec variable in the results file!"
-
+		
 		eng_t = self.mat.abscissa('E_elec', valuesOnly=True) # Time [s]
 		eng_v = self.mat.data('E_elec') # Cumulative electricity generated [J]
 		cap_v = self.mat.data('C_cap') # Capital costs [$]
@@ -383,7 +383,7 @@ class SimResultH2(SimResult):
 		euro_to_usd_exchange = self.mat.data('Euro_to_USD_exchange_rate')[0]
 		
 		assert('H2_mass' in varnames), "For a H2_calc calculation, it is expected to see H2_mass variable in the result file!"
-		
+				
 		#Renewable H2
 		eng_t = self.mat.abscissa('H2_mass_electrolyser', valuesOnly=True) #Time [s]
 		eng_v = self.mat.data('H2_mass_electrolyser') #Cummulative of H2 production in kg
