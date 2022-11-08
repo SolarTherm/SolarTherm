@@ -35,15 +35,35 @@ model GemasolarSystem
 	parameter Integer year = 2008 "Meteorological year";
 
 	// Field
-	parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
+	//parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
+
+	parameter String opt_file(fixed = false);
+	parameter String casefolder ="/media/yewang/Software/program/solartherm-gemasolar/examples/test-gemasolar";//Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
+	parameter String field_type = "surround" "polar or surround";
+	parameter SI.RadiantPower Q_in_rcv = Q_flow_des*SM/0.8 "incident power to the receiver at design point (to size the field design)";
+	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
+	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
+	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+	parameter SI.Length H_tower = 114.75 "Tower height";
+	parameter SI.Length R_tower = 0.01 "Tower diameter";
+	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
+	parameter Real fb = 0.4 "factor to grow the field layout";
+	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
+	parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+
 	parameter Real metadata_list[23] = metadata(opt_file);
 	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
 
-	parameter Real SM = R_des*eta_rec/Q_flow_des "Solar multiple";
+	parameter Real SM = 3.15 "Solar multiple";
 	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
 
 	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
+	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
+	parameter SI.Area A_field = n_heliostat*A_heliostat "Heliostat field reflective area";
+
 	parameter Real he_av_design = 0.99 "Helisotats availability";
 
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
@@ -51,16 +71,26 @@ model GemasolarSystem
 
 
 	// Receiver
+	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
+	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
+	parameter SI.Area A_receiver = Modelica.Constants.pi*D_receiver*H_receiver "Receiver aperture area";
+	parameter SI.Diameter D_receiver = 8.5 "Receiver diameter";
+	parameter SI.Length H_receiver = 10.5 "Receiver height";
+    parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
+    parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
+
+	parameter SI.Area A_land = land_mult*A_field + 182108.7 "Land area";
+
 	parameter Integer N_pa_rec = 18 "Number of panels in receiver";
 	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
 	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
 
-	parameter Real ar_rec = 18.67/15 "Height to diameter aspect ratio of receiver aperture";
+	parameter Real ar_rec = H_receiver/D_receiver "Height to diameter aspect ratio of receiver aperture";
 
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
 
-	parameter SI.RadiantPower R_des = he_av_design*dni_des*A_field*eff_opt "Input power to receiver at design point";
+	parameter SI.RadiantPower R_des = Q_flow_des*SM/eta_rec "Input power to receiver at design point";
 	parameter SI.Efficiency eta_rec = metadata_list[7] "Receiver efficiency at design";
 
 	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
@@ -158,14 +188,8 @@ model GemasolarSystem
 	parameter SI.HeatFlowRate Q_flow_des = P_gross/eff_blk "Heat to power block at design";
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
-	parameter SI.Area A_field = n_heliostat*A_heliostat "Heliostat field reflective area";
-	parameter Integer n_heliostat = integer(metadata_list[1]) "Number of heliostats";
 
-	parameter SI.Area A_receiver = Modelica.Constants.pi*D_receiver*H_receiver "Receiver aperture area";
-	parameter SI.Diameter D_receiver = metadata_list[4] "Receiver diameter";
-	parameter SI.Length H_receiver = metadata_list[5] "Receiver height";
 
-	parameter SI.Area A_land = land_mult*A_field + 182108.7 "Land area";
 
 	parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
 	parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
@@ -187,8 +211,8 @@ model GemasolarSystem
 	parameter SI.Length H_storage = ceil(((4*V_max*(tank_ar^2))/(CN.pi))^(1/3)) "Storage tank height";
 	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
 
-	parameter SI.Length H_tower = metadata_list[6] "Tower height (ground to base of receiver)";
-	parameter SI.Diameter D_tower = D_receiver "Tower diameter";
+	//parameter SI.Length H_tower = metadata_list[6] "Tower height (ground to base of receiver)";
+	//parameter SI.Diameter D_tower = D_receiver "Tower diameter";
 
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.07 "Real discount rate";
@@ -282,6 +306,42 @@ model GemasolarSystem
 			Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
 
 	// Solar field
+	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatField(
+		lon = data.lon,
+		lat = data.lat,
+		ele_min(displayUnit = "deg") = ele_min,
+		use_wind = use_wind,
+		Wspd_max = Wspd_max,
+		he_av = he_av_design,
+		use_on = true,
+		use_defocus = true,
+		A_h = A_heliostat,
+		nu_defocus = nu_defocus,
+		nu_min = nu_min_sf,
+		Q_design = R_des,
+		nu_start = nu_start,
+		psave =casefolder,
+		Q_in_rcv = Q_in_rcv,
+		H_rcv = H_receiver,
+		W_rcv = D_receiver,
+		n_H_rcv = n_H_rcv,
+		n_W_rcv = n_W_rcv,
+		tilt_rcv = tilt_rcv,
+		W_helio = W_helio,
+		H_helio = H_helio,
+		H_tower = H_tower,
+		R_tower = R_tower,
+		R1 = R1,
+		fb = fb,
+		helio_refl = helio_refl,
+		slope_error = slope_error,
+		n_row_oelt = n_row_oelt,
+		n_col_oelt = n_col_oelt,
+		n_rays=n_rays,
+		field_type=field_type,
+		rcv_type=rcv_type) annotation(
+			Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+	/*
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatField(
 		n_h = n_heliostat,
 		lon = data.lon,
@@ -299,6 +359,7 @@ model GemasolarSystem
 		nu_start = nu_start,
 		redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file)) annotation(
 			Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+	*/
 
 	// Receiver
 	SolarTherm.Models.CSP.CRS.Receivers.SodiumReceiver receiver(
@@ -409,7 +470,13 @@ model GemasolarSystem
 	SI.Energy E_elec(start = 0, fixed = true, displayUnit="MW.h") "Generate electricity";
 	FI.Money R_spot(start = 0, fixed = true) "Spot market revenue";
 
+
+initial algorithm
+	opt_file := heliostatField.optical.tablefile;
+
+
 initial equation
+
 	if H_tower > 120 then // then use concrete tower
 
 		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
