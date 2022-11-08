@@ -31,17 +31,19 @@ class TestMoltenSaltSys(unittest.TestCase):
 			return v
 
 		if 1:
-			self.assertAlmostEqual(self.perf[0], 115004.24, 2) # epy
-			self.assertAlmostEqual(self.perf[1], 163.59, 2) # LCOE
-			self.assertAlmostEqual(self.perf[2], 73.23, 2) # Capacity factor
-			self.assertAlmostEqual(getval('R_des')/1e6, 180.24, 2) # Receiver thermal input
-			self.assertAlmostEqual(getval('Q_rec_out')/1e6, 166.03, 2) # Receiver thermal output
+			assert abs(self.perf[0]-115004.24)/115004.24 <0.05
+			assert abs(self.perf[1]-163.59)/163.59 <0.05
+			assert abs(self.perf[2]-73.23)/73.23 <0.05
+			assert abs(getval('R_des')/1e6-180.24)/180.24 <0.05
+			assert abs(getval('Q_rec_out')/1e6-166.03)/166.03 <0.05
+			assert abs(getval('n_heliostat')-2650)/2650 <0.05
+
 			self.assertAlmostEqual(getval('P_gross')/1e6, 19.9, 2) # Power block gross rating
 			self.assertAlmostEqual(getval('SM'), 3.15, 2) # Solar multiple
 			self.assertAlmostEqual(getval('D_receiver'), 8.5, 2) # Receiver diameter
 			self.assertAlmostEqual(getval('H_receiver'), 10.5, 2) # Receiver height
 			self.assertAlmostEqual(getval('H_tower'), 114.75, 2) # Tower height
-			self.assertAlmostEqual(getval('n_heliostat'), 2650, 1) # Number of heliostats
+
 		else:
 			warnings.warn("Test evaluation has been disabled")		
 		
