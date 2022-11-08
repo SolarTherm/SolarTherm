@@ -34,22 +34,22 @@ model HeliostatsFieldSolstice
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
 
 
-    parameter Boolean use_on = false
+  parameter Boolean use_on = false
     "= true to display when solar field is connected"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter Boolean use_defocus = false "= true to use defocus strategy"
+  parameter Boolean use_defocus = false "= true to use defocus strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter Boolean use_wind = false "= true to use Wind-stop strategy"
+  parameter Boolean use_wind = false "= true to use Wind-stop strategy"
       annotation (Dialog(group="Operating strategy"), Evaluate=true, HideResult=true, choices(checkBox=true));
-    parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
-    parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
-    parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
+  parameter SI.Angle ele_min=from_deg(8) "Heliostat stow deploy angle" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter SI.HeatFlowRate Q_design=529.412 "Receiver design thermal power (with heat losses)" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_start=0.60 "Receiver energy start-up fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_min=0.25 "Minimum receiver turndown energy fraction" annotation(min=0,Dialog(group="Operating strategy"));
+  parameter Real nu_defocus=1 "Receiver limiter energy fraction at defocus state" annotation(Dialog(group="Operating strategy",enable=use_defocus));
+  parameter SI.Velocity Wspd_max=15 "Wind stow speed" annotation(min=0,Dialog(group="Operating strategy",enable=use_wind));
 
-    parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
-    parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
+  parameter SI.Energy E_start=90e3 "Start-up energy of a single heliostat" annotation(Dialog(group="Parasitic loads"));
+  parameter SI.Power W_track=0.055e3 "Tracking power for a single heliostat" annotation(Dialog(group="Parasitic loads"));
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
@@ -68,8 +68,7 @@ model HeliostatsFieldSolstice
   Modelica.Blocks.Interfaces.BooleanInput defocus if use_defocus annotation (Placement(
         transformation(extent={{-126,-88},{-86,-48}}),iconTransformation(extent={{-110,
             -72},{-86,-48}})));
-  Modelica.Blocks.Interfaces.RealOutput Q_incident annotation(
-    Placement(transformation(extent = {{94, -18}, {130, 18}})));
+
   Modelica.Blocks.Interfaces.RealInput Wspd if use_wind annotation (Placement(
         transformation(extent={{-126,50},{-86,90}}), iconTransformation(extent={
             {-110,50},{-86,74}})));
@@ -79,6 +78,8 @@ model HeliostatsFieldSolstice
   SI.Angle zen;
   SI.Angle zen2;
   SI.Angle azi;
+  SI.Energy E_dni;
+  SI.Energy E_field;
 
   SI.Power W_loss;
   Real damping;
@@ -151,16 +152,17 @@ equation
     solar.hra,
     lat);
 
+  der(E_field) = Q_net;
+  der(E_dni) = he_av*n_h*A_h*solar.dni;
   damping= if on_internal then Q_net/(Q_raw+1e-3) else 1;
   W_loss1=if ele>1e-2 then n_h*he_av*damping*W_track else 0;
   when ele>1e-2 then
     t_on=time;
   end when;
-    Q_incident = Q_net;
   W_loss2= if time<t_on+t_start then n_h*he_av*damping*E_start/t_start else 0;
   W_loss=W_loss1+W_loss2;
-  annotation (Documentation(info="<html>
-</html>", revisions="<html>
+  annotation (Documentation(info = "<html>
+</html>", revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
