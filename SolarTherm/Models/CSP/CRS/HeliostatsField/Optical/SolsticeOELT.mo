@@ -69,7 +69,7 @@ extends OpticalEfficiency;
 initial equation
   tablefile_status = SolsticePyFunc(ppath, pname, psave, 
       field_type, rcv_type, wea_file, sunshape, argc, 
-      {"method","csr","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, 
+      {"method","sunshape_param","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, 
       {method, buie_csr, Q_in_rcv, n_helios, H_rcv, W_rcv, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, n_row_oelt, n_col_oelt, n_rays}
       ); 
       
