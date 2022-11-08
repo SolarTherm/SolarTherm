@@ -31,9 +31,9 @@ class TestMoltenSaltSys(unittest.TestCase):
 			return v
 
 		if 1:
-			self.assertAlmostEqual(self.perf[0], 107960.97, 2) # epy
-			self.assertAlmostEqual(self.perf[1], 173.89, 2) # LCOE
-			self.assertAlmostEqual(self.perf[2], 68.739, 2) # Capacity factor
+			self.assertAlmostEqual(self.perf[0], 115004.24, 2) # epy
+			self.assertAlmostEqual(self.perf[1], 163.59, 2) # LCOE
+			self.assertAlmostEqual(self.perf[2], 73.23, 2) # Capacity factor
 			self.assertAlmostEqual(getval('R_des')/1e6, 180.24, 2) # Receiver thermal input
 			self.assertAlmostEqual(getval('Q_rec_out')/1e6, 166.03, 2) # Receiver thermal output
 			self.assertAlmostEqual(getval('P_gross')/1e6, 19.9, 2) # Power block gross rating
