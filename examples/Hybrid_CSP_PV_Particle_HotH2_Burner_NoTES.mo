@@ -803,6 +803,7 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_NoTES
   Real eta_pb_gross(start = 0);
   Real eta_pb_net(start = 0);
   Real eta_solartoelec(start = 0);
+  Integer counter_shut_down(start = 0, fixed = true);
   //*********************Dispatch optimiser variables
   Real SLinit;
   Real counter(start = const_t);
@@ -906,7 +907,7 @@ algorithm
 initial equation
 //T_in_gas_DP_H2 = reactorRecuperator.T_H2_after_recup;
   A_recup = reactorRecuperator.A_recup_total;
-  T_in_gas_off_H2 = reactorRecuperator.T7;
+  T_in_gas_off_H2 = reactorRecuperator.T8;
   t_storage_H2_final = t_storage_H2;
   m_dot_pcl_DP_H2_HX = -1;
   A_HX_H2 = -1;
@@ -1029,6 +1030,9 @@ initial equation
   C_indirect = r_cons * C_direct + C_land;
   C_cap = C_direct + C_indirect;
 equation
+  when simpleExchanger.m_dot_hot_HTF < 0 then
+    counter_shut_down = pre(counter_shut_down) + 1;
+  end when;
 //******************************************************************
 //************************* TO CLOSE THE EQUATION (EMERGENCY BURNER ON AND OFF) FIXME: DRAW BOOLEAN OUTPUT FROM THE TANK TO THE SPLITTER
   h2_splitter.emergency_burner = tank_H2.emergency_burner;

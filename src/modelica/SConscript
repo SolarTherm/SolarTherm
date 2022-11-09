@@ -66,8 +66,11 @@ genv.Depends(lib3,lib4)
 #Adding st_linprog_particle library for particle system - 17 October 2021 -- Philipe
 lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linprog_particle/linprog.c'])
 
+#Adding st_linprog_dualtank (TES and H2 tank)- 7 November 2022 -- Philipe
+lib7 = genv.SharedLibrary('st_linprog_dualtank',['st_linprog_dualtank.c'])
+
 #Appending the libs
-shlibs = [lib1, lib4, lib2, lib3, lib6]
+shlibs = [lib1, lib4, lib2, lib3, lib6, lib7]
 
 if env['HAVE_TF']:
 	#Tensorflow linked bits 19 October 2021 -- Philipe

@@ -274,7 +274,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 				,   (int[]){0, SL(i),  SE(i),  DE(i)}
 				,(double[]){0,  +1. ,    -1.,    +1.}
 			);
-			glp_set_row_bnds(P,SEB(i),GLP_FX,SLmin,99999);
+			glp_set_row_bnds(P,SEB(i),GLP_FX,SLmin,99999); //FIXME should be SLinit
 		}else{
 			//MSG("SL(%d) = %d, SE(%i) = %d, DE(%d) = %d", i,SL(i),i,SE(i),i,DE(i));
 			glp_set_mat_row(P, SEB(i), 4

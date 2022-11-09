@@ -35,3 +35,8 @@ wind_speed_horizon
 DNI_horizon
 pri_horizon
 electrolyser_current_density
+LinProgFuncDualTank
+PVArray_func
+DHI_horizon
+Albedo_horizon
+Tdry_horizon
