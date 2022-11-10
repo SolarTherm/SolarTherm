@@ -2,6 +2,7 @@ import os
 import time
 import numpy as np
 
+import argparse
 import solsticepy
 from solsticepy.design_crs import CRS
 #from solsticepy.design_crs_aimingstrategy import *
@@ -131,30 +132,36 @@ def design_crs_aimingstrategy(pm):
 	if not os.path.exists(casedir):
 		os.makedirs(casedir)
 
-	from Field_receiver_model.one_key_co_optimisation import one_key_start
-	from Field_receiver_model.cal_sun import SunPosition
-	from Field_receiver_model.cal_layout_r import radial_stagger, aiming_cylinder
-	from Field_receiver_model.Deviation_aiming_new3 import aiming
-	from Field_receiver_model.Open_CSPERB import eval_v_max, Cyl_receiver
-	from Field_receiver_model.Open_CSPERB_plots import tower_receiver_plots
-	from Field_receiver_model.HC import Na
-	from Field_receiver_model.Tube_materials import Inconel740H
-	from Field_receiver_model.Flux_reader import read_data
-	from Field_receiver_model.Loss_analysis import receiver_correlation
-	from Field_receiver_model.output_motab import output_motab, output_matadata_motab
-	from Field_receiver_model.python_postprocessing import proces_raw_results, get_heliostat_to_receiver_data
-	from Field_receiver_model.SOLSTICE import SolsticeScene
+	from mdbapy.one_key_co_optimisation import one_key_start
+	from mdbapy.cal_sun import SunPosition
+	from mdbapy.cal_layout_r import radial_stagger, aiming_cylinder
+	from mdbapy.Deviation_aiming_new3 import aiming
+	from mdbapy.Open_CSPERB import eval_v_max, Cyl_receiver
+	from mdbapy.Open_CSPERB_plots import tower_receiver_plots
+	from mdbapy.HC import Na
+	from mdbapy.Tube_materials import Inconel740H
+	from mdbapy.Flux_reader import read_data
+	from mdbapy.Loss_analysis import receiver_correlation
+	from mdbapy.output_motab import output_motab, output_metadata_motab
+	from mdbapy.python_postprocessing import proces_raw_results, get_heliostat_to_receiver_data
+	from mdbapy.SOLSTICE import SolsticeScene
 
+	HTF=pm.HTF #'sodium' or 'salt'
 	Model=one_key_start(casedir=casedir, 
-		tower_h=pm.H_tower, 
-		delta_r2=pm.delta_r2,
-		delta_r3=pm.delta_r3,
-		r_diameter=pm.W_rcv,
-		r_height=pm.H_rcv,
-		SM=pm.SM,
-		oversizing=pm.f_oversize, 
+		tower_h=pm.H_tower, # 150-300
+		Q_rec=pm.Q_in_rcv, 
+		T_in=pm.T_in,
+		T_out=pm.T_out,
+		HTF=pm.HTF,
+		rec_material=pm.rcv_material,
+		r_diameter=pm.W_rcv, #15-25 sodium, 15-30
+		r_height=pm.H_rcv, #15-30 
 		fluxlimitpath=pm.fluxlimitpath,
-		hst_w=pm.W_helio,
+		SM=pm.SM,
+		oversizing=pm.f_oversize, 	
+		delta_r2=pm.delta_r2, # sw thesis last chapter
+		delta_r3=pm.delta_r3, #
+		hst_w=pm.W_helio, 
 		hst_h=pm.H_helio,
 		mirror_reflectivity=pm.helio_refl,
 		slope_error=pm.slope_error,
@@ -162,13 +169,19 @@ def design_crs_aimingstrategy(pm):
 		sunshape_param=pm.sunshape_param,
 		num_rays=int(pm.n_rays),
 		latitude=pm.lat,
-		)
+		num_bundle=int(pm.Nb))
 
-	Model.big_field_generation()
-	Model.annual_big_field()
-	Model.determine_field()
-	Model.flow_path()
-	Model.annual_trimmed_field()	
+	#Model.big_field_generation()
+	#Model.annual_big_field()
+	#Model.determine_field()
+	'''
+	if HTF=='salt':
+		Model.flow_path_salt(num_bundle=int(pm.Nb), num_fp=int(pm.Nfp),D0=pm.Do, pattern='NES-NWS') 
+		Model.MDBA_aiming_new(dni=pm.dni_des, phi=0.,elevation=75.89)
+	else:
+		Model.flow_path_sodium()
+	'''
+	Model.annual_trimmed_field()
 
 	return tablefile
 
@@ -212,7 +225,10 @@ if __name__=='__main__':
 	parser.add_argument('--wea_file', type=str)
 	parser.add_argument('--field_type', type=str)
 	parser.add_argument('--rcv_type', type=str)
+	parser.add_argument('--rcv_material', type=str)
+	parser.add_argument('--HTF', type=str)
 	parser.add_argument('--sunshape', type=str)	
+	parser.add_argument('--fluxlimitpath', type=str)	
 	parser.add_argument('--num_args', type=int, default=0, 
 			help="number of float arguments")
 	parser.add_argument('--var_names', type=list)

@@ -12,25 +12,31 @@ extends OpticalEfficiency;
         annotation (Dialog(group="Table data interpretation"));
 
 
-	parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
-	parameter String pname = "run_solstice" "Name of the Python script";
+	  parameter String ppath = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library") "Absolute path to the Python script";
+	  parameter String pname = "run_solstice" "Name of the Python script";
 	//parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
 
     parameter String psave = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/tmp/solstice-result/demo") "the directory for saving the results"; 
 
-    parameter String field_type = "polar" "Other options are : surround";
-    parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
-  parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
-  parameter Real buie_csr=0.02 "circum solar ratio for Buie sunshape";  
+    parameter String field_type = "polar" "polar or surround";
+    parameter String rcv_type = "flat" "flat, cylinder, stl";  
+    parameter String rcv_material = "Incoloy800H" "receiver material, Haynes230, Incoloy800H or Inconel740H";  
+    parameter String HTF = "salt" "heat transfer fluid, salt or sodium";  
+    parameter String fluxlimitpath = "" "directory of the flux limitation file";  
 
-	parameter Integer argc =20 "Number of variables to be passed to the C function";
+	  parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+    parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+    parameter Real sunshape_param=0.02 "csr for buie sunshape or angular size for pillbox (in deg)";  
+
+	  parameter Integer argc =30 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
     parameter Real method = 1 "method of the system deisng, 1 is design from the PB, and 2 is design from the field";
     parameter Real n_helios=1000 "Number of heliostats";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real SM = 2.5 "[SYS] Real solar multiple"; 
+	  parameter SI.Irradiance dni_des = 930 "DNI at design point";  
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -48,11 +54,24 @@ extends OpticalEfficiency;
     parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 5e6 "number of rays for the optical simulation";
 
-   parameter String tablefile(fixed=false);
-   parameter Integer tablefile_status(fixed=false);  
+    parameter String tablefile(fixed=false);
+    parameter Integer tablefile_status(fixed=false);  
 
-    SI.Angle angle1;
-    SI.Angle angle2;
+	// additional parameters for aiming strategy and thermal performance
+	parameter Boolean run_aiming = false "[H&T] Run aiming strategy or not";
+	parameter Boolean run_therm = false "[H&T] Run receiver thermal model or not";
+  parameter Real f_oversize = 1. "[H&T] Field oversizing factor";
+	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
+	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";
+	parameter Integer N_bank_rec = 18 "Number of bank panels in receiver";
+	parameter Integer N_fp_rec = 2 "Number of flow path";	
+	parameter SI.Diameter D_tb_rec = 45e-3 "Receiver tube outer diameter";
+
+	parameter Integer aimingstrategy(fixed=false) "Run aiming strategy or not?";
+	parameter Integer therm(fixed=false) "Run receiver thermal model or not?";
+
+  SI.Angle angle1;
+  SI.Angle angle2;
 
   Modelica.Blocks.Tables.CombiTable2D nu_table(
     tableOnFile=true,
@@ -67,10 +86,18 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial equation
+  if run_aiming then aimingstrategy=1;
+  else aimingstrategy=0;
+  end if;
+
+  if run_therm then therm=1;
+  else therm=0;
+  end if;
+
   tablefile_status = SolsticePyFunc(ppath, pname, psave, 
-      field_type, rcv_type, wea_file, sunshape, argc, 
-      {"method","sunshape_param","Q_in_rcv", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" }, 
-      {method, buie_csr, Q_in_rcv, n_helios, H_rcv, W_rcv, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, n_row_oelt, n_col_oelt, n_rays}
+      wea_file, sunshape, field_type, rcv_type, rcv_material, HTF, fluxlimitpath, argc, 
+      {"method","sunshape_param","Q_in_rcv", "SM", "dni_des", "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays","aimingstrategy", "therm", "f_oversize", "delta_r2", "delta_r3" ,"Nb", "Nfp", "Do"}, 
+      {method, sunshape_param, Q_in_rcv, SM, dni_des, n_helios, H_rcv, W_rcv, n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, helio_refl, slope_error, n_row_oelt, n_col_oelt, n_rays, aimingstrategy, therm, f_oversize, delta_r2, delta_r3, N_bank_rec, N_fp_rec, D_tb_rec}
       ); 
       
   tablefile = SolsticeStatusFunc(tablefile_status, psave);

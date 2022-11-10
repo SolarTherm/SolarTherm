@@ -12,87 +12,82 @@ model GemasolarSystem
 	import metadata = SolarTherm.Utilities.Metadata_Optics_with_RELT;
 	extends Modelica.Icons.Example;
 
-	// Input Parameters
-	// *********************
+    // Parameters
+    // System Level [SYS]
 	parameter Boolean match_sam = false "Configure to match SAM output";
 	parameter Boolean fixed_field = false "true if the size of the solar field is fixed";
-
 	replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph "Medium props for molten salt";
-
+    parameter String HTF = "salt" "heat transfer fluid, salt or sodium";  
 	parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
-
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
+	parameter Real SM = 3.08 "Solar multiple";
+	parameter SI.RadiantPower Q_in_rcv = Q_flow_des*SM/0.8 "incident power to the receiver at design point (to size the field design)";
 
-	// Weather data
+	// Weather data and the sun
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
-
 	parameter nSI.Angle_deg lon = -116.780 "Longitude (+ve East)";
-	parameter nSI.Angle_deg lat = 34.850 "Latitude (+ve North)";
+	parameter nSI.Angle_deg lat = 37.56 "Latitude (+ve North)";
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
 	parameter Integer year = 2008 "Meteorological year";
+    parameter String sunshape = "buie" "buie or pillbox sunshape";  
+    parameter Real sunshape_param = 0.02 "csr for buie sunshape, or angular size for pillbox (in deg)";  
+	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file"; 
+	parameter SI.Irradiance dni_des = 930 "DNI at design point";
 
-	// Field
-	//parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
-
-	parameter String opt_file(fixed = false);
-	parameter String casefolder ="/media/yewang/Software/program/solartherm-gemasolar/examples/test-gemasolar";//Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
+	// Heliostat Field and Tower [H&T]
 	parameter String field_type = "surround" "polar or surround";
-	parameter SI.RadiantPower Q_in_rcv = Q_flow_des*SM/0.8 "incident power to the receiver at design point (to size the field design)";
-	parameter SI.Length W_helio = 12.015614841 "width of heliostat in m";
-	parameter SI.Length H_helio = 12.015614841 "height of heliostat in m";  
-	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
-	parameter SI.Angle slope_error = 2e-3 "slope error of the heliostat in mrad";
+	parameter String opt_file(fixed = false);
+	//parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
+	parameter String casefolder ="/media/yewang/Software/program/solartherm-gemasolar/examples/test-gemasolar";
+	parameter Real he_av_design = 0.99 "Helisotats availability";
+	parameter SI.Length W_helio = 12.305 "width of heliostat in m";
+	parameter SI.Length H_helio = 9.752 "height of heliostat in m";  
+	parameter SI.Efficiency helio_refl = 0.88 "reflectivity of heliostat max =1";  
+	parameter SI.Angle slope_error = 2.6e-3 "slope error of the heliostat in mrad";
 	parameter SI.Length H_tower = 114.75 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
 	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
 	parameter Real fb = 0.4 "factor to grow the field layout";
-	parameter Real n_row_oelt = 5 "number of rows of the look up table (simulated days in a year)";
-	parameter Real n_col_oelt = 3 "number of columns of the lookup table (simulated hours per day)";
-    parameter Real n_rays = 5e6 "number of rays for the optical simulation";
+	parameter Real n_row_oelt = 6 "number of rows of the look up table (simulated days in a year)";
+	parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
+    parameter Real n_rays = 1e6 "number of rays for the optical simulation";
 
 	parameter Real metadata_list[23] = metadata(opt_file);
-	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-
-	parameter Real SM = 3.15 "Solar multiple";
-	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
-
-	parameter Boolean polar = false "True for polar field layout, otherwise surrounded";
 	parameter SI.Area A_heliostat = metadata_list[2] "Heliostat module reflective area";
 	parameter Real n_heliostat = metadata_list[1] "Number of heliostats";
 	parameter SI.Area A_field = n_heliostat*A_heliostat "Heliostat field reflective area";
-
-	parameter Real he_av_design = 0.99 "Helisotats availability";
-
+	parameter Real land_mult = 6.281845377885782 "Land area multiplier";
+	parameter SI.Area A_land = land_mult*A_field + 182108.7 "Land area";
 	parameter SI.Efficiency eff_opt = metadata_list[3] "Field optical efficiency at design point";
-	parameter SI.Irradiance dni_des = 980 "DNI at design point";
+   parameter Boolean run_aiming = true "[H&T] Run aiming strategy or not,";
+   parameter Boolean run_therm = true "[H&T] Run receiver thermal model or not";
+   parameter Real f_oversize = 1 "[H&T] Field oversizing factor";
+   parameter Real delta_r2=0.9 "[H&T] Field expanding for zone2";
+   parameter Real delta_r3=1.9 "[H&T] Field expanding for zone3";
+   parameter String fluxlimitpath(fixed = false);
+   parameter String rcv_material = "Incoloy800H" "receiver material, Haynes230, Incoloy800H or Inconel740H";  
 
 
 	// Receiver
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-	parameter SI.Area A_receiver = Modelica.Constants.pi*D_receiver*H_receiver "Receiver aperture area";
 	parameter SI.Diameter D_receiver = 8.5 "Receiver diameter";
 	parameter SI.Length H_receiver = 10.5 "Receiver height";
+	parameter SI.Area A_receiver = Modelica.Constants.pi*D_receiver*H_receiver "Receiver aperture area";
     parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
     parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
-
-	parameter SI.Area A_land = land_mult*A_field + 182108.7 "Land area";
-
-	parameter Integer N_pa_rec = 18 "Number of panels in receiver";
+	parameter Integer N_bank_rec = 18 "Number of bank panels in receiver";
+	parameter Integer N_fp_rec = 2 "Number of flow path";	
 	parameter SI.Thickness t_tb_rec = 1.2e-3 "Receiver tube wall thickness";
-	parameter SI.Diameter D_tb_rec = 40e-3 "Receiver tube outer diameter";
-
+	parameter SI.Diameter D_tb_rec = 45e-3 "Receiver tube outer diameter";
 	parameter Real ar_rec = H_receiver/D_receiver "Height to diameter aspect ratio of receiver aperture";
-
 	parameter SI.Efficiency ab_rec = 0.94 "Receiver coating absorptance";
 	parameter SI.Efficiency em_rec = 0.88 "Receiver coating emissivity";
-
 	parameter SI.RadiantPower R_des = Q_flow_des*SM/eta_rec "Input power to receiver at design point";
 	parameter SI.Efficiency eta_rec = metadata_list[7] "Receiver efficiency at design";
-
 	parameter Real rec_fr = 1 - metadata_list[7] "Receiver loss fraction of radiance at design point";
 	parameter SI.Temperature rec_T_amb_des = 298.15 "Ambient temperature at design point";
 	parameter Real[4] CL = {metadata_list[8],metadata_list[9],metadata_list[10],metadata_list[11]};
@@ -101,85 +96,66 @@ model GemasolarSystem
 
 	// Storage
 	parameter Real t_storage(unit = "h") = 12 "Hours of storage";
-
 	parameter SI.Temperature T_cold_set = CV.from_degC(290) "Cold tank target temperature";
 	parameter SI.Temperature T_hot_set = CV.from_degC(565) "Hot tank target temperature";
-
 	parameter SI.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting temperature";
 	parameter SI.Temperature T_hot_start = CV.from_degC(565) "Hot tank starting temperature";
-
 	parameter SI.Temperature T_cold_aux_set = CV.from_degC(280) "Cold tank auxiliary heater set-point temperature";
 	parameter SI.Temperature T_hot_aux_set = CV.from_degC(500) "Hot tank auxiliary heater set-point temperature";
-
 	parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
 	parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
-
 	parameter Real tnk_fr = 0.01 "Tank loss fraction of tank in one day at design point";
 	parameter SI.Temperature tnk_T_amb_des = 298.15 "Ambient temperature at design point";
-
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
-
 	parameter Boolean tnk_use_p_top = true "true if tank pressure is to connect to weather file";
 	parameter Boolean tnk_enable_losses = true "true if the tank heat loss calculation is enabled";
-
 	parameter SI.CoefficientOfHeatTransfer alpha = 3 "Tank constant heat transfer coefficient with ambient";
-
 	parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
 	parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
-
 	parameter SI.Power W_heater_hot = 30e6 "Hot tank heater capacity";
 	parameter SI.Power W_heater_cold = 15e6 "Cold tank heater capacity";
-
 	parameter Real tank_ar = 20/18.667 "storage aspect ratio";
+	parameter SI.Length H_storage = ceil(((4*V_max*(tank_ar^2))/(CN.pi))^(1/3)) "Storage tank height";
+	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
+
 
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.Rankine "Rankine cycle regression model";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.SAM "PB cooling model";
-
 	parameter SI.Power P_gross = 19.9e6 "Power block gross rating at design point";
-
 	parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
-
 	parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
-
 	parameter Boolean blk_enable_losses = true "true if the power heat loss calculation is enabled";
-
 	parameter Boolean external_parasities = true "true if there is external parasitic power losses";
-
 	parameter Real nu_min_blk = 0.5 "minimum allowed part-load mass flow fraction to power block";
 	parameter SI.Power W_base_blk = par_fix_fr * P_gross "Power consumed at all times in power block";
 	parameter SI.AbsolutePressure p_blk = 10e6 "Power block operating pressure";
 
 	parameter SI.Temperature blk_T_amb_des = from_degC(35) "Ambient temperature at design for power block";
 	parameter SI.Temperature par_T_amb_des = from_degC(25) "Ambient temperature at design point";
-
 	parameter Real nu_net_blk = 0.9 "Gross to net power conversion factor at the power block";
 	parameter SI.Temperature T_in_ref_blk = from_degC(565) "HTF inlet temperature to power block at design";
 	parameter SI.Temperature T_out_ref_blk = from_degC(290) "HTF outlet temperature to power block at design";
+	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
+	parameter SI.Power P_name = P_net "Nameplate rating of power block";
 
 	// Control
 	parameter SI.Time t_ramping = 1800 "Power block startup delay";
 	parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
 	parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
 	parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-
 	parameter Real nu_start=0.25 "Minimum energy start-up fraction to start the receiver";
 	parameter Real nu_min_sf=0.25 "Minimum turn-down energy fraction to stop the receiver";
 	parameter Real nu_defocus = Q_flow_des/R_des "Energy fraction to the receiver at defocus state";
-
 	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
-
 	parameter Real hot_tnk_full_lb = 123 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 120 "Hot tank full trigger upper bound";
-
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
-
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
-
 	parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
 	parameter Real Kp = -1000 "Gain of proportional component in receiver control";
 
@@ -188,31 +164,17 @@ model GemasolarSystem
 	parameter SI.HeatFlowRate Q_flow_des = P_gross/eff_blk "Heat to power block at design";
 	parameter SI.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
-
-
-
 	parameter SI.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
 	parameter SI.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
-
 	parameter SI.Density rho_cold_set = Medium.density(state_cold_set) "Cold salt density at design";
 	parameter SI.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
-
 	parameter SI.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
 	parameter SI.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";
-
 	parameter SI.MassFlowRate m_flow_fac = SM*Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to receiver at design point";
 	parameter SI.MassFlowRate m_flow_rec_max = 1.2 * m_flow_fac "Maximum mass flow rate to receiver";
 	parameter SI.MassFlowRate m_flow_rec_start = m_flow_fac "Initial or guess value of mass flow rate to receiver in the feedback controller";
 	parameter SI.MassFlowRate m_flow_blk = Q_flow_des/(h_hot_set - h_cold_set) "Mass flow rate to power block at design point";
 
-	parameter SI.Power P_net = (1 - par_fr)*P_gross "Power block net rating at design point";
-	parameter SI.Power P_name = P_net "Nameplate rating of power block";
-
-	parameter SI.Length H_storage = ceil(((4*V_max*(tank_ar^2))/(CN.pi))^(1/3)) "Storage tank height";
-	parameter SI.Diameter D_storage = H_storage/tank_ar "Storage tank diameter";
-
-	//parameter SI.Length H_tower = metadata_list[6] "Tower height (ground to base of receiver)";
-	//parameter SI.Diameter D_tower = D_receiver "Tower diameter";
 
 	// Cost data in USD (default) or AUD
 	parameter Real r_disc = 0.07 "Real discount rate";
@@ -307,6 +269,7 @@ model GemasolarSystem
 
 	// Solar field
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolstice heliostatField(
+		angles=angles,
 		lon = data.lon,
 		lat = data.lat,
 		ele_min(displayUnit = "deg") = ele_min,
@@ -320,8 +283,11 @@ model GemasolarSystem
 		nu_min = nu_min_sf,
 		Q_design = R_des,
 		nu_start = nu_start,
-		psave =casefolder,
+		sunshape=sunshape,
+		sunshape_param=sunshape_param,
 		Q_in_rcv = Q_in_rcv,
+		SM=SM,	
+		dni_des=dni_des,
 		H_rcv = H_receiver,
 		W_rcv = D_receiver,
 		n_H_rcv = n_H_rcv,
@@ -339,7 +305,20 @@ model GemasolarSystem
 		n_col_oelt = n_col_oelt,
 		n_rays=n_rays,
 		field_type=field_type,
-		rcv_type=rcv_type) annotation(
+		rcv_type=rcv_type,
+		rcv_material=rcv_material,
+		HTF=HTF,
+		psave=casefolder, 
+		wea_file=wea_file,
+		fluxlimitpath=fluxlimitpath,
+		run_aiming=run_aiming, 
+		run_therm=run_therm, 
+		f_oversize=f_oversize,
+		delta_r2=delta_r2,
+		delta_r3=delta_r3,
+		N_fp_rec=N_fp_rec,
+		D_tb_rec=D_tb_rec*1000,
+		N_bank_rec=N_bank_rec) annotation(
 			Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
 	/*
 	SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatField(
@@ -367,7 +346,7 @@ model GemasolarSystem
 		redeclare package Medium = Medium,
 		H_rcv = H_receiver,
 		D_rcv = D_receiver,
-		N_pa = N_pa_rec,
+		N_pa = N_bank_rec,
 		t_tb = t_tb_rec,
 		D_tb = D_tb_rec,
 		ab = ab_rec,
@@ -476,6 +455,17 @@ initial algorithm
 
 
 initial equation
+	if rcv_material=="Incoloy800H" then
+	fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/fluxlimit/201015_N08811_thermoElasticPeakFlux_velocity_salt") ;
+	elseif rcv_material=="Inconel740H" then
+	fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/fluxlimit/201015_N07740_thermoElasticPeakFlux_velocity") ;
+	else //Haynes230
+		if HTF=="salt" then
+		fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/fluxlimit/201015_N06230_thermoElasticPeakFlux_velocity_salt") ;
+		else //sodium
+		fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/fluxlimit/201015_N06230_thermoElasticPeakFlux_velocity") ;
+		end if;
+	end if;
 
 	if H_tower > 120 then // then use concrete tower
 

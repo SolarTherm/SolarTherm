@@ -2,6 +2,8 @@ within SolarTherm.Models.CSP.CRS.HeliostatsField;
 model HeliostatsFieldSolstice
     extends Interfaces.Models.Heliostats;
     import metadata = SolarTherm.Utilities.Metadata_Optics;
+
+    parameter SolarTherm.Types.Solar_angles angles=SolarTherm.Types.Solar_angles.dec_hra    "Table angles" annotation (Dialog(group="Table data interpretation"));
     parameter nSI.Angle_deg lon=133.889 "Longitude (+ve East)" annotation(Dialog(group="System location"));
     parameter nSI.Angle_deg lat=-23.795 "Latitude (+ve North)" annotation(Dialog(group="System location"));
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -10,6 +12,8 @@ model HeliostatsFieldSolstice
 
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
+    parameter Real SM = 2.5 "[SYS] Real solar multiple";  
+	parameter SI.Irradiance dni_des = 930 "DNI at design point";
     parameter SI.Length H_rcv=10 "Receiver aperture height";
     parameter SI.Length W_rcv=10 "Receiver aperture width";
     parameter Real n_H_rcv=10 "num of grid in the vertical direction (for flux map)";
@@ -31,8 +35,23 @@ model HeliostatsFieldSolstice
 
     parameter String field_type = "polar" "Other options are : surround";
     parameter String rcv_type = "flat" "other options are : flat, cylindrical, stl";  
-	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+   parameter String rcv_material = "Incoloy800H" "receiver material, Haynes230, Incoloy800H or Inconel740H";  
+    parameter String HTF = "salt" "heat transfer fluid, salt or sodium";  
+    parameter String fluxlimitpath = "" "directory of the flux limitation file";  
 
+	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab"); 
+    parameter String sunshape = "buie" "Buie sunshape (buie) or pillbox sunshape (pillbox)"; 
+    parameter Real sunshape_param=0.02 "csr for buie sunshape or angular size for pillbox (in deg)"; 
+
+	// additional parameters for aiming strategy and thermal performance
+	parameter Boolean run_aiming = false "[H&T] Run aiming strategy or not";
+	parameter Boolean run_therm = false "[H&T] Run receiver thermal model or not";
+    parameter Real f_oversize = 1. "[H&T] Field oversizing factor";
+	parameter Real delta_r2=0 "[H&T] Field expanding for zone2";
+	parameter Real delta_r3=0 "[H&T] Field expanding for zone3";
+	parameter Integer N_bank_rec = 18 "Number of bank panels in receiver";
+	parameter Integer N_fp_rec = 2 "Number of flow path";	
+	parameter SI.Diameter D_tb_rec = 45e-3 "Receiver tube outer diameter";
 
   parameter Boolean use_on = false
     "= true to display when solar field is connected"
@@ -53,7 +72,48 @@ model HeliostatsFieldSolstice
    parameter String opt_file(fixed=false);
    parameter Real metadata_list[8] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, helio_refl=helio_refl,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(
+		angles=angles,
+		hra=solar.hra, 
+		dec=solar.dec, 
+		lat=lat, 
+		sunshape=sunshape,
+		sunshape_param=sunshape_param,
+		method=method, 
+		Q_in_rcv=Q_in_rcv, 
+		SM=SM,	
+		dni_des=dni_des,
+		H_rcv=H_rcv, 
+		W_rcv=W_rcv, 
+		n_H_rcv=n_H_rcv, 
+		n_W_rcv=n_W_rcv, 
+		tilt_rcv=tilt_rcv, 
+		W_helio=W_helio, 
+		H_helio=H_helio, 
+		H_tower=H_tower, 
+		R_tower=R_tower, 
+		R1=R1, 
+		fb=fb, 
+		helio_refl=helio_refl,
+		slope_error=slope_error, 
+		n_row_oelt=n_row_oelt, 
+		n_col_oelt=n_col_oelt, 
+		n_rays=n_rays, 
+		field_type=field_type, 
+		rcv_type=rcv_type, 
+		rcv_material=rcv_material,
+		HTF=HTF,
+		psave=psave, 
+		wea_file=wea_file,
+		fluxlimitpath=fluxlimitpath,
+		run_aiming=run_aiming, 
+		run_therm=run_therm, 
+		f_oversize=f_oversize,
+		delta_r2=delta_r2,
+		delta_r3=delta_r3,
+		N_fp_rec=N_fp_rec,
+		D_tb_rec=D_tb_rec,
+		N_bank_rec=N_bank_rec);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
