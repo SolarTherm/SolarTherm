@@ -179,7 +179,7 @@ void st_linprog_dualtank(
     #define ETASF(I) (I - 1)
 
     //*************** Definine some intermediate functions for indexing the GLP matrices
-    #define N (horizon)
+    #define N ((int)(horizon/dt))
     #define i_Q_H2_reactor(I) (I)
     #define i_Q_H2_burner(I) (I + i_Q_H2_reactor(N))
     #define i_E_TES(I) (I + i_Q_H2_burner(N))
@@ -254,7 +254,7 @@ void st_linprog_dualtank(
         glp_set_obj_coef(P, i_Q_TES_PB(i),    0); 
         glp_set_obj_coef(P, i_Q_TES_HX(i),    0); 
         glp_set_obj_coef(P, i_Q_SF_TES(i),    0); 
-        glp_set_obj_coef(P, i_Q_SF_dumped(i), -1);
+        glp_set_obj_coef(P, i_Q_SF_dumped(i), 0);
         glp_set_obj_coef(P, i_P_PV_TES(i),    0); 
         glp_set_obj_coef(P, i_P_PV_AEL(i),    0); 
         glp_set_obj_coef(P, i_P_PV_dumped(i), -1);
@@ -394,8 +394,10 @@ void st_linprog_dualtank(
     #define TES_LEB(I) (I + N*12)                       // Long term energy balance for TES
 
     //********************** Adding rows to the GLP problem
-    glp_add_rows(P, TES_LEB(N));
-    MSG("Number of rows = %d",TES_LEB(N));
+    //glp_add_rows(P, TES_LEB(N));
+    glp_add_rows(P, HTR_EB(N));
+    //MSG("Number of rows = %d",TES_LEB(N));
+    MSG("Number of rows = %d",HTR_EB(N));
     MSG("Number of cols = %d",i_P_AEL(N));
 
     //********************** Populating the rows
@@ -627,7 +629,7 @@ void st_linprog_dualtank(
         //****************************** Deal with the RHS of the equation
         glp_set_row_bnds(
             P, PV_EB_REV(i), GLP_UP, 
-            0.0, -pvz_i
+            0.0, -pvz_i *dt
         );
         
         //Naming the rows
@@ -651,7 +653,7 @@ void st_linprog_dualtank(
         //Deal with the RHS
         glp_set_row_bnds(
             P, PV_EB(i), GLP_UP, 
-            0.0, pvz_i
+            0.0, pvz_i *dt
         );
         
         //Naming the rows
@@ -761,20 +763,20 @@ void st_linprog_dualtank(
                       +1         +1        -1       -1
         */
         //Deal with the LHS
-        for(int j=1;j<=N;j++){
-            glp_set_mat_row(
-                P, TES_LEB(i), 4,
-                (int[]){0,  i_Q_TES_PB(i), i_Q_TES_HX(i), i_Q_SF_TES(i), i_P_PV_TES(i)},
-                (double[]){0,      1,           1       ,   -1          ,   -1        }
-            );
-        }
-        
-
-        ////Deal with the RHS
-        glp_set_row_bnds(
-            P, TES_LEB(i), GLP_UP, 
-            0.0, 0.0
-        );
+        //for(int j=1;j<=N;j++){
+        //    glp_set_mat_row(
+        //        P, TES_LEB(i), 4,
+        //        (int[]){0,  i_Q_TES_PB(i), i_Q_TES_HX(i), i_Q_SF_TES(i), i_P_PV_TES(i)},
+        //        (double[]){0,      1,           1       ,   -1          ,   -1        }
+        //    );
+        //}
+        //
+//
+        //////Deal with the RHS
+        //glp_set_row_bnds(
+        //    P, TES_LEB(i), GLP_UP, 
+        //    0.0, 0.0
+        //);
 
         //Set row name
         //glp_set_row_name(P,TES_LEB,"TES_LEB");    
@@ -850,10 +852,13 @@ void st_linprog_dualtank(
 		optimalSolution[6] = -987654321;
     }else{
         fprintf(stderr, "\n\nLP is solved with status %d at t = %.2f s\n", res, t0);
+        double Q_SF_in = dni[0] * A_sf * etaRCV * etaSF[0]/1e6;
+        double Q_SF_TES = glp_get_col_prim(P,i_Q_SF_TES(1));
+        double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(1));
         fprintf(
             stderr,
-            "===============================\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_H2_reactor: %.3f MWth\nQ_H2_burner: %.3f MWth\n===============================\n",
-            optimalSolution[0], optimalSolution[1], optimalSolution[2], optimalSolution[3], optimalSolution[4], optimalSolution[5], optimalSolution[6]
+            "===============================\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_H2_reactor: %.3f MWth\nQ_H2_burner: %.3f MWth\n===============================\n",
+            P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped,Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_H2_reactor, Q_H2_burner
         );
         double PV_in = P_PV_AEL + P_PV_TES + P_PV_dumped;
 

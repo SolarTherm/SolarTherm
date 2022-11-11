@@ -35,6 +35,7 @@ model StartUpLogic5_PVCSP_particle_H2O2Storage
   Boolean on_charge ;
   Boolean on_discharge "A boolean to sense whether it is actually OK to charge";
   Real optimalMassFlow;
+  Boolean optimal_dispatch_dual_tank = false "Boolean to control controller setting";
   //discrete Modelica.SIunits.Time t_off;
   //discrete Modelica.SIunits.Time t_on;
   /*This part is only active when scheduler is on*/
@@ -43,6 +44,9 @@ model StartUpLogic5_PVCSP_particle_H2O2Storage
   Modelica.Blocks.Types.ExternalCombiTable1D schedule_table = Modelica.Blocks.Types.ExternalCombiTable1D(tableName = "schedule", fileName = schedule_file, table = fill(0.0, 0, 2), columns = 1:2, smoothness = Modelica.Blocks.Types.Smoothness.ConstantSegments);
   Real schedule(start = 0);
   Real idx(start = 0);
+  
+  Real fraction_Q_TES_PB "Given by the system level model";
+  
   Modelica.Blocks.Interfaces.RealInput m_flow_in annotation(
     Placement(transformation(extent = {{-20, -20}, {20, 20}}, rotation = -90, origin = {0, 104})));
   //initial equation
@@ -79,12 +83,12 @@ equation
   
   if on_discharge and on_charge then
     if on_discharge then
-        m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
+        m_flow = if dispatch_optimiser == true then optimalMassFlow else if optimal_dispatch_dual_tank then m_flow_max * fraction_Q_TES_PB * schedule else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
         //m_flow = if dispatch_optimiser == true then optimalMassFlow else m_flow_max * (min(1.25,load_curvefit)) * schedule;
         m_flow_HX_industrial = 1600;
     else
         //m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1.25,load_curvefit)) * schedule);
-        m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
+        m_flow = if dispatch_optimiser == true then min(optimalMassFlow, m_flow_in) else if optimal_dispatch_dual_tank then min(m_flow_in, m_flow_max * fraction_Q_TES_PB * schedule) else min(m_flow_in, m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule);
         m_flow_HX_industrial = 0;
     end if;
   else

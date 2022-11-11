@@ -67,6 +67,8 @@ model HeatExchanger_ParticleGasIndirect
   
   SI.MassFlowRate m_dot_pcl "Mass flow rate of the particle predicted by NN [kg/s]";
   Boolean on;
+  parameter Boolean on_dispatch_optimiser_dual_tank = false "Variable boolean to control dispatch optimiser";
+  Real fraction_Q_TES_HX "Variable to set the HX is on or off shall on_dispatch_optimiser_dual_tank is on -- given by system level model";
   Real[inputsize] X "input to neural network";
   Modelica.Blocks.Interfaces.BooleanInput on_discharge annotation(
     Placement(visible = true, transformation(origin = {30, 42}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {30, 42}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));  
@@ -79,18 +81,28 @@ model HeatExchanger_ParticleGasIndirect
   Modelica.Blocks.Interfaces.RealInput gas_in annotation(
     Placement(visible = true, transformation(origin = {74, -30}, extent = {{20, -20}, {-20, 20}}, rotation = 0), iconTransformation(origin = {74, -30}, extent = {{20, -20}, {-20, 20}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput gas_out annotation(
-    Placement(visible = true, transformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));   
-
-
+    Placement(visible = true, transformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.BooleanInput emergency_burner annotation(
+    Placement(visible = true, transformation(origin = {-8, 40}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-36, 44}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 initial equation
   A_HX = designPoint.A_HX;
   m_dot_pcl_DP = designPoint.m_dot_pcl_DP;
 
 equation
-  if on_discharge then
-    on = true;
+  if on_dispatch_optimiser_dual_tank == false then
+  //*********** Normal controller
+      if on_discharge then
+        on = true;
+      else
+        on = false;
+      end if;
   else
-    on = false;
+  //*********** Optimal dispatch dual tank controller
+      if on_discharge and fraction_Q_TES_HX > 0 then
+        on = true;
+      else
+        on = false;
+      end if;
   end if;
   
   T_in_pcl_off = PCL.T_h(
@@ -108,7 +120,11 @@ equation
   end if; 
   
   if on then
-    m_dot_pcl = predict(session, X, inputsize, X_max, X_min, out_max, out_min);
+    if emergency_burner == false then
+        m_dot_pcl = predict(session, X, inputsize, X_max, X_min, out_max, out_min);
+    else
+        m_dot_pcl = 0;
+    end if;        
   else
     m_dot_pcl = 0;
   end if;
@@ -120,7 +136,7 @@ equation
   particle_port_out.m_flow + particle_port_in.m_flow = 0;
   particle_port_in.p = particle_port_out.p;
   particle_port_in.h_outflow = inStream(particle_port_out.h_outflow);
-  particle_port_out.h_outflow = PCL.h_T(T_out_pcl_off);
+  particle_port_out.h_outflow = if emergency_burner then PCL.h_T(T_in_pcl_off) else PCL.h_T(T_out_pcl_off);
   
  
   annotation(

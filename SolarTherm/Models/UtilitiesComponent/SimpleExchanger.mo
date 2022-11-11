@@ -37,11 +37,13 @@ equation
   HTF_out = HTF_in "Mass balance";
   h_HTF_out = MedGas.h_T(gas_data, T_out_HTF);
   
-  if abs(T_out_HTF_target - T_out_HTF)>0 then
+  /*if abs(T_out_HTF_target - T_out_HTF)>0 then
       m_dot_hot_HTF = HTF_out - m_dot_HTF_recycle;
   else
       m_dot_hot_HTF = 0;
   end if;
+  */
+  m_dot_hot_HTF = max(HTF_out - m_dot_HTF_recycle,0);
 
 
 

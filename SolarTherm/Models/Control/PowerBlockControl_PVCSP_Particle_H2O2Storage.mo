@@ -16,6 +16,7 @@ model PowerBlockControl_PVCSP_Particle_H2O2Storage
   //Boolean on;
   
   Boolean ramping;
+  Boolean optimal_dispatch_dual_tank = false;
   
   parameter Real P_net = 1e8 "Nameplate for the Hybrid System [W]";
   parameter Real CSP_name_plate = 1e8 "Nameplate of the CSP [W]";
@@ -61,7 +62,8 @@ model PowerBlockControl_PVCSP_Particle_H2O2Storage
     P_net = P_net,
     CSP_name_plate = CSP_name_plate,
     Q_HX_des = Q_HX_des,
-    eta_gross_base = eta_gross_base
+    eta_gross_base = eta_gross_base,
+    optimal_dispatch_dual_tank = optimal_dispatch_dual_tank
   ) annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
   Modelica.Blocks.Interfaces.BooleanOutput rampingout annotation(
     Placement(visible = true, transformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0), iconTransformation(origin = {115, -45}, extent = {{-15, -15}, {15, 15}}, rotation = 0)));
