@@ -197,7 +197,8 @@ model GemasolarSystem
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 5.7320752 / (1e6 * 3600) else (5.7320752 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year";
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-	parameter FI.Money C_tower(fixed = false) "Tower cost";
+	//parameter FI.Money C_tower(fixed = false) "Tower cost";
+	parameter FI.Money C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 	parameter FI.Money C_receiver = if currency==Currency.USD then 71708855 * (A_receiver / 879.8) ^ 0.7 else (71708855 * (A_receiver / 879.8) ^ 0.7)/r_cur "Receiver cost";
 	parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money C_block = pri_block * P_gross "Power block cost";
@@ -466,7 +467,7 @@ initial equation
 		fluxlimitpath=Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/fluxlimit/201015_N06230_thermoElasticPeakFlux_velocity") ;
 		end if;
 	end if;
-
+	/*
 	if H_tower > 120 then // then use concrete tower
 
 		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
@@ -478,6 +479,7 @@ initial equation
 		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
+	*/
 
 equation
 	//Connections from data
