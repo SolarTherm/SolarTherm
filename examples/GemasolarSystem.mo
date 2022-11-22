@@ -197,6 +197,7 @@ model GemasolarSystem
 	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.5 / (1e6 * 3600) else (3.5 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year";
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
+
 	// parameter FI.Money C_tower(fixed = false) "Tower cost";
 	parameter FI.Money C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
 
@@ -482,6 +483,7 @@ initial equation
 
 	end if;
 	*/
+
 equation
 	//Connections from data
 	connect(DNI_input.y, sun.dni) annotation(
