@@ -52,6 +52,8 @@ model ParticleReceiver
 	SI.HeatFlowRate Q_incident "Incident heat";
 	SI.Efficiency eta_rcv;
 	SI.Efficiency eta_rcv_dummy;
+	SI.HeatFlowRate Q_check;
+	SI.HeatFlowRate Q_dumped;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		visible = true,transformation(
@@ -282,7 +284,7 @@ equation
         if logic then
           Q_incident = heat.Q_flow;
           Q_loss= (1-eta_rcv) * Q_incident;
-          Q_rcv = heat.Q_flow - Q_loss;
+          Q_rcv = Q_incident - Q_loss;
           fluid_a.m_flow = Q_rcv/(h_out-h_in);
         else
           Q_incident = 0;
@@ -302,6 +304,8 @@ equation
 	
 	//M flow signal
 	m_flow_out = fluid_a.m_flow;
+    Q_dumped = heat.Q_flow - Q_rcv -Q_loss;
+    Q_check = heat.Q_flow - Q_rcv - Q_loss - Q_dumped;
 	
 	annotation (Documentation(info = "<html>
 </html>", revisions = "<html>

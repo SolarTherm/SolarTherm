@@ -79,8 +79,36 @@ equation
     on_discharge = false;
   end when;
   
-  on_charge = m_flow_in > 0;
+  on_charge = m_flow_in > 0 "TES is charged";
   
+    if on_discharge then
+        if dispatch_optimiser then //TES disp opt
+            m_flow = optimalMassFlow;
+        elseif optimal_dispatch_dual_tank then //TES + H2 stg disp opt
+            m_flow = m_flow_max * fraction_Q_TES_PB * schedule;
+        else //immediate disp
+            m_flow =  m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
+            //m_flow = m_flow_max * (min(1.25,load_curvefit)) * schedule;
+        end if;
+        
+        m_flow_HX_industrial = 1600;
+    else
+        if on_charge then
+            if dispatch_optimiser then
+                m_flow = min(optimalMassFlow,m_flow_in);
+            elseif optimal_dispatch_dual_tank then
+                m_flow = min(m_flow_max * fraction_Q_TES_PB * schedule,m_flow_in);
+            else
+                m_flow =  min(m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule, m_flow_in);
+                //m_flow = min(m_flow_max * (min(1.25,load_curvefit)) * schedule, m_flow_in);
+            end if;
+        else
+            m_flow = 1e-5;
+        end if;
+        
+        m_flow_HX_industrial = 0;
+   end if;        
+  /*
   if on_discharge and on_charge then
     if on_discharge then
         m_flow = if dispatch_optimiser == true then optimalMassFlow else if optimal_dispatch_dual_tank then m_flow_max * fraction_Q_TES_PB * schedule else m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
@@ -95,6 +123,7 @@ equation
     m_flow = 0;
     m_flow_HX_industrial = 0;
   end if;
+  */
   
 
 /*

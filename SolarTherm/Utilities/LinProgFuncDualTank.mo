@@ -3,6 +3,8 @@ within SolarTherm.Utilities;
 function LinProgFuncDualTank
   input Real c0 "Rewards for producing hot hydrogen";
   input Real c1 "Penalty for burning hydrogen in the hydrogen tank";
+  input Real c2 "Penalty for dumping heat from solar field";
+  input Real c3 "Penalty for dumping electricity from PV";
   input Integer n_horizon "Horizon , how many look-ahead time steps";
   input Real dt "Time step in [s]";
   input Real c_ratio "Ratio between H_recycled and H2_reactor [-]";
@@ -40,7 +42,7 @@ function LinProgFuncDualTank
   output Real optimalSolution[7] "Array to store the solution of the optimal dispatch";
 
   external "C" st_linprog_dualtank(
-    c0, c1, n_horizon, dt, c_ratio,
+    c0, c1, c2, c3, n_horizon, dt, c_ratio,
     etaPB, etaSF, etaRCV, etaAEL, etaBurner, etaResistive,
     dni, P_PV_in_z, P_AEL_nameplate,A_sf,
     PB_size, TES_capacity, Q_TES_HX_max, E_TES_init, E_TES_min,

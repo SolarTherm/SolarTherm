@@ -28,6 +28,10 @@ parameter SI.Power Q_heater_rating = W_dumped * eta "Thermal rating of the heate
 /*How deep partload operation that your electrical heater has to endure?*/
 parameter Real eta_part_load = 0.5 "How deep the allowed partload operation";
 parameter SI.Power W_on = if W_dumped < 1 and W_dumped >=0 then 1e10 else 0 "Minimum threshold supplied power above which the heater is on. If W_dumped == 0 then sett W_on to a very large value, else follow the calculation [W]";
+SI.Power W_check(start=0);
+SI.Power W_net(start=0);
+SI.Power W_loss(start=0);
+SI.Power W_dumped_htr(start=0);
 
 /*Fluid Connection*/
 Modelica.Fluid.Interfaces.FluidPort_b particle_port_out(redeclare package Medium = Medium) annotation(
@@ -49,7 +53,7 @@ Boolean on_discharge "Can we draw particle from Cold Tank?";
 /*Variables*/
 SI.SpecificEnthalpy h_in "Inlet enthalpy (given by fluid connection)";
 SI.MassFlowRate mdot_pcl "Mass flow rate of the particle being drawn from the cold tank [kg/s]";
-SI.Energy E_dumped_electricity "Electricity dumped by the system. Happens when no heater but over producing electricity";
+SI.Energy E_dumped_electricity(start=0) "Electricity dumped by the system. Happens when no heater but over producing electricity";
 SI.Mass M_pcl_heater_PB "Mass of particle generated from PB elec";
 SI.Mass M_pcl_heater_PV "Mass of particle generated from PV elec";
 
@@ -83,19 +87,23 @@ on = W_electric > W_on and on_discharge;
 h_in = inStream(particle_port_in.h_outflow);
 
 if on then
-    mdot_pcl = W_electric * eta / (h_out-h_in);
+    W_net = W_electric * eta;
+    W_loss = W_electric * (1-eta);
+    mdot_pcl = W_net / (h_out-h_in);
     der(M_pcl_heater_PB) = W_PB * eta / (h_out-h_in);
     der(M_pcl_heater_PV) = W_PV * eta / (h_out-h_in);
-    der(E_dumped_electricity) = 0;
 else
+    W_net = 0;
+    W_loss = 0;
     mdot_pcl = 0;
     der(M_pcl_heater_PB) = 0;
     der(M_pcl_heater_PV) = 0;
-    der(E_dumped_electricity) = W_electric;
 end if;
 
+W_dumped_htr = W_electric - W_net - W_loss;
+der(E_dumped_electricity) = W_dumped_htr;
 mdot_heater = mdot_pcl "signal to PB controller";
-
+W_check = W_electric - W_net - W_loss - W_dumped_htr;
 
 
 

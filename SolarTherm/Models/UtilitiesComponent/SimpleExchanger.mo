@@ -22,6 +22,8 @@ model SimpleExchanger
     Placement(visible = true, transformation(origin = {110, -6}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput Q_in annotation(
     Placement(visible = true, transformation(origin = {-2, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-2, 108}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealInput HTF_rec annotation(
+    Placement(visible = true, transformation(origin = {-110, 50}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-110, 50}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 equation
   if emergency_burner  then
     h_HTF_in = MedGas.h_T(gas_data, T_in_HTF_emergency);
@@ -43,7 +45,7 @@ equation
       m_dot_hot_HTF = 0;
   end if;
   */
-  m_dot_hot_HTF = max(HTF_out - m_dot_HTF_recycle,0);
+  m_dot_hot_HTF = max(HTF_out - HTF_rec,0);
 
 
 

@@ -91,10 +91,7 @@ equation
 
   der(PB_time_spend_ramping) = if ramping then 1 else 0;
   
-  m_flow = if H2_tank_charging then logic.m_flow * PB_ramp_fraction else 0;
-  
-
-  
+  m_flow = if H2_tank_charging and logic.m_flow>10 then logic.m_flow * PB_ramp_fraction else 0;
   on_discharge = logic.on_discharge;
 
   connect(T_amb_input,logic.T_amb_input) "Extra connection to connect T_amb with logic.T_amb_input";

@@ -84,27 +84,30 @@ model HeatExchanger_ParticleGasIndirect
     Placement(visible = true, transformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {-80, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Blocks.Interfaces.BooleanInput emergency_burner annotation(
     Placement(visible = true, transformation(origin = {-8, 40}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-36, 44}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.BooleanInput on_discharge_TES annotation(
+    Placement(visible = true, transformation(origin = {-38, 44}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {-38, 44}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 initial equation
   A_HX = designPoint.A_HX;
   m_dot_pcl_DP = designPoint.m_dot_pcl_DP;
 
 equation
+/*
   if on_dispatch_optimiser_dual_tank == false then
   //*********** Normal controller
-      if on_discharge then
+      if on_discharge and on_discharge_TES then
         on = true;
       else
         on = false;
       end if;
   else
   //*********** Optimal dispatch dual tank controller
-      if on_discharge and fraction_Q_TES_HX > 0 then
+      if on_discharge and fraction_Q_TES_HX > 0 and on_discharge_TES then
         on = true;
       else
         on = false;
       end if;
   end if;
-  
+*/  
   T_in_pcl_off = PCL.T_h(
       inStream(particle_port_in.h_outflow)
   );
@@ -119,14 +122,27 @@ equation
     X = fill(0, inputsize);
   end if; 
   
+  on = gas_in > 0;
+  
   if on then
-    if emergency_burner == false then
-        m_dot_pcl = predict(session, X, inputsize, X_max, X_min, out_max, out_min);
-    else
-        m_dot_pcl = 0;
-    end if;        
+      if on_dispatch_optimiser_dual_tank then
+          if emergency_burner == false and on_discharge_TES and fraction_Q_TES_HX > 0 then
+              //m_dot_pcl = m_dot_pcl_DP * fraction_Q_TES_HX;
+              m_dot_pcl = m_dot_pcl_DP;
+              //predict(session, X, inputsize, X_max, X_min, out_max, out_min);
+          else
+              m_dot_pcl = 0;
+          end if;     
+      else   
+          if emergency_burner == false and on_discharge_TES then
+              m_dot_pcl = m_dot_pcl_DP;
+              //predict(session, X, inputsize, X_max, X_min, out_max, out_min);
+          else
+              m_dot_pcl = 0;
+          end if;    
+      end if;
   else
-    m_dot_pcl = 0;
+      m_dot_pcl = 0;
   end if;
   
   particle_port_in.m_flow = m_dot_pcl;

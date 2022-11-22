@@ -81,7 +81,7 @@ model sCO2PB_ConstantEfficiency
   parameter Boolean external_parasities = true;
   parameter Boolean test_mode = true;
   parameter SI.Efficiency eta_motor = 0.95;
-  parameter Real nu_min = 0.2;
+  parameter Real nu_min = 0.01;
   parameter Real PB_output_scaling_factor = 1 "Scaling factor of PB output based on the user defined PB efficiency / PB_eff_from SSC";
   
   parameter MedRec.ThermodynamicState state_in_ref=MedRec.setState_pTX(1e5,T_in_ref_blk);
@@ -141,7 +141,7 @@ model sCO2PB_ConstantEfficiency
   T_HTF_in = RecUtils.T_h(h_in);
     
   if state == 1 then
-    eta_gross_rel = 0.0 * 1 + 2.5186574179060797 * load + 
+    /*eta_gross_rel = 0.0 * 1 + 2.5186574179060797 * load + 
                           0.009846440644255819 * T_HTF_in + 0.034264872568813436 * T_amb_input -
                               0.46544551085786523 * load^2 -0.001452829932478892 * load * T_HTF_in -
                                   0.00012626460110771271 * load * T_amb_input -3.795546134277572e-06 * T_HTF_in^2 +
@@ -159,7 +159,9 @@ model sCO2PB_ConstantEfficiency
                                       1.8734586797934383e-09 * T_HTF_in^3 -7.08336767019091e-08 * T_HTF_in^2 * T_amb_input -
                                           7.052553185893373e-07 * T_HTF_in * T_amb_input^2 -9.22688277782413e-07 * T_amb_input^3 +
                                               137.3962200057798
-    "Polynomial regression based on SSC data for several PB size";
+    "Polynomial regression based on SSC data for several PB size";*/
+    eta_gross_rel=1;
+    eta_Q_rel=1;
                     
     eta_gross = eta_gross_base * eta_gross_rel;
     eta_Q = eta_Q_base * eta_Q_rel;
@@ -170,7 +172,7 @@ model sCO2PB_ConstantEfficiency
     end if;
         
     eta_cycle_net = W_net / Q_HX;
-  else// mdot< 0.999 * m_HTF_des*nu_min then
+  else
     eta_gross_rel = 0.0;
     eta_Q_rel = 0.0;
     eta_gross=0;

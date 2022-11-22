@@ -215,6 +215,7 @@ package Electrochemical
     parameter Real H2_molar_mass = 2e-3 "Molar mass of H2 in kg/mol";
     parameter Real O2_molar_mass = 16e-3 "Molar mass of H2 in kg/mol";
     parameter Real H2O_molar_mass = 18e-3 "Molar mass of H2 in kg/mol";
+    parameter Real LHV = 120e6;
     
     //Calculated parameters
     parameter SI.MassFlowRate H2_mdot_design_point(fixed=false) "Given the size of the electricity generator, what would be H2 mdot at design point [kg/s]";
@@ -256,6 +257,7 @@ package Electrochemical
     parameter Boolean with_storage=false;
     SI.Mass H2_dumped;
     SI.Mass O2_dumped;
+    SI.Efficiency eta_AEL;
     
     Modelica.Blocks.Interfaces.RealOutput W_dumped annotation(
       Placement(visible = true, transformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {110, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -331,7 +333,8 @@ package Electrochemical
     end if;
     
     if on_electrolyser then
-        if W_electrolyser > 10 then
+        //if W_electrolyser > 10 then
+        if W_electrolyser > 1e-3 then
             N_unit_final = W_electrolyser_final/P_electro_requested * N_unit "only several units are operating full load";
             der(H2O_mass) = H2O_in * H2O_molar_mass "Mass of water needed";
             H2O_in = electrolyser.n_H2O * max(1,N_unit_final) "Required hydrogen production in mol/s";
@@ -357,6 +360,7 @@ package Electrochemical
         der(H2_dumped) = 0;
         der(O2_dumped) = 0;
     end if;
+    eta_AEL = if W_electrolyser_final > 1 then H2_mdot_out * LHV / W_electrolyser_final else 0 ;
     
   annotation(
       Icon(graphics = {Rectangle(origin = {0, 1}, lineThickness = 3, extent = {{-98, 61}, {98, -61}}), Rectangle(origin = {0, -20}, fillColor = {85, 255, 255}, fillPattern = FillPattern.Vertical, extent = {{-98, 40}, {98, -40}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {-66, -2}, fillColor = {255, 0, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Rectangle(origin = {62, -2}, fillColor = {0, 255, 0}, fillPattern = FillPattern.Solid, extent = {{-6, 42}, {6, -42}}), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {-57, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Anode"), Text(origin = {71, -1}, rotation = 270, extent = {{-19, -3}, {23, -15}}, textString = "Cathode"), Line(origin = {-35, 66}, points = {{-31, -26}, {-31, 20}, {31, 20}, {31, 20}}, thickness = 1), Line(origin = {6, 86}, points = {{-10, 4}, {-10, -4}, {-10, -4}}, thickness = 1), Line(origin = {31.12, 63.5}, points = {{-31, 22.5}, {31, 22.5}, {31, -23.5}, {31, -21.5}, {31, -21.5}}, thickness = 1), Line(origin = {0, 85}, points = {{0, 3}, {0, -1}, {0, -1}}, thickness = 1), Line(origin = {9.19, 66}, points = {{-79.1874, -26}, {-79.1874, 26}, {56.8126, 26}, {56.8126, -26}, {56.8126, -26}, {56.8126, -26}}, pattern = LinePattern.Dash, thickness = 1), Polygon(origin = {66, 43}, fillPattern = FillPattern.Solid, points = {{-2, 3}, {0, -3}, {2, 3}, {2, 3}, {-4, 3}, {-2, 3}}), Text(origin = {-78, 52}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-78, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {-38, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {42, 100}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 80}, extent = {{-6, 8}, {6, -8}}, textString = "e-"), Text(origin = {74, 54}, extent = {{-6, 8}, {6, -8}}, textString = "e-")}, coordinateSystem(initialScale = 0.1)));end Simple_Electrolyser;

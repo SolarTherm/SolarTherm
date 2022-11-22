@@ -74,7 +74,7 @@
 */
 
 void st_linprog_dualtank(
-    double c0, double c1, int horizon, double dt, double c_ratio,
+    double c0, double c1, double c2, double c3, int horizon, double dt, double c_ratio,
     double etaPB, double etaSF[], double etaRCV, double etaAEL, double etaBurner, double etaResistive,
     double dni[], double P_PV_in_z[], double P_AEL_nameplate, double A_sf,
     double PB_size, double TES_capacity, double Q_TES_HX_max, double E_TES_init, double E_TES_min,
@@ -121,10 +121,10 @@ void st_linprog_dualtank(
             fprintf(stderr,"%1f,",dni[i]);
         }
 
-        fprintf(stderr,"\nGHI:\n");
+        fprintf(stderr,"\nPV_in:\n");
 
         for(int i=0; i<horizon;i++){
-            fprintf(stderr,"%1f,",ghi[i]);
+            fprintf(stderr,"%1f,",P_PV_in_z[i]);
         }
 
         fprintf(stderr,"\nP_AEL_nameplate = %.3f\n",P_AEL_nameplate);
@@ -254,14 +254,14 @@ void st_linprog_dualtank(
         glp_set_obj_coef(P, i_Q_TES_PB(i),    0); 
         glp_set_obj_coef(P, i_Q_TES_HX(i),    0); 
         glp_set_obj_coef(P, i_Q_SF_TES(i),    0); 
-        glp_set_obj_coef(P, i_Q_SF_dumped(i), 0);
+        glp_set_obj_coef(P, i_Q_SF_dumped(i), -1 * c2);
         glp_set_obj_coef(P, i_P_PV_TES(i),    0); 
         glp_set_obj_coef(P, i_P_PV_AEL(i),    0); 
-        glp_set_obj_coef(P, i_P_PV_dumped(i), -1);
+        glp_set_obj_coef(P, i_P_PV_dumped(i), -1 * c3);
         glp_set_obj_coef(P, i_P_AEL(i),       0); 
     }
 
-    /*Printing coefficient for debugging*/
+    /*Printing coefficient for debugging
     #ifdef ST_LINPROG_DEBUG
     MSG("Printing the objective function coefficient");
     for (int i = 1; i <= i_P_AEL(N); ++i){
@@ -274,6 +274,7 @@ void st_linprog_dualtank(
         }
     }        
     #endif
+    */
 
     /*
     SET THE VARIABLE BOUNDS
@@ -715,8 +716,8 @@ void st_linprog_dualtank(
         */
         glp_set_mat_row(
             P, HTR_EB_REV(i), 3,
-               (int[]){0,   i_Q_H2_reactor(i)           ,   i_Q_H2_burner(i)            ,   i_Q_TES_HX(i)},
-            (double[]){0,  -c_ratio/LHV*delta_h_H2      ,   +dt * etaBurner             ,       +dt      }
+               (int[]){0,   i_Q_H2_reactor(i)               ,   i_Q_H2_burner(i)            ,   i_Q_TES_HX(i)},
+            (double[]){0,  -c_ratio/LHV*delta_h_H2*dt       ,   +dt * etaBurner             ,       +dt      }
         );
 
         //****************************** Deal with the RHS
@@ -738,8 +739,8 @@ void st_linprog_dualtank(
         */
         glp_set_mat_row(
             P, HTR_EB(i), 3,
-               (int[]){0,  i_Q_H2_reactor(i)           ,   i_Q_H2_burner(i)            ,   i_Q_TES_HX(i)},
-            (double[]){0,  c_ratio/LHV*delta_h_H2      ,   -dt * etaBurner             ,       -dt      }
+               (int[]){0,  i_Q_H2_reactor(i)                ,   i_Q_H2_burner(i)            ,   i_Q_TES_HX(i)},
+            (double[]){0,  c_ratio/LHV*delta_h_H2*dt        ,   -dt * etaBurner             ,       -dt      }
         );
 
         //****************************** Deal with the RHS
@@ -832,6 +833,7 @@ void st_linprog_dualtank(
     double Q_TES_HX     = glp_get_col_prim(P,i_Q_TES_HX(1));
     double Q_H2_reactor = glp_get_col_prim(P,i_Q_H2_reactor(1));
     double Q_H2_burner  = glp_get_col_prim(P,i_Q_H2_burner(1));
+    double H2level      = glp_get_col_prim(P,i_E_H2stg(1))/H2stg_capacity*100;
 
     MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR");
     MSG("P_PV_AEL: %.3f MWe", P_PV_AEL);
@@ -857,9 +859,10 @@ void st_linprog_dualtank(
         double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(1));
         fprintf(
             stderr,
-            "===============================\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_H2_reactor: %.3f MWth\nQ_H2_burner: %.3f MWth\n===============================\n",
-            P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped,Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_H2_reactor, Q_H2_burner
+            "===============================\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\n===============================\n",
+            P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped,Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner
         );
+
         double PV_in = P_PV_AEL + P_PV_TES + P_PV_dumped;
 
         if(PV_in==0){
@@ -892,7 +895,7 @@ void st_linprog_dualtank(
             double Q_SF_in = dni[DNI(i)] * A_sf * etaSF[ETASF(i)] * etaRCV /1e6;
             double Q_SF_TES = glp_get_col_prim(P,i_Q_SF_TES(i));
             double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(i));
-            double P_PV_in = P_PV_in[PVZI(i)];
+            double P_PV_in = P_PV_in_z[PVZI(i)];
             double P_PV_TES = glp_get_col_prim(P,i_P_PV_TES(i));
             double P_PV_dumped = glp_get_col_prim(P,i_P_PV_dumped(i));
             double P_PV_AEL = glp_get_col_prim(P,i_P_PV_AEL(i));

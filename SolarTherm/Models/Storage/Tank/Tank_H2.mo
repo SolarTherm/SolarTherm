@@ -17,12 +17,17 @@ model Tank_H2
   parameter Boolean on_dispatch_optimiser_dual_tank = false "Variable boolean to control dispatch optimiser";
   Real fraction_Q_H2_reactor "Variable to tell whether to send the H2 to the reactor -- given by the system level model";
   Real fraction_Q_TES_HX "Variable to tell whether to send the H2 to the burner -- given by the system level model";
+  Real fraction_Q_H2_burner "Variable to tell whether to send the H2 to the burner -- given by the system level model";
   Real L_tank(start = L_start);
   SI.Energy E_tank(start = L_start / 100 * E_tank_capacity);
   Boolean on_discharge;
   Boolean on_charge;
   Boolean emergency_burner;
   parameter Real t_storage = 20;
+  SI.MassFlowRate H2_burner;
+  SI.Mass H2_burner_mass;
+  SI.Mass H2_in_mass;
+ 
   /*Connections*/
   Modelica.Blocks.Interfaces.RealInput H2_in annotation(
     Placement(visible = true, transformation(origin = {-108, 50}, extent = {{-20, -20}, {20, 20}}, rotation = 0), iconTransformation(origin = {-108, 50}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
@@ -40,6 +45,8 @@ model Tank_H2
     Placement(visible = true, transformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90), iconTransformation(origin = {56, 104}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
   Modelica.Blocks.Interfaces.BooleanOutput emergency_burner_signal annotation(
     Placement(visible = true, transformation(origin = {104, 68}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {104, 68}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealOutput mdot_h2_burner annotation(
+    Placement(visible = true, transformation(origin = {100, -90}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {100, -90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 initial equation
   if t_storage >= t_storage_threshold then
     on_discharge = L_tank > h2_tnk_empty_ub;
@@ -90,49 +97,56 @@ equation
   end if;
   */
   if on_dispatch_optimiser_dual_tank == false then
-//**************** Normal controller
-    if on_discharge then
-      if on_discharge_TES then
-        H2_out = H2_demand "TES is enough so discharge only H2 for the feedstock";
-        emergency_burner = false;
-        discharging = true;
+  //**************** Normal controller
+      if on_discharge then
+          if on_discharge_TES then
+              H2_out = H2_demand "TES is enough so discharge only H2 for the feedstock";
+              emergency_burner = false;
+              H2_burner = 0;
+          else
+              H2_out = H2_demand_emergency "TES is not enough but we can operate the burner by discharging H2";
+              emergency_burner = true;
+              H2_burner = H2_demand_emergency - H2_demand;
+          end if;
       else
-        H2_out = H2_demand_emergency "TES is not enough but we can operate the burner by discharging H2";
-        emergency_burner = true;
-        discharging = true;
-      end if;
-    else
-      H2_out = 0;
-      emergency_burner = false;
-      discharging = false;
-    end if;
-  else
-//***************** Dispatch optimiser dual tank controller
-    if on_discharge then
-// H2 storage level is enuff
-      if fraction_Q_H2_reactor > 0 then
-        if fraction_Q_TES_HX > 1e-1 then
-          H2_out = H2_demand "TES is sending heat to the TES heater, dispatch H2 only for the reactor";
+          H2_out = 0;
           emergency_burner = false;
-          discharging = true;
-        else
-          H2_out = H2_demand_emergency "TES is NOT sending heat to the TES heater, dispatch H2 for both reactor and burner";
-          emergency_burner = true;
-          discharging = true;
-        end if;
-      else
-        H2_out = 0;
-        emergency_burner = false;
-        discharging = false;
+          H2_burner = 0;
       end if;
+  else
+    //***************** Dispatch optimiser dual tank controller
+    if on_discharge and fraction_Q_H2_reactor > 0 then
+        /*
+        if fraction_Q_TES_HX > 0 and on_discharge_TES then
+            H2_out = H2_demand;
+            emergency_burner = false;
+        elseif fraction_Q_H2_burner > 0 then
+            H2_out = H2_demand * fraction_Q_H2_reactor + (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
+            //H2_demand_emergency;
+            emergency_burner = true;
+        else
+            H2_out = 0;
+            emergency_burner = false;
+        end if;  
+        */        
+        H2_out = H2_demand * fraction_Q_H2_reactor + (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
+        H2_burner = (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
+        emergency_burner = fraction_Q_H2_burner > 0;
     else
-// H2 storage isn't enuff in the first place so shut down!
-      H2_out = 0;
-      emergency_burner = false;
-      discharging = false;
+        // H2 storage isn't enuff in the first place so shut down!
+        H2_out = 0;
+        H2_burner = 0;
+        emergency_burner = false;
     end if;
   end if;
-//
+  discharging = H2_out > 1e-3;
+  der(H2_burner_mass) = H2_burner;
+  der(H2_in_mass) = H2_in;
+  
+  //mdot_h2_burner = if on_d max(H2_out - H2_demand,0);
+  //mdot_h2_burner = max(H2_out - H2_demand,0);
+  mdot_h2_burner = max(0,H2_burner);
+
   der(E_tank) = H2_in * LHV_H2 - H2_out * LHV_H2 "dE/dt of the H2 tank";
   L_tank = if t_storage < t_storage_threshold then 50 else E_tank / E_tank_capacity * 100 "Level of the tank";
   L = L_tank "Signal out of the level of the tank";
