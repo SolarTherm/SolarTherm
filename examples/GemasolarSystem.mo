@@ -22,20 +22,20 @@ model GemasolarSystem
 	parameter Currency currency = Currency.USD "Currency used for cost analysis";
 	parameter Boolean const_dispatch = true "Constant dispatch of energy";
 	parameter String sch_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/daily_sch_0.motab") if not const_dispatch "Discharging schedule from a file";
-	parameter Real SM = 3.08 "Solar multiple";
+	parameter Real SM = 2.4 "Solar multiple";
 	parameter SI.RadiantPower Q_in_rcv = Q_flow_des*SM/0.8 "incident power to the receiver at design point (to size the field design)";
 
 	// Weather data and the sun
 	parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Daggett_Ca_TMY32.motab");
 	parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
 	parameter nSI.Angle_deg lon = -116.780 "Longitude (+ve East)";
-	parameter nSI.Angle_deg lat = 37.56 "Latitude (+ve North)";
+	parameter nSI.Angle_deg lat = 34.85 "Latitude (+ve North)";
 	parameter nSI.Time_hour t_zone = -8 "Local time zone (UCT=0)";
 	parameter Integer year = 2008 "Meteorological year";
     parameter String sunshape = "buie" "buie or pillbox sunshape";  
     parameter Real sunshape_param = 0.02 "csr for buie sunshape, or angular size for pillbox (in deg)";  
-	parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file"; 
-	parameter SI.Irradiance dni_des = 930 "DNI at design point";
+	parameter Solar_angles angles = Solar_angles.elo_hra "Angles used in the lookup table file, use elo_hra for mdba aiming, dec_hra for solsicepy "; 
+	parameter SI.Irradiance dni_des = 950 "DNI at design point";
 
 	// Heliostat Field and Tower [H&T]
 	parameter String field_type = "surround" "polar or surround";
@@ -43,14 +43,14 @@ model GemasolarSystem
 	//parameter String opt_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/gemasolar_H230_salt_MDBA.motab");
 	parameter String casefolder ="/media/yewang/Software/program/solartherm-gemasolar/examples/test-gemasolar";
 	parameter Real he_av_design = 0.99 "Helisotats availability";
-	parameter SI.Length W_helio = 12.305 "width of heliostat in m";
-	parameter SI.Length H_helio = 9.752 "height of heliostat in m";  
-	parameter SI.Efficiency helio_refl = 0.88 "reflectivity of heliostat max =1";  
-	parameter SI.Angle slope_error = 2.6e-3 "slope error of the heliostat in mrad";
-	parameter SI.Length H_tower = 114.75 "Tower height";
+	parameter SI.Length W_helio = 12.2 "width of heliostat in m";
+	parameter SI.Length H_helio = 12.2 "height of heliostat in m";  
+	parameter SI.Efficiency helio_refl = 0.9 "reflectivity of heliostat max =1";  
+	parameter SI.Angle slope_error = 1.53e-3 "slope error of the heliostat in mrad";
+	parameter SI.Length H_tower = 193.458 "Tower height";
 	parameter SI.Length R_tower = 0.01 "Tower diameter";
-	parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
-	parameter Real fb = 0.4 "factor to grow the field layout";
+	//parameter SI.Length R1 = 40 "distance between the first row heliostat and the tower";
+	//parameter Real fb = 0.4 "factor to grow the field layout";
 	parameter Real n_row_oelt = 6 "number of rows of the look up table (simulated days in a year)";
 	parameter Real n_col_oelt = 25 "number of columns of the lookup table (simulated hours per day)";
     parameter Real n_rays = 1e6 "number of rays for the optical simulation";
@@ -74,8 +74,8 @@ model GemasolarSystem
 	// Receiver
 	parameter String rcv_type = "cylinder" "other options are : flat, cylinder, stl";
 	parameter nSI.Angle_deg tilt_rcv = 0 "tilt of receiver in degree relative to tower axis";
-	parameter SI.Diameter D_receiver = 8.5 "Receiver diameter";
-	parameter SI.Length H_receiver = 10.5 "Receiver height";
+	parameter SI.Diameter D_receiver = 17.65 "Receiver diameter";
+	parameter SI.Length H_receiver = 21.6 "Receiver height";
 	parameter SI.Area A_receiver = Modelica.Constants.pi*D_receiver*H_receiver "Receiver aperture area";
     parameter Real n_H_rcv=50 "num of grid in the vertical direction (for flux map)";
     parameter Real n_W_rcv=50 "num of grid in the horizontal/circumferetial direction (for flux map)";
@@ -95,7 +95,7 @@ model GemasolarSystem
 	parameter Real[5] CH = {metadata_list[16],metadata_list[17],metadata_list[18],metadata_list[19],metadata_list[20]};
 
 	// Storage
-	parameter Real t_storage(unit = "h") = 12 "Hours of storage";
+	parameter Real t_storage(unit = "h") = 10 "Hours of storage";
 	parameter SI.Temperature T_cold_set = CV.from_degC(290) "Cold tank target temperature";
 	parameter SI.Temperature T_hot_set = CV.from_degC(565) "Hot tank target temperature";
 	parameter SI.Temperature T_cold_start = CV.from_degC(290) "Cold tank starting temperature";
@@ -122,8 +122,8 @@ model GemasolarSystem
 	// Power block
 	replaceable model Cycle = Models.PowerBlocks.Correlation.Rankine "Rankine cycle regression model";
 	replaceable model Cooling = Models.PowerBlocks.Cooling.SAM "PB cooling model";
-	parameter SI.Power P_gross = 19.9e6 "Power block gross rating at design point";
-	parameter SI.Efficiency eff_blk = 0.3774 "Power block efficiency at design point";
+	parameter SI.Power P_gross = 115e6 "Power block gross rating at design point";
+	parameter SI.Efficiency eff_blk = 0.412 "Power block efficiency at design point";
 	parameter Real par_fr = 0.099099099 "Parasitics fraction of power block rating at design point";
 	parameter Real par_fix_fr = 0.0055 "Fixed parasitics as fraction of gross rating";
 	parameter Boolean blk_enable_losses = true "true if the power heat loss calculation is enabled";
@@ -186,18 +186,20 @@ model GemasolarSystem
 	parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
 	parameter Real f_Subs = 0 "Subsidies on initial investment costs";
 
-	parameter FI.AreaPrice pri_field = if currency==Currency.USD then 180 else 180/r_cur "Field cost per design aperture area";
-	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 20 else 20/r_cur "Site improvements cost per area";
-	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 37 / (1e3 * 3600) else (37 / (1e3 * 3600))/r_cur "Storage cost per energy capacity";
-	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 1000 / 1e3 else 1000/r_cur "Power block cost per gross rated power";
-	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 350 / 1e3 else (350 / 1e3)/r_cur "Balance of plant cost per gross rated power";
+	parameter FI.AreaPrice pri_field = if currency==Currency.USD then 140 else 140/r_cur "Field cost per design aperture area";
+	parameter FI.AreaPrice pri_site = if currency==Currency.USD then 16 else 20/r_cur "Site improvements cost per area";
+	parameter FI.EnergyPrice pri_storage = if currency==Currency.USD then 22 / (1e3 * 3600) else (22 / (1e3 * 3600))/r_cur "Storage cost per energy capacity";
+	parameter FI.PowerPrice pri_block = if currency==Currency.USD then 1040 / 1e3 else 1040/r_cur "Power block cost per gross rated power";
+	parameter FI.PowerPrice pri_bop = if currency==Currency.USD then 290 / 1e3 else (290 / 1e3)/r_cur "Balance of plant cost per gross rated power";
 	parameter FI.AreaPrice pri_land = if currency==Currency.USD then 10000 / 4046.86 else (10000 / 4046.86)/r_cur "Land cost per area";
 
-	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 56.715 / 1e3 else (56.715 / 1e3)/r_cur "Fixed O&M cost per nameplate per year";
-	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 5.7320752 / (1e6 * 3600) else (5.7320752 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year";
+	parameter Real pri_om_name(unit = "$/W/year") = if currency==Currency.USD then 66 / 1e3 else (66 / 1e3)/r_cur "Fixed O&M cost per nameplate per year";
+	parameter Real pri_om_prod(unit = "$/J/year") = if currency==Currency.USD then 3.5 / (1e6 * 3600) else (3.5 / (1e6 * 3600))/r_cur "Variable O&M cost per production per year";
 	parameter FI.Money C_field = pri_field * A_field "Field cost";
 	parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-	parameter FI.Money C_tower(fixed = false) "Tower cost";
+	// parameter FI.Money C_tower(fixed = false) "Tower cost";
+	parameter FI.Money C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
+
 	parameter FI.Money C_receiver = if currency==Currency.USD then 71708855 * (A_receiver / 879.8) ^ 0.7 else (71708855 * (A_receiver / 879.8) ^ 0.7)/r_cur "Receiver cost";
 	parameter FI.Money C_storage = pri_storage * E_max "Storage cost";
 	parameter FI.Money C_block = pri_block * P_gross "Power block cost";
@@ -297,8 +299,6 @@ model GemasolarSystem
 		H_helio = H_helio,
 		H_tower = H_tower,
 		R_tower = R_tower,
-		R1 = R1,
-		fb = fb,
 		helio_refl = helio_refl,
 		slope_error = slope_error,
 		n_row_oelt = n_row_oelt,
@@ -310,6 +310,8 @@ model GemasolarSystem
 		HTF=HTF,
 		psave=casefolder, 
 		wea_file=wea_file,
+		//T_in=T_cold_set,
+		//T_out=T_hot_set,
 		fluxlimitpath=fluxlimitpath,
 		run_aiming=run_aiming, 
 		run_therm=run_therm, 
@@ -467,6 +469,7 @@ initial equation
 		end if;
 	end if;
 
+	/*
 	if H_tower > 120 then // then use concrete tower
 
 		C_tower = if currency == Currency.USD then 7612816.32266742 * exp(0.0113 * H_tower) else 7612816.32266742 * exp(0.0113 * H_tower) / r_cur "Tower cost"; 
@@ -478,7 +481,7 @@ initial equation
 		//"Tower cost fixed" updated to match estimated total cost of $125k for a 50 m tower where EPC & Owner costs are 11% of Direct Costs
 
 	end if;
-
+	*/
 equation
 	//Connections from data
 	connect(DNI_input.y, sun.dni) annotation(

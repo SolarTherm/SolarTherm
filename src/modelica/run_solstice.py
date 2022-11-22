@@ -171,16 +171,16 @@ def design_crs_aimingstrategy(pm):
 		latitude=pm.lat,
 		num_bundle=int(pm.Nb))
 
-	#Model.big_field_generation()
-	#Model.annual_big_field()
-	#Model.determine_field()
-	'''
+	Model.big_field_generation()
+	Model.annual_big_field()
+	Model.determine_field()
+
 	if HTF=='salt':
 		Model.flow_path_salt(num_bundle=int(pm.Nb), num_fp=int(pm.Nfp),D0=pm.Do, pattern='NES-NWS') 
 		Model.MDBA_aiming_new(dni=pm.dni_des, phi=0.,elevation=75.89)
 	else:
 		Model.flow_path_sodium()
-	'''
+	
 	Model.annual_trimmed_field()
 
 	return tablefile

@@ -32,18 +32,18 @@ class TestMoltenSaltSys(unittest.TestCase):
 			return v
 
 		if 1:
-			assert abs(self.perf[0]-440565.77)/440565.77 <0.05
-			assert abs(self.perf[1]-235.78)/235.78 <0.05
-			assert abs(self.perf[2]-50.29)/50.29 <0.05
-			assert abs(getval('R_des')/1e6-769.14)/769.14 <0.05
-			assert abs(getval('Q_rec_out')/1e6-705.88)/705.88 <0.05
-			assert abs(getval('n_heliostat')-18473)/18473 <0.05
+			assert abs(self.perf[0]-582762.81)/582762.81 <0.05
+			assert abs(self.perf[1]-143.23)/143.23 <0.05
+			assert abs(self.perf[2]-66.53)/66.53 <0.05
+			assert abs(getval('R_des')/1e6-702.87)/702.87 <0.05
+			assert abs(getval('Q_rec_out')/1e6-646.6)/646.6 <0.05
+			assert abs(getval('n_heliostat')-11714)/11714 <0.05
 
 			self.assertAlmostEqual(getval('P_gross')/1e6, 111, 2) # Power block gross rating
 			self.assertAlmostEqual(getval('SM'), 2.4, 2) # Solar multiple
 			self.assertAlmostEqual(getval('D_receiver'), 19, 2) # Receiver diameter
 			self.assertAlmostEqual(getval('H_receiver'), 20, 2) # Receiver height
-			self.assertAlmostEqual(getval('H_tower'), 114.75, 2) # Tower height
+			self.assertAlmostEqual(getval('H_tower'), 193.458, 2) # Tower height
 
 		else:
 			warnings.warn("Test evaluation has been disabled")		
