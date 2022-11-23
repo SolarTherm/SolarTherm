@@ -20,7 +20,7 @@ class TestMoltenSaltSys(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.update_pars(['P_gross', 'D_receiver', 'H_receiver', 'SM' ],['111e6', '19', '20', '2.4']) 
+		#sim.update_pars(['P_gross', 'D_receiver', 'H_receiver', 'SM' ],['111e6', '19', '20', '2.4']) 
 		sim.simulate(start=0, stop='1y', step='120s',solver='dassl',nls='homotopy')
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
@@ -32,17 +32,17 @@ class TestMoltenSaltSys(unittest.TestCase):
 			return v
 
 		if 1:
-			assert abs(self.perf[0]-582762.81)/582762.81 <0.05
-			assert abs(self.perf[1]-143.23)/143.23 <0.05
-			assert abs(self.perf[2]-66.53)/66.53 <0.05
-			assert abs(getval('R_des')/1e6-702.87)/702.87 <0.05
-			assert abs(getval('Q_rec_out')/1e6-646.6)/646.6 <0.05
-			assert abs(getval('n_heliostat')-11714)/11714 <0.05
+			assert abs(self.perf[0]-591111.07)/591111.07 <0.05
+			assert abs(self.perf[1]-147.71)/147.71 <0.05
+			assert abs(self.perf[2]-65.13)/65.13 <0.05
+			assert abs(getval('R_des')/1e6-727.84)/727.84 <0.05
+			assert abs(getval('Q_rec_out')/1e6- 669.90)/ 669.90 <0.05
+			assert abs(getval('n_heliostat')-12662)/12662 <0.05
 
-			self.assertAlmostEqual(getval('P_gross')/1e6, 111, 2) # Power block gross rating
+			self.assertAlmostEqual(getval('P_gross')/1e6, 115, 2) # Power block gross rating
 			self.assertAlmostEqual(getval('SM'), 2.4, 2) # Solar multiple
-			self.assertAlmostEqual(getval('D_receiver'), 19, 2) # Receiver diameter
-			self.assertAlmostEqual(getval('H_receiver'), 20, 2) # Receiver height
+			self.assertAlmostEqual(getval('D_receiver'), 17.65, 2) # Receiver diameter
+			self.assertAlmostEqual(getval('H_receiver'), 21.6, 2) # Receiver height
 			self.assertAlmostEqual(getval('H_tower'), 193.458, 2) # Tower height
 
 		else:
