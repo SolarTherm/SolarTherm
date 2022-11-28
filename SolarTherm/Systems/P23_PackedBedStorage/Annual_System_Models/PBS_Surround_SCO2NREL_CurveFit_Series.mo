@@ -1,6 +1,6 @@
 within SolarTherm.Systems.P23_PackedBedStorage.Annual_System_Models;
 
-model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
+model PBS_Surround_SCO2NREL_CurveFit_Series
   function opt_file_naming
     input String prefix;
     //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"
@@ -64,34 +64,38 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter SI.TemperatureDifference T_tol_PB = 40.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Temperature controls
   parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
-  parameter SI.Temperature T_PB_start = T_max - 0.5 * T_tol_PB "Temperature at top of tank where PB can start";
+  parameter SI.Temperature T_PB_start = T_max - T_tol_PB + 10.0 "Temperature at top of tank where PB can start";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Temperature at top of tank where PB must stop";
   parameter SI.Temperature T_recv_max = T_min + T_tol_recv "Maximum temperature at bottom of tank when it can no longer be pumped into the receiver";
-  parameter SI.Temperature T_recv_start = T_min + 0.5 * T_tol_recv "Temperature at bottom of tank when it can start being pumped into the receiver again";
+  parameter SI.Temperature T_recv_start = T_min + T_tol_recv - 10.0 "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_min = 500.0 + 273.15 "Ideal low temperature of the storage";
   //Additional Power Block design temperature
   parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
+  //Controller Parameters
+  parameter Real eff_storage_des = Tank.util "design storage utilisation";
+  parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
+  parameter String storage_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/Storage_Table_SAR3.motab");
+  //parameter Real L_recv_max = 0.94599;
+  //L_4
+  //parameter Real L_recv_start = 0.28678;
+  //L_3
+  //parameter Real L_PB_start = 0.067738;
+  //L_2
+  //parameter Real L_PB_min = 0.062044;
+  //L_1
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
-  //Controller Levels
-  parameter Real L_recv_max = 0.92896;
-  //L_4
-  parameter Real L_recv_start = 0.900619;
-  //L_3
-  parameter Real L_PB_start = 0.119226;
-  //L_2
-  parameter Real L_PB_min = 0.09406;
-  //L_1
+  parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
   //parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase";
   //parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   //parameter SI.Length d_p = 0.10 "Tank filler diameter";
   //parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
   //parameter Real ar = 2.0 "Aspect ratio (H/D) of tank";
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 12.0 "Hours of storage";
   //parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.00 "Heat loss coefficient of all tanks";
   //Weather Data (Alice Springs)
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
@@ -103,14 +107,14 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   //Optical Model Parameters
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter String field_type = "surround";
-  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/100MWe/4510c%/883K/1000kWpm2/";
-  parameter String phi_pct_string = "124";
-  parameter Real SM_guess = 2.2;
+  parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/surround/50MWe/4555c%/883K/1000kWpm2/";
+  parameter String phi_pct_string = "100";
+  parameter Real SM_guess = 3.0;
   parameter Real HT_pct_guess = 100;
   parameter Real f_recv = 1.0;
   parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
   parameter String SM_string = String(2 * SolarTherm.Utilities.Round(SM_guess * 5)) "Solar Multiple rounded to the nearest 0.2, multiplied by 10 and converted to string";
-  parameter Real he_av_design = 0.99 "Helisotats availability";
+  parameter Real he_av_design = 1.00 "Helisotats availability";
   parameter SI.Energy helio_E_start = 90e3 * A_heliostat / 144.375 "Heliostat startup energy consumption";
   parameter SI.Power helio_W_track = 0.0553 * A_heliostat / 144.375 "Heliostat tracking power";
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
@@ -120,7 +124,8 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
-  parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) "Number of heliostats";
+  parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) * 2 "Number of heliostats";
+  //Two-tower system
   parameter SI.Area A_heliostat = MetaA[2] "Area of one heliostat";
   parameter Real eff_opt_des = MetaA[3];
   parameter SI.Length H_recv = MetaA[4];
@@ -129,14 +134,15 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter SI.Area A_field = A_heliostat * n_heliostat "Area of the entire field (reflective area)";
   parameter SI.Area A_land = land_mult * A_field "Land area occupied by the plant";
   //Receiver Parameters
-  parameter SI.Area A_recv = if field_type == "polar" then H_recv * D_recv else H_recv * D_recv * CN.pi "Receiver area";
-  parameter Integer N_pa_recv = 20 "Number of panels in receiver";
-  parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
-  parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
-  parameter SI.Efficiency ab_recv = 0.961 "Receiver coating absorptance";
-  parameter SI.Efficiency em_recv = 0.92 "Receiver coating emissivity";
-  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 10.0 "W/m2K";
-  //parameter SI.Temperature T_4avg_recv = (0.20 * (T_min ^ 4 + T_min ^ 3 * T_max + T_min ^ 2 * T_max ^ 2 + T_min * T_max ^ 3 + T_max ^ 4))^0.25;
+  parameter SI.Area A_recv = if field_type == "polar" then 2.0 * H_recv * D_recv else 2.0 * H_recv * D_recv * CN.pi "Total Receiver area";
+  //Two-tower system
+  //parameter Integer N_pa_recv = 20 "Number of panels in receiver";
+  //parameter SI.Thickness t_tb_recv = 1.25e-3 "Receiver tube wall thickness";
+  //parameter SI.Diameter D_tb_recv = 40e-3 "Receiver tube outer diameter";
+  parameter SI.Efficiency ab_recv = 0.9872 "Receiver coating absorptance";
+  parameter SI.Efficiency em_recv = 0.9408 "Receiver coating emissivity";
+  parameter SI.CoefficientOfHeatTransfer h_conv_recv = 20.0 "W/m2K";
+  parameter SI.Temperature T_4avg_recv = (0.20 * (T_min ^ 4 + T_min ^ 3 * T_max + T_min ^ 2 * T_max ^ 2 + T_min * T_max ^ 3 + T_max ^ 4)) ^ 0.25;
   parameter SI.Temperature T_avg_recv = 0.50 * (T_min + T_max);
   parameter SI.Temperature T_amb_recv_des = 25.0 + 273.15 "Design ambient temperature (K)";
   // Power block
@@ -144,8 +150,8 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter SI.Power P_name = 100e6;
   parameter SI.Temperature T_pb_cool_des = 35.0 + 273.15 "Design cooling temperature ambient of PB, is 6 degrees below 41 degC";
   parameter SI.Efficiency eff_net_des = 0.90 "Power block net efficiency rating";
-  parameter SI.Efficiency eff_blk_des = 0.450960 "Power block efficiency at design point";
-  parameter SI.Time t_PB_wait = 2.0 * 3600.0 "Wait time between shutdown and turning back on";
+  parameter SI.Efficiency eff_blk_des = 0.4555 "Power block efficiency at design point";
+  parameter SI.Time t_PB_wait = 1.0 * 3600.0 "Wait time between shutdown and turning back on";
   //Pumping and Parasitics
   parameter SI.SpecificEnergy k_loss_cold = 0.15e3 "Cold pump parasitic power coefficient";
   parameter SI.SpecificEnergy k_loss_hot = 0.55e3 "Hot pump parasitic power coefficient";
@@ -159,7 +165,7 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter SI.SpecificEnthalpy h_out_ref_recv = Medium.specificEnthalpy(Medium.setState_pTX(101323.0, T_max)) "Specific enthalpy of sodium leaving receiver at design pt";
   //Heat Flow Rates
   parameter SI.HeatFlowRate Q_flow_ref_blk = P_gross_des / eff_blk_des "design heat input rate into the PB";
-  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * (T_avg_recv ^ 4 - T_amb_recv_des ^ 4) + h_conv_recv * A_recv * (T_avg_recv - T_amb_recv_des) "Receiver design heat loss rate";
+  parameter SI.HeatFlowRate Q_flow_rec_loss_des = CN.sigma * em_recv * A_recv * (T_4avg_recv ^ 4 - T_amb_recv_des ^ 4) + h_conv_recv * A_recv * (T_avg_recv - T_amb_recv_des) "Receiver design heat loss rate";
   parameter SI.HeatFlowRate Q_flow_rec_des = dni_des * he_av_design * eff_opt_des * A_field * ab_recv - Q_flow_rec_loss_des "Receiver Thermal power output at design";
   parameter SI.HeatFlowRate Q_flow_defocus = (Q_flow_ref_blk + Q_flow_rec_loss_des) / ab_recv "Solar field thermal power at defocused state (not used)";
   //Mass flow rates
@@ -170,8 +176,8 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
   parameter Real land_mult = 5.0 "Land area multiplier";
   // Cost data in USD (default) or AUD
-  parameter Real r_disc = 0.07 "Real discount rate";
-  parameter Real r_i = 0.03 "Inflation rate";
+  parameter Real r_disc = 0.044 "Real discount rate";
+  parameter Real r_i = 0.00 "Inflation rate";
   parameter Integer t_life = 27 "Lifetime of plant";
   parameter Integer t_cons = 3 "Years of construction";
   parameter Real r_cur = 0.71 "The currency rate from AUD to USD";
@@ -187,27 +193,30 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   parameter FI.PowerPrice pri_block = powerBlock.C_PB_total / P_gross_des;
   // SAM 2018 cost data: 1040
   parameter FI.PowerPrice pri_bop = if currency == Currency.USD then 0.29 else 0.29 "Balance of plant cost per gross rated power";
+  //not used
   //SAM 2018 cost data: 290
-  parameter FI.AreaPrice pri_land = if currency == Currency.USD then 2.47 else 2.47 "Land cost per area";
-  parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 66.00 / 1e3 else 66.00 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
+  parameter FI.AreaPrice pri_land = if currency == Currency.USD then 2.471 else 2.471 "Land cost per area";
+  parameter Real pri_om_name(unit = "$/W/year") = if currency == Currency.USD then 40.0 / 1e3 else 40.0 / 1e3 / r_cur "Fixed O&M cost per nameplate per year";
   //SAM 2018 cost data: 66
-  parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3.50 / (1e6 * 3600) else 3.50 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
+  parameter Real pri_om_prod(unit = "$/J/year") = if currency == Currency.USD then 3.0 / (1e6 * 3600) else 3.0 / (1e6 * 3600) / r_cur "Variable O&M cost per production per year";
   //SAM 2018 cost data: 3.5
   parameter FI.Money C_field = pri_field * A_field "Field cost";
   parameter FI.Money C_site = pri_site * A_field "Site improvements cost";
-  parameter FI.Money C_tower = 3000000.0 * exp(0.0113 * H_tower) "Tower cost";
-  parameter FI.Money C_receiver = 71112 * A_recv "Receiver cost";
+  parameter FI.Money C_tower = 3000000.0 * exp(0.0113 * H_tower) * 2.0 "Tower cost";
+  //two-tower system
+  parameter FI.Money C_receiver = (4780420.0 + 21480230.0 * (D_recv / 14.0) * (H_recv / 14.5) ^ 0.6) * 2.0 "Receiver cost";
+  //two-tower system
   // SAM 2018 cost data: 103e6 * (A_receiver / 1571) ^ 0.7
-  parameter FI.Money C_storage = thermocline_Regression.C_total;
+  parameter FI.Money C_storage = Tank.C_total;
   //tankHot.C_Storage "Storage cost";
   //parameter FI.Money C_block = pri_block * P_gross_des "Power block cost";
   parameter FI.Money C_block = powerBlock.C_PB_total "Power block cost";
-  parameter FI.Money C_bop = pri_bop * P_gross_des "Balance of plant cost";
+  parameter FI.Money C_bop = 16216995.0 * (P_name / 100e6) + 11919765.0 * (2.0 * H_tower / 300.0) "Balance of plant cost";
   parameter FI.Money C_cap_dir_sub = (1 - f_Subs) * (C_field + C_site + C_tower + C_receiver + C_storage + C_block + C_bop) "Direct capital cost subtotal";
   // i.e. purchased equipment costs
-  parameter FI.Money C_contingency = 0.07 * C_cap_dir_sub "Contingency costs";
+  parameter FI.Money C_contingency = 0.10 * C_cap_dir_sub "Contingency costs";
   parameter FI.Money C_cap_dir_tot = C_cap_dir_sub + C_contingency "Direct capital cost total";
-  parameter FI.Money C_EPC = 0.11 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
+  parameter FI.Money C_EPC = 0.09 * C_cap_dir_tot "Engineering, procurement and construction(EPC) and owner costs";
   // SAM 2018 cost data: 0.13
   parameter FI.Money C_land = pri_land * A_land "Land cost";
   parameter FI.Money C_cap = C_cap_dir_tot + C_EPC + C_land "Total capital (installed) cost";
@@ -223,7 +232,7 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
     Placement(visible = true, transformation(extent = {{-114, 60}, {-94, 80}}, rotation = 0)));
   //Tamb_input
   Modelica.Blocks.Sources.RealExpression Tamb_input(y = data.Tdry) annotation(
-    Placement(visible = true, transformation(extent = {{120, 70}, {100, 90}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{122, 70}, {102, 90}}, rotation = 0)));
   //WindSpeed_input
   Modelica.Blocks.Sources.RealExpression Wspd_input(y = data.Wspd) annotation(
     Placement(visible = true, transformation(extent = {{-118, 38}, {-92, 58}}, rotation = 0)));
@@ -246,14 +255,14 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
   SolarTherm.Models.Analysis.Market market(redeclare model Price = Models.Analysis.EnergyPrice.Constant) annotation(
     Placement(visible = true, transformation(origin = {144, 20}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   //Receiver
-  SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, N_pa = N_pa_recv, D_tb = D_tb_recv, t_tb = t_tb_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(redeclare package Medium = Medium, H_rcv = H_recv, D_rcv = D_recv, A_recv = A_recv, ab = ab_recv, em = em_recv, T_0 = T_min, Q_des_blk = Q_flow_ref_blk, T_max = T_max) annotation(
     Placement(visible = true, transformation(origin = {-30, 24}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   //Storage
   //Loop Breakers
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, enable_losses = true, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
@@ -311,9 +320,9 @@ model PBS_Surround_SCO2NREL_CurveFit_MultiTank100
     Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-  SolarTherm.Models.Control.PBS_Controller_PBLimit_Level pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = L_PB_min, L_2 = L_PB_start, L_3 = L_recv_start, L_4 = L_recv_max, t_wait = t_PB_wait) annotation(
+  SolarTherm.Models.Control.PBS_Controller_PBLimit_Level_v2 pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = Tank.L_PB_min, L_2 = Tank.L_PB_start, L_3 = Tank.L_recv_start, L_4 = Tank.L_recv_max, t_wait = t_PB_wait, eff_storage_des = Tank.util, t_stor_startPB = t_stor_startPB, E_max = Tank.E_max) annotation(
     Placement(visible = true, transformation(origin = {38, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Table_MultiTank100_Final thermocline_Regression(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, E_max = t_storage * Q_flow_ref_blk * 3600.0, T_max = T_max, T_min = T_min, L_start = 0.0) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Table_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, table_file = storage_file, L_start = 0.0) annotation(
     Placement(visible = true, transformation(origin = {26, 38}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
@@ -428,11 +437,11 @@ equation
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{107, 64}, {107, 38}}, color = {0, 0, 127}));
   connect(powerBlock.T_amb, Tamb_input.y) annotation(
-    Line(points = {{95, 38}, {95, 80}, {99, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{95, 38}, {95, 80}, {101, 80}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(powerBlock.W_net, market.W_net) annotation(
     Line(points = {{116, 20}, {132, 20}}, color = {0, 0, 127}));
   connect(Tamb_input.y, receiver.Tamb) annotation(
-    Line(points = {{99, 80}, {-30, 80}, {-30, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{101, 80}, {-30, 80}, {-30, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 //connect(Wspd_input.y, receiver.Wspd) annotation(
 //  Line(points = {{-113, 48}, {-32, 48}, {-32, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Splitter_bot.fluid_b, pumpCold.fluid_a) annotation(
@@ -445,17 +454,17 @@ equation
     Line(points = {{70, 68}, {82, 68}, {82, 30}, {88, 30}}, color = {0, 127, 255}));
   connect(Splitter_top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{34, 68}, {62, 68}}, color = {0, 127, 255}));
-  connect(Splitter_top.fluid_c, thermocline_Regression.fluid_a) annotation(
+  connect(Splitter_top.fluid_c, Tank.fluid_a) annotation(
     Line(points = {{26, 54}, {26, 54}, {26, 48}, {26, 48}}, color = {0, 127, 255}));
-  connect(thermocline_Regression.fluid_b, Splitter_bot.fluid_c) annotation(
+  connect(Tank.fluid_b, Splitter_bot.fluid_c) annotation(
     Line(points = {{26, 28}, {26, 28}, {26, 14}, {26, 14}}, color = {0, 127, 255}));
-  connect(Pres_input.y, thermocline_Regression.p_amb) annotation(
+  connect(Pres_input.y, Tank.p_amb) annotation(
     Line(points = {{100, 96}, {48, 96}, {48, 38}, {32, 38}, {32, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(thermocline_Regression.h_bot_outlet, pBS_Controller_PBLimit_Level.h_tank_outlet) annotation(
+  connect(Tank.h_bot_outlet, pBS_Controller_PBLimit_Level.h_tank_outlet) annotation(
     Line(points = {{22, 30}, {22, 20}, {34, 20}, {34, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(receiver.Q_rcv_raw, pBS_Controller_PBLimit_Level.Q_rcv_raw) annotation(
     Line(points = {{-26, 20}, {14, 20}, {14, -10}, {27, -10}, {27, -15}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
-  connect(thermocline_Regression.Level, pBS_Controller_PBLimit_Level.Level) annotation(
+  connect(Tank.Level, pBS_Controller_PBLimit_Level.Level) annotation(
     Line(points = {{20, 38}, {10, 38}, {10, -21}, {27, -21}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.Q_defocus, receiver.Q_defocus) annotation(
     Line(points = {{27, -31}, {-12, -31}, {-12, 16}, {-26, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
@@ -469,6 +478,8 @@ equation
     Line(points = {{84, 8}, {62, 8}, {62, 6}, {34, 6}, {34, 6}}, color = {0, 127, 255}));
   connect(pBS_Controller_PBLimit_Level.h_PB_outlet, powerBlock.h_out_signal) annotation(
     Line(points = {{44, -10}, {66, -10}, {66, 4}, {84, 4}, {84, 4}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Tamb_input.y, Tank.T_amb) annotation(
+    Line(points = {{101, 80}, {14, 80}, {14, 38}, {20, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-66, -36}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
@@ -481,4 +492,4 @@ protected
 	</ul>
 
 	</html>"));
-end PBS_Surround_SCO2NREL_CurveFit_MultiTank100;
+end PBS_Surround_SCO2NREL_CurveFit_Series;

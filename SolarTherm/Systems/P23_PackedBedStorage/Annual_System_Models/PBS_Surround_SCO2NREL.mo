@@ -86,7 +86,7 @@ model PBS_Surround_SCO2NREL
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
   parameter Real ar = 2.0 "Aspect ratio (H/D) of tank";
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 12.0 "Hours of storage";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.10 "Heat loss coefficient of all tanks";
   //Weather Data (Alice Springs)
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
@@ -327,7 +327,7 @@ model PBS_Surround_SCO2NREL
     Placement(visible = true, transformation(origin = {60, -18}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
     
     //Analytics
-    Real W_1 "Non-dimensional degradation width of Tank A"; 
+  Real W_1 "Non-dimensional degradation width of Tank A";
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
     if time > 432000 then //after 5 days
@@ -390,7 +390,7 @@ algorithm
 */
 //Optics
 equation
-    W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f,Tank.Tank_A.T_f,0.05,0.95,T_min,T_max)/Tank.Tank_A.H_tank;
+  W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f, Tank.Tank_A.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_A.H_tank;
 /*
 //Analytics
 //Cumulative heat

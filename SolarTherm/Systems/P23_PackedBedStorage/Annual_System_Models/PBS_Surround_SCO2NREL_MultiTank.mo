@@ -75,7 +75,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
   //Controller Parameters
-  parameter Real eff_storage_des = 0.85 "design storage utilisation";
+  parameter Real eff_storage_des = 0.88 "design storage utilisation";
   parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
@@ -83,23 +83,23 @@ model PBS_Surround_SCO2NREL_MultiTank
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
-  parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase for each tank";
+  parameter Integer N_f = 20 "Number of discretizations in vertical fluid phase for each tank";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
-  parameter Real ar = 2.0 "Aspect ratio (H/D) of tank";
+  parameter Real ar = 0.5 "Aspect ratio (H/D) of tank";
   //default equivalent value
-  parameter Real t_storage(unit = "h") = 8.0 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 12.0 "Hours of storage";
   //combined capacity
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.10 "Heat loss coefficient of all tanks";
   //Multitank Parameters
   parameter Real frac_1 = 1.0 / 3.0 "Fraction of energy of total capacity in Tank A";
   parameter Real frac_2 = 1.0 / 3.0 "Fraction of energy of total capacity in Tank B";
   parameter Real frac_3 = 1.0 - frac_1 - frac_2 "Fraction of energy of total capacity in Tank C";
-  parameter Real ar_A = 2.0 * (1.0 / frac_1) ^ 0.5 "Tank aspect ratio";
+  parameter Real ar_A = 0.5 "Tank aspect ratio";
   //Note the 2.0 in the formula is the default aspect ratio of a single tank.
-  parameter Real ar_B = 2.0 * (1.0 / frac_2) ^ 0.5 "Tank aspect ratio";
-  parameter Real ar_C = 2.0 * (1.0 / frac_3) ^ 0.5 "Tank aspect ratio";
+  parameter Real ar_B = ar_A "Tank aspect ratio";
+  parameter Real ar_C = ar_A "Tank aspect ratio";
   //Multitank Blended Temperature Settings
   parameter SI.Temperature T_PB_set = 700.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten discharge output to this value";
   parameter SI.Temperature T_Recv_set = 550.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten charge output to this value";
@@ -115,7 +115,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   parameter String field_type = "surround";
   parameter String opt_file_prefix = "modelica://SolarTherm/Data/Optics/surround/50MWe/4555c%/883K/1000kWpm2/";
   parameter String phi_pct_string = "100";
-  parameter Real SM_guess = 2.4;
+  parameter Real SM_guess = 3.0;
   parameter Real HT_pct_guess = 100;
   parameter Real f_recv = 1.0;
   parameter String opt_file = opt_file_naming(opt_file_prefix, phi_pct_string, SM_guess, HT_pct_guess, f_recv);
@@ -327,7 +327,7 @@ model PBS_Surround_SCO2NREL_MultiTank
             */
   //SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_2P_MixedFlow_Strat2 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, frac_1 = 1.0 / 2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = t_storage * 3600 * Q_flow_ref_blk, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = 0.0, T_PB_set = 0.5 * (T_max + T_PB_min), T_recv_set = T_recv_max, Correlation = 3) annotation(
   //Placement(visible = true, transformation(origin = {26, 36}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_3P_MixedFlow_Strat2 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar_A, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_set = T_Recv_set, T_PB_set = T_PB_set, Correlation = 3) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_3P_MixedOutlet Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar_A, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_set = T_Recv_set, T_PB_set = T_PB_set, Correlation = 3) annotation(
     Placement(visible = true, transformation(origin = {22, 32}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
   /*
                         SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(

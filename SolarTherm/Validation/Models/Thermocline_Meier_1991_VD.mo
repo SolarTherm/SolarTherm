@@ -9,7 +9,7 @@ model Thermocline_Meier_1991_VD
   package Medium = SolarTherm.Media.Air.Air_amb_p;
   package Filler = SolarTherm.Materials.Steatite_Constant;
   package Fluid = SolarTherm.Materials.Air_Table;
-  parameter Integer N_f = 320;
+  parameter Integer N_f = 100;
   parameter Integer N_p = 10;
   parameter SI.Length H_tank = 1.20;
   parameter SI.Diameter D_tank = 0.15;
@@ -41,7 +41,7 @@ model Thermocline_Meier_1991_VD
   SI.Temperature T_bot(start = T_min) "Temperature at the bottom";
   Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_VD_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = Correlation, Tank_A.H_tank = H_tank, Tank_A.D_tank = D_tank, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, d_p = d_p, eta = eta) annotation(
+  SolarTherm.Models.Storage.Thermocline.Variable_Density.Thermocline_Spheres_SingleTank_VD_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = Correlation, Tank_A.H_tank = H_tank, Tank_A.D_tank = D_tank, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, d_p = d_p, eta = eta) annotation(
     Placement(visible = true, transformation(origin = {-4, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-54, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

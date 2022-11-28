@@ -20,10 +20,10 @@ model Thermocline_Meier_1991_LC
   parameter Integer Correlation = 1;
   
   parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(H_tank,N_f);
-  parameter SI.Temperature T_f_start[N_f] = fill(150.0+273.15,N_f);
-  parameter SI.Temperature h_f_start[N_f] = fill(Fluid.h_Tf(150.0+273.15,0),N_f);
-  parameter SI.Temperature T_p_start[N_f] = fill(150.0+273.15,N_f);
-  parameter SI.Temperature h_p_start[N_f] = fill(Filler.h_Tf(150.0+273.15,0.0),N_f);
+  parameter SI.Temperature T_f_start[N_f] = fill(25.0+273.15,N_f);
+  parameter SI.Temperature h_f_start[N_f] = fill(Fluid.h_Tf(25.0+273.15,0),N_f);
+  parameter SI.Temperature T_p_start[N_f] = fill(25.0+273.15,N_f);
+  parameter SI.Temperature h_p_start[N_f] = fill(Filler.h_Tf(25.0+273.15,0.0),N_f);
 
   
   //All tank sections have HTF type in common!
@@ -35,7 +35,7 @@ model Thermocline_Meier_1991_LC
   //parameter SI.MassFlowRate m_flow_charge = E_max/((h_f_max-h_f_min)*t_charge) "Design mass flow rate of charging";
   //parameter SI.MassFlowRate m_flow_discharge = E_max/((h_f_max-h_f_min)*t_discharge) "Design mass flow rate of charging";
   parameter SI.Temperature T_min = 25.0+273.15 "Design cold Temperature of everything in the tank (K)";
-  parameter SI.Temperature T_max = 550+273.15
+  parameter SI.Temperature T_max = 550.0+273.15
  "Design hot Temperature of everything in the tank (K)";
  
   //Inlet and Outlet
