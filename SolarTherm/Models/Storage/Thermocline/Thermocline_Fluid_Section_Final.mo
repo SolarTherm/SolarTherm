@@ -35,7 +35,7 @@ model Thermocline_Fluid_Section_Final
   
   //Thermal Losses
   SI.Temperature T_amb;
-  parameter SI.Area A_loss_tank = CN.pi*D_tank*D_tank*2.0 + CN.pi*D_tank*H_tank "Heat loss area (m2)";
+  parameter SI.Area A_loss_tank = CN.pi*D_tank*D_tank*0.5 + CN.pi*D_tank*H_tank "Heat loss area (m2)";
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "Heat loss coeff of surfaces (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_wall = U_loss_tank "Cylinder wall heat loss coeff (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_top = U_loss_tank "Top circle heat loss coeff (W/m2K)";
@@ -233,8 +233,8 @@ equation
   for i in 2:N_f-1 loop
     Q_loss_wall[i] = U_wall*CN.pi*D_tank*(T_f[i]-T_amb)*dz;
   end for;
-  Q_loss_wall[1] = U_wall*CN.pi*D_tank*(T_f[1]-T_amb)*0.5*dz;
-  Q_loss_wall[N_f] = U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)*0.5*dz;
+  Q_loss_wall[1] = U_wall*CN.pi*D_tank*(T_f[1]-T_amb)*dz;
+  Q_loss_wall[N_f] = U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)*dz;
   Q_loss_total = Q_loss_top + sum(Q_loss_wall) + Q_loss_bot;
   //End heat loss calculations
   

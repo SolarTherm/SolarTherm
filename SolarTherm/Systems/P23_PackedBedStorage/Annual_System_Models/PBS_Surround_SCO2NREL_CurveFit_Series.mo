@@ -271,42 +271,42 @@ model PBS_Surround_SCO2NREL_CurveFit_Series
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-                                  //Analytics
-                                  //Accumulated energy
-                                  SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-                                  SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-                                  SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-                                  SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-                                  SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-                                  SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-                                  SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-                                  SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-                                  SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-                                  Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                  Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                                  Real eta_shading;
-                                  Real eta_cosine;
-                                  Real eta_reflection;
-                                  Real eta_blocking;
-                                  Real eta_attenuation;
-                                  Real eta_intercept;
-                                  //Annual efficiencies
-                                  Real eta_curtail_off "Curtailment: Heliostat off";
-                                  Real eta_he_av "Heliostat Availability";
-                                  Real eta_optical "Field optical efficiency including spillage";
-                                  Real eta_curtail_defocus "Curtailment: Full Storage";
-                                  Real eta_recv_abs "Receiver Absorptivity";
-                                  Real eta_recv_thermal "Receiver thermal efficiency";
-                                  Real eta_storage "Storage thermal efficiency";
-                                  Real eta_pb_gross "Power block gross efficiency";
-                                  Real eta_pb_net "Power block net efficiency";
-                                  Real eta_solartoelec "Solar to electric";
-                                */
+                                    //Analytics
+                                    //Accumulated energy
+                                    SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+                                    SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+                                    SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+                                    SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+                                    SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+                                    SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+                                    SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+                                    SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+                                    SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+                                    Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                    Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                                    Real eta_shading;
+                                    Real eta_cosine;
+                                    Real eta_reflection;
+                                    Real eta_blocking;
+                                    Real eta_attenuation;
+                                    Real eta_intercept;
+                                    //Annual efficiencies
+                                    Real eta_curtail_off "Curtailment: Heliostat off";
+                                    Real eta_he_av "Heliostat Availability";
+                                    Real eta_optical "Field optical efficiency including spillage";
+                                    Real eta_curtail_defocus "Curtailment: Full Storage";
+                                    Real eta_recv_abs "Receiver Absorptivity";
+                                    Real eta_recv_thermal "Receiver thermal efficiency";
+                                    Real eta_storage "Storage thermal efficiency";
+                                    Real eta_pb_gross "Power block gross efficiency";
+                                    Real eta_pb_net "Power block net efficiency";
+                                    Real eta_solartoelec "Solar to electric";
+                                  */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
@@ -323,7 +323,7 @@ model PBS_Surround_SCO2NREL_CurveFit_Series
   SolarTherm.Models.Control.PBS_Controller_PBLimit_Level_v2 pBS_Controller_PBLimit_Level(redeclare package HTF = Medium, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, L_1 = Tank.L_PB_min, L_2 = Tank.L_PB_start, L_3 = Tank.L_recv_start, L_4 = Tank.L_recv_max, t_wait = t_PB_wait, eff_storage_des = Tank.util, t_stor_startPB = t_stor_startPB, E_max = Tank.E_max) annotation(
     Placement(visible = true, transformation(origin = {38, -22}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Thermocline.Thermocline_Table_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, table_file = storage_file, L_start = 0.0) annotation(
-    Placement(visible = true, transformation(origin = {26, 38}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {26, 36}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
     if time > 432000 then //after 5 days
@@ -455,17 +455,17 @@ equation
   connect(Splitter_top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{34, 68}, {62, 68}}, color = {0, 127, 255}));
   connect(Splitter_top.fluid_c, Tank.fluid_a) annotation(
-    Line(points = {{26, 54}, {26, 54}, {26, 48}, {26, 48}}, color = {0, 127, 255}));
+    Line(points = {{26, 54}, {26, 46}}, color = {0, 127, 255}));
   connect(Tank.fluid_b, Splitter_bot.fluid_c) annotation(
-    Line(points = {{26, 28}, {26, 28}, {26, 14}, {26, 14}}, color = {0, 127, 255}));
+    Line(points = {{26, 26}, {26, 14}}, color = {0, 127, 255}));
   connect(Pres_input.y, Tank.p_amb) annotation(
-    Line(points = {{100, 96}, {48, 96}, {48, 38}, {32, 38}, {32, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{100, 96}, {48, 96}, {48, 36}, {32, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tank.h_bot_outlet, pBS_Controller_PBLimit_Level.h_tank_outlet) annotation(
-    Line(points = {{22, 30}, {22, 20}, {34, 20}, {34, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{22, 28}, {22, 20}, {34, 20}, {34, -11}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(receiver.Q_rcv_raw, pBS_Controller_PBLimit_Level.Q_rcv_raw) annotation(
     Line(points = {{-26, 20}, {14, 20}, {14, -10}, {27, -10}, {27, -15}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tank.Level, pBS_Controller_PBLimit_Level.Level) annotation(
-    Line(points = {{20, 38}, {10, 38}, {10, -21}, {27, -21}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{20, 41}, {10, 41}, {10, -21}, {27, -21}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.Q_defocus, receiver.Q_defocus) annotation(
     Line(points = {{27, -31}, {-12, -31}, {-12, 16}, {-26, 16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(pBS_Controller_PBLimit_Level.defocus, receiver.defocus) annotation(
@@ -479,7 +479,7 @@ equation
   connect(pBS_Controller_PBLimit_Level.h_PB_outlet, powerBlock.h_out_signal) annotation(
     Line(points = {{44, -10}, {66, -10}, {66, 4}, {84, 4}, {84, 4}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tamb_input.y, Tank.T_amb) annotation(
-    Line(points = {{101, 80}, {14, 80}, {14, 38}, {20, 38}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+    Line(points = {{101, 80}, {14, 80}, {14, 36}, {20, 36}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-66, -36}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),

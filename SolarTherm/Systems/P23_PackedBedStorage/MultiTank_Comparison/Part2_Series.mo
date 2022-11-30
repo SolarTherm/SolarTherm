@@ -22,7 +22,7 @@ model Part2_Series
   parameter Real eta = 0.26 "Porosity";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 100 "Number of fluid CVs in each tank";
+  parameter Integer N_f = 20 "Number of fluid CVs in each tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
