@@ -161,8 +161,8 @@ if __name__=='__main__':
 				lb=vals[0]
 				ub=vals[1]			
 				par_uniform.append(k)
-				lb_uniform.append(b1)
-				ub_uniform.append(b2)	
+				lb_uniform.append(lb)
+				ub_uniform.append(ub)	
 		elif dist_type=='normal':
 			mean=[]
 			stdev=[]
@@ -246,7 +246,7 @@ if __name__=='__main__':
 
 	method_args={'sample_type':'lhs', 'num_sample': args.ns}
 
-	dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method='uq', args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names= ['lco_h2','capf'] if args.h2 else ['lcoe'], signs=[1,1] if args.h2 else [1])
+	dkt=DakotaSampleIn(casedir=savedir, fn=fn, analysis_type=system, method='uq', args=method_args, var_names=var_names, nominals=nominals, lbs=lbs, ubs=ubs, stdevs=stdevs, dists=dists, start=args.start, stop=args.stop, step=args.step, initStep=args.initStep, maxStep=args.maxStep, integOrder=args.integOrder, tolerance=args.tolerance, solver=args.solver, nls=args.nls, lv=args.lv, runsolstice=int(args.runsolstice), peaker=int(args.peaker), res_names= ['lco_H2','capf'] if args.h2 else ['lcoe'], signs=[1,1] if args.h2 else [1])
 
 	subprocess.call('chmod a+x %s/interface_bb.py'%savedir, shell=True)
 

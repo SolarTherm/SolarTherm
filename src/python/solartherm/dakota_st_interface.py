@@ -160,6 +160,7 @@ class Interface:
 						sys.stderr.write("Calculating performance of H2 system\n\n")
 						resultclass = postproc.SimResultH2(self.sim.res_fn)
 						perf = resultclass.calc_perf()
+						summary=resultclass.report_summary(var_n=self.var_n, savedir='.', suffix=self.suffix)
 					else:
 						resultclass = postproc.SimResultElec(self.sim.res_fn)	
 						if peaker:

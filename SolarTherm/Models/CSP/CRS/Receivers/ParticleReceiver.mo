@@ -54,6 +54,7 @@ model ParticleReceiver
 	SI.Efficiency eta_rcv_dummy;
 	SI.HeatFlowRate Q_check;
 	SI.HeatFlowRate Q_dumped;
+	SI.HeatFlowRate Q_after_sf_opt_rcv;
 
 	Modelica.Blocks.Interfaces.RealInput Tamb annotation (Placement(
 		visible = true,transformation(
@@ -68,6 +69,7 @@ model ParticleReceiver
 		transformation(extent={{-38,-94},{2,-54}}), iconTransformation(extent={{
 		-24,-98},{-12,-86}})));
 	
+	Real fraction_Q_SF_dumped;
 	Real const_coeff;
 	Real Qin_coeff;
 	Real Tamb_coeff;
@@ -283,12 +285,16 @@ equation
         //**************** If the mass is allowed to flow then
         if logic then
           Q_incident = heat.Q_flow;
-          Q_loss= (1-eta_rcv) * Q_incident;
-          Q_rcv = Q_incident - Q_loss;
+          Q_loss= (1-eta_rcv) * Q_incident "Loss to environment (before dumping)";
+          Q_after_sf_opt_rcv = Q_incident - Q_loss "Net heat of the receiver after sf opt and eta rcv";
+          Q_dumped = Q_after_sf_opt_rcv * fraction_Q_SF_dumped "Dumped heat";
+          Q_rcv = (1-fraction_Q_SF_dumped) * Q_after_sf_opt_rcv "Net heat";
           fluid_a.m_flow = Q_rcv/(h_out-h_in);
         else
           Q_incident = 0;
           Q_loss = 0;
+          Q_after_sf_opt_rcv = 0 "Net heat of the receiver after sf opt and eta rcv";
+          Q_dumped = 0 "Dumped heat";
           Q_rcv = 0;
           fluid_a.m_flow = 0;
         end if;  
@@ -298,13 +304,15 @@ equation
       Q_incident = 0;
       Q_rcv = 0;
       Q_loss = 0; // when the receiver is 'off', assume no thermal losses
+      Q_after_sf_opt_rcv = 0 "Net heat of the receiver after sf opt and eta rcv";
+      Q_dumped = 0 "Dumped heat";
       h_out = h_0;
       fluid_a.m_flow = 0;
 	end if;
 	
 	//M flow signal
 	m_flow_out = fluid_a.m_flow;
-    Q_dumped = heat.Q_flow - Q_rcv -Q_loss;
+    //Q_dumped = heat.Q_flow - Q_rcv -Q_loss;
     Q_check = heat.Q_flow - Q_rcv - Q_loss - Q_dumped;
 	
 	annotation (Documentation(info = "<html>

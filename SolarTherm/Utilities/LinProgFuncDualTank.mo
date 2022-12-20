@@ -39,7 +39,7 @@ function LinProgFuncDualTank
       5: Q_H2_reactor   [MWth]
       6: Q_H2_burner    [MWth]
   */
-  output Real optimalSolution[7] "Array to store the solution of the optimal dispatch";
+  output Real optimalSolution[9] "Array to store the solution of the optimal dispatch";
 
   external "C" st_linprog_dualtank(
     c0, c1, c2, c3, n_horizon, dt, c_ratio,

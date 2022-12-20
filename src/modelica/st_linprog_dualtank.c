@@ -5,6 +5,7 @@
 #include <assert.h>
 
 //#define ST_LINPROG_DEBUG
+#define ST_LINPROG_GIF
 
 #ifdef ST_LINPROG_DEBUG
 #define MSG(FMT, ...) fprintf(stdout, "%s:%d: " FMT "\n", __FILE__, __LINE__, ##__VA_ARGS__)
@@ -31,6 +32,8 @@
     @param t0, double                       Initial time (s)
     @param c0, double                       Rewards for producing H₂
     @param c1, double                       Penalty for burning H₂ to generate heat for H₂,ᵣ
+    @param c2, double                       Penalty for dumping solar field heat
+    @param c3, double                       Penalty for dumping PV
     @param horizon, int                     Forecast horizon (hours)
     @param dt,double                        Time stepping of the linear programming (hours)
     @param c_ratio, double                  Ratio between H₂ recycled and H₂,ᵣ (-)
@@ -834,6 +837,9 @@ void st_linprog_dualtank(
     double Q_H2_reactor = glp_get_col_prim(P,i_Q_H2_reactor(1));
     double Q_H2_burner  = glp_get_col_prim(P,i_Q_H2_burner(1));
     double H2level      = glp_get_col_prim(P,i_E_H2stg(1))/H2stg_capacity*100;
+    double TES_level    = glp_get_col_prim(P,i_E_TES(1))/TES_capacity*100;
+    double Q_SF_TES     = glp_get_col_prim(P,i_Q_SF_TES(1));
+    double Q_SF_dumped  = glp_get_col_prim(P,i_Q_SF_dumped(1));
 
     MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR");
     MSG("P_PV_AEL: %.3f MWe", P_PV_AEL);
@@ -852,15 +858,17 @@ void st_linprog_dualtank(
 		optimalSolution[4] = -987654321;
 		optimalSolution[5] = -987654321;
 		optimalSolution[6] = -987654321;
+		optimalSolution[7] = -987654321;
+		optimalSolution[8] = -987654321;
     }else{
         fprintf(stderr, "\n\nLP is solved with status %d at t = %.2f s\n", res, t0);
-        double Q_SF_in = dni[0] * A_sf * etaRCV * etaSF[0]/1e6;
         double Q_SF_TES = glp_get_col_prim(P,i_Q_SF_TES(1));
         double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(1));
+        double Q_SF_in = Q_SF_TES + Q_SF_dumped;
         fprintf(
             stderr,
-            "===============================\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\n===============================\n",
-            P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped,Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner
+            "===============================\nTES capacity: %.3f MWhth\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nTES init: %.2f \%\nTES level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\n===============================\n",
+            TES_capacity, P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped, Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2level, E_TES_init/TES_capacity*100,TES_level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner
         );
 
         double PV_in = P_PV_AEL + P_PV_TES + P_PV_dumped;
@@ -880,6 +888,14 @@ void st_linprog_dualtank(
         optimalSolution[5] = Q_H2_reactor/(Q_H2_reactor_max);
         optimalSolution[6] = Q_H2_burner/(Q_TES_HX_max/etaBurner);
 
+        
+        if(Q_SF_in==0){
+            optimalSolution[7] = 0;
+            optimalSolution[8] = 0;
+        }else{
+            optimalSolution[7] = Q_SF_TES/Q_SF_in;
+            optimalSolution[8] = Q_SF_dumped/Q_SF_in;
+        }
     }
 
     /*Print time series data to CSV*/
@@ -931,6 +947,246 @@ void st_linprog_dualtank(
             );
         }
         fclose(fpt2);
+    #endif
+    /*
+    #ifdef ST_LINPROG_GIF
+        //Check if the file has been created
+        char* fname = "./dispatch_optimisation.csv";
+        int maxchar = 200000;
+        char* to_fill = malloc(sizeof(char) * maxchar);
+
+        if(fopen(fname,"r") == NULL){
+            //File doesn't exist so create the file
+            FILE* fp_gif_new = fopen(fname,"a");
+
+            //Appending the first column
+            char sss[maxchar];
+            snprintf(sss,maxchar,"%s,","time");
+            strcpy(to_fill,sss);
+
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"P_PV_AEL%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"P_PV_TES%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"P_PV_dumped%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"Q_SF_TES%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"Q_SF_dumped%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                snprintf(sss,maxchar,"Q_TES_HX%02d,",i);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                if(i<N){
+                    snprintf(sss,maxchar,"Q_TES_PB%02d,",i);
+                    strcat(to_fill,sss);
+                }else{
+                    snprintf(sss,maxchar,"Q_TES_PB%02d\n",i);
+                    strcat(to_fill,sss);
+                }
+            };
+            fprintf(
+                fp_gif_new, 
+                to_fill
+            );
+            fclose(fp_gif_new);
+
+        }else{
+            FILE* fp_gif_append = fopen(fname,"a");
+
+            //Appending the first value which is time
+            char sss[maxchar];
+            snprintf(sss,maxchar,"%.0f,",t0);
+            strcpy(to_fill,sss);
+
+            //Looping the value we wish to make the gif out of
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_P_PV_AEL(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_P_PV_TES(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_P_PV_dumped(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_Q_SF_TES(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_Q_SF_dumped(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                double val = glp_get_col_prim(P,i_Q_TES_HX(i));
+                snprintf(sss,maxchar,"%.1f,",val);
+                strcat(to_fill,sss);
+            };
+            for(int i=1;i<=N;i++){
+                if(i<N){
+                    double val = glp_get_col_prim(P,i_Q_TES_PB(i));
+                    snprintf(sss,maxchar,"%.1f,",val);
+                    strcat(to_fill,sss);
+                }else{
+                    double val = glp_get_col_prim(P,i_Q_TES_PB(i));
+                    snprintf(sss,maxchar,"%.1f\n",val);
+                    strcat(to_fill,sss);
+                }
+            };
+            fprintf(stderr, "READY to store!!\n");
+            fprintf(stderr, "%s\n", to_fill);
+
+            fprintf(
+                fp_gif_append, 
+                to_fill
+            );
+            fclose(fp_gif_append);
+
+        }
+    #endif
+    */
+
+    #ifdef ST_LINPROG_GIF
+
+        int maxchar = 200000;
+        char fname[maxchar];
+        snprintf(fname,maxchar,"./disp/dispatch_optimisation_%.0f.csv",t0);
+        FILE* fp_gif_new = fopen(fname,"w+");
+
+        //Tending the column
+        char sss2[maxchar];
+        char* to_fill = malloc(sizeof(char) * maxchar);
+        
+        snprintf(sss2,maxchar,"%s,","time");
+        strcpy(to_fill,sss2);
+
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"P_PV_AEL%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"P_PV_TES%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"P_PV_dumped%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"Q_SF_TES%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"Q_SF_dumped%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"Q_TES_HX%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"E_TES%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            snprintf(sss2,maxchar,"E_H2stg%02d,",i);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            if(i<N){
+                snprintf(sss2,maxchar,"Q_TES_PB%02d,",i);
+                strcat(to_fill,sss2);
+            }else{
+                snprintf(sss2,maxchar,"Q_TES_PB%02d\n",i);
+                strcat(to_fill,sss2);
+            }
+        };
+
+        //Appending the rows
+        snprintf(sss2,maxchar,"%.0f,",t0);
+        strcat(to_fill,sss2);
+
+        //Looping the value we wish to make the gif out of
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_P_PV_AEL(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_P_PV_TES(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_P_PV_dumped(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_Q_SF_TES(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_Q_SF_dumped(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_Q_TES_HX(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_E_TES(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            double val = glp_get_col_prim(P,i_E_H2stg(i));
+            snprintf(sss2,maxchar,"%.1f,",val);
+            strcat(to_fill,sss2);
+        };
+        for(int i=1;i<=N;i++){
+            if(i<N){
+                double val = glp_get_col_prim(P,i_Q_TES_PB(i));
+                snprintf(sss2,maxchar,"%.1f,",val);
+                strcat(to_fill,sss2);
+            }else{
+                double val = glp_get_col_prim(P,i_Q_TES_PB(i));
+                snprintf(sss2,maxchar,"%.1f\n",val);
+                strcat(to_fill,sss2);
+            }
+        };
+        fprintf(stderr, "READY to store!!\n");
+        fprintf(stderr, "%s\n", to_fill);
+
+        fprintf(
+            fp_gif_new, 
+            to_fill
+        );
+
+        fclose(fp_gif_new);
     #endif
 
 	/*Free all the memory used in this script*/

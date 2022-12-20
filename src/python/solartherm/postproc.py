@@ -583,6 +583,43 @@ class SimResultH2(SimResult):
 	perf_n = ['H2_yield', 'lco_H2', 'capf', 'srev']
 	perf_u = ['kg/year', '$/kg', '%', '$']
 
+	def report_summary(self, var_n=[], savedir=None, suffix=''):
+		'''
+		matfile: str, directory of the mat file
+		var_n: list of strings, names of the parameters that are of interests
+		savedir: str, directory to save the results
+	 	suffix: str, suffix of the output file (i.e. summary_suffix.csv) 
+		'''
+		#try:
+		perf=self.calc_perf()
+		H2_mass=perf[0]
+		lco_H2=perf[1]
+		capf=perf[2]
+		
+		summary=np.array([
+		['Name', suffix, 'Units', 'Description'], 
+		['lco_H2', lco_H2, 'USD/kg', 'Levelised cost of hydrogen'],
+		['H2_mass', H2_mass, 'kg/year', 'Hydrogen production per year'], 
+		['capf', capf, '%', 'Capacity factor']
+		])
+
+
+		if len(var_n)!=0:
+			for n in var_n:
+				if n!='casefolder':
+					v=self.mat.data(n)[0]
+					summary=np.append(summary, (n, v, '', ''))
+
+		summary=summary.reshape(int(len(summary)/4), 4)
+
+		#except:
+		#	summary=np.array(["mat file fault"])
+
+		if savedir!=None:
+			np.savetxt(savedir+'/summary_report_%s.csv'%suffix, summary, fmt='%s', delimiter=',')
+
+		return summary
+
 class SimResultFuel(SimResult):
 	def calc_perf(self):
 		"""Calculate solar fuels plant performance.
