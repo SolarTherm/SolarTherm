@@ -10,7 +10,7 @@ function LinProgFuncDualTank
   input Real c_ratio "Ratio between H_recycled and H2_reactor [-]";
   input Real etaPB "Power block efficiency at design point [-]";
   input Real etaSF[:] "Solar field efficiency for the next forecast horizon [-]";
-  input Real etaRCV "Receiver efficiency at design point [-]";
+  input Real etaRCV[:] "Receiver efficiency at design point [-]";
   input Real etaAEL "Electrolyser efficiency at design point [-]";
   input Real etaBurner "Hydrogen burner efficiency at design point [-]";
   input Real etaResistive "Resistive heater efficiency [-]";

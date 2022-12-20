@@ -78,7 +78,7 @@
 
 void st_linprog_dualtank(
     double c0, double c1, double c2, double c3, int horizon, double dt, double c_ratio,
-    double etaPB, double etaSF[], double etaRCV, double etaAEL, double etaBurner, double etaResistive,
+    double etaPB, double etaSF[], double etaRCV[], double etaAEL, double etaBurner, double etaResistive,
     double dni[], double P_PV_in_z[], double P_AEL_nameplate, double A_sf,
     double PB_size, double TES_capacity, double Q_TES_HX_max, double E_TES_init, double E_TES_min,
     double Q_H2_reactor_max, double LHV, double delta_h_H2, double H2stg_capacity, double H2stg_init, double H2stg_min,
@@ -299,6 +299,7 @@ void st_linprog_dualtank(
    for(int i=1; i<=N; i++){
         /*Grab the DNI, GHI and etaSF from the array supplied by SolarTherm*/
         double dni_i = dni[DNI(i)];
+        double eta_rcv_i = etaRCV[DNI(i)];
         double pvz_i = P_PV_in_z[PVZI(i)];
         double etaSF_i = etaSF[ETASF(i)];
 
@@ -321,7 +322,7 @@ void st_linprog_dualtank(
             P, i_Q_TES_HX(i), GLP_DB, 0, Q_TES_HX_max
         );
 
-        double cons_sf = dni_i * A_sf * etaSF_i * etaRCV / 1e6;
+        double cons_sf = dni_i * A_sf * etaSF_i * eta_rcv_i / 1e6;
         double cons_pv = pvz_i;
 
         if(cons_sf == 0){
@@ -409,6 +410,7 @@ void st_linprog_dualtank(
     {
         //************** Grab the array data (dni, ghi, etaSF)
         double dni_i = dni[DNI(i)];
+        double eta_rcv_i = etaRCV[DNI(i)];
         double pvz_i = P_PV_in_z[PVZI(i)];
         double etaSF_i = etaSF[ETASF(i)];
 
@@ -587,7 +589,7 @@ void st_linprog_dualtank(
         //****************************** Deal with the RHS of the equation
         glp_set_row_bnds(
             P, SF_EB_REV(i), GLP_UP, 
-            0.0, -A_sf * etaSF_i * etaRCV * dni_i * dt /1e6
+            0.0, -A_sf * etaSF_i * eta_rcv_i * dni_i * dt /1e6
         );
 
         //Naming the rows
@@ -610,7 +612,7 @@ void st_linprog_dualtank(
         //****************************** Deal with the RHS of the equation
         glp_set_row_bnds(
             P, SF_EB(i), GLP_UP, 
-            0.0, A_sf * etaSF_i * etaRCV * dni_i * dt/1e6
+            0.0, A_sf * etaSF_i * eta_rcv_i * dni_i * dt/1e6
         );
 
         //Naming the rows
