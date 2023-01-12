@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     #
   push:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, om1.20.0]
   pull_request:
-    branches:  [ $default-branch, master]
+    branches:  [ $default-branch, master, om1.20.0]
     #[ $default-branch, master-m ]
 
 jobs:
