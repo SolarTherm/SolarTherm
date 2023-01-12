@@ -23,3 +23,5 @@ isobaricExpansionCoefficient
 isothermalCompressibility
 enthalpyOfVaporization
 density_derT_p
+density_derh_p
+density_derp_h
