@@ -59,6 +59,8 @@ extends OpticalEfficiency;
     parameter Integer windy_optics(fixed=false) "simulate the windy oelt or not? 1 is yes, 0 is no";
   	parameter Integer verbose(fixed=false) "save all the optical simulation details or not? 1 is yes, 0 is no";
   	parameter Integer gen_vtk(fixed=false) "visualise the optical simulation scene or not? 1 is yes, 0 is no";
+  	
+  	parameter Boolean use_g3p3_field = false "If true, then always use the pre-LCOE-optimised 100MWe based G3P3 OELT";
   
     SI.Angle angle1;
     SI.Angle angle2;
@@ -133,6 +135,7 @@ initial algorithm
   end if;
 
 initial equation
+if not use_g3p3_field then
   if on_CSP then
       tablefile_status = SolsticePyFunc(ppath, pname, psave, 
             field_type, rcv_type, wea_file, sunshape, argc, 
@@ -146,6 +149,18 @@ initial equation
     
       tablefile = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/OELT_Solstice.motab");
   end if;
+else
+  if on_CSP then
+      tablefile_status = 1; 
+    
+      tablefile = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/OELT_G3P3.motab");
+  else
+      tablefile_status = 1; 
+    
+      tablefile = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Optics/OELT_Solstice.motab");
+  end if;
+end if;
+
   
 
 equation

@@ -12,6 +12,8 @@ model HeliostatsFieldSolstice_1stApproach
 	parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
     parameter Boolean optics_verbose = false "[H&T] true if to save all the optical simulation details";
     parameter Boolean optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
+    
+    parameter Boolean use_g3p3_field = false "If true, then always use the pre-LCOE-optimised 100MWe based G3P3 OELT";
   
     parameter Real method = 1 "method of the system design, 1 is design from the PB, and 2 is design from the field";
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
@@ -88,7 +90,8 @@ model HeliostatsFieldSolstice_1stApproach
         set_swaying_optical_eff = set_swaying_optical_eff,
 	    get_optics_breakdown = get_optics_breakdown,
         optics_verbose=optics_verbose,
-        optics_view_scene=optics_view_scene);
+        optics_view_scene=optics_view_scene,
+        use_g3p3_field = use_g3p3_field);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;

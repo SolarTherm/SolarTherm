@@ -115,20 +115,7 @@ equation
       end if;
   else
     //***************** Dispatch optimiser dual tank controller
-    if on_discharge and fraction_Q_H2_reactor > 0 then
-        /*
-        if fraction_Q_TES_HX > 0 and on_discharge_TES then
-            H2_out = H2_demand;
-            emergency_burner = false;
-        elseif fraction_Q_H2_burner > 0 then
-            H2_out = H2_demand * fraction_Q_H2_reactor + (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
-            //H2_demand_emergency;
-            emergency_burner = true;
-        else
-            H2_out = 0;
-            emergency_burner = false;
-        end if;  
-        */        
+    if on_discharge and fraction_Q_H2_reactor > 0 then    
         H2_out = H2_demand * fraction_Q_H2_reactor + (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
         H2_burner = (H2_demand_emergency-H2_demand) * fraction_Q_H2_burner;
         emergency_burner = fraction_Q_H2_burner > 0;
@@ -143,8 +130,6 @@ equation
   der(H2_burner_mass) = H2_burner;
   der(H2_in_mass) = H2_in;
   
-  //mdot_h2_burner = if on_d max(H2_out - H2_demand,0);
-  //mdot_h2_burner = max(H2_out - H2_demand,0);
   mdot_h2_burner = max(0,H2_burner);
 
   der(E_tank) = H2_in * LHV_H2 - H2_out * LHV_H2 "dE/dt of the H2 tank";
