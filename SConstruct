@@ -200,7 +200,7 @@ def check_omc(ct):
 	env['OMC']=omc
 	try:
 		call = [omc,'--version']
-		res = sp.run(call,check=True,capture_output=True,encoding='utf8') # TODO check the version is OK
+		res = sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf8') # TODO check the version is OK
 		omverstr = res.stdout.strip().split(" ")[1]
 		omver = pv.parse(omverstr)
 	except Exception as e:
@@ -259,7 +259,7 @@ def install_omlibrary(ct):
 			tmpf.write("installPackage(Modelica,\"3.2.3\")\n")
 			tmpf.flush()
 			try:
-				res = sp.run([env['OMC'],tmpf.name],check=True,capture_output=True,encoding='utf-8')
+				res = sp.run([env['OMC'],tmpf.name],check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
 				assert res.stdout.strip() == "true","Unexpected output '%s'"%(res.stdout,)
 			except Exception as e:
 				ct.Result("Failed (%s)"%(str(e),))
