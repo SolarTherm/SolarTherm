@@ -12,7 +12,7 @@ jobs:
         
     env:
       DAKVER: 6.17.0
-      DAKDIRSUFFIX: '-public-src-cli' # NB: use '.src' for 6.14!
+      DAKDIRSUFFIX: '-release-public-src-cli' # NB: use '.src' for 6.14!
 
     steps:
     - uses: actions/checkout@v2
