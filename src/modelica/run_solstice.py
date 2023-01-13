@@ -5,7 +5,12 @@ import numpy as np
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
-from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab
+from solsticepy.output_motab import output_motab, read_motab
+try:
+	from solsticepy.output_motab import output_metadata_motab
+except ImportError:
+	# annoying spelling mistake, correction yet to be uploaded to PyPI
+	from solsticepy.output_motab import output_matadata_motab as output_metadata_motab
 
 
 def set_param(inputs={}):
@@ -101,7 +106,7 @@ if __name__=='__main__':
     n_W_rcv=50
     n_H_rcv=10
     n_rays=10e6
-    rcv_type='cylinder'    
+    rcv_type='cylinder'
 
     field_type='surround'
     wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
@@ -109,4 +114,4 @@ if __name__=='__main__':
 
     run_simul(inputs)
 
-
+# vim: ts=4:sw=4:tw=80:noet

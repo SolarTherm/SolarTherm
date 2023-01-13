@@ -18,15 +18,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04] # one dimensional
         include:
           - os: ubuntu-18.04
-            python-version: 3.6  # added var
-            om: 1.17.0  # added var
-          - os: ubuntu-20.04 # extra case
+            python-version: 3.6
+            om: 1.17.0
+          - os: ubuntu-18.04
+            python-version: 3.6
+            om: 1.14.2
+
+          - os: ubuntu-20.04
             python-version: 3.8
             om: 1.17.0
-          - os: ubuntu-20.04 # extra case
+          - os: ubuntu-20.04
+            python-version: 3.8
+            om: 1.18.1
+          - os: ubuntu-20.04
             python-version: 3.8
             om: release
 
