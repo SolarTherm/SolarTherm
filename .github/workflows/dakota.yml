@@ -23,7 +23,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python3 perl libhdf5-dev
+        sudo apt-get update
+        sudo apt-get install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python3 perl libhdf5-dev
 
     - name: Download DAKOTA
       run: |
