@@ -2,7 +2,9 @@ import os, glob, re, platform
 from pathlib import Path
 
 def rm_if(fn):
-	Path(fn).unlink(missing_ok=True)
+	p = Path(fn)
+	if p.exists():
+		p.unlink()
 
 def clean(stem):
 	r1 = re.compile(r"^%s_([0-9]{2}[a-z]{3}|functions|includes|model|records|literals)\.[och]$" % re.escape(stem))
