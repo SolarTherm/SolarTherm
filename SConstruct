@@ -1,5 +1,6 @@
 import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
 import subprocess as sp
+import packaging.version as pv
 colorama.init()
 
 # build script for SolarTherm -- use 'scons' to run it.
@@ -43,7 +44,8 @@ if shutil.which('omc'):
 	default_om_prefix = Path(shutil.which('omc')).parent.parent
 else:
 	default_om_prefix = default_prefix
-default_om_modelicapath = '$OM_PREFIX/lib/omlibrary' # location of MSL, eg Modelica 3.2.3 etc.
+# note: with OM 1.20.0, this path will now be $HOME/.openmodelica/libraries (at least on Linux)
+default_om_modelicapath = '$OM_PREFIX/lib/omlibrary'  # location of MSL, eg Modelica 3.2.3 etc.
 
 default_colors='auto'
 if sys.stdout.isatty():
@@ -192,16 +194,22 @@ def check_omc(ct):
 	# if our OM_PREFIX is correct, then OMC must be here:
 	omcp = 'omc'+('.exe' if platform.system()=="Windows" else '')
 	omc = Path(ct.env.subst('$OM_BIN'))/omcp
+	omver = None
 	if not omc.exists():
 		ct.Result('Not found')
 		return False
 	try:
 		call = [omc,'--version']
-		sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE) # TODO check the version is OK
+		res = sp.run(call,check=True,capture_output=True,encoding='utf8') # TODO check the version is OK
+		omverstr = res.stdout.strip().split(" ")[1]
+		omver = pv.parse(omverstr)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
 		return False
-	ct.Result(str(omc))
+	#if omver < pv.parse("1.20.0"):
+	#	ct.Result("At least OM 1.20.0 is required")
+	ct.env['OMVER'] = omver
+	ct.Result(str(omver))
 	if str(omc.parent) != '/usr/bin':
 		ct.env.AppendUnique(
 			ST_PATH = [str(omc.parent)]
@@ -211,19 +219,28 @@ def check_omc(ct):
 def check_omlibrary(ct):
 	ct.Message("Checking for Modelica Standard Library...")
 	try:
+		assert 'OMVER' in ct.env
+		if ct.env['OMVER'] >= pv.parse('1.20.0'):
+			# if omc >= 1.20.0, MSL is installed in the user's directory
+			# (they might need to run OMShel installPackage(Modelica,"3.2.3") or similar -- TODO automate that?)
+			ct.env['OM_MODELICAPATH']=Path.home()/'.openmodelica'/'libraries'
 		p = Path(ct.env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
-		if (p/'Modelica 3.2.3').exists():
-			assert (p/'Modelica 3.2.3'/'SIunits.mo').exists()
-			ct.Result('3.2.3')
-		else:
-			# allow 3.2.2 as fallback, for now
-			assert (p/'Modelica 3.2.2'/'SIunits.mo').exists()
-			ct.Result('3.2.2')
+		mslver = None
+		for p1 in p.glob("Modelica *"):
+			mslver = pv.parse(p1.name.split(" ")[1])
+			if mslver >= pv.parse("3.2.3") and mslver < pv.parse("4"):
+				assert (p1/'SIunits.mo').exists(),"No SIunits.mo file found in %s" % (str(p1))
+				ct.Result(str(mslver))
+				return True
+		if mslver:
+			ct.Result("Bad version %s"%(str(mslver)))
+			return False
+		ct.Result("Not found")
+		return False
 	except Exception as e:
 		ct.Result("Failed (%s)"%(str(e),))
 		return False
-	return True
 
 def check_mpi(ct):
 	ct.Message("Checking for mpirun/mpiexec... ")
@@ -343,8 +360,11 @@ if not conf.CS():
 conf.DAK() # we tolerate not finding DAKOTA, use HAVE_DAKOTA later to check
 conf.DAKPY()
 conf.TF()
-if not conf.OMC() or not conf.OMLib():
-	print(REDWARN("Unable to locate OpenModelica. Unable to continue."))
+if not conf.OMC():
+	print(REDWARN("Unable to locate OpenModelica 'omc' executable. Unable to continue."))
+	Exit(1)
+if not conf.OMLib():
+	print(REDWARN("Unable to locate MSL for OpenModelica. Unable to continue."))
 	Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
