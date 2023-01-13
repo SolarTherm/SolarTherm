@@ -9,6 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-22.04]
+        
     env:
       DAKVER: 6.17.0
 
@@ -17,7 +18,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python perl libhdf5-dev
+        sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python3 perl libhdf5-dev
 
     - name: Download DAKOTA
       run: |
