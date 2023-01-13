@@ -229,7 +229,7 @@ def check_omlibrary(ct):
 		mslver = None
 		for p1 in p.glob("Modelica *"):
 			mslver = pv.parse(p1.name.split(" ")[1])
-			if mslver >= pv.parse("3.2.3") and mslver < pv.parse("4"):
+			if mslver >= pv.parse("3.2.2") and mslver < pv.parse("4"):
 				assert (p1/'SIunits.mo').exists(),"No SIunits.mo file found in %s" % (str(p1))
 				ct.Result(str(mslver))
 				return True
