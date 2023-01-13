@@ -12,6 +12,7 @@ jobs:
         
     env:
       DAKVER: 6.17.0
+      DAKDIRSUFFIX: '-public-src-cli' # NB: use '.src' for 6.14!
 
     steps:
     - uses: actions/checkout@v2
@@ -31,19 +32,19 @@ jobs:
         wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
         tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
         ls -l
-        cd dakota-${DAKVER}.src
+        cd dakota-${DAKVER}${DAKDIRSUFFIX}
         
     - name: Build DAKOTA
       run: |
-        cd dakota-${DAKVER}.src
+        cd dakota-${DAKVER}${DAKDIRSUFFIX}
         mkdir build && cd build
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE ..
         make
         
     - name: Install DAKOTA
       run: |
-        cd dakota-${DAKVER}.src/build
-        export PKGN=dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
+        cd dakota-${DAKVER}${DAKDIRSUFFIX}/build
+        export PKGN=dakota-${DAKVER}-${{ matrix.os }}-x86_64-jp
         mkdir -p $HOME/install/$PKGN
         make DESTDIR=$HOME/install/$PKGN install
         cd $HOME/install
