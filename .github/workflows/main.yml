@@ -62,6 +62,7 @@ jobs:
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Use a different Ubuntu mirror
+      run: |
         sudo sed -i 's/azure\.archive\.ubuntu\.com/mirror\.lostpacket\.org/' /etc/apt/sources.list
         sudo cat /etc/apt/sources.list
         sudo apt-get update
