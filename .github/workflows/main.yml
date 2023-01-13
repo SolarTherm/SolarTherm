@@ -40,8 +40,7 @@ jobs:
             om: release # no specification here, new omlibrary thing
           - os: ubuntu-22.04
             python-version: '3.10' # NB
-            om: 1.19.2
-            msl: 3.2.3
+            om: release # should be 1.19.2, but there's no omlib-modelica there
 
     env:
       DAKVER: 6.14.0
