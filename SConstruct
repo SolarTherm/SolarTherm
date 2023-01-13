@@ -251,7 +251,7 @@ def install_omlibrary(ct):
 	ct.Message("Extract MSL from omlibrary cache...")
 	sys.stdout.flush()
 	if ct.env['OMVER'] < pv.parse('1.20'):
-		ct.Result("OM version too old")
+		ct.Result("OM too old; check instructions for installing MSL.")
 		return False
 	else:
 		#with tempfile.NamedTemporaryFile(mode='w',delete=True,suffix='.mos') as tmpf:
@@ -390,9 +390,8 @@ if not conf.OMC():
 	print(REDWARN("Unable to locate OpenModelica 'omc' executable. Unable to continue."))
 	Exit(1)
 if not conf.OMLib():
-	conf.installOMLib()
-	if not conf.OMLib():
-		print(REDWARN("Unable to locate MSL for OpenModelica. Unable to continue."))
+	if not conf.installOMLib() or not conf.OMLib():
+		print(REDWARN("Unable to locate/install MSL for OpenModelica. Unable to continue."))
 		Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))

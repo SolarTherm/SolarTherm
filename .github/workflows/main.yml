@@ -138,6 +138,6 @@ jobs:
         which st
         st --version
         solstice --version
-        st python -m pytest
+        st python -m pytest -rxXs
 
 # vim: ts=2:sw=2:et

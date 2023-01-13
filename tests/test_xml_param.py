@@ -1,7 +1,7 @@
-#! /bin/env python
+#!/bin/env python
 
 from __future__ import division
-import unittest
+import pytest
 
 from solartherm import simulation
 from solartherm import postproc
@@ -9,6 +9,7 @@ import os
 import DyMat
 import xml.etree.ElementTree as ET
 import xml
+import cleantest
 
 class ProcesXML:
     def __init__(self, xmlfile):
@@ -37,40 +38,37 @@ class ProcesXML:
         self.init_et.write(self.xmlfile)      
 
 
-class TestXMLparameter(unittest.TestCase):
-	def setUp(self):
+def test_xmlparameter():
+	fn = '../examples/Reference_2.mo'
+	res_fn='./Reference_2_res.mat'
+	xml_fn='./Reference_2_init.xml'
+	
+	sm=2.8
+	t_storage=9
 
-		fn = '../examples/Reference_2.mo'
-		res_fn='./Reference_2_res.mat'
-		xml_fn='./Reference_2_init.xml'
-		self.sm=2.8
-		self.t_storage=9
+	sim = simulation.Simulator(fn)
+	sim.compile_model()
 
-		sim = simulation.Simulator(fn)
-		sim.compile_model()
-		self.pxml=ProcesXML(xml_fn)
-		self.pxml.write_par(par_n=['SM', 't_storage'], par_v=[self.sm, self.t_storage],one=False)
-		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop=10, step=0.1)		
-		self.mat=DyMat.DyMatFile(res_fn)
+	pxml=ProcesXML(xml_fn)
+	pxml.write_par(par_n=['SM', 't_storage'], par_v=[sm, t_storage],one=False)
 
-	def test_sched(self):
+	sim.compile_sim(args=['-s'])
+	sim.simulate(start=0, stop=10, step=0.1)		
 
-		sm=self.mat.data("SM")
-		st=self.mat.data("t_storage")
+	mat=DyMat.DyMatFile(res_fn)
 
-		print('')
-		print('     :', 'sm ', 't_storage')
-		print('model:', sm[0], st[0])
-		print('input:', self.sm, self.t_storage)
-		print('xml  :', self.pxml.read_par("SM"), self.pxml.read_par("t_storage"))
+	SM=mat.data("SM")
+	T_STORAGE=mat.data("t_storage")
 
-		self.assertEqual(sm[0], self.sm)
-		self.assertEqual(st[0], self.t_storage)
-		os.system('rm Reference_2*')
-		
+	print('')
+	print('     :', 'sm ', 't_storage')
+	print('model:', SM[0], T_STORAGE[0])
+	print('input:', sm, t_storage)
+	print('xml  :', pxml.read_par("SM"), pxml.read_par("t_storage"))
 
+	assert SM[0] == sm
+	assert T_STORAGE[0] == t_storage
+	
+	#cleantest.clean('Reference_2') # name clash with test_xml_stsimulate
 
-if __name__ == '__main__':
-	unittest.main()
-
+# vim: ts=4:sw=4:noet:tw=80

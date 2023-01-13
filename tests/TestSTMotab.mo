@@ -1,4 +1,5 @@
 block TestSTMotab
+    annotation(uses(Modelica(version="3.2.3")));
     import SolarTherm.Utilities.Tables.STMotab;
     import Modelica.Utilities.Files;
     parameter String weafile = Files.loadResource("modelica://SolarTherm/Data/Weather/Mildura_Real2010_Created20130430.motab");

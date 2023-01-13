@@ -5,7 +5,7 @@ import numpy as np
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
-from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
+from solsticepy.output_motab import output_metadata_motab, output_motab, read_motab
 
 
 def set_param(inputs={}):
@@ -19,7 +19,7 @@ def set_param(inputs={}):
         if hasattr(pm, k):
             setattr(pm, k, v)
         else:
-            raise RuntimeError("invalid paramter '%s'"%(k,)) 
+            raise RuntimeError("invalid paramter '%s'"%(k,))
 
     pm.dependent_par()
     return pm
@@ -48,9 +48,9 @@ def run_simul(inputs={}):
     pm.saveparam(casedir)
     tablefile=casedir+'/OELT_Solstice.motab'
     if os.path.exists(tablefile):    
-        print('')
-        print('Load exsiting OELT')
-
+        print()
+        print("Load existing OELT from '%s'"%(tablefile))
+        # just because the file exists doesn't mean it's correct/complete. How to check that?
     else:
 
         crs=CRS(latitude=pm.lat, casedir=casedir)
