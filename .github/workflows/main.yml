@@ -18,12 +18,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-20.04, ubuntu-18.04] # one dimensional
         include:
           - os: ubuntu-20.04
-            python-version: 3.8
+            python-version: 3.8 # extra vars
+            om: 1.17.0
           - os: ubuntu-18.04
             python-version: 3.6
+            om: 1.17.0
+          - os: ubuntu-20.04
+            python-version: 3.8
+            om: release
 
     env:
       DAKVER: 6.14.0
@@ -56,13 +61,23 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Install OpenModelica
-      run: |
-        for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` stable"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
-        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
+    - name: Use a different Ubuntu mirror
         sudo sed -i 's/azure\.archive\.ubuntu\.com/mirror\.lostpacket\.org/' /etc/apt/sources.list
         sudo cat /etc/apt/sources.list
         sudo apt-get update
+
+    - name: Install old OpenModelica ${{ matrix.om }}
+      if: ${{ matrix.om != 'release' }}
+      run: |
+        for deb in deb deb-src; do echo "$deb https://build.openmodelica.org/omc/builds/linux/releases/${{ matrix.om }}/ `lsb_release -cs` release"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
+        sudo apt-get install build-essential omc omlib-modelica-3.2.3 libglpk-dev
+
+    - name: Install current release OpenModelica
+      if: ${{ matrix.om == 'release' }}
+      run: |
+        for deb in deb deb-src; do echo "$deb http://build.openmodelica.org/apt `lsb_release -cs` stable"; done | sudo tee /etc/apt/sources.list.d/openmodelica.list
+        wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get install build-essential omc omlibrary libglpk-dev
 
     - name: Install Solstice
