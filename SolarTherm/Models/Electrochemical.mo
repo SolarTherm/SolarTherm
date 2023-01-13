@@ -240,6 +240,7 @@ package Electrochemical
     SI.Power W_electrolyser_final "Final power sent to the electrolyser after dumping (if necessary)";
     SI.Energy E_dumped(start=0) "Accummulated dumped electricity [J]";
     Real N_unit_final "Number of electrolyser unit that is opearting full load";
+    parameter Real upstreammultiplier = 1;
     
     //*********** External Combitable 2D
     Modelica.Blocks.Types.ExternalCombiTable2D polarisation_curve =  Modelica.Blocks.Types.ExternalCombiTable2D(
@@ -299,7 +300,7 @@ package Electrochemical
             W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W], charge the tank";
             if W_electrolyser_PV < P_electro_requested then
                 W_dumped_PV = 0;
-                W_dumped_PB = W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV);
+                W_dumped_PB = (W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV))/upstreammultiplier;
             else
                 W_dumped_PV = W_dumped;
                 W_dumped_PB = 0;
