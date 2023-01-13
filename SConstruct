@@ -1,6 +1,5 @@
 import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
-import subprocess as sp
-import packaging.version as pv
+import tempfile, subprocess as sp, packaging.version as pv
 colorama.init()
 
 # build script for SolarTherm -- use 'scons' to run it.
@@ -198,6 +197,7 @@ def check_omc(ct):
 	if not omc.exists():
 		ct.Result('Not found')
 		return False
+	env['OMC']=omc
 	try:
 		call = [omc,'--version']
 		res = sp.run(call,check=True,capture_output=True,encoding='utf8') # TODO check the version is OK
@@ -242,6 +242,31 @@ def check_omlibrary(ct):
 		ct.Result("Failed (%s)"%(str(e),))
 		return False
 
+def install_omlibrary(ct):
+	"""
+	On a new system with OM 1.20.0, we need to call omc with a script requesting to 
+	install the Modelica library via the the OM Package Manager. That will extract the MSL files
+	from the omlibrary cache.
+	"""
+	ct.Message("Extract MSL from omlibrary cache...")
+	sys.stdout.flush()
+	if ct.env['OMVER'] < pv.parse('1.20'):
+		ct.Result("OM version too old")
+		return False
+	else:
+		#with tempfile.NamedTemporaryFile(mode='w',delete=True,suffix='.mos') as tmpf:
+		with open('myscript.mos','w') as tmpf:
+			tmpf.write("installPackage(Modelica,\"3.2.3\")\n")
+			tmpf.flush()
+			try:
+				res = sp.run([env['OMC'],tmpf.name],check=True,capture_output=True,encoding='utf-8')
+				assert res.stdout.strip() == "true","Unexpected output '%s'"%(res.stdout,)
+			except Exception as e:
+				ct.Result("Failed (%s)"%(str(e),))
+				return False
+		ct.Result("Installed")
+		return True
+	
 def check_mpi(ct):
 	ct.Message("Checking for mpirun/mpiexec... ")
 	mpirun = shutil.which(ct.env['MPIRUN'])
@@ -350,6 +375,7 @@ conf = env.Configure(custom_tests={
 	,'DAKPY':check_dakota_python
 	,'OMC':check_omc
 	,'OMLib':check_omlibrary
+	,'installOMLib':install_omlibrary
 	,'MPI':check_mpi
 	,'PATH':check_path
 	,'TF':check_tensorflow
@@ -364,8 +390,10 @@ if not conf.OMC():
 	print(REDWARN("Unable to locate OpenModelica 'omc' executable. Unable to continue."))
 	Exit(1)
 if not conf.OMLib():
-	print(REDWARN("Unable to locate MSL for OpenModelica. Unable to continue."))
-	Exit(1)
+	conf.installOMLib()
+	if not conf.OMLib():
+		print(REDWARN("Unable to locate MSL for OpenModelica. Unable to continue."))
+		Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
 if not conf.PATH():
