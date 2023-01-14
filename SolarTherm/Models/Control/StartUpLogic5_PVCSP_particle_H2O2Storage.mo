@@ -41,6 +41,7 @@ model StartUpLogic5_PVCSP_particle_H2O2Storage
   /*This part is only active when scheduler is on*/
   parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/simple_schedule.motab");
   parameter Boolean set_scheduler = false;
+  parameter Real upstreammultiplier = 1;
   Modelica.Blocks.Types.ExternalCombiTable1D schedule_table = Modelica.Blocks.Types.ExternalCombiTable1D(tableName = "schedule", fileName = schedule_file, table = fill(0.0, 0, 2), columns = 1:2, smoothness = Modelica.Blocks.Types.Smoothness.ConstantSegments);
   Real schedule(start = 0);
   Real idx(start = 0);
@@ -60,7 +61,7 @@ initial equation
   on_discharge = level > level_on and level > level_off;
 equation
 
-  CSP_duty = max(0,P_net - PV_input);
+  CSP_duty = max(0,(P_net - PV_input)/upstreammultiplier);
   
   eta_rel = CSP_duty/(eta_gross_base*eta_HX_base * Q_HX_des);
   

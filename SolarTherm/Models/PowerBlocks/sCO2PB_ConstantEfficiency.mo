@@ -182,7 +182,8 @@ model sCO2PB_ConstantEfficiency
   end if;
   
   h_out = fluid_b.h_outflow;
-  Q_HX = eta_Q * Q_HX_des;
+  //Q_HX = eta_Q * Q_HX_des;
+  Q_HX = eta_Q * Q_HX_des * load;
   W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
   
