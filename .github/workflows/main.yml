@@ -23,28 +23,35 @@ jobs:
             python-version: 3.6
             om: 1.17.0
             msl: 3.2.3
+            dakota: 6.14.0
           - os: ubuntu-18.04
             python-version: 3.6
             om: 1.14.2
             msl: 3.2.2 # NB
+            dakota: 6.14.0
           - os: ubuntu-20.04
             python-version: 3.8
             om: 1.17.0
             msl: 3.2.3
+            dakota: 6.17.0
           - os: ubuntu-20.04
             python-version: 3.8
             om: 1.18.1
             msl: 3.2.3
+            dakota: 6.17.0
           - os: ubuntu-20.04
             python-version: 3.8
             om: release # no specification here, new omlibrary thing
+            dakota: 6.17.0
           - os: ubuntu-22.04
             python-version: '3.10' # NB
             om: release # should be 1.19.2, but there's no omlib-modelica there
+            dakota: 6.17.0
 
     env:
-      DAKVER: 6.14.0
+      DAKVER: ${{ matrix.dakota }}
       PYTEST_ADDOPTS: --color=yes
+      SOLSTICEVER: 0.9.1
 
     steps:
     - uses: actions/checkout@v2
@@ -98,7 +105,7 @@ jobs:
       run: |
         sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
         export UBVER=`lsb_release -cs`
-        export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9-x86_64-$UBVER.tar.gz"
+        export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-${SOLSTICEVER}-x86_64-$UBVER.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$SOLSTICEURL" -q -O-)
         echo "CHECK SOLSTICE DEPS"
         export PATH=$PATH:/usr/local/bin
