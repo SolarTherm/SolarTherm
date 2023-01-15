@@ -160,8 +160,8 @@ model SolarMethanolSystem
 	// Cost data
 	parameter Real r_disc = 0.05 "Discount rate";
 	parameter Real r_i = 0.03 "Inflation rate";
-	parameter Integer t_life(unit="year") = 30 "Lifetime of plant";
-	parameter Integer t_cons(unit="year") = 2 "Years of construction";
+	parameter Real t_life(unit="year") = 30 "Lifetime of plant";
+	parameter Real t_cons(unit="year") = 2 "Years of construction";
 
 	parameter Real f_site_prep = 0.15 "Site preparation factor";
 	parameter Real f_serv_fac = 0.20 "Service facilities factor";

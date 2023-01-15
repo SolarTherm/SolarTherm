@@ -2,7 +2,6 @@ ThermodynamicState
 BaseProperties
 setState_pTX
 setState_phX
-setState_dTX
 pressure
 temperature
 specificEnthalpy

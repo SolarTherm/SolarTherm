@@ -274,17 +274,17 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 	end isothermalCompressibility;
 
 
-	function enthalpyOfVaporization
-		"Return vaporization enthalpy of condensing fluid"
-		extends Modelica.Icons.Function;
-		input ThermodynamicState state "Thermodynamic state record";
-		output SpecificEnthalpy r0 "Vaporization enthalpy";
-	algorithm
-		r0 := h_fg_T(T_h(state.h));
-		annotation (Documentation(info="<html>
-
-			</html>"));
-	end enthalpyOfVaporization;
+//function enthalpyOfVaporization
+//	"Return vaporization enthalpy of condensing fluid"/
+//	extends Modelica.Icons.Function;
+//	input ThermodynamicState state "Thermodynamic state record";
+//	output SpecificEnthalpy r0 "Vaporization enthalpy";
+//algorithm
+//	r0 := h_fg_T(T_h(state.h));
+//	annotation (Documentation(info="<html>
+//
+//		</html>"));
+//end enthalpyOfVaporization;
 
 	redeclare function extends density_derT_p
 		"Return density derivative w.r.t. temperature at constant pressure"

@@ -116,17 +116,18 @@ package ChlorideSalt_pT "Chloride Salt model, explicit in p and T"
 		state := ThermodynamicState(p=p, T=T_h(h));
 	end setState_phX;
 
-	redeclare function setState_dTX
-		"Return thermodynamic state as function of d, T and composition X or Xi"
-		extends Modelica.Icons.Function;
-		input Density d "Density";
-		input Temperature T "Temperature";
-		input MassFraction X[:]=reference_X "Mass fractions";
-		output ThermodynamicState state "Thermodynamic state record";
-	algorithm
-		state := ThermodynamicState(p=p_rho(d), T=T);
-		assert(false,"no inverse functions");
-	end setState_dTX;
+//	redeclare function setState_dTX_NOT_IMPLEMENTED/\
+//		"Return thermodynamic state as function of d, T and composition X or Xi"
+//		extends Modelica.Icons.Function;
+//		input Density d "Density";
+//		input Temperature T "Temperature";
+//		input MassFraction X[:]=reference_X "Mass fractions";
+//		output ThermodynamicState state "Thermodynamic state record";
+//	algorithm
+// FIXME not implemented
+//		state := ThermodynamicState(p=p_rho(d), T=T);
+//		assert(false,"no inverse functions");
+//	end setState_dTX_NOT_IMPLEMENTED;
 
 	redeclare function extends pressure "Return pressure"
 	algorithm
