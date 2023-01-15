@@ -14,8 +14,8 @@ try:
 	res = sp.run(['omc','--version'],stdout=sp.PIPE,stderr=sp.PIPE,check=True)
 	import packages.version as pc
 	omcver = pc.parse(res.stdout.strip().split(" ")[1])
-except:
-	pass
+except Exception as e:
+	print("COULDN'T CHECK OMC VERSION:",str(e))
 
 @pytest.mark.skipif(not omcver or omcver >= pc.parse('1.20'),reason="Doesn't work yet with OM 1.20.0")
 def test_solstice_oelt():
