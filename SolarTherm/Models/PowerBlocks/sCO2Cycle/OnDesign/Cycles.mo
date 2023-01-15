@@ -233,20 +233,19 @@ package Cycles "Few different sCO2 cycles."
 		eta_ex = 1 - ex_d_tot / ex_in;
 		eta_carnot = 1 - T_amb / T_high;
 		annotation(
-		Documentation(info = "<html>
-		<p>On-design model of a recompression sCO2 cycle with exchanger. The number of discretization of the heat recuperators has to be discussed.</p>
-	<p>The mass flow is either imposed by the nominal power or by the HTF mass flow rate.</p>
-	<p>A calculation of the price is performed based on a cost estimation of the different components, from	Weiland et al.The uncertainty is between -30%/50%. Depending on the power block layout chosen, other correlations might have to be implemented (motor for the compressor, gearbox, ..). See the article for more informations.</p>
-	<p> The currency is 2017$. The price of the exchanger is taken at 150$/kW_th because it is defined as the objective to reach for next-Gen CSP with particles</p>
-	<p>An exergy analysis is implemented based on a class from Pr. Neveu (UPVD).</p>
-	<p>N. T. Weiland, B. W. Lance, et S. R. Pidaparti, « SCO2 power cycle components cost correlations from DOE data spanning multiple scales and application », p. 17.</p>
-	<p> Available at https://www.netl.doe.gov/projects/files/sCO2PowerCycleComponentCostCorrelationsfromDOEDataSpanningMultipleScalesandApplications_061819.pdf </p>
-	<p>&nbsp;</p>
-		</html>"));
-		annotation(
-		Icon,
-	experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
-	__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
+			Documentation(info = "<html>
+				<p>On-design model of a recompression sCO2 cycle with exchanger. The number of discretization of the heat recuperators has to be discussed.</p>
+				<p>The mass flow is either imposed by the nominal power or by the HTF mass flow rate.</p>
+				<p>A calculation of the price is performed based on a cost estimation of the different components, from	Weiland et al.The uncertainty is between -30%/50%. Depending on the power block layout chosen, other correlations might have to be implemented (motor for the compressor, gearbox, ..). See the article for more informations.</p>
+				<p> The currency is 2017$. The price of the exchanger is taken at 150$/kW_th because it is defined as the objective to reach for next-Gen CSP with particles</p>
+				<p>An exergy analysis is implemented based on a class from Pr. Neveu (UPVD).</p>
+				<p>N. T. Weiland, B. W. Lance, et S. R. Pidaparti, « SCO2 power cycle components cost correlations from DOE data spanning multiple scales and application », p. 17.</p>
+				<p> Available at https://www.netl.doe.gov/projects/files/sCO2PowerCycleComponentCostCorrelationsfromDOEDataSpanningMultipleScalesandApplications_061819.pdf </p>
+				<p>&nbsp;</p>
+				</html>"),
+			Icon,
+			experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
+			__OpenModelica_simulationFlags(lv = "LOG_STATS", outputFormat = "mat", s = "dassl"));
 	end RecompCycleExchanger;
 
 	model IntercoolingCycle

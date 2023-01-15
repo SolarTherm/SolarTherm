@@ -3,7 +3,7 @@ within SolarTherm.Models.Fluid.HeatExchangers;
 model test_HX
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
-  import MA = .Modelica.Math;
+  import MA = Modelica.Math;
   import SolarTherm.{Models,Media};
   import Modelica.Math.Vectors;
   replaceable package Medium1 = Media.Sodium.Sodium_pT "Medium props for Sodium";

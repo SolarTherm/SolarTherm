@@ -51,11 +51,9 @@ within SolarTherm.Models.PowerBlocks.sCO2Cycle.OffDesign;
 		from_comp_port_a.h_outflow = inStream(from_comp_port_b.h_outflow);
 		annotation(
 			Diagram(graphics = {Rectangle(origin = {1, 7}, extent = {{-61, 31}, {61, -31}}), Text(origin = {5, 1}, extent = {{-53, -17}, {53, 17}}, textString = "RECUPERATOR")}),
-			Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-65, 33}, {65, -33}}), Text(origin = {-2, -5}, extent = {{-46, -15}, {46, 15}}, textString = "RECUPERATOR")}));
-		annotation(
+			Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-65, 33}, {65, -33}}), Text(origin = {-2, -5}, extent = {{-46, -15}, {46, 15}}, textString = "RECUPERATOR")}),
 			Documentation(info = "<html>
-			<p>This heat recuperator is a counter-flow HX. Closure equations are based on the equality of m_flow*delta_H for both sides and m_flow*delta_H= UA_i*TLMD_i, TLMD being the logarithmic temperature difference.</p>
-	<p>The UA_i must be given as parameters from the on-design analysis.&nbsp;</p>
-			
-			</html>"));
+				<p>This heat recuperator is a counter-flow HX. Closure equations are based on the equality of m_flow*delta_H for both sides and m_flow*delta_H= UA_i*TLMD_i, TLMD being the logarithmic temperature difference.</p>
+				<p>The UA_i must be given as parameters from the on-design analysis.&nbsp;</p>
+				</html>"));
 	end HeatRecuperatorTLMD;

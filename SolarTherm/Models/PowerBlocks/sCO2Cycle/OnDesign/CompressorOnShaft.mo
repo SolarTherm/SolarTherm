@@ -45,22 +45,19 @@ model CompressorOnShaft "Model 0D of a sCO2 compressor"
 	psi_actual = (state_isen.h - state_a.h) / tipSpeed ^ 2;
 	annotation(
 		Documentation(info = "<html>
-		<p>This compressor is supposed to run on the same shaft as the turbine.</p>
-	<p>The compressor model comes from the thesis of J. Dyreby.</p>
-	<p>Phi corresponds to the adimensionned mass flow rate and psi to the adimensioned head. Because of the difference in the shaft speed regarding Dyreby's thesis, it is necessary to compensate in the off-design model by the on-design head.</p>
-	<p>Parameters to integrate in the off-design PB model are:</p>
-	<p>
-	<ul>
-	<li>The rotor diameter</li>
-	<li>The actual head (psi_actual)</li>
-	<li>The isentropic efficiency at design point (chosen) </li>
-	</ul>
-	</p>
-	<p>J. J. Dyreby, &laquo;&nbsp;Modeling the supercritical
-	carbon dioxide Brayton cycle with recompression&nbsp;&raquo;, The University of
-	Wisconsin-Madison, 2014. Available at https://sel.me.wisc.edu/publications-theses.shtml</p>
-		</html>"));
-	annotation(
+			<p>This compressor is supposed to run on the same shaft as the turbine.</p>
+			<p>The compressor model comes from the thesis of J. Dyreby.</p>
+			<p>Phi corresponds to the adimensionned mass flow rate and psi to the adimensioned head. Because of the difference in the shaft speed regarding Dyreby's thesis, it is necessary to compensate in the off-design model by the on-design head.</p>
+			<p>Parameters to integrate in the off-design PB model are:</p>
+			<ul>
+			<li>The rotor diameter</li>
+			<li>The actual head (psi_actual)</li>
+			<li>The isentropic efficiency at design point (chosen) </li>
+			</ul>
+			<p>J. J. Dyreby, &laquo;Modeling the supercritical
+			carbon dioxide Brayton cycle with recompression&raquo;, The University of
+			Wisconsin-Madison, 2014. Available at https://sel.me.wisc.edu/publications-theses.shtml</p>
+			</html>"),
 		Diagram(graphics = {Text(origin = {-20, 18}, extent = {{-28, 16}, {42, -46}}, textString = "COMPRESSOR"), Polygon(origin = {-12, 10}, points = {{-42, 40}, {-42, -44}, {42, -70}, {42, 70}, {-42, 40}, {-42, 40}})}, coordinateSystem(initialScale = 0.1)),
 	Icon(coordinateSystem(initialScale = 0.1), graphics = {Polygon(origin = {-26, -2}, points = {{-40, 42}, {-42, -48}, {42, -78}, {42, 78}, {-40, 42}}), Text(origin = {-16, 11}, extent = {{-48, -31}, {24, 15}}, textString = "COMPRESSOR")}));
 end CompressorOnShaft;

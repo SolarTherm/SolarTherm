@@ -109,9 +109,9 @@ equation
     Line(points = {{0, -48}, {0, -42}, {-80, -42}, {-80, -12}, {-74, -12}}, color = {0, 0, 127}));
   connect(hotTankLogic.y, and1.u1) annotation(
     Line(points = {{-53.2, -12}, {-44, -12}, {-44, -24}, {-36, -24}}, color = {255, 0, 255}));
+
   annotation(
-    Placement(visible = true, transformation(extent = {{100, -68}, {136, -32}}, rotation = 0), iconTransformation(extent = {{100, -68}, {136, -32}}, rotation = 0)));
-  annotation(
+    Placement(visible = true, transformation(extent = {{100, -68}, {136, -32}}, rotation = 0), iconTransformation(extent = {{100, -68}, {136, -32}}, rotation = 0)),
     Documentation(revisions = "<html> 
   <ul>
   <li>Salvatore Guccione:<br>Released first version. </li>
