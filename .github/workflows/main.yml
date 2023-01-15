@@ -65,7 +65,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip 
         python3 -m pip install --upgrade setuptools wheel
-        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest solsticepy openpyxl distro colorama
+        python3 -m pip install scons flake8 scipy matplotlib DyMat pyswarm cma deap scoop pytest pytest-dependency solsticepy openpyxl distro colorama
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python3 -c "import DyMat; print(DyMat.__version__)"
 
