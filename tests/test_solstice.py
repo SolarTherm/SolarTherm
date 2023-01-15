@@ -4,6 +4,7 @@ import subprocess as sp
 import platform, shutil, sys
 import packaging.version as pv
 
+@pytest.mark.dependency(name="solstice")
 def test_solstice_version():
 	print("SYS.PATH =",sys.path)
 	import solsticepy
