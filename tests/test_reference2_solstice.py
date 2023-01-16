@@ -10,7 +10,6 @@ from solartherm import postproc
 from math import pi
 import os
 
-@pytest.mark.skip(reason="Some issue with SolsticePy")
 def test_ref2solstice():
 	fn = '../examples/Reference_2_solstice.mo'
 	sim = simulation.Simulator(fn)
