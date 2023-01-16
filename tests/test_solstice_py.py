@@ -8,7 +8,7 @@ from solartherm import simulation
 from solartherm import postproc
 import os
 
-@pytest.mark.dependency(depends=['solstice'])
+#@pytest.mark.dependency(depends=['solstice'])
 def test_st_solstice():
 	fn = 'TestSolsticePyFunc.mo'
 	sim = simulation.Simulator(fn)
