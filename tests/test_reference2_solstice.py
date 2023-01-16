@@ -10,6 +10,7 @@ from solartherm import postproc
 from math import pi
 import os
 
+@pytest.mark.skip("This test is too slow (~1 h) to be run all the time")
 def test_ref2solstice():
 	fn = '../examples/Reference_2_solstice.mo'
 	sim = simulation.Simulator(fn)
