@@ -88,7 +88,7 @@ equation
         elseif optimal_dispatch_dual_tank then //TES + H2 stg disp opt
             m_flow = m_flow_max * fraction_Q_TES_PB * schedule;
         else //immediate disp
-            m_flow =  m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule;
+            m_flow =  m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule * fraction_Q_TES_PB;
             //m_flow = m_flow_max * (min(1.25,load_curvefit)) * schedule;
         end if;
         
@@ -100,7 +100,7 @@ equation
             elseif optimal_dispatch_dual_tank then
                 m_flow = min(m_flow_max * fraction_Q_TES_PB * schedule,m_flow_in);
             else
-                m_flow =  min(m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule, m_flow_in);
+                m_flow =  min(m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule, m_flow_in)* fraction_Q_TES_PB;
                 //m_flow = min(m_flow_max * (min(1.25,load_curvefit)) * schedule, m_flow_in);
             end if;
         else

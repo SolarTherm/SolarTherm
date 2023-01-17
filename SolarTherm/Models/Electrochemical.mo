@@ -242,6 +242,8 @@ package Electrochemical
     Real N_unit_final "Number of electrolyser unit that is opearting full load";
     parameter Real upstreammultiplier = 1;
     
+    parameter Boolean set_no_thermal = false "If true, W dumped PV goes to electrical heater is always 0";
+    
     //*********** External Combitable 2D
     Modelica.Blocks.Types.ExternalCombiTable2D polarisation_curve =  Modelica.Blocks.Types.ExternalCombiTable2D(
         tableName = "polarisation_curve", 
@@ -297,12 +299,12 @@ package Electrochemical
         if W_electrolyser > P_electro_requested then
           /*If power input overshoot, has to be dumped shall it exceeds the nameplate*/
             W_electrolyser_final = P_electro_requested "The final electricity send to the electrolyser == nameplate, rest is dumped";
-            W_dumped = W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W], charge the tank";
+            W_dumped = if set_no_thermal then 0 else W_electrolyser - P_electro_requested "Dumped electricity due to overshoot [W], charge the tank";
             if W_electrolyser_PV < P_electro_requested then
                 W_dumped_PV = 0;
-                W_dumped_PB = (W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV))/upstreammultiplier;
+                W_dumped_PB = if set_no_thermal then 0 else (W_electrolyser_PB - (P_electro_requested - W_electrolyser_PV))/upstreammultiplier;
             else
-                W_dumped_PV = W_dumped;
+                W_dumped_PV = if set_no_thermal then 0 else W_dumped;
                 W_dumped_PB = 0;
             end if;
             
@@ -315,13 +317,13 @@ package Electrochemical
     else
         /*If all tanks are full, need not to turn on the electrolyser, all the electricity goes to the resistive heater*/
         W_electrolyser_final = 0;
-        W_dumped = W_electrolyser_PV "Dumped electricity due to overshoot [W]";
-        W_dumped_PV = W_electrolyser_PV "Portion of dumped energy from PV [W]";
+        W_dumped = if set_no_thermal then 0 else W_electrolyser_PV "Dumped electricity due to overshoot [W]";
+        W_dumped_PV = if set_no_thermal then 0 else W_electrolyser_PV "Portion of dumped energy from PV [W]";
         W_dumped_PB = 0 "Portion of dumped power from PB [W]";
     end if;
     
-    W_d_PB = W_dumped_PB; 
-    W_d_PV = W_dumped_PV;
+    W_d_PB = if set_no_thermal then 0 else W_dumped_PB; 
+    W_d_PV = if set_no_thermal then 0 else W_dumped_PV;
          
     der(E_dumped) = W_dumped "Integrating W_dumped to get E_dumped";
     
