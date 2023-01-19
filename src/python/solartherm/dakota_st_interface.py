@@ -196,7 +196,7 @@ class Interface:
 					else: # maxmisation
 						error=0 
 					solartherm_res.append(sign*error)
-				sys.stderr.write('%s\n'%())
+				sys.stderr.write('%s\n'%("failed"))
 				sys.stderr.write('Failed to process the results, case %s\n'%(self.suffix))
 			
 		else:		

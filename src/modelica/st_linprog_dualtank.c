@@ -230,12 +230,13 @@ void st_linprog_dualtank(
         snprintf(sss, NAMEMAX, "P_AEL_%02d", i);
         glp_set_col_name(P, i_P_AEL(i), sss);
     }
-
+	/*
     MSG("COLUMN NAMES");
     for (int i = 1; i <= i_P_AEL(N); i++)
     {
         MSG("%3d: %s", i, glp_get_col_name(P, i));
     }
+    */
 
     /*
     SET THE OBJECTIVE FUNCTIONS
@@ -870,8 +871,8 @@ void st_linprog_dualtank(
         /*
         fprintf(
             stderr,
-            "===============================\nTES capacity: %.3f MWhth\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nTES init: %.2f \%\nTES level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\n===============================\n",
-            TES_capacity, P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped, Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2level, E_TES_init/TES_capacity*100,TES_level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner
+            "===============================\nTES capacity: %.3f MWhth\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nTES init: %.2f \%\nTES level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\nt0: %.2f s\n===============================\n",
+            TES_capacity, P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped, Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2level, E_TES_init/TES_capacity*100,TES_level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner,t0
         );
         */
 
@@ -912,7 +913,7 @@ void st_linprog_dualtank(
 
         for(int i=1;i<=N;i++){
             double t_ = (i-1) * 3600;
-            double Q_SF_in = dni[DNI(i)] * A_sf * etaSF[ETASF(i)] * etaRCV /1e6;
+            double Q_SF_in = dni[DNI(i)] * A_sf * etaSF[ETASF(i)] * etaRCV[ETASF(i)] /1e6;
             double Q_SF_TES = glp_get_col_prim(P,i_Q_SF_TES(i));
             double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(i));
             double P_PV_in = P_PV_in_z[PVZI(i)];
