@@ -98,7 +98,8 @@ equation
             if dispatch_optimiser then
                 m_flow = min(optimalMassFlow,m_flow_in);
             elseif optimal_dispatch_dual_tank then
-                m_flow = min(m_flow_max * fraction_Q_TES_PB * schedule,m_flow_in);
+                //m_flow = min(m_flow_max * fraction_Q_TES_PB * schedule,m_flow_in);
+                m_flow =  min(m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule, m_flow_in)* fraction_Q_TES_PB;
             else
                 m_flow =  min(m_flow_max * (min(1,CSP_duty/CSP_name_plate)) * schedule, m_flow_in)* fraction_Q_TES_PB;
                 //m_flow = min(m_flow_max * (min(1.25,load_curvefit)) * schedule, m_flow_in);
