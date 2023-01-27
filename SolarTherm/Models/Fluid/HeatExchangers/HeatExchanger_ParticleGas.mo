@@ -299,9 +299,9 @@ if on then
     h_pcl_out = PCL.h_T(T_out_PCL_DP);
   else
       if use_neural_network then
-          m_dot_pcl = predict(
+          m_dot_pcl = min(predict(
               session, X, inputsize, X_max, X_min, out_max, out_min
-          );
+          ),m_dot_PCL_DP);
       else
           m_dot_pcl = m_dot_PCL_DP "Mass flow rate of particle at design point";
       end if;

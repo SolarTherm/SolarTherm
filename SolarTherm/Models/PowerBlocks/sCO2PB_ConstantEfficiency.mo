@@ -139,6 +139,7 @@ model sCO2PB_ConstantEfficiency
   
   T_amb_input = T_amb;
   T_HTF_in = RecUtils.T_h(h_in);
+  Q_HX = eta_Q * Q_HX_des * load;
     
   if state == 1 then
     /*eta_gross_rel = 0.0 * 1 + 2.5186574179060797 * load + 
@@ -183,7 +184,6 @@ model sCO2PB_ConstantEfficiency
   
   h_out = fluid_b.h_outflow;
   //Q_HX = eta_Q * Q_HX_des;
-  Q_HX = eta_Q * Q_HX_des * load;
   W_par_fixed_load = (f_fixed_load*P_gross) + parasities;
   
   

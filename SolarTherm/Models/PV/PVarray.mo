@@ -295,7 +295,7 @@ model PVarray
 
 	P_ac_inv = max(0,((P_ac_max_inv/(Ai - Bi)) - Ci*(Ai - Bi))*(P_dc_inv-Bi) + Ci*(P_dc_inv-Bi)^2);
 
-	eta_inv = if P_dc_inv > 1 then max(0,P_ac_inv/P_dc_inv) else 0;
+	eta_inv = if P_dc_inv > 100 then max(0,P_ac_inv/P_dc_inv) else 0;
 
 	if P_ac_inv > P_ac_max_inv then
 	P_net = P_ac_max_inv*N_inv*(1-L_ac);

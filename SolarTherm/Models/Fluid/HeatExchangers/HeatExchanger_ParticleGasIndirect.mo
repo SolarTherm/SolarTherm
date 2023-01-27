@@ -42,6 +42,7 @@ model HeatExchanger_ParticleGasIndirect
   parameter SI.Length w_ch = 6e-3;
   parameter SI.Length th_wall = 1e-3;
   parameter SI.Area A_plate = 0.1;
+  parameter Real upstreammultiplier = 1;
   
   /*Off-design conditions*/
   parameter SI.Temperature T_in_gas_off = 80 + 273.15 "Design inlet temperature of the gas [K]";

@@ -504,6 +504,11 @@ class SimResultH2(SimResult):
 		# Convert to useful units
 		if close_to_year: 
 			capf = 100*capf
+			
+		# FIXME: EXPERIMENTAL WHERE SOGA IS OPTIMISING AT GIVEN CF -- PG
+		# TEST at CF 70% (0.80)
+		lco_H2 = lco_H2 * (1+abs(capf - 0.8))
+		
 		print([eng_v[-1], lco_H2, capf, srev,])
 		return [eng_v[-1], lco_H2, capf, srev,]
 		
