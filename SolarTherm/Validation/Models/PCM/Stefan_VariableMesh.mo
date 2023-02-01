@@ -5,13 +5,13 @@ model Stefan_VariableMesh
     import Modelica.Math.Special.erfc;
 //Start of the HTF-PCM Model
     //Material Parameters
-	parameter Real T_wall = 1078.0 "K";
-	parameter Real T_init = 1068.0 "k";
+	parameter Real T_wall = 1118;//1078.0 "K";
+	parameter Real T_init = 1028;//1068.0 "k";
     parameter Real L = 0.1 "m"; //Length of a plane wall with length L
     parameter Real A = 1.0 "m^2";
-    parameter Integer n3 = 20*2; //Total Number of nodes used in L for f3
-    parameter Integer n2 = 30*2; //Total Number of nodes used in L for f2
-    parameter Integer n1 = 45*2; //Total Number of nodes used in L for f1
+    parameter Integer n3 = 16; //20 //Total Number of nodes used in L for f3
+    parameter Integer n2 = 20; //30 //Total Number of nodes used in L for f2
+    parameter Integer n1 = 25; //45 //Total Number of nodes used in L for f1
 
     //Exact Solution Parameters;
     parameter Real pi = 2.0*Modelica.Math.asin(1.0);
@@ -21,7 +21,7 @@ model Stefan_VariableMesh
     parameter Real alpha_l = 1.25/(2160.0*1198.0);
     parameter Real alpha_s = 4.0/(2160.0*856.0);
     parameter Real lamb = Lambda(St_s,St_l,v); //Solved via Newton-Raphson Method
-    parameter Real r = 1.1; //Mesh growth ratio
+    parameter Real r = 1.0 + 1.0e-6; //Mesh growth ratio, if you want 1.0, use 1.0 + 1.0e-6 to prevent div0 error
     Real X_exact (start = 0.0); //Location of melting front
     Real Q_exact (start = 0.0); //Total energy absorbed
     Real Slope_exact;
@@ -141,6 +141,7 @@ model Stefan_VariableMesh
     Real ORC_X;
     Real dx_min;
     Real ROC_X12;
+    Real ROC_X23;
     
     Real M1;
     Real M2;
@@ -352,6 +353,7 @@ equation
       
       Asymptote_T= ((Norm_T2-Norm_T3)*Norm_T1)/(Norm_T2*(Norm_T1-Norm_T2));
       Asymptote_Q= ((Q_tot2-Q_tot3)*Q_tot1)/(Q_tot2*(Q_tot1-Q_tot2));
+      ROC_X23 = log(abs(X_res2/X_res3))/log(n3/n2);
       ROC_X12 = log(abs(X_res1/X_res2))/log(n2/n1);
       
     else
@@ -390,6 +392,7 @@ equation
       q_ErrorPct3 = 0.0;
       ORC_X = 0;
       ROC_X12 = 0;
+      ROC_X23 = 0;
     end if;
     
     M1 = sum(m1);

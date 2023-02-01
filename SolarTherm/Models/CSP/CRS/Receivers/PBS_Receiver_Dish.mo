@@ -129,10 +129,11 @@ equation
   
   medium_out.h = h_out;
   medium_out.p = medium.p;
-  annotation (Documentation(info="<html>
-</html>", revisions="<html>
+  annotation (Documentation(info = "<html>
+</html>", revisions = "<html>
 <ul>
 <li>by Zebedee Kee, Receiver used in Packed Bed Storage Annual System Model. Only Radiative Losses. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Rectangle(lineColor = {139, 139, 139}, fillColor = {131, 131, 131}, lineThickness = 0.1, extent = {{-100, 100}, {100, -100}})}));
 end PBS_Receiver_Dish;

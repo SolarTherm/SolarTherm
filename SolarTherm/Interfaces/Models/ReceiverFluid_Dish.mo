@@ -11,6 +11,6 @@ partial model ReceiverFluid_Dish
     "Medium in the component"
       annotation (choicesAllMatching = true,Dialog(group="Working fluid"));
   annotation(
-    Icon(graphics = {Line(origin = {65.3381, -8.69117}, points = {{0, -81}, {0, 19}, {0, 19}}, color = {0, 0, 127}, thickness = 1), Line(origin = {32.6, -8.38}, points = {{-22, 19}, {0, 19}, {32, 19}}, color = {0, 0, 127}, thickness = 1, arrow = {Arrow.Filled, Arrow.None}), Line(origin = {52.0558, 46.59}, points = {{10, 43}, {10, 19}, {-20, 19}}, color = {0, 0, 127}, thickness = 1, arrow = {Arrow.Filled, Arrow.None})}, coordinateSystem(initialScale = 0.1)));
+    Icon(graphics = {Line(origin = {65.34, -8.69}, points = {{0, -81}, {0, 19}, {0, 19}}, color = {0, 0, 127}), Line(origin = {33.36, -8.55}, points = {{-24, 19}, {0, 19}, {32, 19}}, color = {0, 0, 127}, arrow = {Arrow.Filled, Arrow.None}), Line(origin = {52.06, 46.59}, points = {{10, 43}, {10, 19}, {-20, 19}}, color = {0, 0, 127}, arrow = {Arrow.Filled, Arrow.None})}, coordinateSystem(initialScale = 0.1)));
 
 end ReceiverFluid_Dish;

@@ -36,6 +36,7 @@ model Heat_Sink_v2
   //Parameters
   //Heat Source Parameters
   parameter SI.Irradiance flux_field = flux_factor*1.00e6 "W/m^2"; //default 1.0e6
+  parameter SI.Irradiance flux_low = 600.0*1.0e3 "W/m2"; //after a condition is met, drop flux to this value
   //parameter SI.HeatFlowRate q_field = flux_field*A "W";
   //Common Properties
   parameter SI.Length L_y = 30.0e-3 "Coupon height (m)";
@@ -152,7 +153,7 @@ algorithm
   
     //Heat Transfer calculation
 
-  q_abs := Solar_Factor*flux_field*ab*A - CN.sigma*em*A*((T_surf^4.0)-(T_amb^4.0)); //Irradiated surface balance
+  q_abs := (flux_low+Solar_Factor*(flux_field-flux_low))*ab*A - CN.sigma*em*A*((T_surf^4.0)-(T_amb^4.0)); //Irradiated surface balance
   
 
 

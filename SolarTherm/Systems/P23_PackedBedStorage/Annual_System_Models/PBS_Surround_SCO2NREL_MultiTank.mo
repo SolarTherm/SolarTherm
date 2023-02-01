@@ -1,7 +1,7 @@
 within SolarTherm.Systems.P23_PackedBedStorage.Annual_System_Models;
 
 model PBS_Surround_SCO2NREL_MultiTank
-  //This is a Gen3 inspired annual system model with two towers for and equivalent of 100 MWe, this variation has three tanks
+  //This is a Gen3 inspired annual system model with two towers for and equivalent of 100 MWe, this variation has three tanks and a mixed-outlet storage algorithm.
 
   function opt_file_naming
     input String prefix;
@@ -62,8 +62,8 @@ model PBS_Surround_SCO2NREL_MultiTank
   //--Tank
   //Concept Parameters
   //Tolerance of PB and receiver inlet
-  parameter SI.TemperatureDifference T_tol_recv = 50.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
-  parameter SI.TemperatureDifference T_tol_PB = 40.0 "Temperature tolerance below design PB input temperature before PB is shut off";
+  parameter SI.TemperatureDifference T_tol_recv = 40.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
+  parameter SI.TemperatureDifference T_tol_PB = 20.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Temperature controls
   parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
   parameter SI.Temperature T_PB_start = T_max - T_tol_PB + 10.0 "Temperature at top of tank where PB can start";
@@ -72,10 +72,10 @@ model PBS_Surround_SCO2NREL_MultiTank
   parameter SI.Temperature T_recv_start = T_min + T_tol_recv - 10.0 "Temperature at bottom of tank when it can start being pumped into the receiver again";
   parameter SI.Temperature T_min = 500.0 + 273.15 "Ideal low temperature of the storage";
   //Additional Power Block design temperature
-  parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
+  parameter SI.Temperature T_PB_in_des = 700.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
   //Controller Parameters
-  parameter Real eff_storage_des = 0.88 "design storage utilisation";
+  parameter Real eff_storage_des = 0.85 "design storage utilisation";
   parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
@@ -83,7 +83,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
-  parameter Integer N_f = 20 "Number of discretizations in vertical fluid phase for each tank";
+  parameter Integer N_f = 252 "Number of discretizations in vertical fluid phase for each tank";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
@@ -102,7 +102,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   parameter Real ar_C = ar_A "Tank aspect ratio";
   //Multitank Blended Temperature Settings
   parameter SI.Temperature T_PB_set = 700.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten discharge output to this value";
-  parameter SI.Temperature T_Recv_set = 550.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten charge output to this value";
+  parameter SI.Temperature T_Recv_set = 540.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten charge output to this value";
   //Weather Data (Alice Springs)
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
   parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
@@ -246,7 +246,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
     Placement(visible = true, transformation(extent = {{120, 86}, {100, 106}}, rotation = 0)));
   //parasitic inputs
-  Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss) annotation(
+  Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + Tank.W_loss_pump) annotation(
     Placement(visible = true, transformation(origin = {121, 64}, extent = {{-13, -10}, {13, 10}}, rotation = 180)));
   // Or block for defocusing
   //Sun
@@ -268,7 +268,7 @@ model PBS_Surround_SCO2NREL_MultiTank
   //Cold Controller (Receiver)
   //Hot Controller (Power Block)
   //Power Block
-  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
+  SolarTherm.Models.PowerBlocks.PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C powerBlock(redeclare package Medium = Medium, redeclare model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling, Q_flow_ref = Q_flow_ref_blk, T_out_ref = T_PB_out_des, W_base = 0.0055 * P_gross_des, m_flow_ref = m_flow_blk_des, nu_net = eff_net_des) annotation(
     Placement(visible = true, transformation(origin = {101, 21}, extent = {{-29, -29}, {29, 29}}, rotation = 0)));
   //Annual Simulation variables
   SI.Power P_elec "Output power of power block";
@@ -352,9 +352,9 @@ model PBS_Surround_SCO2NREL_MultiTank
   SolarTherm.Models.Control.PBS_Controller_PBLimit_v2 Control(redeclare package HTF = Medium, T_recv_max = T_recv_max, T_PB_min = T_PB_min, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_recv_start = T_recv_start, T_PB_start = T_PB_start, t_wait = t_PB_wait, eff_storage_des = eff_storage_des, t_stor_startPB = t_stor_startPB, E_max = Tank.E_max) annotation(
     Placement(visible = true, transformation(origin = {64, -18}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   //Analytics
-  Real W_1 "Non-dimensional degradation width of Tank A";
-  Real W_2 "Non-dimensional degradation width of Tank B";
-  Real W_3 "Non-dimensional degradation width of Tank C";
+  //Real W_1 "Non-dimensional degradation width of Tank A";
+  //Real W_2 "Non-dimensional degradation width of Tank B";
+  //Real W_3 "Non-dimensional degradation width of Tank C";
 algorithm
 /*when rem(time,86400) > 86399 then //reset the storage utilization
     if time > 432000 then //after 5 days
@@ -417,9 +417,9 @@ algorithm
 */
 //Optics
 equation
-  W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f, Tank.Tank_A.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_A.H_tank;
-  W_2 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_B.z_f, Tank.Tank_B.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_B.H_tank;
-  W_3 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_C.z_f, Tank.Tank_C.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_C.H_tank;
+  //W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f, Tank.Tank_A.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_A.H_tank;
+  //W_2 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_B.z_f, Tank.Tank_B.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_B.H_tank;
+  //W_3 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_C.z_f, Tank.Tank_C.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_C.H_tank;
 /*
 //Analytics
 //Cumulative heat

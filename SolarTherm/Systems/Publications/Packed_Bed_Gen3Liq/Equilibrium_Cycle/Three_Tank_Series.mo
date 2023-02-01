@@ -1,6 +1,6 @@
-within SolarTherm.Systems.P23_PackedBedStorage.MultiTank_Comparison;
+within SolarTherm.Systems.Publications.Packed_Bed_Gen3Liq.Equilibrium_Cycle;
 
-model Part2_Series
+model Three_Tank_Series
   //Equilibrium Cycle Model which evaluates the performance of a storage array assuming ideal charging/discharging cycles.
   //Three-Tank array sized for the Gen3Liquids System, storage tanks connected in series.
   //Zebedee Kee 23 Dec 2022
@@ -288,4 +288,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part2_Series;
+end Three_Tank_Series;

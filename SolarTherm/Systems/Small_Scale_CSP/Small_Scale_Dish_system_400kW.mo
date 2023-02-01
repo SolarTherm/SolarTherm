@@ -170,7 +170,7 @@ model Small_Scale_Dish_system_400kW
   parameter FI.AreaPrice pri_site = 16.0;
   parameter FI.EnergyPrice pri_storage = 22.0 / (1e3 * 3600);
   //parameter FI.PowerPrice pri_block = 1040.0 / 1e3;
-  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total/P_gross;
+  parameter FI.PowerPrice pri_block = powerBlock.C_PB_total / P_gross;
   parameter FI.PowerPrice pri_bop = 290.0 / 1e3;
   parameter FI.AreaPrice pri_land = 2.47;
   parameter Real pri_om_name(unit = "$/W/year") = 66.0 / 1e3;
@@ -220,7 +220,7 @@ model Small_Scale_Dish_system_400kW
     Placement(transformation(extent = {{-82, 60}, {-62, 80}})));
   // Solar field (Edited 14/08/20 to include scaling of parasitics)
   SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsField heliostatsField(n_h = n_heliostat, lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, use_wind = use_wind, Wspd_max = Wspd_max, he_av = he_av_design, use_on = true, use_defocus = true, A_h = A_heliostat, nu_defocus = nu_defocus, nu_min = nu_min_sf, Q_design = Q_recv_inc_des, nu_start = nu_start, redeclare model Optical = Models.CSP.CRS.HeliostatsField.Optical.Table(angles = angles, file = opt_file), E_start = helio_E_start, W_track = helio_W_track) annotation(
-    Placement(transformation(extent = {{-88, 2}, {-56, 36}})));
+    Placement(visible = true, transformation(extent = {{-88, 0}, {-56, 34}}, rotation = 0)));
   // Receiver
   SolarTherm.Models.CSP.CRS.Receivers.PBS_Receiver receiver(em = em_rec, redeclare package Medium = Medium, H_rcv = H_receiver, D_rcv = D_receiver, N_pa = N_pa_rec, t_tb = t_tb_rec, D_tb = D_tb_rec, ab = ab_rec, A = A_receiver) annotation(
     Placement(transformation(extent = {{-46, 4}, {-10, 40}})));
@@ -262,7 +262,7 @@ equation
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-119, 70}, {-102, 70}, {-102, 69.8}, {-82.6, 69.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Wspd_input.y, heliostatsField.Wspd) annotation(
-    Line(points = {{-117, 54}, {-100, 54}, {-100, 29.54}, {-87.68, 29.54}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+    Line(points = {{-117, 54}, {-100, 54}, {-100, 28}, {-88, 28}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankCold.p_top) annotation(
     Line(points = {{55, 28}, {59.5, 28}, {59.5, -10}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
   connect(Pres_input.y, tankHot.p_top) annotation(
@@ -294,9 +294,9 @@ equation
 // controlHot connections
 //Solar field connections i.e. solar.heat port and control
   connect(sun.solar, heliostatsField.solar) annotation(
-    Line(points = {{-72, 60}, {-72, 36}}, color = {255, 128, 0}));
+    Line(points = {{-72, 60}, {-72, 34}}, color = {255, 128, 0}));
   connect(heliostatsField.heat, receiver.heat) annotation(
-    Line(points = {{-55.68, 27.5}, {-54.82, 27.5}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
+    Line(points = {{-56, 25.5}, {-54.82, 25.5}, {-54.82, 27.4}, {-46, 27.4}}, color = {191, 0, 0}));
 //PowerBlock connections
   connect(parasities_input.y, powerBlock.parasities) annotation(
     Line(points = {{108, 46}, {108, 40.85}, {109.6, 40.85}, {109.6, 34.4}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
@@ -320,7 +320,7 @@ equation
   connect(tankCold.h_fluid, SSCSP_Controller.h_tank_outlet) annotation(
     Line(points = {{54, -20}, {48, -20}, {48, 26}, {24, 26}, {24, 18}, {24, 18}}, color = {0, 0, 127}));
   connect(False.y, heliostatsField.defocus) annotation(
-    Line(points = {{-96, 8}, {-90, 8}, {-90, 8}, {-88, 8}}, color = {255, 0, 255}));
+    Line(points = {{-96, 8}, {-92, 8}, {-92, 7}, {-88, 7}}, color = {255, 0, 255}));
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {-2, 16}, lineColor = {217, 67, 180}, extent = {{4, 92}, {40, 90}}, textString = "defocus strategy", fontSize = 9), Text(lineColor = {217, 67, 180}, extent = {{-50, -40}, {-14, -40}}, textString = "on/off strategy", fontSize = 9), Text(origin = {-2, 0}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 16, fontName = "CMU Serif"), Text(origin = {-2, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostat", fontSize = 16, fontName = "CMU Serif"), Text(origin = {4, -8}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 16, fontName = "CMU Serif"), Text(origin = {-2, 2}, extent = {{0, 58}, {48, 38}}, textString = "Hot Tank", fontSize = 16, fontName = "CMU Serif"), Text(origin = {2, 0}, extent = {{30, -24}, {78, -44}}, textString = "Cold Tank", fontSize = 16, fontName = "CMU Serif"), Text(origin = {4, 0}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 16, fontName = "CMU Serif"), Text(origin = {2, 30}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 16, fontName = "CMU Serif"), Text(origin = {6, -2}, extent = {{-146, -26}, {-98, -46}}, textString = "Data Source", fontSize = 18, fontName = "CMU Serif"), Text(extent = {{-96, -12}, {-96, -12}}, textString = "Field", fontSize = 18), Text(origin = {-93, -13}, extent = {{-7, 5}, {17, -3}}, textString = "Field", fontSize = 16), Text(origin = {20, -1}, extent = {{-8, 1}, {20, -3}}, textString = "Control", fontSize = 16)}),
     Icon(coordinateSystem(extent = {{-140, -120}, {160, 140}})),

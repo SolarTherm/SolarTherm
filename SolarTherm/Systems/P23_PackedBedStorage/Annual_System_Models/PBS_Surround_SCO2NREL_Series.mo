@@ -62,8 +62,8 @@ model PBS_Surround_SCO2NREL_Series
   //--Tank
   //Concept Parameters
   //Tolerance of PB and receiver inlet
-  parameter SI.TemperatureDifference T_tol_recv = 50.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
-  parameter SI.TemperatureDifference T_tol_PB = 40.0 "Temperature tolerance below design PB input temperature before PB is shut off";
+  parameter SI.TemperatureDifference T_tol_recv = 40.0 "Temperature tolerance above design receiver input temperature before receiver is shut off";
+  parameter SI.TemperatureDifference T_tol_PB = 20.0 "Temperature tolerance below design PB input temperature before PB is shut off";
   //Temperature controls
   parameter SI.Temperature T_max = 720.0 + 273.15 "Ideal high temperature of the storage";
   parameter SI.Temperature T_PB_start = T_max - T_tol_PB + 10.0 "Temperature at top of tank where PB can start";
@@ -75,7 +75,7 @@ model PBS_Surround_SCO2NREL_Series
   parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
   //Controller Parameters
-  parameter Real eff_storage_des = 0.71 "design storage utilisation";
+  parameter Real eff_storage_des = 0.55 "design storage utilisation";
   parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
@@ -83,7 +83,7 @@ model PBS_Surround_SCO2NREL_Series
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
-  parameter Integer N_f = 20 "Number of discretizations in vertical fluid phase for each tank";
+  parameter Integer N_f = 252 "Number of discretizations in vertical fluid phase for each tank";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
@@ -102,7 +102,7 @@ model PBS_Surround_SCO2NREL_Series
   parameter Real ar_C = ar_A "Tank aspect ratio";
   //Multitank Blended Temperature Settings
   parameter SI.Temperature T_PB_set = 700.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten discharge output to this value";
-  parameter SI.Temperature T_Recv_set = 550.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten charge output to this value";
+  parameter SI.Temperature T_Recv_set = 540.0 + 273.15 "Mixed Flow Algorithm will attempt to flatten charge output to this value";
   //Weather Data (Alice Springs)
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
   parameter Real wdelay[8] = {0, 0, 0, 0, 0, 0, 0, 0} "Weather file delays";
@@ -246,7 +246,7 @@ model PBS_Surround_SCO2NREL_Series
   Modelica.Blocks.Sources.RealExpression Pres_input(y = data.Pres) annotation(
     Placement(visible = true, transformation(extent = {{120, 86}, {100, 106}}, rotation = 0)));
   //parasitic inputs
-  Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss) annotation(
+  Modelica.Blocks.Sources.RealExpression parasities_input(y = heliostatsField.W_loss + pumpHot.W_loss + pumpCold.W_loss + Tank.W_loss_pump) annotation(
     Placement(visible = true, transformation(origin = {121, 64}, extent = {{-13, -10}, {13, 10}}, rotation = 180)));
   // Or block for defocusing
   //Sun

@@ -1,8 +1,8 @@
-within SolarTherm.Systems.P23_PackedBedStorage.MultiTank_Comparison;
+within SolarTherm.Systems.Publications.Packed_Bed_Gen3Liq.Equilibrium_Cycle;
 
-model Part2_Series
+model Three_Tank_MixedOutlet
   //Equilibrium Cycle Model which evaluates the performance of a storage array assuming ideal charging/discharging cycles.
-  //Three-Tank array sized for the Gen3Liquids System, storage tanks connected in series.
+  //Three-Tank array sized for the Gen3Liquids System, storage tanks connected in parallel with mixed-outlet.
   //Zebedee Kee 23 Dec 2022
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -15,14 +15,17 @@ model Part2_Series
   parameter Integer Correlation = 3 "Conservative";
   //Temperature Controls
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
-  parameter SI.Temperature T_PB_des = T_max - 0.5*T_tol_PB "Design blended Power Block inlet temperature";
+  parameter SI.Temperature T_PB_des = T_max - T_tol_PB "Design blended Power Block inlet temperature";
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
-  parameter SI.Temperature T_Recv_des = T_min + 0.5*T_tol_Recv "Design blended receiver inlet temperature";
+  parameter SI.Temperature T_Recv_des = T_min + T_tol_Recv "Design blended receiver inlet temperature";
   parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
-  parameter SI.TemperatureDifference T_tol_Recv = 50.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 40.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_Recv = 20.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_PB = 20.0 "Power block Temperature Tolerance (K)";
+  //Mixing strategy
+  parameter SI.Temperature T_PB_set = T_PB_des "Mixed Flow Algorithm will attempt to flatten discharge output to this value";
+  parameter SI.Temperature T_Recv_set = T_Recv_des "Mixed Flow Algorithm will attempt to flatten charge output to this value";
   //Numerical Discretisation
   parameter Integer N_f = 20 "Number of fluid CVs in each tank";
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
@@ -58,7 +61,7 @@ model Part2_Series
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Storage Model
-  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, Correlation = Correlation) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_3P_MixedOutlet thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, Correlation = Correlation, T_recv_set = T_Recv_set, T_PB_set = T_PB_set) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   //Componenets and Connectors
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
@@ -288,4 +291,4 @@ equation
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-3, Interval = 60));
-end Part2_Series;
+end Three_Tank_MixedOutlet;

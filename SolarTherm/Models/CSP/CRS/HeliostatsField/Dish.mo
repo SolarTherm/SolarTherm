@@ -34,12 +34,12 @@ model Dish
   SI.HeatFlowRate Q_net;
 
   Modelica.Blocks.Interfaces.BooleanOutput on if use_on annotation (Placement(
-        transformation(extent={{-20,-20},{20,20}},
-        rotation=-90,
-        origin={0,-100}),                           iconTransformation(extent={{-12,-12},
+        visible = true,transformation(
+        origin={0,-100},extent={{-20,-20},{20,20}},
+        rotation=-90),                           iconTransformation(
+        origin={4, -106},extent={{-12,-12},
             {12,12}},
-        rotation=-90,
-        origin={0,-100})));
+        rotation=-90)));
   Modelica.Blocks.Interfaces.BooleanInput defocus if use_defocus annotation (Placement(
         transformation(extent={{-126,-88},{-86,-48}}),iconTransformation(extent={{-110,
             -72},{-86,-48}})));
