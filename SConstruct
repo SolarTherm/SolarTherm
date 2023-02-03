@@ -16,7 +16,8 @@ default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
 #print('system',platform.system())
 if platform.system()=="Windows" or "MINGW" in platform.system():
-	if os.environ.get('MSYSTEM') == "MINGW64":
+	msystem = os.environ.get('MSYSTEM')
+	if msystem == "MINGW64" or msystem == "UCRT64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
@@ -201,8 +202,12 @@ def check_omc(ct):
 	try:
 		call = [omc,'--version']
 		res = sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf8') # TODO check the version is OK
-		omverstr = res.stdout.strip().split(" ")[1]
-		omver = pv.parse(omverstr)
+		omverstr = res.stdout.strip()
+		if omverstr == 'unknown': # FIXME hack for missing version number in our home-made omc:
+			omver = pv.parse('1.14.0')
+		else:
+			omverstr = omverstr.split(" ")[1]
+			omver = pv.parse(omverstr)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
 		return False

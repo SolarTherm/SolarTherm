@@ -23,7 +23,7 @@ from pathlib import Path,PurePath
 # OpenModelica.
 
 #-------------------------------------------------------------------------------
-# utility routines for handling paths, special treatment require for MSYS2.
+# utility routines for handling paths, special treatment required for MSYS2.
 
 NEWENV = os.environ.copy()
 		
@@ -38,7 +38,6 @@ def CYG(path):
 
 def prepend(path,envvar):
 	pp = NEWENV.get(envvar)
-	path = CYG(path)
 	if os.environ.get('VERBOSE'):
 		print("Prepending '%s' to %s=%s" %(path,envvar,pp))
 	if pp is not None:
@@ -101,9 +100,9 @@ for k in st_paths:
 
 if platform.system()=="Windows":
 	resp = PurePath(omlibp)/'SolarTherm'/'Resources'/'Library'
-	prepend(resp,'PATH')
-	prepend(CYG('/mingw64'),'PYTHONHOME')
-	#print("PYTHONHOME=",os.environ.get('PYTHONHOME'))
+	prepend(CYG(resp),'PATH')
+	#print("MSYSTEM_PREFIX =",os.environ.get('MSYSTEM_PREFIX'))
+	prepend(os.environ.get('MSYSTEM_PREFIX'),'PYTHONHOME')
 
 if os.environ.get('VERBOSE'):
 	print("Updated environment:")
