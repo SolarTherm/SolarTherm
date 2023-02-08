@@ -129,7 +129,7 @@ equation
       if on_dispatch_optimiser_dual_tank then
           if emergency_burner == false and on_discharge_TES and fraction_Q_TES_HX > 0 then
               //m_dot_pcl = m_dot_pcl_DP * fraction_Q_TES_HX;
-              m_dot_pcl = m_dot_pcl_DP;
+              m_dot_pcl = m_dot_pcl_DP * 6 / upstreammultiplier * fraction_Q_TES_HX;
               //predict(session, X, inputsize, X_max, X_min, out_max, out_min);
           else
               m_dot_pcl = 0;
