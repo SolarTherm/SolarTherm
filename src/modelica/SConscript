@@ -69,8 +69,11 @@ lib6 = genv.SharedLibrary('st_linprog_particle',['st_linprog_particle.c','linpro
 #Adding st_linprog_dualtank (TES and H2 tank)- 7 November 2022 -- Philipe
 lib7 = genv.SharedLibrary('st_linprog_dualtank',['st_linprog_dualtank.c'])
 
+#Adding st_linprog_dualtank2 (TES and H2 tank)- 8 Feb 2023 -- Philipe
+lib8 = genv.SharedLibrary('st_linprog_dualtank2',['st_linprog_dualtank2.c'])
+
 #Appending the libs
-shlibs = [lib1, lib4, lib2, lib3, lib6, lib7]
+shlibs = [lib1, lib4, lib2, lib3, lib6, lib7, lib8]
 
 if env['HAVE_TF']:
 	#Tensorflow linked bits 19 October 2021 -- Philipe
