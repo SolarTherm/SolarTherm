@@ -296,7 +296,7 @@ void st_linprog_dualtank2(
         0           ≤         Q_SF_dumped         ≤ dni * A_sf * etaSF * etaRCV / 1e6 [Convert to MWth]
         0           ≤         P_PV_TES            ≤ P_PV_in_z
         0           ≤         P_PV_AEL            ≤ P_PV_in_z
-        0           ≤         P_PV_dumped         ≤
+        0           ≤         P_PV_dumped         ≤ P_PV_in_z
         0           ≤         P_AEL               ≤ P_AEL_nameplate
     */
 
@@ -311,7 +311,7 @@ void st_linprog_dualtank2(
             P, i_Q_H2_reactor(i), GLP_DB, 0, Q_H2_reactor_max
         );
         glp_set_col_bnds(
-            P, i_Q_H2_burner(i), GLP_DB, 0, Q_TES_HX_max/etaBurner
+            P, i_Q_H2_burner(i), GLP_DB, 0, Q_TES_HX_max/etaBurner*um
         );
         glp_set_col_bnds(
             P, i_E_TES(i), GLP_DB, E_TES_min, TES_capacity
@@ -874,9 +874,9 @@ void st_linprog_dualtank2(
 		optimalSolution[6] = -1;
 		optimalSolution[7] = -1;
 		optimalSolution[8] = -1;
-        //fprintf(stderr, "\n\nLP is unsolved at t = %.2f h\n", t0/3600);
+        fprintf(stderr, "\n\nLP is unsolved at t = %.2f h\n", t0/3600);
     }else{
-        //fprintf(stderr, "\n\nLP is solved with status %d at t = %.2f s\n", res, t0);
+        fprintf(stderr, "\n\nLP is solved with status %d at t = %.2f s\n", res, t0);
         double Q_SF_TES = glp_get_col_prim(P,i_Q_SF_TES(1));
         double Q_SF_dumped = glp_get_col_prim(P,i_Q_SF_dumped(1));
         double Q_SF_in = Q_SF_TES + Q_SF_dumped;
@@ -884,9 +884,10 @@ void st_linprog_dualtank2(
         fprintf(
             stderr,
             "===============================\nTES capacity: %.3f MWhth\nP_PV_in: %.3f MWe\nP_PV_AEL: %.3f MWe\nP_PV_TES: %.3f MWe\nP_PV_dumped: %.3f MWe\nQ_SF_in: %.3f MWth\nQ_SF_TES: %.3f MWth\nQ_SF_dumped: %.3f MWth\nQ_TES_PB: %.3f MWth\nQ_TES_HX: %.3f MWth\nQ_TES_HX_max: %.3f MWth\nH2 stg level: %.2f \%\nTES init: %.2f \%\nTES level: %.2f \%\nQ_H2_reactor: %.3f MWth\nQ_H2_reactor_max: %.3f MWth\nQ_H2_burner: %.3f MWth\nQ_H2_burner_max: %.3f MWth\nt0: %.2f s\n===============================\n",
-            TES_capacity, P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped, Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2stg_init/H2stg_capacity*100, E_TES_init/TES_capacity*100,TES_level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner,t0
+            TES_capacity, P_PV_in_z[0] ,P_PV_AEL, P_PV_TES, P_PV_dumped, Q_SF_in, Q_SF_TES, Q_SF_dumped, Q_TES_PB, Q_TES_HX, Q_TES_HX_max, H2stg_init/H2stg_capacity*100, E_TES_init/TES_capacity*100,TES_level, Q_H2_reactor, Q_H2_reactor_max, Q_H2_burner, Q_TES_HX_max/etaBurner*um,t0
         );
         */
+        
         
         
 
