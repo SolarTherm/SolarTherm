@@ -23,10 +23,9 @@ within SolarTherm.Models.PowerBlocks.sCO2Cycle.OnDesign;
 	ex_d = Q_heater * (1 - T_amb / T_high) + port_a.m_flow * (state_a.h - T_amb * MedPB.specificEntropy(state_a)) + port_b.m_flow * (state_b.h - T_amb * MedPB.specificEntropy(state_b));
 	annotation(
 		Documentation(info = "<html>
-		<p> This heater is useful to perform quicker on-design analysis of the cycles. </p>
-		</html>"));
-	annotation(
+			<p> This heater is useful to perform quicker on-design analysis of the cycles. </p>
+			</html>"),
 		Icon(coordinateSystem(initialScale = 0.1), graphics = {Rectangle(origin = {0, -2}, extent = {{-48, 62}, {48, -62}}), Text(origin = {2, -2}, extent = {{-36, 12}, {36, -12}}, textString = "HEATER")}),
-	Diagram(graphics = {Rectangle(origin = {2, 6}, extent = {{-44, 64}, {44, -64}}), Text(origin = {-30, 1}, extent = {{0, -1}, {64, 25}}, textString = "HEATER", fontSize = 15)}),
-	__OpenModelica_commandLineOptions = "");
+		Diagram(graphics = {Rectangle(origin = {2, 6}, extent = {{-44, 64}, {44, -64}}), Text(origin = {-30, 1}, extent = {{0, -1}, {64, 25}}, textString = "HEATER", fontSize = 15)}),
+		__OpenModelica_commandLineOptions = "");
 end Heater;

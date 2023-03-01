@@ -64,17 +64,14 @@ model HeatRecuperatorTLMD "The heat recuperator is subdivised in N_q segments in
 	ex_d = from_turb_port_a.m_flow * (state_from_turb[N_q].h - T_amb * MedPB.specificEntropy(state_from_turb[N_q])) + from_turb_port_b.m_flow * (state_from_turb[1].h - T_amb * MedPB.specificEntropy(state_from_turb[1])) + from_comp_port_b.m_flow * (state_from_comp[N_q].h - T_amb * MedPB.specificEntropy(state_from_comp[N_q])) + from_comp_port_a.m_flow * (state_from_comp[1].h - T_amb * MedPB.specificEntropy(state_from_comp[1]));
 	annotation(
 		Diagram(graphics = {Rectangle(origin = {1, 7}, extent = {{-61, 31}, {61, -31}}), Text(origin = {5, 1}, extent = {{-53, -17}, {53, 17}}, textString = "RECUPERATOR")}),
-	Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-65, 33}, {65, -33}}), Text(origin = {-2, -5}, extent = {{-46, -15}, {46, 15}}, textString = "RECUPERATOR")}));
-	annotation(
+		Icon(graphics = {Rectangle(origin = {-3, -9}, extent = {{-65, 33}, {65, -33}}), Text(origin = {-2, -5}, extent = {{-46, -15}, {46, 15}}, textString = "RECUPERATOR")}),
 		Documentation(info = "<html>
-		<p>&nbsp;</p>
-		<p> The heat recuperator is subdivised in N_q segments in order to accurately represent the CO2 properties variation.</p>
-	<p>This subdivision is based on the heat exchanged between both sides: it is even for all subdivision (Q_HX_HTR_dis).&nbsp;</p>
-	<p>The closure equations are first the equality of the heat exchanged in every sub-HX and by imposing a pinch (of 5&deg;C in general).</p>
-	<p> The conductance in each sub-HX is calculated with Q=UA*TLMD, TLMD being the logarithmic temperature difference. </p>
-	<p>The parameters to integrate in the off-design PB are the UA_dis, which can be done with the CSV button.&nbsp;</p>
-	<p>&nbsp;</p>
-		</html>"));
+			<p> The heat recuperator is subdivised in N_q segments in order to accurately represent the CO2 properties variation.</p>
+			<p>This subdivision is based on the heat exchanged between both sides: it is even for all subdivision (Q_HX_HTR_dis).&nbsp;</p>
+			<p>The closure equations are first the equality of the heat exchanged in every sub-HX and by imposing a pinch (of 5&deg;C in general).</p>
+			<p> The conductance in each sub-HX is calculated with Q=UA*TLMD, TLMD being the logarithmic temperature difference. </p>
+			<p>The parameters to integrate in the off-design PB are the UA_dis, which can be done with the CSV button.&nbsp;</p>
+			</html>"));
 end HeatRecuperatorTLMD;
 
 

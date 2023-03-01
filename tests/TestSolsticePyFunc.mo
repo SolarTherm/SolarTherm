@@ -12,7 +12,9 @@ block TestSolsticePyFunc
     input String varnames[:];
     input Real vars[:];
     output String result;
-    external result =RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
+    // FIXME let's update RunSolsticeFunc so that it doesn't need pname, pfunc and ideally psave?
+    // Having to pass ppath is perhaps unavoidable, on the othe hand.
+    external result = RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
       annotation(
         Library="st_solsticepy"
         ,LibraryDirectory="modelica://SolarTherm/Resources/Library"
@@ -25,9 +27,9 @@ block TestSolsticePyFunc
   parameter String ppath = 
       Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Resources/Library")
       "Absolute path to the Python script";
-  parameter String pname = "run_solstice" "Name of the Python script";
-  parameter String pfunc = "run_simul" "Name of the Python functiuon"; 
-  parameter String psave = "Test_SolsticePyFunc";    
+  parameter String pname = "run_solstice" "Name of the Python script"; // FIXME can't we remove this?
+  parameter String pfunc = "run_simul" "Name of the Python functiuon"; // FIXME can't we remove this?
+  parameter String psave = "Test_SolsticePyFunc"; // FIXME can't we remove this?
   parameter String field_type = "polar" "Other options are : surround";
   parameter String rcv_type = "flat" "other options are : flat, cylinder, stl";  
   parameter String wea_file = 

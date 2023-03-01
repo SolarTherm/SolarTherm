@@ -58,9 +58,8 @@ model Exchanger "0D model of a heat exchanger between the HTF and the CO2"
 		<p>The exchanger is not divided in sub-HX, as the Cp of the CO2 is almost constant in this area (high pressure, high T).&nbsp;</p>
 	<p>Closure equations are based on the equality of the energy exchanged and by imposing a pinch.</p>
 	<p>Parameter to integrate in the off-design PB is the UA_TLMD.</p>
-		</html>"));
-	annotation(
+		</html>"),
 		Diagram(graphics = {Rectangle(origin = {1, 4}, extent = {{-57, 40}, {57, -40}}), Text(origin = {-1, 8}, extent = {{-47, 16}, {47, -16}}, textString = "Exchanger")}),
-	experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
-	Icon(graphics = {Rectangle(origin = {-8, -7}, extent = {{-62, 39}, {62, -39}}), Text(origin = {-6, -13}, extent = {{-48, 21}, {48, -21}}, textString = "Exchanger")}));
+		experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
+		Icon(graphics = {Rectangle(origin = {-8, -7}, extent = {{-62, 39}, {62, -39}}), Text(origin = {-6, -13}, extent = {{-48, 21}, {48, -21}}, textString = "Exchanger")}));
 end Exchanger;

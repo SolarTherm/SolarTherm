@@ -1,8 +1,10 @@
-import unittest, os
+import pytest, os
 from pathlib import Path
 import subprocess as sp
 import platform, shutil, sys
+import packaging.version as pv
 
+@pytest.mark.dependency(name="solstice")
 def test_solstice_version():
 	print("SYS.PATH =",sys.path)
 	import solsticepy
@@ -38,6 +40,6 @@ def test_solstice_version():
 	if ret.returncode != 0:
 		raise RuntimeError("Running 'solstice --version' returned an error code")
 	version = ret.stdout
-	assert version.strip() == "Solstice 0.9.0"
+	assert pv.parse(version.strip().split(" ")[1]) >= pv.parse("0.9")
 
 # vim: ts=4:sw=4:noet:tw=80

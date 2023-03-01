@@ -47,23 +47,22 @@ model Turbine
 	port_a.h_outflow = inStream(port_b.h_outflow);
 	annotation(
 		Diagram(graphics = {Text(origin = {-36, -28}, extent = {{18, 80}, {78, 16}}, textString = "TURBINE"), Polygon(origin = {15, 20}, points = {{-35, 44}, {-35, -52}, {35, -68}, {35, 68}, {-35, 44}, {35, 68}, {-35, 44}})}, coordinateSystem(initialScale = 0.1)),
-	Icon(graphics = {Text(origin = {-10, 26}, extent = {{-10, 12}, {52, -34}}, textString = "TURBINE"), Ellipse(extent = {{56, 58}, {56, 58}}, endAngle = 360), Polygon(origin = {11, 17}, points = {{-37, 49}, {-37, -51}, {37, -71}, {37, 71}, {-37, 49}})}, coordinateSystem(initialScale = 0.1)));
-	annotation(
+		Icon(graphics = {Text(origin = {-10, 26}, extent = {{-10, 12}, {52, -34}}, textString = "TURBINE"), Ellipse(extent = {{56, 58}, {56, 58}}, endAngle = 360), Polygon(origin = {11, 17}, points = {{-37, 49}, {-37, -51}, {37, -71}, {37, 71}, {-37, 49}})}, coordinateSystem(initialScale = 0.1)),
 		Documentation(info = "<html>
-		<p>&nbsp;</p>
-	<div>0D Model of a sCO2 turbine.</div>
-	<div>The model is based on the thesis of J. Dyreby. The diameter of the turbine is calculated in order to maximize the efficiency at the design point.</div>
-	<div></div>
-	<div>The on-design calculation of the cycle gives us as results to be integrated in the off-design power blocks:</div>
-	<div>
-	<ul>
-	<li>Diameter of the turbine</li>
-	<li>Area of the nozzle</li>
-	</ul>
-	</div>
-	<p>J. J. Dyreby, &laquo;&nbsp;Modeling the supercritical
-	carbon dioxide Brayton cycle with recompression&nbsp;&raquo;, The University of
-	Wisconsin-Madison, 2014. Available at https://sel.me.wisc.edu/publications-theses.shtml</p>
-	<p>&nbsp;</p>
-		</html>"));
+			<p>&nbsp;</p>
+			<div>0D Model of a sCO2 turbine.</div>
+			<div>The model is based on the thesis of J. Dyreby. The diameter of the turbine is calculated in order to maximize the efficiency at the design point.</div>
+			<div></div>
+			<div>The on-design calculation of the cycle gives us as results to be integrated in the off-design power blocks:</div>
+			<div>
+			<ul>
+			<li>Diameter of the turbine</li>
+			<li>Area of the nozzle</li>
+			</ul>
+			</div>
+			<p>J. J. Dyreby, &laquo;&nbsp;Modeling the supercritical
+			carbon dioxide Brayton cycle with recompression&nbsp;&raquo;, The University of
+			Wisconsin-Madison, 2014. Available at https://sel.me.wisc.edu/publications-theses.shtml</p>
+			<p>&nbsp;</p>
+			</html>"));
 	end Turbine;

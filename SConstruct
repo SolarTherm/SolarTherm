@@ -1,6 +1,5 @@
 import re, os, sys, platform, shutil, colorama; from pathlib import Path, PurePath
-import subprocess as sp
-import packaging.version as pv
+import tempfile, subprocess as sp, packaging.version as pv
 colorama.init()
 
 # build script for SolarTherm -- use 'scons' to run it.
@@ -17,7 +16,8 @@ default_pyversion = "%d.%d" % (sys.version_info[0],sys.version_info[1])
 
 #print('system',platform.system())
 if platform.system()=="Windows" or "MINGW" in platform.system():
-	if os.environ.get('MSYSTEM') == "MINGW64":
+	msystem = os.environ.get('MSYSTEM')
+	if msystem == "MINGW64" or msystem == "UCRT64":
 		default_prefix=Path(os.environ['HOME'])/'.local'
 		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
@@ -198,11 +198,16 @@ def check_omc(ct):
 	if not omc.exists():
 		ct.Result('Not found')
 		return False
+	env['OMC']=omc
 	try:
 		call = [omc,'--version']
-		res = sp.run(call,check=True,capture_output=True,encoding='utf8') # TODO check the version is OK
-		omverstr = res.stdout.strip().split(" ")[1]
-		omver = pv.parse(omverstr)
+		res = sp.run(call,check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf8') # TODO check the version is OK
+		omverstr = res.stdout.strip()
+		if omverstr == 'unknown': # FIXME hack for missing version number in our home-made omc:
+			omver = pv.parse('1.14.0')
+		else:
+			omverstr = omverstr.split(" ")[1]
+			omver = pv.parse(omverstr)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
 		return False
@@ -229,7 +234,7 @@ def check_omlibrary(ct):
 		mslver = None
 		for p1 in p.glob("Modelica *"):
 			mslver = pv.parse(p1.name.split(" ")[1])
-			if mslver >= pv.parse("3.2.3") and mslver < pv.parse("4"):
+			if mslver >= pv.parse("3.2.2") and mslver < pv.parse("4"):
 				assert (p1/'SIunits.mo').exists(),"No SIunits.mo file found in %s" % (str(p1))
 				ct.Result(str(mslver))
 				return True
@@ -242,6 +247,31 @@ def check_omlibrary(ct):
 		ct.Result("Failed (%s)"%(str(e),))
 		return False
 
+def install_omlibrary(ct):
+	"""
+	On a new system with OM 1.20.0, we need to call omc with a script requesting to 
+	install the Modelica library via the the OM Package Manager. That will extract the MSL files
+	from the omlibrary cache.
+	"""
+	ct.Message("Extract MSL from omlibrary cache...")
+	sys.stdout.flush()
+	if ct.env['OMVER'] < pv.parse('1.20'):
+		ct.Result("OM too old; check instructions for installing MSL.")
+		return False
+	else:
+		#with tempfile.NamedTemporaryFile(mode='w',delete=True,suffix='.mos') as tmpf:
+		with open('myscript.mos','w') as tmpf:
+			tmpf.write("installPackage(Modelica,\"3.2.3\")\n")
+			tmpf.flush()
+			try:
+				res = sp.run([env['OMC'],tmpf.name],check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
+				assert res.stdout.strip() == "true","Unexpected output '%s'"%(res.stdout,)
+			except Exception as e:
+				ct.Result("Failed (%s)"%(str(e),))
+				return False
+		ct.Result("Installed")
+		return True
+	
 def check_mpi(ct):
 	ct.Message("Checking for mpirun/mpiexec... ")
 	mpirun = shutil.which(ct.env['MPIRUN'])
@@ -350,6 +380,7 @@ conf = env.Configure(custom_tests={
 	,'DAKPY':check_dakota_python
 	,'OMC':check_omc
 	,'OMLib':check_omlibrary
+	,'installOMLib':install_omlibrary
 	,'MPI':check_mpi
 	,'PATH':check_path
 	,'TF':check_tensorflow
@@ -364,8 +395,9 @@ if not conf.OMC():
 	print(REDWARN("Unable to locate OpenModelica 'omc' executable. Unable to continue."))
 	Exit(1)
 if not conf.OMLib():
-	print(REDWARN("Unable to locate MSL for OpenModelica. Unable to continue."))
-	Exit(1)
+	if not conf.installOMLib() or not conf.OMLib():
+		print(REDWARN("Unable to locate/install MSL for OpenModelica. Unable to continue."))
+		Exit(1)
 if not conf.MPI():
 	print(REDWARN("Warning: unable to run '%s', needed for parallel optimisation"%(env['MPIRUN'])))
 if not conf.PATH():

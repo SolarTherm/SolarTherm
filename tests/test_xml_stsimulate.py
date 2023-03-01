@@ -1,7 +1,6 @@
-#! /bin/env python
-
 from __future__ import division
-import unittest
+import pytest
+import cleantest
 
 from solartherm import simulation
 from solartherm import postproc
@@ -10,7 +9,7 @@ import DyMat
 import xml.etree.ElementTree as ET
 import xml
 
-def ST():
+def STshell():
 	# follow the same pattern as in weatherFileChecker.mo..\
 	ST = os.environ.get('SOLARTHERM_SHELL')
 	assert ST
@@ -55,42 +54,38 @@ class ProcessXML:
         self.init_et.write(self.xmlfile)      
 
 
-class TestXMLparameter(unittest.TestCase):
-	def setUp(self):
-		fn = '../examples/Reference_2.mo'
-		res_fn='./Reference_2_res_0.mat'
-		xml_fn='./Reference_2_init_0.xml'
-		#xml_fn2='./Reference_2_init.xml'
-		self.sm=2.8
-		self.t_storage=9
-		
-		
-		cmd = ST() + ['simulate',fn,'SM=%s'%(self.sm,),'t_storage=%s'%(self.t_storage,)]
-		print("CMD =",cmd)
-		shell = False
-		if platform.system()=="Windows":
-			shell=True
-		subprocess.run(cmd,shell=shell,check=True)
-		
-		self.mat=DyMat.DyMatFile(res_fn)
-		self.pxml=ProcessXML(xml_fn)
-		#self.pxml2=ProcessXML(xml_fn2)
+def test_xml_stsimulate():
+	fn = '../examples/Reference_2.mo'
+	res_fn='./Reference_2_res_0.mat'
+	xml_fn='./Reference_2_init_0.xml'
+	#xml_fn2='./Reference_2_init.xml'
+	sm=2.8
+	t_storage=9
+	
+	cmd = STshell() + ['simulate',fn,'SM=%s'%(sm,),'t_storage=%s'%(t_storage,)]
+	print("CMD =",cmd)
+	shell = False
+	if platform.system()=="Windows":
+		shell=True
+	subprocess.run(cmd,shell=shell,check=True)
+	
+	mat=DyMat.DyMatFile(res_fn)
+	pxml=ProcessXML(xml_fn)
 
-	def test_sched(self):
-		sm=self.mat.data("SM")
-		st=self.mat.data("t_storage")
-		print('')
-		print('     :', 'sm ', 't_storage')
-		print('model:', sm[0], st[0])
-		print('input:', self.sm, self.t_storage)
-		print('xml_0:', self.pxml.read_par("SM"), self.pxml.read_par("t_storage"))
-		#print 'xml  :',self.pxml2.read_par("SM"),self.pxml2.read_par("t_storage")
+	SM=mat.data("SM")
+	ST=mat.data("t_storage")
+	print('')
+	print('     :', 'sm ', 't_storage')
+	print('model:', SM[0], ST[0])
+	print('input:', sm, t_storage)
+	print('xml_0:', pxml.read_par("SM"), pxml.read_par("t_storage"))
 
-		self.assertEqual(sm[0], self.sm)
-		self.assertEqual(st[0], self.t_storage)
-		os.system('rm Reference_2*')
+	assert SM[0] == sm
+	assert ST[0] == t_storage
+	#cleantest.clean("Reference_2") # clash with test_xml_param.py
 
 
 if __name__ == '__main__':
 	unittest.main()
 
+# vim: ts=4:sw=4:noet:tw=80

@@ -2,9 +2,21 @@
 from __future__ import division
 import os, platform
 import pytest
+import subprocess as sp
+import packaging.version as pv
 
-@pytest.mark.skipif(platform.system()=="Windows", reason="strange behaviour with Optimica on MSYS2")
+omcver = pv.parse('0')
+try:
+	if platform.system()!="Windows":
+		res = sp.run(['omc','--version'],stdout=sp.PIPE,stderr=sp.PIPE,check=True,encoding='utf-8')
+		omcver = pv.parse(res.stdout.strip().split(' ')[1])
+except:
+	pass
+
+@pytest.mark.skipif(omcver <= pv.parse('1.14.2'), reason="Optimica known to fail in old OM (got %s)"%(omcver))
+#@pytest.mark.skipif(platform.system()=="Windows", reason="strange behaviour with Optimica on MSYS2")
 def test_optimum():
+	print("DOING IT")
 	from solartherm import simulation
 	from solartherm import postproc
 	import cleantest
@@ -23,3 +35,5 @@ def test_optimum():
 
 	cleantest.clean('AO')
 
+if __name__=='__main__':
+	test_optimum()

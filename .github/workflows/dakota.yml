@@ -8,35 +8,49 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-    env:
-      DAKVER: 6.14.0
+        os: [ubuntu-20.04, ubuntu-18.04, ubuntu-22.04]
+        include:
+          - os: ubuntu-18.04
+            DAKVER: 6.14.0
+            DAKDIRSUFFIX: '.src' # NB: use '.src' for 6.14!
+          - os: ubuntu-20.04
+            DAKVER: 6.17.0
+            DAKDIRSUFFIX: '-release-public-src-cli'
+          - os: ubuntu-22.04
+            DAKVER: 6.17.0
+            DAKDIRSUFFIX: '-release-public-src-cli'
 
     steps:
     - uses: actions/checkout@v2
 
+    - name: Use a different Ubuntu mirror
+      run: |
+        sudo sed -i 's/azure\.archive\.ubuntu\.com/mirror\.lostpacket\.org/' /etc/apt/sources.list
+        sudo cat /etc/apt/sources.list
+
     - name: Install dependencies
       run: |
-        sudo apt install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python perl libhdf5-dev
+        sudo apt-get update
+        sudo apt-get install gcc g++ gfortran cmake libboost-all-dev libblas-dev liblapack-dev libopenmpi-dev openmpi-bin gsl-bin libgsl-dev python3 perl libhdf5-dev
 
     - name: Download DAKOTA
       run: |
-        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-$DAKVER-release-public-src-cli.tar.gz
-        tar zxf dakota-$DAKVER-release-public-src-cli.tar.gz
+        wget https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-${{ matrix.DAKVER }}-release-public-src-cli.tar.gz
+        tar zxf dakota-${{ matrix.DAKVER }}-release-public-src-cli.tar.gz
         ls -l
-        cd dakota-${DAKVER}.src
+        cd dakota-${{ matrix.DAKVER }}${{ matrix.DAKDIRSUFFIX }}
         
     - name: Build DAKOTA
       run: |
-        cd dakota-${DAKVER}.src
+        cd dakota-${{ matrix.DAKVER }}${{ matrix.DAKDIRSUFFIX }}
         mkdir build && cd build
         cmake -DCMAKE_C_FLAGS="-O2" -DCMAKE_CXX_FLAGS="-O2" -DCMAKE_Fortran_FLAGS="-O2" -DDAKOTA_HAVE_GSL:BOOL=TRUE -DHAVE_QUESO:BOOL=TRUE -DDAKOTA_HAVE_MPI:BOOL=TRUE -DDAKOTA_HDF5:BOOL=TRUE -DBoost_NO_BOOST_CMAKE:BOOL=TRUE ..
         make
         
     - name: Install DAKOTA
       run: |
-        cd dakota-${DAKVER}.src/build
-        export PKGN=dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
+        cd dakota-${{ matrix.DAKVER }}${{ matrix.DAKDIRSUFFIX }}/build
+        export PKGN=dakota-${{ matrix.DAKVER }}-${{ matrix.os }}-x86_64-jp
         mkdir -p $HOME/install/$PKGN
         make DESTDIR=$HOME/install/$PKGN install
         cd $HOME/install
@@ -45,7 +59,7 @@ jobs:
     - name: Upload DAKOTA binary
       uses: actions/upload-artifact@v2
       with:
-        name: dakota-${{ matrix.os }}
+        name: dakota-${{ matrix.DAKVER }}-${{ matrix.os }}
         path: ~/install/dakota-*.tar.gz
 
 

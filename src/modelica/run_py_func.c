@@ -1,6 +1,9 @@
 #include <Python.h>
 #include <stdio.h>
 
+// FIXME if there are errors (even syntax errors) in run_solstice.py, we need
+// a way of reporting them to the user. TODO!
+
 const char* RunSolsticeFunc(const char *ppath, const char *pname
 	, const char *pfunc, const char *psave,  const char *field_type
 	, const char *rcv_type, const char *wea_file, int argc

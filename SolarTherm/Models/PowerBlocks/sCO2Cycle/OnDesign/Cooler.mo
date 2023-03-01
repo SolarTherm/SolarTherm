@@ -50,14 +50,11 @@ model Cooler "0D model of a dry-cooler"
 	
 	annotation(
 		Icon(graphics = {Rectangle(origin = {2, 1}, extent = {{-58, 65}, {58, -65}}), Text(origin = {0, -1}, extent = {{-40, -15}, {40, 15}}, textString = "COOLER")}),
-	Diagram(graphics = {Rectangle(origin = {-4, 7}, extent = {{-64, 67}, {64, -67}}), Text(origin = {5, 14}, extent = {{-41, -12}, {41, 12}}, textString = "COOLER")}));
-	annotation(
+		Diagram(graphics = {Rectangle(origin = {-4, 7}, extent = {{-64, 67}, {64, -67}}), Text(origin = {5, 14}, extent = {{-41, -12}, {41, 12}}, textString = "COOLER")}),
 		Documentation(info = "<html>
-		<p> The overall conductance UA of the cooler is calculated with a logarithmic temperature difference. It is implemented in order to ensure convergence. </p>
-		<p>The Cp is varying from 4kJ/kg.K to 1.2 kJ/kg.K in this temperature/pressure range. It is therefore not very accurate but can be used for economical estimations. </p>
-		<p> The outlet temperature is fixed by the user. The electrical power necessary for the fans is estimated by	P_elec/(Q_cooler*deltaT_average)=constante, for any sCO2/air HX. P_elec is the power to run the fans, Q_cooler is the energy exchanged with outside and deltaT_average is the average of T_CO2-T_amb, the average is taken between the outlet and the inlet. </p>
-		<p> Reference values (but not model) come from: </p> <p>Sienicki, James J., Moisseytsev, Anton, and Lv, Qiuping. Dry Air Cooling and the sCO2 Brayton Cycle. Proceedings of the ASME Turbo Expo 2017: Turbomachinery Technical Conference and Exposition. Volume 9: Oil and Gas Applications; Supercritical CO2 Power Cycles; Wind Energy. Charlotte, North Carolina, USA. June 26–30, 2017. V009T38A015. ASME. https://doi.org/10.1115/GT2017-64042	</p>
-			
-	
-		</html>"));
+			<p> The overall conductance UA of the cooler is calculated with a logarithmic temperature difference. It is implemented in order to ensure convergence. </p>
+			<p>The Cp is varying from 4kJ/kg.K to 1.2 kJ/kg.K in this temperature/pressure range. It is therefore not very accurate but can be used for economical estimations. </p>
+			<p> The outlet temperature is fixed by the user. The electrical power necessary for the fans is estimated by	P_elec/(Q_cooler*deltaT_average)=constante, for any sCO2/air HX. P_elec is the power to run the fans, Q_cooler is the energy exchanged with outside and deltaT_average is the average of T_CO2-T_amb, the average is taken between the outlet and the inlet. </p>
+			<p> Reference values (but not model) come from: </p> <p>Sienicki, James J., Moisseytsev, Anton, and Lv, Qiuping. Dry Air Cooling and the sCO2 Brayton Cycle. Proceedings of the ASME Turbo Expo 2017: Turbomachinery Technical Conference and Exposition. Volume 9: Oil and Gas Applications; Supercritical CO2 Power Cycles; Wind Energy. Charlotte, North Carolina, USA. June 26–30, 2017. V009T38A015. ASME. https://doi.org/10.1115/GT2017-64042	</p>
+			</html>"));
 end Cooler;

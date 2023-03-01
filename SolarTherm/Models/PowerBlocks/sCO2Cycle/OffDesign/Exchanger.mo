@@ -56,12 +56,11 @@ within SolarTherm.Models.PowerBlocks.sCO2Cycle.OffDesign;
 		HTF_port_a.p = HTF_port_b.p;
 		annotation(
 			Diagram(graphics = {Rectangle(origin = {1, 4}, extent = {{-57, 40}, {57, -40}}), Text(origin = {-1, 8}, extent = {{-47, 16}, {47, -16}}, textString = "Exchanger")}),
-			experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002));
-		annotation(
+			experiment(StartTime = 0, StopTime = 1, Tolerance = 1e-6, Interval = 0.002),
 			Documentation(info = "<html>
-			<p>The exchanger is a heat exchanger between the HTF and the CO2. It is a counterflow HX, based on a TLMD. The conductance UA has to be specified from the on-design.</p>
-	<p>The conductance in off-design varies as UA_Off=UA_on*(m_flow/m_design)^0.8.&nbsp;<span >The average between the two mass flows is taken.</span></p>
-	<p>A.T. Louis et T. Neises, analysis and optimization for Off-design performance of the recompression s-CO2 cycles for high temperature CSP applications, in The 5th International Symposium-Supercritical CO2 Power Cycles, 2016</p>
-	<p>&nbsp;</p>
-			</html>"));
+				<p>The exchanger is a heat exchanger between the HTF and the CO2. It is a counterflow HX, based on a TLMD. The conductance UA has to be specified from the on-design.</p>
+				<p>The conductance in off-design varies as UA_Off=UA_on*(m_flow/m_design)^0.8.&nbsp;<span >The average between the two mass flows is taken.</span></p>
+				<p>A.T. Louis et T. Neises, analysis and optimization for Off-design performance of the recompression s-CO2 cycles for high temperature CSP applications, in The 5th International Symposium-Supercritical CO2 Power Cycles, 2016</p>
+				<p>&nbsp;</p>
+				</html>"));
 	end Exchanger;

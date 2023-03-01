@@ -5,7 +5,12 @@ import numpy as np
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
-from solsticepy.output_motab import output_matadata_motab, output_motab, read_motab
+from solsticepy.output_motab import output_motab, read_motab
+try:
+	from solsticepy.output_motab import output_metadata_motab
+except ImportError:
+	# annoying spelling mistake, correction yet to be uploaded to PyPI
+	from solsticepy.output_motab import output_matadata_motab as output_metadata_motab
 
 
 def set_param(inputs={}):
@@ -19,7 +24,7 @@ def set_param(inputs={}):
         if hasattr(pm, k):
             setattr(pm, k, v)
         else:
-            raise RuntimeError("invalid paramter '%s'"%(k,)) 
+            raise RuntimeError("invalid paramter '%s'"%(k,))
 
     pm.dependent_par()
     return pm
@@ -48,9 +53,9 @@ def run_simul(inputs={}):
     pm.saveparam(casedir)
     tablefile=casedir+'/OELT_Solstice.motab'
     if os.path.exists(tablefile):    
-        print('')
-        print('Load exsiting OELT')
-
+        print()
+        print("Load existing OELT from '%s'"%(tablefile))
+        # just because the file exists doesn't mean it's correct/complete. How to check that?
     else:
 
         crs=CRS(latitude=pm.lat, casedir=casedir)
@@ -75,7 +80,7 @@ def run_simul(inputs={}):
         else:
                                           
             A_helio=pm.H_helio*pm.W_helio
-            output_matadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
+            output_metadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
             end=time.time()
             print('')
             print('total time %.2f'%((end-start)/60.), 'min')
@@ -101,7 +106,7 @@ if __name__=='__main__':
     n_W_rcv=50
     n_H_rcv=10
     n_rays=10e6
-    rcv_type='cylinder'    
+    rcv_type='cylinder'
 
     field_type='surround'
     wea_file='../../SolarTherm/Data/Weather/gen3p3_Daggett_TMY3_EES.motab'
@@ -109,4 +114,4 @@ if __name__=='__main__':
 
     run_simul(inputs)
 
-
+# vim: ts=4:sw=4:tw=80:noet
