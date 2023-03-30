@@ -130,20 +130,20 @@ equation
 
   //Figure out which tanks need which equations and connections
   if fluid_a.m_flow > 0.0 then //Charging
-      Tank_A.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_A.m_flow = (-1.0 * fluid_a.m_flow)/frac_1;
       Tank_A.h_in = inStream(fluid_a.h_outflow);
-      Tank_B.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_B.m_flow = (-1.0 * fluid_a.m_flow)/frac_2;
       Tank_B.h_in = inStream(fluid_a.h_outflow);
-      Tank_C.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_C.m_flow = (-1.0 * fluid_a.m_flow)/(1.0-frac_1-frac_2);
       Tank_C.h_in = inStream(fluid_a.h_outflow);
       fluid_a.h_outflow = frac_1*Tank_A.h_in + frac_2*Tank_B.h_in + (1.0-frac_1-frac_2)*Tank_C.h_in;
       fluid_b.h_outflow = frac_1*Tank_A.h_out + frac_2*Tank_B.h_out + (1.0-frac_1-frac_2)*Tank_C.h_out;
   else //Discharging
-      Tank_A.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_A.m_flow = (-1.0 * fluid_a.m_flow)/frac_1;
       Tank_A.h_in = inStream(fluid_b.h_outflow);
-      Tank_B.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_B.m_flow = (-1.0 * fluid_a.m_flow)/frac_2;
       Tank_B.h_in = inStream(fluid_b.h_outflow);
-      Tank_C.m_flow = (-1.0 * fluid_a.m_flow)/3.0;
+      Tank_C.m_flow = (-1.0 * fluid_a.m_flow)/(1.0-frac_1-frac_2);
       Tank_C.h_in = inStream(fluid_b.h_outflow);
       fluid_a.h_outflow = frac_1*Tank_A.h_out + frac_2*Tank_B.h_out + (1.0-frac_1-frac_2)*Tank_C.h_out;
       fluid_b.h_outflow = frac_1*Tank_A.h_in + frac_2*Tank_B.h_in + (1.0-frac_1-frac_2)*Tank_C.h_in;

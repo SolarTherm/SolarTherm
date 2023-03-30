@@ -27,6 +27,6 @@ partial model Temperature
   annotation (Icon(coordinateSystem(preserveAspectRatio=true,  extent={{-100,-100},{100,
               100}})),                  Diagram(coordinateSystem(
           preserveAspectRatio=false)),
-              Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+              Icon(coordinateSystem(initialScale = 0.1), graphics = {Line(points = {{-90, 0}, {-12, 0}}, color = {0, 0, 127}, thickness = 0.5), Line(origin = {51, -0.33}, points = {{-39, 0.329154}, {39, 0.329154}}, color = {0, 0, 127}, thickness = 0.5)}), Diagram(
         coordinateSystem(preserveAspectRatio=false)));
 end Temperature;

@@ -23,7 +23,7 @@ model PBS_Receiver_Dish
   parameter SI.HeatFlowRate Q_des_blk = 200.0e6 "Power block design heat input rate, also defocus power";
   SI.HeatFlowRate Q_loss;
   SI.HeatFlowRate Q_rad;
-  SI.HeatFlowRate Q_conv;
+  //SI.HeatFlowRate Q_conv;
   
   //SI.Temperature T_4 "Power 4 average of inlet and outlet (K)";
   //SI.Temperature T_avg "Linear average of inlet and outlet (K)";
@@ -106,11 +106,11 @@ equation
   //T_avg = 0.5*(T_in + T_out);
   
   Q_rad = A*sigma*em*((medium.T^4)-(Tamb^4));
-  Q_conv = A*h_conv*(medium.T-Tamb);
+  //Q_conv = A*h_conv*(medium.T-Tamb);
   
-  Q_rcv_raw = ab*heat.Q_flow-Q_rad-Q_conv; //Theoretical net receiver output before curtailment
+  Q_rcv_raw = ab*heat.Q_flow-Q_rad;//-Q_conv; //Theoretical net receiver output before curtailment
   if fluid_a.m_flow > 1e-6 then
-    Q_loss = -1.0*(Q_rad+Q_conv);
+    Q_loss = -1.0*(Q_rad);//+Q_conv);
     Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_defocus) else Q_rcv_raw);
     //Q_rcv = (if defocus == true then min(Q_rcv_raw,Q_des_blk) else Q_rcv_raw);
     //Q_rcv=fluid_a.m_flow*(h_out-h_in);

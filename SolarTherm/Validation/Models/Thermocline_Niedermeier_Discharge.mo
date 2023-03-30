@@ -12,7 +12,7 @@ model Thermocline_Niedermeier_Discharge
   package CaO = SolarTherm.Materials.CaO;
   package Quartzite = SolarTherm.Materials.Quartzite_Sand;
 
-  parameter Integer N_f = 360;
+  parameter Integer N_f = 250;
   parameter Integer N_p = 10;
   parameter SI.Length H_tank = 6.1;
   parameter SI.Diameter D_tank = 3.0;
