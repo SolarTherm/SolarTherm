@@ -3,10 +3,10 @@ model SSCSP_PowerBlockModel_sCO2NREL_574C_290C
   extends Interfaces.Models.PowerBlock;
 
   replaceable model Cycle =
-     SolarTherm.Models.PowerBlocks.Correlation.sCO2NREL_31p5kWe_574C_290C constrainedby
+     SolarTherm.Models.PowerBlocks.Correlation.sCO2NREL_574C_290C constrainedby
     SolarTherm.Models.PowerBlocks.Correlation.Cycle
     annotation (Dialog(group="Regresion"),choicesAllMatching=true);
-  Cycle cycle(T_in=T_in,load=load,T_amb=T_amb_internal, final T_in_ref=T_in_ref);
+  Cycle cycle(T_in=T_in,load=load,T_amb=T_amb_internal,  final T_in_ref=T_in_ref, final P_name=P_name);
 
   parameter SI.Power P_name = 31.5e3 "Nameplate rating of power block";
   parameter SI.HeatFlowRate W_des=P_name/nu_net "Design turbine gross output" annotation (Dialog(group="Design"));

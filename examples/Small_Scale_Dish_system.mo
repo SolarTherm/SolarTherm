@@ -20,7 +20,7 @@ model Small_Scale_Dish_system
   replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph "Medium props for molten salt";
   //Replaceable Models
   //**********************
-  replaceable model Cycle = SolarTherm.Models.PowerBlocks.Correlation.sCO2NREL_31p5kWe_574C_290C;
+  replaceable model Cycle = SolarTherm.Models.PowerBlocks.Correlation.sCO2NREL_574C_290C;
   replaceable model Cooling = SolarTherm.Models.PowerBlocks.Cooling.NoCooling "PB cooling model";
   //Imported Files
   //**********************
