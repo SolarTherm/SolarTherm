@@ -33,7 +33,9 @@ model Tank
                                                            annotation (Dialog(group="Heater"));
   parameter SI.Efficiency e_ht=0.99 "Tank Heater Efficiency"
                                                             annotation (Dialog(group="Heater"));
-
+  
+  Modelica.Blocks.Interfaces.RealOutput h_fluid = medium.h "Enthalpy of fluid" annotation (Placement(visible = true, transformation(origin = {107, 3}, extent = {{-11, -11}, {11, 11}}, rotation = 0), iconTransformation(origin = {102, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0))) ;
+  
   SI.Volume V;
 
   SI.Mass m;
@@ -75,6 +77,13 @@ protected
   Modelica.Blocks.Interfaces.RealInput p_top_internal;
   Modelica.Blocks.Interfaces.RealInput T_amb_internal;
 
+algorithm
+  when medium.T<T_set then
+	W_net:=min(-Q_losses,W_max)*1.05;
+  elsewhen medium.T>T_set+1 then
+	W_net:=0;
+  end when;
+
 initial equation
   medium.h=Medium.specificEnthalpy(state_i);
   m=Medium.density(state_i)*V_t*L_start/100;
@@ -107,11 +116,12 @@ equation
   L_internal=100*V/V_t;
   A=2*pi*(D/2)*H*(L_internal/100);
 
-  if noEvent(medium.T<T_set) then
-    W_net=min(-Q_losses,W_max);
-  else
-    W_net=0;
-  end if;
+//Assume overheat of 1kW and hysteresis bounds of +-1K
+  //if medium.T<T_set then
+    //W_net=min(-Q_losses,W_max);
+  //else
+    //W_net=0;
+  //end if;
 
  W_loss=W_net/e_ht;
 

@@ -13,3 +13,6 @@ Pipe
 HeatExchangerInterface
 Compressor
 Turbine
+Dish
+ReceiverFluid_Dish
+Receiver_Dish
