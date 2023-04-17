@@ -36,11 +36,12 @@ jobs:
             om: 1.18.1
             msl: 3.2.3
             dakota: 6.17.0
-          - os: ubuntu-22.04
-            python-version: 3.8
-            om: 1.19.2
-            msl: 3.2.3
-            dakota: 6.17.0
+# we can't test 1.19.2 like this because you need to use the 'omlibrary' package instead of openmodelica-omlibrary-xxx.
+#          - os: ubuntu-22.04
+#            python-version: 3.8
+#            om: 1.19.2
+#            msl: 3.2.3
+#            dakota: 6.17.0
 # suppressing the release versions, they don't work! fix the issue in a branch, then reenable.
 #          - os: ubuntu-20.04
 #            python-version: 3.8
