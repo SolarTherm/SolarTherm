@@ -19,11 +19,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
-            python-version: 3.8
-            om: 1.14.2
-            msl: 3.2.2
-            dakota: 6.17.0
+# we really like 1.14.2 (fast, esp with PG's models), but we can't test it any more, since GHA pulled
+# support for 18.04 runners (where 1.14.2 is available) and 20.04 has no 1.14.2 release.
+#          - os: ubuntu-20.04
+#            python-version: 3.8
+#            om: 1.14.2
+#            msl: 3.2.2
+#            dakota: 6.17.0
           - os: ubuntu-20.04
             python-version: 3.8
             om: 1.17.0
@@ -36,10 +38,10 @@ jobs:
             dakota: 6.17.0
           - os: ubuntu-22.04
             python-version: 3.8
-            om: 1.18.1
+            om: 1.19.2
             msl: 3.2.3
             dakota: 6.17.0
-# ssuppressing the release versions, they don't work! fix the issue in a branch, then reenable.
+# suppressing the release versions, they don't work! fix the issue in a branch, then reenable.
 #          - os: ubuntu-20.04
 #            python-version: 3.8
 #            om: release # no specification here, new omlibrary thing
