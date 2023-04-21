@@ -8,12 +8,13 @@ function SolsticePyFunc
   input String field_type;
   input String rcv_type;
   input String wea_file;
+  input String sunshape;
   input Integer argc;
   input String varnames[:];
   input Real vars[:];
   output String result;
 
-  external result = RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, argc, varnames, vars)
+  external result = RunSolsticeFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, sunshape, argc, varnames, vars)
     annotation(Library="st_solsticepy");
 end SolsticePyFunc;
 

@@ -6,7 +6,7 @@
 
 const char* RunSolsticeFunc(const char *ppath, const char *pname
 	, const char *pfunc, const char *psave,  const char *field_type
-	, const char *rcv_type, const char *wea_file, int argc
+	, const char *rcv_type, const char *wea_file, const char *sunshape, int argc
 	, const char *varnames[], const double var[]
 ){
 	// ppath: path of the Python script

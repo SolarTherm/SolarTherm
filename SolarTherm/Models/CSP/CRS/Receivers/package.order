@@ -21,3 +21,4 @@ HeatTransfer
 ChlorideSaltReceiver
 SodiumReceiver_modular
 PBS_Receiver_Dish
+ReceiverSimpleBlackbody
