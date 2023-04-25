@@ -26,6 +26,7 @@ jobs:
     env:
       PYTEST_ADDOPTS: --color=yes
       DAKVER: 6.14.0
+      MINGW_PACKAGE_PREFIX: mingw-w64-x86_64
 
     steps:
     - uses: msys2/setup-msys2@v2
@@ -34,29 +35,34 @@ jobs:
         install: >-
           git svn wget zip unzip tar make diffutils patch 
           autoconf automake m4 pkg-config libtool bison 
-          mingw-w64-x86_64-toolchain
-          mingw-w64-x86_64-opencl-headers
-          mingw-w64-x86_64-openblas
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-binutils
-          mingw-w64-x86_64-hdf5
-          mingw-w64-x86_64-pkgconf
-          mingw-w64-x86_64-python
-          mingw-w64-x86_64-python-pip
-          mingw-w64-x86_64-python-wheel
-          mingw-w64-x86_64-python-pyzmq
-          mingw-w64-x86_64-python-numpy
-          mingw-w64-x86_64-python-scipy
-          mingw-w64-x86_64-python-matplotlib
-          mingw-w64-x86_64-glpk
-          mingw-w64-x86_64-msmpi
+          ${MINGW_PACKAGE_PREFIX}-toolchain
+          ${MINGW_PACKAGE_PREFIX}-opencl-headers
+          ${MINGW_PACKAGE_PREFIX}-openblas
+          ${MINGW_PACKAGE_PREFIX}-gcc
+          ${MINGW_PACKAGE_PREFIX}-binutils
+          ${MINGW_PACKAGE_PREFIX}-hdf5
+          ${MINGW_PACKAGE_PREFIX}-pkgconf
+          ${MINGW_PACKAGE_PREFIX}-python
+          ${MINGW_PACKAGE_PREFIX}-python-pip
+          ${MINGW_PACKAGE_PREFIX}-python-wheel
+          ${MINGW_PACKAGE_PREFIX}-python-pyzmq
+          ${MINGW_PACKAGE_PREFIX}-python-numpy
+          ${MINGW_PACKAGE_PREFIX}-python-scipy
+          ${MINGW_PACKAGE_PREFIX}-python-matplotlib
+          ${MINGW_PACKAGE_PREFIX}-python-pytest
+          ${MINGW_PACKAGE_PREFIX}-python-colorama
+          ${MINGW_PACKAGE_PREFIX}-python-openpyxl
+          ${MINGW_PACKAGE_PREFIX}-python-greenlet
+          ${MINGW_PACKAGE_PREFIX}-python-pyzmq
+          ${MINGW_PACKAGE_PREFIX}-glpk
+          ${MINGW_PACKAGE_PREFIX}-msmpi
 
     - uses: actions/checkout@v2
 
     - name: Install Python dependencies
       run: |
         echo "WHICH PYTHON =" `which python`
-        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy openpyxl colorama pytest
+        python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy 
 
 #    - name: Install OpenModelica 1.14 (approx)
 #      run: |
@@ -65,9 +71,9 @@ jobs:
 
     - name: Install OpenModelica 1.19
       run: |
-        cd ~
-        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
-        cd omc-repo
+        mkdir ~/omc-repo && cd ~/omc-repo
+#        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
+        wget -q0- "https://cloudstor.aarnet.edu.au/plus/s/ex7S4y8QzlDjQCY/download" | bsdtar -xvf-
         echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
         pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
         echo "REVIEW INSTALLED OMC VERSION..."
