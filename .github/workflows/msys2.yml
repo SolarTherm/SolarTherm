@@ -57,7 +57,7 @@ jobs:
     - name: Install OpenModelica 1.19
       run: |
         mkdir ~/omc-repo && cd ~/omc-repo
-        wget -q0- "https://cloudstor.aarnet.edu.au/plus/s/ex7S4y8QzlDjQCY/download" | bsdtar -xvf-
+        wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/ex7S4y8QzlDjQCY/download" | bsdtar -xvf-
         echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
         pacboy -Sy --noconfirm omc:p openmodelica-msl:p
         echo "REVIEW INSTALLED OMC VERSION..."
