@@ -73,8 +73,7 @@ jobs:
     - name: Install MPIEXEC
       run: |
         wget "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
-        cmd /C "start msmpisetup.exe -unattend -force"
-
+        start msmpisetup.exe -unattend -force
         
     - name: Install DAKOTA
       run: |
