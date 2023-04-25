@@ -195,6 +195,7 @@ def check_omc(ct):
 	omcp = 'omc'+('.exe' if platform.system()=="Windows" else '')
 	omc = Path(ct.env.subst('$OM_BIN'))/omcp
 	omver = None
+	omverstr = 'unknown'
 	if not omc.exists():
 		ct.Result('Not found')
 		return False
@@ -206,15 +207,18 @@ def check_omc(ct):
 		if omverstr == 'unknown': # FIXME hack for missing version number in our home-made omc:
 			omver = pv.parse('1.14.0')
 		else:
-			omverstr = omverstr.split(" ")[1]
-			omver = pv.parse(omverstr)
+			omverstr = omverstr.removeprefix("OpenModelica ").removeprefix("v")
+			omverstr1 = omverstr.split('-')[0] # everything before '-'
+			# version on MSYS: v1.22.0-dev-65-g1a5bb6fad1-cmake
+			# version on Ubuntu: OpenModelica 1.18.1
+			omver = pv.parse(omverstr1)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
 		return False
 	#if omver < pv.parse("1.20.0"):
 	#	ct.Result("At least OM 1.20.0 is required")
 	ct.env['OMVER'] = omver
-	ct.Result(str(omver))
+	ct.Result("%s (%s)"%(str(omver),omverstr))
 	if str(omc.parent) != '/usr/bin':
 		ct.env.AppendUnique(
 			ST_PATH = [str(omc.parent)]
@@ -228,7 +232,10 @@ def check_omlibrary(ct):
 		if ct.env['OMVER'] >= pv.parse('1.20.0'):
 			# if omc >= 1.20.0, MSL is installed in the user's directory
 			# (they might need to run OMShel installPackage(Modelica,"3.2.3") or similar -- TODO automate that?)
-			ct.env['OM_MODELICAPATH']=Path.home()/'.openmodelica'/'libraries'
+			if platform.system()=="Windows":
+				ct.env['OM_MODELICAPATH']=Path(os.environ['USERPROFILE'])/'Application Data'/'.openmodelica'/'libraries'
+			else:
+				ct.env['OM_MODELICAPATH']=Path.home()/'.openmodelica'/'libraries'
 		p = Path(ct.env.subst('$OM_MODELICAPATH'))
 		assert p.exists()
 		mslver = None
@@ -264,7 +271,7 @@ def install_omlibrary(ct):
 			tmpf.write("installPackage(Modelica,\"3.2.3\")\n")
 			tmpf.flush()
 			try:
-				res = sp.run([env['OMC'],tmpf.name],check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
+				res = sp.run([env['OMC'],'-d=disableWindowsPathCheckWarning',tmpf.name],check=True,stdout=sp.PIPE,stderr=sp.PIPE,encoding='utf-8')
 				assert res.stdout.strip() == "true","Unexpected output '%s'"%(res.stdout,)
 			except Exception as e:
 				ct.Result("Failed (%s)"%(str(e),))
