@@ -207,10 +207,11 @@ def check_omc(ct):
 		if omverstr == 'unknown': # FIXME hack for missing version number in our home-made omc:
 			omver = pv.parse('1.14.0')
 		else:
-			omverstr = omverstr.removeprefix("OpenModelica ").removeprefix("v")
-			omverstr1 = omverstr.split('-')[0] # everything before '-'
 			# version on MSYS: v1.22.0-dev-65-g1a5bb6fad1-cmake
 			# version on Ubuntu: OpenModelica 1.18.1
+			rmprefix = lambda t, p: t[len(p):] if t.startswith(p) else t
+			omverstr = rmprefix(rmprefix(omverstr,"OpenModelica "),"v")
+			omverstr1 = omverstr.split('-')[0] # everything before '-'
 			omver = pv.parse(omverstr1)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))
@@ -218,7 +219,10 @@ def check_omc(ct):
 	#if omver < pv.parse("1.20.0"):
 	#	ct.Result("At least OM 1.20.0 is required")
 	ct.env['OMVER'] = omver
-	ct.Result("%s (%s)"%(str(omver),omverstr))
+	if str(omver) == omverstr:
+		ct.Result(omverstr)
+	else:
+		ct.Result("%s (%s)"%(str(omver),omverstr))
 	if str(omc.parent) != '/usr/bin':
 		ct.env.AppendUnique(
 			ST_PATH = [str(omc.parent)]
