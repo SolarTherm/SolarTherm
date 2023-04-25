@@ -18,7 +18,8 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-
+      matrix:
+        sys: [ MINGW64 ]
     defaults:
       run:
         shell: msys2 {0}
@@ -26,36 +27,20 @@ jobs:
     env:
       PYTEST_ADDOPTS: --color=yes
       DAKVER: 6.14.0
-      MINGW_PACKAGE_PREFIX: mingw-w64-x86_64
 
     steps:
     - uses: msys2/setup-msys2@v2
       with:
+        msystem: ${{matrix.sys}}
         update: true
         install: >-
           git svn wget zip unzip tar make diffutils patch 
           autoconf automake m4 pkg-config libtool bison 
-          ${MINGW_PACKAGE_PREFIX}-toolchain
-          ${MINGW_PACKAGE_PREFIX}-opencl-headers
-          ${MINGW_PACKAGE_PREFIX}-openblas
-          ${MINGW_PACKAGE_PREFIX}-gcc
-          ${MINGW_PACKAGE_PREFIX}-binutils
-          ${MINGW_PACKAGE_PREFIX}-hdf5
-          ${MINGW_PACKAGE_PREFIX}-pkgconf
-          ${MINGW_PACKAGE_PREFIX}-python
-          ${MINGW_PACKAGE_PREFIX}-python-pip
-          ${MINGW_PACKAGE_PREFIX}-python-wheel
-          ${MINGW_PACKAGE_PREFIX}-python-pyzmq
-          ${MINGW_PACKAGE_PREFIX}-python-numpy
-          ${MINGW_PACKAGE_PREFIX}-python-scipy
-          ${MINGW_PACKAGE_PREFIX}-python-matplotlib
-          ${MINGW_PACKAGE_PREFIX}-python-pytest
-          ${MINGW_PACKAGE_PREFIX}-python-colorama
-          ${MINGW_PACKAGE_PREFIX}-python-openpyxl
-          ${MINGW_PACKAGE_PREFIX}-python-greenlet
-          ${MINGW_PACKAGE_PREFIX}-python-pyzmq
-          ${MINGW_PACKAGE_PREFIX}-glpk
-          ${MINGW_PACKAGE_PREFIX}-msmpi
+        pacboy: >-
+          toolchain:p opencl-headers:p openblas:p:p hdf5:p python:p python-pip:p
+          python-wheel:p python-pyzmq:p python-numpy:p python-scipy:p
+          python-matplotlib:p python-pytest:p python-colorama:p
+          python-openpyxl:p python-greenlet:p python-pyzmq:p glpk:p msmpi
 
     - uses: actions/checkout@v2
 
@@ -63,16 +48,18 @@ jobs:
       run: |
         echo "WHICH PYTHON =" `which python`
         python3 -m pip install scons DyMat pyswarm cma deap scoop solsticepy 
+
 #    - name: Install OpenModelica 1.14 (approx)
 #      run: |
 #        mkdir -p ~/.local
 #        tar zxv -C ~/.local < <(wget "https://cloudstor.aarnet.edu.au/plus/s/BktvwWvCdgboDY6/download" -q -O-)
+
     - name: Install OpenModelica 1.19
       run: |
         mkdir ~/omc-repo && cd ~/omc-repo
         wget -q0- "https://cloudstor.aarnet.edu.au/plus/s/ex7S4y8QzlDjQCY/download" | bsdtar -xvf-
         echo -e "[openmodelica]\nSigLevel=Never\nServer=file://$PWD" >> /etc/pacman.conf
-        pacman -Sy --noconfirm mingw-w64-x86_64-omc mingw-w64-x86_64-openmodelica-msl
+        pacboy -Sy --noconfirm omc:p openmodelica-msl:p
         echo "REVIEW INSTALLED OMC VERSION..."
         omc --version
 #old path: wget -qO- "https://cloudstor.aarnet.edu.au/plus/s/VBZETOzDPK51Ywr/download" | bsdtar -xvf-
