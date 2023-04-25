@@ -37,10 +37,10 @@ jobs:
           git svn wget zip unzip tar make diffutils patch 
           autoconf automake m4 pkg-config libtool bison 
         pacboy: >-
-          toolchain:p opencl-headers:p openblas:p:p hdf5:p python:p python-pip:p
+          toolchain:p opencl-headers:p openblas:p hdf5:p python:p python-pip:p
           python-wheel:p python-pyzmq:p python-numpy:p python-scipy:p
           python-matplotlib:p python-pytest:p python-colorama:p
-          python-openpyxl:p python-greenlet:p python-pyzmq:p glpk:p msmpi
+          python-openpyxl:p python-greenlet:p python-pyzmq:p glpk:p msmpi:p
 
     - uses: actions/checkout@v2
 
