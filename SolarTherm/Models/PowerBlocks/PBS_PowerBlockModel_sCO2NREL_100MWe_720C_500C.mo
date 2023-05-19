@@ -23,6 +23,9 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C
   SI.Temperature T_in;//=Medium.temperature(state_in);
   SI.Temperature T_out;//=Medium.temperature(state_out);
   
+  parameter Boolean capped = false "Is the net output capped to the design rated output (not crediting excess power)";
+  parameter SI.HeatFlowRate W_cap = W_des*nu_net "The design net rating of the PB";
+  
   parameter Boolean enable_losses = true
     "= true enable thermal losses with environment"
       annotation (Dialog(group="Assumptions"), Evaluate=true, HideResult=true, choices(checkBox=true));
@@ -141,6 +144,10 @@ equation
   der(E_gross)=W_gross;
   der(E_net)=W_net;
   W_loss=(1-nu_net)*W_gross+W_base+parasities_internal;
-  W_net = W_gross - W_loss;
+  if capped == true then
+    W_net = min(W_cap,W_gross - W_loss);
+  else
+    W_net = W_gross - W_loss;
+  end if;
 
 end PBS_PowerBlockModel_sCO2NREL_100MWe_720C_500C;

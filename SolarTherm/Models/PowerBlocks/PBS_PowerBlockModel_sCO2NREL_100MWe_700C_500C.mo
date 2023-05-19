@@ -26,6 +26,8 @@ model PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C
   SI.Temperature T_in;//=Medium.temperature(state_in);
   SI.Temperature T_out;//=Medium.temperature(state_out);
   
+  parameter Boolean capped = false "Is the net output capped to the design rated output (not crediting excess power)";
+  parameter SI.HeatFlowRate W_cap = W_des*nu_net "The design net rating of the PB";
   
   
   parameter Boolean enable_losses = true
@@ -84,7 +86,7 @@ protected
   //Medium.ThermodynamicState state_in=Medium.setState_phX(fluid_a.p,inStream(fluid_a.h_outflow));
   //Medium.ThermodynamicState state_out=Medium.setState_phX(fluid_a.p,h_out);
   Medium.BaseProperties state_in;
-  Medium.BaseProperties state_out;
+  //Medium.BaseProperties state_out;
   parameter Medium.ThermodynamicState state_in_ref=Medium.setState_pTX(1e5,T_in_ref);
   parameter Medium.ThermodynamicState state_out_ref=Medium.setState_pTX(1e5,T_out_ref);
   parameter SI.SpecificEnthalpy h_in_ref=Medium.specificEnthalpy(state_in_ref);
@@ -97,11 +99,13 @@ protected
 equation
   //States
   state_in.h = h_in;
-  h_out = state_out.h;
   T_in = state_in.T;
-  state_out.T = T_out;
   state_in.p = 1e5;
-  state_out.p = 1e5;
+  
+  //state_out.p = 1e5;
+  //h_out = state_out.h;
+  //state_out.T = T_out;
+  T_out = T_out_ref;
   
   if enable_losses then
     connect(T_amb_internal,T_amb);
@@ -135,8 +139,10 @@ equation
     h_out = h_in - Q_flow/fluid_a.m_flow;
     W_gross = k_w*Q_flow;
   else
-    k_q=0.0;
-    k_w=0.0;
+    k_q=max(0.1,cycle.k_q);
+    k_w=max(0.1,cycle.k_w);
+    //k_q=0.0;
+    //k_w=0.0;
     h_out=h_out_ref;
     Q_flow=fluid_a.m_flow*(h_in-h_out);
     W_gross=0.0;
@@ -145,6 +151,10 @@ equation
   der(E_gross)=W_gross;
   der(E_net)=W_net;
   W_loss=(1-nu_net)*W_gross+W_base+parasities_internal;
-  W_net = W_gross - W_loss;
+  if capped == true then
+    W_net = min(W_cap,W_gross - W_loss);
+  else
+    W_net = W_gross - W_loss;
+  end if;
 
 end PBS_PowerBlockModel_sCO2NREL_100MWe_700C_500C;

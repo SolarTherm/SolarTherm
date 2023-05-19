@@ -14,7 +14,7 @@ model PBS_Controller_PBLimit_Level_v2
   Integer Control_State(start=6) "1-6 Determines which pumps are flowing and whether defocus is on";
   Boolean Chg(start=true) "Can the storage be charged?";
   Boolean Disch(start=false) "Can the storage be discharged?";
-  Boolean PB(start=true) "Can the PB be turned on?";
+  Boolean PB(start=false) "Can the PB be turned on?";
 
   //Timer to prevent PB from being turned on too many times
   //parameter SI.Time t_wait=1.0*3600 "Time you have to wait after shutdown before it can be turned on again";

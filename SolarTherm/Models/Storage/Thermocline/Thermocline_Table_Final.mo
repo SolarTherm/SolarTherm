@@ -81,6 +81,9 @@ model Thermocline_Table_Final
   //Measured outlet temperature
   Real T_outlet_degC "Outlet temperature in degrees Celcius";
   //Fluid_Package.State fluid_bot;
+  //Safety calculations
+  //parameter Real e_top_min = (T_PB_min-T_min)/(T_max-T_min);
+  //parameter Real e_bot_min = (T_max-T_recv_max)/(T_max-T_min);
 equation
   //Table inputs
   Table_Charging.u = L;
@@ -90,6 +93,8 @@ equation
 //Theoretical bottom outlet effectiveness
   e_bot = min(1.0,Table_Charging.y[1]);
   e_top = min(1.0,Table_Discharging.y[1]);
+  //e_bot = max(e_bot_min,min(1.0,Table_Charging.y[1]));
+  //e_top = max(e_top_min,min(1.0,Table_Discharging.y[1]));
 //Derived temperatures
   fluid_top.T = T_min + e_top*(T_max-T_min);
   fluid_bot.T = T_max - e_bot*(T_max-T_min);
