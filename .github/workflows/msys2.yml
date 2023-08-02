@@ -79,17 +79,18 @@ jobs:
         mkdir -p ~/.local
         export DAKPLAT=windows.Windows.x64
         export PKGN=dakota-${DAKVER}-release-public-${DAKPLAT}-cli
-        export DIRN=dakota-${DAKVER}.${DAKPLAT}
         cd
         mkdir -p dakota-tmp
         wget "https://github.com/snl-dakota/dakota/releases/download/v${DAKVER}/${PKGN}.zip"
         cd dakota-tmp
         unzip ~/$PKGN
-        cp -R $DIRN/* ~/.local/
+        cp -R $PKGN/* ~/.local/
         export PATH=$PATH:~/.local/bin
         dakota --version
 #old plat        export DAKPLAT=Windows.x64
 #old path        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
+#old dirn        export DIRN=dakota-${DAKVER}.${DAKPLAT}
+# now replaced with PKGN as of 6.17.0
 
     - name: Build SolarTherm
       run: |
