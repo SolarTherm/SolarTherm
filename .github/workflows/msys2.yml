@@ -73,7 +73,7 @@ jobs:
       run: |
         wget "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe"
         start msmpisetup.exe -unattend -force
-        
+
     - name: Install DAKOTA
       run: |
         mkdir -p ~/.local
@@ -83,12 +83,12 @@ jobs:
         cd
         mkdir -p dakota-tmp
         wget "https://github.com/snl-dakota/dakota/releases/download/v${DAKVER}/${PKGN}.zip
-#old path        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
         cd dakota-tmp
         unzip ~/$PKGN
         cp -R $DIRN/* ~/.local/
         export PATH=$PATH:~/.local/bin
         dakota --version
+#old path        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
 
     - name: Build SolarTherm
       run: |
