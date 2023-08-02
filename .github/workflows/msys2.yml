@@ -26,7 +26,7 @@ jobs:
 
     env:
       PYTEST_ADDOPTS: --color=yes
-      DAKVER: 6.14.0
+      DAKVER: 6.17.0
 
     steps:
     - uses: msys2/setup-msys2@v2
@@ -82,7 +82,8 @@ jobs:
         export DIRN=dakota-${DAKVER}.${DAKPLAT}
         cd
         mkdir -p dakota-tmp
-        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
+        wget "https://github.com/snl-dakota/dakota/releases/download/v${DAKVER}/${PKGN}.zip
+#old path        wget "https://dakota.sandia.gov/sites/default/files/distributions/public/${PKGN}.zip"
         cd dakota-tmp
         unzip ~/$PKGN
         cp -R $DIRN/* ~/.local/
