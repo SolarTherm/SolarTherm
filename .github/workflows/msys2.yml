@@ -82,7 +82,7 @@ jobs:
         export DIRN=dakota-${DAKVER}.${DAKPLAT}
         cd
         mkdir -p dakota-tmp
-        wget "https://github.com/snl-dakota/dakota/releases/download/v${DAKVER}/${PKGN}.zip
+        wget "https://github.com/snl-dakota/dakota/releases/download/v${DAKVER}/${PKGN}.zip"
         cd dakota-tmp
         unzip ~/$PKGN
         cp -R $DIRN/* ~/.local/
