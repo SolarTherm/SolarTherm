@@ -84,10 +84,10 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 src/python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Use a different Ubuntu mirror
-      run: |
-        sudo sed -i 's/azure\.archive\.ubuntu\.com/mirror\.lostpacket\.org/' /etc/apt/sources.list
-        sudo cat /etc/apt/sources.list
+#    - name: Use a different Ubuntu mirror
+#      run: |
+#        sudo sed -i 's/azure\.archive\.ubuntu\.com/mirror\.lostpacket\.org/' /etc/apt/sources.list
+#        sudo cat /etc/apt/sources.list
 
     - name: Install old OpenModelica ${{ matrix.om }}
       if: ${{ matrix.om != 'release' }}
