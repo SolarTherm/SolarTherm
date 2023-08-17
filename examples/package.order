@@ -8,6 +8,7 @@ Reference_2
 Reference_2_solstice
 SaltSCO2System
 SmallSaltSCO2System
+Small_Scale_Dish_system
 SimpleSystem
 SolarFuelSystem
 SolarMethanolSystem
@@ -22,3 +23,4 @@ Small_SolarSalt
 NaSaltSCO2System_modular
 NaGraphiteCO2System
 SimpleSystemOptimalDispatch
+WindPVsaltTESsystem
