@@ -21,20 +21,14 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {30, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary coldTank(redeclare package Medium = Medium, T = from_degC(290), nPorts = 1) annotation(
     Placement(visible = true, transformation(origin = {70, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_cold(y = 100) annotation(
-    Placement(visible = true, transformation(origin = {90, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Blocks.Logical.Switch switch1 annotation(
-    Placement(visible = true, transformation(origin = {50, -20}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression zero_flow(y = 0) annotation(
-    Placement(visible = true, transformation(origin = {90, -40}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression bool(y = on_pv) annotation(
-    Placement(visible = true, transformation(origin = {90, -20}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {30, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Boolean on_pv;
   Integer state_con(start = 1);
   SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000, T_ref = from_degC(565))  annotation(
-    Placement(visible = true, transformation(origin = {50, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {76, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression L_mea(y = 50)  annotation(
-    Placement(visible = true, transformation(origin = {14, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {30, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
   when state_con == 1 and pv_wind.y[1] > 1e-3 then
     state_con := 2;
@@ -59,21 +53,14 @@ equation
     Line(points = {{40, -70}, {60, -70}}, color = {0, 127, 255}));
   connect(temperature.fluid_b, hotTank.ports[1]) annotation(
     Line(points = {{-16, 40}, {-16, 50}, {60, 50}}, color = {0, 127, 255}));
-  connect(bool.y, switch1.u2) annotation(
-    Line(points = {{80, -20}, {62, -20}}, color = {255, 0, 255}));
   connect(temperature.T, controlCold.T_mea) annotation(
-    Line(points = {{-6, 30}, {39, 30}}, color = {0, 0, 127}));
+    Line(points = {{-6, 30}, {65, 30}}, color = {0, 0, 127}));
   connect(L_mea.y, controlCold.L_mea) annotation(
-    Line(points = {{26, 24}, {40, 24}}, color = {0, 0, 127}));
-  connect(zero_flow.y, switch1.u3) annotation(
-    Line(points = {{80, -40}, {74, -40}, {74, -28}, {62, -28}}, color = {0, 0, 127}));
-
-  connect(bool.y, controlCold.sf_on) annotation(
-    Line(points = {{80, -20}, {68, -20}, {68, 6}, {18, 6}, {18, 18}, {40, 18}}, color = {255, 0, 255}));
+    Line(points = {{41, 10}, {45.5, 10}, {45.5, 24}, {65, 24}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, pumpCold.m_flow) annotation(
-    Line(points = {{62, 24}, {124, 24}, {124, -52}, {30, -52}, {30, -62}}, color = {0, 0, 127}));
-  connect(m_cold.y, switch1.u1) annotation(
-    Line(points = {{80, 0}, {62, 0}, {62, -12}}, color = {0, 0, 127}));
+    Line(points = {{87, 24}, {94, 24}, {94, -48}, {30, -48}, {30, -62}}, color = {0, 0, 127}));
+  connect(bool.y, controlCold.sf_on) annotation(
+    Line(points = {{41, -10}, {54, -10}, {54, 18}, {66, 18}}, color = {255, 0, 255}));
   annotation(
     experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300));
 end WindPVsaltTESsystem;
