@@ -31,8 +31,6 @@ model WindPVsaltTESsystem
 
   Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow heater annotation(
     Placement(visible = true, transformation(origin = {-50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.CombiTimeTable pv_wind(fileName = elec_input, tableName = "p_pelec", tableOnFile = true) annotation(
-    Placement(visible = true, transformation(origin = {-130, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Fluid.Pipes.DynamicPipe pipe(redeclare package Medium = Medium, diameter = 0.254, length = 1, modelStructure = Modelica.Fluid.Types.ModelStructure.a_vb, nNodes = 1, use_HeatTransfer = true) annotation(
     Placement(visible = true, transformation(origin = {-16, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
   inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
@@ -61,21 +59,17 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {-70, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.HotPumpControl controlHot(m_flow_on = 80)  annotation(
     Placement(visible = true, transformation(origin = {80, 84}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
-  Modelica.Blocks.Logical.Switch switch1 annotation(
-    Placement(visible = true, transformation(origin = {-86, 0}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression Q_defocus(y = 0.5 *Q_flow_des) annotation(
-    Placement(visible = true, transformation(origin = {-130, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression defocus(y = controlHot.defocus_logic.y) annotation(
-    Placement(visible = true, transformation(origin = {-146, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-130, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
   Boolean on_pv;
   Integer state_con(start = 1);
-  Modelica.SIunits.HeatFlowRate Q_defocus_pv_wind;
-
+  SolarTherm.Models.Sources.GridInput gridInput(W_curtailment = 0.5 * Q_flow_des)  annotation(
+    Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
-  when state_con == 1 and pv_wind.y[1] > Q_start then
+  when state_con == 1 and gridInput.electricity > Q_start then
     state_con := 2;
-  elsewhen state_con == 2 and pv_wind.y[1] < Q_stop then
+  elsewhen state_con == 2 and gridInput.electricity < Q_stop then
     state_con := 1;
   end when;
 equation
@@ -84,7 +78,6 @@ equation
   else
     on_pv = true;
   end if;
-  Q_defocus_pv_wind = min(pv_wind.y[1],0.5*Q_flow_des);
   connect(heater.port, pipe.heatPorts[1]) annotation(
     Line(points = {{-40, 0}, {-20, 0}}, color = {191, 0, 0}));
   connect(pipe.port_b, temperature.fluid_a) annotation(
@@ -117,14 +110,10 @@ equation
     Line(points = {{20, 54}, {28, 54}, {28, 98}, {98, 98}, {98, 90}, {90, 90}}, color = {0, 0, 127}));
   connect(bool.y, controlCold.sf_on) annotation(
     Line(points = {{42, -10}, {52, -10}, {52, 18}, {66, 18}}, color = {255, 0, 255}));
-  connect(switch1.y, heater.Q_flow) annotation(
-    Line(points = {{-75, 0}, {-60, 0}}, color = {0, 0, 127}));
-  connect(Q_defocus.y, switch1.u1) annotation(
-    Line(points = {{-118, -30}, {-114, -30}, {-114, -8}, {-98, -8}}, color = {0, 0, 127}));
-  connect(defocus.y, switch1.u2) annotation(
-    Line(points = {{-134, 0}, {-98, 0}}, color = {255, 0, 255}));
-  connect(pv_wind.y[1], switch1.u3) annotation(
-    Line(points = {{-118, 30}, {-114, 30}, {-114, 8}, {-98, 8}}, color = {0, 0, 127}));
+  connect(gridInput.electricity, heater.Q_flow) annotation(
+    Line(points = {{-80, 0}, {-60, 0}}, color = {0, 0, 127}));
+  connect(defocus.y, gridInput.defocus) annotation(
+    Line(points = {{-118, 0}, {-100, 0}}, color = {255, 0, 255}));
   annotation(
     experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300));
 end WindPVsaltTESsystem;
