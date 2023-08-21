@@ -12,9 +12,10 @@ model WindPVsaltTESsystem
   parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
   
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter Real t_storage(unit = "h") = 4 "Hours of storage";
-  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 80*(h_hot_set - h_cold_set) "Heat to power block at design";
-  parameter Real tank_ar = 9.2/60.1 "storage aspect ratio";
+  parameter Real t_storage(unit = "h") = 8 "Hours of storage";
+  parameter Modelica.SIunits.MassFlowRate m_flow_hot = 40 "Nominal hot salt mass flow rate";
+  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = m_flow_hot*(h_hot_set - h_cold_set) "Heat to power block at design";
+  parameter Real tank_ar = 20/18.667 "storage aspect ratio";
   parameter Modelica.SIunits.Length tank_min_l = 1.8 "Storage tank fluid minimum height";
 
   parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
@@ -26,94 +27,100 @@ model WindPVsaltTESsystem
   parameter Modelica.SIunits.Length H_storage = (4*V_max*tank_ar^2/pi)^(1/3) + tank_min_l "Storage tank height";
   parameter Modelica.SIunits.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/pi)^0.5 "Storage tank diameter";
 
+  parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
+  parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
+
+  parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
+  parameter Real hot_tnk_full_ub = 99 "Hot tank full trigger upper bound";
+
   parameter Modelica.SIunits.HeatFlowRate Q_start = 1e-3;
   parameter Modelica.SIunits.HeatFlowRate Q_stop = 1e-3;
 
   Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow heater annotation(
     Placement(visible = true, transformation(origin = {-50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Fluid.Pipes.DynamicPipe pipe(redeclare package Medium = Medium, diameter = 0.254, length = 1, modelStructure = Modelica.Fluid.Types.ModelStructure.a_vb, nNodes = 1, use_HeatTransfer = true) annotation(
-    Placement(visible = true, transformation(origin = {-16, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
+    Placement(visible = true, transformation(origin = {-20, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
   inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     Placement(visible = true, transformation(origin = {-70, -70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.FixedBoundary hotTank(nPorts = 1, redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {76, 50}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Fluid.Sources.FixedBoundary sink(nPorts = 1, redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {130, 30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sensors.Temperature temperature(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-16, 30}, extent = {{-10, 10}, {10, -10}}, rotation = 90)));
+    Placement(visible = true, transformation(origin = {-20, 30}, extent = {{-10, 10}, {10, -10}}, rotation = 90)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {30, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.FixedBoundary coldTank(redeclare package Medium = Medium, T = from_degC(290), nPorts = 1) annotation(
-    Placement(visible = true, transformation(origin = {70, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.BooleanExpression bool(y = on_pv) annotation(
-    Placement(visible = true, transformation(origin = {30, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {20, -80}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = from_degC(290), nPorts = 1) annotation(
+    Placement(visible = true, transformation(origin = {130, -30}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.BooleanExpression bool(y = gridInput.on_pv) annotation(
+    Placement(visible = true, transformation(origin = {10, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000, T_ref = from_degC(565), m_flow_min = 0)  annotation(
-    Placement(visible = true, transformation(origin = {76, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression L_mea(y = 50)  annotation(
-    Placement(visible = true, transformation(origin = {30, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
     Placement(visible = true, transformation(origin = {10, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {48, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, L_start = 30, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
+    Placement(visible = true, transformation(origin = {70, -74}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {66, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(25)) annotation(
     Placement(visible = true, transformation(origin = {-70, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_atm(y = 101325) annotation(
     Placement(visible = true, transformation(origin = {-70, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.HotPumpControl controlHot(m_flow_on = 80)  annotation(
-    Placement(visible = true, transformation(origin = {80, 84}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
+  SolarTherm.Models.Control.HotPumpControl controlHot(L_df_off = hot_tnk_full_lb, L_df_on = hot_tnk_full_ub,L_off = hot_tnk_empty_lb, L_on = hot_tnk_empty_ub, m_flow_on = m_flow_hot)  annotation(
+    Placement(visible = true, transformation(origin = {82, 80}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression defocus(y = controlHot.defocus_logic.y) annotation(
     Placement(visible = true, transformation(origin = {-130, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-
-  Boolean on_pv;
-  Integer state_con(start = 1);
-  SolarTherm.Models.Sources.GridInput gridInput(W_curtailment = 0.5 * Q_flow_des)  annotation(
+  SolarTherm.Models.Sources.GridInput gridInput(Q_start = Q_start, Q_stop = Q_stop, W_curtailment = Q_flow_des)  annotation(
     Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-algorithm
-  when state_con == 1 and gridInput.electricity > Q_start then
-    state_con := 2;
-  elsewhen state_con == 2 and gridInput.electricity < Q_stop then
-    state_con := 1;
-  end when;
+  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpAux(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {104, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression m_hot(y = controlHot.m_flow) annotation(
+    Placement(visible = true, transformation(origin = {150, -50}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 equation
-  if state_con == 1 then
-    on_pv = false;
-  else
-    on_pv = true;
-  end if;
   connect(heater.port, pipe.heatPorts[1]) annotation(
-    Line(points = {{-40, 0}, {-20, 0}}, color = {191, 0, 0}));
+    Line(points = {{-40, 0}, {-24, 0}}, color = {191, 0, 0}));
   connect(pipe.port_b, temperature.fluid_a) annotation(
-    Line(points = {{-16, 10}, {-16, 20}}, color = {0, 127, 255}));
+    Line(points = {{-20, 10}, {-20, 20}}, color = {0, 127, 255}));
   connect(pumpCold.fluid_b, pipe.port_a) annotation(
-    Line(points = {{20, -70}, {-16, -70}, {-16, -10}}, color = {0, 127, 255}));
-  connect(pumpCold.fluid_a, coldTank.ports[1]) annotation(
-    Line(points = {{40, -70}, {60, -70}}, color = {0, 127, 255}));
+    Line(points = {{10, -80}, {-20, -80}, {-20, -10}}, color = {0, 127, 255}));
   connect(temperature.T, controlCold.T_mea) annotation(
-    Line(points = {{-6, 30}, {65, 30}}, color = {0, 0, 127}));
-  connect(L_mea.y, controlCold.L_mea) annotation(
-    Line(points = {{41, 10}, {45.5, 10}, {45.5, 24}, {65, 24}}, color = {0, 0, 127}));
+    Line(points = {{-10, 30}, {49.5, 30}, {49.5, -24}, {59, -24}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, pumpCold.m_flow) annotation(
-    Line(points = {{87, 24}, {96, 24}, {96, -48}, {30, -48}, {30, -62}}, color = {0, 0, 127}));
+    Line(points = {{81, -30}, {96, -30}, {96, -48}, {20, -48}, {20, -71}}, color = {0, 0, 127}));
   connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-    Line(points = {{-16, 40}, {-16, 55}, {0, 55}}, color = {0, 127, 255}));
-  connect(tankHot.fluid_b, pumpSimple.fluid_a) annotation(
-    Line(points = {{20, 43}, {29, 43}, {29, 50}, {38, 50}}, color = {0, 127, 255}));
-  connect(pumpSimple.fluid_b, hotTank.ports[1]) annotation(
-    Line(points = {{58, 50}, {66, 50}}, color = {0, 127, 255}));
+    Line(points = {{-20, 40}, {-20, 55}, {0, 55}}, color = {0, 127, 255}));
+  connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
+    Line(points = {{20, 43}, {29, 43}, {29, 42}, {56, 42}}, color = {0, 127, 255}));
+  connect(pumpHot.fluid_b, sink.ports[1]) annotation(
+    Line(points = {{76, 42}, {120, 42}, {120, 30}}, color = {0, 127, 255}));
   connect(T_amb.y, tankHot.T_amb) annotation(
     Line(points = {{-59, 70}, {6, 70}, {6, 60}}, color = {0, 0, 127}));
   connect(p_atm.y, tankHot.p_top) annotation(
     Line(points = {{-59, 90}, {14.5, 90}, {14.5, 60}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, controlHot.m_flow_in) annotation(
-    Line(points = {{87, 24}, {96, 24}, {96, 79}, {91, 79}}, color = {0, 0, 127}));
-  connect(controlHot.m_flow, pumpSimple.m_flow) annotation(
-    Line(points = {{68, 84}, {48, 84}, {48, 58}}, color = {0, 0, 127}));
+    Line(points = {{81, -30}, {96, -30}, {96, 75}, {93, 75}}, color = {0, 0, 127}));
+  connect(controlHot.m_flow, pumpHot.m_flow) annotation(
+    Line(points = {{71, 80}, {66, 80}, {66, 51}}, color = {0, 0, 127}));
   connect(tankHot.L, controlHot.L_mea) annotation(
-    Line(points = {{20, 54}, {28, 54}, {28, 98}, {98, 98}, {98, 90}, {90, 90}}, color = {0, 0, 127}));
+    Line(points = {{20, 54}, {28, 54}, {28, 98}, {98, 98}, {98, 85}, {93, 85}}, color = {0, 0, 127}));
   connect(bool.y, controlCold.sf_on) annotation(
-    Line(points = {{42, -10}, {52, -10}, {52, 18}, {66, 18}}, color = {255, 0, 255}));
+    Line(points = {{21, -36}, {59, -36}}, color = {255, 0, 255}));
   connect(gridInput.electricity, heater.Q_flow) annotation(
     Line(points = {{-80, 0}, {-60, 0}}, color = {0, 0, 127}));
   connect(defocus.y, gridInput.defocus) annotation(
     Line(points = {{-118, 0}, {-100, 0}}, color = {255, 0, 255}));
+  connect(pumpCold.fluid_a, tankCold.fluid_b) annotation(
+    Line(points = {{30, -80}, {50, -80}, {50, -81}, {60, -81}}, color = {0, 127, 255}));
+  connect(tankCold.fluid_a, pumpAux.fluid_b) annotation(
+    Line(points = {{80, -69}, {88, -69}, {88, -70}, {94, -70}}, color = {0, 127, 255}));
+  connect(pumpAux.fluid_a, source.ports[1]) annotation(
+    Line(points = {{114, -70}, {120, -70}, {120, -30}}, color = {0, 127, 255}));
+  connect(m_hot.y, pumpAux.m_flow) annotation(
+    Line(points = {{140, -50}, {104, -50}, {104, -61}}, color = {0, 0, 127}));
+  connect(p_atm.y, tankCold.p_top);
+  connect(T_amb.y, tankCold.T_amb);
+  connect(tankCold.L, controlCold.L_mea) annotation(
+    Line(points = {{60, -70}, {50, -70}, {50, -30}, {60, -30}}, color = {0, 0, 127}));
   annotation(
-    experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300));
+    experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300),
+    Diagram(coordinateSystem(extent = {{-140, -100}, {140, 100}})),
+    Icon(coordinateSystem(extent = {{-140, -100}, {140, 100}})));
 end WindPVsaltTESsystem;

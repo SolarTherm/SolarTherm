@@ -89,5 +89,5 @@ equation
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"), Icon(graphics = {Text(origin = {-10, 254},lineColor={0,0,255},extent={{-149,-114},{151,-154}}, textString = "%name")}));
 end ReceiverControl;

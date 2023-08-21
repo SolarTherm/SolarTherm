@@ -35,11 +35,11 @@ model HotPumpControl
         rotation=0,
         origin={-108,50})));
   SolarTherm.Models.Control.StartUpLogic5 logic(
-    m_flow_max=m_flow_on,
-    m_flow_startup=m_flow_on/2,
-    level_on=L_on,
+    
     level_off=L_off,
-    m_flow_standby=0)
+    level_on=L_on,m_flow_max=m_flow_on,
+    m_flow_standby=0,
+    m_flow_startup=0)
     annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
 equation
   W_loss = (abs(m_flow_in - m_flow) + m_flow)*k_loss;
@@ -55,9 +55,10 @@ equation
           {0,50},{-108,50}}, color={0,0,127}));
   m_flow = logic.m_flow;
 
-  annotation (Documentation(revisions="<html>
+  annotation (Documentation(revisions = "<html>
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Text(origin = {-10, 254},lineColor={0,0,255},extent={{-149,-114},{151,-154}}, textString = "%name")}));
 end HotPumpControl;
