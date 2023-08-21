@@ -26,10 +26,13 @@ model WindPVsaltTESsystem
   parameter Modelica.SIunits.Length H_storage = (4*V_max*tank_ar^2/pi)^(1/3) + tank_min_l "Storage tank height";
   parameter Modelica.SIunits.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/pi)^0.5 "Storage tank diameter";
 
+  parameter Modelica.SIunits.HeatFlowRate Q_start = 1e-3;
+  parameter Modelica.SIunits.HeatFlowRate Q_stop = 1e-3;
+
   Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow heater annotation(
     Placement(visible = true, transformation(origin = {-50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable pv_wind(fileName = elec_input, tableName = "p_pelec", tableOnFile = true) annotation(
-    Placement(visible = true, transformation(origin = {-86, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-130, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Fluid.Pipes.DynamicPipe pipe(redeclare package Medium = Medium, diameter = 0.254, length = 1, modelStructure = Modelica.Fluid.Types.ModelStructure.a_vb, nNodes = 1, use_HeatTransfer = true) annotation(
     Placement(visible = true, transformation(origin = {-16, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
   inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
@@ -44,9 +47,7 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {70, -70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression bool(y = on_pv) annotation(
     Placement(visible = true, transformation(origin = {30, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Boolean on_pv;
-  Integer state_con(start = 1);
-  SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000, T_ref = from_degC(565))  annotation(
+  SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000, T_ref = from_degC(565), m_flow_min = 0)  annotation(
     Placement(visible = true, transformation(origin = {76, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression L_mea(y = 50)  annotation(
     Placement(visible = true, transformation(origin = {30, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -58,12 +59,23 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {-70, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_atm(y = 101325) annotation(
     Placement(visible = true, transformation(origin = {-70, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = 80)  annotation(
+  SolarTherm.Models.Control.HotPumpControl controlHot(m_flow_on = 80)  annotation(
     Placement(visible = true, transformation(origin = {80, 84}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
+  Modelica.Blocks.Logical.Switch switch1 annotation(
+    Placement(visible = true, transformation(origin = {-86, 0}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Q_defocus(y = 0.5 *Q_flow_des) annotation(
+    Placement(visible = true, transformation(origin = {-130, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.BooleanExpression defocus(y = controlHot.defocus_logic.y) annotation(
+    Placement(visible = true, transformation(origin = {-146, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+  Boolean on_pv;
+  Integer state_con(start = 1);
+  Modelica.SIunits.HeatFlowRate Q_defocus_pv_wind;
+
 algorithm
-  when state_con == 1 and pv_wind.y[1] > 1e-3 then
+  when state_con == 1 and pv_wind.y[1] > Q_start then
     state_con := 2;
-  elsewhen state_con == 2 and pv_wind.y[1] < 1e-3 then
+  elsewhen state_con == 2 and pv_wind.y[1] < Q_stop then
     state_con := 1;
   end when;
 equation
@@ -72,10 +84,9 @@ equation
   else
     on_pv = true;
   end if;
+  Q_defocus_pv_wind = min(pv_wind.y[1],0.5*Q_flow_des);
   connect(heater.port, pipe.heatPorts[1]) annotation(
     Line(points = {{-40, 0}, {-20, 0}}, color = {191, 0, 0}));
-  connect(pv_wind.y[1], heater.Q_flow) annotation(
-    Line(points = {{-74, 0}, {-60, 0}}, color = {0, 0, 127}));
   connect(pipe.port_b, temperature.fluid_a) annotation(
     Line(points = {{-16, 10}, {-16, 20}}, color = {0, 127, 255}));
   connect(pumpCold.fluid_b, pipe.port_a) annotation(
@@ -88,8 +99,6 @@ equation
     Line(points = {{41, 10}, {45.5, 10}, {45.5, 24}, {65, 24}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, pumpCold.m_flow) annotation(
     Line(points = {{87, 24}, {96, 24}, {96, -48}, {30, -48}, {30, -62}}, color = {0, 0, 127}));
-  connect(bool.y, controlCold.sf_on) annotation(
-    Line(points = {{41, -10}, {54, -10}, {54, 18}, {65, 18}}, color = {255, 0, 255}));
   connect(temperature.fluid_b, tankHot.fluid_a) annotation(
     Line(points = {{-16, 40}, {-16, 55}, {0, 55}}, color = {0, 127, 255}));
   connect(tankHot.fluid_b, pumpSimple.fluid_a) annotation(
@@ -106,6 +115,16 @@ equation
     Line(points = {{68, 84}, {48, 84}, {48, 58}}, color = {0, 0, 127}));
   connect(tankHot.L, controlHot.L_mea) annotation(
     Line(points = {{20, 54}, {28, 54}, {28, 98}, {98, 98}, {98, 90}, {90, 90}}, color = {0, 0, 127}));
+  connect(bool.y, controlCold.sf_on) annotation(
+    Line(points = {{42, -10}, {52, -10}, {52, 18}, {66, 18}}, color = {255, 0, 255}));
+  connect(switch1.y, heater.Q_flow) annotation(
+    Line(points = {{-75, 0}, {-60, 0}}, color = {0, 0, 127}));
+  connect(Q_defocus.y, switch1.u1) annotation(
+    Line(points = {{-118, -30}, {-114, -30}, {-114, -8}, {-98, -8}}, color = {0, 0, 127}));
+  connect(defocus.y, switch1.u2) annotation(
+    Line(points = {{-134, 0}, {-98, 0}}, color = {255, 0, 255}));
+  connect(pv_wind.y[1], switch1.u3) annotation(
+    Line(points = {{-118, 30}, {-114, 30}, {-114, 8}, {-98, 8}}, color = {0, 0, 127}));
   annotation(
-    experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 60));
+    experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300));
 end WindPVsaltTESsystem;
