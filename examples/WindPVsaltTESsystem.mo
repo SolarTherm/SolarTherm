@@ -35,7 +35,7 @@ model WindPVsaltTESsystem
   inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     Placement(visible = true, transformation(origin = {-70, -70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Fluid.Sources.FixedBoundary hotTank(nPorts = 1, redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {90, 64}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {76, 50}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sensors.Temperature temperature(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-16, 30}, extent = {{-10, 10}, {10, -10}}, rotation = 90)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium = Medium) annotation(
@@ -51,15 +51,15 @@ model WindPVsaltTESsystem
   Modelica.Blocks.Sources.RealExpression L_mea(y = 50)  annotation(
     Placement(visible = true, transformation(origin = {30, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
-    Placement(visible = true, transformation(origin = {10, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {10, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {48, 64}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {48, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression T_amb(y = from_degC(25)) annotation(
-    Placement(visible = true, transformation(origin = {-70, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-70, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_atm(y = 101325) annotation(
-    Placement(visible = true, transformation(origin = {-70, 110}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-70, 90}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.PowerBlockControl controlHot(m_flow_on = 80)  annotation(
-    Placement(visible = true, transformation(origin = {150, 50}, extent = {{-10, 10}, {10, -10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {80, 84}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
 algorithm
   when state_con == 1 and pv_wind.y[1] > 1e-3 then
     state_con := 2;
@@ -87,26 +87,25 @@ equation
   connect(L_mea.y, controlCold.L_mea) annotation(
     Line(points = {{41, 10}, {45.5, 10}, {45.5, 24}, {65, 24}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, pumpCold.m_flow) annotation(
-    Line(points = {{87, 24}, {94, 24}, {94, -48}, {30, -48}, {30, -62}}, color = {0, 0, 127}));
+    Line(points = {{87, 24}, {96, 24}, {96, -48}, {30, -48}, {30, -62}}, color = {0, 0, 127}));
   connect(bool.y, controlCold.sf_on) annotation(
-    Line(points = {{41, -10}, {54, -10}, {54, 18}, {66, 18}}, color = {255, 0, 255}));
+    Line(points = {{41, -10}, {54, -10}, {54, 18}, {65, 18}}, color = {255, 0, 255}));
   connect(temperature.fluid_b, tankHot.fluid_a) annotation(
-    Line(points = {{-16, 40}, {-16, 76}, {0, 76}}, color = {0, 127, 255}));
+    Line(points = {{-16, 40}, {-16, 55}, {0, 55}}, color = {0, 127, 255}));
   connect(tankHot.fluid_b, pumpSimple.fluid_a) annotation(
-    Line(points = {{20, 64}, {38, 64}}, color = {0, 127, 255}));
+    Line(points = {{20, 43}, {29, 43}, {29, 50}, {38, 50}}, color = {0, 127, 255}));
   connect(pumpSimple.fluid_b, hotTank.ports[1]) annotation(
-    Line(points = {{58, 64}, {80, 64}}, color = {0, 127, 255}));
+    Line(points = {{58, 50}, {66, 50}}, color = {0, 127, 255}));
   connect(T_amb.y, tankHot.T_amb) annotation(
-    Line(points = {{-58, 90}, {6, 90}, {6, 80}}, color = {0, 0, 127}));
+    Line(points = {{-59, 70}, {6, 70}, {6, 60}}, color = {0, 0, 127}));
   connect(p_atm.y, tankHot.p_top) annotation(
-    Line(points = {{-58, 110}, {14, 110}, {14, 80}}, color = {0, 0, 127}));
-  connect(tankHot.L, controlHot.L_mea) annotation(
-    Line(points = {{20, 74}, {139, 74}, {139, 55}}, color = {0, 0, 127}));
+    Line(points = {{-59, 90}, {14.5, 90}, {14.5, 60}}, color = {0, 0, 127}));
   connect(controlCold.m_flow, controlHot.m_flow_in) annotation(
-    Line(points = {{88, 24}, {118, 24}, {118, 46}, {140, 46}}, color = {0, 0, 127}));
-
+    Line(points = {{87, 24}, {96, 24}, {96, 79}, {91, 79}}, color = {0, 0, 127}));
   connect(controlHot.m_flow, pumpSimple.m_flow) annotation(
-    Line(points = {{162, 50}, {180, 50}, {180, 100}, {48, 100}, {48, 72}}, color = {0, 0, 127}));
+    Line(points = {{68, 84}, {48, 84}, {48, 58}}, color = {0, 0, 127}));
+  connect(tankHot.L, controlHot.L_mea) annotation(
+    Line(points = {{20, 54}, {28, 54}, {28, 98}, {98, 98}, {98, 90}, {90, 90}}, color = {0, 0, 127}));
   annotation(
     experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 60));
 end WindPVsaltTESsystem;
