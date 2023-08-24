@@ -36,6 +36,7 @@ extensions = [
     #'sphinx.ext.viewcode',
     #'sphinx.ext.doctest',
     #'sphinx.ext.todo',
+    'sphinx.ext.napoleon',
     'matplotlib.sphinxext.plot_directive',
 ]
 
