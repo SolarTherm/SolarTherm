@@ -105,6 +105,7 @@ Installation for v 1.14.2 (this version of omc works better with our models when
 2. SolarTherm Python dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  
 ::
+
     $ python3 -m pip install --upgrade pip 
     $ python3 -m pip install --upgrade setuptools wheel
     $ python3 -m pip install scons scipy matplotlib DyMat pyswarm cma pytest solsticepy openpyxl distro colorama
