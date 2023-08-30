@@ -73,7 +73,7 @@ model WindPVsaltTESsystem
   SolarTherm.Models.Sources.GridInput gridInput(Q_start = Q_start, Q_stop = Q_stop, W_curtailment = Q_flow_des)  annotation(
     Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler annotation(
-    Placement(visible = true, transformation(origin = {110, -68}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {130, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Boolean curtail;
 equation
   boiler.m_flow = controlHot.m_flow;
@@ -115,11 +115,11 @@ equation
   connect(tankCold.L, controlCold.L_mea) annotation(
     Line(points = {{60, -70}, {50, -70}, {50, -30}, {60, -30}}, color = {0, 0, 127}));
   connect(tankCold.fluid_a, boiler.fluid_b) annotation(
-    Line(points = {{80, -68}, {100, -68}}, color = {0, 127, 255}));
+    Line(points = {{80, -68}, {130, -68}, {130, -20}}, color = {0, 127, 255}));
   connect(boiler.fluid_a, pumpHot.fluid_b) annotation(
-    Line(points = {{120, -68}, {132, -68}, {132, 42}, {76, 42}}, color = {0, 127, 255}));
+    Line(points = {{130, 0}, {130, 42}, {76, 42}}, color = {0, 127, 255}));
   annotation(
     experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300),
     Diagram(coordinateSystem(extent = {{-140, -100}, {140, 100}})),
-    Icon(coordinateSystem(extent = {{-140, -100}, {140, 100}})));
+    Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}})));
 end WindPVsaltTESsystem;
