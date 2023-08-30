@@ -14,13 +14,13 @@ model Part1_Baseline
   parameter Integer Correlation = 3 "Conservative";
   parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
   parameter SI.Temperature T_max = 720 + 273.15 "Maximum temperature";
-  parameter SI.Temperature T_PB_min = 680 + 273.15 "Minimum tolerated outlet temperature to PB";
-  parameter SI.Temperature T_Recv_max = 550 + 273.15 "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_PB_min = 700 + 273.15 "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = 540 + 273.15 "Maximum tolerated outlet temperature to recv";
   parameter Real eta = 0.26 "Porosity";
   parameter Real ar = 2.0 "Tank aspect ratio";
   //0.36 if randomly packed, 0.26 for perfect packing.
   //Tanks
-  parameter Integer N_f = 20 "Number of fluid CVs in main tank";
+  parameter Integer N_f = 100 "Number of fluid CVs in main tank";
   //Study this
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Study this
@@ -203,5 +203,7 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60));
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
+    Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end Part1_Baseline;

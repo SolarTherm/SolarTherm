@@ -21,8 +21,8 @@ model Three_Tank_Series
   parameter SI.Temperature T_Recv_des = T_min + 0.5*T_tol_Recv "Design blended receiver inlet temperature";
   parameter SI.Temperature T_min = 500 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
-  parameter SI.TemperatureDifference T_tol_Recv = 50.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 40.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_Recv = 40.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_PB = 20.0 "Power block Temperature Tolerance (K)";
   //Numerical Discretisation
   parameter Integer N_f = 20 "Number of fluid CVs in each tank";
   parameter Integer N_p = 10 "Number of filler CVs  in main tank";

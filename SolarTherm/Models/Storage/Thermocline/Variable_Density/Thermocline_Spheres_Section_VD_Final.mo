@@ -126,6 +126,7 @@ model Thermocline_Spheres_Section_VD_Final
   parameter Real eff_pump = 1.00 "Pump electricity to work efficiency";
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
+  SI.Power W_loss_pump_ele[N_f] "losses due to pressure drop for each element";
   
   //Cost breakdown
   parameter Real C_fluid = max(rho_f_max,rho_f_min)*eta*(CN.pi*D_tank*D_tank*H_tank/4.0)*Fluid_Package.cost;
@@ -190,9 +191,9 @@ protected
   
   Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
   
-  Real der_rho_f[N_f] "Rate of change of specific enthalpy of fluid";
+  Real der_rho_f[N_f] "Rate of change of density of fluid";
   Real der_rho_f_h_f[N_f] "Rate of change of density*specific enthalpy of fluid";
-  
+  Real der_h_f[N_f] "Rate of change of specific enthalpy of fluid";
 algorithm
   //Fluid Equations
   if State == 1 then //m_flow_in negative
@@ -208,6 +209,8 @@ algorithm
     der_rho_f[1] := (rho_f[1]*u_flow[1] - rho_f[2]*u_flow[2])/dz;
     m_flow_out := eta*rho_f[1]*u_flow[1]*A;
     
+    der_h_f[1] := (der_rho_f_h_f[1] - h_f[1]*der_rho_f[1])/rho_f[1];
+    
     h_out := h_f[1];
   //End Bottom Charging Fluid Node
   //Middle Charging Fluid Nodes
@@ -220,6 +223,8 @@ algorithm
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
       
       der_rho_f[i] := (rho_f[i]*u_flow[i] - rho_f[i+1]*u_flow[i+1])/dz;
+      
+      der_h_f[i] := (der_rho_f_h_f[i] - h_f[i]*der_rho_f[i])/rho_f[i];
     end for;
   //End Middle Charging Fluid Nodes
   //Top Charging Fluid Node
@@ -231,6 +236,8 @@ algorithm
     - U_top*(T_f[N_f]-T_amb)/(eta*dz);
     
     der_rho_f[N_f] := (rho_f[N_f]*u_flow[N_f] - rho_in*u_in)/dz;
+    
+    der_h_f[N_f] := (der_rho_f_h_f[N_f] - h_f[N_f]*der_rho_f[N_f])/rho_f[N_f];
   //End Top Charging Fluid Node
   else
   //Discharge (Mass flows bottom to top)
@@ -243,6 +250,8 @@ algorithm
     - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
     
     der_rho_f[1] := (rho_in*u_in - rho_f[1]*u_flow[1])/dz;
+    
+    der_h_f[1] := (der_rho_f_h_f[1] - h_f[1]*der_rho_f[1])/rho_f[1];
   //End Bottom Discharge Node
   //Middle Discharge Nodes
     for i in 2:N_f - 1 loop
@@ -254,6 +263,8 @@ algorithm
       - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
     
       der_rho_f[i] := (rho_f[i-1]*u_flow[i-1] - rho_f[i]*u_flow[i])/dz;
+      
+      der_h_f[i] := (der_rho_f_h_f[i] - h_f[i]*der_rho_f[i])/rho_f[i];
     end for;
   //End Middle Discharge Nodes
   //Top Discharge Node
@@ -267,6 +278,8 @@ algorithm
     der_rho_f[N_f] := (rho_f[N_f - 1] * u_flow[N_f - 1] - rho_f[N_f] * u_flow[N_f]) / dz;
     m_flow_out := eta*rho_f[N_f]*u_flow[N_f]*A;
     h_out := h_f[N_f];
+    
+    der_h_f[N_f] := (der_rho_f_h_f[N_f] - h_f[N_f]*der_rho_f[N_f])/rho_f[N_f];
   end if;
 
 initial equation
@@ -281,7 +294,8 @@ equation
   for i in 1:N_f loop
     der_rho_f[i] = der(rho_f[i]);
     //der_rho_f_h_f[i] = der(rho_f[i]*h_f[i]);
-    der_rho_f_h_f[i] = rho_f[i]*der(h_f[i]) + h_f[i]*der(rho_f[i]);
+    //der_rho_f_h_f[i] = rho_f[i]*der(h_f[i]) + h_f[i]*der(rho_f[i]);
+    der_h_f[i] = der(h_f[i]);
   end for;
   /*
   //Determine which operational state: In this version, standby and discharge are lumped.
@@ -344,7 +358,7 @@ equation
   //Convection Equations
   for i in 1:N_f loop
     if abs(u_flow[i]) > 1e-12 then //There is actually mass flowing
-      Re[i] = rho_f[i] * d_p * abs(u_0[i]) / mu_f[i];
+      Re[i] = max(0.0,rho_f[i] * d_p * abs(u_0[i]) / mu_f[i]); //Safeguard sqrt function
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       if Correlation == 1 then 
         Nu[i] = 2.0 + 1.1 * (Re[i] ^ 0.6) * (Pr[i] ^ (1 / 3)); //Wakao and Kaguei
@@ -412,13 +426,14 @@ equation
   
   //Calculated Pumping losses
   for i in 1:N_f loop
-    //p_drop[i] = dz*(((600*((1-eta)^2)*mu_f[i]*abs(m_flow[i]))/((eta^3)*(d_p^2)*rho_f[i]*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow[i]^2))/((eta^3)*d_p*rho_f[i]*CN.pi*CN.pi*(D_tank^4))));
-    p_drop[i] = 0.0;
+    p_drop[i] = dz*(((600*((1-eta)^2)*mu_f[i]*abs(m_flow[i]))/((eta^3)*(d_p^2)*rho_f[i]*CN.pi*(D_tank^2)))+((28*(1-eta)*(m_flow[i]^2))/((eta^3)*d_p*rho_f[i]*CN.pi*CN.pi*(D_tank^4))));
+    //p_drop[i] = 0.0;
+    W_loss_pump_ele[i] = (abs(m_flow[i])/rho_f[i])*p_drop[i]/eff_pump;
   end for;
   p_drop_total = sum(p_drop);
   //W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
   //W_loss_pump = (sum(p_drop.*abs(m_flow)./rho_f))/eff_pump;
-  W_loss_pump = 0.0;
+  W_loss_pump = sum(W_loss_pump_ele);
   
   annotation (Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>

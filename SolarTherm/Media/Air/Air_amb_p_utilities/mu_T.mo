@@ -1,5 +1,5 @@
 within SolarTherm.Media.Air.Air_amb_p_utilities;
-function mu_T "Dynamic viscosity (Ns/m2) of air at ambient pressue as a function of temperature"
+function mu_T "Dynamic viscosity (Ns/m2) of air at ambient pressure as a function of temperature"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature (K)";
 	output Modelica.SIunits.DynamicViscosity mu "Dynamic Viscosity (Ns/m2)";

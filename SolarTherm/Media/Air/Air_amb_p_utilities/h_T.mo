@@ -1,5 +1,5 @@
 within SolarTherm.Media.Air.Air_amb_p_utilities;
-function h_T "Specific enthalpy (J/kg) of air at ambient pressue as a function of temperature"
+function h_T "Specific enthalpy (J/kg) of air at ambient pressure as a function of temperature"
 	extends Modelica.Icons.Function;
 	input Modelica.SIunits.Temperature T "Temperature (K)";
 	output Modelica.SIunits.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
