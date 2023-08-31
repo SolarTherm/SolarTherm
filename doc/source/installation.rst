@@ -75,7 +75,7 @@ The terminal commands for building the essential packages on Ubuntu (18.04 and 2
 1. OpenModelica
 ^^^^^^^^^^^^^^^
 
-Installation for the latest version 
+Installation for the latest version (Note that the newest sometime is not the best, since it has not been carefully tested)
 
 ::
 
@@ -84,11 +84,15 @@ Installation for the latest version
     $ sudo apt update
     $ sudo apt install build-essential openmodelica omlib-modelica-3.2.3 libglpk-dev
 
+Installation for v 1.17.0 ::
 
-Installation for v 1.14.2 (this version of omc works better with our models when we tested it, especially for the particle systems.) 
+	$ echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.17.0/ `lsb_release -cs` release" | sudo tee /etc/apt/sources.list.d/openmodelica.list
+    $ wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add -  
+    $ sudo apt-get update
+    $ sudo apt-get install build-essential omc omlib-modelica-3.2.3 libglpk-dev
+	$ sudo apt install openmodelica
 
-::
-
+Installation for v 1.14.2 (this version of omc works better with our models when we tested it, especially for the particle systems.) ::
 
 	$ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3A59B53664970947 
     $ echo "deb https://build.openmodelica.org/omc/builds/linux/releases/1.14.2/ bionic release"| sudo tee /etc/apt/sources.list.d/openmodelica.list
@@ -98,13 +102,21 @@ Installation for v 1.14.2 (this version of omc works better with our models when
 
 
 
-2. SolarTherm dependencies
-^^^^^^^^^^^^^^^^^^^^^^^^^^  
+2. SolarTherm Python dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  
 ::
- 
+
     $ python3 -m pip install --upgrade pip 
     $ python3 -m pip install --upgrade setuptools wheel
     $ python3 -m pip install scons scipy matplotlib DyMat pyswarm cma pytest solsticepy openpyxl distro colorama
+
+
+Note that if pip is not installed on your platform, then install it first by the following comment
+::
+
+    $ sudo apt install python3-pip 
+    $ sudo apt install python3-testresources
+
 
 3. Solstice
 ^^^^^^^^^^^
@@ -112,7 +124,7 @@ Installation for v 1.14.2 (this version of omc works better with our models when
 
     $ sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
     $ export UBVER=`lsb_release -cs`
-    $ export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9-x86_64-$UBVER.tar.gz"
+    $ export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-0.9.1-x86_64-$UBVER.tar.gz"
     $ sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$SOLSTICEURL" -q -O-)
     $ export PATH=$PATH:/usr/local/bin
     $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
@@ -155,19 +167,25 @@ Install Dakota::
 
 5. Build and install SolarTherm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Clone the SolarTherm source code, change to the SolarTherm source directory and compile the package using ``scons``::
-    
+Clone the SolarTherm source code, change to the SolarTherm source directory and compile the package using ``scons``
+::
+
+    $ sudo apt install git
     $ git clone https://github.com/SolarTherm/SolarTherm.git SolarTherm
+	$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+	$ export PYTHONPATH=$PYTHONPATH:/usr/local/share/dakota/Python
     $ cd SolarTherm
     $ scons
     $ scons install
 
-The default installation prefix is ``~/.local``. A user defined prefix can be given to the 'PREFIX' variable to change the installation prefix, for example::
+The default installation prefix is ``~/.local``. A user defined prefix can be given to the 'PREFIX' variable to change the installation prefix, for example
+::
 
     $ scons PREFIX=/the/user/defined/directory
     $ scons install PREFIX=/the/user/defined/directory
 
-The default SolarTherm modelica library prefix is ``~/.openmodelica/libraries`` on Linux and ``~/.local/lib/omlibrary`` on Windows (MSYS2). If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``INSTALL_OMLIBRARY`` variable. For example::
+The default SolarTherm modelica library prefix is ``~/.openmodelica/libraries`` on Linux and ``~/.local/lib/omlibrary`` on Windows (MSYS2). If OpenModelica is installed at a different prefix, then the full path to the library directory should be given to the ``INSTALL_OMLIBRARY`` variable. For example
+::
 
     $ scons PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
     $ scons install PREFIX=/the/user/defined/directory INSTALL_OMLIBRARY=/the/directory/where/Openmodelica/installed
