@@ -5,27 +5,28 @@ model WindPVsaltTESsystem
   import Modelica.SIunits.Conversions.*;
   import Modelica.Constants.*;
   replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph;
-  parameter String elec_input = "/home/arfontalvo/solartherm-master/examples/pv_electricity.motab";
+  parameter String elec_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/heater_input.motab");
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565) "Hot tank temperature";
-  parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290) "Hot tank temperature";
+  parameter Modelica.SIunits.Temperature T_cold_set = from_degC(280) "Hot tank temperature";
   parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
   parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold salt thermodynamic state at design";
   
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
-  parameter Real t_storage(unit = "h") = 8 "Hours of storage";
-  parameter Modelica.SIunits.MassFlowRate m_flow_hot = 40 "Nominal hot salt mass flow rate";
-  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = m_flow_hot*(h_hot_set - h_cold_set) "Heat to power block at design";
+  parameter Real t_storage(unit = "h") = 10 "Hours of storage";
+  parameter Modelica.SIunits.MassFlowRate m_flow_hot = Q_flow_des/(h_hot_set - h_cold_set) "Nominal hot salt mass flow rate";
+  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 800e6 "Heat to power block at design";
   parameter Real tank_ar = 20/18.667 "storage aspect ratio";
   parameter Modelica.SIunits.Length tank_min_l = 1.8 "Storage tank fluid minimum height";
 
+  parameter Modelica.SIunits.MassFlowRate m_flow_heater_max = 2.5*m_flow_hot "Nominal hot salt mass flow rate";
   parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
   parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
   parameter Modelica.SIunits.Density rho_cold_set = Medium.density(state_cold_set) "Cold salt density at design";
   parameter Modelica.SIunits.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
   parameter Modelica.SIunits.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
   parameter Modelica.SIunits.Volume V_max = m_max/((rho_hot_set + rho_cold_set)/2) "Max salt volume in tanks";
-  parameter Modelica.SIunits.Length H_storage = (4*V_max*tank_ar^2/pi)^(1/3) + tank_min_l "Storage tank height";
-  parameter Modelica.SIunits.Diameter D_storage = (0.5*V_max/(H_storage - tank_min_l)*4/pi)^0.5 "Storage tank diameter";
+  parameter Modelica.SIunits.Length H_storage = 19 "Storage tank height";
+  parameter Modelica.SIunits.Diameter D_storage = 20 "Storage tank diameter";
 
   parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound"; // Level (below which) to stop disptach
   parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound"; // Level (above which) to start disptach
@@ -54,9 +55,9 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {20, -80}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression grid_on(y = gridInput.on_pv) annotation(
     Placement(visible = true, transformation(origin = {10, -36}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000, T_ref = from_degC(565), m_flow_min = 0, L_df_on = cold_tnk_defocus_lb,	L_df_off = cold_tnk_defocus_ub, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub)  annotation(
+  SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000,	L_df_off = cold_tnk_defocus_ub, L_df_on = cold_tnk_defocus_lb, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, T_ref = from_degC(565), m_flow_max = m_flow_heater_max, m_flow_min = 0)  annotation(
     Placement(visible = true, transformation(origin = {70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_set, W_max = 30e6, use_L = true) annotation(
     Placement(visible = true, transformation(origin = {10, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, L_start = 30, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
     Placement(visible = true, transformation(origin = {70, -74}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -70,9 +71,9 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {82, 80}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
   Modelica.Blocks.Sources.BooleanExpression curtailment(y = curtail) annotation(
     Placement(visible = true, transformation(origin = {-130, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Sources.GridInput gridInput(Q_start = Q_start, Q_stop = Q_stop, W_curtailment = Q_flow_des)  annotation(
+  SolarTherm.Models.Sources.GridInput gridInput(Q_start = Q_start, Q_stop = Q_stop, W_curtailment = Q_flow_des, elec_input = elec_input)  annotation(
     Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler(T_cold_set = T_cold_set)  annotation(
     Placement(visible = true, transformation(origin = {130, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Boolean curtail;
 equation
