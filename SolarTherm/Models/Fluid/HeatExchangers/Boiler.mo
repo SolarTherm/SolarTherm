@@ -25,8 +25,10 @@ model Boiler
   Modelica.Blocks.Sources.RealExpression m_hot(y = m_flow) annotation(
     Placement(visible = true, transformation(origin = {30, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.SIunits.MassFlowRate m_flow;
+  Modelica.SIunits.Energy E_thermal;
 equation
   Q_flow = m_flow*(inStream(fluid_a.h_outflow) - h_cold_set);
+  Q_flow = der(E_thermal);
   connect(sink.ports[1], fluid_a) annotation(
     Line(points = {{-60, 0}, {-100, 0}, {-100, -2}}, color = {0, 127, 255}));
   connect(pumpAux.fluid_b, fluid_b) annotation(

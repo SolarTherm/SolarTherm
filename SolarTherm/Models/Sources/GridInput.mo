@@ -15,7 +15,9 @@ model GridInput
     Placement(visible = true, transformation(origin = {-100, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-100, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput electricity annotation(
     Placement(visible = true, transformation(origin = {100, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {100, 2.66454e-15}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
-  Boolean on_pv;
+  Modelica.Blocks.Interfaces.BooleanOutput on_pv annotation (
+    Placement(transformation(extent={{20,-20},{-20,20}},rotation=90,origin={0,-114})));
+//  Boolean on_pv;
   Integer state_con(start = 1);
 algorithm
   when state_con == 1 and grid_input.y[1] > Q_start then
@@ -29,7 +31,7 @@ equation
   else
     on_pv = true;
   end if;
-  Q_defocus_y = min(grid_input.y[1], W_curtailment);
+//  Q_defocus_y = min(grid_input.y[1], W_curtailment);
   connect(curtailment.y, switch1.u1) annotation(
     Line(points = {{-38, -30}, {-28, -30}, {-28, -8}, {-12, -8}}, color = {0, 0, 127}));
   connect(grid_input.y[1], switch1.u3) annotation(
