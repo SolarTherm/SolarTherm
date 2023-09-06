@@ -1,0 +1,220 @@
+within SolarTherm.Validation.Models;
+
+model Annular_Rahjoo_VD_2022_reverse
+  import SI = Modelica.SIunits;
+  import CN = Modelica.Constants;
+  import CV = Modelica.SIunits.Conversions;
+  import Tables = Modelica.Blocks.Tables;
+  package Medium = SolarTherm.Media.Air.Air_amb_p;
+  package Filler = SolarTherm.Materials.Geopolymer_Rahjoo_2022;
+  package Fluid = SolarTherm.Materials.Air_Table;
+  parameter Integer N_f = 50;
+  parameter Integer N_p = 10;
+  parameter SI.Length L_pipe = 0.5;
+  parameter SI.Length D_pipe = 0.154;
+  parameter SI.Length D_solid = 0.25;
+  
+  parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.5 "W/m2K";
+  //0.09003;
+  parameter Real Multiplier = 1.0;
+  //parameter SI.Length H_tank = 0.48;
+  //parameter SI.Diameter D_tank = 0.5;
+  //parameter Real eta = 0.37;
+  //parameter SI.Diameter d_p = 0.018;
+  //parameter Real U_loss_tank = 0.0;
+  parameter Integer Correlation = 2; //1=Liq, 2=gas
+  //1:Wakao-kaguei, 2:melissari-argyropoulos
+  //parameter Real ar = 0.48/0.5;
+  //parameter SI.Volume V_tank = 0.25*CN.pi*D_tank*D_tank*H_tank;
+  //Properties of Fluid
+  parameter SI.Density rho_f_avg = 0.5 * (Fluid.rho_Tf(T_max, 1.0) + Fluid.rho_Tf(T_min, 0.0)) "averaged fluid density";
+  parameter SI.SpecificEnthalpy h_f_max = Fluid.h_Tf(T_max, 1.0) "Max fluid specific enthalpy";
+  parameter SI.SpecificEnthalpy h_f_min = Fluid.h_Tf(T_min, 0.0) "Min fluid specific enthalpy";
+  parameter SI.Density rho_p_min = min(Filler.rho_Tf(T_max, 1.0), Filler.rho_Tf(T_min, 0.0)) "averaged filler density";
+  parameter SI.SpecificEnthalpy h_p_max = Filler.h_Tf(T_max, 1.0) "Max filler specific enthalpy";
+  parameter SI.SpecificEnthalpy h_p_min = Filler.h_Tf(T_min, 0.0) "Min filler specific enthalpy";
+  parameter SI.Temperature T_min = 30 + 273.15 "Design cold Temperature of everything in the tank (K)";
+  parameter SI.Temperature T_max = 630.0 + 273.15 "Design hot Temperature of everything in the tank (K)";
+  
+  //parameter Real E_v = eta*rho_f_avg*(h_f_max-h_f_min) + (1.0-eta)*rho_p_min*(h_p_max-h_p_min) "Volumetric Energy density of the tank (J/m3)";
+  //parameter SI.Energy E_max = E_v*V_tank "Total capacity of the tank";
+  parameter SI.Energy E_max = Multiplier * (thermocline_Tank.Tank_A.E_unit / thermocline_Tank.Tank_A.E_unit_solid) "Total capacity of the tank";
+  parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(L_pipe, N_f);
+  //parameter SI.Temperature T_f_start[N_f] = fill(30.0+273.15,N_f);
+  //parameter SI.Temperature h_f_start[N_f] = fill(Fluid.h_Tf(30.0+273.15,0),N_f);
+  //parameter SI.Temperature T_p_start[N_f,N_p] = fill(fill(30.0+273.15,N_p),N_f);
+  //parameter SI.Temperature h_p_start[N_f,N_p] = fill(fill(Filler.h_Tf(30.0+273.15,0.0),N_p),N_f);
+  import Dataset = SolarTherm.Validation.Datasets.Rahjoo_Fig4b_Dataset;
+  parameter SI.Temperature T_f_start[N_f] = Dataset.Initial_Temperature_f(z_f / L_pipe);
+  parameter SI.Temperature h_f_start[N_f] = Dataset.Initial_Enthalpy_f(z_f / L_pipe);
+  parameter SI.Temperature T_p_start[N_f, N_p] = Dataset.Initial_Temperature_p(z_f / L_pipe, N_p);
+  parameter SI.Temperature h_p_start[N_f, N_p] = Dataset.Initial_Enthalpy_p(z_f / L_pipe, N_p);
+  //parameter SI.Length[:] z_exp_1h = {0.4796,0.4310,0.3303,0.2293,0.1296,0.0295};
+  //parameter SI.Length[:] z_exp_2h = {0.48,0.43,0.3299,0.2302,0.1296,0.0290};
+  //parameter SI.Temperature[:] TC_exp_1h = {682,664,516,322,164,83};
+  //parameter SI.Temperature[:] TC_exp_2h = {682,678,621,516,350,220};
+  //All tank sections have HTF type in common!
+  //Fluid.State fluid_top(h_start=h_f_start[N_f]) "Top fluid property object";
+  //Fluid.State fluid_bot(h_start=h_f_start[1]) "Bottom fluid property object";
+  //parameter SI.Time t_charge = 7 * 3600 "charging time";
+  //parameter SI.Time t_discharge = 7 * 3600 "discharging time";
+  //parameter SI.MassFlowRate m_flow_charge = E_max/((h_f_max-h_f_min)*t_charge) "Design mass flow rate of charging";
+  //parameter SI.MassFlowRate m_flow_discharge = E_max/((h_f_max-h_f_min)*t_discharge) "Design mass flow rate of charging";
+  //Inlet and Outlet
+  SI.SpecificEnthalpy h_top "J/kg";
+  SI.SpecificEnthalpy h_bot "J/kg";
+  SI.MassFlowRate m_Recv_signal "kg/s";
+  SI.MassFlowRate m_PB_signal "kg/s";
+  Integer ControlState(start=1);
+  SI.Temperature T_inlet "K";
+  //Core thermocouple temperature
+  //Pos4 z/L = 0.0435, Pos1 z/L = 0.9565
+  SI.Temperature T_core[N_f](start = T_f_start) "Core temperature, approximated by the filler node furthest from the fluid";
+  SI.Temperature T_core_Pos1 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f, T_core, 0.1 * L_pipe);
+  SI.Temperature T_core_Pos2 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f, T_core, 0.5 * L_pipe);
+  SI.Temperature T_core_Pos3 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f, T_core, 0.9 * L_pipe);
+  //Experimental Data ref
+  SI.Temperature T_core_Pos1_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_Pos1_times, Dataset.T_Pos1_TK, time);
+  SI.Temperature T_core_Pos2_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_Pos2_times, Dataset.T_Pos2_TK, time);
+  SI.Temperature T_core_Pos3_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_Pos3_times, Dataset.T_Pos3_TK, time);
+  
+  SI.Velocity u_flow_exp = Dataset.Timeseries_uflow(time);
+  SI.Velocity u_flow_mid = abs(thermocline_Tank.Tank_A.u_flow[integer(N_f / 2.0) + 1]);
+  //SI.Temperature T_outlet_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_outlet_times,Dataset.T_outlet_TK,time);
+  //Recorded Variable
+  //SI.Energy E_stored (start=0.0) "J";
+  //SI.Energy E_pump_loss (start=0.0) "J";
+  //Real E_stored_kWh = E_stored/(3600.0e3) "kWh";
+  //Real E_pump_loss_kWh = E_pump_loss/(3600.0e3) "kWh";
+  //Boundary Conditions
+  SI.Temperature T_top(start = T_min) "Temperature at the top";
+  SI.Temperature T_bot(start = T_min) "Temperature at the bottom";
+  Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, nPorts = 1, p = 101325, use_T_in = true) annotation(
+    Placement(visible = true, transformation(origin = {-110, 70}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Annular_SingleTank_VD_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe = L_pipe, D_pipe = D_pipe, D_solid = D_solid, Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier = Multiplier, Multiplier = Multiplier,U_loss_tank=U_loss_tank) annotation(
+    Placement(visible = true, transformation(origin = {2, 12}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {-52, 70}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
+    Placement(visible = true, transformation(origin = {-42, 32}, extent = {{-12, -18}, {12, 18}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression p_amb(y = 101325) annotation(
+    Placement(visible = true, transformation(origin = {83, -8}, extent = {{13, -16}, {-13, 16}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression m_flow_Recv(y = m_Recv_signal) annotation(
+    Placement(visible = true, transformation(origin = {-107, 1}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression Receiver_Inlet_T(y = T_inlet) annotation(
+    Placement(visible = true, transformation(origin = {-182, 72}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.IntegerExpression State(y = ControlState) annotation(
+    Placement(visible = true, transformation(origin = {64, 24}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink annotation(
+    Placement(visible = true, transformation(origin = {-90, -56}, extent = {{26, -26}, {-26, 26}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_Top(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {2, 47.6883}, extent = {{-18, 0}, {18, 21.8731}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Sources.FluidSink PB_Sink annotation(
+    Placement(visible = true, transformation(origin = {102, 70}, extent = {{-26, -26}, {26, 26}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_Bot(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {2, -23.6568}, extent = {{18, 0}, {-18, -21.6512}}, rotation = 0)));
+  Modelica.Fluid.Sources.Boundary_pT boundary_pT(redeclare package Medium = Medium,nPorts = 1, p = 101325, use_T_in = true) annotation(
+    Placement(visible = true, transformation(origin = {104, -56}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple(redeclare package Medium = Medium) annotation(
+    Placement(visible = true, transformation(origin = {48, -56}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression realExpression(y = m_PB_signal) annotation(
+    Placement(visible = true, transformation(origin = {37, -33}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
+  Modelica.Blocks.Sources.RealExpression realExpression1(y = T_inlet) annotation(
+    Placement(visible = true, transformation(origin = {168, -54}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Valves.Valve_TwoWay PB_valve annotation(
+    Placement(visible = true, transformation(origin = {48, 51.0118}, extent = {{-18, 0}, {18, 24.9882}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Valves.Valve_TwoWay Recv_valve annotation(
+    Placement(visible = true, transformation(origin = {-36, -78.9902}, extent = {{18, 0}, {-18, 26.9902}}, rotation = 0)));
+algorithm
+  
+  when time > 1.47*24.0*3600 then
+    ControlState := 2;
+  elsewhen time > 2.09*24.0*3600 then
+    ControlState := 1;
+  elsewhen time > 2.71*24.0*3600 then
+    ControlState := 2;
+  elsewhen time > 3.26*24.0*3600 then
+    ControlState := 1;
+  elsewhen time > 3.84*24.0*3600 then
+    ControlState := 2;
+  elsewhen time > 4.34*24.0*3600 then
+    ControlState := 1;
+  elsewhen time > 4.96*24.0*3600 then
+    ControlState := 2;
+  elsewhen time > 5.42*24.0*3600 then
+    ControlState := 1;
+  end when;
+  
+equation
+  T_inlet = Dataset.Timeseries_TinletK(time);
+  
+  if ControlState == 1 then
+    m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
+    m_PB_signal = 0.0;
+    //PB_Sink.port_a.m_flow=0.0;
+    Recv_valve.open = true;
+    PB_valve.open = false;
+  else
+    m_Recv_signal = 0.0;
+    m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
+    //Recv_Sink.port_a.m_flow=0.0;
+    Recv_valve.open = false;
+    PB_valve.open = true;
+  end if;
+
+//Connections
+  h_bot = thermocline_Tank.fluid_bot.h;
+  h_top = thermocline_Tank.fluid_top.h;
+  T_bot = thermocline_Tank.fluid_bot.T;
+  T_top = thermocline_Tank.fluid_top.T;
+//m_Recv_signal = 0.01389;
+  m_PB_signal = 0.0;
+  //PBS_TeeJunction_LoopBreaker_Bot.fluid_b.p = 101325;
+  //PBS_TeeJunction_LoopBreaker_Bot.fluid_a.p = 101325;
+//der(E_stored) = m_Recv_signal*(h_top-h_bot);
+//der(E_pump_loss) = thermocline_Tank.Tank_A.W_loss_pump;
+  for i in 1:N_f loop
+    T_core[i] = thermocline_Tank.Tank_A.T_p[i, integer(N_p / 2) + 1];
+  end for;
+//Fluid inlet and outlet properties
+//fluid_top.h = h_top;H_ta
+//fluid_bot.h = h_bot;
+//fluid_top.T = T_top;
+//fluid_bot.T = T_bot;
+  connect(p_amb.y, thermocline_Tank.p_amb) annotation(
+    Line(points = {{69, -8}, {69, 5}, {19, 5}, {19, 12}}, color = {0, 0, 127}));
+  connect(Tamb.y, thermocline_Tank.T_amb) annotation(
+    Line(points = {{-29, 32}, {-23, 32}, {-23, 12}, {-15, 12}}, color = {0, 0, 127}));
+  connect(m_flow_Recv.y, pumpSimple_EqualPressure.m_flow) annotation(
+    Line(points = {{-86, 1}, {-72, 1}, {-72, 70}, {-52, 70}, {-52, 79}}, color = {0, 0, 127}));
+  connect(pumpSimple_EqualPressure.fluid_a, Recv_outlet.ports[1]) annotation(
+    Line(points = {{-62, 70}, {-94, 70}}, color = {0, 127, 255}));
+  connect(Receiver_Inlet_T.y, Recv_outlet.T_in) annotation(
+    Line(points = {{-171, 72}, {-160, 72}, {-160, 76}, {-129, 76}}, color = {0, 0, 127}));
+  connect(State.y, thermocline_Tank.Control_State) annotation(
+    Line(points = {{53, 24}, {44, 24}, {44, 19}, {19, 19}}, color = {255, 127, 0}));
+  connect(pumpSimple_EqualPressure.fluid_b, Splitter_Top.fluid_a) annotation(
+    Line(points = {{-42, 70}, {-12, 70}, {-12, 72}, {-12, 72}}, color = {0, 127, 255}));
+  connect(boundary_pT.ports[1], pumpSimple.fluid_a) annotation(
+    Line(points = {{88, -56}, {58, -56}, {58, -56}, {58, -56}}, color = {0, 127, 255}));
+  connect(pumpSimple.fluid_b, Splitter_Bot.fluid_a) annotation(
+    Line(points = {{38, -56}, {16, -56}, {16, -57}}, color = {0, 127, 255}));
+  connect(Splitter_Top.fluid_c, thermocline_Tank.fluid_a) annotation(
+    Line(points = {{2, 54}, {2, 42}}, color = {0, 127, 255}));
+  connect(Splitter_Bot.fluid_c, thermocline_Tank.fluid_b) annotation(
+    Line(points = {{2, -40}, {2, -18}}, color = {0, 127, 255}));
+  connect(realExpression.y, pumpSimple.m_flow) annotation(
+    Line(points = {{58, -32}, {66, -32}, {66, -48}, {48, -48}, {48, -48}}, color = {0, 0, 127}));
+  connect(realExpression1.y, boundary_pT.T_in) annotation(
+    Line(points = {{158, -54}, {126, -54}, {126, -50}, {124, -50}}, color = {0, 0, 127}));
+  connect(Splitter_Top.fluid_b, PB_valve.fluid_a) annotation(
+    Line(points = {{16, 72}, {32, 72}, {32, 72}, {34, 72}}, color = {0, 127, 255}));
+  connect(PB_valve.fluid_b, PB_Sink.port_a) annotation(
+    Line(points = {{62, 72}, {76, 72}, {76, 70}, {76, 70}}, color = {0, 127, 255}));
+  connect(Splitter_Bot.fluid_b, Recv_valve.fluid_a) annotation(
+    Line(points = {{-12, -56}, {-22, -56}, {-22, -56}, {-22, -56}}, color = {0, 127, 255}));
+  connect(Recv_valve.fluid_b, Recv_Sink.port_a) annotation(
+    Line(points = {{-50, -56}, {-64, -56}, {-64, -56}, {-64, -56}}, color = {0, 127, 255}));
+  annotation(
+    experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 300.0));
+end Annular_Rahjoo_VD_2022_reverse;

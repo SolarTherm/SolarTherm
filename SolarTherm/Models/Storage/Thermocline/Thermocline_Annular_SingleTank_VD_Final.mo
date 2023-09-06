@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_Annular_SingleTank_Final
+model Thermocline_Annular_SingleTank_VD_Final
 
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
@@ -55,10 +55,10 @@ model Thermocline_Annular_SingleTank_Final
           
   Modelica.Blocks.Interfaces.RealOutput T_95_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.95) + 273.15 "Temperature at the 90% height of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
-          extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {173, 41}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+          extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {17, 39}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput T_05_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f,0.05) + 273.15"Temperature at the 10% height of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
-          extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {165, -37}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+          extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {17, -43}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   
   Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
@@ -81,7 +81,7 @@ model Thermocline_Annular_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Annular_Storage_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
+  SolarTherm.Models.Storage.Thermocline.Annular_Storage_Section_VD_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
 
 
   //Cost BreakDown
@@ -92,9 +92,15 @@ model Thermocline_Annular_SingleTank_Final
   //parameter Real C_insulation = Tank_A.C_insulation;
   //parameter Real C_encapsulation = Tank_A.C_encapsulation;
   //Theoretical Tank Level
-  Modelica.Blocks.Interfaces.RealOutput Level "Theoretical Tank Level"
-                                          annotation (Placement(visible = true,transformation(
-          extent = {{40, 16}, {60, 36}}, rotation = 0), iconTransformation(origin = {45, 21}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
+  Real Level;
+  Modelica.Blocks.Interfaces.IntegerInput Control_State(start=1) annotation (Placement(
+        visible = true,transformation(
+        
+        origin={48, 20},extent={{10, -10}, {-10, 10}},
+        rotation=0), iconTransformation(
+        
+        origin={46, 18},extent={{6, -6}, {-6, 6}},
+        rotation=0)));
 
   //Tank Non-dimensionalized vertical axis
   parameter Real ZDH[N_f] = Tank_A.ZDH;
@@ -107,6 +113,7 @@ model Thermocline_Annular_SingleTank_Final
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
 equation
+  /*
   if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
     fluid_bot.h = fluid_b.h_outflow;
@@ -117,6 +124,21 @@ equation
     fluid_top.T = 298.15;
     fluid_bot.T = 298.15;
   end if;
+  */
+  //if fluid_a.m_flow > 1e-6 then
+  if Control_State == 1 then //Charging
+    fluid_top.h = inStream(fluid_a.h_outflow);
+    fluid_bot.h = fluid_b.h_outflow;
+  else
+  //elseif fluid_a.m_flow < -1e-6 then
+    fluid_top.h = fluid_a.h_outflow;
+    fluid_bot.h = inStream(fluid_b.h_outflow);
+  //else
+  //  fluid_top.T = 298.15;
+  //  fluid_bot.T = 298.15;
+  end if;
+  
+  
   //Convert from Kelvin to degC for easier plotting
   T_f_degC = (Tank_A.T_f).-273.15;
   
@@ -127,7 +149,8 @@ equation
   h_bot_outlet = Tank_A.h_f[1];
   
   //Mass balance
-  fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
+  //fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
+  /*
   if fluid_a.m_flow > 0.0 then //mass is flowing into the top, direction is downwards so Tank_A.m_flow is (negative), charging
     Tank_A.m_flow = -1.0*fluid_a.m_flow/Multiplier;
     Tank_A.h_in = inStream(fluid_a.h_outflow);
@@ -139,7 +162,23 @@ equation
     fluid_a.h_outflow = Tank_A.h_out;//Tank_A.h_f[N_f];//fluid_top.h;
     fluid_b.h_outflow = Tank_A.h_in;//Tank_A.h_f[1];//fluid_bot.h;
   end if;
-
+  */
+  if Control_State == 1 then //Charging
+    Tank_A.m_flow_in = -1.0*fluid_a.m_flow;
+    fluid_b.m_flow = Tank_A.m_flow_out;
+    Tank_A.h_in = inStream(fluid_a.h_outflow);
+    fluid_a.h_outflow = Tank_A.h_f[N_f];//fluid_top.h;Tank_A.h_in;
+    fluid_b.h_outflow = Tank_A.h_out;//Tank_A.h_f[1];//fluid_bot.h;
+    Tank_A.State = 1;
+  else //discharging
+    Tank_A.m_flow_in = fluid_b.m_flow;
+    fluid_a.m_flow = -1.0*Tank_A.m_flow_out;
+    Tank_A.h_in = inStream(fluid_b.h_outflow);
+    fluid_a.h_outflow = Tank_A.h_out;//Tank_A.h_f[N_f];//fluid_top.h;
+    fluid_b.h_outflow = Tank_A.h_in;//Tank_A.h_f[1];//fluid_bot.h;
+    Tank_A.State = 3;
+  end if;
+  
   fluid_a.p = p_amb;
   fluid_b.p = p_amb;
   T_amb = Tank_A.T_amb;
@@ -147,10 +186,10 @@ equation
   T_bot_measured = Tank_A.T_f[1];
 
 annotation(
-    Icon(graphics = {Text(origin = {-60, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {-52, -71}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {61, 70}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {174, 31.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {170, -44.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {54, 31}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Ellipse(origin = {-30, -56}, fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-40, 60}, {40, -60}}), Rectangle(origin = {0, -2}, fillColor = {153, 153, 153}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, extent = {{-39.5, -56}, {40, -60}}), Ellipse(origin = {-30, 64}, fillColor = {207, 207, 207}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {227, 227, 227}, pattern = LinePattern.Dash, extent = {{-10, 60}, {10, -68}}), Ellipse(origin = {-42, 60}, fillColor = {221, 221, 221}, fillPattern = FillPattern.Solid, extent = {{32, 2}, {52, -2}}, endAngle = 360), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}})}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
+    Icon(graphics = {Text(origin = {-60, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {-52, -71}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {61, 70}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {18, 33.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {16, -50.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {54, 31}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Ellipse(origin = {-30, -56}, fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-40, 60}, {40, -60}}), Rectangle(origin = {0, -2}, fillColor = {153, 153, 153}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, extent = {{-39.5, -56}, {40, -60}}), Ellipse(origin = {-30, 64}, fillColor = {207, 207, 207}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {227, 227, 227}, pattern = LinePattern.Dash, extent = {{-10, 60}, {10, -68}}), Ellipse(origin = {-42, 60}, fillColor = {221, 221, 221}, fillPattern = FillPattern.Solid, extent = {{32, 2}, {52, -2}}, endAngle = 360), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}})}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>
 		</html>",info="<html>
 		<p>This model contains the fluid_a (top) and fluid_b (bottom) ports, basically a complete CSP component. This model simply connects the Thermocline_Spheres_Section models to the correct ports.</p>
 		</html>"));
 
-end Thermocline_Annular_SingleTank_Final;
+end Thermocline_Annular_SingleTank_VD_Final;
