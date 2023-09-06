@@ -49,8 +49,8 @@ model WindPVsaltTESsystem
   parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
   parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
 
-  parameter Modelica.SIunits.HeatFlowRate Q_start = 1e-3;
-  parameter Modelica.SIunits.HeatFlowRate Q_stop = 1e-3;
+  parameter Modelica.SIunits.HeatFlowRate Q_start = eps;
+  parameter Modelica.SIunits.HeatFlowRate Q_stop = eps;
 
   Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow heater annotation(
     Placement(visible = true, transformation(origin = {-50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -64,9 +64,9 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {20, -80}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.ReceiverControl controlCold(Kp = -1000,	L_df_off = cold_tnk_defocus_ub, L_df_on = cold_tnk_defocus_lb, L_off = cold_tnk_crit_lb, L_on = cold_tnk_crit_ub, T_ref = from_degC(565), m_flow_max = m_flow_heater_max, m_flow_min = 0)  annotation(
     Placement(visible = true, transformation(origin = {70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_set, W_max = 30e6, use_L = true) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankHot(redeclare package Medium = Medium, D = D_storage, H = H_storage, T_start = T_hot_set, W_max = 30e6, use_L = true, use_p_top = true) annotation(
     Placement(visible = true, transformation(origin = {10, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, L_start = 30, T_start = T_cold_set, W_max = 30e6, use_L = true) annotation(
+  SolarTherm.Models.Storage.Tank.Tank tankCold(redeclare package Medium = Medium, D = D_storage, H = H_storage, L_start = 30, T_start = T_cold_set, W_max = 30e6, use_L = true, use_p_top = true) annotation(
     Placement(visible = true, transformation(origin = {70, -74}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 42}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -78,7 +78,7 @@ model WindPVsaltTESsystem
     Placement(visible = true, transformation(origin = {82, 70}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
   SolarTherm.Models.Sources.GridInput gridInput(Q_start = Q_start, Q_stop = Q_stop, heater_efficiency = heater_efficiency, max_input = max_input, pv_fraction = pv_fraction, pv_ref = pv_file, pv_ref_size = pv_ref_size, wind_ref = wind_file, wind_ref_size = wind_ref_size)  annotation(
     Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler(T_cold_set = T_cold_set)  annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler(Q_flow_ref = Q_flow_des,T_cold_set = T_cold_set, T_hot_set = T_hot_set, nu_min = 0.25)  annotation(
     Placement(visible = true, transformation(origin = {130, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schedule_file, tableName = "m_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {124, 70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -87,7 +87,7 @@ model WindPVsaltTESsystem
   Modelica.Blocks.Logical.Or or1 annotation(
     Placement(visible = true, transformation(origin = {-116, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 equation
-  boiler.m_flow = controlHot.m_flow;
+//  boiler.m_flow = controlHot.m_flow;
   curtail = controlCold.defocus or controlHot.defocus;
   gridInput.CurtaimentPower*heater_efficiency = min(gridInput.RenewableInput, scheduler.y[1] * (h_hot_set - h_cold_set));
   Q_scheduled = scheduler.y[1] * (h_hot_set - h_cold_set);
