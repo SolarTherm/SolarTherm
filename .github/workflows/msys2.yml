@@ -5,10 +5,10 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, msys_numpy_test ]
   push:
 
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, msys_numpy_test ]
 
   pull_request:
     branches:  [ $default-branch, master]
