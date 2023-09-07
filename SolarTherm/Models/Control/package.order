@@ -17,3 +17,6 @@ HX_Control_new_alg
 m_flow_calculations_simple_alg
 m_flow_calculations_simple_2
 SSCSP_Controller
+HotPumpControl
+HeaterControl
+ScheduleLogic

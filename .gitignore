@@ -17,6 +17,7 @@ src/python/solartherm.egg-info
 src/env/st
 Testing
 SolarTherm/Models/Control/reference_1.mat
+SolarTherm/Data/Data
 examples/*_res*.mat
 .scons*
 .sconf_temp

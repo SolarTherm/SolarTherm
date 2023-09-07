@@ -15,7 +15,7 @@ model ReceiverControl
 
   Modelica.Blocks.Logical.Switch switch
     annotation (Placement(transformation(extent={{54,-6},{66,6}})));
-  Modelica.Blocks.Sources.RealExpression m_flow_off_input(y=0)
+  Modelica.Blocks.Sources.RealExpression m_flow_off_input(y=m_flow_min)
     annotation (Placement(transformation(extent={{6,-34},{32,-10}})));
   Modelica.Blocks.Math.Feedback feedback annotation(Placement(transformation(extent={{-28,38},
             {-8,18}})));
@@ -89,5 +89,5 @@ equation
 <ul>
 <li>Alberto de la Calle:<br>Released first version. </li>
 </ul>
-</html>"));
+</html>"), Icon(graphics = {Text(origin = {-10, 254},lineColor={0,0,255},extent={{-149,-114},{151,-154}}, textString = "%name")}));
 end ReceiverControl;
