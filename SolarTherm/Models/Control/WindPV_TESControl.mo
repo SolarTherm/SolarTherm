@@ -43,10 +43,11 @@ model WindPV_TESControl
 
   Modelica.Blocks.Interfaces.RealInput Q_rcv_raw "The net receiver heat rate before curtailment"
     annotation (Placement(visible = true, transformation(extent = {{-124, 52}, {-84, 92}}, rotation = 0), iconTransformation(extent = {{-126, 48}, {-86, 88}}, rotation = 0)));
-    
+  
+  
   Modelica.Blocks.Interfaces.RealInput Q_demand "The boiler heat demand"
     annotation (Placement(visible = true, transformation(extent = {{-124, -102}, {-84, -62}}, rotation = 0), iconTransformation(origin = {70, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-    
+  
   Modelica.Blocks.Interfaces.RealInput h_PB_outlet "Enthalpy of the HTF coming out of PB"
     annotation (Placement(visible = true, transformation(extent = {{-124, -54}, {-84, -14}}, rotation = 0), iconTransformation(origin = {14, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
     
