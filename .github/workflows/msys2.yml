@@ -113,6 +113,12 @@ jobs:
         cd tests
         python3 -m pytest test_stenv.py
 
+    - name: Test numpy
+      run: |
+        export PATH=$PATH:~/.local/bin
+        cd tests
+        st python test_numpy.py
+
 #    - name: Test SolarTherm dakota
 #      run: |
 #        export PATH=$PATH:~/.local/bin
