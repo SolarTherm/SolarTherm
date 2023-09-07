@@ -53,7 +53,7 @@ model WindPVannularTESsystem
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 50, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 150, T_target = T_hot_set, eff_storage_des = 0.60, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.0001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 1.0 * 3600.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 50, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 150, T_target = T_hot_set, eff_storage_des = 0.45, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.0001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 1.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "m_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -112,5 +112,5 @@ equation
     Line(points = {{126, 32}, {136, 32}, {136, -48}, {10, -48}, {10, -56}, {10, -56}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {107, -76}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump")}),
-    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)));
+    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end WindPVannularTESsystem;

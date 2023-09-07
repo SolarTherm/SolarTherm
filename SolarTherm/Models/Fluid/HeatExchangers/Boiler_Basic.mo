@@ -27,13 +27,16 @@ import Modelica.SIunits.Conversions.*;
 
   //Real load;
   //Boolean logic;
-  
+  Medium.BaseProperties state_in;
   SI.HeatFlowRate Q_flow;
   SI.Energy E_thermal(start=0.0);
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out;
 
 equation
+  state_in.h = h_in;
+
+  state_in.p = 1e5;
   //load=max(nu_eps,fluid_a.m_flow/m_flow_ref);
   //logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
