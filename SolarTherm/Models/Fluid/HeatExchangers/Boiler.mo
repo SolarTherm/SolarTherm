@@ -1,10 +1,17 @@
 within SolarTherm.Models.Fluid.HeatExchangers;
 model Boiler//Copied from Armando's windPV-salt_TES
-  import Modelica.SIunits.Conversions.*;
+import Modelica.SIunits.Conversions.*;
   replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph;
+  parameter Modelica.SIunits.HeatFlowRate Q_flow_ref=50e6 "Design thermal power";
   parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290);
-  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
-  parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
+  parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565);
+  final parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold salt thermodynamic state at design";
+  final parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold salt thermodynamic state at design";
+  final parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold salt specific enthalpy at design";  
+  final parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold salt specific enthalpy at design";  
+  final parameter SI.MassFlowRate m_flow_ref = Q_flow_ref / (h_hot_set - h_cold_set) "Mass flow rate at design";
+  final parameter Real nu_eps=1e-3 "Minimum load";
+  parameter Real nu_min=1e-3 "Minimum turbine operation";
 
   Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = Medium)
     "Fluid connector a (positive design flow direction is from port_a to port_b)"
@@ -15,27 +22,33 @@ model Boiler//Copied from Armando's windPV-salt_TES
     "Fluid connector b (positive design flow direction is from port_a to port_b)"
     annotation (Placement(visible = true,transformation(extent={{110,-10},{90,10}}, rotation=0), iconTransformation(extent = {{10, -112}, {-10, -92}}, rotation = 0)));
 
+  Real load;
+  Boolean logic;
+  
   Modelica.SIunits.HeatFlowRate Q_flow;
-  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpAux(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.FixedBoundary sink(nPorts = 1, redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-50, 0}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
-  Modelica.Fluid.Sources.FixedBoundary source(redeclare package Medium = Medium, T = T_cold_set, nPorts = 1) annotation(
-    Placement(visible = true, transformation(origin = {4, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_hot(y = m_flow) annotation(
-    Placement(visible = true, transformation(origin = {30, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.SIunits.MassFlowRate m_flow;
+  Modelica.SIunits.Energy E_thermal;
+  Modelica.SIunits.SpecificEnthalpy h_in;
+  Modelica.SIunits.SpecificEnthalpy h_out;
+protected
+  Real k_q;
 equation
-  Q_flow = m_flow*(inStream(fluid_a.h_outflow) - h_cold_set);
-  connect(sink.ports[1], fluid_a) annotation(
-    Line(points = {{-60, 0}, {-100, 0}, {-100, -2}}, color = {0, 127, 255}));
-  connect(pumpAux.fluid_b, fluid_b) annotation(
-    Line(points = {{60, 0}, {100, 0}}, color = {0, 127, 255}));
-  connect(source.ports[1], pumpAux.fluid_a) annotation(
-    Line(points = {{14, 0}, {40, 0}}, color = {0, 127, 255}));
-  connect(m_hot.y, pumpAux.m_flow) annotation(
-    Line(points = {{41, 40}, {50, 40}, {50, 8}}, color = {0, 0, 127}));
-annotation(
+  load=max(nu_eps,fluid_a.m_flow/m_flow_ref);
+  logic=load>nu_min;
+  h_in=inStream(fluid_a.h_outflow);
+  h_out=fluid_b.h_outflow;
+  h_out=fluid_a.h_outflow;
+  fluid_a.m_flow+fluid_b.m_flow=0;
+  fluid_a.p=fluid_b.p;
+  if logic then
+    k_q=1;
+    Q_flow=-fluid_a.m_flow*(h_out-h_in);
+  else
+    k_q=0;
+    h_out=h_cold_set;
+  end if;
+  Q_flow/(Q_flow_ref*load)=k_q;
+  Q_flow = der(E_thermal);
+  annotation(
     Icon(graphics = {Text(origin = {0, -6}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {151, -154}}, textString = "%name"),
     Rectangle(fillColor = {135, 135, 135}, fillPattern = FillPattern.Backward, extent = {{-100, 64}, {100, -64}}),
         Rectangle(fillColor = {255, 255, 255}, fillPattern = FillPattern.HorizontalCylinder, extent = {{-100, -44}, {100, 44}}),
