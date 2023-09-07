@@ -21,7 +21,7 @@ model WindPVsaltTESsystem
 	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
 
 	// Heater parameters
-	parameter Modelica.SIunits.Efficiency heater_efficiency = 0.90 "Electric heater efficiency";
+	parameter Modelica.SIunits.Efficiency heater_efficiency = 0.99 "Electric heater efficiency";
 	parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565) "Hot tank temperature";
 	parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290) "Hot tank temperature";
 
@@ -123,12 +123,12 @@ model WindPVsaltTESsystem
 			Placement(visible = true, transformation(origin = {20, -80}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 
 	// Cold salt pump control
-	SolarTherm.Models.Control.ReceiverControl controlCold(
-		L_df_off = cold_tnk_curtailment_ub, 
-		L_df_on = cold_tnk_curtailment_lb, 
-		L_off = cold_tnk_crit_lb, 
-		L_on = cold_tnk_crit_ub, 
-		T_ref = T_hot_set, 
+	SolarTherm.Models.Control.HeaterControl controlCold(
+		level_curtailment_on = cold_tnk_curtailment_ub, 
+		level_curtailment_off = cold_tnk_curtailment_lb, 
+		level_off = cold_tnk_crit_lb, 
+		level_on = cold_tnk_crit_ub, 
+		T_heater_set = T_hot_set, 
 		m_flow_max = m_flow_heater_max, 
 		m_flow_min = 0,
 		Ti = Ti,
@@ -186,7 +186,7 @@ model WindPVsaltTESsystem
 		T_cold_set = T_cold_set, 
 		T_hot_set = T_hot_set, 
 		nu_min = nu_min_boiler)  annotation(
-		Placement(visible = true, transformation(origin = {130, -10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+		Placement(visible = true, transformation(origin = {120, 0}, extent = {{-10, 10}, {10, -10}}, rotation = 270)));
 
 	// Boiler scheduler
 	Modelica.Blocks.Sources.CombiTimeTable scheduler(
@@ -234,25 +234,25 @@ equation
 	Line(points = {{-20, 40}, {-20, 55}, {0, 55}}, color = {0, 127, 255}));
 	connect(tankHot.fluid_b, pumpHot.fluid_a) annotation(
 	Line(points = {{20, 43}, {29, 43}, {29, 42}, {56, 42}}, color = {0, 127, 255}));
-	connect(pumpHot.fluid_b, boiler.fluid_a) annotation(
-	Line(points = {{130, 0}, {130, 42}, {76, 42}}, color = {0, 127, 255}));
-	connect(boiler.fluid_b, tankCold.fluid_a) annotation(
-	Line(points = {{80, -68}, {130, -68}, {130, -20}}, color = {0, 127, 255}));
+	connect(pumpHot.fluid_b, boiler.port_a) annotation(
+	Line(points = {{76, 42}, {120, 42}, {120, 10}}, color = {0, 127, 255}));
+	connect(boiler.port_b, tankCold.fluid_a) annotation(
+    Line(points = {{120, -10}, {120, -68}, {80, -68}}, color = {0, 127, 255}));
 	connect(tankCold.fluid_b, pumpCold.fluid_a) annotation(
 	Line(points = {{30, -80}, {50, -80}, {50, -81}, {60, -81}}, color = {0, 127, 255}));
 
 	// Control Cold connections
-	connect(temperature.T, controlCold.T_mea) annotation(
+	connect(temperature.T, controlCold.T_heater_measured) annotation(
 	Line(points = {{-10, 30}, {49.5, 30}, {49.5, -24}, {59, -24}}, color = {0, 0, 127}));
-	connect(controlCold.m_flow, pumpCold.m_flow) annotation(
-	Line(points = {{81, -30}, {96, -30}, {96, -48}, {20, -48}, {20, -71}}, color = {0, 0, 127}));
-	connect(tankCold.L, controlCold.L_mea) annotation(
+	connect(controlCold.m_flow_heater, pumpCold.m_flow) annotation(
+	Line(points = {{81, -30}, {100, -30}, {100, -48}, {20, -48}, {20, -71}}, color = {0, 0, 127}));
+	connect(tankCold.L, controlCold.tank_level) annotation(
 	Line(points = {{60, -70}, {50, -70}, {50, -30}, {60, -30}}, color = {0, 0, 127}));
-	connect(controlCold.defocus, or1.u2) annotation(
+	connect(controlCold.curtailment, or1.u2) annotation(
 	Line(points = {{70, -42}, {70, -46}, {-136, -46}, {-136, -4}, {-120, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-	connect(gridInput.on_renewable, controlCold.sf_on) annotation(
+	connect(gridInput.on_renewable, controlCold.on_input_signal) annotation(
     Line(points = {{-70, -11}, {-70, -36}, {60, -36}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-	connect(controlCold.m_flow, controlHot.m_flow_pump_charging) annotation(
+	connect(controlCold.m_flow_heater, controlHot.m_flow_pump_charging) annotation(
 	Line(points = {{82, -30}, {100, -30}, {100, 62}, {92, 62}}, color = {0, 0, 127}));
 
 	// Control Hot connections

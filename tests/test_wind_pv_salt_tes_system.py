@@ -22,7 +22,7 @@ class TestScheduler(unittest.TestCase):
 		# Note these are set to the values for what is thought to be a working
 		# version.  They are not validated against anything or independently
 		# calculated.
-		ref_annual_ouput = 273744.99056518177 # Reference annnual thermal output
+		ref_annual_ouput = 335958.7437294272 # Reference annnual thermal output
 		annual_output=self.mat.data('E_thermal')[-1]
 		annual_output = annual_output/(1e6*3600) # Convert from J/year to MWh/year
 		# Testing output

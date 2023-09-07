@@ -1,5 +1,6 @@
 within SolarTherm.Models.Sources;
 model GridInput
+	extends SolarTherm.Icons.GridInput;
 	parameter String pv_file "File with the reference PV farm output";
 	parameter String wind_file "File with the reference Wind farm output";
 	parameter Modelica.SIunits.Power P_elec_min = 25e6 "Minimum power input";
@@ -66,6 +67,41 @@ equation
     Line(points = {{-38, 30}, {-26, 30}, {-26, 8}, {-12, 8}}, color = {0, 0, 127}));
   connect(switch1.y, electricity) annotation(
     Line(points = {{12, 0}, {100, 0}}, color = {0, 0, 127}));
-  annotation(
-    Icon(graphics = {Line(points = {{40, 20}, {-40, -20}, {-40, 20}, {40, -20}, {40, 20}}), Line(origin = {0, -100}, points = {{-80, 0}, {80, 0}}), Line(origin = {0, -60.17}, points = {{-80, -40}, {-40, 40}, {40, 40}, {80, -40}}), Line(points = {{-40, -20}, {60, -60}, {-60, -60}, {40, -20}}), Line(points = {{-60, -60}, {80, -100}}), Line(points = {{60, -60}, {-80, -100}}), Line(origin = {0.17, 39.78}, points = {{-40.1708, -19.7764}, {39.8292, -19.7764}, {39.8292, 20.2236}, {-40.1708, -19.7764}, {-40.1708, 20.2236}, {39.8292, -19.7764}}), Line(origin = {0, 80}, points = {{-40, -20}, {0, 20}, {40, -20}, {-40, -20}}), Line(origin = {-70, 40}, points = {{30, -20}, {-30, 0}, {30, 20}}), Line(origin = {70, 40}, points = {{-30, 20}, {30, 0}, {-30, -20}}), Text(origin = {-10, 254}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {151, -154}}, textString = "%name")}));
+
+annotation(
+	Documentation(info="<html>
+	<p>
+	<b>GridInput</b> models the input of electrical power from renewable sources, such as photovoltaic (PV) and wind farms, into an electrical grid. The model calculates the net electrical power input based on reference power data, curtailment, and user-defined parameters.
+	</p>
+	<p>
+	The <b>GridInput</b> model has the following connectors and parameters:
+	</p>
+	<ul>
+	<li> Parameters:
+	<ul>
+	<li> <b>pv_file</b>: File with the reference PV farm output.</li>
+	<li> <b>wind_file</b>: File with the reference Wind farm output.</li>
+	<li> <b>P_elec_min</b>: Minimum power input, in Watts. Default: 25e6 W.</li>
+	<li> <b>P_elec_max</b>: Maximum power input, in Watts. Default: 100e6 W.</li>
+	<li> <b>pv_fraction</b>: PV fraction of renewable input at design. Default: 0.5.</li>
+	<li> <b>P_elec_pv_ref_size</b>: PV farm reference size, in Watts. Default: 50e6 W.</li>
+	<li> <b>P_elec_wind_ref_size</b>: Wind farm reference size, in Watts. Default: 50e6 W.</li>
+	</ul>
+	</li>
+	<li> Connectors:
+	<ul>
+	<li> <b>P_elec_net</b>: Net electrical power output to the grid.</li>
+	<li> <b>curtail</b>: Input for curtailment control.</li>
+	<li> <b>P_schedule</b>: Input for controlling power scheduling.</li>
+	<li> <b>electricity</b>: Output for the electrical power input to the grid.</li>
+	<li> <b>on_renewable</b>: Output indicating whether the power input is from renewable sources.</li>
+	</ul>
+	</li>
+	</ul>
+	</html>", revisions="<html>
+	<ul>
+	<li><i>September 2023</i> by <a href=\"mailto:armando.fontalvo@anu.edu.au\">Armando Fontalvo</a>:<br>
+	Created documentation for GridInput.</li>
+	</ul>
+	</html>"));
 end GridInput;

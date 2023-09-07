@@ -1,7 +1,7 @@
 within SolarTherm.Interfaces.Models;
 partial model SimpleResistiveHeater
 	extends SolarTherm.Icons.ResistiveHeater;
-	extends Modelica.Fluid.Interfaces.PartialTwoPort(redeclare package Medium = Medium);
+	extends Modelica.Fluid.Interfaces.PartialTwoPort;
 	replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph
 		constrainedby Modelica.Media.Interfaces.PartialMedium
 		"Medium in the component"
