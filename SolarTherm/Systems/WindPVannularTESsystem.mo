@@ -6,11 +6,11 @@ model WindPVannularTESsystem
   import Modelica.Constants.*;
   parameter String elec_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/heater_input.motab");
   parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_mflow.motab");
-  replaceable package Fluid = SolarTherm.Materials.Air_Table;
+  replaceable package Fluid = SolarTherm.Materials.SolarSalt;
   replaceable package Filler = SolarTherm.Materials.Geopolymer_Rahjoo_2022;
-  parameter Integer N_f = 23;
+  parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 23.0;
+  parameter SI.Length L_pipe = 50.0;
   parameter SI.Length D_pipe = 0.020;
   parameter SI.Length D_solid = 0.080;
   //0.09003;
@@ -18,11 +18,11 @@ model WindPVannularTESsystem
   parameter Integer Correlation = 2;
   //1:Liquid 2:Gas
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
-  parameter Real t_storage(unit = "h") = 18 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 12.0 "Hours of storage";
   parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 600.0e6 "Heat to boiler at design";
   parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
-  replaceable package Medium = SolarTherm.Media.Air.Air_amb_p;
+  replaceable package Medium = SolarTherm.Media.MoltenSalt.MoltenSalt_ph;
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565) "Ideal hot temperature";
   parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290) "Ideal cold temperature";
   parameter Medium.ThermodynamicState state_air_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold air thermodynamic state at design";
@@ -53,7 +53,7 @@ model WindPVannularTESsystem
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 50, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 150, T_target = T_hot_set, eff_storage_des = 0.8, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_wait = 0.5 * 3600)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 50, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 150, T_target = T_hot_set, eff_storage_des = 0.60, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.0001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 1.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "m_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -61,7 +61,7 @@ model WindPVannularTESsystem
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-46, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.CombiTimeTable grid_input(fileName = elec_input, tableName = "p_pelec", tableOnFile = true) annotation(
+  Modelica.Blocks.Sources.CombiTimeTable grid_input(fileName = elec_input, tableName = "p_pelec", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-110, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
 //grid_input.Q_defocus_y = min(gridInput.grid_input.y[1], scheduler.y[1] * (h_salt_hot_set - h_salt_cold_set));

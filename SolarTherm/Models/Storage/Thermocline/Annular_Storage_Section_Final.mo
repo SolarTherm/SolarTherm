@@ -469,10 +469,18 @@ equation
   
   for i in 2:N_f-1 loop //not the ends of the pipe
     //Innermost solid annulus
-    der(h_p[i,1]) = (U_in[i,1]*(T_s[i]-T_p[i,1]) - U_in[i,2]*(T_p[i,1]-T_p[i,2]) + U_right[i-1,1]*(T_p[i-1,1]-T_p[i,1]) - U_right[i,1]*(T_p[i,1]-T_p[i+1,1]) ) / m_pj[1];
+    der(h_p[i,1]) = 
+    (U_in[i,1]*(T_s[i]-T_p[i,1]) 
+    - U_in[i,2]*(T_p[i,1]-T_p[i,2]) 
+    + U_right[i-1,1]*(T_p[i-1,1]-T_p[i,1]) 
+    - U_right[i,1]*(T_p[i,1]-T_p[i+1,1]) ) / m_pj[1];
     //Middle solid annuli
     for j in 2:N_p - 1 loop
-      der(h_p[i,j]) = (U_in[i,j]*(T_p[i,j-1]-T_p[i,j]) - U_in[i,j+1]*(T_p[i,j]-T_p[i,j+1]) + U_right[i-1,j]*(T_p[i-1,j]-T_p[i,j]) - U_right[i,j]*(T_p[i,j]-T_p[i+1,j]) ) / m_pj[j];
+      der(h_p[i,j]) = 
+      (U_in[i,j]*(T_p[i,j-1]-T_p[i,j]) 
+      - U_in[i,j+1]*(T_p[i,j]-T_p[i,j+1]) 
+      + U_right[i-1,j]*(T_p[i-1,j]-T_p[i,j]) 
+      - U_right[i,j]*(T_p[i,j]-T_p[i+1,j]) ) / m_pj[j];
     end for;
     //Outermost solid annulus
     der(h_p[i,N_p]) = 
@@ -491,8 +499,8 @@ equation
   - U_side*(T_p[1,1]-T_amb)*A_px[1] ) / m_pj[1];
     //Middle solid annuli
     for j in 2:N_p - 1 loop
-      der(h_p[1,j]) 
-      = (U_in[1,j]*(T_p[1,j-1]-T_p[1,j]) 
+      der(h_p[1,j]) = 
+      (U_in[1,j]*(T_p[1,j-1]-T_p[1,j]) 
       - U_in[1,j+1]*(T_p[1,j]-T_p[1,j+1]) 
       - U_right[1,j]*(T_p[1,j]-T_p[2,j])
       - U_side*(T_p[1,j]-T_amb)*A_px[j] ) / m_pj[j];

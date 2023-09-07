@@ -7,7 +7,7 @@ model Annular_Laing_2006
   import Tables = Modelica.Blocks.Tables;
 
   package Medium = SolarTherm.Media.DowthermA.DowthermA_ph;
-  package Filler = SolarTherm.Materials.Concrete_Laing_2006_Variation;
+  package Filler = SolarTherm.Materials.Concrete_Laing_2006_Variation;// ;_2006_Variation;
   package Fluid = SolarTherm.Materials.Dowtherm_Table;
 
   parameter Integer N_f = 50; 
@@ -85,6 +85,8 @@ model Annular_Laing_2006
   SI.Temperature T_core_Pos4 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f,T_core,0.0435*L_pipe);
   SI.Temperature T_core_Pos1 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f,T_core,0.9565*L_pipe);
   
+  SI.Temperature T_s_Pos4 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f,thermocline_Tank.Tank_A.T_s,0.0435*L_pipe);
+  SI.Temperature T_s_Pos1 = SolarTherm.Utilities.Interpolation.Interpolate1D(z_f,thermocline_Tank.Tank_A.T_s,0.9565*L_pipe);
   //Experimental Data ref
   SI.Temperature T_core_Pos4_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_Pos4_times,Dataset.T_Pos4_TK,time);
   SI.Temperature T_core_Pos1_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_Pos1_times,Dataset.T_Pos1_TK,time);

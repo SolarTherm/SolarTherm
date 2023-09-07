@@ -16,7 +16,7 @@ algorithm
   dr := (r_solid-r_pipe)/N_p;
   for j in 1:N_p loop
     r[j] := r_pipe + ((j - 0.5) * dr);
-    A_px[j] := CN.pi*(((r[j]+dr)^2.0)-((r[j]-dr)^2.0));
+    A_px[j] := CN.pi*(((r[j]+0.5*dr)^2.0)-((r[j]-0.5*dr)^2.0));
     m_pj[j] := A_px[j]*dx*rho_p;
   end for;
 end Annular_Masses;
