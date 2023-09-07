@@ -205,7 +205,10 @@ model WindPVsaltTESsystem
 	Modelica.Blocks.Logical.Or or1 annotation(
 		Placement(visible = true, transformation(origin = {-116, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 
-	equation
+	Modelica.SIunits.Energy E_thermal(start = 0, fixed = true, displayUnit="MW.h") "Generated Energy";
+	Modelica.SIunits.Power P_thermal "Thermal Output power of boiler";
+
+equation
 
 	curtail = controlCold.defocus or controlHot.defocus;
 	gridInput.CurtaimentPower*heater_efficiency = min(gridInput.RenewableInput, Q_scheduled);
@@ -269,6 +272,9 @@ model WindPVsaltTESsystem
 
 	connect(or1.y, gridInput.defocus) annotation(
 	Line(points = {{-112, 0}, {-100, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+
+	P_thermal = boiler.Q_flow;
+	der(E_thermal) = P_thermal;
 
 	annotation(
 	Diagram(
