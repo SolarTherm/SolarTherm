@@ -6,13 +6,13 @@ model Basic_Heater
   //Medium.BaseProperties medium_in; //new
   parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290);
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565);
-  final parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold fluid thermodynamic state at design";
-  final parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold fluid thermodynamic state at design";
-  final parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";  
-  final parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold fluid specific enthalpy at design";
+  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold fluid thermodynamic state at design";
+  parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold fluid thermodynamic state at design";
+  parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";  
+  parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold fluid specific enthalpy at design";
   
   SI.SpecificEnthalpy h_in;
-  SI.SpecificEnthalpy h_out(start=h_cold_set);
+  SI.SpecificEnthalpy h_out(start=h_hot_set);
   //SI.MassFlowRate m_flow;
 
   //parameter SI.HeatFlowRate Q_des_blk = 200.0e6 "Power block design heat input rate, also defocus power";
@@ -25,8 +25,8 @@ model Basic_Heater
   //SI.Temperature T_avg "Linear average of inlet and outlet (K)";
   //End New
   
-  SI.HeatFlowRate Q_in "Actual heating rate";
-  SI.HeatFlowRate Q_in_raw "Heating rate after curtailment";
+  SI.HeatFlowRate Q_in "Heating rate after curtailment";
+  SI.HeatFlowRate Q_in_raw "Actual heating rate";
         
   Modelica.Blocks.Interfaces.RealInput Q_curtail "Required defocus heat rate" annotation (Placement(
         visible = true,transformation(

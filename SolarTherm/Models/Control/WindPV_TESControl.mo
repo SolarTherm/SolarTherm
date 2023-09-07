@@ -60,8 +60,8 @@ model WindPV_TESControl
   
   //New model input parameters
   parameter SI.Energy E_max = 12.0*3600.0*800.0e6 "theoretical storage capacity"; 
-  parameter Real eff_storage_des = 0.50 "design storage utilisation";
-  parameter SI.Time t_stor_startPB = 1.0*3600.0 "minimum hours of storage available to startup PB"; 
+  parameter Real eff_storage_des = 0.95 "design storage utilisation";
+  parameter SI.Time t_stor_startPB = 0.5*3600.0 "minimum hours of storage available to startup PB"; 
   
   //New calculated parameters
   parameter SI.Time t_stor_cap = E_max/Q_des_blk "design storage capacity in seconds of design PB operation";
@@ -69,13 +69,13 @@ model WindPV_TESControl
   
   //Relative flow magnitude State
   Integer Flow_State(start = 0); //0 if receiver < 0, 1 if recv between 0 and PB, 2 if recv greater than PB
-  parameter SI.MassFlowRate m_tol = 0.0001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
+  parameter SI.MassFlowRate m_tol = 0.001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
 
 initial algorithm
-  if Level <= L_startPB then
-    PB := false;
-  end if;
-
+  //if Level <= L_startPB then
+    //PB := false;
+  //end if;
+  PB := true;
 algorithm
   //Changing Storage State
   when T_top_tank < T_PB_min then 
@@ -114,28 +114,16 @@ algorithm
   end when;
 
   
-  
-//Old controls: PB triggered by shutdown and re-enabled after threshold time
-//  when m_flow_PB < 0.1 * m_flow_PB_des then
-//    PB := false;
-//    t_threshold := time + t_wait;
-//  end when;
-//take this as shutdown
-//start the cooldown
-//  when time > t_threshold then
-//    PB := true;
-//  end when;
-//End Old controls
 
 //New controls: PB triggered by shutdown and re-enabled after tank level increases past a certain value
-  when m_flow_PB < 0.2 * m_flow_PB_des then
-    if Level <= L_startPB then //try this condition
-      PB := false;
-    end if;
-  end when;
-  when Level > L_startPB then
-    PB := true;
-  end when;
+  //when m_flow_PB < 0.2 * m_flow_PB_des then
+    //if Level <= L_startPB then //try this condition
+      //PB := false;
+    //end if;
+  //end when;
+  //when Level > L_startPB then
+    //PB := true;
+  //end when;
   
   //when Q_rcv_raw > 1e-6 then  //try not using this
     //if Level > L_startPB then
@@ -144,6 +132,7 @@ algorithm
   //end when;
 
 equation
+  PB = true;
   //m_guess = Q_rcv_raw/(h_target-max(h_tank_outlet,h_PB_outlet));
   //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);

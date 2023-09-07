@@ -187,6 +187,8 @@ model Annular_Storage_Section_Final
   Real Nu_high[N_f] "Nusselt number at Re=4000";
   Real f_low[N_f] "Friction factor at Re=2000";
   Real f_high[N_f] "Friction factor at Re=4000";
+  
+  //Integer flow_scheme[N_f](start = fill(1,N_f)) "Flow scheme (1=Laminar, 2=Transition, 3=Turbulent)";
   protected 
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete
   SI.ThermalConductance U_in[N_f, N_p] "K/W";
@@ -390,11 +392,21 @@ equation
     else //Air
       Nu_high[i] = 0.023*(4000.0^0.8)*(Pr[i]^0.4)*((T_s[i]/T_f[i])^(-0.4));
     end if;
-    
-    if Re[i] <= 2000.0 then //Laminar
+    /*
+    if Re[i] <= 2000.0 then
+      flow_scheme[i] = 1;
+    elseif Re[i] >= 4000.0 then
+      flow_scheme[i] = 3;
+    else
+      flow_scheme[i] = 2;
+    end if;
+    */
+    if Re[i] < 2000.0 then //Laminar
+    //if pre(flow_scheme[i]) == 1 then
       f_fric[i] = 64.0/Re[i];
       Nu[i] = 3.66*((mu_f[i]/mu_f_wall[i])^0.11);
-    elseif Re[i] >= 4000 then //Turbulent
+    elseif Re[i] > 4000.0 then //Turbulent
+    //elseif pre(flow_scheme[i]) == 3 then
       f_fric[i] = (1.82*log10(Re[i])-1.64)^(-2.0);
       if Correlation == 1 then //Liquids
         if T_s[i] > T_f[i] then
@@ -537,7 +549,7 @@ equation
   
   //Analyics
   der(E_stored) = abs(m_flow) * (h_in - h_out);
-  Level = E_stored / E_unit;
+  Level = max(0.0,min(1.0,E_stored / E_unit));
   
   if m_flow > 1.0e-3 then //Discharging, outlet is the top
     T_outlet_degC = T_f[N_f] - 273.15;

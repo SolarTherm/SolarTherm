@@ -10,8 +10,8 @@ model Annular_Laing_2006
   package Filler = SolarTherm.Materials.Concrete_Laing_2006_Variation;
   package Fluid = SolarTherm.Materials.Dowtherm_Table;
 
-  parameter Integer N_f = 100; 
-  parameter Integer N_p = 10;
+  parameter Integer N_f = 50; 
+  parameter Integer N_p = 9;
   parameter SI.Length L_pipe = 23.0;
   parameter SI.Length D_pipe = 0.020;
   parameter SI.Length D_solid = 0.080;//0.09003;
