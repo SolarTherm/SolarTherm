@@ -19,11 +19,12 @@ model WindPVannularTESsystem
   //1:Liquid 2:Gas
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
   parameter Real t_storage(unit = "h") = 10 "Hours of storage";
-  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 800e6 "Heat to power block at design";
+  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 800e6 "Heat to boiler at design";
+  parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p;
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565) "Ideal hot temperature";
-  parameter Modelica.SIunits.Temperature T_cold_set = from_degC(280) "Ideal cold temperature";
+  parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290) "Ideal cold temperature";
   parameter Medium.ThermodynamicState state_air_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold air thermodynamic state at design";
   parameter Medium.ThermodynamicState state_air_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold air thermodynamic state at design";
   parameter Modelica.SIunits.SpecificEnthalpy h_air_cold_set = Medium.specificEnthalpy(state_air_cold_set) "Cold air specific enthalpy at design";
@@ -52,7 +53,7 @@ model WindPVannularTESsystem
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl Control(m_flow_PB_des = 10.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl Control(E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 50, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 50, T_recv_start = T_cold_set + 30, T_target = T_hot_set, eff_storage_des = 0.5, m_flow_PB_des = m_boiler_des)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "m_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -73,8 +74,6 @@ equation
     Line(points = {{95, 0}, {74, 0}}, color = {0, 0, 127}));
   connect(Splitter_Bot.fluid_b, pumpCold.fluid_a) annotation(
     Line(points = {{43, -72}, {33.5, -72}, {33.5, -64}, {20, -64}}, color = {0, 127, 255}));
-  connect(Control.m_flow_PB, pumpCold.m_flow) annotation(
-    Line(points = {{125, 27}, {132, 27}, {132, -90}, {-16, -90}, {-16, -42}, {10, -42}, {10, -56}}, color = {0, 0, 127}));
   connect(thermocline_Tank.h_bot_outlet, Control.h_tank_outlet) annotation(
     Line(points = {{46, -26}, {46, -32}, {86, -32}, {86, 60}, {110, 60}, {110, 37}}, color = {0, 0, 127}));
   connect(thermocline_Tank.T_top_measured, Control.T_top_tank) annotation(
@@ -85,8 +84,6 @@ equation
     Line(points = {{74, 8}, {90, 8}, {90, 28}, {103, 28}, {103, 29}}, color = {0, 0, 127}));
   connect(Splitter_Top.fluid_c, thermocline_Tank.fluid_a) annotation(
     Line(points = {{56, 67}, {56, 30}}, color = {0, 127, 255}));
-  connect(Control.m_flow_recv, pumpHot.m_flow) annotation(
-    Line(points = {{125, 32}, {126, 32}, {126, 94}, {92, 94}, {92, 84}}, color = {0, 0, 127}));
   connect(Splitter_Top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{71, 79}, {82, 79}, {82, 76}}, color = {0, 127, 255}));
   connect(Boiler.h_out_signal, Control.h_PB_outlet) annotation(
@@ -109,6 +106,10 @@ equation
     Line(points = {{-98, 10}, {-82, 10}, {-82, 6}, {-58, 6}, {-58, 6}}, color = {0, 0, 127}));
   connect(scheduler.y[1], Control.Q_demand) annotation(
     Line(points = {{174, 38}, {168, 38}, {168, 56}, {122, 56}, {122, 38}, {122, 38}}, color = {0, 0, 127}));
+  connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
+    Line(points = {{126, 26}, {132, 26}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
+  connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
+    Line(points = {{126, 32}, {136, 32}, {136, -48}, {10, -48}, {10, -56}, {10, -56}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {107, -76}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)));
