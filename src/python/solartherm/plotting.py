@@ -24,7 +24,7 @@ import math
 from solartherm import simulation
 
 def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, share=True, bw=False,
-	dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	dpi=600, font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""Plot variables from one or more Result objects.
 
 	The variables to plot and their arrangement on axes and subplots is provided
@@ -53,7 +53,7 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 	otherwise the plot will be output to a new window.
 
 	An optional setting for matplotlib.rcParams can be provided as
-	font, usetetx, and ucode, repsesenting font family, font style, use text rendering With LaTeX and use usetex with unicode.
+	font, and usetex, representing font family, font style, and use text rendering With LaTeX.
 	"""
 
 	font_family= font[0]
@@ -61,7 +61,6 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	xlim = [simulation.parse_var_val(x, xunit) for x in xlim]
 
@@ -193,7 +192,7 @@ def plot_res(res, fmt, xlim=[], xunit='d', eunit='MWh', punit="MW", out=None, sh
 		plt.show()
 
 def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'],
-	usetex=False, ucode=False, fontsize=12):
+	usetex=False, fontsize=12):
 	"""Plot a list of variables nested in ys list as a function of x1
 	e.g.
 	#plot_par1(x1=[1, 2, 3], ys=[[10, 100, 1000], [10, 100, 1000]], xlabel='X', ylabels=['Y1', 'Y2'])
@@ -203,7 +202,6 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', '
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	fig = plt.figure()
 
@@ -226,7 +224,7 @@ def plot_par1(x1, ys, xlabel='', ylabels=[], out=None, dpi=600, font=['serif', '
 		plt.show()
 
 def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600, font=['serif', 'Times New Roman'],
-	usetex=False, ucode=False, fontsize=12):
+	usetex=False, fontsize=12):
 	"""Plot ys as a function of x2 for various x1 values in one graph.
 	e.g. plotting lcoe as a function t_storage for various P_names
 	like: st_simulate --stop 1y --step 5m --plot lcoe FluidSystem.mo P_name=50000,75000,100000,125000 t_storage=2,3,4,5,6,7,8,9,10,11,12
@@ -236,7 +234,6 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600,
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	x1g = []
 	ysg = [[] for i in range(len(ys))]
@@ -276,7 +273,7 @@ def plot_par2(x1, x2, ys, x1label='', x2label='', ylabels=[], out=None, dpi=600,
 		plt.show()
 
 def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['serif', 'Times New Roman'],
-	usetex=False, ucode=False, fontsize=12):
+	usetex=False, fontsize=12):
 	"""Plot a 3d graph based on variables x, y and z
 	e.g.
 	plot_3d(x=[1,2,3], y=[1,2,3] , z=[10, 100, 1000], xlabel='X', ylabel='Y', zlabel='Z')
@@ -289,7 +286,6 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	fig = plt.figure()
 
@@ -309,7 +305,7 @@ def plot_3d(x, y, z, xlabel='', ylabel='', zlabel='', out=None, dpi=600, font=['
 
 def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctdistance=0.6, shadow=False,
 		labeldistance=1.1, startangle=90, radius=1, frame=False, out=None,
-		dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+		dpi=600, font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""Plot a single pie chart, where the slices will be ordered and plotted counter-clockwise.
 	vals: sizes in pie()
 	ex: explode in pie()
@@ -329,7 +325,6 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	def pct_v(pct, nd=nd):
 		"Returns percentage values rounded to nd decimal places"
@@ -387,7 +382,7 @@ def pie_chart1(vals, ex, lbs, title='', co=None, nd=2, sv='pct', lwv=False, pctd
 
 def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6, shadow=False, labeldistance=1.1,
 		startangle=90, radius=1, frame=False, out=None, dpi=600, font=['serif', 'Times New Roman'],
-		usetex=False, ucode=False, fontsize=12):
+		usetex=False, fontsize=12):
 	"""Plot a single or multiple pie charts, where the slices will be ordered and plotted counter-clockwise.
 	vals: a 2d lsit of sizes
 	ex: a 2d lsit o explode
@@ -407,7 +402,6 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	def pct_v(pct, nd=nd):
 		"Returns percentage values rounded to nd decimal places"
@@ -500,7 +494,7 @@ def pie_chart2(vals, ex, lbs, title='', co=None, nd=2, sv='pct', pctdistance=0.6
 
 def bar_chart1(y, xlabel, ylabel, tlabels, title='', yerr=None, ecolor=None,
 width=0.5, align='center', co='y', edgecolor='None', out=None, dpi=600,
-font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""
 	Plot a simple bar chart with a single bar for each tick on the x axis.
 	y: a list of y values
@@ -517,7 +511,6 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	N = len(tlabels)
 	x = np.arange(N) # the x locations for the groups
@@ -545,7 +538,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 
 def bar_chart2(y, xlabel, ylabel, tlabels, labels, co=None, title='', yerr=None, ecolor=None,
 width=0.5, align='center', edgecolor='None', out=None, dpi=600,
-font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""
 	Plot a bar chart with a single or multiple bars for each tick on the x axis.
 	y: a list of y values
@@ -564,7 +557,6 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	N = len(tlabels)
 	x = np.arange(N) # the x locations for the groups
@@ -606,7 +598,7 @@ font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
 
 def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', table=False, yerr=None, ecolor=None,
 	width=0.5, align='center', edgecolor='None', out=None, dpi=600,
-	font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""
 	Plot a stacked bar chart with a single bar for each tick on the x axis.
 	y: a list of y values
@@ -626,7 +618,6 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', tab
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	if co == None:
 		co = plt.cm.Pastel1(np.linspace(0, 0.5, len(labels))) # Get some shades for the colors
@@ -689,7 +680,7 @@ def stacked_bar_chart(y, xlabel, ylabel, tlabels, labels, co=None, title='', tab
 		plt.show()
 
 def tornado(v_low, v_high, v_base, weights, v_names, xlabel, ylabel, title='', co=['gold', 'lightskyblue'],
-	out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, ucode=False, fontsize=12):
+	out=None, dpi=600, font=['serif', 'Times New Roman'], usetex=False, fontsize=12):
 	"""
 	Plot a tornado graph to show the sensitivity of a variable (objective) to a set of parameters deacreasing and increasing.
 	v_low: values of objective (e.g. LCOF) when a set of parameters are reduced by x% (e.g. -60%).
@@ -710,7 +701,6 @@ def tornado(v_low, v_high, v_base, weights, v_names, xlabel, ylabel, title='', c
 	matplotlib.rcParams['font.family'] = font_family
 	matplotlib.rcParams['font.'+font_family] = font_style
 	matplotlib.rcParams['text.usetex'] = usetex
-	matplotlib.rcParams['text.latex.unicode'] = ucode
 
 	values = np.array(v_high) - np.array(v_low) # difference in high and low values
 	lows = np.array([v_base-v/w for v, w in zip(values,weights)]) # i.e. bas-values/weights for each parameter
@@ -767,3 +757,4 @@ def tornado(v_low, v_high, v_base, weights, v_names, xlabel, ylabel, title='', c
 		fig.savefig(out, dpi=dpi)
 	else:
 		plt.show()
+
