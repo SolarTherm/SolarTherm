@@ -16,10 +16,9 @@ model WindPVsaltTESsystem
 	parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
 	parameter Modelica.SIunits.Power pv_ref_size = 50e6 "PV farm reference size";
 	parameter Modelica.SIunits.Power wind_ref_size = 50e6 "Wind farm reference size";
-	parameter Modelica.SIunits.HeatFlowRate Q_start = 1e-3;
-	parameter Modelica.SIunits.HeatFlowRate Q_stop = 1e-3;
-	parameter Modelica.SIunits.HeatFlowRate pv_fraction = 0.5 "Maximum hot salt mass flow rate";
-	parameter Modelica.SIunits.HeatFlowRate max_input = 100e6 "Maximum hot salt mass flow rate";
+	parameter Modelica.SIunits.Power P_elec_min = 10e6;
+	parameter Modelica.SIunits.Power P_elec_max = 100e6 "Maximum hot salt mass flow rate";
+	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
 
 	// Heater parameters
 	parameter Modelica.SIunits.Efficiency heater_efficiency = 0.90 "Electric heater efficiency";
@@ -67,14 +66,17 @@ model WindPVsaltTESsystem
 	parameter Real hot_tnk_full_lb = 90 "Hot tank full trigger lower bound";
 	parameter Real hot_tnk_full_ub = 99 "Hot tank full trigger upper bound";
 
-	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound";
-	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound";
+	parameter Real cold_tnk_curtailment_lb = 5 "Cold tank empty trigger lower bound";
+	parameter Real cold_tnk_curtailment_ub = 7 "Cold tank empty trigger upper bound";
 	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound";
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound";
 
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
-	parameter Real Ti = 1 "Time constant for integral component of receiver control";
+	parameter Modelica.SIunits.Time Ti = 1 "Time constant for integral component of receiver control";
 	parameter Real Kp = -1000 "Gain of proportional component in receiver control";
+
+	parameter Modelica.SIunits.Temperature T_cold_aux_set = from_degC(280) "Cold tank auxiliary heater set-point temperature";
+	parameter Modelica.SIunits.Temperature T_hot_aux_set = from_degC(500) "Hot tank auxiliary heater set-point temperature";
 
 	// System defaults
 	inner Modelica.Fluid.System system(
@@ -93,28 +95,20 @@ model WindPVsaltTESsystem
 
 	// Renewable energy input
 	SolarTherm.Models.Sources.GridInput gridInput(
-		Q_start = Q_start, 
-		Q_stop = Q_stop, 
-		heater_efficiency = heater_efficiency, 
-		max_input = max_input, 
+		P_elec_max = P_elec_max,P_elec_min = P_elec_min, 
+		P_elec_pv_ref_size = pv_ref_size, 
+		P_elec_wind_ref_size = wind_ref_size, pv_file = pv_file, 
 		pv_fraction = pv_fraction, 
-		pv_ref = pv_file, 
-		pv_ref_size = pv_ref_size, 
-		wind_ref = wind_file, 
-		wind_ref_size = wind_ref_size) annotation(
-		Placement(visible = true, transformation(origin = {-90, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+		wind_file = wind_file) annotation(
+		Placement(visible = true, transformation(origin = {-70, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+
+	// Curtailment input
+	Modelica.Blocks.Sources.RealExpression P_elec_schedule(y = scheduler.y[1] * (h_hot_set - h_cold_set)) annotation(
+		Placement(visible = true, transformation(origin = {-106, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	// Electrical Heater
-	Modelica.Thermal.HeatTransfer.Sources.PrescribedHeatFlow heater annotation(
-		Placement(visible = true, transformation(origin = {-50, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-
-	Modelica.Fluid.Pipes.DynamicPipe pipe(
-		redeclare package Medium = Medium, 
-		diameter = 0.254, 
-		length = 1, 
-		modelStructure = Modelica.Fluid.Types.ModelStructure.a_vb, 
-		nNodes = 1, 
-		use_HeatTransfer = true) annotation(
+	SolarTherm.Models.Fluid.HeatExchangers.SimpleResistiveHeater heater(
+		redeclare package Medium = Medium) annotation(
 			Placement(visible = true, transformation(origin = {-20, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
 
 	// Temperature sensor
@@ -130,8 +124,8 @@ model WindPVsaltTESsystem
 
 	// Cold salt pump control
 	SolarTherm.Models.Control.ReceiverControl controlCold(
-		L_df_off = cold_tnk_defocus_ub, 
-		L_df_on = cold_tnk_defocus_lb, 
+		L_df_off = cold_tnk_curtailment_ub, 
+		L_df_on = cold_tnk_curtailment_lb, 
 		L_off = cold_tnk_crit_lb, 
 		L_on = cold_tnk_crit_ub, 
 		T_ref = T_hot_set, 
@@ -144,6 +138,7 @@ model WindPVsaltTESsystem
 	// Hot tank TES
 	SolarTherm.Models.Storage.Tank.Tank tankHot(
 		redeclare package Medium = Medium, 
+		T_set = T_cold_aux_set,
 		D = D_storage, 
 		H = H_storage, 
 		L_start = split_cold,
@@ -158,6 +153,7 @@ model WindPVsaltTESsystem
 	// Cold tank TES
 	SolarTherm.Models.Storage.Tank.Tank tankCold(
 		redeclare package Medium = Medium, 
+		T_set = T_cold_aux_set,
 		D = D_storage, 
 		H = H_storage, 
 		L_start = (1 - split_cold)*100, 
@@ -177,10 +173,10 @@ model WindPVsaltTESsystem
 
 	// Hot pump control
 	SolarTherm.Models.Control.HotPumpControl controlHot(
-		L_df_off = hot_tnk_full_lb, 
-		L_df_on = hot_tnk_full_ub,
-		L_off = hot_tnk_empty_lb, 
-		L_on = hot_tnk_empty_ub, 
+		level_curtailment_off = hot_tnk_full_lb, 
+		level_curtailment_on = hot_tnk_full_ub,
+		level_off = hot_tnk_empty_lb, 
+		level_on = hot_tnk_empty_ub, 
 		m_flow_on = m_flow_hot)  annotation(
 		Placement(visible = true, transformation(origin = {82, 70}, extent = {{10, 10}, {-10, -10}}, rotation = 0)));
 
@@ -200,8 +196,7 @@ model WindPVsaltTESsystem
 		Placement(visible = true, transformation(origin = {124, 70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 
 	// Variables
-	Boolean curtail;
-	Modelica.SIunits.HeatFlowRate Q_scheduled;
+
 	Modelica.Blocks.Logical.Or or1 annotation(
 		Placement(visible = true, transformation(origin = {-116, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 
@@ -209,10 +204,6 @@ model WindPVsaltTESsystem
 	Modelica.SIunits.Power P_thermal "Thermal Output power of boiler";
 
 equation
-
-	curtail = controlCold.defocus or controlHot.defocus;
-	gridInput.CurtaimentPower*heater_efficiency = min(gridInput.RenewableInput, Q_scheduled);
-	Q_scheduled = scheduler.y[1] * (h_hot_set - h_cold_set);
 
 	// Ambient connections
 	connect(T_amb.y, tankHot.T_amb) annotation(
@@ -225,15 +216,19 @@ equation
 	Line(points = {{-38, 64}, {-4, 64}, {-4, -60}, {66, -60}, {66, -64}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
 	// Renewable heating connections
-	connect(gridInput.electricity, heater.Q_flow) annotation(
-	Line(points = {{-80, 0}, {-60, 0}}, color = {0, 0, 127}));
-	connect(heater.port, pipe.heatPorts[1]) annotation(
-	Line(points = {{-40, 0}, {-24, 0}}, color = {191, 0, 0}));
+	connect(gridInput.electricity, heater.P_elec_in) annotation(
+    Line(points = {{-60, 0}, {-30, 0}}, color = {0, 0, 127}));
+	connect(or1.y, gridInput.curtail) annotation(
+    Line(points = {{-112, 0}, {-80, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+	connect(P_elec_schedule.y, gridInput.P_schedule) annotation(
+    Line(points = {{-94, -30}, {-88, -30}, {-88, -6}, {-80, -6}}, color = {0, 0, 127}));
+	connect(gridInput.on_renewable, heater.on_renewable) annotation(
+    Line(points = {{-70, -12}, {-48, -12}, {-48, -6}, {-30, -6}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 	// Fluid connections
-	connect(pumpCold.fluid_b, pipe.port_a) annotation(
+	connect(pumpCold.fluid_b, heater.port_a) annotation(
 	Line(points = {{10, -80}, {-20, -80}, {-20, -10}}, color = {0, 127, 255}));
-	connect(pipe.port_b, temperature.fluid_a) annotation(
+	connect(heater.port_b, temperature.fluid_a) annotation(
 	Line(points = {{-20, 10}, {-20, 20}}, color = {0, 127, 255}));
 	connect(temperature.fluid_b, tankHot.fluid_a) annotation(
 	Line(points = {{-20, 40}, {-20, 55}, {0, 55}}, color = {0, 127, 255}));
@@ -255,28 +250,25 @@ equation
 	Line(points = {{60, -70}, {50, -70}, {50, -30}, {60, -30}}, color = {0, 0, 127}));
 	connect(controlCold.defocus, or1.u2) annotation(
 	Line(points = {{70, -42}, {70, -46}, {-136, -46}, {-136, -4}, {-120, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-	connect(gridInput.on_pv, controlCold.sf_on) annotation(
-	Line(points = {{-90, -12}, {-90, -36}, {60, -36}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-	connect(controlCold.m_flow, controlHot.m_flow_in) annotation(
+	connect(gridInput.on_renewable, controlCold.sf_on) annotation(
+    Line(points = {{-70, -11}, {-70, -36}, {60, -36}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
+	connect(controlCold.m_flow, controlHot.m_flow_pump_charging) annotation(
 	Line(points = {{82, -30}, {100, -30}, {100, 62}, {92, 62}}, color = {0, 0, 127}));
 
 	// Control Hot connections
-	connect(controlHot.m_flow, pumpHot.m_flow) annotation(
+	connect(controlHot.m_flow_pump_discharging, pumpHot.m_flow) annotation(
 	Line(points = {{71, 70}, {66, 70}, {66, 51}}, color = {0, 0, 127}));
-	connect(tankHot.L, controlHot.L_mea) annotation(
+	connect(tankHot.L, controlHot.tank_level) annotation(
 	Line(points = {{20, 54}, {36, 54}, {36, 96}, {106, 96}, {106, 78}, {93, 78}}, color = {0, 0, 127}));
-	connect(scheduler.y[1], controlHot.m_flow_sch) annotation(
+	connect(scheduler.y[1], controlHot.m_flow_schedule) annotation(
 	Line(points = {{113, 70}, {93, 70}}, color = {0, 0, 127}));
-	connect(controlHot.defocus, or1.u1) annotation(
+	connect(controlHot.curtailment, or1.u1) annotation(
 	Line(points = {{82, 82}, {82, 90}, {-136, 90}, {-136, 0}, {-120, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-
-	connect(or1.y, gridInput.defocus) annotation(
-	Line(points = {{-112, 0}, {-100, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 	P_thermal = boiler.Q_flow;
 	der(E_thermal) = P_thermal;
 
-	annotation(
+annotation(
 	Diagram(
 		coordinateSystem(extent = {{-140, -100}, {140, 100}}), 
 		graphics = {
@@ -290,4 +282,4 @@ equation
 	</ul>
 
 	</html>"));
-	end WindPVsaltTESsystem;
+end WindPVsaltTESsystem;
