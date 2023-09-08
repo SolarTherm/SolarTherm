@@ -27,9 +27,6 @@ model Boiler
 	Modelica.SIunits.SpecificEnthalpy h_in;
 	Modelica.SIunits.SpecificEnthalpy h_out;
 	
-protected
-	Real k_q;
-	
 equation
 	// Calculate load and logic
 	load = max(nu_eps, port_a.m_flow / m_flow_ref);
@@ -39,6 +36,7 @@ equation
 	h_in = inStream(port_a.h_outflow);
 	h_out = port_b.h_outflow;
 	h_out = port_a.h_outflow;
+	h_out = h_cold_set;
 	
 	// Mass and pressure balance
 	port_a.m_flow + port_b.m_flow = 0;
@@ -46,15 +44,12 @@ equation
 	
 	// Calculate Q_flow based on logic
 	if logic then
-	k_q = 1;
-	Q_flow = -port_a.m_flow * (h_out - h_in);
+		Q_flow = -port_a.m_flow * (h_out - h_in);
 	else
-	k_q = 0;
-	h_out = h_cold_set;
+		Q_flow = 0;
 	end if;
 	
 	// Thermal energy balance
-	Q_flow / (Q_flow_ref * load) = k_q;
 	Q_flow = der(E_thermal);
 
 annotation (Documentation(info="<html>
