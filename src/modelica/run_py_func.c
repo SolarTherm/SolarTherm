@@ -23,6 +23,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 
 	// add the path of the Python function file to the system path
 	PyObject *sys_path = PySys_GetObject("path");
+	fprintf(stderr,"%s:%d: Adding to Python's sys.path: %s\n",__FILE__,__LINE__,ppath);
 	PyList_Append(sys_path, PyUnicode_FromString((char *)ppath));
 
 	// name of the Python file
