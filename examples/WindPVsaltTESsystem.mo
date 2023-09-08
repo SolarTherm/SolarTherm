@@ -108,7 +108,10 @@ model WindPVsaltTESsystem
 
 	// Electrical Heater
 	SolarTherm.Models.Fluid.HeatExchangers.SimpleResistiveHeater heater(
-		redeclare package Medium = Medium) annotation(
+		redeclare package Medium = Medium,
+		heater_efficiency = heater_efficiency,
+		T_cold_set = T_cold_set,
+		T_hot_set = T_hot_set) annotation(
 			Placement(visible = true, transformation(origin = {-20, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 90)));
 
 	// Temperature sensor
@@ -182,6 +185,7 @@ model WindPVsaltTESsystem
 
 	// Boiler
 	SolarTherm.Models.Fluid.HeatExchangers.Boiler boiler(
+		redeclare package Medium = Medium,
 		Q_flow_ref = Q_flow_des,
 		T_cold_set = T_cold_set, 
 		T_hot_set = T_hot_set, 
@@ -192,7 +196,8 @@ model WindPVsaltTESsystem
 	Modelica.Blocks.Sources.CombiTimeTable scheduler(
 		fileName = schedule_file, 
 		tableName = "m_flow", 
-		tableOnFile = true) annotation(
+		tableOnFile = true,
+		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
 		Placement(visible = true, transformation(origin = {124, 70}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
 
 	// Variables

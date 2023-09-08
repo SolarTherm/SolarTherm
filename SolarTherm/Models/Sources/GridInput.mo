@@ -11,8 +11,16 @@ model GridInput
 	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*P_elec_max "Maximum PV capacity";
 	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*P_elec_max "Maximum Wind farm capacity";
 
-	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(fileName = pv_file, tableName = "Power", tableOnFile = true);
-	Modelica.Blocks.Sources.CombiTimeTable P_elec_rec_wind(fileName = wind_file, tableName = "Power", tableOnFile = true);
+	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(
+		fileName = pv_file, 
+		tableName = "Power", 
+		tableOnFile = true,
+		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
+	Modelica.Blocks.Sources.CombiTimeTable P_elec_rec_wind(
+		fileName = wind_file, 
+		tableName = "Power", 
+		tableOnFile = true,
+		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
 
 	Modelica.Blocks.Sources.RealExpression P_elec_net_switch1(y = P_elec_net) annotation(
 		Placement(visible = true, transformation(origin = {-50, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
