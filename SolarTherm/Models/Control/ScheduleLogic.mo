@@ -32,7 +32,7 @@ initial equation
 initial equation
   on_discharge = level > level_on and level > level_off;
 equation
-  on_charge = m_flow_in > 0;
+  on_charge = m_flow_in > 1e-3;
   when level > level_on then
     on_discharge = true;
   elsewhen level < level_off then
