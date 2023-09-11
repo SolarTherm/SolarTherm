@@ -8,16 +8,25 @@ model GridInput
 	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "PV fraction of renewable input at design";
 	parameter Modelica.SIunits.Power P_elec_pv_ref_size = 50e6 "PV farm reference size";
 	parameter Modelica.SIunits.Power P_elec_wind_ref_size = 50e6 "Wind farm reference size";
+	parameter Real renewable_multiple = 2 "Oversizing factor with respect to the heat input";
 	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*P_elec_max "Maximum PV capacity";
 	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*P_elec_max "Maximum Wind farm capacity";
 
-	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(fileName = pv_file, tableName = "Power", tableOnFile = true);
-	Modelica.Blocks.Sources.CombiTimeTable P_elec_rec_wind(fileName = wind_file, tableName = "Power", tableOnFile = true);
+	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(
+		fileName = pv_file, 
+		tableName = "Power", 
+		tableOnFile = true,
+		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
+	Modelica.Blocks.Sources.CombiTimeTable P_elec_rec_wind(
+		fileName = wind_file, 
+		tableName = "Power", 
+		tableOnFile = true,
+		smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative);
 
 	Modelica.Blocks.Sources.RealExpression P_elec_net_switch1(y = P_elec_net) annotation(
 		Placement(visible = true, transformation(origin = {-50, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
-	Modelica.Blocks.Sources.RealExpression P_elec_curtail_switch1(y = P_schedule) annotation(
+	Modelica.Blocks.Sources.RealExpression P_elec_curtail_switch1(y = min(P_schedule,P_elec_net)) annotation(
 		Placement(visible = true, transformation(origin = {-50, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	Modelica.Blocks.Logical.Switch switch1 annotation(
@@ -53,7 +62,7 @@ equation
 	P_elec_raw_pv = P_elec_max_pv / P_elec_pv_ref_size * P_elec_ref_pv.y[1];
 	P_elec_raw_wind = P_elec_max_wind / P_elec_wind_ref_size * P_elec_rec_wind.y[1];
 	
-	P_elec_raw = min(P_elec_raw_pv + P_elec_raw_wind, P_elec_max);
+	P_elec_raw = min(renewable_multiple*(P_elec_raw_pv + P_elec_raw_wind), P_elec_max);
 
 	on_renewable = P_elec_raw > P_elec_min;
 	
