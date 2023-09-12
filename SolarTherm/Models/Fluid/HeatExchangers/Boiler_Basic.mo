@@ -44,7 +44,7 @@ equation
   h_out_signal=h_cold_set;
   
   if fluid_a.m_flow > 1.0e-6 then
-    Q_flow = (h_in-h_out)/fluid_a.m_flow;
+    Q_flow = (h_in-h_out)*fluid_a.m_flow;
   else
     Q_flow = 0.0;
   end if;

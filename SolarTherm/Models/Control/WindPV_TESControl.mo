@@ -69,7 +69,7 @@ model WindPV_TESControl
   
   //Relative flow magnitude State
   Integer Flow_State(start = 0); //0 if receiver < 0, 1 if recv between 0 and PB, 2 if recv greater than PB
-  parameter SI.MassFlowRate m_tol = 0.01*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
+  parameter SI.MassFlowRate m_tol = 0.001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
 
 initial algorithm
   if Level <= L_startPB then

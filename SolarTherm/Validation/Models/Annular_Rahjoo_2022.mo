@@ -11,16 +11,16 @@ model Annular_Rahjoo_2022
   package Fluid = SolarTherm.Materials.Air_Table;
 
   parameter Integer N_f = 50; 
-  parameter Integer N_p = 5;
+  parameter Integer N_p = 9;
   parameter SI.Length L_pipe = 0.5;
   parameter SI.Length D_pipe = 0.154051;
-  parameter SI.Length D_solid = 0.25;//0.09003;
+  parameter SI.Length D_solid = 0.2821;//0.25 0.2821 0.3536;
   parameter Real Multiplier = 1.0;
   //parameter SI.Length H_tank = 0.48;
   //parameter SI.Diameter D_tank = 0.5;
   //parameter Real eta = 0.37;
   //parameter SI.Diameter d_p = 0.018;
-  parameter Real U_loss_tank = 1.0;
+  parameter Real U_loss_tank = 0.5;
   parameter Integer Correlation = 2; //1:Liquids, 2:Gas
   //parameter Real ar = 0.48/0.5;
   
@@ -160,6 +160,7 @@ algorithm
   end when;
     
 equation
+  
   if ControlState == 1 then
     //m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
     m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
@@ -171,7 +172,20 @@ equation
     //m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
     //Recv_Sink.port_a.m_flow=0.0;
   end if;
-
+  /*
+  if ControlState == 1 then
+    //m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
+    m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
+    m_PB_signal = 0.0;
+    //PB_Sink.port_a.m_flow=0.0;
+  else
+    m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
+    m_PB_signal = 0.0;//max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
+    //m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
+    //Recv_Sink.port_a.m_flow=0.0;
+    
+  end if;
+  */
   //Connections
   h_bot = thermocline_Tank.fluid_bot.h;
   h_top = thermocline_Tank.fluid_top.h;

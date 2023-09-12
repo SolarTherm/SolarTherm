@@ -1,4 +1,0 @@
-within SolarTherm.Systems.Publications.Thermocline.Constant_Charging;
-
-package Temperature_Controlled
-end Temperature_Controlled;

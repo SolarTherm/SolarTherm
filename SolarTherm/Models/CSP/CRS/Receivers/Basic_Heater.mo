@@ -57,8 +57,10 @@ model Basic_Heater
 //algorithm
   //T_4avg := (0.20*(T_in^4 + (T_in^3)*(T_out) + (T_in^2)*(T_out^2) + (T_in)*(T_out^3) + T_out^4))^0.25;
   //T_avg := 0.5*(T_in+T_out);
-  
+  Medium.BaseProperties state_in;
 equation
+  state_in.h = h_in;
+  state_in.p = 1e5;
   
   fluid_a.m_flow + fluid_b.m_flow = 0.0;
   fluid_a.p = fluid_b.p;
@@ -72,9 +74,9 @@ equation
   Q_heater_raw = Q_in_raw;
   Q_in_raw = P_supply;
 
-  if fluid_a.m_flow > 1e-6 then
+  if fluid_a.m_flow > 1e-3 then
     Q_in = (if curtail == true then min(Q_in_raw,Q_curtail) else Q_in_raw);
-    h_out = h_in + Q_in/fluid_a.m_flow;
+    h_out = h_in + Q_in/max(1.0e-3,fluid_a.m_flow);
 
   else
     Q_in = 0.0;

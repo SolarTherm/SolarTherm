@@ -7,14 +7,14 @@ model Annular_Laing_2006
   import Tables = Modelica.Blocks.Tables;
 
   package Medium = SolarTherm.Media.DowthermA.DowthermA_ph;
-  package Filler = SolarTherm.Materials.Concrete_Laing_2006_Variation;// ;_2006_Variation;
+  package Filler = SolarTherm.Materials.Concrete_Laing_2006_Variation;//_Variation;// ;_2006_Variation;
   package Fluid = SolarTherm.Materials.Dowtherm_Table;
 
   parameter Integer N_f = 50; 
   parameter Integer N_p = 9;
   parameter SI.Length L_pipe = 23.0;
   parameter SI.Length D_pipe = 0.020;
-  parameter SI.Length D_solid = 0.080;//0.09003;
+  parameter SI.Length D_solid = 0.09;//0.08, 0.09003, 0.113
   parameter Real Multiplier = 36.0;
   //parameter SI.Length H_tank = 0.48;
   //parameter SI.Diameter D_tank = 0.5;
@@ -105,7 +105,7 @@ model Annular_Laing_2006
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
  Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
- SolarTherm.Models.Storage.Thermocline.Thermocline_Annular_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier=Multiplier, Multiplier=Multiplier,U_loss_tank=U_loss_tank) annotation(
+ SolarTherm.Models.Storage.Thermocline.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier=Multiplier, Multiplier=Multiplier,U_loss_tank=U_loss_tank) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-54, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -191,5 +191,5 @@ equation
     Line(points = {{0, -32}, {0, -32}, {0, -46}, {0, -46}}, color = {0, 127, 255}));
  connect(Receiver_Inlet_T.y, Recv_outlet.T_in) annotation(
     Line(points = {{-172, 50}, {-160, 50}, {-160, 54}, {-132, 54}, {-132, 54}}, color = {0, 0, 127}));  
-annotation(experiment(StopTime = 22680, StartTime = 0, Tolerance = 1e-3, Interval = 180.0));
+annotation(experiment(StopTime = 22680, StartTime = 0, Tolerance = 1e-3, Interval = 60.0));
 end Annular_Laing_2006;
