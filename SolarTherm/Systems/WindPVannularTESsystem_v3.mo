@@ -1,11 +1,11 @@
 within SolarTherm.Systems;
 
-model WindPVannularTESsystem
+model WindPVannularTESsystem_v3
   extends Modelica.Icons.Example;
   import Modelica.SIunits.Conversions.*;
   import Modelica.Constants.*;
   parameter String elec_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/heater_input.motab");
-  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_mflow.motab");
+  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow.motab");
   replaceable package Medium = SolarTherm.Media.Therminol_66.Therminol_66_ph;//SolarTherm.Media.Air.Air_amb_p;
   replaceable package Fluid = SolarTherm.Materials.Therminol_66_Table;//SolarTherm.Materials.Air_Table;
   replaceable package Filler = SolarTherm.Materials.Concrete_Laing_2006;
@@ -18,8 +18,9 @@ model WindPVannularTESsystem
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 1; //1=Liq 2=Air
   //1:Liquid 2:Gas
+  parameter Real eff_storage_des = 0.20; //Utilisation
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
-  parameter Real t_storage(unit = "h") = 10.0/0.40 "Hours of storage";
+  parameter Real t_storage(unit = "h") = 10.0/eff_storage_des "Hours of storage";
   parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 600.0e6 "Heat to boiler at design";
   parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
@@ -54,9 +55,9 @@ model WindPVannularTESsystem
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 40, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 100, T_recv_start = T_cold_set + 75, T_target = T_hot_set, eff_storage_des = 0.40, h_target = h_air_hot_set, m_0 = 1e-7, m_flow_PB_des = m_boiler_des, m_min = 1e-7, m_tol = 0.01 * m_boiler_des, t_stor_startPB = 1.0 * 3600.0, t_wait = 1.0 * 3600.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 40, T_PB_start = T_hot_set - 30, T_recv_max = T_cold_set + 100, T_recv_start = T_cold_set + 75, T_target = T_hot_set, eff_storage_des = eff_storage_des, h_target = h_air_hot_set, m_0 = 1e-7, m_flow_PB_des = m_boiler_des, m_min = 1e-7, m_tol = 0.001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 2.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "m_flow", tableOnFile = true) annotation(
+  Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "Q_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -105,13 +106,15 @@ equation
     Line(points = {{104, 18}, {-12, 18}, {-12, -12}, {-72, -12}, {-72, 2}, {-58, 2}, {-58, 0}}, color = {0, 0, 127}));
   connect(grid_input.y[1], basic_Heater.P_supply) annotation(
     Line(points = {{-98, 10}, {-82, 10}, {-82, 6}, {-58, 6}, {-58, 6}}, color = {0, 0, 127}));
-  connect(scheduler.y[1], Control.Q_demand) annotation(
-    Line(points = {{174, 38}, {168, 38}, {168, 56}, {122, 56}, {122, 38}, {122, 38}}, color = {0, 0, 127}));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
     Line(points = {{126, 26}, {132, 26}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
     Line(points = {{126, 32}, {136, 32}, {136, -48}, {10, -48}, {10, -56}, {10, -56}}, color = {0, 0, 127}));
+  connect(scheduler.y[1], Control.Q_demand) annotation(
+    Line(points = {{174, 38}, {166, 38}, {166, 56}, {120, 56}, {120, 38}, {122, 38}}, color = {0, 0, 127}));
+  connect(thermocline_Tank.h_top_outlet, Control.h_tank_top) annotation(
+    Line(points = {{46, 24}, {46, 24}, {46, 48}, {106, 48}, {106, 38}, {106, 38}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-49, -8}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
-end WindPVannularTESsystem;
+end WindPVannularTESsystem_v3;

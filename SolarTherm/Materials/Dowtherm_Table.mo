@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Dowtherm_Table
-  extends SolarTherm.Materials.PartialMaterial(MM = 166.0e-3, T_melt = 12.0 + 273.15, cost = 24.41);
+  extends SolarTherm.Materials.PartialMaterial(MM = 166.0e-3, T_melt = 12.0 + 273.15, cost = 2.10); //Cost from Heller et al. 2013
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
   //constant SI.MolarMass MM = 22.989769e-3 "Molar mass (kg/mol)";

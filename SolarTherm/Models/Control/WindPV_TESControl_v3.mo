@@ -1,5 +1,5 @@
 within SolarTherm.Models.Control;
-model WindPV_TESControl
+model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now increases m_flow_PB if the storage outlet is below the ideadl temperature
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Air.Air_amb_p;
   parameter SI.Temperature T_recv_max = 330.0 + 273.15 "Maximum tolerated receiver input temperature";
@@ -9,6 +9,7 @@ model WindPV_TESControl
   parameter SI.Temperature T_target = 565.0 + 273.15 "Target receiver outlet temperature";
   
   parameter SI.MassFlowRate m_flow_PB_des = 100.0 "Reference power block mass flow rate";
+  SI.MassFlowRate m_flow_PB_dem = m_flow_PB_des*Q_demand/Q_des_blk "Power block mass demand";
   parameter SI.HeatFlowRate Q_des_blk = 200e6 "Power block design heat rate";
   parameter SI.SpecificEnthalpy h_target = HTF.specificEnthalpy(HTF.setState_pTX(101323.0, T_target)) "Target specific enthalpy of the receiver outlet";
   Integer Control_State(start=6) "1-6 Determines which pumps are flowing and whether defocus is on";
@@ -53,6 +54,9 @@ model WindPV_TESControl
     
   Modelica.Blocks.Interfaces.RealInput h_tank_outlet "Enthalpy of the HTF coming out of bottom of tank"
     annotation (Placement(visible = true, transformation(extent = {{-124, -78}, {-84, -38}}, rotation = 0), iconTransformation(origin = {-40, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
+    
+  Modelica.Blocks.Interfaces.RealInput h_tank_top "Enthalpy of the HTF coming out of top of tank"
+    annotation (Placement(visible = true, transformation(extent = {{-124, 80}, {-84, 120}}, rotation = 0), iconTransformation(origin = {-90, 112},extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 
   SI.MassFlowRate m_guess(start=0.0) "Guess required flow rate of recv";
   parameter SI.Time t_wait = 1.0*3600 "Waiting time between turning off PB and being able to turn on";
@@ -92,7 +96,7 @@ algorithm
   
   //New parts
   when m_guess > m_tol then
-    if m_guess < m_flow_PB_des + m_tol then //no overshoot
+    if m_guess < m_flow_PB_dem + m_tol then //no overshoot
       Flow_State := 1;
     else //overshot
       Flow_State := 2;
@@ -102,10 +106,10 @@ algorithm
     Flow_State := 0;
   end when;
   
-  when m_guess > m_flow_PB_des + m_tol then
+  when m_guess > m_flow_PB_dem + m_tol then
     Flow_State := 2;
   end when;
-  when m_guess < m_flow_PB_des then
+  when m_guess < m_flow_PB_dem then
     if m_guess > m_tol then //no overshoot
       Flow_State := 1;
     else
@@ -116,7 +120,7 @@ algorithm
   
 
 //New controls: PB triggered by shutdown and re-enabled after tank level increases past a certain value
-  when m_flow_PB < 0.2 * m_flow_PB_des then
+  when m_flow_PB < 0.1 * m_flow_PB_des then
     if Level <= L_startPB then //try this condition
       PB := false;
     end if;
@@ -134,8 +138,7 @@ algorithm
 equation
 //PB = true;
   //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-  m_guess = (Q_rcv_raw + m_flow_PB_des*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-  
+  m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
   /*
   if Chg == false and Disch == false then //6 or 3
@@ -242,25 +245,28 @@ equation
     
   elseif Control_State == 2 then
     m_flow_recv = m_0;
-    m_flow_PB = m_flow_PB_des;
+    //m_flow_PB = m_flow_PB_dem;
+    m_flow_PB = m_flow_PB_dem*h_target/h_tank_top;
     curtail = false;
     Q_curtail = Q_des_blk; //Not used anyway
 
   elseif Control_State == 3 then
-    m_flow_recv = m_flow_PB_des;
-    m_flow_PB = m_flow_PB_des;
+    m_flow_recv = m_flow_PB_dem;
+    m_flow_PB = m_flow_PB_dem;
     curtail = true;
-    Q_curtail = m_flow_PB_des*(h_target-h_PB_outlet); //Not used anyway
+    Q_curtail = m_flow_PB_dem*(h_target-h_PB_outlet); //Not used anyway
 
   elseif Control_State == 4 then
     m_flow_recv = Q_rcv_raw/(h_target-h_PB_outlet);
-    m_flow_PB = m_flow_PB_des; //whoops I switched these by mistake
+    //m_flow_PB = m_flow_PB_dem;
+    m_flow_PB = (m_flow_PB_dem*h_target + m_flow_recv*h_tank_top - m_flow_recv*h_target)/h_tank_top;
     curtail = false;
     Q_curtail = Q_des_blk; //Not used anyway
 
   elseif Control_State == 5 then
-    m_flow_recv = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-    m_flow_PB = m_flow_PB_des;
+    //m_flow_recv = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+    m_flow_recv = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+    m_flow_PB = m_flow_PB_dem;
     curtail = false;
     Q_curtail = Q_des_blk; //Not used anyway
 
@@ -282,4 +288,4 @@ equation
 		</html>",info="<html>
 		<p>This component determines the mass flow rates of both the receiver and power block mass flow rates. The variable m_guess calculates the required receiver mass flow to achieve target outlet temperature T_target based on inlet enthalpy from either storage bottom outlet, PB outlet or a combination of both. Depending on whether the storage is allowed to charge, discharge and relative size of m_guess wrt minimum flowrate and PB design flowrate, one of the 6 operating states is chosen.</p>
 		</html>"));
-end WindPV_TESControl;
+end WindPV_TESControl_v3;

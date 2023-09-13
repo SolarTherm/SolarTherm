@@ -60,9 +60,14 @@ model Thermocline_Annular_SingleTank_Final
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {45, -45}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   
-  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)"
+  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (J/kg)"
                                           annotation (Placement(visible = true,transformation(
           origin = {-40, -70},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-27, -69}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+          
+  Modelica.Blocks.Interfaces.RealOutput h_top_outlet "Enthaply at the top of the tank as an output signal (J/kg)"
+                                          annotation (Placement(visible = true,transformation(
+          origin = {-40, 58},extent = {{10, -10}, {-10, 10}}, rotation = -90), iconTransformation(origin = {-27, 65}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
+          
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
         visible = true,transformation(
         
@@ -81,7 +86,7 @@ model Thermocline_Annular_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Annular_Storage_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
+  SolarTherm.Models.Storage.Thermocline.Annular.Annular_Storage_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
 
 
   //Cost BreakDown
@@ -125,6 +130,7 @@ equation
   
   //Determine tank outlet enthalpy used by external control system
   h_bot_outlet = Tank_A.h_f[1];
+  h_top_outlet = Tank_A.h_f[N_f];
   
   //Mass balance
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
@@ -147,7 +153,7 @@ equation
   T_bot_measured = Tank_A.T_f[1];//Tank_A.T_p[1,1];
 
 annotation(
-    Icon(graphics = {Text(origin = {-60, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {-52, -71}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {61, 70}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {54, 39.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {56, -48.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {56, 27}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Ellipse(origin = {-30, -56}, fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-40, 60}, {40, -60}}), Rectangle(origin = {0, -2}, fillColor = {153, 153, 153}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, extent = {{-39.5, -56}, {40, -60}}), Ellipse(origin = {-30, 64}, fillColor = {207, 207, 207}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {227, 227, 227}, pattern = LinePattern.Dash, extent = {{-10, 60}, {10, -68}}), Ellipse(origin = {-42, 60}, fillColor = {221, 221, 221}, fillPattern = FillPattern.Solid, extent = {{32, 2}, {52, -2}}, endAngle = 360), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}})}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
+    Icon(graphics = {Text(origin = {-60, 11}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {-52, -71}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {61, 70}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {54, 39.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_95%"), Text(origin = {56, -48.5}, extent = {{-6, 2.5}, {10, -7.5}}, textString = "T_05%"), Text(origin = {56, 27}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Ellipse(origin = {-30, -56}, fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {153, 153, 153}, fillPattern = FillPattern.Solid, extent = {{-40, 60}, {40, -60}}), Rectangle(origin = {0, -2}, fillColor = {153, 153, 153}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, extent = {{-39.5, -56}, {40, -60}}), Ellipse(origin = {-30, 64}, fillColor = {207, 207, 207}, fillPattern = FillPattern.Solid, extent = {{-10, 4}, {70, -12}}, endAngle = 360), Rectangle(fillColor = {227, 227, 227}, pattern = LinePattern.Dash, extent = {{-10, 60}, {10, -68}}), Ellipse(origin = {-42, 60}, fillColor = {221, 221, 221}, fillPattern = FillPattern.Solid, extent = {{32, 2}, {52, -2}}, endAngle = 360), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}}), Text(origin = {-50, 69}, extent = {{-28, 3}, {28, -3}}, textString = "h_top_outlet")}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>
 		</html>",info="<html>
 		<p>This model contains the fluid_a (top) and fluid_b (bottom) ports, basically a complete CSP component. This model simply connects the Thermocline_Spheres_Section models to the correct ports.</p>

@@ -81,7 +81,7 @@ model Thermocline_Annular_SingleTank_VD_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Annular_Storage_Section_VD_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
+  SolarTherm.Models.Storage.Thermocline.Annular.Annular_Storage_Section_VD_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p,E_max = E_max,L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,U_loss_tank=U_loss_tank);
 
 
   //Cost BreakDown

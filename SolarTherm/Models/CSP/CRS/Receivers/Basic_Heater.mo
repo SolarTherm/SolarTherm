@@ -41,7 +41,7 @@ model Basic_Heater
     Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {111, 67}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
 
   Modelica.Blocks.Interfaces.BooleanInput curtail annotation (Placement(
-        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-124, -94}, {-100, -70}}, rotation = 0)));
+        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-124, -100}, {-100, -76}}, rotation = 0)));
         
   //parameter SI.Area A_recv "Area of receiver";
   //parameter Medium.ThermodynamicState state_0=Medium.setState_pTX(1e5,T_0);
@@ -115,5 +115,5 @@ equation
 <li>by Zebedee Kee, Receiver used in Packed Bed Storage Annual System Model. Only Radiative Losses. </li>
 </ul>
 </html>"),
-    Icon(graphics = {Line(origin = {-60, -2}, points = {{-40, 0}, {40, 0}}, thickness = 0.5), Line(origin = {-76, -42}, points = {{-24, -40}, {24, -40}, {24, 40}}, color = {255, 0, 255}, thickness = 0.5), Line(origin = {-76, -27}, points = {{-24, -25}, {24, -25}, {24, 25}}, thickness = 0.5)}));
+    Icon(graphics = {Line(origin = {-60, -2}, points = {{-40, 0}, {40, 0}}, thickness = 0.5), Line(origin = {-76, -48}, points = {{-24, -40}, {24, -40}, {24, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {-76, -27}, points = {{-24, -25}, {24, -25}, {24, 25}}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {2.62, 0.31}, points = {{6.00532, 33.005}, {-9.99468, 1.00502}, {10.0053, 1.00502}, {-7.99468, -32.995}}, thickness = 1.25)}, coordinateSystem(initialScale = 0.1)));
 end Basic_Heater;
