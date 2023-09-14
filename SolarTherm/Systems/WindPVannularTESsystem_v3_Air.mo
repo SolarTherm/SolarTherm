@@ -17,8 +17,8 @@ model WindPVannularTESsystem_v3_Air
   parameter Integer N_f = 25;
   parameter Integer N_p = 5;
   parameter SI.Length L_pipe = 25.0;
-  parameter SI.Length D_pipe = 0.02;
-  parameter SI.Length D_solid = 0.0250;
+  parameter SI.Length D_pipe = 0.020;
+  parameter SI.Length D_solid = 0.025;
   //0.09003;
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 2; //1=Liq 2=Air
@@ -60,9 +60,9 @@ model WindPVannularTESsystem_v3_Air
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 100, T_PB_start = T_hot_set - 75, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 175, T_target = T_hot_set, eff_storage_des = eff_storage_des, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.01 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 2.0 * 3600.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 100, T_PB_start = T_hot_set - 75, T_recv_max = T_cold_set + 200, T_recv_start = T_cold_set + 175, T_target = T_hot_set, eff_storage_des = eff_storage_des, h_target = h_air_hot_set, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 2.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, tableName = "Q_flow", tableOnFile = true) annotation(
+  Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Q_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

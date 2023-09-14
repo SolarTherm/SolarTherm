@@ -345,7 +345,7 @@ equation
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
     //k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
-    mu_f[i] = fluid[i].mu;
+    mu_f[i] = max(1.0e-8,fluid[i].mu);
 
   end for;
   //Particle Property evaluation quartzite and sand
@@ -375,8 +375,8 @@ equation
     Bi[i] = (Nu[i]*k_f[i])/(6.0*k_p[i,N_p]); //Use outermost shell conductivity
     Pe[i] = Re[i]*Pr[i];
     
-    Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-    Re[i] = max(10.0,rho_f_avg * D_pipe * abs(u_flow) / mu_f[i]);
+    Pr[i] = max(1.0e-8,c_pf[i] * mu_f[i] / k_f[i]);
+    Re[i] = max(10.0, rho_f[i] * D_pipe * abs(u_flow[i]) / mu_f[i]);
    
    
     f_low[i] = 64.0/2000.0;
@@ -390,8 +390,8 @@ equation
         Nu_high[i] = ((f_high[i]/8.0)*(4000.0)*Pr[i]/(1.07 + 12.7*((f_high[i]/8.0)^0.5)*((Pr[i]^0.667)-1.0) ))*((mu_f[i]/mu_f_wall[i])^0.25);
       end if;
     else //Air Humble,Lowdermilk, Desmon
-      if T_s[i] > T_f[i] then //Heating the Fluid
-        Nu_high[i] = 0.023*(4000.0^0.8)*(Pr[i]^0.4)*((T_s[i]/T_f[i])^(-0.55));
+      if T_s[i] > T_f[i] + 0.1 then //Heating the Fluid
+        Nu_high[i] = 0.023*(4000.0^0.8)*(Pr[i]^0.4)*((max(1.0e-8,T_s[i] / T_f[i]))^(-0.55));
       else //Cooling the Fluid, exponent is zero
         Nu_high[i] = 0.023*(4000.0^0.8)*(Pr[i]^0.4); 
       end if;
@@ -419,8 +419,8 @@ equation
           Nu[i] = ((f_fric[i]/8.0)*(Re[i])*Pr[i]/(1.07 + 12.7*((f_fric[i]/8.0)^0.5)*((Pr[i]^0.667)-1.0) ))*((mu_f[i]/mu_f_wall[i])^0.25);
         end if;
       else
-        if T_s[i] > T_f[i] then //Heating the Fluid
-          Nu[i] = 0.023*(Re[i]^0.8)*(Pr[i]^0.4)*((T_s[i]/T_f[i])^(-0.55));
+        if T_s[i] > T_f[i] + 0.1 then //Heating the Fluid
+          Nu[i] = 0.023*(Re[i]^0.8)*(Pr[i]^0.4)*((max(1.0e-8,T_s[i] / T_f[i]))^(-0.55));
         else //Cooling the Fluid
           Nu[i] = 0.023*(Re[i]^0.8)*(Pr[i]^0.4);
         end if;
