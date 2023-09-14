@@ -115,5 +115,5 @@ equation
 <li>by Zebedee Kee, Receiver used in Packed Bed Storage Annual System Model. Only Radiative Losses. </li>
 </ul>
 </html>"),
-    Icon(graphics = {Line(origin = {-60, -2}, points = {{-40, 0}, {40, 0}}, thickness = 0.5), Line(origin = {-76, -48}, points = {{-24, -40}, {24, -40}, {24, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {-76, -27}, points = {{-24, -25}, {24, -25}, {24, 25}}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {2.62, 0.31}, points = {{6.00532, 33.005}, {-9.99468, 1.00502}, {10.0053, 1.00502}, {-7.99468, -32.995}}, thickness = 1.25)}, coordinateSystem(initialScale = 0.1)));
+    Icon(graphics = {Line(origin = {-60, -2}, points = {{-40, 0}, {40, 0}}, thickness = 0.5), Line(origin = {-76, -48}, points = {{-24, -40}, {24, -40}, {24, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {-76, -27}, points = {{-24, -25}, {24, -25}, {24, 25}}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {2.62, 0.31}, points = {{6.00532, 33.005}, {-9.99468, 1.00502}, {10.0053, 1.00502}, {-7.99468, -32.995}}, thickness = 1.25), Line(origin = {62, 34}, points = {{-38, -34}, {0, -34}, {0, 32}, {38, 32}}, pattern = LinePattern.Dash, thickness = 0.5)}, coordinateSystem(initialScale = 0.1)));
 end Basic_Heater;
