@@ -258,9 +258,9 @@ equation
 
   elseif Control_State == 4 then
     m_flow_recv = max(m_0,Q_rcv_raw/(h_target-h_PB_outlet));
-    //m_flow_PB = m_flow_PB_dem;
-    //m_flow_PB = max(m_0,(m_flow_PB_dem*h_target + m_flow_recv*h_tank_top - m_flow_recv*h_target)/h_tank_top);
-    m_flow_PB = max( m_0 , m_flow_PB_dem*(h_target/h_tank_top) + ( Q_rcv_raw / (h_target-h_PB_outlet) )*( 1.0 - (h_target/h_tank_top) ) );
+    //m_flow_PB = max( m_0 , m_flow_PB_dem*(h_target/h_tank_top) + ( Q_rcv_raw / (h_target-h_PB_outlet) )*( 1.0 - (h_target/h_tank_top) ) );
+    //m_flow_PB = m_flow_PB_dem*(h_target/h_tank_top) + Q_rcv_raw * ((h_tank_top-h_target)/(h_tank_top*(h_target-h_PB_outlet)));
+    m_flow_PB = max(m_0, (m_flow_recv*(h_tank_top-h_target) + m_flow_PB_dem*(h_target-h_PB_outlet))/(h_tank_top-h_PB_outlet) );
     curtail = false;
     Q_curtail = Q_des_blk; //Not used anyway
 
