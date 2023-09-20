@@ -1,6 +1,6 @@
 within SolarTherm.Systems;
 
-model WindPVannularTESsystem_v3_Air
+model WindPVannularTESsystem_v3_Air_3TSeries
   extends Modelica.Icons.Example;
   import Modelica.SIunits.Conversions.*;
   import Modelica.Constants.*;
@@ -16,9 +16,9 @@ model WindPVannularTESsystem_v3_Air
   
   parameter Integer N_f = 25;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 25.0;
+  parameter SI.Length L_pipe = 25.0/3.0;
   parameter SI.Length D_pipe = 0.10;
-  parameter SI.Length D_solid = 0.15;
+  parameter SI.Length D_solid = 0.125;
   //0.09003;
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 2; //1=Liq 2=Air
@@ -45,7 +45,7 @@ model WindPVannularTESsystem_v3_Air
   parameter Modelica.SIunits.HeatFlowRate Q_start = 1e-3;
   parameter Modelica.SIunits.HeatFlowRate Q_stop = 1e-3;
   Modelica.SIunits.HeatFlowRate Q_scheduled;
-  SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_hot_set, T_min = T_cold_set, Correlation = Correlation, E_max = E_max, L_pipe = L_pipe, D_pipe = D_pipe, D_solid = D_solid, U_loss_tank = U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Annular.Series.Annular_Storage_SGroup3_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_hot_set, T_min = T_cold_set, Correlation = Correlation, E_max = E_max, L_pipe = L_pipe, D_pipe = D_pipe, D_solid = D_solid, U_loss_tank = U_loss_tank) annotation(
     Placement(visible = true, transformation(origin = {32, 2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {10, -64}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -130,4 +130,4 @@ equation
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-49, -8}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
-end WindPVannularTESsystem_v3_Air;
+end WindPVannularTESsystem_v3_Air_3TSeries;

@@ -24,6 +24,7 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
   parameter SI.HeatFlowRate Q_rcv_min = 0.10*Q_des_blk "Minimum receiver heat-rate to start mass flow to receiver";
   parameter SI.MassFlowRate m_0 = 1e-8 "Minimum mass flow rate through any pipe";
   parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start"; //used to be 1e-7 for both
+  parameter Real level_mid = 0.50 "Midpoint storage level, necessary for asymmetrical chg/dis";
   
   Modelica.Blocks.Interfaces.RealInput Level "Tank Storage Level 0-100"
     annotation (Placement(visible = true, transformation(extent = {{-124, 24}, {-84, 64}}, rotation = 0), iconTransformation(extent = {{-126, 6}, {-86, 46}}, rotation = 0)));
@@ -69,7 +70,7 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
   
   //New calculated parameters
   parameter SI.Time t_stor_cap = E_max/Q_des_blk "design storage capacity in seconds of design PB operation";
-  parameter Real L_startPB = t_stor_startPB/t_stor_cap + 0.6*(1.0-eff_storage_des) "Minimum tank level to start PB to ensure the required time of stored energy available";
+  parameter Real L_startPB = t_stor_startPB/t_stor_cap + level_mid-0.5*eff_storage_des "Minimum tank level to start PB to ensure the required time of stored energy available";
   
   //Relative flow magnitude State
   Integer Flow_State(start = 0); //0 if receiver < 0, 1 if recv between 0 and PB, 2 if recv greater than PB
