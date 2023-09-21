@@ -16,7 +16,7 @@ model Thermocline_Annular_SingleTank_SM
   parameter Integer Correlation = 1 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
     //Storage CApacity
   parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity";
-  parameter Real Multiplier = E_max/Tank_A.E_unit;
+  parameter Real Multiplier = Tank_A.E_max/Tank_A.E_unit;
     //Aspect ratios (H/D) of tank
   //parameter Real ar = 2.0 "Aspect ratio of tank";
   parameter SI.Length D_pipe = 0.10 "Air pipe diameter (m)";
@@ -135,12 +135,12 @@ equation
   //Mass balance
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component
   if fluid_a.m_flow > 0.0 then //mass is flowing into the top, direction is downwards so Tank_A.m_flow is (negative), charging
-    Tank_A.m_flow = -1.0*fluid_a.m_flow/Multiplier;
+    Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_in = inStream(fluid_a.h_outflow);
     fluid_a.h_outflow = Tank_A.h_in;//Tank_A.h_f[N_f];//fluid_top.h;
     fluid_b.h_outflow = Tank_A.h_out;//Tank_A.h_f[1];//fluid_bot.h;
   else //discharging
-    Tank_A.m_flow = -1.0*fluid_a.m_flow/Multiplier;
+    Tank_A.m_flow = -1.0*fluid_a.m_flow;
     Tank_A.h_in = inStream(fluid_b.h_outflow);
     fluid_a.h_outflow = Tank_A.h_out;//Tank_A.h_f[N_f];//fluid_top.h;
     fluid_b.h_outflow = Tank_A.h_in;//Tank_A.h_f[1];//fluid_bot.h;

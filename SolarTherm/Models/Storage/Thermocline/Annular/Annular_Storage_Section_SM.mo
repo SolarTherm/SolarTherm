@@ -101,6 +101,7 @@ model Annular_Storage_Section_SM //Stationary Momentum Version (SM)
   SI.Temperature T_amb;
   //Mass flow rates and superficial velocity
   SI.MassFlowRate m_flow(start = 0.0) "kg/s";
+  SI.MassFlowRate m_flow_unit(start = 0.0) "kg/s";
   SI.Velocity u_flow[N_f] "Fluid velocity for each element, wrt the x-axis (m/s)";
   //SI.Velocity u_0 "Fluid velocity through empty cross section = u_flow/eta (m/s)";
   //Analytics
@@ -147,18 +148,19 @@ model Annular_Storage_Section_SM //Stationary Momentum Version (SM)
   Real Pr[N_f] "Prandtl";
   Real Nu[N_f] "Nusselt";
   Real h_c[N_f] "Heat transfer coeff (W/m2K)";
-  Real f_fric[N_f] "Friction factor";
+  //Real f_fric[N_f] "Friction factor";
   //Flow-Scheme dependent numbers
-  Real Nu_low[N_f] "Nusselt number at Re=2000";
-  Real Nu_high[N_f] "Nusselt number at Re=4000";
-  Real f_low[N_f] "Friction factor at Re=2000";
-  Real f_high[N_f] "Friction factor at Re=4000";
+  //Real Nu_low[N_f] "Nusselt number at Re=2000";
+  //Real Nu_high[N_f] "Nusselt number at Re=4000";
+  //Real f_low[N_f] "Friction factor at Re=2000";
+  //Real f_high[N_f] "Friction factor at Re=4000";
   //Integer flow_scheme[N_f](start = fill(1,N_f)) "Flow scheme (1=Laminar, 2=Transition, 3=Turbulent)";
-protected
+
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete
   SI.ThermalConductance U_in[N_f, N_p] "K/W";
   SI.ThermalConductance U_right[N_f, N_p] "K/W";
   //SI.ThermalConductance U_out_e[N_f] "K/W";
+  protected
   //Filler Properties
   SI.SpecificEnthalpy h_p[N_f, N_p](start = h_p_start) "J/kg";
   SI.ThermalConductivity k_p[N_f, N_p] "W/mK";
@@ -182,43 +184,77 @@ protected
   Filler_Package.State filler[N_f, N_p] "Filler object array";
   //Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
   Real der_h_f[N_f] "Rate of change of specific enthalpy of fluid";
+  //Real der_h_p[N_f,N_p] "Rate of change of specific enthalpy of solid";
 algorithm
 //Fluid equations
   if State == 1 then //Fluid is flowing downwards uflow is negative
     der_h_f[1] := 
     ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) * A_fx / ((k_f[1] + k_f[2]) * dx) 
-    +  m_flow * (h_f[1] - h_f[2]) 
+    +  m_flow_unit * (h_f[1] - h_f[2]) 
     - h_c[1] * (T_f[1] - T_s[1]) * A_fr ) / dm_f;
     h_out := h_f[1];
     for i in 2:N_f - 1 loop
       der_h_f[i] := 
       (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fx / ((k_f[i - 1] + k_f[i]) * dx) 
       - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fx / ((k_f[i] + k_f[i + 1]) * dx) 
-      + m_flow * (h_f[i] - h_f[i + 1]) 
+      + m_flow_unit * (h_f[i] - h_f[i + 1]) 
       - h_c[i] * (T_f[i] - T_s[i]) * A_fr) / dm_f;
     end for;
     der_h_f[N_f] := 
     (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fx / ((k_f[N_f - 1] + k_f[N_f]) * dx) 
-    + m_flow * (h_f[N_f] - h_in) 
+    + m_flow_unit * (h_f[N_f] - h_in) 
     - h_c[N_f] * (T_f[N_f] - T_s[N_f]) * A_fr) / dm_f;
   else
     der_h_f[1] := 
     ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) * A_fx / ((k_f[1] + k_f[2]) * dx)) 
-    + m_flow * (h_in - h_f[1]) 
+    + m_flow_unit * (h_in - h_f[1]) 
     - h_c[1] * (T_f[1] - T_s[1]) * A_fr) / dm_f;
     for i in 2:N_f - 1 loop
       der_h_f[i] := 
       (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fx / ((k_f[i - 1] + k_f[i]) * dx) 
       - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fx / ((k_f[i] + k_f[i + 1]) * dx) 
-      + m_flow * (h_f[i - 1] - h_f[i]) 
+      + m_flow_unit * (h_f[i - 1] - h_f[i]) 
       - h_c[i] * (T_f[i] - T_s[i]) * A_fr) / dm_f;
     end for;
     der_h_f[N_f] := 
     (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fx / ((k_f[N_f - 1] + k_f[N_f]) * dx) 
-    + m_flow * (h_f[N_f - 1] - h_f[N_f]) 
+    + m_flow_unit * (h_f[N_f - 1] - h_f[N_f]) 
     - h_c[N_f] * (T_f[N_f] - T_s[N_f]) * A_fr) / dm_f;
     h_out := h_f[N_f];
   end if;
+  
+  /*
+//Solid Equations  
+  for i in 2:N_f-1 loop
+//Innermost solid annulus
+    der_h_p[i, 1] := (U_in[i, 1] * (T_s[i] - T_p[i, 1]) - U_in[i, 2] * (T_p[i, 1] - T_p[i, 2]) + U_right[i - 1, 1] * (T_p[i - 1, 1] - T_p[i, 1]) - U_right[i, 1] * (T_p[i, 1] - T_p[i + 1, 1])) / m_pj[1];
+//Middle solid annuli
+    for j in 2:N_p - 1 loop
+      der_h_p[i, j] := (U_in[i, j] * (T_p[i, j - 1] - T_p[i, j]) - U_in[i, j + 1] * (T_p[i, j] - T_p[i, j + 1]) + U_right[i - 1, j] * (T_p[i - 1, j] - T_p[i, j]) - U_right[i, j] * (T_p[i, j] - T_p[i + 1, j])) / m_pj[j];
+    end for;
+//Outermost solid annulus
+    der_h_p[i, N_p] := (U_in[i, N_p] * (T_p[i, N_p - 1] - T_p[i, N_p]) + U_right[i - 1, N_p] * (T_p[i - 1, N_p] - T_p[i, N_p]) - U_right[i, N_p] * (T_p[i, N_p] - T_p[i + 1, N_p]) - U_wall * (T_p[i, N_p] - T_amb) * CN.pi * D_solid * dx) / m_pj[N_p];
+  end for;
+//Left end of the pipe i = 1
+//Innermost solid annulus
+  der_h_p[1, 1] := (U_in[1, 1] * (T_s[1] - T_p[1, 1]) - U_in[1, 2] * (T_p[1, 1] - T_p[1, 2]) - U_right[1, 1] * (T_p[1, 1] - T_p[2, 1]) - U_side * (T_p[1, 1] - T_amb) * A_px[1]) / m_pj[1];
+//Middle solid annuli
+  for j in 2:N_p - 1 loop
+    der_h_p[1, j] := (U_in[1, j] * (T_p[1, j - 1] - T_p[1, j]) - U_in[1, j + 1] * (T_p[1, j] - T_p[1, j + 1]) - U_right[1, j] * (T_p[1, j] - T_p[2, j]) - U_side * (T_p[1, j] - T_amb) * A_px[j]) / m_pj[j];
+  end for;
+//Outermost solid annulus
+  der_h_p[1, N_p] := (U_in[1, N_p] * (T_p[1, N_p - 1] - T_p[1, N_p]) - U_right[1, N_p] * (T_p[1, N_p] - T_p[2, N_p]) - U_wall * (T_p[1, N_p] - T_amb) * CN.pi * D_solid * dx - U_side * (T_p[1, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
+//Right end of the pipe i = N_f
+//Innermost solid annulus
+  der_h_p[N_f, 1] := (U_in[N_f, 1] * (T_s[N_f] - T_p[N_f, 1]) - U_in[N_f, 2] * (T_p[N_f, 1] - T_p[N_f, 2]) + U_right[N_f - 1, 1] * (T_p[N_f - 1, 1] - T_p[N_f, 1]) - U_side * (T_p[N_f, 1] - T_amb) * A_px[1]) / m_pj[1];
+//Middle solid annuli
+  for j in 2:N_p - 1 loop
+    der_h_p[N_f, j] := (U_in[N_f, j] * (T_p[N_f, j - 1] - T_p[N_f, j]) - U_in[N_f, j + 1] * (T_p[N_f, j] - T_p[N_f, j + 1]) + U_right[N_f - 1, j] * (T_p[N_f - 1, j] - T_p[N_f, j]) - U_side * (T_p[N_f, j] - T_amb) * A_px[j]) / m_pj[j];
+  end for;
+//Outermost solid annulus
+  der_h_p[N_f, N_p] := (U_in[N_f, N_p] * (T_p[N_f, N_p - 1] - T_p[N_f, N_p]) + U_right[N_f - 1, N_p] * (T_p[N_f - 1, N_p] - T_p[N_f, N_p]) - U_wall * (T_p[N_f, N_p] - T_amb) * CN.pi * D_solid * dx - U_side * (T_p[N_f, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
+  */
+  
 //Charging (Mass flows top to bottom)
 //Bottom Charging Fluid Node
 //End Bottom Charging Fluid Node
@@ -233,6 +269,77 @@ algorithm
 //End Middle Discharge Nodes
 //Top Discharge Node
 //Re, Pr, Nu Calculation
+//Convection Equations
+/*
+  for i in 1:N_f loop
+    
+    Bi[i] := Nu[i] * k_f[i] / (6.0 * k_p[i, N_p]);
+//Use outermost shell conductivity
+    Pe[i] := Re[i] * Pr[i];
+    Pr[i] := max(1.0e-8,c_pf[i] * mu_f[i] / k_f[i]);
+    Re[i] := max(10.0, rho_f[i] * D_pipe * abs(u_flow[i]) / mu_f[i]);
+    f_low[i] := 64.0 / 2000.0;
+    f_high[i] := (1.82 * log10(4000.0) - 1.64) ^ (-2.0);
+    Nu_low[i] := 3.66 * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+    
+    
+    if Correlation == 1 then
+//Liquids
+      if T_s[i] > T_f[i] then
+//Heating the Fluid
+        Nu_high[i] := f_high[i] / 8.0 * 4000.0 * Pr[i] / (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+      else
+//Cooling the Fluid
+        Nu_high[i] := f_high[i] / 8.0 * 4000.0 * Pr[i] / (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
+      end if;
+    else
+//Air Humble,Lowdermilk, Desmon
+      if T_s[i] > T_f[i] + 0.1 then
+//Heating the Fluid
+        Nu_high[i] := 0.023 * 4000.0 ^ 0.8 * (Pr[i] ^ 0.4) * ((max(1.0e-8,T_s[i] / T_f[i])) ^ (-0.55));
+      else
+//Cooling the Fluid, exponent is zero
+        Nu_high[i] := 0.023 * 4000.0 ^ 0.8 * (Pr[i] ^ 0.4);
+      end if;
+    end if;
+    if Re[i] < 2000.0 then
+//Laminar
+//if pre(flow_scheme[i]) == 1 then
+      f_fric[i] := 64.0 / Re[i];
+      Nu[i] := 3.66 * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+    elseif Re[i] > 4000.0 then
+//Turbulent
+//elseif pre(flow_scheme[i]) == 3 then
+      f_fric[i] := (1.82 * log10(Re[i]) - 1.64) ^ (-2.0);
+      if Correlation == 1 then
+//Liquids
+        if T_s[i] > T_f[i] then
+//Heating the Fluid
+          Nu[i] := f_fric[i] / 8.0 * Re[i] * Pr[i] / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+        else
+//Cooling the Fluid
+          Nu[i] := f_fric[i] / 8.0 * Re[i] * Pr[i] / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
+        end if;
+      else
+        if T_s[i] > T_f[i] + 0.1 then
+//Heating the Fluid
+          Nu[i] := 0.023 * (Re[i] ^ 0.8) * (Pr[i] ^ 0.4) * ((max(1.0e-8,T_s[i] / T_f[i])) ^ (-0.55));
+        else
+//Cooling the Fluid
+          Nu[i] := 0.023 * (Re[i] ^ 0.8) * (Pr[i] ^ 0.4);
+        end if;
+      end if;
+    else
+      f_fric[i] := f_low[i] + (f_high[i] - f_low[i]) * SolarTherm.Utilities.Phis((Re[i] - 2000.0) / 2000.0);
+      Nu[i] := Nu_low[i] + (Nu_high[i] - Nu_low[i]) * SolarTherm.Utilities.Phis((Re[i] - 2000.0) / 2000.0);
+    end if;
+    
+    h_c[i] := Nu[i] * k_f[i] / D_pipe;
+    
+    
+  end for;
+*/
+
 /*
   for i in 1:N_f loop
     Pr[i] := c_pf[i] * mu_f[i] / k_f[i];
@@ -257,16 +364,23 @@ algorithm
 initial equation
   for i in 1:N_f loop
     fluid[i].h = h_f_start[i];
-    for j in 1:N_p - 1 loop
+    for j in 1:N_p loop
       filler[i, j].h = h_p_start[i, j];
     end for;
 //encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
+  m_flow_unit = m_flow/Multiplier;
   for i in 1:N_f loop
     der_h_f[i] = der(h_f[i]);
-    u_flow[i] = m_flow / (rho_f[i] * A_fx);
+    u_flow[i] = m_flow_unit / (rho_f[i] * A_fx);
   end for;
+  
+  //for i in 1:N_f loop
+    //for j in 1:N_p loop
+      //der_h_p[i,j] = der(h_p[i,j]);
+    //end for;
+  //end for;
 //Determine which operational state: In this version, standby and discharge are lumped.
   if m_flow < 0.0 then
 //mass is flowing downwards so charging
@@ -286,7 +400,7 @@ equation
 //Wall surface properties for convection
   for i in 1:N_f loop
     fluid_wall[i].T = T_s[i];
-    mu_f_wall[i] = max(1.0e-8,fluid_wall[i].mu);
+    //mu_f_wall[i] = max(1.0e-8,fluid_wall[i].mu);
   end for;
 //Fluid Property evaluation SolarSalt
   for i in 1:N_f loop
@@ -297,6 +411,7 @@ equation
     rho_f[i] = fluid[i].rho; //added this for stationary momentum (SM) assumption
 //k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
     mu_f[i] = max(1.0e-8,fluid[i].mu);
+    mu_f_wall[i] = max(1.0e-8,fluid_wall[i].mu);
   end for;
 //Particle Property evaluation quartzite and sand
   for i in 1:N_f loop
@@ -318,44 +433,47 @@ equation
 //k_p[i,N_p] = encapsulation[i].k;
 //f_p[i,N_p] = encapsulation[i].f;
   end for;
+
+  
 //Convection Equations
   for i in 1:N_f loop
+    
     Bi[i] = Nu[i] * k_f[i] / (6.0 * k_p[i, N_p]);
 //Use outermost shell conductivity
     Pe[i] = Re[i] * Pr[i];
     Pr[i] = max(1.0e-8,c_pf[i] * mu_f[i] / k_f[i]);
     Re[i] = max(10.0, rho_f[i] * D_pipe * abs(u_flow[i]) / mu_f[i]);
+    
+    if Correlation == 1 then //Liquids
+      Nu[i] = Nusselt_Liquid(Re[i],Pr[i],T_f[i],T_s[i],mu_f[i],mu_f_wall[i]);
+    else //Gas
+      Nu[i] = Nusselt_Gas(Re[i],Pr[i],T_f[i],T_s[i]);
+    end if;
+    /*
     f_low[i] = 64.0 / 2000.0;
     f_high[i] = (1.82 * log10(4000.0) - 1.64) ^ (-2.0);
     Nu_low[i] = 3.66 * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+    
+    
     if Correlation == 1 then
 //Liquids
       if T_s[i] > T_f[i] then
 //Heating the Fluid
-        Nu_high[i] = f_high[i] / 8.0 * 4000.0 * Pr[i] / (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+        Nu_high[i] = (((f_high[i] / 8.0) * 4000.0 * Pr[i] )/ (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0))) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
       else
 //Cooling the Fluid
-        Nu_high[i] = f_high[i] / 8.0 * 4000.0 * Pr[i] / (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
+        Nu_high[i] = (((f_high[i] / 8.0) * 4000.0 * Pr[i] )/ (1.07 + 12.7 * (f_high[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0))) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
       end if;
     else
 //Air Humble,Lowdermilk, Desmon
-      if T_s[i] > T_f[i] + 0.1 then
+      if T_s[i] > T_f[i] + 0.01 then
 //Heating the Fluid
-        Nu_high[i] = 0.023 * 4000.0 ^ 0.8 * (Pr[i] ^ 0.4) * ((max(1.0e-8,T_s[i] / T_f[i])) ^ (-0.55));
+        Nu_high[i] = 0.023 * (4000.0 ^ 0.8) * (Pr[i] ^ 0.4) * ((max(1.0e-8,T_s[i] / T_f[i])) ^ (-0.55));
       else
 //Cooling the Fluid, exponent is zero
-        Nu_high[i] = 0.023 * 4000.0 ^ 0.8 * (Pr[i] ^ 0.4);
+        Nu_high[i] = 0.023 * (4000.0 ^ 0.8) * (Pr[i] ^ 0.4);
       end if;
     end if;
-/*
-    if Re[i] <= 2000.0 then
-      flow_scheme[i] = 1;
-    elseif Re[i] >= 4000.0 then
-      flow_scheme[i] = 3;
-    else
-      flow_scheme[i] = 2;
-    end if;
-    */
     if Re[i] < 2000.0 then
 //Laminar
 //if pre(flow_scheme[i]) == 1 then
@@ -369,13 +487,13 @@ equation
 //Liquids
         if T_s[i] > T_f[i] then
 //Heating the Fluid
-          Nu[i] = f_fric[i] / 8.0 * Re[i] * Pr[i] / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
+          Nu[i] = (((f_fric[i] / 8.0) * Re[i] * Pr[i]) / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0))) * (mu_f[i] / mu_f_wall[i]) ^ 0.11;
         else
 //Cooling the Fluid
-          Nu[i] = f_fric[i] / 8.0 * Re[i] * Pr[i] / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0)) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
+          Nu[i] = (((f_fric[i] / 8.0) * Re[i] * Pr[i]) / (1.07 + 12.7 * (f_fric[i] / 8.0) ^ 0.5 * (Pr[i] ^ 0.667 - 1.0))) * (mu_f[i] / mu_f_wall[i]) ^ 0.25;
         end if;
       else
-        if T_s[i] > T_f[i] + 0.1 then
+        if T_s[i] > T_f[i] + 0.01 then
 //Heating the Fluid
           Nu[i] = 0.023 * (Re[i] ^ 0.8) * (Pr[i] ^ 0.4) * ((max(1.0e-8,T_s[i] / T_f[i])) ^ (-0.55));
         else
@@ -387,42 +505,23 @@ equation
       f_fric[i] = f_low[i] + (f_high[i] - f_low[i]) * SolarTherm.Utilities.Phis((Re[i] - 2000.0) / 2000.0);
       Nu[i] = Nu_low[i] + (Nu_high[i] - Nu_low[i]) * SolarTherm.Utilities.Phis((Re[i] - 2000.0) / 2000.0);
     end if;
-/*
-    if abs(u_flow) > 1e-12 then //There is actually mass flowing
-      f[Re_tra] = 64/Re[Re_tra] + SolarTherm.Utilities.Phis((Re[Re_tra]-2e3)/2e3)*(pow(1.82*np.log10(Re[Re_tra]) - 1.64, -2.) - 64/Re[Re_tra]);
-      //Re[i] = rho_f_avg * d_p * abs(u_0) / mu_f[i]; //Use superficial velocity u_0 instead of intersitial velocity u_flow
-      Re[i] = rho_f_avg * D_pipe * abs(u_flow) / mu_f[i];
-      Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-      if Correlation == 1 then  //Dittus Boelter
-        if T_s[i] > T_f[i] then //fluid is heated by the solid
-          Nu[i] = 0.023*(Re[i]^0.8)*(Pr[i]^0.4);
-        else
-          Nu[i] = 0.023*(Re[i]^0.8)*(Pr[i]^0.3);
-        end if;
-      elseif Correlation == 2 then
-        Nu[i] = 2.0 + 0.47 * (Re[i] ^ 0.5) * (Pr[i] ^ 0.36);//Use Melissari and Argyropolus
-      elseif Correlation == 3 then
-        Nu[i] = 2.0; //Conservative
-      end if;
-    else
-      Re[i] = 0;
-      Pr[i] = 0;
-      Nu[i] = 2.0;
-    end if;
     */
-//h_v[i] = (f_surface)*6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p); //Note that filler surface area correction factor is applied elsewhere.
+
     h_c[i] = Nu[i] * k_f[i] / D_pipe;
+   
+    
   end for;
-//Particle Equations
-//Radial Conductance
+
+  //Solid Equations
+  //Radial Conductance
   for i in 1:N_f loop
     U_in[i, 1] = 2.0 * CN.pi * dx / (log(r_pj[1] / (r_pj[1] - 0.5 * dr)) / k_p[i, 1]);
     for j in 2:N_p loop
       U_in[i, j] = 2.0 * CN.pi * dx / (log((r_pj[j] - 0.5 * dr) / (r_pj[j] - dr)) / k_p[i, j - 1] + log(r_pj[j] / (r_pj[j] - 0.5 * dr)) / k_p[i, j]);
     end for;
 //
-    U_in[i, 1] * (T_s[i] - T_p[i, 1]) = h_c[i] * A_fr * (T_f[i] - T_s[i]);
-//reconciles fluid and filler heat transfer
+    U_in[i, 1] * (T_s[i] - T_p[i, 1]) = h_c[i] * A_fr * (T_f[i] - T_s[i]); //links fluid and filler equations
+    //reconciles fluid and filler heat transfer
   end for;
 //Axial Conductance
   for j in 1:N_p loop
@@ -431,6 +530,7 @@ equation
     end for;
     U_right[N_f, j] = 2.0 * k_p[N_f, j] * A_px[j] / dx;
   end for;
+  
   for i in 2:N_f - 1 loop
 //not the ends of the pipe
 //Innermost solid annulus
@@ -460,6 +560,7 @@ equation
   end for;
 //Outermost solid annulus
   der(h_p[N_f, N_p]) = (U_in[N_f, N_p] * (T_p[N_f, N_p - 1] - T_p[N_f, N_p]) + U_right[N_f - 1, N_p] * (T_p[N_f - 1, N_p] - T_p[N_f, N_p]) - U_wall * (T_p[N_f, N_p] - T_amb) * CN.pi * D_solid * dx - U_side * (T_p[N_f, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
+  
 //Particle Surface equations energy balance
 //Heat loss calculations, different form than the equations above as they were in terms of rho*dh/dt not m*dh/dt
 //Q_loss_top = U_top*CN.pi*D_tank*D_tank*0.25*(T_f[N_f]-T_amb);
@@ -478,7 +579,7 @@ equation
 //p_drop_total = sum(p_drop);
 //W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
 //Analyics
-  der(E_stored) = abs(m_flow) * (h_in - h_out);
+  der(E_stored) = abs(m_flow_unit) * (h_in - h_out);
   Level = E_stored / E_unit;
   if m_flow > 1.0e-3 then
 //Discharging, outlet is the top

@@ -9,7 +9,7 @@ model Annual_Solar_Resource
 //Burnie "Burnie_TAS_2015.motab"
 
   parameter String wea_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/example_TMY3.motab");
-  parameter String wea_file2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Alice_Springs_Real2000_Created20130430.motab");
+  parameter String wea_file2 = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Weather/Pilbara_WA_2019.motab");
   parameter nSI.Angle_deg lon = -23.795 "Longitude (+ve East)";
   parameter nSI.Angle_deg lat = 133.889 "Latitude (+ve North)";
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
