@@ -14,25 +14,46 @@ model WindPVannularTESsystem_v3_Air
   SI.Energy E_demand(start=0) "Energy demanded by the industrial process (J)";
   Real Capacity_Factor(start=0) "Capacity factor of the system";
   
-  parameter Integer N_f = 25;
+  //Discretisation and geometry
+  parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 62.5;
-  parameter SI.Length D_pipe = 0.10;
-  parameter SI.Length D_solid = 0.15;
-  //0.09003;
+  parameter SI.Length L_pipe = 100.0;
+  parameter SI.Length D_pipe = 0.1;
+  parameter SI.Length D_solid = 0.2; 
+  
+  //Component-level analysis results
+  parameter Real util_storage_des = 0.648074; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.55129; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  
+  //Misc Parameters
+  parameter Real stor_oversize_factor = 1.67; 
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 2; //1=Liq 2=Air
+  
+  //Temperature Controls
+  parameter SI.Temperature T_max = 600 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_PB_start = T_max - 0.5*T_tol_PB "Temperature at which TES can start being discharged"; //halfway between
+  parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_Recv_start = T_min + 0.5*T_tol_Recv "Temperature at which TES can start being charged"; //halfway between
+  parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
+  
+  parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
+  //Level-Controls
+  parameter SI.Time t_stor_startPB = 3.0 * 3600.0 "Number of storage seconds stored before boiler can be run from the TES";  
+
   //1:Liquid 2:Gas
-  parameter Real eff_storage_des = 0.3; //Utilisation
+
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
-  parameter Real stor_oversize_factor = 1.0;
+  
   parameter Real t_storage(unit = "h") = 10.0*stor_oversize_factor "Hours of storage";
   parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 600.0e6 "Heat to boiler at design";
   parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
   
-  parameter Modelica.SIunits.Temperature T_hot_set = from_degC(600) "Ideal hot temperature";
-  parameter Modelica.SIunits.Temperature T_cold_set = from_degC(125) "Ideal cold temperature";
+  parameter Modelica.SIunits.Temperature T_hot_set = T_max "Ideal hot temperature";
+  parameter Modelica.SIunits.Temperature T_cold_set = T_min "Ideal cold temperature";
   parameter Medium.ThermodynamicState state_air_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold air thermodynamic state at design";
   parameter Medium.ThermodynamicState state_air_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold air thermodynamic state at design";
   parameter Modelica.SIunits.SpecificEnthalpy h_air_cold_set = Medium.specificEnthalpy(state_air_cold_set) "Cold air specific enthalpy at design";
@@ -61,7 +82,7 @@ model WindPVannularTESsystem_v3_Air
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_hot_set - 150, T_PB_start = T_hot_set - 100, T_recv_max = T_cold_set + 300, T_recv_start = T_cold_set + 250, T_target = T_hot_set, eff_storage_des = eff_storage_des, h_target = h_air_hot_set, level_mid = 0.60, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = 2.0 * 3600.0, t_wait = 1.0 * 3600.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_PB_min, T_PB_start = T_PB_start, T_recv_max = T_Recv_max, T_recv_start = T_Recv_start, T_target = T_max, eff_storage_des = util_storage_des, h_target = h_air_hot_set, level_mid = level_storage_mid, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = t_stor_startPB, t_wait = 1.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Q_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));

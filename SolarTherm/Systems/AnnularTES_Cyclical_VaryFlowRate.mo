@@ -11,13 +11,13 @@ model AnnularTES_Cyclical_VaryFlowRate
   package Filler_Package = SolarTherm.Materials.Concrete_Constant;
   
   //Numerical Discretisation
-  parameter Integer N_f = 10;
+  parameter Integer N_f = 50;
   parameter Integer N_p = 5;
   
   //TES Parameters
-  parameter SI.Length L_pipe = 62.5;
-  parameter SI.Length D_pipe = 0.08255;
-  parameter SI.Length D_solid = 0.112;
+  parameter SI.Length L_pipe = 100.0;
+  parameter SI.Length D_pipe = 0.1;
+  parameter SI.Length D_solid = 0.2; 
   parameter Integer Correlation = 2; //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   
@@ -30,12 +30,12 @@ model AnnularTES_Cyclical_VaryFlowRate
   parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
   parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 150.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
 
   //Tank Geometry
   parameter SI.Power Q_dis_des = 600.0e6 "Design storage discharge heat-rate";
   parameter SI.Power Q_chg_des = (t_discharge/t_charge)*Q_dis_des "Design storage charge heat-rate";
-  parameter Real stor_oversize_factor = 1.0;
+  parameter Real stor_oversize_factor = 1.67;
   parameter SI.Energy E_max = t_discharge * Q_dis_des * stor_oversize_factor "Ideal storage capacity (J_thermal)";
   parameter SI.Time t_charge = 10.0 * 3600.0 "Charging period";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";

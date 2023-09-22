@@ -77,9 +77,11 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
   parameter SI.MassFlowRate m_tol = 0.001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
 
 initial algorithm
+  
   if Level <= L_startPB then
     PB := false;
   end if;
+  
  // PB := true;
 algorithm
   //Changing Storage State
@@ -118,8 +120,16 @@ algorithm
     end if;
   end when;
 
+  /*
+  when m_flow_PB < 0.1 * m_flow_PB_des then //take this as shutdown
+    PB := false; //start the cooldown
+    t_threshold := time + t_wait;
+  end when;
+  when time > t_threshold then
+    PB := true;
+  end when;
+  */
   
-
 //New controls: PB triggered by shutdown and re-enabled after tank level increases past a certain value
   when m_flow_PB < 0.1 * m_flow_PB_des then
     if Level <= L_startPB then //try this condition
@@ -130,14 +140,15 @@ algorithm
    PB := true;
   end when;
   
+  /*
   when Q_rcv_raw > 1e-6 then  //try not using this
     if Level > L_startPB then
      PB := true;
     end if;
   end when;
-
+  */
 equation
-//PB = true;
+  //PB = true;
   //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
