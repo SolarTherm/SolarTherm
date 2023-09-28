@@ -15,9 +15,9 @@ model AnnularTES_Cyclical_VaryFlowRate
   parameter Integer N_p = 5;
   
   //TES Parameters
-  parameter SI.Length L_pipe = 100.0;
-  parameter SI.Length D_pipe = 0.1;
-  parameter SI.Length D_solid = 0.2; 
+  parameter SI.Length L_pipe = 25.0;
+  parameter SI.Length D_pipe = 0.0508;
+  parameter SI.Length D_solid = 0.1008; 
   parameter Integer Correlation = 2; //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   
@@ -35,7 +35,7 @@ model AnnularTES_Cyclical_VaryFlowRate
   //Tank Geometry
   parameter SI.Power Q_dis_des = 600.0e6 "Design storage discharge heat-rate";
   parameter SI.Power Q_chg_des = (t_discharge/t_charge)*Q_dis_des "Design storage charge heat-rate";
-  parameter Real stor_oversize_factor = 1.67;
+  parameter Real stor_oversize_factor = 1.89;
   parameter SI.Energy E_max = t_discharge * Q_dis_des * stor_oversize_factor "Ideal storage capacity (J_thermal)";
   parameter SI.Time t_charge = 10.0 * 3600.0 "Charging period";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";

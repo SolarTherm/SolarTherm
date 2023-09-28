@@ -14,8 +14,10 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
   parameter SI.SpecificEnthalpy h_target = HTF.specificEnthalpy(HTF.setState_pTX(101323.0, T_target)) "Target specific enthalpy of the receiver outlet";
   Integer Control_State(start=6) "1-6 Determines which pumps are flowing and whether defocus is on";
   Boolean Chg(start=true) "Can the storage be charged?";
-  Boolean Disch(start=false) "Can the storage be discharged?";
-  Boolean PB(start=false) "Can the PB be turned on?";
+  //Boolean DisT(start=false) "Can the storage be discharged based on temperature?";
+  Boolean Dis(start=false) "Can the storage be discharged based on temperature?";
+  Boolean PB(start=true) "Can the PB be turned on?";
+  //Boolean DisL(start=false) "Can the storage be discharged based on level?";
 
   //Timer to prevent PB from being turned on too many times
   //parameter SI.Time t_wait=1.0*3600 "Time you have to wait after shutdown before it can be turned on again";
@@ -61,7 +63,7 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
 
   SI.MassFlowRate m_guess(start=0.0) "Guess required flow rate of recv";
   parameter SI.Time t_wait = 1.0*3600 "Waiting time between turning off PB and being able to turn on";
-  //SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
+  SI.Time t_threshold(start=0.0) "if time passes this value, PB := true";
   
   //New model input parameters
   parameter SI.Energy E_max = 12.0*3600.0*800.0e6 "theoretical storage capacity"; 
@@ -77,18 +79,54 @@ model WindPV_TESControl_v3 //now outputs the demand m_flow_PB_dem if able, now i
   parameter SI.MassFlowRate m_tol = 0.001*m_flow_PB_des; //Tolerance of 0.1% of design PB mass flow rate
 
 initial algorithm
-  
+
   if Level <= L_startPB then
-    PB := false;
+    Dis := false;
+  else
+    Dis := true;
+  end if;
+  /*
+  if Level <= L_startPB then
+    DisL := false;
+  else
+    DisL := true;
   end if;
   
+  if T_top_tank < T_PB_min then
+    DisT := false;
+  else
+    DisT := true;
+  end if;
+  */
  // PB := true;
 algorithm
-  //Changing Storage State
+  
+
+
+  //when m_flow_PB < 0.1 * m_flow_PB_des then
+    //if Level <= L_startPB then //try this condition
+      //PB := false;
+    //end if;
+  //end when;
+  /*
+  when Level > L_startPB then
+    DisL := true;
+  //elsewhen Level < L_startPB - 0.05 then
+    //DisL := false;
+  end when;
+    //Changing Storage State
   when T_top_tank < T_PB_min then 
-    Disch := false;
+    DisT := false;
+    DisL := false;
   elsewhen T_top_tank > T_PB_start then 
-    Disch := true;
+    DisT := true;
+  end when;
+  */
+  when Level > L_startPB then
+    Dis := true;
+  end when;
+   when T_top_tank < T_PB_min then 
+    Dis := false;
   end when;
   
   when T_bot_tank > T_recv_max then 
@@ -120,7 +158,7 @@ algorithm
     end if;
   end when;
 
-  /*
+  
   when m_flow_PB < 0.1 * m_flow_PB_des then //take this as shutdown
     PB := false; //start the cooldown
     t_threshold := time + t_wait;
@@ -128,9 +166,10 @@ algorithm
   when time > t_threshold then
     PB := true;
   end when;
-  */
+  
   
 //New controls: PB triggered by shutdown and re-enabled after tank level increases past a certain value
+/*
   when m_flow_PB < 0.1 * m_flow_PB_des then
     if Level <= L_startPB then //try this condition
       PB := false;
@@ -139,7 +178,7 @@ algorithm
   when Level > L_startPB then
    PB := true;
   end when;
-  
+*/ 
   /*
   when Q_rcv_raw > 1e-6 then  //try not using this
     if Level > L_startPB then
@@ -148,7 +187,7 @@ algorithm
   end when;
   */
 equation
-  //PB = true;
+  //PB = true; //Override
   //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
   
@@ -210,7 +249,8 @@ equation
   end if;
   */
   if Flow_State == 0 then
-    if Disch == true then
+    //if (DisT and DisL) == true then
+    if Dis == true then
       if PB == true then
         Control_State = 2;
       else
@@ -220,7 +260,8 @@ equation
       Control_State = 6;
     end if;
   elseif Flow_State == 1 then
-    if Disch == true then
+    //if (DisT and DisL) == true then
+    if Dis == true then
       if PB == true then
         Control_State = 4;
       else

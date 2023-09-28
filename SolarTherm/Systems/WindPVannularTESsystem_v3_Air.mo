@@ -4,11 +4,24 @@ model WindPVannularTESsystem_v3_Air
   extends Modelica.Icons.Example;
   import Modelica.SIunits.Conversions.*;
   import Modelica.Constants.*;
-  parameter String elec_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/heater_input.motab");
+  parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/pv_gen_Gladstone_1MWe.motab");
+  parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/wind_gen_Gladstone320MWe.motab");
   parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow.motab");
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
+  
+  //Inputs
+  parameter Real RM = 2.0 "Renewable Multiple";
+  parameter Real PV_fraction = 0.2 "PV_fraction";
+  parameter Real t_storage = 10.0 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.582846; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.560761; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  
+  //Renewable Parameters
+  parameter SI.Power P_renewable_des = RM*Q_flow_des;
+  parameter SI.Power PV_ref_size = 1.0e6;
+  parameter SI.Power Wind_ref_size = 320.0e6;
   //Results
   SI.Energy E_supplied(start=0) "Energy supplied by the boiler to the industrial process (J)";
   SI.Energy E_demand(start=0) "Energy demanded by the industrial process (J)";
@@ -17,16 +30,12 @@ model WindPVannularTESsystem_v3_Air
   //Discretisation and geometry
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 100.0;
-  parameter SI.Length D_pipe = 0.1;
-  parameter SI.Length D_solid = 0.2; 
+  parameter SI.Length L_pipe = 25.0;
+  parameter SI.Length D_pipe = 0.05;
+  parameter SI.Length D_solid = 0.10; 
   
-  //Component-level analysis results
-  parameter Real util_storage_des = 0.648074; //Utilisation determined via component-level analysis
-  parameter Real level_storage_mid = 0.55129; //Midpoint of minimum and maximum storage levels determine via component-level analysis
-  
+ 
   //Misc Parameters
-  parameter Real stor_oversize_factor = 1.67; 
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 2; //1=Liq 2=Air
   
@@ -41,13 +50,10 @@ model WindPVannularTESsystem_v3_Air
   parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
   parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Level-Controls
-  parameter SI.Time t_stor_startPB = 3.0 * 3600.0 "Number of storage seconds stored before boiler can be run from the TES";  
-
-  //1:Liquid 2:Gas
+  parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "Number of storage seconds stored before boiler can be run from the TES";  
 
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
   
-  parameter Real t_storage(unit = "h") = 10.0*stor_oversize_factor "Hours of storage";
   parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 600.0e6 "Heat to boiler at design";
   parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
@@ -90,8 +96,12 @@ model WindPVannularTESsystem_v3_Air
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {-46, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.CombiTimeTable grid_input(fileName = elec_input, tableName = "p_pelec", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
-    Placement(visible = true, transformation(origin = {-110, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
+    Placement(visible = true, transformation(origin = {-166, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Math.Add Grid_Sum(k1 =  P_renewable_des *PV_fraction / PV_ref_size, k2 =  P_renewable_des *(1.0 - PV_fraction) / Wind_ref_size)  annotation(
+    Placement(visible = true, transformation(origin = {-106, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  Modelica.Blocks.Sources.CombiTimeTable Wind_input(fileName = Wind_file, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Power", tableOnFile = true) annotation(
+    Placement(visible = true, transformation(origin = {-166, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 equation
   der(E_supplied) = Boiler.Q_flow;
   der(E_demand) = Control.Q_demand;
@@ -138,8 +148,6 @@ equation
     Line(points = {{126, 22}, {128, 22}, {128, -36}, {-68, -36}, {-68, -2}, {-58, -2}}, color = {255, 0, 255}));
   connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
     Line(points = {{104, 18}, {-12, 18}, {-12, -12}, {-72, -12}, {-72, 2}, {-58, 2}, {-58, 0}}, color = {0, 0, 127}));
-  connect(grid_input.y[1], basic_Heater.P_supply) annotation(
-    Line(points = {{-98, 10}, {-82, 10}, {-82, 6}, {-58, 6}, {-58, 6}}, color = {0, 0, 127}));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
     Line(points = {{126, 26}, {132, 26}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
@@ -148,6 +156,12 @@ equation
     Line(points = {{174, 38}, {166, 38}, {166, 56}, {120, 56}, {120, 38}, {122, 38}}, color = {0, 0, 127}));
   connect(thermocline_Tank.h_top_outlet, Control.h_tank_top) annotation(
     Line(points = {{22, 27}, {22, 48}, {106, 48}, {106, 38}}, color = {0, 0, 127}));
+  connect(PV_input.y[1], Grid_Sum.u1) annotation(
+    Line(points = {{-154, 34}, {-144, 34}, {-144, 24}, {-118, 24}}, color = {0, 0, 127}));
+  connect(Wind_input.y[1], Grid_Sum.u2) annotation(
+    Line(points = {{-154, 4}, {-142, 4}, {-142, 12}, {-118, 12}}, color = {0, 0, 127}));
+  connect(Grid_Sum.y, basic_Heater.P_supply) annotation(
+    Line(points = {{-95, 18}, {-80, 18}, {-80, 6}, {-58, 6}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-49, -8}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));

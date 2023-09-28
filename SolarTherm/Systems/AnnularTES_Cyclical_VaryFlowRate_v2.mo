@@ -1,6 +1,6 @@
 within SolarTherm.Systems;
 
-model AnnularTES_Cyclical_VaryFlowRate_3TSeries
+model AnnularTES_Cyclical_VaryFlowRate_v2
   //Baseline 3-tank series component analysis simulation from Chapter 7 and 8.3
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -8,14 +8,20 @@ model AnnularTES_Cyclical_VaryFlowRate_3TSeries
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   package Fluid_Package = SolarTherm.Materials.Air_amb_p_curvefit;
-  package Filler_Package = SolarTherm.Materials.Concrete_Laing_2006;
+  package Filler_Package = SolarTherm.Materials.Concrete_Constant;
+  
+  //Vary these
+  parameter Real RM = 2.0 "Renewable Multiple";
+  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
+  
+  
   //Numerical Discretisation
-  parameter Integer N_f = 10;
-  parameter Integer N_p = 10;
+  parameter Integer N_f = 50;
+  parameter Integer N_p = 5;
   //TES Parameters
-  parameter SI.Length L_pipe = 25.0/3.0; //"length of pipe of each TES module in the series"
-  parameter SI.Length D_pipe = 0.10;
-  parameter SI.Length D_solid = 0.15;
+  parameter SI.Length L_pipe = 25.0;
+  parameter SI.Length D_pipe = 0.05;
+  parameter SI.Length D_solid = 0.10;
   parameter Integer Correlation = 2;
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
@@ -25,33 +31,36 @@ model AnnularTES_Cyclical_VaryFlowRate_3TSeries
   parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
   parameter SI.Temperature T_Recv_des = T_min + 0.5 * T_tol_Recv "Design blended receiver inlet temperature";
-  parameter SI.Temperature T_min = 100 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
   parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 150.0 "Power block Temperature Tolerance (K)";
+  parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Tank Geometry
-  parameter SI.Power Q_dis_des = 600.0e6 "Design storage discharge heat-rate";
-  parameter SI.Power Q_chg_des = t_discharge / t_charge * Q_dis_des "Design storage charge heat-rate";
-  parameter Real stor_oversize_factor = 1.0;
-  parameter SI.Energy E_max = t_discharge * Q_dis_des * stor_oversize_factor "Ideal storage capacity (J_thermal)";
-  parameter SI.Time t_charge = 10.0 * 3600.0 "Charging period";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
-  parameter SI.Time t_extension = 1.0 * 3600.0 "Extension period to make sure charging and discharging complete, applied twice";
-  parameter SI.Time t_standby = 24.0 * 3600.0 - t_charge - t_discharge - 2.0 * t_extension "Standby period between discharge and charge";
+
+  
+  parameter SI.Power Q_boiler_des = 600.0e6 "Design boiler discharge heat-rate";
+  parameter SI.Power Q_heater_des = RM*Q_boiler_des "Design heater output heat-rate";
+  
+  
+  parameter SI.Energy E_max = t_discharge * Q_boiler_des  "Ideal storage capacity (J_thermal)";
+  parameter SI.Time t_charge = t_discharge/(RM-1.0) "Charging period";
+  
+  parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_boiler_des) / (h_f_max - h_f_min);
+  parameter SI.MassFlowRate m_discharge_des = (Q_boiler_des) / (h_f_max - h_f_min);
+
   //Derived Parameters
-  parameter SI.Time t_cycle = t_charge + t_discharge + t_standby + 2.0 * t_extension;
+  parameter SI.Time t_cycle = t_charge + t_discharge;
   //this is 24 hours
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
-  parameter SI.MassFlowRate m_charge_des = Q_chg_des / (h_f_max - h_f_min);
-  parameter SI.MassFlowRate m_discharge_des = Q_dis_des / (h_f_max - h_f_min);
+
   //Output signals
   Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Storage Model
-  SolarTherm.Models.Storage.Thermocline.Annular.Series.Annular_Storage_SGroup3_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe = L_pipe, D_pipe = D_pipe, D_solid = D_solid, U_loss_tank = U_loss_tank) annotation(
+  SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe = L_pipe, D_pipe = D_pipe, D_solid = D_solid, U_loss_tank = U_loss_tank) annotation(
     Placement(visible = true, transformation(origin = {0, 0}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   //Componenets and Connectors
   SolarTherm.Models.Fluid.Sources.FluidSink Recv_Sink(redeclare package Medium = Medium) annotation(
@@ -93,13 +102,13 @@ model AnnularTES_Cyclical_VaryFlowRate_3TSeries
   //SI.Energy E_lost(start = 0) "Externally lost energy from storage";
   //SI.Energy E_pump(start = 0) "Pumping energy consumed";
   parameter SI.Energy X_max = m_discharge_des * t_discharge * (h_f_max * (1.0 - 298.15 / T_max) - h_f_min * (1.0 - 298.15 / T_min)) "Theoretical Exergetic storage capacity (J)";
-  SI.Energy X_chg(start = 0.0) "Total exergy charged in the last cycle";
-  SI.Energy X_dis(start = 0.0) "Discharged exergy";
+  //SI.Energy X_chg(start = 0.0) "Total exergy charged in the last cycle";
+  //SI.Energy X_dis(start = 0.0) "Discharged exergy";
   //Utilisation and efficiencies
   Real util_energy(start = 0.0) "Energetic utilisation (1st Law)";
   Real eff_energy(start = 0.0) "Energetic efficiency (1st Law)";
-  Real util_exergy(start = 0.0) "Exergetic utilisation (2nd law)";
-  Real eff_exergy(start = 0.0) "Exergetic efficiency (2nd law)";
+  //Real util_exergy(start = 0.0) "Exergetic utilisation (2nd law)";
+  //Real eff_exergy(start = 0.0) "Exergetic efficiency (2nd law)";
   //Individual Tank Utilization Calculations
   parameter SI.Energy E_max_A = thermocline_Tank.Tank_A.E_max "Maximum energy capacity of Tank A";
   //parameter SI.Energy E_max_B = thermocline_Tank.Tank_B.E_max "Maximum energy capacity of Tank B";
@@ -114,64 +123,49 @@ model AnnularTES_Cyclical_VaryFlowRate_3TSeries
   //Real util_energy_B(start = 0.0) "Storage utilisation of Tank B";
   //Real util_energy_C(start = 0.0) "Storage utilisation of Tank C";
   //Stats to determine if stable cycle has been reached
-  SI.Energy E_dis_total(start = 0.0) "Total discharged energy for entire simulation";
+  //SI.Energy E_dis_total(start = 0.0) "Total discharged energy for entire simulation";
   //SI.Energy E_pump_total(start = 0.0) "Total pump energy losses for entire simulation";
-  SI.Energy E_dis_prev(start = 0.001) "Total discharged energy for previous cycle";
+  //SI.Energy E_dis_prev(start = 0.001) "Total discharged energy for previous cycle";
   //SI.Energy E_pump_prev(start = 0.001) "Total pump energy losses for previous cycle";
-  Real util_prev(start = 0.001) "Previous day's level, starts at 0.1% to prevent divbyzero";
-  Real time_stop(start = 3600.0 * 24.0 * 10.0) "The maximum time this simulation can last";
-  Integer Control_State(start = 1) "Control state 1= Charge 2=Standby 3=Discharge";
+  //Real util_prev(start = 0.001) "Previous day's level, starts at 0.1% to prevent divbyzero";
+  //Real time_stop(start = 3600.0 * 24.0 * 10.0) "The maximum time this simulation can last";
+  Boolean Chg(start = false) "Can storage be charged?";
+  Boolean Dis(start = false) "Can storage be discharged?";
+  //Integer Control_State(start = 1) "Control state 1= Charge 2=Standby 3=Discharge";
   Real Level_high(start = 1.0);
   Real Level_low(start = 0.0);
   Real Level_mid(start = 0.5);
 algorithm
 //Mass flow controls
   when rem(time, t_cycle) > 1e-6 then
-    if thermocline_Tank.T_bot_measured > T_Recv_max then
-      Control_State := 2;
-    else
-      Control_State := 1;
+    Dis := false;
+    if thermocline_Tank.T_bot_measured < T_Recv_max then
+      Chg := true;
     end if;
   end when;
-//Start charging
-//Cannot charge
-//Can charge
-  when rem(time, t_cycle) > t_charge + 1e-6 + t_extension then
-    if thermocline_Tank.T_top_measured < T_PB_min then
-      Control_State := 2;
-    else
-      Control_State := 3;
+  
+  when rem(time, t_cycle) > 1e-6 + t_charge then
+    Chg := false;
+    if thermocline_Tank.T_top_measured > T_PB_min then
+      Dis := true;
     end if;
   end when;
-//Stop charging and start discharging time is up
-//Cannot discharge
-//Can discharge
-//when rem(time, t_cycle) > t_charge + t_discharge + 1e-6 + 2.0*t_extension then //Stop discharging time is up
-//Control_State := 2;
-//end when;
+  
   when thermocline_Tank.T_bot_measured > T_Recv_max then
-    Control_State := 2;
+    Chg := false;
     Level_high := thermocline_Tank.Level;
   end when;
-//Force stop charging, unacceptable bottom outlet Temperature
+  
   when thermocline_Tank.T_top_measured < T_PB_min then
-    Control_State := 2;
+    Dis := false;
     Level_low := thermocline_Tank.Level;
     Level_mid := 0.5 * (Level_high + Level_low);
   end when;
+
 //Force stop discharging, unacceptable top outlet Temperature
 //Utilisation convergence
-  when time > time_stop - 10.0 then
+  when time > 10.0*t_cycle then
     terminate("Stable cycle has been reached");
-  end when;
-  when rem(time, t_cycle) > 1.0e-6 then
-    if abs((E_dis_total - E_dis_prev) / E_max - util_prev) / util_prev < 0.01 and div(time, t_cycle) > 0.0 then
-      time_stop := 3600.0 * 24.0 * 10.0;
-    end if;
-    if div(time, t_cycle) > 0.0 then
-      util_prev := (E_dis_total - E_dis_prev) / E_max;
-      E_dis_prev := E_dis_total;
-    end if;
   end when;
 //Replace time + t_cycle - 1.0e-6 with 3600.0*24.0*10.0 to bypass the 1% check and simulate the full 10 days
 //if abs((((E_dis_total - E_dis_prev) - (E_pump_total - E_pump_prev))/E_max) - util_prev)/(util_prev) < 0.01 and div(time,t_cycle) > 0.0 then //stable cycle
@@ -181,18 +175,29 @@ algorithm
 //util_prev := ((E_dis_total - E_dis_prev) - (E_pump_total - E_pump_prev))/E_max;
 //E_pump_prev := E_pump_total;
 equation
-  if Control_State == 1 then
-//Charging
+  if Chg then
     m_Recv_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - thermocline_Tank.h_bot_outlet);
-    m_PB_signal = 1.0e-8;
-  elseif Control_State == 2 then
-//Standby
-    m_Recv_signal = 1.0e-8;
-    m_PB_signal = 1.0e-8;
   else
     m_Recv_signal = 1.0e-8;
-    m_PB_signal = m_discharge_des * (h_f_max - h_f_min) / (thermocline_Tank.h_top_outlet - h_f_min);
   end if;
+  
+  if Dis then
+    m_PB_signal = m_discharge_des * (h_f_max - h_f_min) / (thermocline_Tank.h_top_outlet - h_f_min);
+  else
+    m_PB_signal = 1.0e-8;
+  end if;
+  //if Control_State == 1 then
+//Charging
+    //m_Recv_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - thermocline_Tank.h_bot_outlet);
+    //m_PB_signal = 1.0e-8;
+  //elseif Control_State == 2 then
+//Standby
+    //m_Recv_signal = 1.0e-8;
+    //m_PB_signal = 1.0e-8;
+  //else
+    //m_Recv_signal = 1.0e-8;
+    //m_PB_signal = m_discharge_des * (h_f_max - h_f_min) / (thermocline_Tank.h_top_outlet - h_f_min);
+  //end if;
 //Measured temperature sensors
   T_top_degC = thermocline_Tank.T_top_measured - 273.15;
   T_bot_degC = thermocline_Tank.T_bot_measured - 273.15;
@@ -205,88 +210,27 @@ equation
   else
     T_outlet_degC = 25.0;
   end if;
-  if time > time_stop - t_cycle then
-//this is the final cycle
-//Charging Phase
-    if rem(time, t_cycle) < t_charge + t_extension then
-      der(E_chg) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
-      der(E_dis) = 0.0;
-      der(X_chg) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) * (1.0 - 298.15 / thermocline_Tank.fluid_top.T) - thermocline_Tank.fluid_b.h_outflow * (1.0 - 298.15 / thermocline_Tank.fluid_bot.T));
-      der(X_dis) = 0.0;
-//der(E_dis_A) = 0.0;
-//der(E_dis_B) = 0.0;
-//der(E_dis_C) = 0.0;
-    elseif rem(time, t_cycle) > t_charge + t_extension and rem(time, t_cycle) < t_charge + t_discharge + 2.0 * t_extension then
-//discharging phase
-      der(E_chg) = 0.0;
-      der(E_dis) = thermocline_Tank.fluid_b.m_flow * (thermocline_Tank.fluid_a.h_outflow - inStream(thermocline_Tank.fluid_b.h_outflow));
-      der(X_chg) = 0.0;
-      der(X_dis) = thermocline_Tank.fluid_b.m_flow * (thermocline_Tank.fluid_a.h_outflow * (1.0 - 298.15 / thermocline_Tank.fluid_top.T) - inStream(thermocline_Tank.fluid_b.h_outflow) * (1.0 - 298.15 / thermocline_Tank.fluid_bot.T));
-//der(E_dis_A) = thermocline_Tank.Tank_A.m_flow*(thermocline_Tank.Tank_A.fluid_out.h - thermocline_Tank.Tank_A.fluid_in.h);
-//der(E_dis_B) = thermocline_Tank.Tank_B.m_flow*(thermocline_Tank.Tank_B.fluid_out.h - thermocline_Tank.Tank_B.fluid_in.h);
-//der(E_dis_C) = thermocline_Tank.Tank_C.m_flow*(thermocline_Tank.Tank_C.fluid_out.h - thermocline_Tank.Tank_C.fluid_in.h);
-    else
-      der(E_chg) = 0.0;
-      der(E_dis) = 0.0;
-      der(X_chg) = 0.0;
-      der(X_dis) = 0.0;
-//der(E_dis_A) = 0.0;
-//der(E_dis_B) = 0.0;
-//der(E_dis_C) = 0.0;
-    end if;
-//der(E_lost) = thermocline_Tank.Tank_A.Q_loss_total + thermocline_Tank.Tank_B.Q_loss_total + thermocline_Tank.Tank_C.Q_loss_total;
-//der(E_pump) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
-//der(E_pump_A) = thermocline_Tank.Tank_A.W_loss_pump;
-//der(E_pump_B) = thermocline_Tank.Tank_B.W_loss_pump;
-//der(E_pump_C) = thermocline_Tank.Tank_C.W_loss_pump;
+  
+  if time > 9.0*t_cycle and time < 9.0*t_cycle + t_charge then //last charging phase
+    der(E_chg) = thermocline_Tank.fluid_a.m_flow * (inStream(thermocline_Tank.fluid_a.h_outflow) - thermocline_Tank.fluid_b.h_outflow);
+    der(E_dis) = 0.0;
+  elseif time >= 9.0*t_cycle + t_charge and time < 10.0*t_cycle then //last discharging phase
+    der(E_chg) = 0.0;
+    der(E_dis) = thermocline_Tank.fluid_b.m_flow * (thermocline_Tank.fluid_a.h_outflow - inStream(thermocline_Tank.fluid_b.h_outflow));
   else
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
-    der(X_chg) = 0.0;
-    der(X_dis) = 0.0;
-//der(E_dis_A) = 0.0;
-//der(E_dis_B) = 0.0;
-//der(E_dis_C) = 0.0;
-//der(E_lost) = 0.0;
-//der(E_pump) = 0.0;
-//der(E_pump_A) = 0.0;
-//der(E_pump_B) = 0.0;
-//der(E_pump_C) = 0.0;
   end if;
-//Utilisation Convergence
-  if rem(time, t_cycle) < t_charge + t_extension then
-    der(E_dis_total) = 0.0;
-  else
-    der(E_dis_total) = thermocline_Tank.fluid_b.m_flow * (thermocline_Tank.fluid_a.h_outflow - inStream(thermocline_Tank.fluid_b.h_outflow));
-  end if;
-//der(E_pump_total) = thermocline_Tank.Tank_A.W_loss_pump + thermocline_Tank.Tank_B.W_loss_pump + thermocline_Tank.Tank_C.W_loss_pump;
-  if time > time_stop - t_cycle + t_charge + 100.0 then
-//We can calculate these efficiencies without division by zero
-/*
-    util_energy = (E_dis - E_pump) / E_max; 
-    eff_energy = (E_dis - E_pump) / E_chg; 
-    util_exergy = (X_dis - E_pump) / X_max;
-    eff_exergy = (X_dis - E_pump) / X_chg;
-    util_energy_A = (E_dis_A - E_pump_A)/E_max_A;
-    util_energy_B = (E_dis_B - E_pump_B)/E_max_B;
-    util_energy_C = (E_dis_C - E_pump_C)/E_max_C;
-    */
-    util_energy = E_dis / E_max;
-    eff_energy = E_dis / E_chg;
-    util_exergy = X_dis / X_max;
-    eff_exergy = X_dis / X_chg;
-//util_energy_A = E_dis_A/E_max_A;
-//util_energy_B = E_dis_B/E_max_B;
-//util_energy_C = E_dis_C/E_max_C;
+  
+  if time > 9.0*t_cycle + t_charge then //we can calculate utilisation and efficiency because denominator is not zero;
+    util_energy = E_dis/E_max;
+    eff_energy = E_dis/E_chg;
   else
     util_energy = 0.0;
     eff_energy = 0.0;
-    util_exergy = 0.0;
-    eff_exergy = 0.0;
-//util_energy_A = 0.0;
-//util_energy_B = 0.0;
-//util_energy_C = 0.0;
   end if;
+    
+
 //Connectors
   connect(thermocline_Tank.fluid_b, thermocline_Splitter2.fluid_c) annotation(
     Line(points = {{0, -30}, {0, -46}}, color = {0, 127, 255}));
@@ -323,7 +267,7 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-3, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
-end AnnularTES_Cyclical_VaryFlowRate_3TSeries;
+end AnnularTES_Cyclical_VaryFlowRate_v2;
