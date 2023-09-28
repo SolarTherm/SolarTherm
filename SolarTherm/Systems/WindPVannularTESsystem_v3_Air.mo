@@ -13,8 +13,8 @@ model WindPVannularTESsystem_v3_Air
   
   //Inputs
   parameter Real RM = 2.0 "Renewable Multiple";
-  parameter Real PV_fraction = 0.2 "PV_fraction";
-  parameter Real t_storage = 10.0 "Hours of storage (hours)";
+  parameter Real PV_fraction = 0.5 "PV_fraction";
+  parameter Real t_storage = 20.0 "Hours of storage (hours)";
   parameter Real util_storage_des = 0.582846; //Utilisation determined via component-level analysis
   parameter Real level_storage_mid = 0.560761; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
@@ -50,7 +50,7 @@ model WindPVannularTESsystem_v3_Air
   parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
   parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Level-Controls
-  parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "Number of storage seconds stored before boiler can be run from the TES";  
+  parameter SI.Time t_stor_startPB = 0.20*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";  
 
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
   

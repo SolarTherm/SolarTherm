@@ -123,8 +123,16 @@ algorithm
   end when;
   */
   when Level > L_startPB then
-    Dis := true;
+    if T_top_tank > T_PB_start then
+      Dis := true;
+    end if;
   end when;
+  when T_top_tank > T_PB_start then
+    if Level > L_startPB then
+      Dis := true;
+    end if;
+  end when;
+  
    when T_top_tank < T_PB_min then 
     Dis := false;
   end when;
