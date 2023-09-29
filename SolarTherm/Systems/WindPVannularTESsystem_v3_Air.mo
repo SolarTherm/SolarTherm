@@ -14,7 +14,7 @@ model WindPVannularTESsystem_v3_Air
   //Inputs
   parameter Real RM = 2.0 "Renewable Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
-  parameter Real t_storage = 20.0 "Hours of storage (hours)";
+  parameter Real t_storage = 10.0 "Hours of storage (hours)";
   parameter Real util_storage_des = 0.582846; //Utilisation determined via component-level analysis
   parameter Real level_storage_mid = 0.560761; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
@@ -30,9 +30,9 @@ model WindPVannularTESsystem_v3_Air
   //Discretisation and geometry
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 25.0;
-  parameter SI.Length D_pipe = 0.05;
-  parameter SI.Length D_solid = 0.10; 
+  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length D_pipe = 0.0826;
+  parameter SI.Length D_solid = 0.1197; 
   
  
   //Misc Parameters

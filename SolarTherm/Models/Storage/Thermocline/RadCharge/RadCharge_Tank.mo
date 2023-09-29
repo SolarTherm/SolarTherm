@@ -21,6 +21,8 @@ model RadCharge_Tank
   parameter SI.WaveNumber c_surf = 10.0 "Total surface area to Volume ratio (m^-1)";
   parameter SI.Length L_char = 0.05 "Characteristic length of channel for convection calculations";
   parameter SI.Temperature T_rad = CV.from_degC(1100);
+  parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
+  parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
 
   
     //Porosity of tank filler materials
@@ -92,7 +94,7 @@ model RadCharge_Tank
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad );
+  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z );
 
 
   //Cost BreakDown
@@ -119,11 +121,11 @@ model RadCharge_Tank
   
 equation
   //Charging Rate
-  if Tank_A.T_p[N_f-1] > T_rad - 10.0 then
-    Tank_A.Q_input = 0.0;
-  else
+  //if Tank_A.T_p[N_f-1] > T_rad - 10.0 then
+    //Tank_A.Q_input = 0.0;
+ // else
     Tank_A.Q_input = Q_input;
-  end if;
+  //end if;
   //if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
     fluid_bot.h = fluid_b.h_outflow;

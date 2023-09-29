@@ -36,6 +36,7 @@ model RadCharge_Section
   parameter SI.WaveNumber c_surf = 10.0 "ratio of contact surface area of a slice to the volume of the slice (m2/m3)";
   parameter SI.Area A_surf_unit = c_surf*V_unit "Total contact surface area between the fluid and solid per slice (m2)";
   parameter SI.Length L_char = 0.05 "Characteristic length of internal flow (m)";
+  parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
 
   parameter SI.Temperature T_rad = CV.from_degC(1100) "Radiative element temperature (K)";
   //Temperature Bounds
@@ -73,7 +74,7 @@ model RadCharge_Section
   Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
   SI.HeatFlowRate Q_rad[N_f-2] "Total heat input to each vertical slice";
   SI.HeatFlowRate Q_input "Total electrical heating input (W)";
-  
+  parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
   
   
   //Initialise Fluid Array
@@ -152,9 +153,9 @@ model RadCharge_Section
   SI.ThermalConductance U_up[N_f] "Thermal conductance between solid element i and i+1 (K/W)";
   //SI.ThermalConductance U_right[N_f, N_p] "K/W";
   //SI.ThermalConductance U_out_e[N_f] "K/W";
-  protected
   //Filler Properties
   SI.SpecificEnthalpy h_p[N_f](start = h_p_start) "J/kg";
+  protected
   SI.ThermalConductivity k_p[N_f] "W/mK";
   //parameter SI.Mass m_p[N_f, N_p] = fill(cat(1,Particle_Masses(d_p-2*t_e, N_p-1, rho_p),{rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3))}), N_f) "Masses of each particle element";
   //parameter SI.Mass m_e = rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3)) "Masses of encapsulation in one particle";
@@ -189,7 +190,8 @@ algorithm
       (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * eta*A_cs / ((k_f[i - 1] + k_f[i]) * H_unit) 
       - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * eta*A_cs / ((k_f[i] + k_f[i + 1]) * H_unit) 
       + m_flow * (h_f[i - 1] - h_f[i]) 
-      - h_c[i] * (T_f[i] - T_p[i]) * A_surf_unit) / m_f_unit;
+      - h_c[i] * (T_f[i] - T_p[i]) * A_surf_unit
+      + Q_rad[i-1]*f_rad_fluid ) / m_f_unit;
     end for;
     der_h_f[N_f] := 
     (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * eta*A_cs / ((k_f[N_f - 1] + k_f[N_f]) * H_unit) 
@@ -500,16 +502,17 @@ equation
   
 //Axial Conductance
   for i in 1:N_f-1 loop
-      U_up[i] = 2.0 * (1.0-eta)*A_cs * k_p[i] * k_p[i + 1] / (H_unit * (k_p[i] + k_p[i + 1]));
+      U_up[i] = 2.0 * (1.0-eta)*A_cs * c_cond_z*k_p[i] * c_cond_z*k_p[i + 1] / (H_unit * (c_cond_z*k_p[i] + c_cond_z*k_p[i + 1]));
   end for;
-  U_up[N_f] = 2.0 * k_p[N_f] * (1.0-eta)*A_cs / H_unit;
+  U_up[N_f] = 2.0 * c_cond_z*k_p[N_f] * (1.0-eta)*A_cs / H_unit;
   
   der(h_p[1]) = ( -1.0*U_up[1]*(T_p[1]-T_p[2])
                 + h_c[1]*A_surf_unit*(T_f[1]-T_p[1]) )/m_p_unit;
   for i in 2:N_f - 1 loop
     der(h_p[i]) = (U_up[i-1]*(T_p[i-1]-T_p[i])
                    -1.0*U_up[i]*(T_p[i]-T_p[i+1])
-                   + h_c[i]*A_surf_unit*(T_f[i]-T_p[i]) + Q_rad[i-1] )/m_p_unit; //Q_rad is for elements 2,3,4,5 out of 1-6
+                   + h_c[i]*A_surf_unit*(T_f[i]-T_p[i]) 
+                   + Q_rad[i-1]*(1.0-f_rad_fluid) )/m_p_unit; //Q_rad is for elements 2,3,4,5 out of 1-6
   end for;
   der(h_p[N_f]) = ( U_up[N_f-1]*(T_p[N_f-1]-T_p[N_f])
                     + h_c[N_f]*A_surf_unit*(T_f[N_f]-T_p[N_f]) )/m_p_unit;
