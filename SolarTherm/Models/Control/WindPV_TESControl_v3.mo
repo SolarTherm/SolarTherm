@@ -85,19 +85,19 @@ initial algorithm
   else
     Dis := true;
   end if;
-  /*
-  if Level <= L_startPB then
-    DisL := false;
-  else
-    DisL := true;
-  end if;
   
-  if T_top_tank < T_PB_min then
-    DisT := false;
-  else
-    DisT := true;
-  end if;
-  */
+  //if Level <= L_startPB then
+    //DisL := false;
+  //else
+    //DisL := true;
+  //end if;
+  
+  //if T_top_tank < T_PB_min then
+    //DisT := false;
+  //else
+    //DisT := true;
+  //end if;
+  
  // PB := true;
 algorithm
   
@@ -108,20 +108,22 @@ algorithm
       //PB := false;
     //end if;
   //end when;
+  
   /*
   when Level > L_startPB then
     DisL := true;
-  //elsewhen Level < L_startPB - 0.05 then
-    //DisL := false;
+  elsewhen Level < L_startPB - 0.05 then
+    DisL := false;
   end when;
     //Changing Storage State
   when T_top_tank < T_PB_min then 
     DisT := false;
-    DisL := false;
+    //DisL := false;
   elsewhen T_top_tank > T_PB_start then 
     DisT := true;
   end when;
   */
+  
   when Level > L_startPB then
     if T_top_tank > T_PB_start then
       Dis := true;
@@ -196,8 +198,15 @@ algorithm
   */
 equation
   //PB = true; //Override
-  //m_guess = (Q_rcv_raw + m_flow_PB*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
-  m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+  
+  //m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+  
+  if Q_rcv_raw >= Q_demand then
+    m_guess = (Q_rcv_raw + m_flow_PB_dem*(h_PB_outlet-h_tank_outlet))/(h_target-h_tank_outlet);
+  else
+    m_guess = Q_rcv_raw/(h_target-h_PB_outlet);
+  end if;
+  
   
   /*
   if Chg == false and Disch == false then //6 or 3

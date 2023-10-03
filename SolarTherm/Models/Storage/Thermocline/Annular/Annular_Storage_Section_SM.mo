@@ -224,6 +224,15 @@ algorithm
   end if;
   
   /*
+  for i in 1:N_f loop
+    if Correlation == 1 then //Liquids
+      Nu[i] := Nusselt_Liquid(Re[i],Pr[i],T_f[i],T_s[i],mu_f[i],mu_f_wall[i]);
+    else //Gas
+      Nu[i] := Nusselt_Gas(Re[i],Pr[i],T_f[i],T_s[i]);
+    end if;
+  end for;
+  */
+  /*
 //Solid Equations  
   for i in 2:N_f-1 loop
 //Innermost solid annulus
@@ -444,11 +453,13 @@ equation
     Pr[i] = max(1.0e-8,c_pf[i] * mu_f[i] / k_f[i]);
     Re[i] = max(10.0, rho_f[i] * D_pipe * abs(u_flow[i]) / mu_f[i]);
     
+    
     if Correlation == 1 then //Liquids
       Nu[i] = Nusselt_Liquid(Re[i],Pr[i],T_f[i],T_s[i],mu_f[i],mu_f_wall[i]);
     else //Gas
       Nu[i] = Nusselt_Gas(Re[i],Pr[i],T_f[i],T_s[i]);
     end if;
+    
     /*
     f_low[i] = 64.0 / 2000.0;
     f_high[i] = (1.82 * log10(4000.0) - 1.64) ^ (-2.0);

@@ -17,12 +17,12 @@ model RadCharge_160kWt
   parameter Integer Correlation = 2 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
   //Storage CApacity
   parameter Integer N_f = 6;
-  parameter Real eta = 0.20;
+  parameter Real eta = 0.30;
   parameter SI.Length H_unit = 0.50;
-  parameter SI.WaveNumber c_surf = 100.0;
+  parameter SI.WaveNumber c_surf = 200.0;
   parameter SI.Length L_char = 0.05;
   parameter SI.Temperature T_rad = CV.from_degC(1050);
-  parameter Real f_rad_fluid = 0.1 "Fraction of radiative heating absorbed by the fluid";
+  parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
@@ -125,7 +125,7 @@ model RadCharge_160kWt
   Modelica.Blocks.Sources.RealExpression realExpression(y = Q_charge_signal) annotation(
     Placement(visible = true, transformation(origin = {-100, 27}, extent = {{-20, -19}, {20, 19}}, rotation = 0)));
 algorithm
-  when rem(time, t_cycle) > 1e-6 then
+  when rem(time, t_cycle) > 6.0*3600.0*1e-6 then
     if thermocline_Tank.Tank_A.T_p[N_f-1] < T_chg_stop - 50.0 then
       Chg := true;
     end if;
@@ -152,10 +152,10 @@ algorithm
   end when;
   */
   
-  when rem(time, t_cycle) > t_charge + t_discharge + 1e-6 then //Shut down
-    Chg := false;
-    Dis := false;
-  end when;
+  //when rem(time, t_cycle) > t_charge + t_discharge + 1e-6 then //Shut down
+    //Chg := false;
+    //Dis := false;
+  //end when;
   
   when thermocline_Tank.Tank_A.T_p[N_f] < T_PB_min - 25.0 then 
       Dis := false;
@@ -163,12 +163,12 @@ algorithm
 
 equation
   if Chg == true then
-    if rem(time, t_cycle) > 0.0 and rem(time, t_cycle) <= 3.0*3600.0 then
-      Q_charge_signal = Q_chg_des * ((rem(time, t_cycle)/(3.0*3600.0))*(170/420) + 250/420 );
-    elseif rem(time, t_cycle) > 3.0*3600.0 and rem(time, t_cycle) <= 9.0*3600.0 then
+    if rem(time, t_cycle) > 6.0*3600.0 and rem(time, t_cycle) <= 9.0*3600.0 then
+      Q_charge_signal = Q_chg_des * (((rem(time, t_cycle)-6.0*3600)/(3.0*3600.0))*(170/420) + 250/420 );
+    elseif rem(time, t_cycle) > 9.0*3600.0 and rem(time, t_cycle) <= 15.0*3600.0 then
       Q_charge_signal = Q_chg_des;
-    elseif rem(time, t_cycle) > 9.0*3600.0 and rem(time, t_cycle) <= 12.0*3600.0 then
-      Q_charge_signal = Q_chg_des * (( (12.0*3600.0-rem(time, t_cycle))/(3.0*3600.0))*(170/420) + 250/420 );
+    elseif rem(time, t_cycle) > 15.0*3600.0 and rem(time, t_cycle) <= 18.0*3600.0 then
+      Q_charge_signal = Q_chg_des * (( (18.0*3600.0-rem(time, t_cycle))/(9.0*3600.0))*(170/420) + 250/420 );
     else
       Q_charge_signal = 0.0;
     end if;

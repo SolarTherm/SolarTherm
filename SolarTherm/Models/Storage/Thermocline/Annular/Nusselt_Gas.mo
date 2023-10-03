@@ -11,13 +11,13 @@ algorithm
     Nu := 3.66;
   elseif Re >= 4000 then //Turbulent
     if T_s > T_f then
-      Nu := 0.023*(Re^0.8)*(Pr^0.4)*((T_s/T_f)^(-0.55));
+      Nu := 0.023*(Re^0.8)*(Pr^0.4)*((max(T_s/T_f,1.0e-3))^(-0.55));
     else
       Nu := 0.023*(Re^0.8)*(Pr^0.4);
     end if;
   else //Transition
     if T_s > T_f then //Fluid is being heated
-      Nu := 3.66 + ((0.023*(Re^0.8)*(Pr^0.4)*((T_s/T_f)^(-0.55))) - 3.66)*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
+      Nu := 3.66 + ((0.023*(Re^0.8)*(Pr^0.4)*((max(T_s/T_f,1.0e-3))^(-0.55))) - 3.66)*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
     else //Fluid is being cooled
       Nu := 3.66 + ((0.023*(Re^0.8)*(Pr^0.4)) - 3.66)*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
     end if;
