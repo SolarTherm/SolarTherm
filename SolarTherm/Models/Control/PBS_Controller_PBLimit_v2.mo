@@ -25,10 +25,10 @@ model PBS_Controller_PBLimit_v2
   parameter SI.MassFlowRate m_min = 1e-8 "minimum mass flow rate to start"; //used to be 1e-7 for both
   
   Modelica.Blocks.Interfaces.RealInput Level "Tank Storage Level 0-100"
-    annotation (Placement(visible = true, transformation(extent = {{-126, -4}, {-86, 36}}, rotation = 0), iconTransformation(extent = {{-126, 6}, {-86, 46}}, rotation = 0)));
+    annotation (Placement(visible = true, transformation(extent = {{-126, -4}, {-86, 36}}, rotation = 0), iconTransformation(extent = {{-126, -36}, {-86, 4}}, rotation = 0)));
   
   Modelica.Blocks.Interfaces.RealInput T_top_tank "Temperature of the top of HTF in storage"
-    annotation (Placement(visible = true, transformation(extent = {{-126, -30}, {-86, 10}}, rotation = 0), iconTransformation(extent = {{-126, -36}, {-86, 4}}, rotation = 0)));
+    annotation (Placement(visible = true, transformation(extent = {{-126, -30}, {-86, 10}}, rotation = 0), iconTransformation(extent = {{-126, 6}, {-86, 46}}, rotation = 0)));
     
   Modelica.Blocks.Interfaces.RealInput T_bot_tank "Temperature of the bottom of HTF in storage"
     annotation (Placement(visible = true, transformation(extent = {{-126, -60}, {-86, -20}}, rotation = 0), iconTransformation(extent = {{-126, -78}, {-86, -38}}, rotation = 0)));

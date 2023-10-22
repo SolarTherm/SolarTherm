@@ -12,11 +12,11 @@ model WindPVannularTESsystem_v3_Air
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
   
   //Inputs
-  parameter Real RM = 1.5 "Renewable Multiple";
-  parameter Real PV_fraction = 0.2 "PV_fraction";
+  parameter Real RM = 3.5 "Renewable Multiple";
+  parameter Real PV_fraction = 0.8 "PV_fraction";
   parameter Real t_storage = 20.0 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.6123; //Utilisation determined via component-level analysis
-  parameter Real level_storage_mid = 0.5547; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  parameter Real util_storage_des = 0.5995; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.5486; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
   //Renewable Parameters
   parameter SI.Power P_renewable_des = RM*Q_flow_des;
@@ -30,9 +30,9 @@ model WindPVannularTESsystem_v3_Air
   //Discretisation and geometry
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 50.0;
-  parameter SI.Length D_pipe = 0.10;
-  parameter SI.Length D_solid = 0.15; 
+  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length D_pipe = 0.0826;
+  parameter SI.Length D_solid = 0.1197; 
   
  
   //Misc Parameters
@@ -46,6 +46,7 @@ model WindPVannularTESsystem_v3_Air
   parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
   parameter SI.Temperature T_Recv_start = T_min + 0.5*T_tol_Recv "Temperature at which TES can start being charged"; //halfway between
   parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
+
   
   parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
   parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";

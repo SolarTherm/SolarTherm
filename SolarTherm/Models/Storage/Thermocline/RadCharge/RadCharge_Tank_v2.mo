@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline.RadCharge;
 
-model RadCharge_Tank
+model RadCharge_Tank_v2
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
@@ -14,17 +14,17 @@ model RadCharge_Tank
   //Storage Parameter Settings
   parameter Integer Correlation = 1 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
     //Storage CApacity
-  parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity (J)";
-  parameter Integer N_f = 6 "Number of block elements";
-  parameter Real eta = 0.450 "Volume fraction of air"; 
-  parameter SI.Length H_unit = 0.50 "Height of each block";
-  parameter SI.WaveNumber c_surf = 75.00 "Total surface area to Volume ratio (m^-1)";
+  parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity";
+  parameter Integer N_f = 6;
+  parameter Real eta = 0.25;
+  parameter SI.Length H_unit = 0.50;
+  parameter SI.WaveNumber c_surf = 10.0 "Total surface area to Volume ratio (m^-1)";
   parameter SI.Length L_char = 0.05 "Characteristic length of channel for convection calculations";
   parameter SI.Temperature T_rad = CV.from_degC(1100);
-  parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
+  parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
 
-  parameter SI.Mass m_solid_total = Tank_A.m_solid_total;
+  
     //Porosity of tank filler materials
   //parameter Real eta = 0.22 "Porosity";
   
@@ -55,7 +55,7 @@ model RadCharge_Tank
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {45, -57}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
           
-  Modelica.Blocks.Interfaces.RealOutput T_p_top_measured = Tank_A.T_p[N_f-1] "Temperature of the innermost solid element at the the hot-end of the TES (K)"
+  Modelica.Blocks.Interfaces.RealOutput T_p_top_measured = Tank_A.T_p[N_f] "Temperature of the innermost solid element at the the hot-end of the TES (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {45, 43}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput T_p_bot_measured = Tank_A.T_p[1] "Temperature of the innermost solid element at the the cold-end of the TES (K)"
@@ -94,7 +94,7 @@ model RadCharge_Tank
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z );
+  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section_v2 Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z );
 
 
   //Cost BreakDown
@@ -163,7 +163,7 @@ equation
   fluid_a.p = p_amb;
   fluid_b.p = p_amb;
   T_amb = Tank_A.T_amb;
-  T_top_measured = Tank_A.T_f[N_f-1];// 0.5*(Tank_A.T_f[N_f]+Tank_A.T_s[N_f]);//Tank_A.T_f[N_f];;Tank_A.T_p[N_f,1];
+  T_top_measured = Tank_A.T_f[N_f];// 0.5*(Tank_A.T_f[N_f]+Tank_A.T_s[N_f]);//Tank_A.T_f[N_f];;Tank_A.T_p[N_f,1];
   T_bot_measured = Tank_A.T_f[1];//0.5*(Tank_A.T_f[1]+Tank_A.T_s[1]);//Tank_A.T_f[1];//Tank_A.T_p[1,1];
 
 annotation(
@@ -172,4 +172,4 @@ annotation(
 		</html>",info="<html>
 		<p>This model contains the fluid_a (top) and fluid_b (bottom) ports, basically a complete CSP component. This model simply connects the Thermocline_Spheres_Section models to the correct ports.</p>
 		</html>"));
-end RadCharge_Tank;
+end RadCharge_Tank_v2;

@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline.RadCharge;
 
-model RadCharge_Section
+model RadCharge_Section_v2
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -37,8 +37,6 @@ model RadCharge_Section
   parameter SI.Area A_surf_unit = c_surf*V_unit "Total contact surface area between the fluid and solid per slice (m2)";
   parameter SI.Length L_char = 0.05 "Characteristic length of internal flow (m)";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
-  
-  parameter SI.Mass m_solid_total = m_p_unit*N_f;
 
   parameter SI.Temperature T_rad = CV.from_degC(1100) "Radiative element temperature (K)";
   //Temperature Bounds
@@ -72,11 +70,15 @@ model RadCharge_Section
   parameter SI.Density rho_p_max = Filler_Package.rho_Tf(T_max, 1.0);
   parameter SI.Density rho_p = min(rho_p_min, rho_p_max) "kg/m3";
   //Radiation Heating
-  Real T4_diff[N_f-2](start = fill( T_rad^4.0 - T_min^4.0,N_f-2)); 
-  Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
+  //Real T4_diff[N_f-2](start = fill( T_rad^4.0 - T_min^4.0,N_f-2)); 
+  //Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
+  Real eff_rad[N_f-2] "Efficiency of radiative heat transfer between heating element and solid";
   SI.HeatFlowRate Q_rad[N_f-2] "Total heat input to each vertical slice";
   SI.HeatFlowRate Q_input "Total electrical heating input (W)";
+  SI.HeatFlowRate Q_rad_total "Total electrical heating actually getting absorbed by TES";
+  Real eff_rad_total "Effective heater efficiency";
   parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
+  parameter SI.Temperature T_rad_ref = 25.0 + 273.15;
   
   
   //Initialise Fluid Array
@@ -497,11 +499,14 @@ equation
   //Solid Equations
   //radiative heat input
   for i in 2:N_f-1 loop
-    T4_diff[i-1] = max(1e-3,(T_rad^4.0) - (T_p[i]^4.0));
-    f_rad[i-1] = T4_diff[i-1]/sum(T4_diff);
-    Q_rad[i-1] = Q_input*f_rad[i-1];
+    //T4_diff[i-1] = (T_rad^4.0) - (T_p[i]^4.0);
+    //f_rad[i-1] = T4_diff[i-1]/sum(T4_diff);
+    //eff_rad[i-1] = max((((T_rad^4.0) - (T_p[i]^4.0))/(T_rad^4.0)),0.0);
+    eff_rad[i-1] = min(max((((T_rad^4.0) - (T_p[i]^4.0))/((T_rad^4.0)-(T_rad_ref^4.0))),0.0),1.0);
+    Q_rad[i-1] = (Q_input/(N_f-2))*eff_rad[i-1];
   end for;
-  
+  Q_rad_total = sum(Q_rad);
+  eff_rad_total = if Q_input > 1.0e-3 then Q_rad_total/Q_input else 0.0;
 //Axial Conductance
   for i in 1:N_f-1 loop
       U_up[i] = 2.0 * (1.0-eta)*A_cs * c_cond_z*k_p[i] * c_cond_z*k_p[i + 1] / (H_unit * (c_cond_z*k_p[i] + c_cond_z*k_p[i + 1]));
@@ -538,4 +543,4 @@ equation
 		</html>", info = "<html>
 		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
-end RadCharge_Section;
+end RadCharge_Section_v2;

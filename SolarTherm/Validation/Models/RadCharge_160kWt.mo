@@ -8,7 +8,7 @@ model RadCharge_160kWt
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   package Fluid_Package = SolarTherm.Materials.Air_amb_p_curvefit;
-  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
+  package Filler_Package = SolarTherm.Materials.Brick_Stack;
   //Numerical Discretisation
   //parameter Integer N_f = 50;
   //parameter Integer N_p = 5;
@@ -17,32 +17,32 @@ model RadCharge_160kWt
   parameter Integer Correlation = 2 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
   //Storage CApacity
   parameter Integer N_f = 6;
-  parameter Real eta = 0.30;
+  parameter Real eta = 0.50512;
   parameter SI.Length H_unit = 0.50;
-  parameter SI.WaveNumber c_surf = 200.0;
-  parameter SI.Length L_char = 0.05;
-  parameter SI.Temperature T_rad = CV.from_degC(1050);
+  parameter SI.WaveNumber c_surf = 83.340;
+  parameter SI.Length L_char = 0.01136;
+  parameter SI.Temperature T_rad = CV.from_degC(1200);
   parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   //Temperature Controls
-  parameter SI.Temperature T_max = 850.0 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_max = 1000.0 + 273.15 "Maximum temperature";
   parameter SI.Temperature T_PB_des = T_max - 0.5 * T_tol_PB "Design blended Power Block inlet temperature";
   parameter SI.Temperature T_PB_min = 325.0 +273.15 "Minimum tolerated outlet temperature to PB";
   parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
   parameter SI.Temperature T_Recv_des = T_min + 0.5 * T_tol_Recv "Design blended receiver inlet temperature";
-  parameter SI.Temperature T_min = 100.0 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_min = 125.0 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
   parameter SI.TemperatureDifference T_tol_Recv = 500.0 "Power block Temperature Tolerance (K) (Redundant, no receiver)";
   parameter SI.TemperatureDifference T_tol_PB = T_max - T_PB_min "Power block Temperature Tolerance (K)";
-  parameter SI.Temperature T_chg_stop = 850.0 + 273.15 "Temperature of element 5 at which charging is stopped";
+  parameter SI.Temperature T_chg_stop = 1000.0 + 273.15 "Temperature of element 5 at which charging is stopped";
   //parameter SI.Temperature T_cold_inlet = 100.0 + 273.15 "Cold inlet temperature";
   //Tank Geometry
   parameter Real RM = 2.8125 "Renewable Multiple";
   parameter SI.Power Q_dis_des = 160.0e3 "Design storage discharge heat-rate";
   parameter SI.Power Q_chg_des = 420.0e3 "Design storage charge heat-rate";
-  parameter SI.Energy E_max = 2.0e6*3600.0 "Ideal storage capacity (J_thermal), slightly higher than the discharge time";
+  parameter SI.Energy E_max = 2.0e6*3600.0*((T_max-T_min)/631.14) "Ideal storage capacity (J_thermal), slightly higher than the discharge time";
   parameter SI.Time t_charge = 12.0*3600.0;//(RM - 1.0) * t_discharge "Charging period";
   parameter SI.Time t_discharge = 12.0 * 3600.0 "Discharging period";
   parameter SI.Time t_extension = 0.0 * 3600.0 "Extension period to make sure charging and discharging complete, applied twice";
@@ -58,7 +58,7 @@ model RadCharge_160kWt
   Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
   //Storage Model
-  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_PB_min, Correlation = Correlation, E_max = E_max, U_loss_tank = U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad,f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z) annotation(
+  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Tank thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, U_loss_tank = U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad,f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z) annotation(
     Placement(visible = true, transformation(origin = { 0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   //Componenets and Connectors
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
@@ -168,7 +168,7 @@ equation
     elseif rem(time, t_cycle) > 9.0*3600.0 and rem(time, t_cycle) <= 15.0*3600.0 then
       Q_charge_signal = Q_chg_des;
     elseif rem(time, t_cycle) > 15.0*3600.0 and rem(time, t_cycle) <= 18.0*3600.0 then
-      Q_charge_signal = Q_chg_des * (( (18.0*3600.0-rem(time, t_cycle))/(9.0*3600.0))*(170/420) + 250/420 );
+      Q_charge_signal = Q_chg_des * (( (18.0*3600.0-rem(time, t_cycle))/(3.0*3600.0))*(170/420) + 250/420 );
     else
       Q_charge_signal = 0.0;
     end if;
