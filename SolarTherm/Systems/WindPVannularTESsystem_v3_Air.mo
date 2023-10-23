@@ -6,7 +6,7 @@ model WindPVannularTESsystem_v3_Air
   import Modelica.Constants.*;
   parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/pv_gen_Gladstone_1MWe.motab");
   parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/wind_gen_Gladstone320MWe.motab");
-  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow.motab");
+  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow_minute.motab");
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
@@ -95,7 +95,7 @@ model WindPVannularTESsystem_v3_Air
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_renewable_des = P_renewable_des, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {-46, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-166, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -165,5 +165,5 @@ equation
     Line(points = {{-95, 18}, {-80, 18}, {-80, 6}, {-58, 6}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {7, -78}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-49, -8}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
-    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
+    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1e-6, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end WindPVannularTESsystem_v3_Air;

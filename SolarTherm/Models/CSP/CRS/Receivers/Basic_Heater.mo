@@ -10,6 +10,7 @@ model Basic_Heater
   parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold fluid thermodynamic state at design";
   parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";  
   parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold fluid specific enthalpy at design";
+  parameter SI.Power P_renewable_des;
   
   SI.SpecificEnthalpy h_in;
   SI.SpecificEnthalpy h_out(start=h_hot_set);
@@ -72,7 +73,7 @@ equation
   fluid_b.h_outflow = h_out;
   
   Q_heater_raw = Q_in_raw;
-  Q_in_raw = P_supply;
+  Q_in_raw = min(P_supply,P_renewable_des);
 
   if fluid_a.m_flow > 1e-3 then
     Q_in = (if curtail == true then min(Q_in_raw,Q_curtail) else Q_in_raw);
