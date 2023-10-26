@@ -12,9 +12,9 @@ model WindPVRadChgTESsystem_Air
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
   replaceable package Filler = SolarTherm.Materials.Brick_Stack;
   //Inputs
-  parameter Real RM = 2.0 "Renewable Multiple";
-  parameter Real PV_fraction = 0.7 "PV_fraction";
-  parameter Real t_storage = 40.0 "Hours of storage (hours)";
+  parameter Real RM = 3.5 "Renewable Multiple";
+  parameter Real PV_fraction = 0.2 "PV_fraction";
+  parameter Real t_storage = 30.0 "Hours of storage (hours)";
   //parameter Real util_storage_des = 0.5995;
   //Utilisation determined via component-level analysis
   //parameter Real level_storage_mid = 0.5486;
@@ -71,29 +71,29 @@ model WindPVRadChgTESsystem_Air
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpCold(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {84, -50}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
-    Placement(visible = true, transformation(origin = {-71, -26}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-83, -26}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_amb(y = 101325) annotation(
-    Placement(visible = true, transformation(origin = {60, 11}, extent = {{12, -13}, {-12, 13}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {20, 11}, extent = {{12, -13}, {-12, 13}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
   //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Q_flow", tableOnFile = true) annotation(
-    Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {130, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
-    Placement(visible = true, transformation(origin = {162, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {114, 2}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
-    Placement(visible = true, transformation(origin = {-166, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-144, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Math.Add Grid_Sum(k1 = P_renewable_des * PV_fraction / PV_ref_size, k2 = P_renewable_des * (1.0 - PV_fraction) / Wind_ref_size) annotation(
     Placement(visible = true, transformation(origin = {-106, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable Wind_input(fileName = Wind_file, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Power", tableOnFile = true) annotation(
-    Placement(visible = true, transformation(origin = {-166, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-144, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater_Energy Heater(Q_limit = P_renewable_des)  annotation(
-    Placement(visible = true, transformation(origin = {-68, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-76, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Tank RadChg_TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler ,Correlation = 2, E_max = E_max, H_unit = H_unit, L_char = L_char, N_f = N_f, T_max = T_max, T_min = T_min, T_rad = T_rad, U_loss_tank = U_loss_tank, c_surf = c_surf, eta = eta)  annotation(
-    Placement(visible = true, transformation(origin = {3, 11}, extent = {{-47, -47}, {47, 47}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-23, 11}, extent = {{-47, -47}, {47, 47}}, rotation = 0)));
   SolarTherm.Models.Control.WindPV_RadTESControl windPV_RadTESControl(redeclare package HTF = Medium, Q_des_blk = Q_flow_des, T_PB_min = T_PB_min, T_PB_start = T_PB_start, T_target = T_target, T_top_max = T_top_max, T_top_start = T_top_start, h_target = h_air_hot_set, m_flow_PB_des = m_boiler_des)  annotation(
-    Placement(visible = true, transformation(origin = {112, 8}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {60, 8}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
-    Placement(visible = true, transformation(origin = {80, 76}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {24, 78}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 equation
   der(E_supplied) = Boiler.Q_flow;
   der(E_demand) = windPV_RadTESControl.Q_demand;
@@ -105,39 +105,39 @@ equation
 //grid_input.Q_defocus_y = min(gridInput.grid_input.y[1], scheduler.y[1] * (h_salt_hot_set - h_salt_cold_set));
   Q_scheduled = scheduler.y[1] * (h_salt_hot_set - h_salt_cold_set);
   connect(PV_input.y[1], Grid_Sum.u1) annotation(
-    Line(points = {{-154, 34}, {-144, 34}, {-144, 24}, {-118, 24}}, color = {0, 0, 127}));
+    Line(points = {{-133, 34}, {-126, 34}, {-126, 24}, {-118, 24}}, color = {0, 0, 127}));
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
-    Line(points = {{-154, 4}, {-142, 4}, {-142, 12}, {-118, 12}}, color = {0, 0, 127}));
+    Line(points = {{-133, 4}, {-126, 4}, {-126, 12}, {-118, 12}}, color = {0, 0, 127}));
   connect(Grid_Sum.y, Heater.Q_heater_raw) annotation(
-    Line(points = {{-94, 18}, {-79, 18}}, color = {0, 0, 127}));
+    Line(points = {{-94, 18}, {-87, 18}}, color = {0, 0, 127}));
   connect(Boiler.fluid_b, pumpCold.fluid_a) annotation(
-    Line(points = {{162, -10}, {162, -50}, {94, -50}}, color = {0, 127, 255}));
+    Line(points = {{114, -8}, {114, -50}, {94, -50}}, color = {0, 127, 255}));
   connect(pumpCold.fluid_b, RadChg_TES.fluid_b) annotation(
-    Line(points = {{74, -50}, {3, -50}, {3, -27}}, color = {0, 127, 255}));
+    Line(points = {{74, -50}, {-23, -50}, {-23, -27}}, color = {0, 127, 255}));
   connect(p_amb.y, RadChg_TES.p_amb) annotation(
-    Line(points = {{47, 11}, {25, 11}}, color = {0, 0, 127}));
+    Line(points = {{7, 11}, {-1, 11}}, color = {0, 0, 127}));
   connect(Tamb.y, RadChg_TES.T_amb) annotation(
-    Line(points = {{-62, -26}, {-50, -26}, {-50, 3}, {-19, 3}}, color = {0, 0, 127}));
+    Line(points = {{-73, -26}, {-66, -26}, {-66, 3}, {-45, 3}}, color = {0, 0, 127}));
   connect(Heater.Q_heater, RadChg_TES.Q_input) annotation(
-    Line(points = {{-56, 18}, {-19, 18}}, color = {0, 0, 127}));
+    Line(points = {{-65, 18}, {-45, 18}}, color = {0, 0, 127}));
   connect(windPV_RadTESControl.heater_on, Heater.on) annotation(
-    Line(points = {{126, 4}, {138, 4}, {138, -78}, {-98, -78}, {-98, 0}, {-68, 0}, {-68, 6}, {-68, 6}}, color = {255, 0, 255}));
+    Line(points = {{73, 3}, {100, 3}, {100, -78}, {-98, -78}, {-98, 0}, {-76, 0}, {-76, 7}}, color = {255, 0, 255}));
   connect(windPV_RadTESControl.m_flow_PB, pumpCold.m_flow) annotation(
-    Line(points = {{126, 12}, {144, 12}, {144, -30}, {84, -30}, {84, -42}, {84, -42}}, color = {0, 0, 127}));
+    Line(points = {{73, 11}, {84, 11}, {84, -42}}, color = {0, 0, 127}));
   connect(RadChg_TES.T_p_top_measured, windPV_RadTESControl.T_top_tank) annotation(
-    Line(points = {{24, 32}, {86, 32}, {86, 10}, {100, 10}, {100, 10}}, color = {0, 0, 127}));
+    Line(points = {{-2, 31}, {40, 31}, {40, 9}, {48, 9}}, color = {0, 0, 127}));
   connect(RadChg_TES.h_top_outlet, windPV_RadTESControl.h_tank_top) annotation(
-    Line(points = {{-10, 42}, {-10, 42}, {-10, 58}, {102, 58}, {102, 22}, {102, 22}}, color = {0, 0, 127}));
+    Line(points = {{-36, 42}, {-36, 58}, {49, 58}, {49, 21}}, color = {0, 0, 127}));
   connect(Boiler.h_out_signal, windPV_RadTESControl.h_PB_outlet) annotation(
-    Line(points = {{153, -7}, {153, -12}, {146, -12}, {146, 36}, {114, 36}, {114, 22}}, color = {0, 0, 127}));
+    Line(points = {{105, -5}, {105, -10}, {88, -10}, {88, 36}, {62, 36}, {62, 21}}, color = {0, 0, 127}));
   connect(scheduler.y[1], windPV_RadTESControl.Q_demand) annotation(
-    Line(points = {{174, 38}, {164, 38}, {164, 30}, {122, 30}, {122, 22}, {120, 22}}, color = {0, 0, 127}));
+    Line(points = {{119, 38}, {94, 38}, {94, 30}, {78, 30}, {78, 27}, {72, 27}, {72, 21}, {68, 21}}, color = {0, 0, 127}));
   connect(mass_loop_breaker.port_a, RadChg_TES.fluid_a) annotation(
-    Line(points = {{68, 76}, {4, 76}, {4, 48}, {4, 48}}, color = {0, 127, 255}));
+    Line(points = {{12, 78}, {-23, 78}, {-23, 49}}, color = {0, 127, 255}));
   connect(mass_loop_breaker.port_b, Boiler.fluid_a) annotation(
-    Line(points = {{92, 76}, {162, 76}, {162, 10}, {162, 10}}, color = {0, 127, 255}));
+    Line(points = {{36, 78}, {114, 78}, {114, 12}}, color = {0, 127, 255}));
   annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {83, -66}, extent = {{-11, 2}, {15, -6}}, textString = "Pump"), Text(origin = {-69, 32}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
+    Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {83, -66}, extent = {{-11, 2}, {15, -6}}, textString = "Pump"), Text(origin = {-79, 32}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)),
     experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end WindPVRadChgTESsystem_Air;
