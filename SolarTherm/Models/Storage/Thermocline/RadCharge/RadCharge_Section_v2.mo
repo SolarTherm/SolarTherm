@@ -14,7 +14,7 @@ model RadCharge_Section_v2
   Fluid_Package.State fluid_in "Model which calculates properties at inlet of the section";
   Fluid_Package.State fluid_out "Model which calculates properties at outlet of the section";
   //Interfacial heat transfer Settings
-  parameter Integer Correlation = 1 "Air";
+  parameter Integer Correlation = 2 "1=Liquid, 2=Gas";
   //Height offset for plotting purposes
   parameter SI.Length z_offset = 0.0 "Amount of height offset if there is a tank below it";
   //Tank Design parameters
@@ -37,8 +37,13 @@ model RadCharge_Section_v2
   parameter SI.Area A_surf_unit = c_surf*V_unit "Total contact surface area between the fluid and solid per slice (m2)";
   parameter SI.Length L_char = 0.05 "Characteristic length of internal flow (m)";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
+  
+  parameter SI.MassAttenuationCoefficient A_radperkg = 0.0011796 "Radiative wire area per kg of bricks (m2/kg)";  
+  parameter Real em_wire = 0.70 "Emissivity of the radiative wire (-)";
+  
+  parameter SI.Mass m_solid_total = m_p_unit*N_f;
 
-  parameter SI.Temperature T_rad = CV.from_degC(1100) "Radiative element temperature (K)";
+  parameter SI.Temperature T_rad_max = CV.from_degC(1200) "Maximum Radiative element temperature (K)";
   //Temperature Bounds
   parameter SI.Temperature T_min = CV.from_degC(125) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(1000) "Design hot Temperature of everything in the tank (K)";
@@ -70,15 +75,15 @@ model RadCharge_Section_v2
   parameter SI.Density rho_p_max = Filler_Package.rho_Tf(T_max, 1.0);
   parameter SI.Density rho_p = min(rho_p_min, rho_p_max) "kg/m3";
   //Radiation Heating
-  //Real T4_diff[N_f-2](start = fill( T_rad^4.0 - T_min^4.0,N_f-2)); 
-  //Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
-  Real eff_rad[N_f-2] "Efficiency of radiative heat transfer between heating element and solid";
-  SI.HeatFlowRate Q_rad[N_f-2] "Total heat input to each vertical slice";
+  Real T4_diff[N_f-2](start = fill( T_rad_max^4.0 - T_min^4.0,N_f-2)); 
+  Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
+  SI.Temperature T_rad_calc[N_f-2] "Radiative wire temperature if the heater were to be on (K)";
+  SI.HeatFlowRate Q_rad[N_f-2] "Total calculated heat input to each vertical slice as per the divying up strategy";
+  SI.HeatFlowRate Q_rad_net[N_f-2] "Total actual heat input to each vertical slice after considering on/off";
   SI.HeatFlowRate Q_input "Total electrical heating input (W)";
-  SI.HeatFlowRate Q_rad_total "Total electrical heating actually getting absorbed by TES";
-  Real eff_rad_total "Effective heater efficiency";
-  parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
-  parameter SI.Temperature T_rad_ref = 25.0 + 273.15;
+  SI.HeatFlowRate Q_input_net "Actual electrical heating input (W)";
+  Boolean heater_on(start=true) "Can heater be turned on?";
+  parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
   
   
   //Initialise Fluid Array
@@ -182,7 +187,13 @@ model RadCharge_Section_v2
   //Encapsulation_Package.State encapsulation[N_f] "Encapsulation object array";
   Real der_h_f[N_f] "Rate of change of specific enthalpy of fluid";
   //Real der_h_p[N_f,N_p] "Rate of change of specific enthalpy of solid";
+  
 algorithm
+  when max(T_rad_calc) > T_rad_max then
+    heater_on := false;
+  elsewhen max(T_rad_calc) < T_rad_max - 50.0 then
+    heater_on := true;
+  end when;
 //Fluid equations
   
     der_h_f[1] := 
@@ -498,15 +509,21 @@ equation
 
   //Solid Equations
   //radiative heat input
+  
   for i in 2:N_f-1 loop
-    //T4_diff[i-1] = (T_rad^4.0) - (T_p[i]^4.0);
-    //f_rad[i-1] = T4_diff[i-1]/sum(T4_diff);
-    //eff_rad[i-1] = max((((T_rad^4.0) - (T_p[i]^4.0))/(T_rad^4.0)),0.0);
-    eff_rad[i-1] = min(max((((T_rad^4.0) - (T_p[i]^4.0))/((T_rad^4.0)-(T_rad_ref^4.0))),0.0),1.0);
-    Q_rad[i-1] = (Q_input/(N_f-2))*eff_rad[i-1];
+      T4_diff[i-1] = max(1e-3,(T_rad_max^4.0) - (T_p[i]^4.0));
+      f_rad[i-1] = T4_diff[i-1]/sum(T4_diff);
+      Q_rad[i-1] = Q_input*f_rad[i-1];
+      //Q_rad[i-1] = Q_input_net/(N_f-2.0);
+      //
+      T_rad_calc[i-1] = ((T_p[i]^4.0) + (Q_rad[i-1])/(A_radperkg*m_p_unit*em_wire*CN.sigma))^0.25;
+      if heater_on == true then
+        Q_rad_net[i-1] = Q_rad[i-1];
+      else
+        Q_rad_net[i-1] = 0.0;
+  end if;
   end for;
-  Q_rad_total = sum(Q_rad);
-  eff_rad_total = if Q_input > 1.0e-3 then Q_rad_total/Q_input else 0.0;
+  Q_input_net = sum(Q_rad_net);
 //Axial Conductance
   for i in 1:N_f-1 loop
       U_up[i] = 2.0 * (1.0-eta)*A_cs * c_cond_z*k_p[i] * c_cond_z*k_p[i + 1] / (H_unit * (c_cond_z*k_p[i] + c_cond_z*k_p[i + 1]));
@@ -519,13 +536,13 @@ equation
     der(h_p[i]) = (U_up[i-1]*(T_p[i-1]-T_p[i])
                    -1.0*U_up[i]*(T_p[i]-T_p[i+1])
                    + h_c[i]*A_surf_unit*(T_f[i]-T_p[i]) 
-                   + Q_rad[i-1]*(1.0-f_rad_fluid) )/m_p_unit; //Q_rad is for elements 2,3,4,5 out of 1-6
+                   + Q_rad_net[i-1]*(1.0-f_rad_fluid) )/m_p_unit; //Q_rad is for elements 2,3,4,5 out of 1-6
   end for;
   der(h_p[N_f]) = ( U_up[N_f-1]*(T_p[N_f-1]-T_p[N_f])
                     + h_c[N_f]*A_surf_unit*(T_f[N_f]-T_p[N_f]) )/m_p_unit;
   
 //Analyics
-  der(E_stored) = m_flow * (h_in - h_out) + sum(Q_rad);
+  der(E_stored) = m_flow * (h_in - h_out) + sum(Q_rad_net);
   Level = E_stored / E_max;
   if m_flow > 1.0e-3 then
 //Discharging, outlet is the top

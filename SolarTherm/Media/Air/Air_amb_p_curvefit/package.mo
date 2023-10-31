@@ -9,7 +9,7 @@ package Air_amb_p_curvefit "Air, explicit in h curvefitted for 100-1300 K"
   		constants (such as nX, nXi) are automatically defined by
   		definitions given in the base class Interfaces.PartialMedium"
   	*/
-  extends Modelica.Media.Interfaces.PartialMedium(ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph, final mediumName = "Air", final substanceNames = {"Air"}, final singleState = false, final reducedX = true, final fixedX = true, Temperature(min = 100.0, max = 1300.0, start = 298.15));
+  extends Modelica.Media.Interfaces.PartialMedium(ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph, final mediumName = "Air", final substanceNames = {"Air"}, final singleState = false, final reducedX = true, final fixedX = true, Temperature(min = 100.0, max = 1600.0, start = 298.15));
   //import SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.*;
   import SolarTherm.Media.Air.Air_amb_p_curvefit_utilities.*;
   // Provide medium constants here

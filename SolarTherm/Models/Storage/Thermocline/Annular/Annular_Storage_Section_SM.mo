@@ -590,8 +590,8 @@ equation
 //p_drop_total = sum(p_drop);
 //W_loss_pump = (abs(m_flow)/rho_f_avg)*p_drop_total/eff_pump;
 //Analyics
-  der(E_stored) = abs(m_flow_unit) * (h_in - h_out);
-  Level = E_stored / E_unit;
+  der(E_stored) = Multiplier*abs(m_flow_unit) * (h_in - h_out);
+  Level = E_stored / (Multiplier*E_unit);
   if m_flow > 1.0e-3 then
 //Discharging, outlet is the top
     T_outlet_degC = T_f[N_f] - 273.15;

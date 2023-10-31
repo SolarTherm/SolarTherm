@@ -11,30 +11,30 @@ model AnnularTES_Cyclical_VaryFlowRate_v2
   package Filler_Package = SolarTherm.Materials.Concrete_Constant;
   
   //Vary these
-  parameter Real RM = 2.0 "Renewable Multiple";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Discharging period";
+  parameter Real RM = 3.5 "Renewable Multiple";
+  parameter SI.Time t_discharge = 20.0 * 3600.0 "Discharging period";
   
   
   //Numerical Discretisation
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
   //TES Parameters
-  parameter SI.Length L_pipe = 25.0;
-  parameter SI.Length D_pipe = 0.05;
-  parameter SI.Length D_solid = 0.10;
+  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length D_pipe = 0.08;
+  parameter SI.Length D_solid = 0.12;
   parameter Integer Correlation = 2;
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   //Temperature Controls
-  parameter SI.Temperature T_max = 600 + 273.15 "Maximum temperature";
-  parameter SI.Temperature T_PB_des = T_max - 0.5 * T_tol_PB "Design blended Power Block inlet temperature";
-  parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Minimum tolerated outlet temperature to PB";
-  parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
-  parameter SI.Temperature T_Recv_des = T_min + 0.5 * T_tol_Recv "Design blended receiver inlet temperature";
-  parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 600.0 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_PB_des = 600.0 + 273.15 "Design Power Block inlet temperature";
+  parameter SI.Temperature T_PB_min = 475.0 + 273.15 "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = 450.0 + 273.15 "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_Recv_des = 175.0 + 273.15 "Design receiver inlet temperature";
+  parameter SI.Temperature T_min = 175.0 + 273.15 "Minimum temperature";
   //Temp Tolerance Settings
-  parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
+  //parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
+  //parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Tank Geometry
 
   
@@ -165,7 +165,7 @@ algorithm
 //Force stop discharging, unacceptable top outlet Temperature
 //Utilisation convergence
   when time > 10.0*t_cycle then
-    terminate("Stable cycle has been reached");
+    terminate("Ten cycles have been reached");
   end when;
 //Replace time + t_cycle - 1.0e-6 with 3600.0*24.0*10.0 to bypass the 1% check and simulate the full 10 days
 //if abs((((E_dis_total - E_dis_prev) - (E_pump_total - E_pump_prev))/E_max) - util_prev)/(util_prev) < 0.01 and div(time,t_cycle) > 0.0 then //stable cycle

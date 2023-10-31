@@ -6,17 +6,18 @@ model WindPVannularTESsystem_v3_Air
   import Modelica.Constants.*;
   parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/pv_gen_Gladstone_1MWe.motab");
   parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/wind_gen_Gladstone320MWe.motab");
-  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow.motab");
+  parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow_5min.motab");
+  //parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Data/schedule_Qflow_minute.motab");
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
   
   //Inputs
-  parameter Real RM = 2.0 "Renewable Multiple";
-  parameter Real PV_fraction = 0.8 "PV_fraction";
-  parameter Real t_storage = 8.0 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.5995; //Utilisation determined via component-level analysis
-  parameter Real level_storage_mid = 0.5486; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  parameter Real RM = 3.5 "Renewable Multiple";
+  parameter Real PV_fraction = 0.2 "PV_fraction";
+  parameter Real t_storage = 20.00 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.518337; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.594032; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
   //Renewable Parameters
   parameter SI.Power P_renewable_des = RM*Q_flow_des;
@@ -30,9 +31,9 @@ model WindPVannularTESsystem_v3_Air
   //Discretisation and geometry
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 50.0;
-  parameter SI.Length D_pipe = 0.10;
-  parameter SI.Length D_solid = 0.125; 
+  parameter SI.Length L_pipe = 60.0;
+  parameter SI.Length D_pipe = 0.08;
+  parameter SI.Length D_solid = 0.12; 
   
  
   //Misc Parameters
@@ -40,16 +41,13 @@ model WindPVannularTESsystem_v3_Air
   parameter Integer Correlation = 2; //1=Liq 2=Air
   
   //Temperature Controls
-  parameter SI.Temperature T_max = 600 + 273.15 "Maximum temperature";
-  parameter SI.Temperature T_PB_start = T_max - 0.5*T_tol_PB "Temperature at which TES can start being discharged"; //halfway between
-  parameter SI.Temperature T_PB_min = T_max - T_tol_PB "Minimum tolerated outlet temperature to PB";
-  parameter SI.Temperature T_Recv_max = T_min + T_tol_Recv "Maximum tolerated outlet temperature to recv";
-  parameter SI.Temperature T_Recv_start = T_min + 0.5*T_tol_Recv "Temperature at which TES can start being charged"; //halfway between
-  parameter SI.Temperature T_min = 125 + 273.15 "Minimum temperature";
+  parameter SI.Temperature T_max = 600.0 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_PB_start = 525.0 + 273.15 "Temperature at which TES can start being discharged"; //halfway between
+  parameter SI.Temperature T_PB_min = 475.0 + 273.15 "Minimum tolerated outlet temperature to PB";
+  parameter SI.Temperature T_Recv_max = 450.0 + 273.15 "Maximum tolerated outlet temperature to recv";
+  parameter SI.Temperature T_Recv_start = 400.0 + 273.15 "Temperature at which TES can start being charged"; //halfway between
+  parameter SI.Temperature T_min = 175.0 + 273.15 "Minimum temperature";
 
-  
-  parameter SI.TemperatureDifference T_tol_Recv = 300.0 "Power block Temperature Tolerance (K)";
-  parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Level-Controls
   parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";  
 

@@ -12,19 +12,21 @@ model RadCharge_Tank_v2
   //replaceable package Encapsulation_Package = Filler_Package; //Defaults to filler material
   
   //Storage Parameter Settings
-  parameter Integer Correlation = 1 "Interfacial convection correlation {1 = WakaoKaguei, 2 = MelissariArgyropoulos, 3 = Conservative}";
+  parameter Integer Correlation = 2 "1=Liquid, 2=Gas";
     //Storage CApacity
-  parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity";
-  parameter Integer N_f = 6;
-  parameter Real eta = 0.25;
-  parameter SI.Length H_unit = 0.50;
-  parameter SI.WaveNumber c_surf = 10.0 "Total surface area to Volume ratio (m^-1)";
+  parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity (J)";
+  parameter Integer N_f = 6 "Number of block elements";
+  parameter Real eta = 0.450 "Volume fraction of air"; 
+  parameter SI.Length H_unit = 0.50 "Height of each block";
+  parameter SI.WaveNumber c_surf = 75.00 "Total surface area to Volume ratio (m^-1)";
   parameter SI.Length L_char = 0.05 "Characteristic length of channel for convection calculations";
-  parameter SI.Temperature T_rad = CV.from_degC(1100);
-  parameter Real f_rad_fluid = 0.2 "Fraction of radiative heating absorbed by the fluid";
+  parameter SI.Temperature T_rad_max = CV.from_degC(1200);
+  parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
+  parameter SI.MassAttenuationCoefficient A_radperkg = 0.0011796 "Radiative wire area per kg of bricks (m2/kg)";  
+  parameter Real em_wire = 0.70 "Emissivity of the radiative wire (-)";
 
-  
+  parameter SI.Mass m_solid_total = Tank_A.m_solid_total;
     //Porosity of tank filler materials
   //parameter Real eta = 0.22 "Porosity";
   
@@ -94,7 +96,7 @@ model RadCharge_Tank_v2
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section_v2 Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad = T_rad, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z );
+  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section_v2 Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad_max = T_rad_max, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z, A_radperkg = A_radperkg, em_wire = em_wire);
 
 
   //Cost BreakDown
