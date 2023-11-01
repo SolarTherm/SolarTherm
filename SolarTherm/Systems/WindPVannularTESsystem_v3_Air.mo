@@ -13,11 +13,11 @@ model WindPVannularTESsystem_v3_Air
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
   //Inputs
   parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
-  parameter Real HM = 1.5 "Heater Multiple";
+  parameter Real HM = 2.2 "Heater Multiple";
   parameter Real PV_fraction = 0.2 "PV_fraction";
-  parameter Real t_storage = 5.00 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.4623; //Utilisation determined via component-level analysis
-  parameter Real level_storage_mid = 0.5865; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  parameter Real t_storage = 20.00 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.5385; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.5997; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
   //Heater parameters
   parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
@@ -54,7 +54,8 @@ model WindPVannularTESsystem_v3_Air
   parameter SI.Temperature T_min = 175.0 + 273.15 "Minimum temperature";
 
   //Level-Controls
-  parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";  
+  parameter SI.Time t_stor_startPB = 1.0*3600.0 "Number of storage seconds stored before TES can start discharging (1 hour)";  
+  //parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)"; 
 
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des "Maximum tank stored energy";
   
@@ -93,7 +94,7 @@ model WindPVannularTESsystem_v3_Air
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_boiler_des, T_PB_min = T_PB_min, T_PB_start = T_PB_start, T_recv_max = T_Recv_max, T_recv_start = T_Recv_start, T_target = T_max, eff_storage_des = util_storage_des, h_target = h_air_hot_set, level_mid = level_storage_mid, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = t_stor_startPB, t_wait = 1.0 * 3600.0)  annotation(
-    Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {114, 28}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Q_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
@@ -125,19 +126,19 @@ equation
   connect(Splitter_Bot.fluid_b, pumpCold.fluid_a) annotation(
     Line(points = {{17, -78}, {-8, -78}}, color = {0, 127, 255}, thickness = 0.5));
   connect(thermocline_Tank.h_bot_outlet, Control.h_tank_outlet) annotation(
-    Line(points = {{22, -24}, {22, -32}, {86, -32}, {86, 60}, {110, 60}, {110, 37}}, color = {0, 0, 127}));
+    Line(points = {{22, -24}, {22, -32}, {86, -32}, {86, 60}, {110, 60}, {110, 39}}, color = {0, 0, 127}));
   connect(thermocline_Tank.T_top_measured, Control.T_top_tank) annotation(
-    Line(points = {{49, 23}, {78, 23}, {78, 24}, {103, 24}}, color = {0, 0, 127}));
+    Line(points = {{49, 23}, {78, 23}, {78, 26}, {103, 26}}, color = {0, 0, 127}));
   connect(thermocline_Tank.T_bot_measured, Control.T_bot_tank) annotation(
-    Line(points = {{49, -20}, {82, -20}, {82, 20}, {103, 20}}, color = {0, 0, 127}));
+    Line(points = {{49, -20}, {82, -20}, {82, 22}, {103, 22}}, color = {0, 0, 127}));
   connect(thermocline_Tank.Level, Control.Level) annotation(
-    Line(points = {{49, 10}, {90, 10}, {90, 28}, {103, 28}, {103, 29}}, color = {0, 0, 127}));
+    Line(points = {{49, 10}, {90, 10}, {90, 28}, {103, 28}, {103, 31}}, color = {0, 0, 127}));
   connect(Splitter_Top.fluid_c, thermocline_Tank.fluid_a) annotation(
     Line(points = {{32, 67}, {32, 32}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Splitter_Top.fluid_b, pumpHot.fluid_a) annotation(
     Line(points = {{47, 79}, {82, 79}, {82, 76}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Boiler.h_out_signal, Control.h_PB_outlet) annotation(
-    Line(points = {{149, -7}, {149, -12}, {138, -12}, {138, 74}, {115, 74}, {115, 37}}, color = {0, 0, 127}));
+    Line(points = {{149, -7}, {149, -12}, {138, -12}, {138, 74}, {115, 74}, {115, 39}}, color = {0, 0, 127}));
   connect(Boiler.fluid_b, Splitter_Bot.fluid_a) annotation(
     Line(points = {{158, -10}, {158, -78}, {45, -78}}, color = {0, 127, 255}, thickness = 0.5));
   connect(pumpHot.fluid_b, Boiler.fluid_a) annotation(
@@ -147,19 +148,19 @@ equation
   connect(basic_Heater.fluid_b, Splitter_Top.fluid_a) annotation(
     Line(points = {{-46, 15}, {-46, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Control.Q_rcv_raw, basic_Heater.Q_heater_raw) annotation(
-    Line(points = {{104, 32}, {-24, 32}, {-24, 13}, {-35, 13}}, color = {0, 0, 127}));
+    Line(points = {{103, 35}, {-24, 35}, {-24, 13}, {-35, 13}}, color = {0, 0, 127}));
   connect(Control.curtail, basic_Heater.curtail) annotation(
-    Line(points = {{126, 22}, {128, 22}, {128, -36}, {-68, -36}, {-68, -2}, {-58, -2}}, color = {255, 0, 255}));
+    Line(points = {{125, 24}, {128, 24}, {128, -36}, {-68, -36}, {-68, -2}, {-58, -2}}, color = {255, 0, 255}));
   connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
-    Line(points = {{104, 18}, {-12, 18}, {-12, -12}, {-72, -12}, {-72, 2}, {-58, 2}, {-58, 0}}, color = {0, 0, 127}));
+    Line(points = {{103, 19}, {45.5, 19}, {45.5, 15}, {-10, 15}, {-10, -12}, {-72, -12}, {-72, 2}, {-58, 2}, {-58, 0}}, color = {0, 0, 127}));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
-    Line(points = {{126, 26}, {132, 26}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
+    Line(points = {{125, 29}, {132, 29}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
-    Line(points = {{126, 32}, {136, 32}, {136, -48}, {-18, -48}, {-18, -69}}, color = {0, 0, 127}));
+    Line(points = {{125, 34}, {136, 34}, {136, -48}, {-18, -48}, {-18, -69}}, color = {0, 0, 127}));
   connect(scheduler.y[1], Control.Q_demand) annotation(
-    Line(points = {{174, 38}, {166, 38}, {166, 56}, {120, 56}, {120, 38}, {122, 38}}, color = {0, 0, 127}));
+    Line(points = {{174, 38}, {166, 38}, {166, 56}, {120, 56}, {120, 39}, {121, 39}}, color = {0, 0, 127}));
   connect(thermocline_Tank.h_top_outlet, Control.h_tank_top) annotation(
-    Line(points = {{22, 27}, {22, 46}, {106, 46}, {106, 38}}, color = {0, 0, 127}));
+    Line(points = {{22, 27}, {22, 46}, {105, 46}, {105, 39}}, color = {0, 0, 127}));
   connect(PV_input.y[1], Grid_Sum.u1) annotation(
     Line(points = {{-113, 34}, {-104, 34}, {-104, 24}, {-96, 24}}, color = {0, 0, 127}));
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
@@ -168,5 +169,5 @@ equation
     Line(points = {{-73, 18}, {-66, 18}, {-66, 6}, {-58, 6}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {-21, -90}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-29, 0}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
-    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 0.001, Interval = 300, maxStepSize = 60, initialStepSize = 60));
+    Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-6, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end WindPVannularTESsystem_v3_Air;
