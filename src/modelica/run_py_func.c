@@ -75,7 +75,6 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	PyObject *pName = NULL, *pModule = NULL, *pFunc = NULL;
 	PyObject *pArgs = NULL, *pValue = NULL, *inputs = NULL;
 
-#if 1
 	/*
 	Final approach:
 	1. if SOLARTHERM_PYTHONHOME is set, we use that. This allows us to distribute
@@ -115,8 +114,8 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 		Py_ExitStatusException(status);
 		exit(1);
 	}	
-#endif
 
+#ifdef __MINGW32__
 	printf("CALCULATING DIRECTORY\n");
     wchar_t bindir[] = L"bin";
     wchar_t binpath[MAX_PATH]; // Assuming a max path length of 260 characters for simplicity
@@ -162,17 +161,16 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
     Py_DECREF(args);
     Py_DECREF(func);
     Py_DECREF(os_module);
+#endif
 
-#if 1
 	// add the path of the Python function file to the system path
 	PyObject *sys_path2 = PySys_GetObject("path");
 	MSG("Adding to Python's sys.path: %s",ppath);
 	//MSG("Current env PATH: %s",getenv("PATH"));
 	//char *dylib = "c:\\msys64\\mingw64\\lib\\python3.11\\lib-dynaload
 	PyList_Append(sys_path2, PyUnicode_FromString((char *)ppath));
-#endif
 
-#if 1
+#ifdef RUNPY_DEBUG
 #define PY_SSIZE_T_CLEAN
     // Get sys.path directly
     PyObject *sys_path1 = PySys_GetObject("path");
@@ -196,9 +194,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
     MSG("ENV PATH = %s",getenv("PATH"));
 #endif
 
-
-
-
+#if 0
 #ifdef WIN32
     // Path to the .pyd file
     const char* libraryPath = "C:\\msys64\\mingw64\\lib\\python3.11\\lib-dynload\\binascii.cp311-mingw_x86_64.pyd";
@@ -227,6 +223,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
         MSG("LOADED SUCCESSFULLY.");
         FreeLibrary(hLib);  // Don't forget to free the loaded library
     }
+#endif
 #endif
 
 #if 0
