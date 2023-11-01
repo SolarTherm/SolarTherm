@@ -11,16 +11,21 @@ model WindPVannularTESsystem_v3_Air
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
   replaceable package Filler = SolarTherm.Materials.Concrete_Constant;
-  
   //Inputs
-  parameter Real RM = 3.5 "Renewable Multiple";
+  parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
+  parameter Real HM = 1.5 "Heater Multiple";
   parameter Real PV_fraction = 0.2 "PV_fraction";
-  parameter Real t_storage = 20.00 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.518337; //Utilisation determined via component-level analysis
-  parameter Real level_storage_mid = 0.594032; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  parameter Real t_storage = 5.00 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.4623; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.5865; //Midpoint of minimum and maximum storage levels determine via component-level analysis
+  
+  //Heater parameters
+  parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
   
   //Renewable Parameters
-  parameter SI.Power P_renewable_des = RM*Q_flow_des;
+  parameter SI.Power P_renewable_des = RM*P_heater_des;
+  parameter SI.HeatFlowRate Q_heater_des = HM*Q_boiler_des;
+  parameter SI.Power P_heater_des = Q_heater_des/eff_heater;
   parameter SI.Power PV_ref_size = 1.0e6;
   parameter SI.Power Wind_ref_size = 320.0e6;
   //Results
@@ -51,10 +56,10 @@ model WindPVannularTESsystem_v3_Air
   //Level-Controls
   parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";  
 
-  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_flow_des "Maximum tank stored energy";
+  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des "Maximum tank stored energy";
   
-  parameter Modelica.SIunits.HeatFlowRate Q_flow_des = 600.0e6 "Heat to boiler at design";
-  parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_flow_des/(h_air_hot_set-h_air_cold_set);
+  parameter Modelica.SIunits.HeatFlowRate Q_boiler_des = 600.0e6 "Heat to boiler at design";
+  parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_boiler_des/(h_air_hot_set-h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
   
   parameter Modelica.SIunits.Temperature T_hot_set = T_max "Ideal hot temperature";
@@ -87,13 +92,13 @@ model WindPVannularTESsystem_v3_Air
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
   //inner Modelica.Fluid.System system(T_start = from_degC(290), allowFlowReversal = false, p_start = Medium.p_default) annotation(
     //Placement(visible = true, transformation(origin = {-136, -24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_flow_des, T_PB_min = T_PB_min, T_PB_start = T_PB_start, T_recv_max = T_Recv_max, T_recv_start = T_Recv_start, T_target = T_max, eff_storage_des = util_storage_des, h_target = h_air_hot_set, level_mid = level_storage_mid, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = t_stor_startPB, t_wait = 1.0 * 3600.0)  annotation(
+  SolarTherm.Models.Control.WindPV_TESControl_v3 Control(redeclare package HTF = Medium, E_max = E_max, Q_des_blk = Q_boiler_des, T_PB_min = T_PB_min, T_PB_start = T_PB_start, T_recv_max = T_Recv_max, T_recv_start = T_Recv_start, T_target = T_max, eff_storage_des = util_storage_des, h_target = h_air_hot_set, level_mid = level_storage_mid, m_0 = 1e-8, m_flow_PB_des = m_boiler_des, m_min = 1e-8, m_tol = 0.001 * m_boiler_des, t_stor_startPB = t_stor_startPB, t_wait = 1.0 * 3600.0)  annotation(
     Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable scheduler(fileName = schd_input, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Q_flow", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {184, 38}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_renewable_des = P_renewable_des, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {-46, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-124, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

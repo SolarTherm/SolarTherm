@@ -11,17 +11,17 @@ model AnnularTES_Cyclical_VaryFlowRate_v2
   package Filler_Package = SolarTherm.Materials.Concrete_Constant;
   
   //Vary these
-  parameter Real RM = 3.5 "Renewable Multiple";
-  parameter SI.Time t_discharge = 20.0 * 3600.0 "Discharging period";
+  parameter Real HM = 1.5 "Heater Multiple";
+  parameter SI.Time t_discharge = 7.5 * 3600.0 "Discharging period";
   
   
   //Numerical Discretisation
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
   //TES Parameters
-  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length L_pipe = 60.0;
   parameter SI.Length D_pipe = 0.08;
-  parameter SI.Length D_solid = 0.12;
+  parameter SI.Length D_solid = 0.12; 
   parameter Integer Correlation = 2;
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
@@ -39,11 +39,11 @@ model AnnularTES_Cyclical_VaryFlowRate_v2
 
   
   parameter SI.Power Q_boiler_des = 600.0e6 "Design boiler discharge heat-rate";
-  parameter SI.Power Q_heater_des = RM*Q_boiler_des "Design heater output heat-rate";
+  parameter SI.Power Q_heater_des = HM*Q_boiler_des "Design heater output heat-rate";
   
   
   parameter SI.Energy E_max = t_discharge * Q_boiler_des  "Ideal storage capacity (J_thermal)";
-  parameter SI.Time t_charge = t_discharge/(RM-1.0) "Charging period";
+  parameter SI.Time t_charge = t_discharge/(HM-1.0) "Charging period";
   
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_boiler_des) / (h_f_max - h_f_min);
   parameter SI.MassFlowRate m_discharge_des = (Q_boiler_des) / (h_f_max - h_f_min);

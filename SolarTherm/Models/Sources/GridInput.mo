@@ -35,20 +35,20 @@ model GridInput
 	Modelica.Blocks.Interfaces.BooleanInput curtail annotation(
 		Placement(visible = true, 
 		transformation(origin = {-100, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), 
-		iconTransformation(origin = {-100, 0}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+		iconTransformation(origin = {-120, 6}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 
 	Modelica.Blocks.Interfaces.RealInput P_schedule annotation(
 		Placement(visible = true, 
 		transformation(origin = {-100, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0), 
-		iconTransformation(origin = {-100, -60}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+		iconTransformation(origin = {-120, -66}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 
 	Modelica.Blocks.Interfaces.RealOutput electricity annotation(
 		Placement(visible = true, 
 		transformation(origin = {100, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0), 
-		iconTransformation(origin = {100, 2.66454e-15}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+		iconTransformation(origin = {120, -26}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
 
 	Modelica.Blocks.Interfaces.BooleanOutput on_renewable annotation (
-		Placement(transformation(extent={{20,-20},{-20,20}},rotation=90,origin={0,-114})));
+		Placement(visible = true, transformation(origin = {0, -114}, extent = {{20, -20}, {-20, 20}}, rotation = 90), iconTransformation(extent = {{16, -26}, {-24, 14}}, rotation = 90)));
 
 	Modelica.SIunits.Power P_elec_net;
 	Modelica.SIunits.Power P_elec_raw;

@@ -44,7 +44,7 @@ model RadCharge_160kWt_v2
   parameter Real RM = 2.8125 "Renewable Multiple";
   parameter SI.Power Q_dis_des = 160.0e3 "Design storage discharge heat-rate";
   parameter SI.Power Q_chg_des = 420.0e3 "Design storage charge heat-rate";
-  parameter Real oversize_factor = 1.4698*1.0 "Oversize factor of the storage";
+  parameter Real oversize_factor = 1.4698*1.0*1.33 "Oversize factor of the storage";
   parameter SI.Energy E_max = 2.0e6*3600.0*oversize_factor "Ideal storage capacity (J_thermal), slightly higher than the discharge time";
   parameter SI.Time t_charge = 12.0*3600.0;//(RM - 1.0) * t_discharge "Charging period";
   parameter SI.Time t_discharge = 12.0 * 3600.0 "Discharging period";
