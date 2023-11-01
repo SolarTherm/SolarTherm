@@ -22,7 +22,7 @@ if platform.system()=="Windows" or "MINGW" in platform.system():
 		default_glpk_prefix = default_prefix
 		default_tf_prefix = default_prefix
 		default_om_libpath = '$OM_PREFIX/lib/omc'
-		default_om_libs = ['SimulationRuntimeC','omcgc']
+		default_om_libs = ['SimulationRuntimeC','omcgc','OpenModelicaRuntimeC']
 		default_install_omlibrary = '$PREFIX/lib/omlibrary'
 		default_mpirun = 'mpiexec'
 	else:
@@ -41,6 +41,7 @@ else:
 	default_dakota_prefix = default_prefix
 
 if shutil.which('omc'):
+	print("FOUND OMC IN PATH");
 	default_om_prefix = Path(shutil.which('omc')).parent.parent
 else:
 	default_om_prefix = default_prefix
@@ -414,6 +415,8 @@ if not conf.MPI():
 if not conf.PATH():
 	print(REDWARN("Warning: folder %s is not in your PATH. You will need to add it so that you can run the 'st' script easily."%(env.subst('$INSTALL_BIN'),)))
 env = conf.Finish()
+
+print("OM_CPPPATH =",env.subst('$OM_CPPPATH'))
 
 #---------------------------------------------------------------------------------------------------
 

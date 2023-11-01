@@ -5,10 +5,10 @@ name: SolarTherm MSYS2
 
 on:
   workflow_dispatch:
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, msys_numpy_test ]
   push:
 
-    branches: [ $default-branch, master]
+    branches: [ $default-branch, master, msys_numpy_test ]
 
   pull_request:
     branches:  [ $default-branch, master]
@@ -17,7 +17,7 @@ jobs:
   build:
     runs-on: windows-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         sys: [ MINGW64 ]
     defaults:
@@ -113,13 +113,17 @@ jobs:
         cd tests
         python3 -m pytest test_stenv.py
 
-#    - name: Test SolarTherm dakota
-#      run: |
-#        export PATH=$PATH:~/.local/bin
-#        export PATH="$PATH:/c/Program Files/Microsoft MPI/Bin"
-#        echo "WHICH ST? [" `which st` "]"
-#        cd tests
-#        st python -m pytest test_stopt.py
+    - name: Test numpy
+      run: |
+        export PATH=$PATH:~/.local/bin
+        cd tests
+        st python test_numpy.py
+
+    - name: Test failing test_solstice_oelt.py case
+      run: |
+        export PATH="$PATH:~/.local/bin:/c/Program Files/Microsoft MPI/Bin"
+        cd tests
+        st python -m pytest -s test_solstice_oelt.py
 
     - name: Test SolarTherm
       run: |

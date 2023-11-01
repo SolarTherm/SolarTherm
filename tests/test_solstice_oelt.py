@@ -6,9 +6,9 @@ import pytest
 import cleantest
 from solartherm import simulation
 from solartherm import postproc
-import os
 
 #@pytest.mark.dependency(depends=['solstice'])
+@simulation.in_dir_of(__file__)
 def test_solstice_oelt():
 	fn = 'TestSolsticeOELT.mo'
 	sim = simulation.Simulator(fn)

@@ -1,5 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 import os
+from pathlib import Path
 import shutil
 import warnings
 from pipes import quote as sh_quote
@@ -148,6 +149,30 @@ def parse_var_val(vstr, unit):
 	except KeyError:
 		raise ValueError('Can\'t convert from unit ' + unit_old + ' to ' + unit)
 
+
+from pathlib import Path
+import os, sys
+
+def in_dir_of(destination: Path):
+	"""decorator for use in testing functions"""
+	def decorator(func):
+		def wrapper(*args, **kwargs):
+			dest = Path(destination)
+			orig_cwd = Path.cwd()
+			os.chdir(dest if dest.is_dir() else dest.parent)
+			#print("ENVIRON:",os.environ)
+			print("SYS.PATH:",sys.path)			
+			print("CHECKING IMPORT NUMPY")
+			import numpy
+			print("...OK")			
+			print("ENTERING",Path.cwd())		    
+			try:
+				return func(*args, **kwargs)
+			finally:
+				print("LEAVING BACK TO",orig_cwd)
+				os.chdir(orig_cwd)
+		return wrapper
+	return decorator
 
 UNIONFS = "/usr/bin/unionfs-fuse"
 FUSERMOUNT = "/bin/fusermount"
