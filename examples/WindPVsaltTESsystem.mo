@@ -19,7 +19,8 @@ model WindPVsaltTESsystem
 	parameter Modelica.SIunits.Power P_elec_min = 1e5;
 	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
 	parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
-	parameter Modelica.SIunits.Power P_elec_max = renewable_multiple*Q_flow_des "Maximum hot salt mass flow rate";
+	parameter Real heater_multiple = 2 "Heater energy to process heat demand factor";
+	parameter Modelica.SIunits.Power P_elec_max = heater_multiple*Q_flow_des "Maximum hot salt mass flow rate";
 
 	// Heater parameters
 	parameter Modelica.SIunits.Efficiency heater_efficiency = 0.99 "Electric heater efficiency";
@@ -30,6 +31,7 @@ model WindPVsaltTESsystem
 	parameter Boolean size_storage = true;
 	parameter Real t_storage(unit = "h") = 8 "Hours of storage";
 	parameter Real tank_ar = 20/19 "storage aspect ratio";
+	parameter Integer n_parallel_tanks = 2 "Number of parallel tank (hot and cold) pairs";
 	parameter Modelica.SIunits.Temperature T_amb_des = from_degC(25) "Ambient temperature at design";
 	parameter Modelica.SIunits.Length H_storage = if size_storage then ceil((4*V_max*tank_ar^2/pi)^(1/3)) else 10 "Storage tank height";
 	parameter Modelica.SIunits.Diameter D_storage = if size_storage then H_storage/tank_ar else 20 "Storage tank diameter";
@@ -45,9 +47,9 @@ model WindPVsaltTESsystem
 	parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot salt specific enthalpy at design";
 	parameter Modelica.SIunits.Density rho_cold_set = Medium.density(state_cold_set) "Cold salt density at design";
 	parameter Modelica.SIunits.Density rho_hot_set = Medium.density(state_hot_set) "Hot salt density at design";
-	parameter Modelica.SIunits.Mass m_max = E_max/(h_hot_set - h_cold_set) "Max salt mass in tanks";
+	parameter Modelica.SIunits.Mass m_max = E_max/(h_hot_set - h_cold_set)/n_parallel_tanks "Max salt mass in tanks";
 	parameter Modelica.SIunits.Volume V_max = 2*m_max/(rho_hot_set + rho_cold_set) "Max salt volume in tanks";
-	parameter Modelica.SIunits.Efficiency off_design_factor = 0.98 "Off-design curtailment correction";
+	parameter Modelica.SIunits.Efficiency off_design_factor = 1/heater_efficiency "Off-design curtailment correction";
 
 	parameter Modelica.SIunits.Energy E_max = t_storage * 3600 * Q_flow_des "Maximum tank stored energy";
 
@@ -62,7 +64,7 @@ model WindPVsaltTESsystem
 
 	// Control parameters
 	parameter Real heater_max_frac = 2.5 "Max/nominal heating fraction";
-	parameter Modelica.SIunits.MassFlowRate m_flow_heater_max = heater_max_frac*m_flow_hot "Maximum hot salt mass flow rate";
+	parameter Modelica.SIunits.MassFlowRate m_flow_heater_max = heater_max_frac*heater_multiple*m_flow_hot "Maximum hot salt mass flow rate";
 
 	parameter Real hot_tnk_empty_lb = 5 "Hot tank empty trigger lower bound";
 	parameter Real hot_tnk_empty_ub = 10 "Hot tank empty trigger upper bound";
@@ -98,10 +100,12 @@ model WindPVsaltTESsystem
 
 	// Renewable energy input
 	SolarTherm.Models.Sources.GridInput gridInput(
-		P_elec_max = P_elec_max,P_elec_min = P_elec_min, 
-		P_elec_pv_ref_size = pv_ref_size, 
-		P_elec_wind_ref_size = wind_ref_size, pv_file = pv_file, 
-		pv_fraction = pv_fraction, 
+		P_elec_max = P_elec_max,
+		P_elec_min = P_elec_min,
+		P_elec_pv_ref_size = pv_ref_size,
+		P_elec_wind_ref_size = wind_ref_size,
+		pv_file = pv_file,
+		pv_fraction = pv_fraction,
 		wind_file = wind_file,
 		renewable_multiple = renewable_multiple) annotation(
 		Placement(visible = true, transformation(origin = {-70, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -143,12 +147,12 @@ model WindPVsaltTESsystem
 			Placement(visible = true, transformation(origin = {70, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	// Hot tank TES
-	SolarTherm.Models.Storage.Tank.Tank tankHot(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankHot(
 		redeclare package Medium = Medium, 
 		T_set = T_cold_aux_set,
 		D = D_storage, 
 		H = H_storage, 
-		L_start = split_cold*100,
+		L_start = (1 - split_cold)*100,
 		T_start = T_hot_set, 
 		alpha = alpha,
 		W_max = W_heater_hot, 
@@ -158,12 +162,12 @@ model WindPVsaltTESsystem
 			Placement(visible = true, transformation(origin = {10, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	// Cold tank TES
-	SolarTherm.Models.Storage.Tank.Tank tankCold(
+	SolarTherm.Models.Storage.Tank.Two_Tanks tankCold(
 		redeclare package Medium = Medium, 
 		T_set = T_cold_aux_set,
 		D = D_storage, 
 		H = H_storage, 
-		L_start = (1 - split_cold)*100, 
+		L_start = split_cold*100, 
 		alpha = alpha,
 		T_start = T_cold_set, 
 		W_max = W_heater_cold, 
@@ -210,7 +214,10 @@ model WindPVsaltTESsystem
 		Placement(visible = true, transformation(origin = {-116, 0}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
 
 	Modelica.SIunits.Energy E_thermal(start = 0, fixed = true, displayUnit="MW.h") "Generated Energy";
+	Modelica.SIunits.Energy E_schedule(start = 0, fixed = true, displayUnit="MW.h") "Scheduled Energy";
+	Modelica.SIunits.Energy E_renewable(start = 0, fixed = true, displayUnit="MW.h") "Renewable Energy";
 	Modelica.SIunits.Power P_thermal "Thermal Output power of boiler";
+	Modelica.SIunits.Power Q_schedule "Scheduled Thermal Output power of boiler";
 
 equation
 
@@ -219,10 +226,10 @@ equation
 	Line(points = {{-39, 64}, {6, 64}, {6, 60}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 	connect(p_atm.y, tankHot.p_top) annotation(
 	Line(points = {{-7, 76}, {14.5, 76}, {14.5, 60}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
-	connect(p_atm.y, tankCold.T_amb) annotation(
-	Line(points = {{-6, 76}, {30, 76}, {30, -54}, {74, -54}, {74, -64}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
-	connect(T_amb.y, tankCold.p_top) annotation(
-	Line(points = {{-38, 64}, {-4, 64}, {-4, -60}, {66, -60}, {66, -64}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+	connect(p_atm.y, tankCold.p_top) annotation(
+	Line(points = {{-6, 76}, {30, 76}, {30, -54}, {66, -54}, {66, -64}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
+	connect(T_amb.y, tankCold.T_amb) annotation(
+	Line(points = {{-38, 64}, {-4, 64}, {-4, -60}, {74, -60}, {74, -64}}, color = {0, 0, 127}, pattern = LinePattern.Dot));
 
 	// Renewable heating connections
 	connect(gridInput.electricity, heater.P_elec_in) annotation(
@@ -274,8 +281,11 @@ equation
 	connect(controlHot.curtailment, or1.u1) annotation(
 	Line(points = {{82, 82}, {82, 90}, {-136, 90}, {-136, 0}, {-120, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
+	Q_schedule = scheduler.y[1]*(boiler.h_in - boiler.h_out);
 	P_thermal = boiler.Q_flow;
 	der(E_thermal) = P_thermal;
+	der(E_renewable) = gridInput.electricity;
+	der(E_schedule) = Q_schedule;
 
 annotation(
 	Diagram(

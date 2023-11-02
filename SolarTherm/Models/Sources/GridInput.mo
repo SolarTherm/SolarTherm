@@ -9,8 +9,8 @@ model GridInput
 	parameter Modelica.SIunits.Power P_elec_pv_ref_size = 50e6 "PV farm reference size";
 	parameter Modelica.SIunits.Power P_elec_wind_ref_size = 50e6 "Wind farm reference size";
 	parameter Real renewable_multiple = 2 "Oversizing factor with respect to the heat input";
-	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*P_elec_max "Maximum PV capacity";
-	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*P_elec_max "Maximum Wind farm capacity";
+	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*renewable_multiple*P_elec_max "Maximum PV capacity";
+	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*renewable_multiple*P_elec_max "Maximum Wind farm capacity";
 
 	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(
 		fileName = pv_file, 
@@ -55,27 +55,27 @@ model GridInput
 	Modelica.SIunits.Power P_elec_raw_pv;
 	Modelica.SIunits.Power P_elec_raw_wind;
 
-initial equation   
+initial equation
 	on_renewable = P_elec_raw > P_elec_min;
 
 equation
 	P_elec_raw_pv = P_elec_max_pv / P_elec_pv_ref_size * P_elec_ref_pv.y[1];
 	P_elec_raw_wind = P_elec_max_wind / P_elec_wind_ref_size * P_elec_rec_wind.y[1];
 	
-	P_elec_raw = min(renewable_multiple*(P_elec_raw_pv + P_elec_raw_wind), P_elec_max);
-
+	P_elec_raw = min(P_elec_raw_pv + P_elec_raw_wind, P_elec_max);
+	
 	on_renewable = P_elec_raw > P_elec_min;
 	
 	P_elec_net = if on_renewable then P_elec_raw else 0.0;
 
-  connect(P_elec_curtail_switch1.y, switch1.u1) annotation(
-    Line(points = {{-39, -30}, {-25.5, -30}, {-25.5, -8}, {-12, -8}}, color = {0, 0, 127}));
-  connect(curtail, switch1.u2) annotation(
-    Line(points = {{-100, 0}, {-12, 0}}, color = {255, 0, 255}));
-  connect(P_elec_net_switch1.y, switch1.u3) annotation(
-    Line(points = {{-38, 30}, {-26, 30}, {-26, 8}, {-12, 8}}, color = {0, 0, 127}));
-  connect(switch1.y, electricity) annotation(
-    Line(points = {{12, 0}, {100, 0}}, color = {0, 0, 127}));
+	connect(P_elec_curtail_switch1.y, switch1.u1) annotation(
+		Line(points = {{-39, -30}, {-25.5, -30}, {-25.5, -8}, {-12, -8}}, color = {0, 0, 127}));
+	connect(curtail, switch1.u2) annotation(
+	Line(points = {{-100, 0}, {-12, 0}}, color = {255, 0, 255}));
+	connect(P_elec_net_switch1.y, switch1.u3) annotation(
+		Line(points = {{-38, 30}, {-26, 30}, {-26, 8}, {-12, 8}}, color = {0, 0, 127}));
+	connect(switch1.y, electricity) annotation(
+		Line(points = {{12, 0}, {100, 0}}, color = {0, 0, 127}));
 
 annotation(
 	Documentation(info="<html>
