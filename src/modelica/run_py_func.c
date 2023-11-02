@@ -7,53 +7,16 @@
 #endif
 #include <ModelicaUtilities.h>
 
-#define MSG(FMT, ...) \
+//#define RUNPY_DEBUG
+#ifdef RUNPY_DEBUG
+# define MSG(FMT, ...) \
 	fprintf(stderr,"%s:%d(%s) " FMT "\n",__FILE__,__LINE__,__func__,##__VA_ARGS__);
+#else
+# define MSG(...)
+#endif
 
 // FIXME if there are errors (even syntax errors) in run_solstice.py, we need
 // a way of reporting them to the user. TODO!
-
-#if 0
-/**
-	A little function to help with adding lib-dynaload paths for Python
-	(why do we even need this?)
-*/
-int add_to_path(const char *new_path) {
-    // Get the current PATH
-    const char *current_path = getenv("PATH");
-    if (!current_path) {
-        fprintf(stderr, "Failed to get PATH.\n");
-        return -1;
-    }
-
-    // Calculate the size for the new PATH value
-    size_t new_path_size = strlen(current_path) + strlen(new_path) + 6; // 6 for "PATH=" and the ';' separator
-
-    // Allocate memory for the new PATH value
-    char *new_path_value = (char *)malloc(new_path_size);
-    if (!new_path_value) {
-        fprintf(stderr, "Failed to allocate memory.\n");
-        return -1;
-    }
-
-    // Construct the new PATH value
-    snprintf(new_path_value, new_path_size, "PATH=%s;%s", current_path, new_path);
-
-    // Set the new PATH value
-    if (putenv(new_path_value) != 0) {
-        fprintf(stderr, "Failed to set new PATH.\n");
-        free(new_path_value); // Don't forget to free the allocated memory
-        return -1;
-    }
-
-    // Memory allocated for new_path_value shouldn't be freed immediately 
-    // since putenv might directly use this pointer without copying its content.
-    // It will be freed when the program exits.
-
-    return 0;
-}
-#endif
-
 
 /**
 	`ppath`: path of the Python script
@@ -81,14 +44,20 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 		a binary package that accommodate's a users's setup at install time,
 		without depending on MSYSTEM env vars.
 	2. next, we will use a hard-wired compile time value ST_PYTHONHOME, if set.
-	3. finally, we will use $MSYSTEM_PREFIX if present. this is not foolproof
-		because the user can open a UCRT64, MINGW64 or other prompt, and it
-		will change the value of MSYSTEM_PREFIX, pointing us to the wrong
-		version of Python.	
+		This will be robust for users who are compiling their own tool, and will
+		also help us to support the case of direct calls from the OpenModelica
+		GUI without need for explicit env vars.
+	3. finally, if that is not set, we will use $MSYSTEM_PREFIX if present. 
+		This is not foolproof because MSYS2 provides multiple MSYSTEM configs
+		such as UCRT64, MINGW64, each of which has a different directory tree.
+		If the user switches from one to the other, it will point Python to 
+		potentially/probably incompatible DLLS.
+	4. as a final fallback, we hardcode a probable default path, namely
+		C:\msys64\mingw64.
 	*/
+#ifdef __MINGW32__
 	PyConfig config;
 	PyConfig_InitIsolatedConfig(&config);
-#ifdef __MINGW32__
 	const char *source = "$SOLARTHERM_PYTHONHOME";
 	wchar_t *prefix = _wgetenv(L"SOLARTHERM_PYTHONHOME");
 #ifdef ST_PYTHONHOME
@@ -105,10 +74,16 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 		source = "fallback default";
 		prefix = L"c:\\msys64\\mingw64";
 	}
-	printf("SETTING config.home TO '%ls' FROM %s\n",prefix,source);
+	MSG("SETTING config.home TO '%ls' FROM %s",prefix,source);
 	config.home = prefix;
 	
+#else
+	// on Linux, we don't use an isolated config
+	// (it is doubtful that we should be doing it on Windows too)
+	PyConfig config;
+	PyConfig_InitPythonConfig(&config);
 #endif
+
 	PyStatus status = Py_InitializeFromConfig(&config);
 	if (PyStatus_Exception(status)) {
 		Py_ExitStatusException(status);
@@ -116,19 +91,23 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
 	}	
 
 #ifdef __MINGW32__
-	printf("CALCULATING DIRECTORY\n");
+	/*
+		In MSYS2, we need to call os.add_dll_directory on the folder containing the
+		Python DLL, which is c:\msys64\mingw64\bin. We create this path by 
+		combining the value of `prefix` above with `bin`.
+	*/
+	MSG("CALCULATING DLL DIRECTORY");
     wchar_t bindir[] = L"bin";
-    wchar_t binpath[MAX_PATH]; // Assuming a max path length of 260 characters for simplicity
-
+    wchar_t binpath[MAX_PATH];
+    
     // Check if the last character of baseDir is a backslash
-    //wchar_t *separator = (prefix[wcslen(prefix) - 1] == L'\\') ? L"" : L"\\";
     wchar_t *separator = (prefix[wcslen(prefix) - 1] == L'/') ? L"" : L"/";
 
     _snwprintf(binpath, sizeof(binpath)/sizeof(wchar_t), L"%ls%ls%ls", prefix, separator, bindir);
 
 	//wprintf(L"Full Path: %ls\n", binpath);
 	
-	printf("ADDING THE DIRECTORY %ls\n",binpath);
+	MSG("ADDING THE DLL DIRECTORY %ls",binpath);
 	
     // Import the os module
     PyObject* os_module = PyImport_ImportModule("os");
@@ -153,7 +132,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
         PyErr_Print();
         return NULL;
     }else{
-    	printf("ADDED PATH\n");
+    	MSG("SUCCESS: ADDED DLL PATH\n");
 	}
 	
     // Clean up
@@ -186,7 +165,7 @@ const char* RunSolsticeFunc(const char *ppath, const char *pname
         for (Py_ssize_t i = 0; i < len; i++) {
             PyObject *item = PyList_GetItem(sys_path1, i);
             if (PyUnicode_Check(item)) {
-                MSG("SYS.PATH[%d]: %s",i,PyUnicode_AsUTF8(item));
+                MSG("SYS.PATH[%zd]: %s",i,PyUnicode_AsUTF8(item));
             }
         }
     }
