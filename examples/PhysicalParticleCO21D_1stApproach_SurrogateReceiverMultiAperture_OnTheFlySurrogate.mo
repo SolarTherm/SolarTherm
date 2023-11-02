@@ -41,11 +41,11 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter Boolean set_single_field = true "[H&T] True for single field, false for multi tower";
   parameter Boolean set_external_parasities = true "[PB] True = net power calculation in the PB model will consider parasitic losses";
   parameter Boolean set_use_wind = true "True if using wind stopping strategy in the solar field";
-  parameter Boolean set_swaying_optical_eff = true "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
+  parameter Boolean set_swaying_optical_eff = false "[H&T] True if optical efficiency depends on the wind speed due to swaying effect";
   parameter Boolean get_optics_breakdown = false "if true, the breakdown of the optical performance will be processed";
   parameter Boolean set_optics_verbose = false "[H&T] true if to save all the optical simulation details";
   parameter Boolean set_optics_view_scene = false "[H&T] true if to visualise the optical simulation scene (generate vtk files)";
-  parameter Boolean with_catch_and_release_mechanism = true ;
+  parameter Boolean with_catch_and_release_mechanism = false ;
   
   //****************************** Importing medium and external files
   replaceable package Particle_Package = SolarTherm.Media.SolidParticles.CarboHSP_utilities;
@@ -195,8 +195,8 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   parameter SI.Temperature T_amb_min_rcv = 253.195291854307 "[RCV] minimum ambient temperature to the surrogate model [K]";
   parameter Real F_wind_min_rcv = 1.00000380701676 "[RCV] minimum wind factor to the surrogate model [-]";
   
-  parameter Real y_max_rcv = 0.994870462245571 "[RCV] maximum thermal efficiency";
-  parameter Real y_min_rcv = 0.201110600582715 "[RCV] minimum thermal efficiency";
+  parameter Real y_max_rcv = 0.904870462245571 "[RCV] maximum thermal efficiency";
+  parameter Real y_min_rcv = 0.101110600582715 "[RCV] minimum thermal efficiency";
   
   parameter Real[inputsize_rcv] X_max_rcv = {
                                 H_drop_max_rcv, 
@@ -219,9 +219,9 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   
   parameter String saved_model_dir_rcv = 
         Modelica.Utilities.Files.loadResource(
-              "modelica://SolarTherm/Data/SurrogateModels/ParticleReceiver/single_aperture_MFPR_CSIRO/surrogate_model"
+              "modelica://SolarTherm/Data/SurrogateModels/ParticleReceiver/surrogate_receiver_wide"
               )
-  "[RCV] path to which the static particle receiver surrogate model is stored - Updated model MSE_test = 0.0067, old-model MSE = 0.08";
+  "[RCV] path to which the static particle receiver surrogate model is stored - Updated model 1 November 2023, MSE_test = 0.0057. Wider parameters";
   
   //****************************** OnTheFlySurrogate Power Block Parameters
   /************************************************************************************************************** /
@@ -1152,6 +1152,10 @@ model PhysicalParticleCO21D_1stApproach_SurrogateReceiverMultiAperture_OnTheFlyS
   SI.Energy E_losses_defocus_2(start = 0, fixed = true);
   SI.Energy E_losses_defocus_3(start = 0, fixed = true);
   
+  SI.HeatFlux Q_flux_1(start=0);
+  SI.HeatFlux Q_flux_2(start=0);
+  SI.HeatFlux Q_flux_3(start=0);
+  
   Real eta_curtail_off(start = 0);
   Real eta_optical(start = 0);
   Real eta_he_av(start = 0);
@@ -1321,6 +1325,10 @@ initial equation
   C_cap = C_direct + C_indirect;
 
 equation
+  Q_flux_1 = particleReceiver.Q_in_1 / A_ap_lv1;
+  Q_flux_2 = particleReceiver.Q_in_2 / A_ap_lv2;
+  Q_flux_3 = particleReceiver.Q_in_3 / A_ap_lv3;
+  
 //************************************ Equations below exist to close the model
   particleReceiver.raw_input_1[1] = H_rcv_lv1;
   particleReceiver.raw_input_1[2] = ar_rec_lv1;
