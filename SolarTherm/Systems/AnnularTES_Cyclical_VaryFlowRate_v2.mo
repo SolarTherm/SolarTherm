@@ -11,17 +11,17 @@ model AnnularTES_Cyclical_VaryFlowRate_v2
   package Filler_Package = SolarTherm.Materials.Concrete_Constant;
   
   //Vary these
-  parameter Real HM = 1.5 "Heater Multiple";
-  parameter SI.Time t_discharge = 7.5 * 3600.0 "Discharging period";
+  parameter Real HM = 2.1 "Heater Multiple";
+  parameter SI.Time t_discharge = 16.0 * 3600.0 "Discharging period";
   
   
   //Numerical Discretisation
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
   //TES Parameters
-  parameter SI.Length L_pipe = 60.0;
-  parameter SI.Length D_pipe = 0.08;
-  parameter SI.Length D_solid = 0.12; 
+  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length D_pipe = 0.0826;
+  parameter SI.Length D_solid = 0.1197; 
   parameter Integer Correlation = 2;
   //1=Liq 2=Air
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";

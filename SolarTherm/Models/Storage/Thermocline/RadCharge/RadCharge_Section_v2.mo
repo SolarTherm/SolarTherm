@@ -48,6 +48,8 @@ model RadCharge_Section_v2
   parameter SI.Temperature T_min = CV.from_degC(125) "Design cold Temperature of everything in the tank (K)";
   parameter SI.Temperature T_max = CV.from_degC(1000) "Design hot Temperature of everything in the tank (K)";
   parameter SI.Temperature T_start = T_min "Initial (uniform) temperature of all components (K), defaults to T_min";
+  
+  parameter Real strategy_exponent = 4.0 "Temperature exponent used to decide divying up of input heating rate"; 
 
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "Heat loss coeff of surfaces (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_wall = U_loss_tank "Cylinder wall heat loss coeff (W/m2K)";
@@ -78,11 +80,13 @@ model RadCharge_Section_v2
   Real T4_diff[N_f-2](start = fill( T_rad_max^4.0 - T_min^4.0,N_f-2)); 
   Real f_rad[N_f-2](start = fill(1.0/(N_f-2),N_f-2));
   SI.Temperature T_rad_calc[N_f-2] "Radiative wire temperature if the heater were to be on (K)";
-  SI.HeatFlowRate Q_rad[N_f-2] "Total calculated heat input to each vertical slice as per the divying up strategy";
+  SI.HeatFlowRate Q_rad_raw[N_f-2] "Total calculated heat input to each vertical slice as per the divying up strategy assuming heater is on";
   SI.HeatFlowRate Q_rad_net[N_f-2] "Total actual heat input to each vertical slice after considering on/off";
-  SI.HeatFlowRate Q_input "Total electrical heating input (W)";
-  SI.HeatFlowRate Q_input_net "Actual electrical heating input (W)";
-  Boolean heater_on(start=true) "Can heater be turned on?";
+  
+  SI.HeatFlowRate Q_input_raw "Total heating input currently able to be delivered by the heater assuming it is on (W_th)";
+  SI.HeatFlowRate Q_input "Total heating input actually delivered to the TES (W_th)";
+  //SI.HeatFlowRate Q_input_net "Actual electrical heating input (W)";
+  //Boolean heater_on(start=true) "Can heater be turned on?";
   parameter Real f_rad_fluid = 0.0 "Fraction of radiative heating absorbed by the fluid";
   
   
@@ -189,11 +193,11 @@ model RadCharge_Section_v2
   //Real der_h_p[N_f,N_p] "Rate of change of specific enthalpy of solid";
   
 algorithm
-  when max(T_rad_calc) > T_rad_max then
-    heater_on := false;
-  elsewhen max(T_rad_calc) < T_rad_max - 50.0 then
-    heater_on := true;
-  end when;
+  //when max(T_rad_calc) > T_rad_max then
+    //heater_on := false;
+  //elsewhen max(T_rad_calc) < T_rad_max - 50.0 then
+    //heater_on := true;
+  //end when;
 //Fluid equations
   
     der_h_f[1] := 
@@ -206,7 +210,7 @@ algorithm
       - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * eta*A_cs / ((k_f[i] + k_f[i + 1]) * H_unit) 
       + m_flow * (h_f[i - 1] - h_f[i]) 
       - h_c[i] * (T_f[i] - T_p[i]) * A_surf_unit
-      + Q_rad[i-1]*f_rad_fluid ) / m_f_unit;
+      + Q_rad_net[i-1]*f_rad_fluid ) / m_f_unit;
     end for;
     der_h_f[N_f] := 
     (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * eta*A_cs / ((k_f[N_f - 1] + k_f[N_f]) * H_unit) 
@@ -511,19 +515,21 @@ equation
   //radiative heat input
   
   for i in 2:N_f-1 loop
-      T4_diff[i-1] = max(1e-3,(T_rad_max^4.0) - (T_p[i]^4.0));
+      //T4_diff[i-1] = max(1.0e-3,(T_rad_max^4.0) - (T_p[i]^4.0));
+      T4_diff[i-1] = max(1.0e-3,(T_rad_max^(strategy_exponent)) - (T_p[i]^(strategy_exponent)));
+      
       f_rad[i-1] = T4_diff[i-1]/sum(T4_diff);
-      Q_rad[i-1] = Q_input*f_rad[i-1];
+      Q_rad_raw[i-1] = Q_input_raw*f_rad[i-1];
       //Q_rad[i-1] = Q_input_net/(N_f-2.0);
       //
-      T_rad_calc[i-1] = ((T_p[i]^4.0) + (Q_rad[i-1])/(A_radperkg*m_p_unit*em_wire*CN.sigma))^0.25;
-      if heater_on == true then
-        Q_rad_net[i-1] = Q_rad[i-1];
-      else
-        Q_rad_net[i-1] = 0.0;
-  end if;
+      T_rad_calc[i-1] = ((T_p[i]^4.0) + (Q_rad_raw[i-1])/(A_radperkg*m_p_unit*em_wire*CN.sigma))^0.25;
+      //if heater_on == true then
+      Q_rad_net[i-1] = Q_input*f_rad[i-1];
+      //else
+        //Q_rad_net[i-1] = 0.0;
+  //end if;
   end for;
-  Q_input_net = sum(Q_rad_net);
+  //Q_input_net = sum(Q_rad_net);
 //Axial Conductance
   for i in 1:N_f-1 loop
       U_up[i] = 2.0 * (1.0-eta)*A_cs * c_cond_z*k_p[i] * c_cond_z*k_p[i + 1] / (H_unit * (c_cond_z*k_p[i] + c_cond_z*k_p[i + 1]));

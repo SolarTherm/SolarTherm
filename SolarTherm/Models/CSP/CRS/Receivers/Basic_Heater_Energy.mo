@@ -1,39 +1,20 @@
 within SolarTherm.Models.CSP.CRS.Receivers;
 model Basic_Heater_Energy
-  //extends Interfaces.Models.Electric_Heater;
-  //Medium.BaseProperties medium;
-  //Medium.BaseProperties medium_out;
-  //Medium.BaseProperties medium_in; //new
-  //parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290);
-  //parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565);
-  //parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold fluid thermodynamic state at design";
-  //parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold fluid thermodynamic state at design";
-  //parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";
-  //parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold fluid specific enthalpy at design";
-  //SI.SpecificEnthalpy h_in;
-  //SI.SpecificEnthalpy h_out(start=h_hot_set);
-  parameter SI.HeatFlowRate Q_limit = 1200.0e6 "Maximum transmission limit (W)";
-  //SI.MassFlowRate m_flow;
-
-  //parameter SI.HeatFlowRate Q_des_blk = 200.0e6 "Power block design heat input rate, also defocus power";
-  //SI.HeatFlowRate Q_loss;
-  //SI.HeatFlowRate Q_rad;
-  //SI.HeatFlowRate Q_conv;
-  
-  //New
-  //SI.Temperature T_4avg "Power 4 average of inlet and outlet (K)";
-  //SI.Temperature T_avg "Linear average of inlet and outlet (K)";
-  //End New
-  
-  //SI.HeatFlowRate Q_in "Heating rate after curtailment";
-  //SI.HeatFlowRate Q_in_raw "Actual heating rate";
-        
+  //This model is an energy-based heater model used for direct charging of a radiatively heated TES component"
+  parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
+  parameter SI.HeatFlowRate Q_heater_des = 600.0e6 "Design maximum heater heat-rate output (W_th)";
+  parameter SI.Power P_heater_des = Q_heater_des/eff_heater "Design maximum electrical power input to the heater (W_e)";
+  SI.Power P_heater_out "Heater inlet power after P_supply is limited by P_heater_des";
+  //SI.HeatFlowRate Q_out_raw "Heat-rate before curtailment signal from the system controller";
 
     
-  Modelica.Blocks.Interfaces.RealInput Q_heater_raw annotation(
+  Modelica.Blocks.Interfaces.RealInput P_supply "Supplied electrical power" annotation(
     Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {-111, -1}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
     
-  Modelica.Blocks.Interfaces.RealOutput Q_heater annotation(
+  Modelica.Blocks.Interfaces.RealOutput Q_out_raw "Heat-rate that the heater is currently able to output" annotation(
+    Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {33, 43}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
+    
+  Modelica.Blocks.Interfaces.RealOutput Q_out "Actual heater heat output after considering on/off state" annotation(
     Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {111, -1}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
 
   Modelica.Blocks.Interfaces.BooleanInput on annotation (Placement(
@@ -56,10 +37,14 @@ model Basic_Heater_Energy
   //Medium.BaseProperties state_in;
 equation
   if on then
-    Q_heater = max(min(Q_limit,Q_heater_raw),1.0e-6);
+    Q_out = max(Q_out_raw,1.0e-6);
   else
-    Q_heater = 1.0e-6;
+    Q_out = 1.0e-6;
   end if;
+  
+  Q_out_raw = P_heater_out*eff_heater;
+  P_heater_out = min(P_supply,P_heater_des);
+  
   //state_in.h = h_in;
   //state_in.p = 1e5;
   

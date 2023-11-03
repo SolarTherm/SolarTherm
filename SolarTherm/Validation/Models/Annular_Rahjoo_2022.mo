@@ -6,21 +6,21 @@ model Annular_Rahjoo_2022
   import CV = Modelica.SIunits.Conversions;
   import Tables = Modelica.Blocks.Tables;
 
-  package Medium = SolarTherm.Media.Air.Air_amb_p;
+  package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   package Filler = SolarTherm.Materials.Geopolymer_Rahjoo_2022;
-  package Fluid = SolarTherm.Materials.Air_Table;
+  package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
 
   parameter Integer N_f = 50; 
-  parameter Integer N_p = 9;
+  parameter Integer N_p = 5;
   parameter SI.Length L_pipe = 0.5;
-  parameter SI.Length D_pipe = 0.154051;
-  parameter SI.Length D_solid = 0.2821;//0.25 0.2821 0.3536;
+  parameter SI.Length D_pipe = 0.154;
+  parameter SI.Length D_solid = 0.282;//0.25 0.2821 0.3536;
   parameter Real Multiplier = 1.0;
   //parameter SI.Length H_tank = 0.48;
   //parameter SI.Diameter D_tank = 0.5;
   //parameter Real eta = 0.37;
   //parameter SI.Diameter d_p = 0.018;
-  parameter Real U_loss_tank = 0.5;
+  parameter Real U_loss_tank = 1.00;
   parameter Integer Correlation = 2; //1:Liquids, 2:Gas
   //parameter Real ar = 0.48/0.5;
   
@@ -40,7 +40,7 @@ model Annular_Rahjoo_2022
   
   //parameter Real E_v = eta*rho_f_avg*(h_f_max-h_f_min) + (1.0-eta)*rho_p_min*(h_p_max-h_p_min) "Volumetric Energy density of the tank (J/m3)";
   //parameter SI.Energy E_max = E_v*V_tank "Total capacity of the tank";
-  parameter SI.Energy E_max = Multiplier*(thermocline_Tank.Tank_A.E_unit/thermocline_Tank.Tank_A.E_unit_solid) "Total capacity of the tank";
+  parameter SI.Energy E_max = Multiplier*(thermocline_Tank.Tank_A.E_unit) "Total capacity of the tank";
   parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(L_pipe,N_f);
   //parameter SI.Temperature T_f_start[N_f] = fill(30.0+273.15,N_f);
   //parameter SI.Temperature h_f_start[N_f] = fill(Fluid.h_Tf(30.0+273.15,0),N_f);
@@ -95,7 +95,7 @@ model Annular_Rahjoo_2022
   
   //SI.Temperature T_outlet_exp = SolarTherm.Utilities.Interpolation.Interpolate1D(Dataset.T_outlet_times,Dataset.T_outlet_TK,time);
   Integer ControlState(start=1);
-  SI.Velocity u_flow_abs=abs(thermocline_Tank.Tank_A.u_flow);
+  SI.Velocity u_flow_abs=abs(thermocline_Tank.Tank_A.u_flow[25]);
   SI.Velocity u_flow_exp = Dataset.Timeseries_uflow(time);
   //Recorded Variable
   //SI.Energy E_stored (start=0.0) "J";
@@ -110,7 +110,7 @@ model Annular_Rahjoo_2022
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
  Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, nPorts = 1, p = 101325, use_T_in = true) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
- SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_Final thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier=Multiplier, Multiplier=Multiplier,U_loss_tank=U_loss_tank) annotation(
+ SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier=Multiplier, Multiplier=Multiplier,U_loss_tank=U_loss_tank) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-54, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -161,14 +161,14 @@ algorithm
     
 equation
   
-  if ControlState == 1 then
+  if ControlState == 1 then//charge
     //m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
-    m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
+    m_Recv_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[25],0.0) * thermocline_Tank.Tank_A.A_fx);
     m_PB_signal = 0.0;
     //PB_Sink.port_a.m_flow=0.0;
-  else
+  else//discharge
     m_Recv_signal = 0.0;
-    m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * rho_f_avg * thermocline_Tank.Tank_A.A_fx);
+    m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[25],0.0) * thermocline_Tank.Tank_A.A_fx);
     //m_PB_signal = max(1.0e-6, Dataset.Timeseries_uflow(time) * Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f / 2.0) + 1], 1.0) * thermocline_Tank.Tank_A.A_fx);
     //Recv_Sink.port_a.m_flow=0.0;
   end if;

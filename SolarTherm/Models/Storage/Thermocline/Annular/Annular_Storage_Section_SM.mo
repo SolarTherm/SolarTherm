@@ -15,6 +15,7 @@ model Annular_Storage_Section_SM //Stationary Momentum Version (SM)
   Fluid_Package.State fluid_out "Model which calculates properties at outlet of the section";
   //Interfacial heat transfer Settings
   parameter Integer Correlation = 1 "1=WakaoKaguei, 2=MelissariArgyropolus, 3=Conservative, 4=Bellan, 5=Laminar, 6=Laminar+Turbulent, 7 = Nie";
+  parameter Real f_hc = 1.0 "Scaling factor for convective heat transfer. Lower this if fouling is suspected, default 1.0";
   //Height offset for plotting purposes
   parameter SI.Length z_offset = 0.0 "Amount of height offset if there is a tank below it";
   //Tank Design parameters
@@ -518,7 +519,7 @@ equation
     end if;
     */
 
-    h_c[i] = Nu[i] * k_f[i] / D_pipe;
+    h_c[i] = f_hc * Nu[i] * k_f[i] / D_pipe;
    
     
   end for;

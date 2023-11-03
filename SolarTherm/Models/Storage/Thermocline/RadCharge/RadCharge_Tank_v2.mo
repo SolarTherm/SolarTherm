@@ -25,6 +25,7 @@ model RadCharge_Tank_v2
   parameter Real c_cond_z = 1.0 "Multiplier to the vertical thermal conductivity of solid due to radiation";
   parameter SI.MassAttenuationCoefficient A_radperkg = 0.0011796 "Radiative wire area per kg of bricks (m2/kg)";  
   parameter Real em_wire = 0.70 "Emissivity of the radiative wire (-)";
+  parameter Real strategy_exponent = 4.0 "Temperature exponent used to decide divying up of input heating rate"; 
 
   parameter SI.Mass m_solid_total = Tank_A.m_solid_total;
     //Porosity of tank filler materials
@@ -50,6 +51,10 @@ model RadCharge_Tank_v2
 
 
   //Input and Output Ports
+  Modelica.Blocks.Interfaces.RealOutput T_rad_measured "Temperature of the hottest heating element (K)"
+                                          annotation (Placement(visible = true,transformation(
+          extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {31, 65}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
+  
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)"
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {45, 55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
@@ -69,13 +74,22 @@ model RadCharge_Tank_v2
                                           annotation (Placement(visible = true,transformation(
           origin = {-40, 56},extent = {{10, -10}, {-10, 10}}, rotation = -90), iconTransformation(origin = {-27, 65}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
 
-  Modelica.Blocks.Interfaces.RealInput Q_input "Direct Charging" annotation (Placement(
+  Modelica.Blocks.Interfaces.RealInput Q_input "Actual input heat-rate delivered by the heater after considering on/off" annotation (Placement(
         visible = true,transformation(
         
         origin={-50, 12},extent={{-10, -10}, {10, 10}},
         rotation=0), iconTransformation(
         
         origin={-46, 14},extent={{-6, -6}, {6, 6}},
+        rotation=0)));
+        
+  Modelica.Blocks.Interfaces.RealInput Q_input_raw "Current heat-rate that can be delivered by the heater assuming it is on" annotation (Placement(
+        visible = true,transformation(
+        
+        origin={-50, 32},extent={{-10, -10}, {10, 10}},
+        rotation=0), iconTransformation(
+        
+        origin={-46, 42},extent={{-6, -6}, {6, 6}},
         rotation=0)));
        
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
@@ -96,7 +110,7 @@ model RadCharge_Tank_v2
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section_v2 Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad_max = T_rad_max, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z, A_radperkg = A_radperkg, em_wire = em_wire);
+  SolarTherm.Models.Storage.Thermocline.RadCharge.RadCharge_Section_v2 Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, T_min = T_min, T_max = T_max, N_f = N_f,E_max = E_max,U_loss_tank=U_loss_tank, eta = eta, H_unit = H_unit, c_surf = c_surf, L_char = L_char, T_rad_max = T_rad_max, f_rad_fluid = f_rad_fluid, c_cond_z = c_cond_z, A_radperkg = A_radperkg, em_wire = em_wire, strategy_exponent = strategy_exponent);
 
 
   //Cost BreakDown
@@ -122,11 +136,13 @@ model RadCharge_Tank_v2
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
 equation
+  T_rad_measured = max(Tank_A.T_rad_calc);
   //Charging Rate
   //if Tank_A.T_p[N_f-1] > T_rad - 10.0 then
     //Tank_A.Q_input = 0.0;
  // else
     Tank_A.Q_input = Q_input;
+    Tank_A.Q_input_raw = Q_input_raw;
   //end if;
   //if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
@@ -169,7 +185,7 @@ equation
   T_bot_measured = Tank_A.T_f[1];//0.5*(Tank_A.T_f[1]+Tank_A.T_s[1]);//Tank_A.T_f[1];//Tank_A.T_p[1,1];
 
 annotation(
-    Icon(graphics = {Text(origin = {-64, -27}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {-52, -71}, extent = {{-28, 3}, {28, -3}}, textString = "h_bot_outlet"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {61, 70}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {54, 39.5}, extent = {{-6, 2.5}, {34, -7.5}}, textString = "T_p_top_measured"), Text(origin = {56, -48.5}, extent = {{-6, 2.5}, {38, -11.5}}, textString = "T_p_bot_measured"), Text(origin = {56, 27}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Rectangle(origin = {0, -2},fillColor = {220, 220, 220}, fillPattern = FillPattern.Solid, extent = {{-40, 62}, {40, -60}}), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}}), Text(origin = {-50, 69}, extent = {{-28, 3}, {28, -3}}, textString = "h_top_outlet"), Text(origin = {-64, 29}, extent = {{-8, 3}, {12, -7}}, textString = "Q_input"), Polygon(origin = {-30, 35}, fillColor = {248, 120, 81}, fillPattern = FillPattern.Backward, points = {{-4, -11}, {-4, -87}, {4, -79}, {4, -3}, {-4, -11}}), Rectangle(origin = {24, -48}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, -28}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 32}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, -8}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 12}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 52}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Line(origin = {-17.1183, 27.8973}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, 17.9052}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-17.7061, 8.79467}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, -1.19749}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18.2939, -11.1897}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, -21.7696}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-17.7061, -32.6434}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled})}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
+    Icon(graphics = {Text(origin = {-62, -5}, extent = {{-8, 3}, {8, -3}}, textString = "T_amb"), Text(origin = {54, -12}, extent = {{-8, 6}, {8, -6}}, textString = "p_amb"), Text(origin = {64, -65}, extent = {{-18, 5}, {24, -9}}, textString = "T_bot_measured"), Text(origin = {63, 66}, extent = {{-15, 4}, {25, -12}}, textString = "T_top_measured"), Text(origin = {18, 80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_a"), Text(origin = {18, -80}, extent = {{-12, 4}, {12, -4}}, textString = "fluid_b"), Text(origin = {54, 39.5}, extent = {{-6, 2.5}, {34, -7.5}}, textString = "T_p_top_measured"), Text(origin = {56, -48.5}, extent = {{-6, 2.5}, {38, -11.5}}, textString = "T_p_bot_measured"), Text(origin = {56, 27}, extent = {{-8, 3}, {8, -3}}, textString = "Level"), Rectangle(origin = {0, -2}, fillColor = {220, 220, 220}, fillPattern = FillPattern.Solid, extent = {{-40, 62}, {40, -60}}), Line(origin = {0, 64}, points = {{0, 4}, {0, -4}}), Text(origin = {-50, 69}, extent = {{-28, 3}, {28, -3}}, textString = "h_top_outlet"), Text(origin = {-64, 27}, extent = {{-8, 3}, {12, -7}}, textString = "Q_input"), Polygon(origin = {-30, 35}, fillColor = {248, 120, 81}, fillPattern = FillPattern.Backward, points = {{-4, -11}, {-4, -87}, {4, -79}, {4, -3}, {-4, -11}}), Rectangle(origin = {24, -48}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, -28}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 32}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, -8}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 12}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Rectangle(origin = {24, 52}, fillColor = {106, 106, 106}, fillPattern = FillPattern.Solid, extent = {{-34, 6}, {12, -10}}), Line(origin = {-17.1183, 27.8973}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, 17.9052}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-17.7061, 8.79467}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, -1.19749}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18.2939, -11.1897}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-18, -21.7696}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Line(origin = {-17.7061, -32.6434}, points = {{-6, -5}, {6, 5}}, arrow = {Arrow.None, Arrow.Filled}), Text(origin = {49, 76}, extent = {{-15, 4}, {25, -12}}, textString = "T_rad_measured"), Text(origin = {-66, 51}, extent = {{-20, 11}, {12, -7}}, textString = "Q_input_raw")}, coordinateSystem(initialScale = 0.1)), Documentation(revisions ="<html>
 		<p>By Zebedee Kee on 03/12/2020</p>
 		</html>",info="<html>
 		<p>This model contains the fluid_a (top) and fluid_b (bottom) ports, basically a complete CSP component. This model simply connects the Thermocline_Spheres_Section models to the correct ports.</p>

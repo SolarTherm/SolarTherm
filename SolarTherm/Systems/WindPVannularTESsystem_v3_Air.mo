@@ -36,9 +36,9 @@ model WindPVannularTESsystem_v3_Air
   //Discretisation and geometry
   parameter Integer N_f = 50;
   parameter Integer N_p = 5;
-  parameter SI.Length L_pipe = 60.0;
-  parameter SI.Length D_pipe = 0.08;
-  parameter SI.Length D_solid = 0.12; 
+  parameter SI.Length L_pipe = 62.5;
+  parameter SI.Length D_pipe = 0.0826;
+  parameter SI.Length D_solid = 0.1197; 
   
  
   //Misc Parameters
@@ -55,8 +55,7 @@ model WindPVannularTESsystem_v3_Air
 
   //Level-Controls
   parameter SI.Time t_stor_startPB = 1.0*3600.0 "Number of storage seconds stored before TES can start discharging (1 hour)";  
-  //parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)"; 
-
+//parameter SI.Time t_stor_startPB = 0.2*t_storage*3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";
   parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des "Maximum tank stored energy";
   
   parameter Modelica.SIunits.HeatFlowRate Q_boiler_des = 600.0e6 "Heat to boiler at design";
@@ -100,7 +99,7 @@ model WindPVannularTESsystem_v3_Air
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Boiler(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
-    Placement(visible = true, transformation(origin = {-46, 6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-46, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness=Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-124, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Math.Add Grid_Sum(k1 =  P_renewable_des *PV_fraction / PV_ref_size, k2 =  P_renewable_des *(1.0 - PV_fraction) / Wind_ref_size)  annotation(
@@ -144,15 +143,15 @@ equation
   connect(pumpHot.fluid_b, Boiler.fluid_a) annotation(
     Line(points = {{100, 78}, {158, 78}, {158, 10}, {158, 10}}, color = {0, 127, 255}, thickness = 0.5));
   connect(pumpCold.fluid_b, basic_Heater.fluid_a) annotation(
-    Line(points = {{-28, -78}, {-46, -78}, {-46, -3}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{-28, -78}, {-46, -78}, {-46, 1}}, color = {0, 127, 255}, thickness = 0.5));
   connect(basic_Heater.fluid_b, Splitter_Top.fluid_a) annotation(
-    Line(points = {{-46, 15}, {-46, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{-46, 19}, {-46, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Control.Q_rcv_raw, basic_Heater.Q_heater_raw) annotation(
-    Line(points = {{103, 35}, {-24, 35}, {-24, 13}, {-35, 13}}, color = {0, 0, 127}));
+    Line(points = {{103, 35}, {-24, 35}, {-24, 10}, {-35, 10}}, color = {0, 0, 127}));
   connect(Control.curtail, basic_Heater.curtail) annotation(
-    Line(points = {{125, 24}, {128, 24}, {128, -36}, {-68, -36}, {-68, -2}, {-58, -2}}, color = {255, 0, 255}));
+    Line(points = {{125, 24}, {128, 24}, {128, -36}, {-68, -36}, {-68, 1}, {-57, 1}}, color = {255, 0, 255}));
   connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
-    Line(points = {{103, 19}, {45.5, 19}, {45.5, 15}, {-10, 15}, {-10, -12}, {-72, -12}, {-72, 2}, {-58, 2}, {-58, 0}}, color = {0, 0, 127}));
+    Line(points = {{103, 19}, {45.5, 19}, {45.5, 15}, {-10, 15}, {-10, -12}, {-72, -12}, {-72, 2}, {-57, 2}, {-57, 5}}, color = {0, 0, 127}));
   connect(Control.m_flow_PB, pumpHot.m_flow) annotation(
     Line(points = {{125, 29}, {132, 29}, {132, 98}, {90, 98}, {90, 84}, {92, 84}}, color = {0, 0, 127}));
   connect(Control.m_flow_recv, pumpCold.m_flow) annotation(
@@ -166,7 +165,7 @@ equation
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
     Line(points = {{-113, 4}, {-104, 4}, {-104, 12}, {-96, 12}}, color = {0, 0, 127}));
   connect(Grid_Sum.y, basic_Heater.P_supply) annotation(
-    Line(points = {{-73, 18}, {-66, 18}, {-66, 6}, {-58, 6}}, color = {0, 0, 127}));
+    Line(points = {{-73, 18}, {-66, 18}, {-66, 10}, {-57, 10}}, color = {0, 0, 127}));
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {-21, -90}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-29, 0}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-6, Interval = 300, maxStepSize = 60, initialStepSize = 60));

@@ -11,11 +11,12 @@ model Annular_Laing_2006
   package Fluid = SolarTherm.Materials.Dowtherm_Table;
 
   parameter Integer N_f = 50; 
-  parameter Integer N_p = 9;
+  parameter Integer N_p = 5;
   parameter SI.Length L_pipe = 23.0;
   parameter SI.Length D_pipe = 0.020;
-  parameter SI.Length D_solid = 0.09;//0.08, 0.09003, 0.113
+  parameter SI.Length D_solid = 0.090;//0.08, 0.090, 0.113
   parameter Real Multiplier = 36.0;
+  parameter Real f_hc = 1.00 "Scaling factor for convective heat transfer. Lower this if fouling is suspected, default 1.0";
   //parameter SI.Length H_tank = 0.48;
   //parameter SI.Diameter D_tank = 0.5;
   //parameter Real eta = 0.37;
@@ -40,7 +41,7 @@ model Annular_Laing_2006
   
   //parameter Real E_v = eta*rho_f_avg*(h_f_max-h_f_min) + (1.0-eta)*rho_p_min*(h_p_max-h_p_min) "Volumetric Energy density of the tank (J/m3)";
   //parameter SI.Energy E_max = E_v*V_tank "Total capacity of the tank";
-  parameter SI.Energy E_max = Multiplier*(thermocline_Tank.Tank_A.E_unit/thermocline_Tank.Tank_A.E_unit_solid) "Total capacity of the tank";
+  parameter SI.Energy E_max = Multiplier*(thermocline_Tank.Tank_A.E_unit) "Total capacity of the tank";
   parameter SI.Length z_f[N_f] = SolarTherm.Models.Storage.Thermocline.Z_position(L_pipe,N_f);
   //parameter SI.Temperature T_f_start[N_f] = fill(30.0+273.15,N_f);
   //parameter SI.Temperature h_f_start[N_f] = fill(Fluid.h_Tf(30.0+273.15,0),N_f);
@@ -105,7 +106,7 @@ model Annular_Laing_2006
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
  Modelica.Fluid.Sources.Boundary_pT PB_outlet(redeclare package Medium = Medium, T = T_min, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {92, -60}, extent = {{16, -16}, {-16, 16}}, rotation = 0)));
- SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Tank_A.Multiplier=Multiplier, Multiplier=Multiplier,U_loss_tank=U_loss_tank) annotation(
+ SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM thermocline_Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, L_pipe=L_pipe,D_pipe=D_pipe,D_solid=D_solid,Tank_A.T_f_start = T_f_start, Tank_A.h_f_start = h_f_start, Tank_A.T_p_start = T_p_start, Tank_A.h_p_start = h_p_start, Multiplier=Multiplier,U_loss_tank=U_loss_tank, Tank_A.f_hc = f_hc) annotation(
     Placement(visible = true, transformation(origin = {0, -2}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
  SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-54, 48}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));

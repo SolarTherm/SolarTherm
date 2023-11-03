@@ -12,20 +12,21 @@ protected
   Real f "Friction Factor";
 algorithm
   if Re <= 2000 then //Laminar
-    Nu := 3.66*((mu_f/mu_s)^(0.11));
+    Nu := 3.66*((max(mu_f/mu_s,1.0e-3))^(0.11));
     f := 64.0/Re;
   elseif Re >= 4000 then //Turbulent
     f := (1.82*log10(Re)-1.64)^(-2.0);
     if T_s > T_f then //Turbulent
-      Nu := (((f/8.0)*Re*Pr) / ( 1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((mu_f/mu_s)^(0.11));
+      Nu := (((f/8.0)*Re*Pr) / ( 1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((max(mu_f/mu_s,1.0e-3))^(0.11));
     else
-      Nu := (((f/8.0)*Re*Pr) / ( 1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((mu_f/mu_s)^(0.25));
+      Nu := (((f/8.0)*Re*Pr) / ( 1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((max(mu_f/mu_s,1.0e-3))^(0.25));
     end if;
   else //Transition
+    f := (1.82*log10(Re)-1.64)^(-2.0);
     if T_s > T_f then //Fluid is being heated
-      Nu := 3.66*((mu_f/mu_s)^(0.11)) + ( (((f/8.0)*Re*Pr) / ( (1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((mu_f/mu_s)^(0.11))) - 3.66*((mu_f/mu_s)^(0.11)) )*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
+      Nu := 3.66*((max(mu_f/mu_s,1.0e-3))^(0.11)) + ( (((f/8.0)*Re*Pr) / ( (1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((max(mu_f/mu_s,1.0e-3))^(0.11))) - 3.66*((max(mu_f/mu_s,1.0e-3))^(0.11)) )*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
     else //Fluid is being cooled
-      Nu := 3.66*((mu_f/mu_s)^(0.11)) + ( (((f/8.0)*Re*Pr) / ( (1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((mu_f/mu_s)^(0.25))) - 3.66*((mu_f/mu_s)^(0.11)) )*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
+      Nu := 3.66*((max(mu_f/mu_s,1.0e-3))^(0.11)) + ( (((f/8.0)*Re*Pr) / ( (1.07 + 12.7*((f/8.0)^0.5)*((Pr^0.667)-1.0)))*((max(mu_f/mu_s,1.0e-3))^(0.25))) - 3.66*((max(mu_f/mu_s,1.0e-3))^(0.11)) )*SolarTherm.Utilities.Phis((Re - 2000.0) / 2000.0);
     end if;
   end if;
 

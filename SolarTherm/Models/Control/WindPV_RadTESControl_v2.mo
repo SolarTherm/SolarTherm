@@ -4,11 +4,13 @@ model WindPV_RadTESControl_v2
   //now outputs the demand m_flow_PB_dem if able, now increases m_flow_PB if the storage outlet is below the ideadl temperature
   extends Icons.Control;
   replaceable package HTF = SolarTherm.Media.Air.Air_amb_p;
-  parameter SI.Temperature T_top_max = 1050.0 + 273.15 "Maximum tolerated top temperature where charging is stopped";
-  parameter SI.Temperature T_top_start = 950.0 + 273.15 "Top temperature where charging can start";
+  //parameter SI.Temperature T_top_max = 1050.0 + 273.15 "Maximum tolerated top temperature where charging is stopped";
+  //parameter SI.Temperature T_top_start = 950.0 + 273.15 "Top temperature where charging can start";
   parameter SI.Temperature T_PB_min = 350.0 + 273.15 "Minimum tolerated PB input temperature";
   parameter SI.Temperature T_PB_start = 450.0 + 273.15 "PB input temperature at which it can start";
   parameter SI.Temperature T_target = 600.0 + 273.15 "Target receiver outlet temperature";
+  parameter SI.Temperature T_rad_max = 1200.0 + 273.15 "Maximum allowable heater element temperature";
+  parameter SI.Temperature T_rad_start = 1150.0 + 273.15 "Temperature of the heater element below which charging can be resumed.";
   parameter SI.MassFlowRate m_flow_PB_des = 100.0 "Reference power block mass flow rate";
   SI.MassFlowRate m_flow_PB_dem = m_flow_PB_des * Q_demand / Q_des_blk "Power block mass demand";
   parameter SI.HeatFlowRate Q_des_blk = 200e6 "Power block design heat rate";
@@ -29,7 +31,9 @@ model WindPV_RadTESControl_v2
   //used to be 1e-7 for both
   //parameter Real level_mid = 0.50 "Midpoint storage level, necessary for asymmetrical chg/dis";
   Modelica.Blocks.Interfaces.RealInput T_top_tank "Temperature of the top of HTF in storage" annotation(
-    Placement(visible = true, transformation(extent = {{-124, -4}, {-84, 36}}, rotation = 0), iconTransformation(extent = {{-124, -10}, {-84, 30}}, rotation = 0)));
+    Placement(visible = true, transformation(extent = {{-124, -4}, {-84, 36}}, rotation = 0), iconTransformation(extent = {{-124, -50}, {-84, -10}}, rotation = 0)));
+  Modelica.Blocks.Interfaces.RealInput T_rad_measured "Temperature of the hottest heating element (K)" annotation(
+    Placement(visible = true, transformation(extent = {{-124, -4}, {-84, 36}}, rotation = 0), iconTransformation(extent = {{-124, 44}, {-84, 84}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput m_flow_PB(start = 1.0e-8) "Power block mass flow?" annotation(
     Placement(visible = true, transformation(extent = {{90, -20}, {130, 20}}, rotation = 0), iconTransformation(extent = {{90, 6}, {130, 46}}, rotation = 0)));
   Modelica.Blocks.Interfaces.BooleanOutput heater_on(start = true) "can the heater be on?" annotation(
@@ -71,6 +75,13 @@ model WindPV_RadTESControl_v2
   //end if;
   // PB := true;
 algorithm
+  when T_rad_measured > T_rad_max then
+    Chg := false;
+  end when;
+  
+  when T_rad_measured < T_rad_start then
+    Chg := true;
+  end when;
 //when m_flow_PB < 0.1 * m_flow_PB_des then
 //if Level <= L_startPB then //try this condition
 //PB := false;
@@ -159,7 +170,7 @@ algorithm
   end when;
   */
 equation
-  Chg = true;
+  //Chg = true;
 //if PB == true and Dis == true then
   if Dis == true then
     m_flow_PB = m_flow_PB_dem * (h_target - h_PB_outlet) / (h_tank_top - h_PB_outlet);
