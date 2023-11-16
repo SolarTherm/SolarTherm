@@ -21,7 +21,7 @@ model HeliostatsIPH
   parameter String sunshape = "Buie";
   parameter Real csr = 0.02 "circumsolar ratio";
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
-  parameter SI.Irradiance dni_des = 950 "DNI at design point";
+  parameter SI.Irradiance dni_des = 1000 "DNI at design point";
   // Heliostat field
   parameter String opt_file(fixed = false);
   parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
@@ -40,15 +40,16 @@ model HeliostatsIPH
   parameter Real n_rays = 5e6 "number of rays for the optical simulation";
   parameter Real metadata_list[9] = metadata(opt_file);
   parameter Real n_helios = metadata_list[1] "Number of heliostats";
+  parameter SI.Efficiency eta_opt_des =  metadata_list[3] "design point optical efficiency";
   parameter SI.Area A_land = metadata_list[9] "Land area";
   parameter SI.Area A_field = A_helio * n_helios "Reflective area of a heliostat m2";
-  parameter SI.Efficiency eff_opt = 0.6389 "Field optical efficiency at design point";
-  //parameter Real C = 1046.460400794 "Concentration ratio";
+  parameter Real C_des = eta_opt_des* A_field/A_recv "Concentration ratio at design point";
   // Receiver
   parameter String recv_type = "flat" "other options are : flat, cylinder, stl";
   parameter SI.Power P_net = 60e6 "Receiver net output at design point";
   parameter SI.Temperature T_recv = 1200 "receiver working temperature (K)";
-  parameter SI.Area A_recv = 124.63;
+  parameter SI.Length r_recv = 6.3 "radius of receiver aperture";
+  parameter SI.Area A_recv = 3.14159*r_recv^2;
   //0.3288 * (P_net / 1e6) ^ 1.304 "Receiver area m2";
   parameter SI.Length W_recv = A_recv ^ 0.5 "Receiver width";
   parameter SI.Length H_recv = A_recv ^ 0.5 "Receiver height";
@@ -62,11 +63,7 @@ model HeliostatsIPH
   parameter SI.Length R_tower = 0.01 "Tower diameter";
   // Control
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
-  parameter Boolean use_wind = true "true if using wind stopping strategy in the solar field";
-  parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
-  parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
-  parameter Real nu_start = 0.6 "Minimum energy start-up fraction to start the receiver";
-  parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
+  
   // Costs
   parameter FI.AreaPrice c_field = 130 "Field cost per design aperture area";
   parameter FI.AreaPrice c_site = 0 "Site improvements cost per area";
@@ -96,6 +93,10 @@ model HeliostatsIPH
   SI.Energy E_net(start = 0, fixed = true, displayUnit = "MW.h");
   SI.Energy E_inc(start = 0, fixed = true, displayUnit = "MW.h");
   SI.Energy E_sol(start = 0, fixed = true, displayUnit = "MW.h");
+  Real DNI_counts(start=0);
+  SI.HeatFlowRate DNI_q(start = 0);
+  SI.HeatFlowRate DNI_average(start=0);
+  
   //Weather data
   SolarTherm.Models.Sources.DataTable.DataTable data(lon = lon, lat = lat, t_zone = t_zone, year = year, file = wea_file) annotation(
     Placement(visible = true, transformation(origin = {-49, 30}, extent = {{-9, -10}, {9, 10}}, rotation = 0)));
@@ -110,7 +111,7 @@ model HeliostatsIPH
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(visible = true, transformation(extent = {{-10, 40}, {10, 60}}, rotation = 0)));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolsticeSimpleControl heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, wea_file = wea_file, sunshape = sunshape, csr = csr, he_av = he_av_design, A_h = A_helio, Q_in_rcv = Q_in_rcv, Q_design = P_net, H_rcv = H_recv, W_rcv = W_recv, n_H_rcv = 1, n_W_rcv = 1, tilt_rcv = tilt_recv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, n_rays = n_rays, field_type = field_type, rcv_type = recv_type, psave = casefolder) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolsticeSimpleControl heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, wea_file = wea_file, sunshape = sunshape, csr = csr, dni_des=dni_des, he_av = he_av_design, A_h = A_helio, Q_in_rcv = Q_in_rcv, Q_design = P_net, H_rcv = H_recv, W_rcv = W_recv, n_H_rcv = 1, n_W_rcv = 1, tilt_rcv = tilt_recv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, n_rays = n_rays, field_type = field_type, rcv_type = recv_type, psave = casefolder) annotation(
     Placement(visible = true, transformation(origin = {8, 0}, extent = {{-24, -24}, {24, 24}}, rotation = 0)));
   // Receiver
   SolarTherm.Models.CSP.CRS.Receivers.ReceiverSimpleBlackbody receiver(em = em_recv, ab = ab_recv, A_recv = A_recv, T_recv = T_recv) annotation(
@@ -125,6 +126,9 @@ equation
   der(E_net) = receiver.Q_rcv_net;
   der(E_inc) = heliostatsField.Q_net;
   der(E_sol) = heliostatsField.Q_solar;
+  der(DNI_q) = sun.dni;
+  der(DNI_counts) = 1;
+  DNI_average = DNI_q/DNI_counts;
   
   connect(DNI_input.y, sun.dni) annotation(
     Line(points = {{-37, 50}, {-30, 50}, {-30, 49.8}, {-10.6, 49.8}}, color = {0, 0, 127}, pattern = LinePattern.Dot));

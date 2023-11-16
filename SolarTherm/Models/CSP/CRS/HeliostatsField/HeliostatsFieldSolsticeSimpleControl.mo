@@ -9,6 +9,7 @@ model HeliostatsFieldSolsticeSimpleControl
     parameter SI.HeatFlowRate Q_in_rcv = 1e6;
    parameter String sunshape = "Buie";
    parameter Real csr = 0.02 "circumsolar ratio";
+  parameter SI.Irradiance dni_des = 1000 "DNI at design point";
 
 	// heliostat field
     parameter Real n_h=metadata_list[1] "Number of heliostats" annotation(Dialog(group="Technical data"));
@@ -45,7 +46,7 @@ model HeliostatsFieldSolsticeSimpleControl
     parameter String opt_file(fixed=false);
     parameter Real metadata_list[9] = metadata(opt_file);
 
-  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file, sunshape=sunshape, csr=csr);
+  SolarTherm.Models.CSP.CRS.HeliostatsField.Optical.SolsticeOELT optical(hra=solar.hra, dec=solar.dec, lat=lat, method=method, dni_des=dni_des, Q_in_rcv=Q_in_rcv, H_rcv=H_rcv, W_rcv=W_rcv, n_H_rcv=n_H_rcv, n_W_rcv=n_W_rcv, tilt_rcv=tilt_rcv, W_helio=W_helio, H_helio=H_helio, H_tower=H_tower, R_tower=R_tower, R1=R1, fb=fb, rho_helio=rho_helio,slope_error=slope_error, n_row_oelt=n_row_oelt, n_col_oelt=n_col_oelt, n_rays=n_rays, field_type=field_type, rcv_type=rcv_type, psave=psave, wea_file=wea_file, sunshape=sunshape, csr=csr);
 
   SI.HeatFlowRate Q_raw;
   SI.HeatFlowRate Q_net;
