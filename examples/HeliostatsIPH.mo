@@ -27,11 +27,12 @@ model HeliostatsIPH
   parameter String casefolder = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/SolsticeResults");
   parameter SI.HeatFlowRate Q_in_rcv = P_net / 0.9 "Receiver net output at design point";
   parameter String field_type = "polar" "polar or surround";
-  parameter SI.Area A_helio = 160 "Reflective area of a heliostat m2";
-  parameter SI.Length W_helio = sqrt(A_helio) "width of heliostat in m";
-  parameter SI.Length H_helio = sqrt(A_helio) "height of heliostat in m";
+  parameter SI.Area A_helio = H_helio*W_helio "Reflective area of a heliostat m2";
+  parameter Real  r_helio_to_recv= 0.7 "heliostat to receiver size ratio";  
+  parameter SI.Length W_helio = H_helio "width of heliostat in m";
+  parameter SI.Length H_helio = r_helio_to_recv*H_recv "height of heliostat in m";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
-  parameter SI.Angle slope_error = 1.5e-3 "slope error of the heliostat in mrad";
+  parameter SI.Angle slope_error = 2.0e-3 "slope error of the heliostat in mrad";
   parameter SI.Length R1 = 60 "distance between the first row heliostat and the tower";
   parameter Real fb = 0.75 "factor to grow the field layout";
   parameter Real he_av_design = 1 "Helisotats availability";
@@ -46,20 +47,19 @@ model HeliostatsIPH
   parameter Real C_des = eta_opt_des* A_field/A_recv "Concentration ratio at design point";
   // Receiver
   parameter String recv_type = "flat" "other options are : flat, cylinder, stl";
-  parameter SI.Power P_net = 60e6 "Receiver net output at design point";
-  parameter SI.Temperature T_recv = 1200 "receiver working temperature (K)";
-  parameter SI.Length r_recv = 6.3 "radius of receiver aperture";
-  parameter SI.Area A_recv = 3.14159*r_recv^2;
-  //0.3288 * (P_net / 1e6) ^ 1.304 "Receiver area m2";
-  parameter SI.Length W_recv = A_recv ^ 0.5 "Receiver width";
-  parameter SI.Length H_recv = A_recv ^ 0.5 "Receiver height";
-  parameter nSI.Angle_deg tilt_recv = 60 "tilt of receiver in degree relative to tower axis";
+  parameter SI.Power P_net = 20e6 "Receiver net output at design point";
+  parameter SI.Temperature T_recv = 900+273.15 "receiver working temperature (K)";
+  //parameter SI.Length r_recv = 6.3 "radius of receiver aperture";
+  parameter SI.Area A_recv = W_recv*H_recv;
+  parameter SI.Length W_recv = 5 "Receiver width (m)";
+  parameter SI.Length H_recv = 5 "Receiver height (m)";
+  parameter nSI.Angle_deg tilt_recv = 30 "tilt of receiver in degree relative to tower axis";
   parameter SI.Efficiency ab_recv = 1 "Receiver coating absorptance";
   parameter SI.Efficiency em_recv = 1 "Receiver coating emissivity";
   //parameter SI.RadiantPower R_des(fixed= if fixed_field then true else false) "Input power to receiver at design point";
-  parameter SI.Temperature rec_T_amb_des = 293 "Ambient temperature at design point";
+  parameter SI.Temperature rec_T_amb_des = 25+273.15 "Ambient temperature at design point";
   // Tower
-  parameter SI.Length H_tower = 130 "Tower height";
+  parameter SI.Length H_tower = 80 "Tower height";
   parameter SI.Length R_tower = 0.01 "Tower diameter";
   // Control
   parameter SI.Angle ele_min = 0.13962634015955 "Heliostat stow deploy angle";
