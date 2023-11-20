@@ -51,7 +51,7 @@ model HeliostatsIPH
   parameter SI.Temperature T_recv = 900+273.15 "receiver working temperature (K)";
   //parameter SI.Length r_recv = 6.3 "radius of receiver aperture";
   parameter SI.Area A_recv = W_recv*H_recv;
-  parameter SI.Length W_recv = 5 "Receiver width (m)";
+  parameter SI.Length W_recv = H_recv "Receiver width (m)";
   parameter SI.Length H_recv = 5 "Receiver height (m)";
   parameter nSI.Angle_deg tilt_recv = 30 "tilt of receiver in degree relative to tower axis";
   parameter SI.Efficiency ab_recv = 1 "Receiver coating absorptance";
