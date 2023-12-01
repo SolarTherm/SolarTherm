@@ -16,3 +16,4 @@ Testing
 SolarTherm/Models/Control/reference_1.mat
 examples/*_res*.mat
 SolarTherm/Data/Data
+SolarTherm/Models/Storage/Thermocline/RadCharge

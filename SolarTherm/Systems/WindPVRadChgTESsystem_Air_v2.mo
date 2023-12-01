@@ -14,9 +14,10 @@ model WindPVRadChgTESsystem_Air_v2
   replaceable package Filler = SolarTherm.Materials.Brick_Stack;
   //Inputs
   parameter Real RM = 1.5 "Renewable Multiple";
-  parameter Real HM = 1.5 "Heater Multiple";
+  parameter Real HM = (E_max_RD*eff_heater)/(Q_boiler_des*3.158*3600.0) "Heater Multiple";
   parameter Real PV_fraction = 0.2 "PV_fraction";
-  parameter Real t_storage = 5.0 "Hours of storage (hours)";
+  parameter Real t_storage = 5.0 "Hours of storage (hours) of RD-defined storage";
+  parameter Real E_max_RD = t_storage * 3600.0 * Q_boiler_des "Joules of RD-defined storage capacity"; 
   //parameter Real util_storage_des = 0.5995;
   //Utilisation determined via component-level analysis
   //parameter Real level_storage_mid = 0.5486;
@@ -36,17 +37,17 @@ model WindPVRadChgTESsystem_Air_v2
   Real Capacity_Factor(start = 0) "Capacity factor of the system";
   //Discretisation and geometry
   parameter Integer N_f = 6;
-  parameter Real eta = 0.55;
+  parameter Real eta = 0.50512;
   parameter SI.Length H_unit = 0.50;
-  parameter SI.WaveNumber c_surf = 100.0;
-  parameter SI.Length L_char = 0.015;
+  parameter SI.WaveNumber c_surf = 83.340;
+  parameter SI.Length L_char = 0.01136;
   parameter SI.Temperature T_rad_max = CV.from_degC(1200);
   parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.0 "W/m2K";
   parameter SI.MassAttenuationCoefficient A_radperkg = 0.0011796 "Radiative wire area per kg of bricks (m2/kg)";  
   parameter Real em_wire = 0.70 "Emissivity of the radiative wire (-)";
   //1=Liq 2=Air
   //Temperature Controls
-  parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature";
+  parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature at which storage capacity is calculated at.";
   parameter SI.Temperature T_PB_start = 700 + 273.15 "Temperature at which TES can start being discharged";
   //halfway between
   parameter SI.Temperature T_PB_min = 650.0 + 273.15 "Minimum tolerated outlet temperature to PB, also design inlet to the HRSG";
@@ -59,7 +60,7 @@ model WindPVRadChgTESsystem_Air_v2
   //parameter SI.TemperatureDifference T_tol_PB = 200.0 "Power block Temperature Tolerance (K)";
   //Level-Controls
   //parameter SI.Time t_stor_startPB = 0.2 * t_storage * 3600.0 "Number of storage seconds stored before TES can start discharging (20% of capacity)";
-  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des "Maximum tank stored energy";
+  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des * 1.6294 "Maximum tank stored energy, with 1.6294 scaling for RD definition";
   parameter Modelica.SIunits.HeatFlowRate Q_boiler_des = 600.0e6 "Heat to boiler at design";
   parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_boiler_des / (h_air_PB_set - h_air_cold_set);
   //parameter Real ar = 0.48/0.5;
