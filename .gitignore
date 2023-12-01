@@ -28,3 +28,5 @@ SolarTherm/Resources
 cscope.*
 *.deb
 wheel
+SolarTherm/Systems/Private
+SolarTherm/Models/Storage/Private
