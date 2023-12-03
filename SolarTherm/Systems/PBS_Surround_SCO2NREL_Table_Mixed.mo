@@ -1,5 +1,5 @@
 within SolarTherm.Systems;
-
+//SM=3.0, 17.5 ideal storage hours, Storage blends to 710 degC , Power block 720-500 degC. 746586 MWhe per year
 model PBS_Surround_SCO2NREL_Table_Mixed
   //Note here we used the optimised isp value
   function opt_file_naming
@@ -89,8 +89,8 @@ model PBS_Surround_SCO2NREL_Table_Mixed
   parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Change this to sweep
   parameter Real eff_storage_des = Tank.util;// 0.8317; //Override and set it to 0.55 Tank.util "design storage utilisation";
-  parameter String storage_file = stor_file_naming("modelica://SolarTherm/Data/Storage/Storage_Table_Mixed42_252_", t_storage);//Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Storage/Storage_Table_Mixed42_252_10h.motab");
-  parameter Real t_storage(unit = "h") = 16.0 "Hours of storage";
+  parameter String storage_file = stor_file_naming("modelica://SolarTherm/Data/Storage/Storage_Table_Mixed42_b710_252_", t_storage);
+  parameter Real t_storage(unit = "h") = 17.5 "Hours of storage";
   //parameter Real L_recv_max = 0.94599;
   //L_4
   //parameter Real L_recv_start = 0.28678;

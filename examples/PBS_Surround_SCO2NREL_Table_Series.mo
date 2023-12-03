@@ -1,7 +1,7 @@
-within SolarTherm.Systems;
+within examples;
 //SM=3.0, 25 ideal storage hours, Power block 720-500 degC. 759153 MWhe per year
 model PBS_Surround_SCO2NREL_Table_Series
-  //Note here we used the optimised isp value
+    //Note here we used the optimised isp value
   function opt_file_naming
     input String prefix;
     //"modelica://SolarTherm/Data/Optics/SodiumBoiler/surround/Ref/"

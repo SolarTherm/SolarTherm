@@ -147,7 +147,7 @@ model Reference_2
 	parameter Real cold_tnk_defocus_lb = 5 "Cold tank empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_defocus_ub = 7 "Cold tank empty trigger upper bound"; // Level (above which) to start disptach
 
-	parameter Real cold_tnk_crit_lb = 0 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
+	parameter Real cold_tnk_crit_lb = 1 "Cold tank critically empty trigger lower bound"; // Level (below which) to stop disptach
 	parameter Real cold_tnk_crit_ub = 30 "Cold tank critically empty trigger upper bound"; // Level (above which) to start disptach
 
 	parameter Real Ti = 0.1 "Time constant for integral component of receiver control";
