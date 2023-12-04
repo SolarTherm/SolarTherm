@@ -16,7 +16,7 @@ class TestReference(unittest.TestCase):
 		sim = simulation.Simulator(fn)
 		sim.compile_model()
 		sim.compile_sim(args=['-s'])
-		sim.simulate(start=0, stop='1y', step='300s', maxStep='60s', initStep='60s', solver='dassl', nls='mixed')
+		sim.simulate(start=0, stop='1y', step='300s', maxStep='60s', initStep='60s', solver='dassl', nls='mixed', args=['noEventEmit'])
 		self.res = postproc.SimResultElec(sim.res_fn)
 		self.perf = self.res.calc_perf()
 

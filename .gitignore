@@ -30,3 +30,4 @@ cscope.*
 wheel
 SolarTherm/Systems/Private
 SolarTherm/Models/Storage/Private
+SolarTherm/Data/Private

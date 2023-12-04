@@ -456,9 +456,9 @@ equation
     
     
     if Correlation == 1 then //Liquids
-      Nu[i] = Nusselt_Liquid(Re[i],Pr[i],T_f[i],T_s[i],mu_f[i],mu_f_wall[i]);
+      Nu[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.Nusselt_Liquid(Re[i],Pr[i],T_f[i],T_s[i],mu_f[i],mu_f_wall[i]);
     else //Gas
-      Nu[i] = Nusselt_Gas(Re[i],Pr[i],T_f[i],T_s[i]);
+      Nu[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.Nusselt_Gas(Re[i],Pr[i],T_f[i],T_s[i]);
     end if;
     
     /*

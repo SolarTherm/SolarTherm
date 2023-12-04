@@ -405,7 +405,6 @@ class Simulator(object):
 			'-lv', lv, # Specifies which logging levels to enable
 			'-f', self.init_out_fn,
 			'-r', self.res_fn,
-			'-noEventEmit',
 			]
 
 		if initStep==None:
