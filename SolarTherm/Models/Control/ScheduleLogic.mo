@@ -57,7 +57,7 @@ equation
       if on_discharge then
         m_flow = m_flow_sch;
       else
-        m_flow = min(m_flow_in, m_flow_sch);
+        m_flow = 0;
       end if;
     end if;
   else
