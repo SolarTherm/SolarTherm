@@ -1,4 +1,4 @@
-within SolarTherm.Models.Control;
+within SolarTherm.Models.Control.Private;
 
 model WindPV_RadTESControl_v2
   //now outputs the demand m_flow_PB_dem if able, now increases m_flow_PB if the storage outlet is below the ideadl temperature
