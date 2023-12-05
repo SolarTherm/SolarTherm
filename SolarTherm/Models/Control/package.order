@@ -23,3 +23,4 @@ ScheduleLogic
 Thermocline_Controller_PBLimit_Level
 Thermocline_Controller_PBLimit
 WindPV_Thermocline_Control
+WindPV_RadTES_Control
