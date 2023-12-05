@@ -5,3 +5,5 @@ PBS_Surround_SCO2NREL_Table_Series
 PBS_Surround_SCO2NREL_Table_Mixed
 PBS_Surround_SCO2NREL_Mixed
 PBS_Surround_SCO2NREL_Series
+AnnularTES_ComponentLevel
+WindPV_AnnularTES_SystemModel
