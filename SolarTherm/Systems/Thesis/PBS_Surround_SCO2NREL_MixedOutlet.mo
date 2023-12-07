@@ -85,7 +85,7 @@ model PBS_Surround_SCO2NREL_MixedOutlet
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
-  parameter Integer N_f = 252 "Number of discretizations in vertical fluid phase for each tank";
+  parameter Integer N_f = 25 "Number of discretizations in vertical fluid phase for each tank";
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";

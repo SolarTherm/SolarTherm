@@ -39,7 +39,7 @@ model Thermocline_Spheres_3P_MixedOutlet
   parameter SI.Length t_e_B = d_p_B/(2*N_p_B) "Encapsulation thickness"; //Defaults to equidistant radial
   parameter SI.Length t_e_C = d_p_C/(2*N_p_C) "Encapsulation thickness"; //Defaults to equidistant radial
     //Discretization settings
-  parameter Integer N_f_A = 20 "Number of fluid CVs in Tank_A";
+  parameter Integer N_f_A = 50 "Number of fluid CVs in Tank_A";
   parameter Integer N_p_A = 5 "Number of filler CVs in Tank_A";
   parameter Integer N_f_B = N_f_A "Number of fluid CVs in Tank_B";
   parameter Integer N_p_B = N_p_A "Number of filler CVs in Tank_B";
@@ -77,8 +77,10 @@ model Thermocline_Spheres_3P_MixedOutlet
     Placement(visible = true, transformation(extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {45, 55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealOutput T_bot_measured "Temperature at the bottom of the tank as an output signal (K)" annotation(
     Placement(visible = true, transformation(extent = {{40, -70}, {60, -50}}, rotation = 0), iconTransformation(origin = {45, -55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
-  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)" annotation(
+  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (J/kg)" annotation(
     Placement(visible = true, transformation(extent = {{40, -72}, {60, -52}}, rotation = 0), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealOutput h_top_outlet "Enthaply at the top of the tank as an output signal (J/kg)" annotation(
+    Placement(visible = true, transformation(extent = {{40, -72}, {60, -52}}, rotation = 0), iconTransformation(origin = {-27, 65}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation(
     Placement(visible = true, transformation(origin = {-50, 8.88178e-16}, extent = {{-10, -10}, {10, 10}}, rotation = 0), iconTransformation(origin = {-46, 0}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   Modelica.Blocks.Interfaces.RealInput p_amb "Ambient Pressure" annotation(
@@ -323,7 +325,7 @@ equation
     h_bot_outlet = Tank_C.h_f[1];
   end if;
   */
-
+  
   //Charging
   if fluid_a.m_flow > 0.0 then //Charging
       if Charge_State > 2 then
@@ -338,7 +340,7 @@ equation
         fluid_a.h_outflow = Tank_B.h_in * (1.0 - f_chg) + Tank_A.h_in * (f_chg);
         fluid_b.h_outflow = Tank_B.h_out * (1.0 - f_chg) + Tank_A.h_out * (f_chg);
       
-        h_bot_outlet = (1.0 - f_chg)*Tank_B.h_f[1] + f_chg*Tank_A.h_f[1];
+        //h_bot_outlet = (1.0 - f_chg)*Tank_B.h_f[1] + f_chg*Tank_A.h_f[1];
       else
         Tank_C.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_chg);
         Tank_B.m_flow = -1.0 * fluid_a.m_flow * f_chg;
@@ -351,7 +353,7 @@ equation
         fluid_a.h_outflow = Tank_C.h_in * (1.0 - f_chg) + Tank_B.h_in * (f_chg);
         fluid_b.h_outflow = Tank_C.h_out * (1.0 - f_chg) + Tank_B.h_out * (f_chg);
       
-        h_bot_outlet = (1.0 - f_chg)*Tank_C.h_f[1] + f_chg*Tank_B.h_f[1];
+        //h_bot_outlet = (1.0 - f_chg)*Tank_C.h_f[1] + f_chg*Tank_B.h_f[1];
       end if;
   else //Discharging
       if Discharge_State < 3 then
@@ -366,7 +368,7 @@ equation
         fluid_a.h_outflow = Tank_A.h_out * (1.0 - f_disch) + Tank_B.h_out * (f_disch);
         fluid_b.h_outflow = Tank_A.h_in * (1.0 - f_disch) + Tank_B.h_in * (f_disch);
       
-        h_bot_outlet = (1.0 - f_disch)*Tank_A.h_f[1] + f_disch*Tank_B.h_f[1];
+        //h_bot_outlet = (1.0 - f_disch)*Tank_A.h_f[1] + f_disch*Tank_B.h_f[1];
       else
         Tank_A.m_flow = 0.0;
         Tank_B.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_disch);
@@ -379,9 +381,22 @@ equation
         fluid_a.h_outflow = Tank_B.h_out * (1.0 - f_disch) + Tank_C.h_out * (f_disch);
         fluid_b.h_outflow = Tank_B.h_in * (1.0 - f_disch) + Tank_C.h_in * (f_disch);
       
-        h_bot_outlet = (1.0 - f_disch)*Tank_B.h_f[1] + f_disch*Tank_C.h_f[1];
+        //h_bot_outlet = (1.0 - f_disch)*Tank_B.h_f[1] + f_disch*Tank_C.h_f[1];
       end if;
   end if;
+  
+  if Charge_State > 2 then
+    h_bot_outlet = (1.0 - f_chg)*Tank_B.h_f[1] + f_chg*Tank_A.h_f[1];
+  else
+    h_bot_outlet = (1.0 - f_chg)*Tank_C.h_f[1] + f_chg*Tank_B.h_f[1];
+  end if;
+  
+  if Discharge_State < 3 then
+    h_top_outlet = (1.0 - f_disch)*Tank_A.h_f[N_f_A] + f_disch*Tank_B.h_f[N_f_B];
+  else
+    h_top_outlet = (1.0 - f_disch)*Tank_B.h_f[N_f_B] + f_disch*Tank_C.h_f[N_f_C];
+  end if;
+  
   //Connect pressure and ambient temp
   fluid_a.p = p_amb;
   fluid_a.p = fluid_b.p;
