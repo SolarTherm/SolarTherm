@@ -137,7 +137,7 @@ model Annular_Rahjoo_2022
  SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker PBS_TeeJunction_LoopBreaker_Bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-8.88178e-16, -47}, extent = {{-18, -19}, {18, 19}}, rotation = 180)));
  Modelica.Blocks.Sources.RealExpression Receiver_Inlet_T(y = T_inlet)  annotation(
-    Placement(visible = true, transformation(origin = {-184, 50}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-196, -8}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 algorithm
     T_inlet := Dataset.Timeseries_TinletK(time);
     //m_Recv_signal := max(1.0e-6, Dataset.Timeseries_uflow(time)*Fluid.rho_Tf(thermocline_Tank.Tank_A.T_f[integer(N_f/2.0)+1],1.0)*thermocline_Tank.Tank_A.A_fx);
@@ -239,9 +239,9 @@ equation
  connect(thermocline_Tank.fluid_b, PBS_TeeJunction_LoopBreaker_Bot.fluid_c) annotation(
     Line(points = {{0, -32}, {0, -32}, {0, -46}, {0, -46}}, color = {0, 127, 255}));
  connect(Receiver_Inlet_T.y, Recv_outlet.T_in) annotation(
-    Line(points = {{-172, 50}, {-160, 50}, {-160, 54}, {-132, 54}, {-132, 54}}, color = {0, 0, 127}));
+    Line(points = {{-185, -8}, {-160, -8}, {-160, 54}, {-132, 54}}, color = {0, 0, 127}));
  connect(Receiver_Inlet_T.y, PB_outlet.T_in) annotation(
-    Line(points = {{-172, 50}, {-160, 50}, {-160, -88}, {138, -88}, {138, -52}, {112, -52}, {112, -54}}, color = {0, 0, 127}));  
+    Line(points = {{-185, -8}, {-160, -8}, {-160, -88}, {138, -88}, {138, -52}, {112, -52}, {112, -54}}, color = {0, 0, 127}));  
 annotation(experiment(StopTime = 518400, StartTime = 0, Tolerance = 1e-3, Interval = 300.0),
     Diagram(coordinateSystem(preserveAspectRatio = false)));
 end Annular_Rahjoo_2022;

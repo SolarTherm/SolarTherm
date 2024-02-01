@@ -1,0 +1,38 @@
+within SolarTherm.Calculators;
+
+model Fluid_Properties_Test_pT
+  package Medium = Modelica.Media.Water.WaterIF97_pT;
+  //package Medium = Modelica.Media.Air.DryAirNasa;
+  SI.SpecificEnthalpy h_lsat "Specific enthalpy of saturated liquid.";
+  SI.SpecificEnthalpy h_vsat "Specific enthalpy of saturated vapour.";
+  //Modelica.Media.Water.IF97_Utilities.hl_p
+  
+  //Pressure is swept using time
+  parameter SI.Pressure p_start = 0.650e3;//1.0e3; //1kPa
+  parameter SI.Pressure p_stop = 100.0e6;//50.0e6; //50MPa
+  
+  //Temperature is swept via an array
+  //parameter SI.Temperature T_array[7] = {10.0,40.0,60.0,100.0,200.0,300.0,400.0}.+273.15; //p-h graph
+  parameter SI.Temperature T_array[7] = {10.0,50.0,100.0,200.0,300.0,400.0,500.0}.+273.15; //h-s graph
+  
+
+  SI.SpecificEnthalpy h_array[7] "Specific enthalpy (J/kg)";
+  SI.SpecificEnthalpy s_array_isotherm[7] "Specific entropy for the given T_array (J/kgK)";
+  SI.Pressure p(start=p_start) "Absolute pressure (Pa)";
+protected
+  Medium.BaseProperties state[7] "Current thermodynamic state";
+equation
+  //Simulation lasts 100s
+  p = p_start*10.0^(0.01*Modelica.Math.log10(p_stop/p_start)*time); //This is to plot the p-h diagram (isotherm lines)
+  
+  h_lsat = Modelica.Media.Water.IF97_Utilities.hl_p(p);
+  h_vsat = Modelica.Media.Water.IF97_Utilities.hv_p(p);
+  for i in 1:7 loop
+    state[i].p = p;
+    state[i].T = T_array[i];
+    h_array[i] = state[i].h;
+    s_array_isotherm[i] = Modelica.Media.Water.IF97_Utilities.s_pT(p,T_array[i]); //calc directly
+  end for; 
+  annotation(
+    experiment(StopTime = 100, StartTime = 0, Tolerance = 1e-3, Interval = 0.1));
+end Fluid_Properties_Test_pT;

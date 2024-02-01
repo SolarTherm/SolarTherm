@@ -1,0 +1,12 @@
+within SolarTherm.Media.H2.H2_amb_p_table_utilities;
+function s_T "Specific absolute entropy of H2 gas as a function of temperature at atmospheric pressure"
+	extends Modelica.Icons.Function;
+	input Modelica.SIunits.Temperature T "Temperature (K)";
+	output Modelica.SIunits.SpecificEntropy s "Specific entropy (J/kgK)";
+protected
+    constant Modelica.SIunits.Temperature T_data[26] = {100.00, 150.00, 200.00, 250.00, 298.15, 300.00, 350.00, 400.00, 450.00, 500.00, 550.00, 600.00, 700.00, 800.00, 900.00, 1000.00, 1100.00, 1200.00, 1300.00, 1400.00, 1500.00, 1600.00, 1700.00, 1800.00, 1900.00, 2000.00};
+	constant Modelica.SIunits.SpecificEntropy s_data[26] = {51301.71, 55520.15, 59239.92, 62324.62, 64825.36, 64913.87, 67129.48, 69059.34, 70765.96, 72294.59, 73678.70, 74943.62, 77189.87, 79145.52, 80883.48, 82453.33, 83889.90, 85218.40, 86457.38, 87620.57, 88718.48, 89759.31, 90749.66, 91694.87, 92599.41, 93467.01};
+
+algorithm
+	s := Utilities.Interpolation.Interpolate1D(T_data,s_data,T);
+end s_T;

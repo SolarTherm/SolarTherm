@@ -1,3 +1,5 @@
+Fluid
+Filler
 z_f_sim_0p0h
 T_f_sim_degC_0p0h
 z_f_sim_0p5h
@@ -18,8 +20,6 @@ z_f_exp_1p5h
 T_f_exp_degC_1p5h
 z_f_exp_2p0h
 T_f_exp_degC_2p0h
-Fluid
-Filler
 Initial_Temperature_f
 Initial_Enthalpy_f
 Initial_Temperature_p

@@ -57,9 +57,10 @@ model Thermocline_Spheres_SingleTank_Final
                                           annotation (Placement(visible = true,transformation(
           extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {165, -37}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
   
-  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (K)"
-                                          annotation (Placement(visible = true,transformation(
-          origin = {-40, -70},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealOutput h_bot_outlet "Enthaply at the bottom of the tank as an output signal (J/kg)" annotation (Placement(visible = true,transformation(
+          origin = {-40, -74},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-27, -65}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+  Modelica.Blocks.Interfaces.RealOutput h_top_outlet "Enthaply at the top of the tank as an output signal (J/kg)" annotation (Placement(visible = true,transformation(
+          origin = {-40, -74},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-27, 65}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
         visible = true,transformation(
         
@@ -78,7 +79,7 @@ model Thermocline_Spheres_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, redeclare replaceable package  Encapsulation_Package = Encapsulation_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank, t_e = t_e);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, redeclare replaceable package  Encapsulation_Package = Encapsulation_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, N_p = N_p, U_loss_tank = U_loss_tank, t_e = t_e, eff_pump=eff_pump);
 
 
   //Cost BreakDown
@@ -103,6 +104,10 @@ model Thermocline_Spheres_SingleTank_Final
   Fluid_Package.State fluid_top "Fluid entering/exiting top";
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
+  //Total pumping losses
+  SI.Power W_loss_pump = Tank_A.W_loss_pump;
+  parameter Real eff_pump = 0.8 "Pumping efficiency, fed into physical model";
+  
 equation
   if fluid_a.m_flow > 1e-6 then
     fluid_top.h = inStream(fluid_a.h_outflow);
@@ -122,6 +127,7 @@ equation
   
   //Determine tank outlet enthalpy used by external control system
   h_bot_outlet = Tank_A.h_f[1];
+  h_top_outlet = Tank_A.h_f[N_f];
   
   //Mass balance
   fluid_a.m_flow = -1.0*fluid_b.m_flow; //always true for a steady state component

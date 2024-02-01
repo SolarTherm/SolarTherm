@@ -1,0 +1,30 @@
+within SolarTherm.Calculators;
+
+model Fluid_Properties_Test
+  package Medium = Modelica.Media.Water.WaterIF97_pT;
+  //package Medium = Modelica.Media.Air.DryAirNasa;
+  
+  
+  //Pressure is swept using time
+  parameter SI.SpecificEnthalpy p_start = 1.0e3; //1kPa
+  parameter SI.SpecificEnthalpy p_stop = 50.0e6; //20MPa
+  
+  //Temperature is swept via an array
+  parameter SI.Temperature T_array[6] = {10.0,40.0,60.0,100.0,200.0,350.0}.+273.15;
+
+  SI.SpecificEnthalpy h_array[6] "Specific enthalpy (J/kg)";
+  SI.Pressure p(start=p_start) "Absolute pressure (Pa)";
+protected
+  Medium.BaseProperties state[6] "Current thermodynamic state";
+equation
+  //Simulation lasts 100s
+  //p = p_start + (time/1000.0)*(p_stop-p_start);
+  p = p_start*10.0^(0.01*Modelica.Math.log10(p_stop/p_start)*time);
+  for i in 1:6 loop
+    state[i].p = p;
+    state[i].T = T_array[i];
+    h_array[i] = state[i].h;
+  end for; 
+  annotation(
+    experiment(StopTime = 100, StartTime = 0, Tolerance = 1e-3, Interval = 0.1));
+end Fluid_Properties_Test;

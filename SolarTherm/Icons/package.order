@@ -39,3 +39,6 @@ StorageModel_TwoTanks
 DishModel
 ReceiverDishModel
 GridInput
+Chemistry
+ChemEqn
+Reactor
