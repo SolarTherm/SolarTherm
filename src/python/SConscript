@@ -21,13 +21,24 @@ wheel = env.Glob('wheel/solartherm-*.whl')
 
 env.Depends(wheel,pipwheel)
 
+# this logic is used to switch the 'pip install' command to '--user' in the case
+# that the PREFIX is a parent of the pip 'install --user' destination.
+from pathlib import Path
+import site
+prefix = Path(env['PREFIX']).expanduser().resolve()
+user = Path(site.USER_SITE).resolve()
+if prefix in user.parents:
+	arg = '--user'
+else:
+	arg = '--prefix=$PREFIX'	
+
 pipinst = env.Command(
 	target = env.subst('$PREFIX/lib/python$PYVERSION/site-packages/solartherm/__init__.py')
 	,source = wheel
-	,action = ['%s -m pip install --prefix=$PREFIX --upgrade $SOURCE'%(sys.executable,)]
+	,action = ['%s -m pip install %s --upgrade $SOURCE'%(sys.executable,arg)]
 )
 
-# FIXME we still need to implement a smart way of *uninstall* the pip package.
+# FIXME we would still like to implement a smart way of *uninstall* the pip package.
 # for case of 'scons -c install'.
 
 # vim: ts=4:sw=4:noet:tw=80

@@ -6,8 +6,11 @@ senv.Append(
 	,LIBPATH = ['$OM_LIBPATH']
 	,LIBS = ['m'] + env['OM_LIBS']
 )
+print("MODELICA CPPPATH=",senv.subst("$CPPPATH"))
+
 conf = senv.Configure()
 conf.CheckHeader('openmodelica.h')
+conf.CheckHeader('ModelicaUtilities.h')
 senv = conf.Finish()
 
 lib1 = senv.SharedLibrary('st_tables',[
@@ -38,6 +41,8 @@ penv = conf.Finish()
 
 lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
+#lib5 = penv.SharedLibrary('st_runpy2',['runpy2.c'])
+
 # GLPK-linked bits...
 genv = senv.Clone()
 genv.Append(
@@ -56,7 +61,7 @@ lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
 genv.Depends(lib3,lib4)
 
-shlibs = [lib1,lib4,lib2,lib3]
+shlibs = [lib1,lib4,lib2,lib3]#,lib5]
 pysrcs = ['st_test_ext.py','run_solstice.py']
 
 # this is the location that st_simulate etc will use
