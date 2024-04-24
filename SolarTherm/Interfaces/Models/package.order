@@ -17,4 +17,5 @@ Dish
 ReceiverFluid_Dish
 Receiver_Dish
 SimpleResistiveHeater
+SimpleResistiveHeaterFluid
 Boiler

@@ -115,7 +115,7 @@ model WindPVsaltTESsystem
 		Placement(visible = true, transformation(origin = {-106, -30}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	// Electrical Heater
-	SolarTherm.Models.Fluid.HeatExchangers.SimpleResistiveHeater heater(
+	SolarTherm.Models.Fluid.HeatExchangers.SimpleResistiveHeaterFluid heater(
 		redeclare package Medium = Medium,
 		heater_efficiency = heater_efficiency,
 		T_cold_set = T_cold_set,

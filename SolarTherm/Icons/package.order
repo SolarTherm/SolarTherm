@@ -36,5 +36,7 @@ Turbine
 DishModel
 ReceiverDishModel
 ResistiveHeater
+ResistiveHeaterFluid
 Boiler
 GridInput
+Thermal
