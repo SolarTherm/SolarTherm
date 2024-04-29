@@ -1,7 +1,7 @@
 within SolarTherm.Systems;
 
-model PBS_Surround_SCO2NREL_Mixed
-  //This is a Gen3 inspired annual system model with two towers for and equivalent of 100 MWe, this variation has three tanks and a mixed-outlet storage algorithm.
+model PBS_Surround_SCO2NREL_Series_v2
+  //This is a Gen3 inspired annual system model with two towers for and equivalent of 100 MWe, this variation has three tanks
 
   function opt_file_naming
     input String prefix;
@@ -75,15 +75,16 @@ model PBS_Surround_SCO2NREL_Mixed
   parameter SI.Temperature T_PB_in_des = 720.0 + 273.15 "Power Block design inlet temperature";
   parameter SI.Temperature T_PB_out_des = 500.0 + 273.15 "Power Block design outlet temperature";
   //Controller Parameters
-  parameter Real eff_storage_des = 0.85 "design storage utilisation";
-  parameter SI.Time t_stor_startPB = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
+  parameter Real eff_storage_des = 0.55 "design storage utilisation";
+  parameter SI.Time t_stor_start_dis = 1.0 * 3600.0 "minimum hours of storage available to startup PB";
   //Material and Media Packages
   replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT "Medium props for molten salt";
   replaceable package Fluid = SolarTherm.Materials.Sodium_Table "Material model for Sodium Chloride PCM";
   replaceable package Filler = SolarTherm.Materials.MgO_Constant "Tank filler";
   //Storage Design
   parameter SI.Energy E_max = Q_flow_ref_blk * t_storage * 3600.0 "Theoretical max capacity of storage";
-  parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase for each tank";//252 for the thesis
+  parameter Integer N_f = 50 "Number of discretizations in vertical fluid phase for each tank";
+  //252 in thesis
   parameter Integer N_p = 10 "Number of discretizations in radial filler phase";
   parameter SI.Length d_p = 0.10 "Tank filler diameter";
   parameter Real eta = 0.26 "Packed bed void fraction (porosity)";
@@ -128,6 +129,7 @@ model PBS_Surround_SCO2NREL_Mixed
   parameter SI.Velocity Wspd_max = 15 if use_wind "Wind stow speed";
   parameter Real nu_start = 0.4 "Minimum energy start-up fraction to start the receiver";
   parameter Real nu_min_sf = 0.3 "Minimum turn-down energy fraction to stop the receiver";
+  parameter Real nu_recv_min = 0.10 "Minimum receiver mass flow rate fraction";
   parameter Real nu_defocus = 1 "Energy fraction to the receiver at defocus state";
   parameter Real[8] MetaA = SolarTherm.Utilities.Metadata_Optics(opt_file);
   parameter Integer n_heliostat = SolarTherm.Utilities.Round(MetaA[1]) * 2 "Number of heliostats";
@@ -177,6 +179,7 @@ model PBS_Surround_SCO2NREL_Mixed
   //Mass flow rates
   parameter SI.MassFlowRate m_flow_blk_des = Q_flow_ref_blk / (h_in_ref_blk - h_out_ref_blk) "Design point mass flow rate of sodium vapor condensing into the power block";
   parameter SI.MassFlowRate m_flow_recv_des = Q_flow_rec_des / (h_out_ref_recv - h_in_ref_recv) "Design mass flow rate into recv";
+  parameter SI.MassFlowRate m_recv_min = nu_recv_min * m_flow_recv_des;
   //Cost & Financial Parameters
   parameter String pri_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Prices/aemo_vic_2014.motab") "Electricity price file";
   parameter Currency currency = Currency.USD "Currency used for cost analysis";
@@ -277,70 +280,70 @@ model PBS_Surround_SCO2NREL_Mixed
   //Boolean constrained(start = false);
   //Real distance(start = 0);
   /*
-                                      //Analytics
-                                      //Accumulated energy
-                                      SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
-                                      SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
-                                      SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
-                                      SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
-                                      SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
-                                      SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
-                                      SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
-                                      SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
-                                      SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
-                                      Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
-                                      Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
-                                      Real eta_shading;
-                                      Real eta_cosine;
-                                      Real eta_reflection;
-                                      Real eta_blocking;
-                                      Real eta_attenuation;
-                                      Real eta_intercept;
-                                      //Annual efficiencies
-                                      Real eta_curtail_off "Curtailment: Heliostat off";
-                                      Real eta_he_av "Heliostat Availability";
-                                      Real eta_optical "Field optical efficiency including spillage";
-                                      Real eta_curtail_defocus "Curtailment: Full Storage";
-                                      Real eta_recv_abs "Receiver Absorptivity";
-                                      Real eta_recv_thermal "Receiver thermal efficiency";
-                                      Real eta_storage "Storage thermal efficiency";
-                                      Real eta_pb_gross "Power block gross efficiency";
-                                      Real eta_pb_net "Power block net efficiency";
-                                      Real eta_solartoelec "Solar to electric";
-                                    */
+                                            //Analytics
+                                            //Accumulated energy
+                                            SI.Energy E_resource(start = 0) "Integral of DNI with time if greater than zero";
+                                            SI.Energy E_helio_incident(start = 0) "Cumulative heat energy incident on heliostats after curtailment (low-DNI/high-wind)";
+                                            SI.Energy E_helio_raw(start = 0) "Cumulative heat energy delivered by field to receiver after he_av losses + optical losses";
+                                            SI.Energy E_helio_net(start = 0) "Cumulative heat energy delivered by field to receiver after defocusing losses";
+                                            SI.Energy E_recv_absorbed(start = 0) "Cumulative heat energy absorbed by the receiver before re-emission and convection";
+                                            SI.Energy E_recv_output(start = 0) "Cumulative heat energy outputted by the receiver after thermal losses";
+                                            SI.Energy E_PB_input(start = 0) "Cumulative heat energy inputted into the power block";
+                                            SI.Energy E_PB_gross(start = 0) "Cumulative gross electrical energy produced by the power block";
+                                            SI.Energy E_PB_net(start = 0) "Cumulative electrical output of the power block after parasitics and generator losses";
+                                            Real sum_shading(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_cosine(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_reflection(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_blocking(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_attenuation(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_intercept(start = 0) "Shading efficiency multiplied by time when heliostats are on";
+                                            Real sum_timehelio(start = 0) "Sum of time when heliostat is on";
+                                            Real eta_shading;
+                                            Real eta_cosine;
+                                            Real eta_reflection;
+                                            Real eta_blocking;
+                                            Real eta_attenuation;
+                                            Real eta_intercept;
+                                            //Annual efficiencies
+                                            Real eta_curtail_off "Curtailment: Heliostat off";
+                                            Real eta_he_av "Heliostat Availability";
+                                            Real eta_optical "Field optical efficiency including spillage";
+                                            Real eta_curtail_defocus "Curtailment: Full Storage";
+                                            Real eta_recv_abs "Receiver Absorptivity";
+                                            Real eta_recv_thermal "Receiver thermal efficiency";
+                                            Real eta_storage "Storage thermal efficiency";
+                                            Real eta_pb_gross "Power block gross efficiency";
+                                            Real eta_pb_net "Power block net efficiency";
+                                            Real eta_solartoelec "Solar to electric";
+                                          */
   //Storage Uitlization
   //Real E_max_today(start=0.0) "Today's max energy stored";
   //Real E_min_today(start=0.0) "Today's min energy stored";
   //Real eta_util_ytd(start=0.0) "yesterday's total utilization pct of storage";
   //End Analytics
   /*SolarTherm.Models.Storage.Thermocline.Cascaded.Thermocline_Group_3 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 10, N_f_B = 30, N_f_C = 10, N_p_A = 5, N_p_B = 5, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta, frac_1 = 0.1, frac_2 = 0.1) annotation(
-                                    Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-                                  */
+                                          Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                                        */
   /*
-              SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p, eta = eta) annotation(
-                Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-            */
+                    SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p, eta = eta) annotation(
+                      Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                  */
   //SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_2P_MixedFlow_Strat2 Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, frac_1 = 1.0 / 2.0, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = t_storage * 3600 * Q_flow_ref_blk, ar_A = ar, eta_A = eta, d_p_A = d_p, U_loss_tank_A = 0.0, T_PB_set = 0.5 * (T_max + T_PB_min), T_recv_set = T_recv_max, Correlation = 3) annotation(
   //Placement(visible = true, transformation(origin = {26, 36}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_Spheres_3P_MixedOutlet Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar_A, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, T_recv_set = T_Recv_set, T_PB_set = T_PB_set, Correlation = 3) annotation(
+  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Final Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, frac_1 = frac_1, frac_2 = frac_2, N_f_A = N_f, N_p_A = N_p, T_max = T_max, T_min = T_min, E_max = E_max, ar_A = ar_A, ar_B = ar_B, ar_C = ar_C, eta_A = eta, d_p_A = d_p, U_loss_tank_A = U_loss_tank, Correlation = 3) annotation(
     Placement(visible = true, transformation(origin = {22, 32}, extent = {{-18, -18}, {18, 18}}, rotation = 0)));
   /*
-                        SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
-                          Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-                        */
+                              SolarTherm.Models.Storage.Thermocline.Thermocline_HCylinders_SingleTank Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 8, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
+                                Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                              */
   /*
-                      SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 15, N_p_A = 5, N_f_B = 70, N_p_B = 5, N_f_C = 15, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar_A = ar, d_p_A = d_p_A, eta_A = eta, frac_1 = 0.15) annotation(
-                        Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-                      */
+                            SolarTherm.Models.Storage.Thermocline.Series.Thermocline_Spheres_SGroup3_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler_A, redeclare package Filler_Package_B = Filler_B, redeclare package Filler_Package_C = Filler_C, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f_A = 15, N_p_A = 5, N_f_B = 70, N_p_B = 5, N_f_C = 15, N_p_C = 5, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar_A = ar, d_p_A = d_p_A, eta_A = eta, frac_1 = 0.15) annotation(
+                              Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                            */
   /*
-                        SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
-                          Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
-                        */
+                              SolarTherm.Models.Storage.Thermocline.Thermocline_Spheres_SingleTank_Compact Tank(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler_B, Correlation = 3, E_max = t_storage * 3600 * Q_flow_ref_blk, N_f = 100, N_p = 10, T_max = T_max, T_min = T_min, U_loss_tank = U_loss_tank, ar = ar, d_p = d_p_A, eta = eta) annotation(
+                                Placement(visible = true, transformation(origin = {26, 36}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
+                              */
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_bot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {26, 13}, extent = {{-10, -9}, {10, 9}}, rotation = 180)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_top(redeclare package Medium = Medium) annotation(
@@ -349,7 +352,7 @@ model PBS_Surround_SCO2NREL_Mixed
     Placement(visible = true, transformation(origin = {-2, 6}, extent = {{4, -4}, {-4, 4}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {66, 68}, extent = {{-4, -4}, {4, 4}}, rotation = 0)));
-  SolarTherm.Models.Control.Thermocline_Controller_PBLimit Control(redeclare package HTF = Medium, T_recv_max = T_recv_max, T_PB_min = T_PB_min, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_recv_start = T_recv_start, T_PB_start = T_PB_start, t_wait = t_PB_wait, eff_storage_des = eff_storage_des, t_stor_startPB = t_stor_startPB, E_max = Tank.E_max) annotation(
+  SolarTherm.Models.Control.Thermocline_Controller_PBLimit_v2 Control(redeclare package HTF = Medium, T_recv_max = T_recv_max, T_PB_min = T_PB_min, T_target = T_max, m_flow_PB_des = m_flow_blk_des, Q_des_blk = Q_flow_ref_blk, T_recv_start = T_recv_start, T_PB_start = T_PB_start, t_wait = t_PB_wait, eff_storage_des = eff_storage_des, t_stor_start_dis = t_stor_start_dis, E_max = Tank.E_max) annotation(
     Placement(visible = true, transformation(origin = {64, -18}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   //Analytics
   //Real W_1 "Non-dimensional degradation width of Tank A";
@@ -417,9 +420,9 @@ algorithm
 */
 //Optics
 equation
-  //W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f, Tank.Tank_A.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_A.H_tank;
-  //W_2 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_B.z_f, Tank.Tank_B.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_B.H_tank;
-  //W_3 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_C.z_f, Tank.Tank_C.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_C.H_tank;
+//W_1 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_A.z_f, Tank.Tank_A.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_A.H_tank;
+//W_2 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_B.z_f, Tank.Tank_B.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_B.H_tank;
+//W_3 = SolarTherm.Utilities.Thermocline.Degradation_Width_2(Tank.Tank_C.z_f, Tank.Tank_C.T_f, 0.05, 0.95, T_min, T_max) / Tank.Tank_C.H_tank;
 /*
 //Analytics
 //Cumulative heat
@@ -506,8 +509,6 @@ equation
     Line(points = {{73, -17}, {76, -17}, {76, 76}, {66, 76}, {66, 72}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.defocus, receiver.defocus) annotation(
     Line(points = {{73, -21}, {70, -21}, {70, -26}, {-38, -26}, {-38, 20}, {-34, 20}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
-  connect(Tank.h_bot_outlet, Control.h_tank_outlet) annotation(
-    Line(points = {{17, 20}, {56, 20}, {56, -9}, {61, -9}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(powerBlock.h_out_signal, Control.h_PB_outlet) annotation(
     Line(points = {{84, 4}, {68, 4}, {68, -9}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Control.Q_defocus, receiver.Q_defocus) annotation(
@@ -518,6 +519,10 @@ equation
     Line(points = {{30, 22}, {30, -8.5}, {56, -8.5}, {56, -23}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
   connect(Tank.Level, Control.Level) annotation(
     Line(points = {{30, 36}, {46, 36}, {46, -16}, {56, -16}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Tank.h_top_outlet, Control.h_tank_top) annotation(
+    Line(points = {{18, 44}, {18, 44}, {18, 48}, {58, 48}, {58, -10}, {58, -10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
+  connect(Tank.h_bot_outlet, Control.h_tank_bot) annotation(
+    Line(points = {{18, 20}, {16, 20}, {16, -4}, {62, -4}, {62, -10}, {62, -10}}, color = {0, 0, 127}, pattern = LinePattern.Dash));
 protected
   annotation(
     Diagram(coordinateSystem(extent = {{-140, -120}, {160, 140}}, initialScale = 0.1), graphics = {Text(origin = {0, 6}, extent = {{-52, 8}, {-4, -12}}, textString = "Receiver", fontSize = 12, fontName = "CMU Serif"), Text(origin = {12, 2}, extent = {{-110, 4}, {-62, -16}}, textString = "Heliostats Field", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-16, 10}, extent = {{-80, 86}, {-32, 66}}, textString = "Sun", fontSize = 12, fontName = "CMU Serif"), Text(origin = {0, -12}, extent = {{80, 12}, {128, -8}}, textString = "Power Block", fontSize = 12, fontName = "CMU Serif"), Text(origin = {8, -2}, extent = {{112, 16}, {160, -4}}, textString = "Market", fontSize = 12, fontName = "CMU Serif"), Text(origin = {-42, -34}, extent = {{80, 12}, {128, -8}}, textString = "Controller", fontSize = 12, fontName = "CMU Serif")}),
@@ -530,4 +535,4 @@ protected
 	</ul>
 
 	</html>"));
-end PBS_Surround_SCO2NREL_Mixed;
+end PBS_Surround_SCO2NREL_Series_v2;

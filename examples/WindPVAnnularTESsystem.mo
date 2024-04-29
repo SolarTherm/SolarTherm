@@ -1,6 +1,5 @@
-within SolarTherm.Systems;
-//Total simulation time = 8448s, Capacity Factor = 98.58%, Total annual heat delivered = 774.4 GWh
-model WindPV_AnnularTES_SystemModel "Generic system model with WindPV input, Annular TES component and a boiler"
+within examples;
+model WindPVAnnularTESsystem
   extends Modelica.Icons.Example;
   import Modelica.SIunits.Conversions.*;
   import Modelica.Constants.*;
@@ -17,8 +16,8 @@ model WindPV_AnnularTES_SystemModel "Generic system model with WindPV input, Ann
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
   parameter Real t_storage = 20.00 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.4697; //Utilisation determined via component-level analysis 0.5767
-  parameter Real level_storage_mid = 0.4659; //Midpoint of minimum and maximum storage levels determine via component-level analysis 0.4637
+  parameter Real util_storage_des = 0.4697; //Utilisation determined via component-level analysis
+  parameter Real level_storage_mid = 0.4659; //Midpoint of minimum and maximum storage levels determine via component-level analysis
   
   //Heater Parameters
   parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
@@ -35,7 +34,7 @@ model WindPV_AnnularTES_SystemModel "Generic system model with WindPV input, Ann
   Real Capacity_Factor(start=0) "Capacity factor of the system";
   
   //Discretisation and geometry
-  parameter Integer N_f = 10; //50
+  parameter Integer N_f = 10;
   parameter Integer N_p = 5;
   parameter SI.Length L_pipe = 50.0;
   parameter SI.Length D_pipe = 0.050;
@@ -161,4 +160,5 @@ equation
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {-21, -90}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-29, 0}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-6, Interval = 300, maxStepSize = 60, initialStepSize = 60));
-end WindPV_AnnularTES_SystemModel;
+
+end WindPVAnnularTESsystem;
