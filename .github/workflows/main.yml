@@ -141,7 +141,7 @@ jobs:
     - name: Install DAKOTA
       run: |
         export PKGN=dakota-${{ env.DAKVER }}-${{ matrix.os }}-x86_64-jp
-        export DAKURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=$PKGN.tar.gz"
+        export DAKURL="https://github.com/anustg/installation-packages/releases/download/omc-dakota-solstice-installation/$PKGN.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$DAKURL" -q -O-)
         export PATH=$PATH:/usr/local/bin    # needed for Ubuntu 18.04
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib  # needed for 18.04
