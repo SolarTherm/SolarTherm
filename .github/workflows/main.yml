@@ -109,7 +109,7 @@ jobs:
       run: |
         sudo apt install libpolyclipping-dev libtbb-dev libyaml-dev  libgomp1
         export UBVER=`lsb_release -cs`
-        export SOLSTICEURL="https://cloudstor.aarnet.edu.au/plus/s/TaoO6XnrGRiwoiC/download?path=%2F&files=solstice-${SOLSTICEVER}-x86_64-$UBVER.tar.gz"
+        export SOLSTICEURL="https://github.com/anustg/installation-packages/releases/download/omc-dakota-solstice-installation/solstice-${SOLSTICEVER}-x86_64-$UBVER.tar.gz"
         sudo tar zxv --strip-components=3 -C /usr/local < <(wget "$SOLSTICEURL" -q -O-)
         echo "CHECK SOLSTICE DEPS"
         export PATH=$PATH:/usr/local/bin
