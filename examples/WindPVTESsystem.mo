@@ -15,7 +15,7 @@ model WindPVTESsystem
 	parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
 	parameter Modelica.SIunits.Power pv_ref_size = 50e6 "PV farm reference size";
 	parameter Modelica.SIunits.Power wind_ref_size = 50e6 "Wind farm reference size";
-	parameter Modelica.SIunits.Power P_elec_min = 1e5;
+	parameter Modelica.SIunits.Power P_elec_min = 1e6;
 	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
 	parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
 	parameter Real heater_multiple = 2 "Heater energy to process heat demand factor";
@@ -39,8 +39,8 @@ model WindPVTESsystem
 	parameter Real level_curtailment_off = 93 "Hot tank full trigger lower bound";
 	parameter Real level_curtailment_on = 98 "Hot tank full trigger upper bound";
 	parameter Real split_cold = 0.7 "Starting medium fraction in cold tank";
-	parameter Modelica.SIunits.Time t_process_ramp_up = 7200 "Delay until process starts";
-	parameter Modelica.SIunits.Time t_process_ramp_dw = 3600 "Delay until process shuts down";
+	parameter Modelica.SIunits.Time t_process_ramp_up = 3*3600 "Delay until process starts";
+	parameter Modelica.SIunits.Time t_process_ramp_dw = 2*3600 "Delay until process shuts down";
 
 	// System defaults
 	inner Modelica.Fluid.System system(T_start = T_amb_des, allowFlowReversal = false, p_start = Medium.p_default) annotation(
@@ -51,7 +51,7 @@ model WindPVTESsystem
 	Placement(visible = true, transformation(origin = {-20, 24}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
 
 	// Renewable energy input
-	SolarTherm.Models.Sources.GridInput grid_input(
+	SolarTherm.Models.Sources.GridInput renewable_input(
 		P_elec_max = P_elec_max, 
 		P_elec_min = P_elec_min, 
 		P_elec_pv_ref_size = pv_ref_size, 
@@ -110,9 +110,9 @@ model WindPVTESsystem
 	Modelica.SIunits.Power P_curtail "Electrical input due to curtailment";
 equation
 // Renewable heating connections
-  connect(grid_input.electricity, heater.P_elec_in) annotation(
+  connect(renewable_input.electricity, heater.P_elec_in) annotation(
     Line(points = {{-34, 0}, {-18, 0}}, color = {0, 0, 127}));
- connect(P_elec_schedule.y, grid_input.P_schedule) annotation(
+ connect(P_elec_schedule.y, renewable_input.P_schedule) annotation(
     Line(points = {{-71, -20}, {-64.5, -20}, {-64.5, -6}, {-54, -6}}, color = {0, 0, 127}));
 	connect(T_ambient.y, thermal_storage.T_amb) annotation(
 		Line(points = {{-9, 24}, {20, 24}, {20, 10}}, color = {0, 0, 127}));
@@ -123,19 +123,20 @@ equation
 	connect(thermal_storage.Q_out, thermal_process.Q_in) annotation(
 		Line(points = {{34, 0}, {60, 0}}, color = {0, 0, 127}));
  P_curtail = schedule.y[1] / heater_efficiency;
-	P_thermal = thermal_process.Q_in;
+	P_thermal = controller.Q_discharging;
+//	P_thermal = if controller.process_state==3 then thermal_process.Q_in else 0.0;
 	thermal_storage.Q_flow_set = Q_process_des;
 
 	der(E_thermal) = P_thermal;
-	der(E_renewable) = grid_input.electricity;
+ der(E_renewable) = renewable_input.electricity;
 	der(E_schedule) = Q_process_des;
  connect(schedule.y[1], controller.Q_schedule) annotation(
     Line(points = {{21, 36}, {39, 36}}, color = {0, 0, 127}));
  connect(thermal_storage.Level, controller.storage_level) annotation(
     Line(points = {{34, 6}, {36, 6}, {36, 24}, {39, 24}}, color = {0, 0, 127}));
- connect(controller.curtailment, grid_input.curtail) annotation(
+ connect(controller.curtailment, renewable_input.curtail) annotation(
     Line(points = {{50, 41}, {50, 60}, {-80, 60}, {-80, 0}, {-54, 0}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
- connect(grid_input.on_renewable, heater.on_renewable) annotation(
+ connect(renewable_input.on_renewable, heater.on_renewable) annotation(
     Line(points = {{-44, -12}, {-44, -20}, {-30, -20}, {-30, -6}, {-18, -6}}, color = {255, 0, 255}, pattern = LinePattern.Dash));
 
 annotation(

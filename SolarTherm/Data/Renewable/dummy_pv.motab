@@ -1,5 +1,7 @@
 #1
 double Power(8761,2)
+#TABLELABELS,time,power
+#TABLEUNITS,s,W
 0,0
 3600.0,-0.0
 7200.0,-0.0

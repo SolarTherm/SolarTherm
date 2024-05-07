@@ -294,7 +294,7 @@ annotation(
 			Bitmap(extent = {{-18, 64}, {-18, 64}})
 		}),
 	Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}})),
-	experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 300),
+	experiment(StartTime = 0, StopTime = 3.1536e+07, Tolerance = 1e-06, Interval = 1800),
 	Documentation(revisions = "<html>
 	<ul>
 	<li> A. Fontalvo Lascano (September 2023) :<br>Released first version. </li>
