@@ -318,12 +318,13 @@ equation
     
     when counter > 0 then
         time_simul = floor(time);
-        optimalDispatch = SolarTherm.Utilities.LinProgFuncVariability(
-            pv_motab, wind_motab,
-            horizon, dt, time_simul,
-            eff_heater, eff_process,
-            DEmax, SLmax, SLinit, SLmin,
-            P_elec_max
+        optimalDispatch = SolarTherm.Utilities.LinProgFuncVariability(pv_motab, wind_motab
+			,renewable_input.P_elec_max,renewable_input.P_elec_max_wind
+			,renewable_input.P_elec_pv_ref_size,renewable_input.P_elec_wind_ref_size
+			,horizon, dt, time_simul
+            ,eff_heater, eff_process
+            ,DEmax, SLmax, SLinit, SLmin
+			,P_elec_max
           );
           immediateDispatch = Q_process_des/1e6;
           reinit(counter, -dt);  

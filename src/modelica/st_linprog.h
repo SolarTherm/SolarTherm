@@ -11,6 +11,8 @@ double st_linprog(MotabData *wd, MotabData *pd
 );
 
 double st_linprog_variability(MotabData *pvd, MotabData *wnd
+		,double P_elec_max_pv, double P_elec_max_wind
+		,double P_elec_pv_ref_size, double P_elec_wind_ref_size
 		,int horizon, double dt, double t0
 		,double etaH, double etaG
 		,double DEmax, double SLmax, double SLinit

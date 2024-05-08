@@ -6,24 +6,30 @@ within SolarTherm.Utilities;
 function LinProgFuncVariability
     import SolarTherm.Utilities.Tables.STMotab;
 
-    input STMotab.STMotab wea_motab;
-    input STMotab.STMotab pri_motab;
+    input STMotab.STMotab pv_motab;
+    input STMotab.STMotab wnd_motab;
+	input Real P_elec_max_pv;
+	input Real P_elec_max_wind;
+	input Real P_elec_pv_ref_size;
+	input Real P_elec_wind_ref_size;
     input Integer horizon;
     input Real dt;
     input Real time_simul;
-    input Real etaC;
+    input Real etaH;
     input Real etaG;
     input Real DEmax;
     input Real SLmax;
     input Real SLinit;
     input Real SLmin;
-    input Real Ahelio;
+    input Real P_max;
     output Real Dispatch;
-    external "C" Dispatch = st_linprog_variability(wea_motab,pri_motab
+    external "C" Dispatch = st_linprog_variability(pv_motab,wnd_motab
+			,P_elec_max_pv,P_elec_max_wind
+			,P_elec_pv_ref_size,P_elec_wind_ref_size
             ,horizon,dt,time_simul
-            ,etaC,etaG
+            ,etaH,etaG
             ,DEmax,SLmax,SLinit,SLmin
-            ,Ahelio
+            ,P_max
         );
     annotation(Library="st_linprog");
 end LinProgFuncVariability;

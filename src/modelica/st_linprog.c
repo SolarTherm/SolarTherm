@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 //#define ST_LINPROG_DEBUG
 
@@ -450,6 +451,8 @@ double st_linprog(MotabData *wd, MotabData *pd
 	FIXME end-of-year wraparound is not yet implemented, will need checking.
 */
 double st_linprog_variability(MotabData *pvd, MotabData *wnd
+		,double P_elec_max_pv, double P_elec_max_wind
+		,double P_elec_pv_ref_size, double P_elec_wind_ref_size
 		,int horizon, double dt, double t0
 		,double etaH, double etaG
 		,double DEmax, double SLmax, double SLinit
@@ -509,12 +512,12 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 
 #define WND(I) (\
 	/*MSG("WND(%d) at t=%f",I,t0+((I)-1)*dt),*/\
-	motab_get_value_wraparound(wnd,    t0+(I)*dt,wind_col)\
+	P_elec_max_wind / P_elec_wind_ref_size*motab_get_value_wraparound(wnd,    t0+(I)*dt,wind_col)\
 	)
 /** as noted above, PV for the ith period (counting from 1) is at t0+i*dt */
 #define PV(I) (\
 	/*MSG("PV(%d) at t=%f",(I),t0+(I)*dt),*/\
-	motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
+	P_elec_max_pv / P_elec_pv_ref_size*motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
 	)
 
 	// Initialise problem object lp
@@ -565,7 +568,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 	/* OBJECTIVE FUNCTION
 	
 		max ∑(DEi·ηG)                     Maximise the revenue over the
-		                                       forecast interval.
+		                                  forecast interval.
 	*/
 	glp_set_obj_dir(P, GLP_MAX);
 	for(int i=1; i<= N; ++i){
@@ -577,8 +580,8 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		
 		SLmin ≤ SLi ≤ SLmax
 		0 ≤ DEi ≤ DEmax
-		0 ≤ SEi ≤ A · ηC · PVi
-		0 ≤ XEi ≤ A · ηC · PVi
+		0 ≤ SEi ≤ ηH · (PVi + WNDi)
+		0 ≤ XEi ≤ ηH · (PVi + WNDi)
 	*/
 	for(int i=1; i<= N; ++i){
 		double pvd_i = PV(i);
@@ -643,8 +646,8 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		snprintf(sss,NAMEMAX,"SEB%02d",i); glp_set_row_name(P,SEB(i),sss);
 	/*
 	2. Stored energy balance (N equations)
-		SEi + XEn = A·ηC·PVi·Δt       Collected energy is either stored (SE)
-		                               or dumped (XE).
+		SEi + XEn = ηH·(PVi + WNDi)·Δt       Collected energy is either stored (SE)
+		                                     or dumped (XE).
 	*/
 		glp_set_mat_row(P, EDX(i), 2
 			,   (int[]){0, SE(i),  XE(i)}
