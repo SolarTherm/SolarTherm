@@ -21,6 +21,7 @@ class TestScheduler(unittest.TestCase):
         df=DyMat.DyMatFile('WindPVSimpleSystemOptimalDispatch_res.mat')
         Q_flow_dis=df.data('Q_flow_dis')/1.e6
         Q_flow_chg=df.data('Q_flow_chg')/1.e6
+        P_elec_net=df.data('renewable_input.P_elec_net')/1.e6
         E_max=df.data('E_max')[0]
         E=df.data('E')/E_max*100
         times=df.abscissa('Q_flow_dis')[0]/3600.
@@ -30,6 +31,7 @@ class TestScheduler(unittest.TestCase):
         import math
         fig,axes=plt.subplots(1,1,figsize=(18,4))
         axes.plot(times,Q_flow_dis,ls='--',marker='*',color='tab:red',label='Q_flow_dis')
+        axes.plot(times,P_elec_net,ls='-',marker='+',color='tab:orange',label='P_elec_net')
         axes.plot(times,Q_flow_chg,ls='-',color='tab:blue',label='Q_flow_chg')
         axes.set_xlabel('time (h)')
         axes.set_ylabel('Thermal Power [MW]')

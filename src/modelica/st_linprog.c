@@ -481,6 +481,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 
 	MSG("t = %f s, dt = %f s:",t0,dt);
 	MSG("P_elec_max = %f MWt",P_elec_max);
+	MSG("ramp_up_fraction = %f",ramp_up_fraction);
 	MSG("DEmax = %f MWth",DEmax);
 	MSG("SLmax = %f MWhth",SLmax);
 	MSG("SLinit = %f MWhth",SLinit);
@@ -536,10 +537,10 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 #define DE(I) (SL(N) + I)
 #define SE(I) (DE(N) + I)
 #define XE(I) (SE(N) + I)
-/*#define RR(I) (XE(N) + I)*/
+#define RR(I) (XE(N) + I)
 
-/*	glp_add_cols(P, RR(N));*/
-	glp_add_cols(P, XE(N));
+	glp_add_cols(P, RR(N));
+/*	glp_add_cols(P, XE(N));*/
 	
 	MSG("Number of cols = %d",XE(N));
 	
@@ -550,15 +551,16 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		snprintf(sss,NAMEMAX,"DE%02d",i); glp_set_col_name(P,DE(i),sss);
 		snprintf(sss,NAMEMAX,"SE%02d",i); glp_set_col_name(P,SE(i),sss);
 		snprintf(sss,NAMEMAX,"XE%02d",i); glp_set_col_name(P,XE(i),sss);
-/*		snprintf(sss,NAMEMAX,"RR%02d",i); glp_set_col_name(P,RR(i),sss);*/
+		snprintf(sss,NAMEMAX,"RR%02d",i); glp_set_col_name(P,RR(i),sss);
 	}
 
+	double LCOH = 78;
+	double RampCost = 0.0;
 	/* OBJECTIVE FUNCTION*/
 	glp_set_obj_dir(P, GLP_MAX);
 	for(int i=1; i<= N; ++i){
-		//MSG("i = %d",i);
-		glp_set_obj_coef(P,DE(i),etaG*77.656); //Based on an LCOH of 77.656 USD/MWh
-/*		glp_set_obj_coef(P,RR(i),-0);*/
+		glp_set_obj_coef(P,DE(i),etaG*LCOH);
+		glp_set_obj_coef(P,RR(i),-RampCost);
 	}
 	
 	/* VARIABLE BOUNDS*/
@@ -573,7 +575,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		}
 		glp_set_col_bnds(P, SL(i), GLP_DB, SLmin, SLmax             );
 		glp_set_col_bnds(P, DE(i), GLP_DB, 0    , DEmax             );
-/*		glp_set_col_bnds(P, RR(i), GLP_DB, 0    , ramp_up_fraction*DEmax);*/
+		glp_set_col_bnds(P, RR(i), GLP_DB, 0    , ramp_up_fraction*DEmax);
 		if(pvd_i == 0 && wnd_i == 0){
 			glp_set_col_bnds(P, SE(i), GLP_FX,0.,0.);
 			glp_set_col_bnds(P, XE(i), GLP_FX,0.,0.);
@@ -647,36 +649,38 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		,   (int[]){0, SL(N)}
 		,(double[]){0,  +1. }
 	);
-	glp_set_row_bnds(P,LEB,GLP_FX,SLinit,99999);
+	glp_set_row_bnds(P,LEB,GLP_DB,SLinit,99999);
 	glp_set_row_name(P,LEB,"LEB");
 
-/*	glp_add_rows(P, 2 * N);*/
-/*	int base_idx_for_ramps = 2 * N + 2;*/
-/*	double DE0 = pre_dispatched_heat;*/
+	glp_add_rows(P, 2 * N);
+	int base_idx_for_ramps = 2 * N + 2;
+	double DE0 = pre_dispatched_heat;
 
-/*	for(unsigned i=1; i<=N; ++i){*/
-/*		int row_idx_pos = base_idx_for_ramps + 2 * (i - 1);*/
-/*		int row_idx_neg = base_idx_for_ramps + 2 * (i - 1) + 1;*/
+	for(unsigned i=1; i<=N; ++i){
+		int row_idx_pos = base_idx_for_ramps + 2 * (i - 1);
+		int row_idx_neg = base_idx_for_ramps + 2 * (i - 1) + 1;
 
-/*		if(i == 1){*/
-/*			// RR(1) >= DE(1) - DE0*/
+		if(i == 1){
+			// RR(1) >= DE(1) - DE0
+			glp_set_mat_row(P, row_idx_pos, 1, (int[]){0, RR(1)}, (double[]){0, +1});
+			glp_set_row_bnds(P, row_idx_pos, GLP_FX, 0.0, 0.0);
 /*			glp_set_mat_row(P, row_idx_pos, 2, (int[]){0, DE(1), RR(1)}, (double[]){0, 1, -1});*/
 /*			glp_set_row_bnds(P, row_idx_pos, GLP_UP, DE0, 0);*/
 /*			glp_set_row_bnds(P, row_idx_pos, GLP_FX, 0.0, 0.0);*/
 
-/*			// RR(1) >= DE0 - DE(1)*/
-/*			glp_set_mat_row(P, row_idx_neg, 2, (int[]){0, DE(1), RR(1)}, (double[]){0, -1, -1});*/
-/*			glp_set_row_bnds(P, row_idx_neg, GLP_UP, -DE0, 0);*/
-/*		} else {*/
-/*			// RR(i) >= DE(i) - DE(i-1)*/
-/*			glp_set_mat_row(P, row_idx_pos, 3, (int[]){0, DE(i), DE(i-1), RR(i)}, (double[]){0, 1, -1, -1});*/
-/*			glp_set_row_bnds(P, row_idx_pos, GLP_UP, 0, 0);*/
+			// RR(1) >= DE0 - DE(1)
+/*			glp_set_mat_row(P, row_idx_neg, 2, (int[]){0, DE(1), RR(1)}, (double[]){0, 1, 1});*/
+/*			glp_set_row_bnds(P, row_idx_neg, GLP_UP, DE0, 0);*/
+		} else {
+			// RR(i) >= DE(i) - DE(i-1)
+			glp_set_mat_row(P, row_idx_pos, 3, (int[]){0, DE(i), DE(i-1), RR(i)}, (double[]){0, 1, -1, -1});
+			glp_set_row_bnds(P, row_idx_pos, GLP_UP, 0, 0);
 
-/*			// RR(i) >= DE(i-1) - DE(i)*/
-/*			glp_set_mat_row(P, row_idx_neg, 3, (int[]){0, DE(i-1), DE(i), RR(i)}, (double[]){0, 1, -1, -1});*/
-/*			glp_set_row_bnds(P, row_idx_neg, GLP_UP, 0, 0);*/
-/*		}*/
-/*	}*/
+			// RR(i) >= DE(i-1) - DE(i)
+			glp_set_mat_row(P, row_idx_neg, 3, (int[]){0, DE(i-1), DE(i), RR(i)}, (double[]){0, 1, -1, -1});
+			glp_set_row_bnds(P, row_idx_neg, GLP_UP, 0, 0);
+		}
+	}
 
 	// Message attribute
 	glp_smcp parm;

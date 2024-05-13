@@ -22,7 +22,7 @@ model WindPVSimpleSystemOptimalDispatch
     parameter Modelica.SIunits.Power P_elec_min = 1e6;
     parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
     parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
-    parameter Real heater_multiple = 1 "Heater energy to process heat demand factor";
+    parameter Real heater_multiple = 1.5 "Heater energy to process heat demand factor";
     parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des "Maximum hot salt mass flow rate";
     parameter Modelica.SIunits.HeatFlowRate Q_process_des = 50e6 "Process heat demand at design";
     parameter Modelica.SIunits.Efficiency eff_heater = 0.99 "Electric heater efficiency";
@@ -37,8 +37,8 @@ model WindPVSimpleSystemOptimalDispatch
         wind_file = wind_file, 
         renewable_multiple = renewable_multiple);
 
-    Modelica.Blocks.Sources.BooleanExpression curtail(y=false);
-    Modelica.Blocks.Sources.RealExpression P_curtail(y=Q_process_des/eff_heater);
+    Modelica.Blocks.Sources.BooleanExpression curtail(y=full);
+    Modelica.Blocks.Sources.RealExpression P_curtail(y=Q_flow_dis/eff_heater);
 
     // Parameters
     parameter String pri_file = Modelica.Utilities.Files.loadResource(
@@ -97,12 +97,8 @@ model WindPVSimpleSystemOptimalDispatch
     SI.HeatFlowRate Q_flow_dis "Heat flow out of tank";
     SI.Power P_elec "Output power of power block";
 
-    Real fr_dfc(min=0, max=1) "Target energy fraction of the heliostat fistateld at the defocused state";
     Boolean full "True if the storage tank is full";
 
-    SolarTherm.Utilities.Transition.Ramp ramp_up_con(ramp_order=ramp_order, t_dur= t_con_on_delay, up=true);
-    SolarTherm.Utilities.Transition.Ramp ramp_down_con(ramp_order=ramp_order, t_dur= t_con_off_delay, up=false);
-    Real fr_ramp_con (min=0.0, max=1.0) "ramping transition rate for the concentrator";
     SolarTherm.Utilities.Transition.Ramp ramp_up_blk(ramp_order=ramp_order, t_dur= t_blk_on_delay, up=true);
     SolarTherm.Utilities.Transition.Ramp ramp_down_blk(ramp_order=ramp_order, t_dur= t_blk_off_delay, up=false);
     Real fr_ramp_blk (min=0.0, max=1.0) "ramping transition rate for the power block";
@@ -111,14 +107,9 @@ model WindPVSimpleSystemOptimalDispatch
 
     SI.HeatFlowRate Q_flow_sched "Discharge schedule";
 
-    Integer con_state(min=1, max=5) "Concentrator state";
     Integer blk_state(min=1, max=4) "Power block state";
     Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
-    SI.Time  t_con_w_now "Time of concentrator current warm-up event";
-    SI.Time  t_con_w_next "Time of concentrator next warm-up event";
-    SI.Time  t_con_c_now "Time of concentrator current cool-down event";
-    SI.Time  t_con_c_next "Time of concentrator next cool-down event";
     SI.Time  t_blk_w_now "Time of power block current warm-up event";
     SI.Time  t_blk_w_next "Time of power block next warm-up event";
     SI.Time  t_blk_c_now "Time of power block current cool-down event";
@@ -184,15 +175,10 @@ end LPOptimisation;
 
 initial equation
 
-    E = E_start;
+    E = E_low_l;
     Q_flow_sched = Q_flow_sched_val[sch_state_start];
-    con_state = 1;
     blk_state = 1;
     sch_state = sch_state_start;
-    t_con_w_now = 0;
-    t_con_w_next = 0;
-    t_con_c_now = 0;
-    t_con_c_next = 0;
     t_blk_w_now = 0;
     t_blk_w_next = 0;
     t_blk_c_now = 0;
@@ -210,30 +196,6 @@ initial equation
     algorithm
     // Discrete equation system not yet supported (even though correct)
     // Putting in algorithm section instead
-    when con_state == 2 and (renewable_input.electricity <= P_elec_min or E >= E_up_u) then
-        con_state := 1; // off sun
-    elsewhen con_state == 3 and (renewable_input.electricity <= P_elec_min) and t_con_off_delay > 0 then
-        con_state := 5; // ramp down
-    elsewhen con_state == 3 and (renewable_input.electricity <= P_elec_min) and t_con_off_delay <= 0 then
-        con_state := 1; // off sun(no ramp-down)
-    elsewhen con_state == 3 and full then
-        con_state := 4; // on sun at part load
-    elsewhen con_state == 4 and not full then
-        con_state := 3; // on sun at full load
-    elsewhen con_state == 4 and (renewable_input.electricity <= P_elec_min) and t_con_off_delay > 0 then
-        con_state := 5; // ramp down
-    elsewhen con_state == 4 and (renewable_input.electricity <= P_elec_min) and t_con_off_delay <= 0 then
-        con_state := 1; // off sun (no ramp-down)
-    elsewhen con_state == 1 and renewable_input.electricity >= P_elec_min and E <= E_up_l and t_con_on_delay > 0 then
-        con_state := 2; // start onsteering (i.e. ramp up)
-    elsewhen con_state == 1 and renewable_input.electricity >= P_elec_min and E <= E_up_l and t_con_on_delay <= 0 then
-        con_state := 3; // on sun at full (no ramp-up)
-    elsewhen con_state == 2 and time >= t_con_w_next then
-        con_state := 3; // on sun at full load
-    elsewhen con_state == 5 and time >= t_con_c_next then
-        con_state := 1; // off sun
-    end when;
-
     when blk_state == 2 and Q_flow_sched <= 0 then
         blk_state := 1; // turn off (or stop ramping) due to no demand
     elsewhen blk_state == 2 and E <= E_low_l then
@@ -260,16 +222,6 @@ initial equation
         sch_state := mod(pre(sch_state), n_sched_states) + 1;
     end when;
 
-    when con_state == 2 then
-        t_con_w_now := time;
-        t_con_w_next := time + t_con_on_delay;
-    end when;
-
-    when con_state == 5 then
-        t_con_c_now := time;
-        t_con_c_next := time + t_con_off_delay;
-    end when;
-
     when blk_state == 2 then
         t_blk_w_now := time;
         t_blk_w_next := time + t_blk_on_delay;
@@ -293,15 +245,6 @@ initial equation
         full := false;
     end when;
 
-    if con_state == 2 then
-        fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_up_con.y);
-    elseif con_state == 5 then
-        fr_ramp_con := if ramp_order == 0 then 0.0 else abs(ramp_down_con.y);
-    else
-        fr_ramp_con := 0;
-    end if;
-
-
     if blk_state == 2 then
         fr_ramp_blk := if ramp_order == 0 then 0.0 else abs(ramp_up_blk.y);
     elseif blk_state == 4 then
@@ -314,9 +257,6 @@ equation
     connect(renewable_input.curtail,curtail.y);
     connect(renewable_input.P_schedule,P_curtail.y);
 
-    ramp_up_con.x = t_con_w_now;
-    ramp_down_con.x = t_con_c_now;
-
     ramp_up_blk.x = t_blk_w_now;
     ramp_down_blk.x = t_blk_c_now;
 
@@ -324,29 +264,7 @@ equation
 
     der(E) = Q_flow_chg - Q_flow_dis;
 
-    if con_state <= 1 then
-        Q_flow_rec = 0;
-        fr_dfc = 0;
-    elseif con_state == 2 then
-        Q_flow_rec = fr_ramp_con * max(renewable_input.electricity, 0);
-        fr_dfc = if ramp_order == 0 then 0 else 1;
-    elseif con_state == 5 then
-        Q_flow_rec = fr_ramp_con * max(renewable_input.electricity, 0);
-        fr_dfc = if ramp_order == 0 then 0 else 1;
-    else
-        if full then
-            if eff_heater*(renewable_input.electricity) > Q_flow_dis then
-                Q_flow_rec = min(Q_flow_dis/eff_heater, max(renewable_input.electricity, 0));
-                fr_dfc = Q_flow_dis / (max(renewable_input.electricity, 0) + 1e-10);
-            else
-                Q_flow_rec = max(renewable_input.electricity, 0);
-                fr_dfc = 1;
-            end if;
-        else
-            Q_flow_rec = max(renewable_input.electricity, 0);
-            fr_dfc = 1;
-        end if;
-    end if;
+	Q_flow_rec = renewable_input.electricity;
 
     der(counter) = 1;
     SLinit = E * MWh_per_J "Initial stored energy at TES";
@@ -365,7 +283,7 @@ equation
             ,DEmax, SLmax, SLinit, SLmin
             ,dt/t_blk_on_delay
             ,P_elec_max/1e6
-            ,pre(Q_flow_dis)/1e6
+            ,pre_dispatched_heat
           );
         immediateDispatch = Q_process_des/1e6;
         reinit(counter, -dt);  
@@ -405,5 +323,5 @@ equation
     der(TOD_W) = P_elec*pri.price * (1e6*3600);
 //        StopTime=31536000.0
     annotation(experiment(StartTime = 0, StopTime = 864000, Interval = 300, Tolerance = 1e-06),
- Diagram(graphics = {Bitmap(origin = {-18, 72}, extent = {{-30, -32}, {30, 32}})}));
+ Diagram);
 end WindPVSimpleSystemOptimalDispatch;
