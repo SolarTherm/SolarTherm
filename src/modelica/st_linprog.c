@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <math.h>
 
-//#define ST_LINPROG_DEBUG
+#define ST_LINPROG_DEBUG
 
 #ifdef ST_LINPROG_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
@@ -446,7 +446,7 @@ double st_linprog(MotabData *wd, MotabData *pd
 	@param SLmax         maximum storage level (MWhth)
 	@param SLinit        initial storage level, at time_simul (MWhth?)
 	@param SLmin         minimum allowed storage level (MWhth)
-	@param P_max         Maximum heater capacity
+	@param P_elec_max         Maximum heater capacity
 
 	FIXME end-of-year wraparound is not yet implemented, will need checking.
 */
@@ -456,23 +456,14 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		,int horizon, double dt, double t0
 		,double etaH, double etaG
 		,double DEmax, double SLmax, double SLinit
-		,double SLmin, double P_max
+		,double SLmin, double ramp_up_fraction, double P_elec_max
+		,double pre_dispatched_heat
 ){
-/*	ErrorCallback *errcallback = st_linprog_errcallback;
-#ifdef ST_HAVE_MODELICA
-	if(use_modelicaerror){
-		errcallback = &ModelicaFormatError;
-	}
-#endif
-*/
-	
-	MSG("t = %f",t0);
+	MSG("\n\nt = %f",t0);
 
 	double pvdstep, wndstep;
 	assert(0 == motab_check_timestep(pvd,&pvdstep));
-	//assert(pvdstep == 3600.);
 	assert(0 == motab_check_timestep(wnd,&wndstep));
-	//assert(wndstep == 3600.);
 	
 	static MotabData *pvdcache, *wndcache;
 	if(pvdcache != pvd){
@@ -486,11 +477,10 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 			" from forecasting timestep %fs (message is only shown once)",wndstep, dt);
 	}
 
-	//const int time_index = time_simul / 3600;
-	
 	// check that pvd and wnd can cover the required time range
 
 	MSG("t = %f s, dt = %f s:",t0,dt);
+	MSG("P_elec_max = %f MWt",P_elec_max);
 	MSG("DEmax = %f MWth",DEmax);
 	MSG("SLmax = %f MWhth",SLmax);
 	MSG("SLinit = %f MWhth",SLinit);
@@ -512,12 +502,12 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 
 #define WND(I) (\
 	/*MSG("WND(%d) at t=%f",I,t0+((I)-1)*dt),*/\
-	P_elec_max_wind / P_elec_wind_ref_size*motab_get_value_wraparound(wnd,    t0+(I)*dt,wind_col)\
+	1e-6*P_elec_max_wind / P_elec_wind_ref_size*motab_get_value_wraparound(wnd,    t0+(I)*dt,wind_col)\
 	)
 /** as noted above, PV for the ith period (counting from 1) is at t0+i*dt */
 #define PV(I) (\
 	/*MSG("PV(%d) at t=%f",(I),t0+(I)*dt),*/\
-	P_elec_max_pv / P_elec_pv_ref_size*motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
+	1e-6*P_elec_max_pv / P_elec_pv_ref_size*motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
 	)
 
 	// Initialise problem object lp
@@ -546,7 +536,9 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 #define DE(I) (SL(N) + I)
 #define SE(I) (DE(N) + I)
 #define XE(I) (SE(N) + I)
+/*#define RR(I) (XE(N) + I)*/
 
+/*	glp_add_cols(P, RR(N));*/
 	glp_add_cols(P, XE(N));
 	
 	MSG("Number of cols = %d",XE(N));
@@ -558,42 +550,30 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		snprintf(sss,NAMEMAX,"DE%02d",i); glp_set_col_name(P,DE(i),sss);
 		snprintf(sss,NAMEMAX,"SE%02d",i); glp_set_col_name(P,SE(i),sss);
 		snprintf(sss,NAMEMAX,"XE%02d",i); glp_set_col_name(P,XE(i),sss);
+/*		snprintf(sss,NAMEMAX,"RR%02d",i); glp_set_col_name(P,RR(i),sss);*/
 	}
 
-	MSG("COLUMN NAMES");
-	for(int i=1;i<XE(N);++i){
-		MSG("%3d: %s",i,glp_get_col_name(P,i));
-	}
-
-	/* OBJECTIVE FUNCTION
-	
-		max ∑(DEi·ηG)                     Maximise the revenue over the
-		                                  forecast interval.
-	*/
+	/* OBJECTIVE FUNCTION*/
 	glp_set_obj_dir(P, GLP_MAX);
 	for(int i=1; i<= N; ++i){
 		//MSG("i = %d",i);
-		glp_set_obj_coef(P,DE(i),etaG);
+		glp_set_obj_coef(P,DE(i),etaG*77.656); //Based on an LCOH of 77.656 USD/MWh
+/*		glp_set_obj_coef(P,RR(i),-0);*/
 	}
 	
-	/* VARIABLE BOUNDS
-		
-		SLmin ≤ SLi ≤ SLmax
-		0 ≤ DEi ≤ DEmax
-		0 ≤ SEi ≤ ηH · (PVi + WNDi)
-		0 ≤ XEi ≤ ηH · (PVi + WNDi)
-	*/
+	/* VARIABLE BOUNDS*/
 	for(int i=1; i<= N; ++i){
 		double pvd_i = PV(i);
 		double wnd_i = WND(i);
 		assert(wnd_i != MOTAB_NO_REAL);
 		assert(pvd_i != MOTAB_NO_REAL);
 		double p_heat_i = (pvd_i + wnd_i)*etaH;
-		if(p_heat_i > P_max){
-			p_heat_i = P_max;
+		if(p_heat_i > P_elec_max){
+			p_heat_i = P_elec_max;
 		}
 		glp_set_col_bnds(P, SL(i), GLP_DB, SLmin, SLmax             );
 		glp_set_col_bnds(P, DE(i), GLP_DB, 0    , DEmax             );
+/*		glp_set_col_bnds(P, RR(i), GLP_DB, 0    , ramp_up_fraction*DEmax);*/
 		if(pvd_i == 0 && wnd_i == 0){
 			glp_set_col_bnds(P, SE(i), GLP_FX,0.,0.);
 			glp_set_col_bnds(P, XE(i), GLP_FX,0.,0.);
@@ -625,8 +605,8 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		double pvd_i = PV(i);
 		double wnd_i = WND(i);
 		double p_heat_i = (pvd_i + wnd_i)*etaH;
-		if(p_heat_i > P_max){
-			p_heat_i = P_max;
+		if(p_heat_i > P_elec_max){
+			p_heat_i = P_elec_max;
 		}
 		if(i == 1){
 			//MSG("SL(%d) = %d, SE(%i) = %d, DE(%d) = %d", i,SL(i),i,SE(i),i,DE(i));
@@ -670,6 +650,34 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 	glp_set_row_bnds(P,LEB,GLP_FX,SLinit,99999);
 	glp_set_row_name(P,LEB,"LEB");
 
+/*	glp_add_rows(P, 2 * N);*/
+/*	int base_idx_for_ramps = 2 * N + 2;*/
+/*	double DE0 = pre_dispatched_heat;*/
+
+/*	for(unsigned i=1; i<=N; ++i){*/
+/*		int row_idx_pos = base_idx_for_ramps + 2 * (i - 1);*/
+/*		int row_idx_neg = base_idx_for_ramps + 2 * (i - 1) + 1;*/
+
+/*		if(i == 1){*/
+/*			// RR(1) >= DE(1) - DE0*/
+/*			glp_set_mat_row(P, row_idx_pos, 2, (int[]){0, DE(1), RR(1)}, (double[]){0, 1, -1});*/
+/*			glp_set_row_bnds(P, row_idx_pos, GLP_UP, DE0, 0);*/
+/*			glp_set_row_bnds(P, row_idx_pos, GLP_FX, 0.0, 0.0);*/
+
+/*			// RR(1) >= DE0 - DE(1)*/
+/*			glp_set_mat_row(P, row_idx_neg, 2, (int[]){0, DE(1), RR(1)}, (double[]){0, -1, -1});*/
+/*			glp_set_row_bnds(P, row_idx_neg, GLP_UP, -DE0, 0);*/
+/*		} else {*/
+/*			// RR(i) >= DE(i) - DE(i-1)*/
+/*			glp_set_mat_row(P, row_idx_pos, 3, (int[]){0, DE(i), DE(i-1), RR(i)}, (double[]){0, 1, -1, -1});*/
+/*			glp_set_row_bnds(P, row_idx_pos, GLP_UP, 0, 0);*/
+
+/*			// RR(i) >= DE(i-1) - DE(i)*/
+/*			glp_set_mat_row(P, row_idx_neg, 3, (int[]){0, DE(i-1), DE(i), RR(i)}, (double[]){0, 1, -1, -1});*/
+/*			glp_set_row_bnds(P, row_idx_neg, GLP_UP, 0, 0);*/
+/*		}*/
+/*	}*/
+
 	// Message attribute
 	glp_smcp parm;
 	glp_init_smcp(&parm);
@@ -685,6 +693,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 	char *msg;
 	if(res == 0){
 		MSG("LP successfully solved");
+		printres = 1;
 	}else{
 		switch(res){
 		case GLP_EBADB: msg = "Invalid initial basis";break;
@@ -706,54 +715,15 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		// Get the value of the optimal obj. function
 		MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
 
-#define PRVECVAR(FN,LABEL,UNITS) {\
-			MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
-			for(int i=1;i <= N; i++){ \
-				MSG2("%s%10.1f", (i==1?"":", "), FN(i)); \
-			} \
-			MSGL; \
-		}
-
-#define PRVECVAR1(FN,LABEL,UNITS) {\
-			MSG1("%-20s%10s %-7s:",LABEL,#FN,"(" UNITS ")"); \
-			for(int i=1;i <= N; i++){ \
-				MSG2("%s%10.1f", (i==1?"":", "), glp_get_col_prim(P,FN(i))); \
-			} \
-			MSGL; \
-		}
-
-#define PRCEVAR(LABEL,UNITS) {\
-			MSG1("%-20s%10s %-7s:",LABEL,"CE","(" UNITS ")"); \
-			for(int i=1;i <= N; i++){ \
-				double ce = (PV(i) + WND(i))*etaH;\
-				MSG2("%s%10.1f", (i==1?"":", "),ce); \
-			} \
-			MSGL; \
-		}
-
-#define PRREVVAR(LABEL,UNITS) {\
-			MSG1("%-20s%10s %-7s:",LABEL,"REV","(" UNITS ")"); \
-			for(int i=1;i <= N; i++){ \
-				double rev = etaG*WND(i)*glp_get_col_prim(P,DE(i));\
-				MSG2("%s%10.1f", (i==1?"":", "),rev); \
-			} \
-			MSGL; \
-		}
-		
-		PRVECVAR(PV,"PV","W");
-		PRVECVAR(WND,"WND","W");
-		PRCEVAR("Collected heat","MWth");
-		PRVECVAR1(XE,"Dumped heat","MWth");
-		PRVECVAR1(SE,"Stored heat","MWth");
-		PRVECVAR1(DE,"Dispatched heat","MWth");
-		MSG("%-20s%10s %-7s: %10.1f","Initial storage lev","SLinit","(MWth)",SLinit);
-		PRVECVAR1(SL,"Storage level","MWth");
-		PRREVVAR("Revenue","USD");
-
 	}
 	
 	double optimalDispatch = glp_get_col_prim(P,DE(1));
 
+		MSG("     SL,   SE,   XE,   DE,   RR");
+	for(int i=1;i<N;++i){
+		//MSG("%3d: %.2f,%.2f,%.2f,%.2f,%.2f",i,glp_get_col_prim(P,SL(i)),glp_get_col_prim(P,SE(i)),glp_get_col_prim(P,XE(i)),glp_get_col_prim(P,DE(i)),glp_get_col_prim(P,RR(i)));
+		MSG("%3d: %.2f,%.2f,%.2f,%.2f",i,glp_get_col_prim(P,SL(i)),glp_get_col_prim(P,SE(i)),glp_get_col_prim(P,XE(i)),glp_get_col_prim(P,DE(i)));
+	}
 	MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f",optimalDispatch);
 
 	/*Free all the memory used in this script*/

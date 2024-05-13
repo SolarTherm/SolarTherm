@@ -12,33 +12,33 @@ model WindPVSimpleSystemOptimalDispatch
 
     constant Real MWh_per_J = 1 / (3600. * 1e6);
 
-	// Renewable energy input
-	parameter String pv_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_pv.motab");
-	parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
+    // Renewable energy input
+    parameter String pv_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_pv.motab");
+    parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
     parameter STMotab.STMotab pv_motab = STMotab.STMotab(pv_file);
     parameter STMotab.STMotab wind_motab = STMotab.STMotab(wind_file);
-	parameter Modelica.SIunits.Power pv_ref_size = 50e6 "PV farm reference size";
-	parameter Modelica.SIunits.Power wind_ref_size = 50e6 "Wind farm reference size";
-	parameter Modelica.SIunits.Power P_elec_min = 1e6;
-	parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
-	parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
-	parameter Real heater_multiple = 1 "Heater energy to process heat demand factor";
-	parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des "Maximum hot salt mass flow rate";
-	parameter Modelica.SIunits.HeatFlowRate Q_process_des = 50e6 "Process heat demand at design";
-	parameter Modelica.SIunits.Efficiency eff_heater = 0.99 "Electric heater efficiency";
+    parameter Modelica.SIunits.Power pv_ref_size = 50e6 "PV farm reference size";
+    parameter Modelica.SIunits.Power wind_ref_size = 50e6 "Wind farm reference size";
+    parameter Modelica.SIunits.Power P_elec_min = 1e6;
+    parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
+    parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
+    parameter Real heater_multiple = 1 "Heater energy to process heat demand factor";
+    parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des "Maximum hot salt mass flow rate";
+    parameter Modelica.SIunits.HeatFlowRate Q_process_des = 50e6 "Process heat demand at design";
+    parameter Modelica.SIunits.Efficiency eff_heater = 0.99 "Electric heater efficiency";
 
-	SolarTherm.Models.Sources.GridInput renewable_input(
-		P_elec_max = P_elec_max, 
-		P_elec_min = P_elec_min, 
-		P_elec_pv_ref_size = pv_ref_size, 
-		P_elec_wind_ref_size = wind_ref_size, 
-		pv_file = pv_file, 
-		pv_fraction = pv_fraction, 
-		wind_file = wind_file, 
-		renewable_multiple = renewable_multiple);
+    SolarTherm.Models.Sources.GridInput renewable_input(
+        P_elec_max = P_elec_max, 
+        P_elec_min = P_elec_min, 
+        P_elec_pv_ref_size = pv_ref_size, 
+        P_elec_wind_ref_size = wind_ref_size, 
+        pv_file = pv_file, 
+        pv_fraction = pv_fraction, 
+        wind_file = wind_file, 
+        renewable_multiple = renewable_multiple);
 
-	Modelica.Blocks.Sources.BooleanExpression curtail(y=false);
-	Modelica.Blocks.Sources.RealExpression P_curtail(y=Q_process_des/eff_heater);
+    Modelica.Blocks.Sources.BooleanExpression curtail(y=false);
+    Modelica.Blocks.Sources.RealExpression P_curtail(y=Q_process_des/eff_heater);
 
     // Parameters
     parameter String pri_file = Modelica.Utilities.Files.loadResource(
@@ -53,6 +53,7 @@ model WindPVSimpleSystemOptimalDispatch
     parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
     parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
     parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
+    parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
     parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
     parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
@@ -143,11 +144,47 @@ model WindPVSimpleSystemOptimalDispatch
     Real SLmin "Minimum level of the tank MWhth";
 
     Real TOD_W(start=0);
-    Real level=E/E_max;
+    Real pre_dispatched_heat;
+
+function LPOptimisation
+    import SolarTherm.Utilities.Tables.STMotab;
+
+    input STMotab.STMotab pv_motab;
+    input STMotab.STMotab wnd_motab;
+    input Real P_elec_max_pv;
+    input Real P_elec_max_wind;
+    input Real P_elec_pv_ref_size;
+    input Real P_elec_wind_ref_size;
+    input Integer horizon;
+    input Real dt;
+    input Real time_simul;
+    input Real eff_heater;
+    input Real eff_process;
+    input Real DEmax;
+    input Real SLmax;
+    input Real SLinit;
+    input Real SLmin;
+    input Real max_ramp_up_fraction;
+    input Real P_heater_max;
+    input Real pre_dispatched_heat;
+    output Real Dispatch;
+    external "C" Dispatch = st_linprog_variability(
+            pv_motab,wnd_motab
+            ,P_elec_max_pv,P_elec_max_wind
+            ,P_elec_pv_ref_size,P_elec_wind_ref_size
+            ,horizon,dt,time_simul
+            ,eff_heater,eff_process
+            ,DEmax,SLmax,SLinit,SLmin
+            ,max_ramp_up_fraction
+            ,P_heater_max
+            ,pre_dispatched_heat
+        );
+    annotation(Library="st_linprog");
+end LPOptimisation;
 
 initial equation
 
-    E = E_low_l;
+    E = E_start;
     Q_flow_sched = Q_flow_sched_val[sch_state_start];
     con_state = 1;
     blk_state = 1;
@@ -274,8 +311,8 @@ initial equation
     end if;
 
 equation
-	connect(renewable_input.curtail,curtail.y);
-	connect(renewable_input.P_schedule,P_curtail.y);
+    connect(renewable_input.curtail,curtail.y);
+    connect(renewable_input.P_schedule,P_curtail.y);
 
     ramp_up_con.x = t_con_w_now;
     ramp_down_con.x = t_con_c_now;
@@ -315,19 +352,23 @@ equation
     SLinit = E * MWh_per_J "Initial stored energy at TES";
     SLmax = E_max * MWh_per_J "Maximum stored energy at TES";
     SLmin = E_low_l * MWh_per_J "Lowest energy level in the tank";
+    pre_dispatched_heat = pre(Q_flow_dis)/1e6 "Previous heat dispatched";
     
     when counter > 0 then
         time_simul = floor(time);
-        optimalDispatch = SolarTherm.Utilities.LinProgFuncVariability(pv_motab, wind_motab
-			,renewable_input.P_elec_max,renewable_input.P_elec_max_wind
-			,renewable_input.P_elec_pv_ref_size,renewable_input.P_elec_wind_ref_size
-			,horizon, dt, time_simul
+        optimalDispatch = LPOptimisation(
+            pv_motab, wind_motab
+            ,renewable_input.P_elec_max/1e6,renewable_input.P_elec_max_wind/1e6
+            ,renewable_input.P_elec_pv_ref_size/1e6,renewable_input.P_elec_wind_ref_size/1e6
+            ,horizon, dt, time_simul
             ,eff_heater, eff_process
             ,DEmax, SLmax, SLinit, SLmin
-			,P_elec_max
+            ,dt/t_blk_on_delay
+            ,P_elec_max/1e6
+            ,pre(Q_flow_dis)/1e6
           );
-          immediateDispatch = Q_process_des/1e6;
-          reinit(counter, -dt);  
+        immediateDispatch = Q_process_des/1e6;
+        reinit(counter, -dt);  
     end when;
                          
  
@@ -337,13 +378,13 @@ equation
     elseif blk_state == 2 then
         if ramp_order == 0 then
             if dispatch_optimiser == true then
-                Q_flow_dis = immediateDispatch*1e6;
+                Q_flow_dis = optimalDispatch*1e6;
             else
                 Q_flow_dis = Q_flow_sched;
             end if;
         else
             if dispatch_optimiser == true then
-                Q_flow_dis = fr_ramp_blk * immediateDispatch*1e6;
+                Q_flow_dis = fr_ramp_blk * optimalDispatch*1e6;
             else
                 Q_flow_dis = fr_ramp_blk * Q_flow_sched;
             end if;
@@ -351,19 +392,18 @@ equation
         P_elec = eff_process*Q_flow_dis;
     elseif blk_state == 4 then
         Q_flow_dis = fr_ramp_blk * (if dispatch_optimiser == true
-                then immediateDispatch*1e6 else Q_flow_sched);
+                then optimalDispatch*1e6 else Q_flow_sched);
         P_elec = eff_process*Q_flow_dis;
     else
         Q_flow_dis = if dispatch_optimiser == true 
-                then immediateDispatch*1e6 else Q_flow_sched;
+                then optimalDispatch*1e6 else Q_flow_sched;
         P_elec = eff_process*Q_flow_dis;
     end if;
 
     der(E_elec) = P_elec;
     der(R_spot) = P_elec*pri.price;
     der(TOD_W) = P_elec*pri.price * (1e6*3600);
-
-    annotation(experiment(StartTime= 0, StopTime=31536000.0
-        , Interval= 3600, Tolerance=1e-06));
+//        StopTime=31536000.0
+    annotation(experiment(StartTime = 0, StopTime = 864000, Interval = 300, Tolerance = 1e-06),
+ Diagram(graphics = {Bitmap(origin = {-18, 72}, extent = {{-30, -32}, {30, 32}})}));
 end WindPVSimpleSystemOptimalDispatch;
-

@@ -16,7 +16,8 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		,int horizon, double dt, double t0
 		,double etaH, double etaG
 		,double DEmax, double SLmax, double SLinit
-		,double SLmin, double P_max
+		,double SLmin, double ramp_up_fraction, double P_elec_max
+		,double pre_dispatched_heat
 );
 
 #endif

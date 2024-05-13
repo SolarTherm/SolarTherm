@@ -21,7 +21,9 @@ function LinProgFuncVariability
     input Real SLmax;
     input Real SLinit;
     input Real SLmin;
-    input Real P_max;
+    input Real ramp_up_fraction;
+    input Real P_elec_max;
+    input Real ramp_cost;
     output Real Dispatch;
     external "C" Dispatch = st_linprog_variability(pv_motab,wnd_motab
 			,P_elec_max_pv,P_elec_max_wind
@@ -29,7 +31,9 @@ function LinProgFuncVariability
             ,horizon,dt,time_simul
             ,etaH,etaG
             ,DEmax,SLmax,SLinit,SLmin
-            ,P_max
+            ,ramp_up_fraction
+            ,P_elec_max
+            ,ramp_cost
         );
     annotation(Library="st_linprog");
 end LinProgFuncVariability;
