@@ -15,7 +15,7 @@ class TestScheduler(unittest.TestCase):
         sim = simulation.Simulator(fn)
         sim.compile_model()
         sim.compile_sim(args=['-s'])
-        sim.simulate(start=0, stop='2d', step='30m', solver='dassl', nls='homotopy', tolerance = '1e-06')
+        sim.simulate(start=0, stop='10d', step='5m', solver='dassl', nls='homotopy', tolerance = '1e-06', args=['-noEventEmit'])
 
     def test_sched(self):
         df=DyMat.DyMatFile('WindPVSimpleSystemOptimalDispatch_res.mat')
@@ -24,7 +24,7 @@ class TestScheduler(unittest.TestCase):
         P_elec_net=df.data('renewable_input.P_elec_net')/1.e6
         E_max=df.data('E_max')[0]
         E=df.data('E')/E_max*100
-        times=df.abscissa('Q_flow_dis')[0]/3600.
+        times=df.abscissa('Q_flow_dis')[0]
 
         import matplotlib.pyplot as plt
         import numpy as np
@@ -46,6 +46,7 @@ class TestScheduler(unittest.TestCase):
         axes.legend(loc='best')
         plt.savefig('fig_WindPVSimpleSystemOptimalDispatch.png',dpi=300)
         # Deleting simulation files
+        os.system(f'mv WindPVSimpleSystemOptimalDispatch_res.mat {st_folder}/examples/WindPVSimpleSystemOptimalDispatch_res.mat')
         os.system('rm WindPVSimpleSystemOptimalDispatch*')
 
 if __name__ == '__main__':
