@@ -55,10 +55,8 @@ model WindPVSimpleSystemOptimalDispatch
     parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
     parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
-    parameter SI.Time t_con_on_delay = 20*60 "Delay until concentrator starts";
-    parameter SI.Time t_con_off_delay = 15*60 "Delay until concentrator shuts off";
     parameter SI.Time t_blk_on_delay = 4*3600 "Delay until power block starts";
-    parameter SI.Time t_blk_off_delay = 3*3600 "Delay until power block shuts off";
+    parameter SI.Time t_blk_off_delay = t_blk_on_delay "Delay until power block shuts off";
 
     parameter Integer ramp_order = 1 "ramping filter order";
 
@@ -129,7 +127,6 @@ model WindPVSimpleSystemOptimalDispatch
     Real counter(start = -dt);
     Real time_simul "time of the optimisation";
     Real optimalDispatch "optimal disopatch";
-    Real immediateDispatch "Immediate dispatch";
     Real SLinit "Current capacity the tank MWh";
     Real SLmax "Max capacity MWhth";
     Real SLmin "Minimum level of the tank MWhth";
@@ -196,26 +193,16 @@ initial equation
     algorithm
     // Discrete equation system not yet supported (even though correct)
     // Putting in algorithm section instead
-    when blk_state == 2 and Q_flow_sched <= 0 then
-        blk_state := 1; // turn off (or stop ramping) due to no demand
-    elsewhen blk_state == 2 and E <= E_low_l then
-        blk_state := 1; // turn off (or stop ramping) due to empty tank
-    elsewhen blk_state == 3 and Q_flow_sched <= 0 and t_blk_off_delay > 0 then
-        blk_state := 4; // ramp down due to no demand
-    elsewhen blk_state == 3 and Q_flow_sched <= 0 and t_blk_off_delay <= 0 then
-        blk_state := 1; // turn off (no ramp-down) due to no demand
-    elsewhen blk_state == 3 and E <= E_low_l and t_blk_off_delay > 0 then
-        blk_state := 4; // ramp down due to empty tank
-    elsewhen blk_state == 3 and E <= E_low_l and t_blk_off_delay <= 0 then
-        blk_state := 1; // turn off (no ramp down) due to empty tank
-    elsewhen blk_state == 2 and time >= t_blk_w_next then
+    when blk_state == 2 and E <= E_low_l or Q_flow_sched <= 0 then
+        blk_state := 1; // turn off (or stop ramping) due to empty tank or no demand
+    elsewhen blk_state == 2 and time >= t_blk_w_next and Q_flow_sched > 0 then
         blk_state := 3; // operational, ramp-up completed
-    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  and t_blk_on_delay > 0 then
-        blk_state := 2; // ramp up, demand and tank has capacity
-    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u  and t_blk_on_delay <= 0 then
-        blk_state := 3; // operational (no ramp-up)
+    elsewhen blk_state == 3 and E <= E_low_l or Q_flow_sched <= 0 then
+        blk_state := 4; // ramp down due to empty tank or no demand
     elsewhen blk_state == 4 and time >= t_blk_c_next then
         blk_state := 1; // turn off after the ramp-down is complete
+    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u then
+        blk_state := 2; // ramp up, demand and tank has capacity
     end when;
 
     when time >= t_sch_next then
@@ -264,7 +251,7 @@ equation
 
     der(E) = Q_flow_chg - Q_flow_dis;
 
-	Q_flow_rec = renewable_input.electricity;
+    Q_flow_rec = renewable_input.electricity;
 
     der(counter) = 1;
     SLinit = E * MWh_per_J "Initial stored energy at TES";
@@ -285,7 +272,6 @@ equation
             ,P_elec_max/1e6
             ,pre_dispatched_heat
           );
-        immediateDispatch = Q_process_des/1e6;
         reinit(counter, -dt);  
     end when;
                          
