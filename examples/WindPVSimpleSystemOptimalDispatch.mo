@@ -23,7 +23,8 @@ model WindPVSimpleSystemOptimalDispatch
     parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
     parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
     parameter Real heater_multiple = 1.5 "Heater energy to process heat demand factor";
-    parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des "Maximum hot salt mass flow rate";
+    parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des/eff_heater "Maximum heater electrical input";
+    parameter Modelica.SIunits.Power nu_process_min = 0.80 "Minimum operation threshold";
     parameter Modelica.SIunits.HeatFlowRate Q_process_des = 50e6 "Process heat demand at design";
     parameter Modelica.SIunits.Efficiency eff_heater = 0.99 "Electric heater efficiency";
 
@@ -55,8 +56,9 @@ model WindPVSimpleSystemOptimalDispatch
     parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
     parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
-    parameter SI.Time t_blk_on_delay = 4*3600 "Delay until power block starts";
-    parameter SI.Time t_blk_off_delay = t_blk_on_delay "Delay until power block shuts off";
+    parameter SI.Time t_shutdown_min = 12*3600 "Delay before ramping-up";
+    parameter SI.Time t_blk_on_delay = 4*3600 "Ramp-up time";
+    parameter SI.Time t_blk_off_delay = 1*3600 "Ramp-down time";
 
     parameter Integer ramp_order = 1 "ramping filter order";
 
@@ -108,6 +110,7 @@ model WindPVSimpleSystemOptimalDispatch
     Integer blk_state(min=1, max=4) "Power block state";
     Integer sch_state(min=1, max=n_sched_states) "Schedule state";
 
+    SI.Time  t_startup_next "Minimum delay after complete shutting down";
     SI.Time  t_blk_w_now "Time of power block current warm-up event";
     SI.Time  t_blk_w_next "Time of power block next warm-up event";
     SI.Time  t_blk_c_now "Time of power block current cool-down event";
@@ -121,7 +124,7 @@ model WindPVSimpleSystemOptimalDispatch
     /*Dispatch optimisation*/
     parameter Real DEmax = Q_process_des / eff_process * 1e-6 "Thermal rating of the power block ==> maximum dispatched thermal power to the PB (MWth)";
     parameter SI.Time dt(displayUnit="h") = 3600 "delta t";
-    parameter Integer horizon = 48;
+    parameter Integer horizon = 24*2;
     parameter Boolean dispatch_optimiser = true;
 
     Real counter(start = -dt);
@@ -181,6 +184,7 @@ initial equation
     t_blk_c_now = 0;
     t_blk_c_next = 0;
     t_sch_next = t_sch_next_start;
+    optimalDispatch = DEmax;
 
     if E > E_up_u then
         full = true;
@@ -193,20 +197,24 @@ initial equation
     algorithm
     // Discrete equation system not yet supported (even though correct)
     // Putting in algorithm section instead
-    when blk_state == 2 and E <= E_low_l or Q_flow_sched <= 0 then
+    when blk_state == 2 and E <= E_low_l or optimalDispatch <= nu_process_min*DEmax then
         blk_state := 1; // turn off (or stop ramping) due to empty tank or no demand
     elsewhen blk_state == 2 and time >= t_blk_w_next and Q_flow_sched > 0 then
         blk_state := 3; // operational, ramp-up completed
-    elsewhen blk_state == 3 and E <= E_low_l or Q_flow_sched <= 0 then
+    elsewhen blk_state == 3 and E <= E_low_l or pre(optimalDispatch) <= nu_process_min*DEmax then
         blk_state := 4; // ramp down due to empty tank or no demand
     elsewhen blk_state == 4 and time >= t_blk_c_next then
         blk_state := 1; // turn off after the ramp-down is complete
-    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u then
+    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u and time >= t_startup_next then
         blk_state := 2; // ramp up, demand and tank has capacity
     end when;
 
     when time >= t_sch_next then
         sch_state := mod(pre(sch_state), n_sched_states) + 1;
+    end when;
+
+    when blk_state == 1 then
+        t_startup_next := time + t_shutdown_min;
     end when;
 
     when blk_state == 2 then
@@ -276,22 +284,14 @@ equation
     end when;
                          
  
-    if blk_state <=1 then
+    if blk_state ==1 then
         Q_flow_dis = 0;
         P_elec = 0;
     elseif blk_state == 2 then
-        if ramp_order == 0 then
-            if dispatch_optimiser == true then
-                Q_flow_dis = optimalDispatch*1e6;
-            else
-                Q_flow_dis = Q_flow_sched;
-            end if;
+        if dispatch_optimiser == true then
+            Q_flow_dis = fr_ramp_blk * optimalDispatch*1e6;
         else
-            if dispatch_optimiser == true then
-                Q_flow_dis = fr_ramp_blk * optimalDispatch*1e6;
-            else
-                Q_flow_dis = fr_ramp_blk * Q_flow_sched;
-            end if;
+            Q_flow_dis = fr_ramp_blk * Q_flow_sched;
         end if;
         P_elec = eff_process*Q_flow_dis;
     elseif blk_state == 4 then

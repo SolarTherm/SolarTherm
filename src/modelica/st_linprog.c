@@ -541,6 +541,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 	// These 4·N equations are organised with column indices as follows:
 
 #define INCLUDE_RR
+//#define INCLUDE_DER
 //#define INCLUDE_DEO
 #define N (horizon)
 #define SL(I) (I)
@@ -569,7 +570,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 		#endif
 	}
 
-	double LCOH = 78;
+	double LCOH = 78.0;
 	double RampCost = 0.0;
 	/* OBJECTIVE FUNCTION*/
 	glp_set_obj_dir(P, GLP_MAX);
@@ -635,7 +636,7 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 				,   (int[]){0, SL(i),  SE(i),  DE(i)}
 				,(double[]){0,  +1. ,    -1.,    +1.}
 			);
-			glp_set_row_bnds(P,SEB(i),GLP_FX,SLmin,99999);
+			glp_set_row_bnds(P,SEB(i),GLP_FX,SLinit,99999);
 		}else{
 			//MSG("SL(%d) = %d, SE(%i) = %d, DE(%d) = %d", i,SL(i),i,SE(i),i,DE(i));
 			glp_set_mat_row(P, SEB(i), 4
@@ -713,7 +714,8 @@ double st_linprog_variability(MotabData *pvd, MotabData *wnd
 				glp_set_row_bnds(P, row_idx_neg, GLP_UP, 0, 0);
 			}
 		}
-	#else
+	#endif
+	#ifdef INCLUDE_DER
 		glp_add_rows(P, 2 * N - 2);
 		int base_idx_for_ramps = 2*N + 2;
 
