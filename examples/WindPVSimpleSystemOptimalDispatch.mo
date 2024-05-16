@@ -57,7 +57,7 @@ model WindPVSimpleSystemOptimalDispatch
     parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
     parameter SI.Time t_shutdown_min = 12*3600 "Delay before ramping-up";
-    parameter SI.Time t_blk_on_delay = 4*3600 "Ramp-up time";
+    parameter SI.Time t_blk_on_delay = 16*3600 "Ramp-up time";
     parameter SI.Time t_blk_off_delay = 1*3600 "Ramp-down time";
 
     parameter Integer ramp_order = 1 "ramping filter order";
@@ -201,11 +201,11 @@ initial equation
         blk_state := 1; // turn off (or stop ramping) due to empty tank or no demand
     elsewhen blk_state == 2 and time >= t_blk_w_next and Q_flow_sched > 0 then
         blk_state := 3; // operational, ramp-up completed
-    elsewhen blk_state == 3 and E <= E_low_l or pre(optimalDispatch) <= nu_process_min*DEmax then
+    elsewhen blk_state == 3 and E <= E_low_l then
         blk_state := 4; // ramp down due to empty tank or no demand
     elsewhen blk_state == 4 and time >= t_blk_c_next then
         blk_state := 1; // turn off after the ramp-down is complete
-    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u and time >= t_startup_next then
+    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u then
         blk_state := 2; // ramp up, demand and tank has capacity
     end when;
 
