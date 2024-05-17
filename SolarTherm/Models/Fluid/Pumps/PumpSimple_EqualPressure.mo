@@ -21,9 +21,10 @@ equation
   fluid_b.Xi_outflow=inStream(fluid_a.Xi_outflow);
   fluid_a.p=fluid_b.p;
   W_loss=k_loss*m_flow;
-  annotation (Documentation(revisions="<html>
+  annotation (Documentation(revisions = "<html>
 <ul>
 <li>Zebedee Kee:<br>Modified to allow equal pressures on both sides. </li>
 </ul>
-</html>"));
+</html>"),
+    Icon(graphics = {Text(origin = {-10, 14}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {151, -154}}, textString = "%name")}));
 end PumpSimple_EqualPressure;

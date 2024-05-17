@@ -13,5 +13,5 @@ equation
   //Fluid.p = port_a.p;
  port_a.h_outflow = inStream(port_a.h_outflow);//0; // shouldn't flow backwards anyway
 annotation(
-    Icon(graphics = {Rectangle(origin = {0, -1}, extent = {{-60, 41}, {60, -39}}), Text(origin = {3, 0}, extent = {{-23, 16}, {23, -16}}, textString = "Sink"), Line(origin = {-80, 0}, points = {{20, 0}, {-20, 0}, {-20, 0}})}));
+    Icon(graphics = {Rectangle(origin = {0, -1}, extent = {{-60, 41}, {60, -39}}), Text(origin = {3, 0}, extent = {{-23, 16}, {23, -16}}, textString = "Sink"), Line(origin = {-80, 0}, points = {{20, 0}, {-20, 0}, {-20, 0}}), Text(origin = {0, 72}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {151, -154}}, textString = "%name")}, coordinateSystem(initialScale = 0.1)));
 end FluidSink2;
