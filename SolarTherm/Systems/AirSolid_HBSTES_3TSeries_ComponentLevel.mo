@@ -12,7 +12,7 @@ model AirSolid_HBSTES_3TSeries_ComponentLevel
   parameter Real HM = 2.0 "Heater Multiple";
   parameter SI.Time t_discharge = 10.0 * 3600.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
-  parameter Integer N_f = 32;
+  parameter Integer N_f = 25;
   parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
   parameter SI.Length d_p = 0.02 "Hole diameter in the filler (m)";
