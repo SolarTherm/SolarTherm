@@ -91,7 +91,7 @@ model AirSolid_HBSTES_3TMixed_ComponentLevel
   //SI.Energy E_lost(start = 0) "Externally lost energy from storage";
   //SI.Energy E_pump(start = 0) "Pumping energy consumed";
   parameter SI.Energy X_max = m_discharge_des * t_discharge * (h_f_max * (1.0 - 298.15 / T_max) - h_f_min * (1.0 - 298.15 / T_min)) "Theoretical Exergetic storage capacity (J)";
-  //SI.Energy X_chg(start = 0.0) "Total exergy charged in the last cycle";
+  //SI.Energy X_chg(start = 0.0) "Total exergy charged i3n the last cycle";
   //SI.Energy X_dis(start = 0.0) "Discharged exergy";
   //Utilisation and efficiencies
   Real util_energy(start = 0.0) "Energetic utilisation (1st Law)";
@@ -253,7 +253,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-5, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end AirSolid_HBSTES_3TMixed_ComponentLevel;

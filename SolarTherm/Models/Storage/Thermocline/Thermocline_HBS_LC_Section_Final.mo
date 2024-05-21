@@ -93,8 +93,7 @@ model Thermocline_HBS_LC_Section_Final
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min for this to be correct";
   Real Level(start = 0.0) "Tank energy charging level (0-1)";
   SI.HeatFlowRate Q_loss_total "Heat loss from the entire surface area";
-  //Initialise Particle
-  SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
+  
   //Initialise Encapsulation
   //SI.Temperature T_e[N_f](start=T_e_start) "Temperature of encapsulation elements";
   //SI.SpecificEnthalpy h_e[N_f](start = h_e_min) "J/kg";
@@ -116,10 +115,13 @@ model Thermocline_HBS_LC_Section_Final
   //Initialise Filler surface temperature
   SI.Temperature T_s[N_f](start = T_f_start);
   //parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
+  
+protected
+  //Initialise Particle
+  SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
   //Filler mass-liquid fraction
   Real f_p[N_f] "Mass liquid fraction of filler";
   Real Bi[N_f] "Biot Number";
-protected
   //Convection Properties
   Real Re[N_f] "Reynolds";
   Real Pr[N_f] "Prandtl";

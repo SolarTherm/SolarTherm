@@ -253,7 +253,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{28, 0}, {24, 0}, {24, -4}, {14, -4}, {14, -1}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-5, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end AirSolid_HBSTES_3TSeries_ComponentLevel;
