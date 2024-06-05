@@ -124,7 +124,7 @@ model WindPVSimpleSystemOptimalDispatch
     /*Dispatch optimisation*/
     parameter Real DEmax = Q_process_des / eff_process * 1e-6 "Thermal rating of the power block ==> maximum dispatched thermal power to the PB (MWth)";
     parameter SI.Time dt(displayUnit="h") = 3600 "delta t";
-    parameter Integer horizon = 24*2;
+    parameter Integer horizon = 24*7;
     parameter Boolean dispatch_optimiser = true;
 
     Real counter(start = -dt);
@@ -155,19 +155,32 @@ function LPOptimisation
     input Real SLmax;
     input Real SLinit;
     input Real SLmin;
-    input Real max_ramp_up_fraction;
+    input Real ramp_up_fraction;
+    input Real ramp_dw_fraction;
     input Real P_heater_max;
+    input Real nu_process_min;
     input Real pre_dispatched_heat;
     output Real Dispatch;
-    external "C" Dispatch = st_linprog_variability(
-            pv_motab,wnd_motab
-            ,P_elec_max_pv,P_elec_max_wind
-            ,P_elec_pv_ref_size,P_elec_wind_ref_size
-            ,horizon,dt,time_simul
-            ,eff_heater,eff_process
-            ,DEmax,SLmax,SLinit,SLmin
-            ,max_ramp_up_fraction
+    external "C" Dispatch = st_mip(
+             pv_motab
+            ,wnd_motab
+            ,P_elec_max_pv
+            ,P_elec_max_wind
+            ,P_elec_pv_ref_size
+            ,P_elec_wind_ref_size
+            ,horizon
+            ,dt
+            ,time_simul
+            ,eff_heater
+            ,eff_process
+            ,DEmax
+            ,SLmax
+            ,SLinit
+            ,SLmin
+            ,ramp_up_fraction
+            ,ramp_dw_fraction
             ,P_heater_max
+            ,nu_process_min
             ,pre_dispatched_heat
         );
     annotation(Library="st_linprog");
@@ -270,14 +283,25 @@ equation
     when counter > 0 then
         time_simul = floor(time);
         optimalDispatch = LPOptimisation(
-            pv_motab, wind_motab
-            ,renewable_input.P_elec_max/1e6,renewable_input.P_elec_max_wind/1e6
-            ,renewable_input.P_elec_pv_ref_size/1e6,renewable_input.P_elec_wind_ref_size/1e6
-            ,horizon, dt, time_simul
-            ,eff_heater, eff_process
-            ,DEmax, SLmax, SLinit, SLmin
+             pv_motab
+            ,wind_motab
+            ,renewable_input.P_elec_max/1e6
+            ,renewable_input.P_elec_max_wind/1e6
+            ,renewable_input.P_elec_pv_ref_size/1e6
+            ,renewable_input.P_elec_wind_ref_size/1e6
+            ,horizon
+            ,dt
+            ,time_simul
+            ,eff_heater
+            ,eff_process
+            ,DEmax
+            ,SLmax
+            ,SLinit
+            ,SLmin
             ,dt/t_blk_on_delay
+            ,dt/t_blk_off_delay
             ,P_elec_max/1e6
+            ,nu_process_min
             ,pre_dispatched_heat
           );
         reinit(counter, -dt);  
