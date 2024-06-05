@@ -15,7 +15,7 @@ class TestScheduler(unittest.TestCase):
         sim = simulation.Simulator(fn)
         sim.compile_model()
         sim.compile_sim(args=['-s'])
-        sim.simulate(start=0, stop='10d', step='5m', solver='dassl', nls='homotopy', tolerance = '1e-06', args=['-noEventEmit'])
+        sim.simulate(start=0, stop='30d', step='1h', solver='dassl', nls='homotopy', tolerance = '1e-06', args=['-noEventEmit'])
 
     def test_sched(self):
         df=DyMat.DyMatFile('WindPVSimpleSystemOptimalDispatch_res.mat')
@@ -25,22 +25,21 @@ class TestScheduler(unittest.TestCase):
         blk_state=df.data('blk_state')
         E_max=df.data('E_max')[0]
         E=df.data('E')/E_max*100
-        times=df.abscissa('Q_flow_dis')[0]/3600.
+        times=df.abscissa('Q_flow_dis')[0]/3600./24.
 
         import matplotlib.pyplot as plt
         import numpy as np
         import math
-        fig,axes=plt.subplots(2,1,figsize=(18,8),sharex=True)
-        line1, = axes[0].plot(times,Q_flow_dis,ls='--',marker='*',color='tab:red',markevery=5,label='Process Input [MWt]',zorder=2.5)
+        fig,axes=plt.subplots(2,1,figsize=(30/2.54,15/2.54))
+        line1, = axes[0].plot(times,Q_flow_dis,ls='-',marker='*',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
         line2, = axes[0].plot(times,Q_flow_chg,ls='-',color='tab:blue',label='Heater Input [MWe]',zorder=2.1)
-        #line4, = axes[0].plot(times,P_elec_net,ls='-',marker='+',color='tab:orange',label='P_elec_net',zorder=2)
-        axes[0].set_xlabel('time (h)')
+        line2, = axes[0].plot(times,P_elec_net,ls='-',marker='',color='tab:blue',label='Renewable Input [MWe]',zorder=2)
+        axes[0].set_xlabel('time (d)')
         axes[0].set_ylabel('Power [MW]')
 
         max_Q_flow_chg = np.amax(Q_flow_chg)
         upper_limit = math.ceil(max_Q_flow_chg / 10) * 10 + 10
         axes[0].set_ylim([0,upper_limit])
-        #axes[0].set_xlim([0,250])
 
         axe2=axes[0].twinx()
         line3, = axe2.plot(times,E,ls='--',color='tab:green',label='Storage Level [%]')
@@ -55,7 +54,7 @@ class TestScheduler(unittest.TestCase):
         plt.legend(lines, labels, loc='lower left', bbox_to_anchor=(0,1.02,1,0.2), ncol=3)
 
         axes[1].plot(times,blk_state,ls='-',marker='',color='tab:red',markevery=2,label='Controller state',zorder=2.5)
-        axes[1].set_xlabel('time (h)')
+        axes[1].set_xlabel('time (d)')
         axes[1].set_yticks([1,2,3,4])
         axes[1].legend(loc='upper left')
 
