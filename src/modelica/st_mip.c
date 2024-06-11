@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <math.h>
 
-/*#define ST_LINPROG_DEBUG*/
+#define ST_LINPROG_DEBUG
 
 #ifdef ST_LINPROG_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
@@ -154,11 +154,13 @@ double st_mip(
 	}
 
 	/* VARIABLE BOUNDS */
+	MSG("      \t pvd_i \t wnd_i");
 	for(int i = 1; i <= N; ++i) {
 		double pvd_i = PV(i);
 		double wnd_i = WND(i);
 		double p_heat_i = (pvd_i + wnd_i) * eff_heater;
-		p_heat_i = fmin(p_heat_i, P_elec_max);  
+		p_heat_i = fmin(p_heat_i, P_elec_max); 
+		MSG("%3d: \t %.2f \t %.2f", i, pvd_i, wnd_i); 
 
 		glp_set_col_bnds(P, SL(i), GLP_DB, SLmin, SLmax); // Stored energy bounds
 		glp_set_col_bnds(P, DE(i), GLP_DB, 0, DEmax); // Dispatched energy bounds
@@ -271,6 +273,12 @@ double st_mip(
 			(const double[]){0, 1.0, -1.0, 1.0}); // ZON_OFF[i] = YON[i-1] - YON[i] when transitioning from 1 to 0
 		glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
 	}
+
+	glp_add_rows(P, 1);
+	glp_set_mat_row(P, glp_get_num_rows(P), 1,
+		(const int[]){0, DE(1)},
+		(const double[]){0, +1.0});
+	glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP + pre_dispatched_heat);
 
 	for(int i = 2; i <= N; ++i) {
 		glp_add_rows(P, 1);

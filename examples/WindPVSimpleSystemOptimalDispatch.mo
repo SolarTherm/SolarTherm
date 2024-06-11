@@ -52,11 +52,11 @@ model WindPVSimpleSystemOptimalDispatch
 
     parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
     parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
-    parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
+    parameter SI.Energy E_low_u = 1/t_storage*E_max "Lower energy limit";
     parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
     parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
-    parameter SI.Time t_shutdown_min = 12*3600 "Delay before ramping-up";
+    parameter SI.Time t_shutdown_min = 2*3600 "Delay before ramping-up";
     parameter SI.Time t_blk_on_delay = 16*3600 "Ramp-up time";
     parameter SI.Time t_blk_off_delay = 1*3600 "Ramp-down time";
 
@@ -218,7 +218,7 @@ initial equation
         blk_state := 4; // ramp down due to empty tank or no demand
     elsewhen blk_state == 4 and time >= t_blk_c_next then
         blk_state := 1; // turn off after the ramp-down is complete
-    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u then
+    elsewhen blk_state == 1 and Q_flow_sched > 0 and E >= E_low_u and time >= t_startup_next then
         blk_state := 2; // ramp up, demand and tank has capacity
     end when;
 
@@ -278,7 +278,7 @@ equation
     SLinit = E * MWh_per_J "Initial stored energy at TES";
     SLmax = E_max * MWh_per_J "Maximum stored energy at TES";
     SLmin = E_low_l * MWh_per_J "Lowest energy level in the tank";
-    pre_dispatched_heat = pre(Q_flow_dis)/1e6 "Previous heat dispatched";
+    pre_dispatched_heat = pre(optimalDispatch) "Previous heat dispatched";
     
     when counter > 0 then
         time_simul = floor(time);
