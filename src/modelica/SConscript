@@ -59,9 +59,13 @@ genv = conf.Finish()
 
 lib3 = genv.SharedLibrary('st_linprog',['st_linprog.c','linprog/linprog.c'])
 
+lib6 = genv.SharedLibrary('st_mip',['st_mip.c','linprog/linprog.c'])
+
 genv.Depends(lib3,lib4)
 
-shlibs = [lib1,lib4,lib2,lib3]#,lib5]
+genv.Depends(lib6,lib4)
+
+shlibs = [lib1,lib4,lib2,lib3,lib6]#,lib5]
 pysrcs = ['st_test_ext.py','run_solstice.py']
 
 # this is the location that st_simulate etc will use
