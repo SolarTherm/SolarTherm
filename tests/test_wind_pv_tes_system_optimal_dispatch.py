@@ -21,6 +21,7 @@ class TestScheduler(unittest.TestCase):
         df=DyMat.DyMatFile('WindPVSimpleSystemOptimalDispatch_res.mat')
         Q_flow_dis=df.data('Q_flow_dis')/1.e6
         Q_flow_chg=df.data('renewable_input.electricity')/1.e6
+        optimalDispatch=df.data('optimalDispatch')
         P_elec_net=df.data('renewable_input.P_elec_net')/1.e6
         blk_state=df.data('blk_state')
         E_max=df.data('E_max')[0]
@@ -31,9 +32,9 @@ class TestScheduler(unittest.TestCase):
         import numpy as np
         import math
         fig,axes=plt.subplots(2,1,figsize=(30/2.54,15/2.54))
-        line1, = axes[0].plot(times,Q_flow_dis,ls='-',marker='*',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
-        line2, = axes[0].plot(times,Q_flow_chg,ls='-',color='tab:blue',label='Heater Input [MWe]',zorder=2.1)
+        line1, = axes[0].plot(times,Q_flow_dis,ls='-',marker='',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
         line2, = axes[0].plot(times,P_elec_net,ls='-',marker='',color='tab:blue',label='Renewable Input [MWe]',zorder=2)
+        line3, = axes[0].plot(times,optimalDispatch,ls='-',marker='',color='tab:blue',label='Optimal Dispatch [MWt]',zorder=2.1)
         axes[0].set_xlabel('time (d)')
         axes[0].set_ylabel('Power [MW]')
 
@@ -42,12 +43,12 @@ class TestScheduler(unittest.TestCase):
         axes[0].set_ylim([0,upper_limit])
 
         axe2=axes[0].twinx()
-        line3, = axe2.plot(times,E,ls='--',color='tab:green',label='Storage Level [%]')
+        line4, = axe2.plot(times,E,ls='--',color='tab:green',label='Storage Level [%]')
         axe2.set_ylabel('Storage Level [%]')
         axe2.set_ylim([0,100])
 
         # Combine legends from both axes
-        lines = [line1, line2, line3]
+        lines = [line1, line2, line3, line4]
         labels = [line.get_label() for line in lines]
 
         # Place legend outside the plot area
@@ -60,6 +61,9 @@ class TestScheduler(unittest.TestCase):
 
         plt.tight_layout()
         plt.savefig('fig_WindPVSimpleSystemOptimalDispatch.png',dpi=300)
+
+        csv=np.c_[times*24.*3600.,Q_flow_dis,Q_flow_chg,optimalDispatch,P_elec_net,blk_state,E]
+        np.savetxt("verification_results.csv",csv,delimiter=",",header="times,Q_flow_dis,Q_flow_chg,optimalDispatch,P_elec_net,blk_state,E")
 
         # Deleting simulation files
         os.system(f'mv WindPVSimpleSystemOptimalDispatch_res.mat {st_folder}/examples/WindPVSimpleSystemOptimalDispatch_res.mat')
