@@ -313,14 +313,14 @@ equation
         P_elec = 0;
     elseif blk_state == 2 then
         if dispatch_optimiser == true then
-            Q_flow_dis = fr_ramp_blk * optimalDispatch*1e6;
+            Q_flow_dis = fr_ramp_blk * optimalDispatch * 1e6;
         else
             Q_flow_dis = fr_ramp_blk * Q_flow_sched;
         end if;
         P_elec = eff_process*Q_flow_dis;
     elseif blk_state == 4 then
         Q_flow_dis = fr_ramp_blk * (if dispatch_optimiser == true
-                then optimalDispatch*1e6 else Q_flow_sched);
+                then optimalDispatch * 1e6 else Q_flow_sched);
         P_elec = eff_process*Q_flow_dis;
     else
         Q_flow_dis = if dispatch_optimiser == true 
