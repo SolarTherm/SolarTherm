@@ -128,9 +128,15 @@ double st_mip(
     #define YON(I) (XE(N) + I) // Disjunct mode for ON state
     #define YOFF(I) (YON(N) + I)
     #define YPAR(I) (YOFF(N) + I)
+    #define ZONOFF(I) (YPAR(N) + I)
+    #define ZOFFON(I) (ZONOFF(N) + I)
+    #define ZOFFPAR(I) (ZOFFON(N) + I)
+    #define ZPAROFF(I) (ZOFFPAR(N) + I)
+    #define ZONPAR(I) (ZPAROFF(N) + I)
+    #define ZPARON(I) (ZONPAR(N) + I)
 
     // Add columns for variables, including binary variables
-    int cols = YPAR(N);
+    int cols = ZPARON(N);
     glp_add_cols(P, cols);
 
     MSG("Number of cols = %d", cols);
@@ -146,6 +152,12 @@ double st_mip(
         snprintf(sss, NAMEMAX, "YON%02d", i); glp_set_col_name(P, YON(i), sss); // Disjunct mode for ON state
         snprintf(sss, NAMEMAX, "YOFF%02d", i); glp_set_col_name(P, YOFF(i), sss);
         snprintf(sss, NAMEMAX, "YPAR%02d", i); glp_set_col_name(P, YPAR(i), sss);
+        snprintf(sss, NAMEMAX, "ZONOFF%02d", i); glp_set_col_name(P, ZONOFF(i), sss);
+        snprintf(sss, NAMEMAX, "ZOFFON%02d", i); glp_set_col_name(P, ZOFFON(i), sss);
+        snprintf(sss, NAMEMAX, "ZOFFPAR%02d", i); glp_set_col_name(P, ZOFFPAR(i), sss);
+        snprintf(sss, NAMEMAX, "ZPAROFF%02d", i); glp_set_col_name(P, ZPAROFF(i), sss);
+        snprintf(sss, NAMEMAX, "ZONPAR%02d", i); glp_set_col_name(P, ZONPAR(i), sss);
+        snprintf(sss, NAMEMAX, "ZPARON%02d", i); glp_set_col_name(P, ZPARON(i), sss);
     }
 
     // Set the objective function to maximize
@@ -183,6 +195,24 @@ double st_mip(
 
         glp_set_col_bnds(P, YPAR(i), GLP_DB, 0, 1); // Auxiliary variable bounds
         glp_set_col_kind(P, YPAR(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZONOFF(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZONOFF(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZOFFON(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZOFFON(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZOFFPAR(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZOFFPAR(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZPAROFF(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZPAROFF(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZONPAR(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZONPAR(i), GLP_BV); // Set variable as binary
+
+        glp_set_col_bnds(P, ZPARON(i), GLP_DB, 0, 1); // Auxiliary variable bounds
+        glp_set_col_kind(P, ZPARON(i), GLP_BV); // Set variable as binary
     }
 
     /* CONSTRAINTS */
@@ -246,10 +276,8 @@ double st_mip(
     glp_set_row_name(P, LEB, "LEB");
 
 
+    // MODE DETECTION
     for (unsigned i = 1; i <= N; ++i) {
-        /*
-        3. Disjunct modes for x[i] = DE[i]/DEmax
-        */
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), YON(i)},
@@ -273,29 +301,176 @@ double st_mip(
             (const int[]){0, DE(i), YOFF(i)},
             (const double[]){0, 1.0, +M});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, LPT+M);
-    }
 
-    glp_add_rows(P, 1);
-    glp_set_mat_row(P, glp_get_num_rows(P), 1,
-        (const int[]){0, DE(1)},
-        (const double[]){0, +1.0});
-    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP+pre_dispatched_heat);
-
-    for(int i = 2; i <= N; ++i) {
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), DE(i-1)},
-            (const double[]){0, +1.0, -1.0});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP);
-    }
-
-    for (unsigned i = 1; i <= N; ++i) {
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 3,
             (const int[]){0, YON(i), YOFF(i), YPAR(i)},
             (const double[]){0, 1.0, 1.0, 1.0});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 1.0, 1.0);
     }
+
+// SWITCH DETECTION
+// ON->OFF
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YON(i-1), ZONOFF(i)}, //YON(i-1) >= ZONOFF(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YOFF(i), ZONOFF(i)}, //YOFF(i) >= ZONOFF(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YON(i-1), YOFF(i), ZONOFF(i)}, //YON(i-1) + YOFF(i) >= ZONOFF(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+// OFF->ON
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YOFF(i-1), ZOFFON(i)}, //YOFF(i-1) >= ZOFFON(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YON(i), ZOFFON(i)}, //YON(i) >= ZOFFON(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YOFF(i-1), YON(i), ZOFFON(i)}, //YOFF(i-1) + YON(i) >= ZOFFON(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+
+// OFF->PAR
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YOFF(i-1), ZOFFPAR(i)}, //YOFF(i-1) >= ZOFFPAR(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YPAR(i), ZOFFPAR(i)}, //YPAR(i) >= ZOFFPAR(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YOFF(i-1), YPAR(i), ZOFFPAR(i)}, //YON(i-1) + YPAR(i) >= ZOFFPAR(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+// PAR->OFF
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YPAR(i-1), ZPAROFF(i)}, //YPAR(i-1) >= ZPAROFF(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YOFF(i), ZPAROFF(i)}, //YOFF(i) >= ZPAROFF(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YPAR(i-1), YOFF(i), ZPAROFF(i)}, //YPAR(i-1) + YOFF(i) >= ZPAROFF(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+// ON->PAR
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YON(i-1), ZONPAR(i)}, //YON(i-1) >= ZONPAR(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YPAR(i), ZONPAR(i)}, //YPAR(i) >= ZONPAR(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YON(i-1), YPAR(i), ZONPAR(i)}, //YON(i-1) + YPAR(i) >= ZONPAR(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+// PAR->ON
+for(int i = 2; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YPAR(i-1), ZPARON(i)}, //YPAR(i-1) >= ZPARON(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, YON(i), ZPARON(i)}, //YON(i) >= ZPARON(i)
+        (const double[]){0, 1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 3,
+        (const int[]){0, YPAR(i-1), YON(i), ZPARON(i)}, //YPAR(i-1) + YON(i) >= ZPARON(i)
+        (const double[]){0, 1.0, +1.0, -1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 1.0, 0.0);
+}
+
+
+for(int i = 1; i <= N; ++i) {
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 1,
+        (const int[]){0, ZOFFON(i)},
+        (const double[]){0, 1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 1,
+        (const int[]){0, ZPAROFF(i)},
+        (const double[]){0, 1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 0.0, 0.0);
+
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 1,
+        (const int[]){0, ZONPAR(i)},
+        (const double[]){0, 1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 0.0, 0.0);
+}
+
+/*    glp_add_rows(P, 1);*/
+/*    glp_set_mat_row(P, glp_get_num_rows(P), 1,*/
+/*        (const int[]){0, DE(1)},*/
+/*        (const double[]){0, +1.0});*/
+/*    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP+pre_dispatched_heat);*/
+
+/*    for(int i = 2; i <= N; ++i) {*/
+/*        glp_add_rows(P, 1);*/
+/*        glp_set_mat_row(P, glp_get_num_rows(P), 2,*/
+/*            (const int[]){0, DE(i), DE(i-1)},*/
+/*            (const double[]){0, +1.0, -1.0});*/
+/*        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP);*/
+/*    }*/
 
     // Message attribute
     glp_iocp parm;
@@ -343,16 +518,22 @@ double st_mip(
     double optimalDispatch = glp_mip_col_val(P, DE(1));
 
 #ifdef ST_LINPROG_DEBUG
-    MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR");
+    MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR \t ZONOFF \t ZOFFON \t ZOFFPAR \t ZPAROFF \t ZONPAR \t ZPARON");
     for(int i = 1; i <= N; ++i){
-        MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
-        glp_mip_col_val(P, SL(i)),
-        glp_mip_col_val(P, SE(i)),
-        glp_mip_col_val(P, XE(i)),
-        glp_mip_col_val(P, DE(i)),
-        glp_mip_col_val(P, YON(i)),
-        glp_mip_col_val(P, YOFF(i)),
-        glp_mip_col_val(P, YPAR(i))
+        MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
+            glp_mip_col_val(P, SL(i)),
+            glp_mip_col_val(P, SE(i)),
+            glp_mip_col_val(P, XE(i)),
+            glp_mip_col_val(P, DE(i)),
+            glp_mip_col_val(P, YON(i)),
+            glp_mip_col_val(P, YOFF(i)),
+            glp_mip_col_val(P, YPAR(i)),
+            glp_mip_col_val(P, ZONOFF(i)),
+            glp_mip_col_val(P, ZOFFON(i)),
+            glp_mip_col_val(P, ZOFFPAR(i)),
+            glp_mip_col_val(P, ZPAROFF(i)),
+            glp_mip_col_val(P, ZONPAR(i)),
+            glp_mip_col_val(P, ZPARON(i))
         );
     }
 #endif
