@@ -6,8 +6,10 @@ import unittest
 from solartherm import simulation
 import DyMat
 
-from math import pi
 import os
+import numpy as np
+from math import pi,ceil
+import matplotlib.pyplot as plt
 
 class TestScheduler(unittest.TestCase):
     def setUp(self):
@@ -28,18 +30,15 @@ class TestScheduler(unittest.TestCase):
         E=df.data('E')/E_max*100
         times=df.abscissa('Q_flow_dis')[0]/3600./24.
 
-        import matplotlib.pyplot as plt
-        import numpy as np
-        import math
-        fig,axes=plt.subplots(2,1,figsize=(30/2.54,15/2.54))
-        line1, = axes[0].plot(times,Q_flow_dis,ls='-',marker='',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
+        fig,axes=plt.subplots(2,1,figsize=(30/2.54,15/2.54),sharex=True)
+        line1, = axes[0].plot(times,Q_flow_dis,ls='--',marker='',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
         line2, = axes[0].plot(times,P_elec_net,ls='-',marker='',color='tab:blue',label='Renewable Input [MWe]',zorder=2)
-        line3, = axes[0].plot(times,optimalDispatch,ls='-',marker='',color='tab:blue',label='Optimal Dispatch [MWt]',zorder=2.1)
+        line3, = axes[0].plot(times,optimalDispatch,ls='-',marker='',color='tab:orange',label='Optimal Dispatch [MWt]',zorder=2.1)
         axes[0].set_xlabel('time (d)')
         axes[0].set_ylabel('Power [MW]')
 
         max_Q_flow_chg = np.amax(Q_flow_chg)
-        upper_limit = math.ceil(max_Q_flow_chg / 10) * 10 + 10
+        upper_limit = ceil(max_Q_flow_chg / 10) * 10 + 10
         axes[0].set_ylim([0,upper_limit])
 
         axe2=axes[0].twinx()
