@@ -245,29 +245,30 @@ double st_mip(
     glp_set_row_bnds(P, LEB, GLP_FX, SLinit, SLinit);
     glp_set_row_name(P, LEB, "LEB");
 
-
+    // MODE DETECTION (YON,YOFF,YPAR)
     for (unsigned i = 1; i <= N; ++i) {
-        /*
-        3. Disjunct modes for x[i] = DE[i]/DEmax
-        */
+        // DE(i) >= UPT - M*[1-YON(i)]
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), YON(i)},
             (const double[]){0, 1.0, -M});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, UPT-M, 0.0);
 
+        // DE(i) <= UPT + M*[1-YPAR(i)]
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), YPAR(i)},
             (const double[]){0, 1.0, +M});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, UPT+M);
 
+        // DE(i) >= LPT - M*[1-YPAR(i)]
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), YPAR(i)},
             (const double[]){0, 1.0, -M});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, LPT-M, 0.0);
 
+        // DE(i) <= LPT + M*[1-YOFF(i)]
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), YOFF(i)},
@@ -281,18 +282,54 @@ double st_mip(
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 1.0, 1.0);
     }
 
+    // RESTRICTION OF RAMPING RATE
+    // DE(1) - pre_dispatched_heat <= MaxRUP
     glp_add_rows(P, 1);
     glp_set_mat_row(P, glp_get_num_rows(P), 1,
         (const int[]){0, DE(1)},
         (const double[]){0, +1.0});
     glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP+pre_dispatched_heat);
 
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 2,
+        (const int[]){0, DE(1), YPAR(1)},
+        (const double[]){0, +1.0, -M});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, -M+pre_dispatched_heat, 0.0);
+
     for(int i = 2; i <= N; ++i) {
+        // DE(i) - DE(i-1) <= MaxRUP
         glp_add_rows(P, 1);
         glp_set_mat_row(P, glp_get_num_rows(P), 2,
             (const int[]){0, DE(i), DE(i-1)},
             (const double[]){0, +1.0, -1.0});
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP);
+
+        // M*[1-YPAR(i)] + DE(i) - DE(i-1) >= 0
+        glp_add_rows(P, 1);
+        glp_set_mat_row(P, glp_get_num_rows(P), 2,
+            (const int[]){0, DE(i), DE(i-1), YPAR(i)},
+            (const double[]){0, +1.0, -1.0, -M});
+        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, -M, 0.0);
+    }
+
+    // FORBIDEN TRANSITION: ON-->PAR
+    // YON_init + YPAR(1) <= 1
+    double YON_init = 0;
+    if (pre_dispatched_heat > UPT) {
+        YON_init = 1;
+    }
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 1,
+        (const int[]){0, YPAR(1)},
+        (const double[]){0, +1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0-YON_init);
+    // YON(i-1) + YPAR(i) <= 1
+    for(int i = 2; i <= N; ++i) {
+        glp_add_rows(P, 1);
+        glp_set_mat_row(P, glp_get_num_rows(P), 2,
+            (const int[]){0, YON(i-1), YPAR(i)},
+            (const double[]){0, +1.0, +1.0});
+        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0);
     }
 
     // Message attribute
