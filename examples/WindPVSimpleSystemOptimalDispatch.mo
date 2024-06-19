@@ -210,11 +210,11 @@ initial equation
     algorithm
     // Discrete equation system not yet supported (even though correct)
     // Putting in algorithm section instead
-    when blk_state == 2 and E <= E_low_l or optimalDispatch < nu_process_min*DEmax then
+    when blk_state == 2 and (E <= E_low_l or optimalDispatch < nu_process_min*DEmax) then
         blk_state := 1; // turn off (or stop ramping) due to empty tank or no demand
     elsewhen blk_state == 2 and time >= t_blk_w_next and Q_flow_sched > 0 then
         blk_state := 3; // operational, ramp-up completed
-    elsewhen blk_state == 3 and E <= E_low_l then
+    elsewhen blk_state == 3 and (E <= E_low_l or optimalDispatch < nu_process_min*DEmax) then
         blk_state := 4; // ramp down due to empty tank or no demand
     elsewhen blk_state == 4 and time >= t_blk_c_next then
         blk_state := 1; // turn off after the ramp-down is complete

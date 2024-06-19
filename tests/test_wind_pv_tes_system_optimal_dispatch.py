@@ -60,6 +60,7 @@ class TestScheduler(unittest.TestCase):
 
         plt.tight_layout()
         plt.savefig('fig_WindPVSimpleSystemOptimalDispatch.png',dpi=300)
+        plt.show()
 
         csv=np.c_[times*24.*3600.,Q_flow_dis,Q_flow_chg,optimalDispatch,P_elec_net,blk_state,E]
         np.savetxt("verification_results.csv",csv,delimiter=",",header="times,Q_flow_dis,Q_flow_chg,optimalDispatch,P_elec_net,blk_state,E")
