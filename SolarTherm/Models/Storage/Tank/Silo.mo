@@ -47,8 +47,7 @@ model Silo "A silo (from Ancient Greek σιρός (sirós) 'pit for holding grai
   //SI.SpecificEnthalpy h_in "Inlet Enthalpy depends on mass flow direction (J/kg)";
   //SI.SpecificEnthalpy h_out "Outlet Enthalpy depends on mass flow direction (J/kg)";
   //SI.Temperature T_in "Inlet Temperature depends on mass flow direction";
-  //SI.Temperature T_out "Outlet Temperature depends on mass flow direction";  
-  
+  //SI.Temperature T_out "Outlet Temperature depends on mass flow direction";
   SI.Power P_aux "Instantaneous power consumed by the auxiliary heater (W)";
   SI.HeatFlowRate Q_aux "Heat-rate delivered by the auxiliary heater (J/s)";
   SI.HeatFlowRate Q_loss "Instantaneous heat-loss-rate to the surroundings (J/s)";
@@ -108,7 +107,7 @@ equation
   
   Filler_State.h = medium.h;
 
-  annotation (Icon(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1), graphics = {Text(origin = {3, -5}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{-55, 37}, {55, -37}}, textString = "Silo")}), Diagram(
+  annotation (Icon(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1), graphics = {Text(origin = {3, -5}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{-55, 37}, {55, -37}}, textString = "Silo"), Text(origin = {14, 0}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {129, -146}}, textString = "%name")}), Diagram(
         coordinateSystem(preserveAspectRatio=false)),
     Documentation(revisions="<html>
 <ul>

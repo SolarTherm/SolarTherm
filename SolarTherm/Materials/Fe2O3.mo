@@ -15,7 +15,7 @@ package Fe2O3
   equation
 	T = SolarTherm.Media.SolidParticles.Fe2O3_utilities.T_h(h);
     rho = SolarTherm.Media.SolidParticles.Fe2O3_utilities.rho_T(T);
-    k = SolarTherm.Media.SolidParticles.Fe2O3_utilities.lamda_T(T); //some genius spelt it like that, not Zeb
+    k = SolarTherm.Media.SolidParticles.Fe2O3_utilities.k_T(T); //some genius spelt it like that, not Zeb
     f = 0.0; //Never melts
   end State;
   
@@ -44,7 +44,7 @@ package Fe2O3
     input Real f;
     output SI.ThermalConductivity k;
   algorithm
-    k := SolarTherm.Media.SolidParticles.Fe2O3_utilities.lamda_T(T); //because some genius decided to spell it that way
+    k := SolarTherm.Media.SolidParticles.Fe2O3_utilities.k_T(T); //because some genius decided to spell it that way
     //k := Interpolate1D(T_data,k_data,T);
   end k_Tf;
     

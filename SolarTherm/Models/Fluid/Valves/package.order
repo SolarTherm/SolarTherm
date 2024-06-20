@@ -7,3 +7,5 @@ PBS_TeeJunction
 PBS_TeeJunction_LoopBreaker
 Valve_TwoWay
 PBS_TeeJunction_Valve
+Mixer
+H2_H2O_Splitter

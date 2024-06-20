@@ -9,9 +9,9 @@ model Stefan_VariableMesh
 	parameter Real T_init = 1028;//1068.0 "k";
     parameter Real L = 0.1 "m"; //Length of a plane wall with length L
     parameter Real A = 1.0 "m^2";
-    parameter Integer n3 = 16; //20 //Total Number of nodes used in L for f3
-    parameter Integer n2 = 20; //30 //Total Number of nodes used in L for f2
-    parameter Integer n1 = 25; //45 //Total Number of nodes used in L for f1
+    parameter Integer n3 = 20; //20 //Total Number of nodes used in L for f3
+    parameter Integer n2 = 26; //30 //Total Number of nodes used in L for f2
+    parameter Integer n1 = 36; //45 //Total Number of nodes used in L for f1
 
     //Exact Solution Parameters;
     parameter Real pi = 2.0*Modelica.Math.asin(1.0);
@@ -21,7 +21,7 @@ model Stefan_VariableMesh
     parameter Real alpha_l = 1.25/(2160.0*1198.0);
     parameter Real alpha_s = 4.0/(2160.0*856.0);
     parameter Real lamb = Lambda(St_s,St_l,v); //Solved via Newton-Raphson Method
-    parameter Real r = 1.0 + 1.0e-6; //Mesh growth ratio, if you want 1.0, use 1.0 + 1.0e-6 to prevent div0 error
+    parameter Real r = 1.1 + 1.0e-6; //Mesh growth ratio, if you want 1.0, use 1.0 + 1.0e-6 to prevent div0 error
     Real X_exact (start = 0.0); //Location of melting front
     Real Q_exact (start = 0.0); //Total energy absorbed
     Real Slope_exact;
@@ -406,4 +406,5 @@ equation
     X_pct2 = 100.0*X_res2/X_exact;
     X_pct3 = 100.0*X_res3/X_exact;
     
+    annotation(experiment(StopTime = 250, StartTime = 0, Tolerance = 1e-6, Interval = 1.0));
 end Stefan_VariableMesh;

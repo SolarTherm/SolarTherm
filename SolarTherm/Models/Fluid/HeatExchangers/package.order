@@ -15,3 +15,5 @@ mass_pressure_loop_breaker
 pressure_loop_breaker
 Boiler
 Boiler_Basic
+HRSG_eNTU
+H2DRI

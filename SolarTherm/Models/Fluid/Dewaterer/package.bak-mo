@@ -1,0 +1,6 @@
+within SolarTherm.Models.Fluid;
+
+package Dewaterer
+  annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)));
+end Dewaterer;

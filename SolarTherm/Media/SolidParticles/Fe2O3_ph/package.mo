@@ -16,7 +16,7 @@ package Fe2O3_ph
 		final reducedX=true,
 		final fixedX=true,
 		Temperature(
-			min=298.15,
+			min=293.15,
 			max=1812.0,
 			start=900+273.15));
 
@@ -84,7 +84,7 @@ package Fe2O3_ph
 	d = rho_T(T);
 	h = state.h;
 	u = h - p / d;
-	MM = 0.159688;
+	MM = 159.6882e-3;
 	R = 8.3144 / MM;
 
 	end BaseProperties;
@@ -173,7 +173,7 @@ package Fe2O3_ph
 
 	redeclare function extends thermalConductivity "Return thermal conductivity"
 	algorithm
-		lambda := lamda_T(T_h(state.h));
+		lambda := k_T(T_h(state.h));
 		annotation (Documentation(info="<html>
 
 			</html>"));
@@ -239,22 +239,7 @@ package Fe2O3_ph
 			</html>"));
 	end density_derT_p;
 
-	annotation (Documentation(info= "<html><head></head><body><p><span style=\"font-family: Arial,sans-serif;\">Calculation of thermo-physical properties for pure solid Fe2O3 in the temperature region of 298.15 K to 1570 K. Thermodynamic properties are explicit in terms of enthalpy and pressure. Properties are calculated via linear interpolation of data-tables with 10 K temperature intervals.
-		</span></p><b><span style=\"font-family: Arial, sans-serif;\">Restrictions</span></b><div><span style=\"font-family: Arial, sans-serif;\"><br></span></div><div><span style=\"font-family: Arial, sans-serif;\">The functions provided by this package shall be used inside of the restricted limits according to the referenced literature.</span>
-<ul>
-		<li><b><span style=\"font-family: Arial,sans-serif;\">298.15 K ≤ T ≤ 1570 K </span></b></li>
-		<li><b><span style=\"font-family: Arial,sans-serif;\">Explicit for pressure and enthalpy. </span></b></li>
-</ul>
-		<p><b><span style=\"font-family: Arial,sans-serif;\">References</span></b> </p>
-		<p style=\"margin-left: 30px;\">Chase M. W. NIST-JANAF themochemical tables, 1998. URL https://webbook.nist.gov/cgi/
-cbook.cgi?ID=C1317608&amp;Mask=2#Thermo-Condensed. Fourth Edition, Monograph 9</p>
-		<p style=\"margin-left: 30px;\">Emmanuil Beygelzimer and Yan Beygelzimer. Heat Capacity of oxide scale in the range from 0
-C to 1300 C: Generalized estimates with account for movability of phase transitions, October
-2021.</p>
-		<p style=\"margin-left: 30px;\">Emmanuil Beygelzimer and Yan Beygelzimer. Thermal conductivity of oxide scale and its com-
-ponents in the range from 0 C to 1300 C: Generalized estimates with account for movability of
-phase transitions, October 2021.</p>
-		<p style=\"margin-left: 30px;\">Emmanuil Beygelzimer and Yan Beygelzimer. Generalized estimates for the density of oxide
-scale in the range from 0 C to 1300 C, October 2021.</p>
+	annotation (Documentation(info= "<html><head></head><body><p><span style=\"font-family: Arial,sans-serif;\">Calculation of thermo-physical properties for pure solid Fe2O3 in the temperature region of 298.15 K to 1500 K. Thermodynamic properties are explicit in terms of enthalpy and pressure. Properties are calculated via linear interpolation of data-tables with 10 K temperature intervals.
+		</span></p><p><b><span style=\"font-family: Arial, sans-serif;\"></span></b></p><div><b style=\"font-family: 'DejaVu Sans Mono';\"><span style=\"font-family: Arial, sans-serif;\">Restrictions</span></b><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><span style=\"font-family: Arial, sans-serif;\"><br></span></div><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><span style=\"font-family: Arial, sans-serif;\">The functions provided by this package shall be used inside of the restricted limits according to the referenced literature.</span><ul><li><b><span style=\"font-family: Arial, sans-serif;\">298.15 K ≤ T ≤ 1500 K</span></b></li><li><b><span style=\"font-family: Arial, sans-serif;\">Explicit for pressure and enthalpy.</span></b></li></ul><div><font face=\"Arial, sans-serif\">The following sources were used:</font></div><div><ul><li><font face=\"Arial, sans-serif\"><b>cp, h, s: FactSage</b></font></li><li><font face=\"Arial, sans-serif\"><b>rho, k: Beygelzimer</b></font></li></ul><div><font face=\"Arial, sans-serif\">The following phases were considered in this model:</font></div></div><div><ul><li><font face=\"Arial, sans-serif\"><b>S1: 298.15 K - 1500.0 K</b></font></li></ul><div><font face=\"Arial, sans-serif\">Specific enthalpy,&nbsp;</font><i style=\"font-family: Arial, sans-serif;\">h</i><span style=\"font-family: Arial, sans-serif;\">(</span><i style=\"font-family: Arial, sans-serif;\">T</i><span style=\"font-family: Arial, sans-serif;\">)</span><span style=\"font-family: Arial, sans-serif;\">&nbsp;[J/kg] measured with respect to phase S1 at 298.15 K.</span></div></div><div><font face=\"Arial, sans-serif\">Specific absolute entropy,&nbsp;<i>s</i>(<i>T</i>) [J/kgK] provided as an absolute measurement.</font></div><p><b><span style=\"font-family: Arial, sans-serif;\">References</span></b></p><p style=\"margin-left: 30px;\">C. W. Bale, E. Bélisle, P. Chartrand, S. A. Decterov, G. Eriksson, A.E. Gheribi, K. Hack, I. H. Jung, Y. B. Kang, J. Melançon, A. D. Pelton, S. Petersen, C. Robelin. J. Sangster, P. Spencer and M-A. Van Ende, FactSage Thermochemical Software and Databases - 2010 - 2016, Calphad, vol. 54, pp 35-53, 2016 &lt;www.factsage.com&gt;</p><p style=\"margin-left: 30px;\">Emmanuil Beygelzimer and Yan Beygelzimer. Thermal conductivity of oxide scale and its com- ponents in the range from 0 C to 1300 C: Generalized estimates with account for movability of phase transitions, October 2021.</p><p style=\"margin-left: 30px;\">Emmanuil Beygelzimer and Yan Beygelzimer. Generalized estimates for the density of oxide scale in the range from 0 C to 1300 C, October 2021.</p></div></div><div>
 		</div></body></html>"));
 end Fe2O3_ph;
