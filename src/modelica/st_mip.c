@@ -46,6 +46,12 @@ double st_mip(
         ,double P_elec_max // Maximum electrical power
         ,double upper_threshold // Minimum energy delivery to the process
         ,double pre_dispatched_heat // Initially pre-dispatched heat
+        ,double pre_Q_flow_dis
+        ,double pre_blk_state
+        ,double pre_startup_next
+        ,double t_shutdown_min
+        ,double * optimalDispatch
+        ,double * blk_state
 ){
     MSG("\n\nt = %f",t0);
 
@@ -73,7 +79,7 @@ double st_mip(
     double MinRUP = 0.0; // Minimum ramp-up rate
     double MinRDW = 0.0; // Minimum ramp-down rate
     double UPT = upper_threshold * DEmax;
-    double LPT = 0.05 * DEmax;
+    double LPT = 1e-3;
     double M = 10*DEmax; // Big M value
 
     // Print the initial values for debugging purposes
@@ -90,6 +96,8 @@ double st_mip(
     MSG("Max ramp-up rate = %.2f", MaxRUP);
     MSG("Max ramp-dw rate = %.2f", MaxRDW);
     MSG("DEinit           = %.2f", pre_dispatched_heat);
+    MSG("pre_Q_flow_dis   = %.2f", pre_Q_flow_dis);
+    MSG("pre_blk_state    = %.2f", pre_blk_state);
 
     if(NULL==pvd)return ST_ERRVAL;
     if(NULL==wnd)return ST_ERRVAL;
@@ -332,6 +340,26 @@ double st_mip(
         glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0);
     }
 
+    // FORBIDEN TRANSITION: PAR-->OFF
+    // YPAR_init + YOFF(1) <= 1
+    double YPAR_init = 0;
+    if (pre_dispatched_heat <= UPT && pre_dispatched_heat > LPT) {
+        YPAR_init = 1;
+    }
+    glp_add_rows(P, 1);
+    glp_set_mat_row(P, glp_get_num_rows(P), 1,
+        (const int[]){0, YOFF(1)},
+        (const double[]){0, +1.0});
+    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0-YPAR_init);
+    // YPAR(i-1) + YOFF(i) <= 1
+    for(int i = 2; i <= N; ++i) {
+        glp_add_rows(P, 1);
+        glp_set_mat_row(P, glp_get_num_rows(P), 2,
+            (const int[]){0, YPAR(i-1), YOFF(i)},
+            (const double[]){0, +1.0, +1.0});
+        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0);
+    }
+
     // Message attribute
     glp_iocp parm;
     glp_init_iocp(&parm);
@@ -375,7 +403,17 @@ double st_mip(
 
     }
 
-    double optimalDispatch = glp_mip_col_val(P, DE(1));
+    if (pre_blk_state == 4){
+        blk_state[0] = t0 + t_shutdown_min;
+    } else {
+        blk_state[0] = pre_startup_next;
+    }
+    if (t0 >= blk_state[0]){
+        optimalDispatch[0] = glp_mip_col_val(P, DE(1));
+    } else {
+        optimalDispatch[0] = 0.0;
+    }
+    
 
 #ifdef ST_LINPROG_DEBUG
     MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR");
@@ -392,7 +430,7 @@ double st_mip(
     }
 #endif
 
-    MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f", optimalDispatch);
+    MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f", optimalDispatch[0]);
 
     /* Free all the memory used in this script */
     glp_delete_prob(P);
@@ -404,7 +442,6 @@ double st_mip(
     }
 
     /* End of the code */
-    return optimalDispatch;
 }
 
 // vim: ts=4:sw=4:noet:tw=80

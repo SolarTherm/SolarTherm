@@ -136,6 +136,9 @@ model WindPVSimpleSystemOptimalDispatch
 
     Real TOD_W(start=0);
     Real pre_dispatched_heat;
+    Real pre_blk_state;
+    Real t_startup_next_fun;
+    Real pre_startup_next;
 
 function LPOptimisation
     import SolarTherm.Utilities.Tables.STMotab;
@@ -160,8 +163,13 @@ function LPOptimisation
     input Real P_heater_max;
     input Real nu_process_min;
     input Real pre_dispatched_heat;
+    input Real pre_Q_flow_dis;
+    input Real pre_blk_state;
+    input Real pre_startup_next;
+    input Real t_shutdown_min;
     output Real Dispatch;
-    external "C" Dispatch = st_mip(
+    output Real t_startup_next_fun;
+    external "C" st_mip(
              pv_motab
             ,wnd_motab
             ,P_elec_max_pv
@@ -182,6 +190,12 @@ function LPOptimisation
             ,P_heater_max
             ,nu_process_min
             ,pre_dispatched_heat
+            ,pre_Q_flow_dis
+            ,pre_blk_state
+            ,pre_startup_next
+            ,t_shutdown_min
+            ,Dispatch
+            ,t_startup_next_fun
         );
     annotation(Library="st_mip");
 end LPOptimisation;
@@ -197,7 +211,7 @@ initial equation
     t_blk_c_now = 0;
     t_blk_c_next = 0;
     t_sch_next = t_sch_next_start;
-    optimalDispatch = DEmax;
+    optimalDispatch = 0.0;
 
     if E > E_up_u then
         full = true;
@@ -210,7 +224,7 @@ initial equation
     algorithm
     // Discrete equation system not yet supported (even though correct)
     // Putting in algorithm section instead
-    when blk_state == 2 and (E <= E_low_l or optimalDispatch < nu_process_min*DEmax) then
+    when blk_state == 2 and (E <= E_low_l) then
         blk_state := 1; // turn off (or stop ramping) due to empty tank or no demand
     elsewhen blk_state == 2 and time >= t_blk_w_next and Q_flow_sched > 0 then
         blk_state := 3; // operational, ramp-up completed
@@ -274,15 +288,17 @@ equation
 
     Q_flow_rec = renewable_input.electricity;
 
-    der(counter) = 1;
+    der(counter) = if blk_state==1 then 0 else 1;
     SLinit = E * MWh_per_J "Initial stored energy at TES";
     SLmax = E_max * MWh_per_J "Maximum stored energy at TES";
     SLmin = E_low_l * MWh_per_J "Lowest energy level in the tank";
     pre_dispatched_heat = pre(optimalDispatch) "Previous heat dispatched";
+    pre_blk_state = pre(blk_state);
+    pre_startup_next = pre(t_startup_next_fun);
     
     when counter > 0 then
         time_simul = floor(time);
-        optimalDispatch = LPOptimisation(
+        (optimalDispatch,t_startup_next_fun) = LPOptimisation(
              pv_motab
             ,wind_motab
             ,renewable_input.P_elec_max/1e6
@@ -303,6 +319,10 @@ equation
             ,P_elec_max/1e6
             ,nu_process_min
             ,pre_dispatched_heat
+            ,pre(Q_flow_dis)/1e6
+            ,pre_blk_state
+            ,pre_startup_next
+            ,t_shutdown_min
           );
         reinit(counter, -dt);  
     end when;
@@ -313,14 +333,14 @@ equation
         P_elec = 0;
     elseif blk_state == 2 then
         if dispatch_optimiser == true then
-            Q_flow_dis = fr_ramp_blk * optimalDispatch * 1e6;
+            Q_flow_dis = optimalDispatch * 1e6;
         else
             Q_flow_dis = fr_ramp_blk * Q_flow_sched;
         end if;
         P_elec = eff_process*Q_flow_dis;
     elseif blk_state == 4 then
-        Q_flow_dis = fr_ramp_blk * (if dispatch_optimiser == true
-                then optimalDispatch * 1e6 else Q_flow_sched);
+        Q_flow_dis = (if dispatch_optimiser == true
+                then optimalDispatch * 1e6 else fr_ramp_blk * Q_flow_sched);
         P_elec = eff_process*Q_flow_dis;
     else
         Q_flow_dis = if dispatch_optimiser == true 

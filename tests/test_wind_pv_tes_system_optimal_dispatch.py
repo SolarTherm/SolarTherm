@@ -8,6 +8,7 @@ import DyMat
 
 import os
 import numpy as np
+import time
 from math import pi,ceil
 import matplotlib.pyplot as plt
 
@@ -17,7 +18,9 @@ class TestScheduler(unittest.TestCase):
         sim = simulation.Simulator(fn)
         sim.compile_model()
         sim.compile_sim(args=['-s'])
+        tinit=time.time()
         sim.simulate(start=0, stop='30d', step='1h', solver='dassl', nls='homotopy', tolerance = '1e-06', args=['-noEventEmit'])
+        print('Simulation time: %4.2f s'%(time.time()-tinit))
 
     def test_sched(self):
         df=DyMat.DyMatFile('WindPVSimpleSystemOptimalDispatch_res.mat')
@@ -26,13 +29,15 @@ class TestScheduler(unittest.TestCase):
         optimalDispatch=df.data('optimalDispatch')
         P_elec_net=df.data('renewable_input.P_elec_net')/1.e6
         blk_state=df.data('blk_state')
+        t_startup_next_fun=df.data('t_startup_next')/3600.
+        pre_blk_state=df.data('pre_blk_state')
         E_max=df.data('E_max')[0]
         E=df.data('E')/E_max*100
         times=df.abscissa('Q_flow_dis')[0]/3600./24.
 
-        fig,axes=plt.subplots(2,1,figsize=(30/2.54,15/2.54),sharex=True)
+        fig,axes=plt.subplots(3,1,figsize=(30/2.54,22.5/2.54),sharex=True)
         line1, = axes[0].plot(times,Q_flow_dis,ls='--',marker='',color='tab:red',markevery=5,label='Process Heat Input [MWt]',zorder=2.5)
-        line2, = axes[0].plot(times,P_elec_net,ls='-',marker='',color='tab:blue',label='Renewable Input [MWe]',zorder=2)
+        line2, = axes[0].plot(times,P_elec_net,ls='-',marker='',color='tab:blue',label='Renewable Input [MWe]',zorder=2,alpha=0.5)
         line3, = axes[0].plot(times,optimalDispatch,ls='-',marker='',color='tab:orange',label='Optimal Dispatch [MWt]',zorder=2.1)
         axes[0].set_xlabel('time (d)')
         axes[0].set_ylabel('Power [MW]')
@@ -42,7 +47,7 @@ class TestScheduler(unittest.TestCase):
         axes[0].set_ylim([0,upper_limit])
 
         axe2=axes[0].twinx()
-        line4, = axe2.plot(times,E,ls='--',color='tab:green',label='Storage Level [%]')
+        line4, = axe2.plot(times,E,ls='--',color='tab:green',label='Storage Level [%]',alpha=0.7)
         axe2.set_ylabel('Storage Level [%]')
         axe2.set_ylim([0,100])
 
@@ -51,12 +56,18 @@ class TestScheduler(unittest.TestCase):
         labels = [line.get_label() for line in lines]
 
         # Place legend outside the plot area
-        plt.legend(lines, labels, loc='lower left', bbox_to_anchor=(0,1.02,1,0.2), ncol=3)
+        plt.legend(lines, labels, loc='lower left', bbox_to_anchor=(0,1.02,1,0.2), ncol=4)
 
         axes[1].plot(times,blk_state,ls='-',marker='',color='tab:red',markevery=2,label='Controller state',zorder=2.5)
+        axes[1].plot(times,pre_blk_state,ls='-',marker='*',color='tab:blue',markevery=2,label='Pre Controller state',zorder=2.3)
         axes[1].set_xlabel('time (d)')
         axes[1].set_yticks([1,2,3,4])
+        axes[1].set_yticklabels(['Off','Ramp-up','On','Ramp-down'])
         axes[1].legend(loc='upper left')
+
+        axes[2].plot(times,t_startup_next_fun,ls='-',marker='',color='tab:orange',markevery=2,label='t_startup_next_fun',zorder=2.0)
+        axes[2].set_xlabel('time (d)')
+        axes[2].set_ylabel('Next startup time (h)')
 
         plt.tight_layout()
         plt.savefig('fig_WindPVSimpleSystemOptimalDispatch.png',dpi=300)

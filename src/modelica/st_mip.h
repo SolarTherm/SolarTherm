@@ -24,6 +24,12 @@ double st_mip(
         ,double P_elec_max // Maximum electrical power
         ,double upper_threshold // Minimum energy delivery to the process
         ,double pre_dispatched_heat // Initially pre-dispatched heat
+        ,double pre_Q_flow_dis
+        ,double pre_blk_state
+        ,double pre_startup_next
+        ,double t_shutdown_min
+        ,double * optimalDispatch
+        ,double * blk_state
 );
 
 #endif
