@@ -266,7 +266,7 @@ if __name__ == '__main__':
 			xlabel = par_n[dims[0]] + ' (' + x1_unit + ')'
 
 			plotting.plot_par1(x1, ys, xlabel=xlabel, ylabels=ylabels, out=args.outfile,
-				dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode)
+				dpi=args.dpi, font=args.font, usetex=args.usetex)
 		elif len(dims) == 2 and not args.plot3d:
 			x1 = [v[dims[0]] for v in var_vals]
 			x1_unit = sim.get_unit(par_n[dims[0]])
@@ -289,7 +289,7 @@ if __name__ == '__main__':
 			x2label = par_n[dims[1]] + ' (' + x2_unit + ')'
 			plotting.plot_par2(x1, x2, ys, x1label=x1label, x2label=x2label,
 					ylabels=ylabels, out=args.outfile, dpi=args.dpi,
-					font=args.font, usetex=args.usetex, ucode=args.unicode)
+					font=args.font, usetex=args.usetex)
 		elif len(dims) == 2 and args.plot3d:
 			x1 = [float(v[dims[0]]) for v in var_vals]
 			x1_unit = sim.get_unit(par_n[dims[0]])
@@ -312,7 +312,7 @@ if __name__ == '__main__':
 			x2label = par_n[dims[1]] + ' (' + x2_unit + ')'
 			plotting.plot_3d(x1, x2, ys[0], xlabel=x1label, ylabel=x2label,
 					zlabel=ylabels[0], out=args.outfile, dpi=args.dpi, font=args.font,
-					usetex=args.usetex, ucode=args.unicode)
+					usetex=args.usetex)
 		else:
 			print('Cannot plot problem with ' + str(len(dims)) + ' dimensions')
 
