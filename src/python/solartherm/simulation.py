@@ -404,7 +404,7 @@ class Simulator(object):
 			maxStep = str(parse_var_val(maxStep, 's'))
 
 		sim_args = [
-			'-override',edito
+			'-override',
 			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+tolerance,
 			'-s', solver,
 			'-nls', nls, #Nonlinear solver
