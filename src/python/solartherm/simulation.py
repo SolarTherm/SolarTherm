@@ -3,7 +3,12 @@ import os
 from pathlib import Path
 import shutil
 import warnings
-from pipes import quote as sh_quote
+
+try:
+    from shlex import quote as sh_quote
+except ImportError:
+    from pipes import quote as sh_quote
+
 import subprocess as sp
 import xml.etree.ElementTree as ET
 import multiprocessing as mp
@@ -399,7 +404,7 @@ class Simulator(object):
 			maxStep = str(parse_var_val(maxStep, 's'))
 
 		sim_args = [
-			'-override',
+			'-override',edito
 			'startTime='+start+',stopTime='+stop+',stepSize='+step+',tolerance='+tolerance,
 			'-s', solver,
 			'-nls', nls, #Nonlinear solver
