@@ -5,12 +5,8 @@ import numpy as np
 import solsticepy
 from solsticepy.design_crs import CRS
 from solsticepy.input import Parameters
-from solsticepy.output_motab import output_motab, read_motab
-try:
-	from solsticepy.output_motab import output_metadata_motab
-except ImportError:
-	# annoying spelling mistake, correction yet to be uploaded to PyPI
-	from solsticepy.output_motab import output_matadata_motab as output_metadata_motab
+from solsticepy.output_motab import output_motab, read_motab, output_metadata_motab
+
 
 
 def set_param(inputs={}):
@@ -48,6 +44,10 @@ def run_simul(inputs={}):
     print('')
 
     start=time.time()
+    if pm.num_aperture>1:
+        pass # yet added the multi-aperture case
+    else:
+        pm.Z_rcv=pm.H_tower	
 
     casedir=pm.casedir
     pm.saveparam(casedir)
@@ -58,7 +58,7 @@ def run_simul(inputs={}):
         # just because the file exists doesn't mean it's correct/complete. How to check that?
     else:
 
-        crs=CRS(latitude=pm.lat, casedir=casedir)
+        crs=CRS(latitude=pm.lat, casedir=casedir, verbose=False)
 
         crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
@@ -80,7 +80,7 @@ def run_simul(inputs={}):
         else:
                                           
             A_helio=pm.H_helio*pm.W_helio
-            output_metadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
+            output_metadata_motab(table=oelt, field_type=pm.field_type, aiming='single', n_helios=crs.n_helios, A_helio=A_helio, eff_design=crs.eff_des, eff_annual=crs.eff_annual, H_rcv=pm.H_rcv, W_rcv=pm.W_rcv, H_tower=pm.H_tower, Q_in_rcv=pm.Q_in_rcv, A_land=A_land, savedir=tablefile)
             end=time.time()
             print('')
             print('total time %.2f'%((end-start)/60.), 'min')
