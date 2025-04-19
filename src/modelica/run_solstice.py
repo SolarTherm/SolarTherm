@@ -1,5 +1,10 @@
+from __future__ import print_function
+
+import sys
+
 import os
 import time
+import argparse
 import numpy as np
 
 import solsticepy
@@ -67,7 +72,7 @@ def run_simul(inputs={}):
         else:
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.rho_helio, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios*2, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
  
-        crs.yaml(dni=1000, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+        crs.yaml(dni=pm.dni_des, sunshape=pm.sunshape, csr=pm.crs, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
 
         if pm.field_type[-3:]=='csv':
             oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))
@@ -89,9 +94,20 @@ def run_simul(inputs={}):
     tablefile=tablefile.encode('utf-8')
     return tablefile
 
+def convert_list(alist, delimiter=','):
+    c=[]
+    tmp=''
+    for l in alist:
+	    if l==delimiter:
+		    c.append(tmp)
+		    tmp=''
+	    else:
+		    tmp+=l
+    return c
     
     
 if __name__=='__main__':
+    '''	
     case="./test"
     Q_in_rcv=553e6 #W
     W_helio=12.015614841
@@ -113,5 +129,35 @@ if __name__=='__main__':
     inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
 
     run_simul(inputs)
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--casedir', type=str)
+    parser.add_argument('--wea_file', type=str)
+    parser.add_argument('--field_type', type=str)
+    parser.add_argument('--rcv_type', type=str)
+    #parser.add_argument('--sunshape', type=str)	
+    parser.add_argument('--num_args', type=int, default=0, 
+		    help="number of float arguments")
+    parser.add_argument('--var_vals', type=list)
+    parser.add_argument('--var_names', type=list)
 
+	    
+    args = parser.parse_args()
+    args.var_names=convert_list(args.var_names)
+    args.var_vals=convert_list(args.var_vals)
+    inputs=vars(args)
+
+    for i in range(args.num_args):
+	    i=int(i)
+	    n=args.var_names[i]
+	    v=float(args.var_vals[i])
+	    inputs[n]=v
+		    
+    del inputs['num_args']
+    del inputs['var_names']
+    del inputs['var_vals']
+
+    output=run_simul(inputs)
+
+	#python3 /home/yewang/.openmodelica/libraries/SolarTherm/Resources/Library/run_solstice.py --casedir /home/yewang/.openmodelica/libraries/SolarTherm/SolsticeResults --wea_file /home/yewang/.openmodelica/libraries/SolarTherm/Data/Weather/example_TMY3.motab --field_type surround --rcv_type cylinder --num_args 19 --var_names method,Q_in_rcv,n_helios,H_rcv,W_rcv,n_H_rcv,n_W_rcv,tilt_rcv,W_helio,H_helio,H_tower,R_tower,R1,fb,rho_helio,slope_error,n_row_oelt,n_col_oelt,n_rays, --var_vals 1.000000,553222594.675885,1000.000000,18.669999,15.000000,50.000000,50.000000,0.000000,12.015615,12.015615,183.331345,0.010000,40.000000,0.400000,0.900000,0.002000,3.000000,3.000000,5000000.000000,
 # vim: ts=4:sw=4:tw=80:noet

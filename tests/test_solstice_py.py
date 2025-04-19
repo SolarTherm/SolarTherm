@@ -16,7 +16,7 @@ def test_st_solstice():
 	sim.compile_sim(args=['-s'])
 	sim.simulate(start=0, stop=10, step=0.1)
 	res = postproc.SimResult(sim.model + '_res.mat')
-	
-	assert abs(res.interpolate('nu', 0)-0.8834)/0.8834<0.01
+	print(res.interpolate('nu', 0))
+	assert abs(res.interpolate('nu', 0)-0.756)/0.756<0.01
 	cleantest.clean('TestSolsticePyFunc')
 
