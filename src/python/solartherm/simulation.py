@@ -3,7 +3,12 @@ import os
 from pathlib import Path
 import shutil
 import warnings
-from pipes import quote as sh_quote
+
+try:
+    from shlex import quote as sh_quote
+except ImportError:
+    from pipes import quote as sh_quote
+
 import subprocess as sp
 import xml.etree.ElementTree as ET
 import multiprocessing as mp
@@ -378,11 +383,15 @@ class Simulator(object):
 		node = root.find('*ScalarVariable[@name=\''+var_n+'\']/*[@unit]')
 		return '' if node is None else node.attrib['unit']
 
-	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS,-stdout', args=[]):
+	def simulate(self, start='0', stop='86400', step='60', tolerance = '1e-04', initStep=None, maxStep=None, integOrder=None, solver='rungekutta', nls='newton', lv='-LOG_SUCCESS', args=[]):
 		"""Run simulation.
 
 		If running an optimisation then 'optimization' needs to be used as
 		solver type.
+		
+		Note that by default, SolarTherm previously suppressed SUCCESS and STDOUT output
+		from the simulation executable. When tracking solver issues, the STDOUT
+		text can be useful -- so we've turned off that suppression now.
 		"""
 		start = str(parse_var_val(start, 's'))
 		stop = str(parse_var_val(stop, 's'))

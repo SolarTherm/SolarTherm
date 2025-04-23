@@ -9,6 +9,7 @@ Makefile
 *.makefile
 *.json
 *.log
+**/__pycache__
 install_manifest.txt
 CMakeCache.txt
 CMakeFiles

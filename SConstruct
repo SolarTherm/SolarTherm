@@ -209,10 +209,13 @@ def check_omc(ct):
 			omver = pv.parse('1.14.0')
 		else:
 			# version on MSYS: v1.22.0-dev-65-g1a5bb6fad1-cmake
+			# version on MSYS: v1.25.0~dev.beta.1-1-g5e8bf4a
 			# version on Ubuntu: OpenModelica 1.18.1
 			rmprefix = lambda t, p: t[len(p):] if t.startswith(p) else t
 			omverstr = rmprefix(rmprefix(omverstr,"OpenModelica "),"v")
-			omverstr1 = omverstr.split('-')[0] # everything before '-'
+			# replace ~dev.beta.N with bN
+			omverstr1 = omverstr.replace("~dev.beta.","b")
+			omverstr1 = omverstr1.split('-')[0] # everything before '-'
 			omver = pv.parse(omverstr1)
 	except Exception as e:
 		ct.Result("Not found (%s)"%(str(e),))

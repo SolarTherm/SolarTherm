@@ -19,8 +19,7 @@ tenv.Program('testdispatch2',['testdispatch2.c'],LIBS=['glpk','st_linprog','st_m
 
 import platform
 if platform.system()=="Windows":
-	env.Program('testmpi',['testmpi.c'],CC='mpicc',tools=['default','mingw']
-)	
+	env.Program('testmpi',['testmpi.c'],CC='mpicc',tools=['default','mingw'],CCFLAGS=env['CCFLAGS']+['-mconsole'])
 else:
 	env.Program('testmpi',['testmpi.c'],CC='mpicc')
 	
