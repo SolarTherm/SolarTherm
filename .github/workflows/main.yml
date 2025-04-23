@@ -95,8 +95,9 @@ jobs:
         echo "deb https://build.openmodelica.org/omc/builds/linux/releases/${{ matrix.om }}/ `lsb_release -cs` release" | sudo tee /etc/apt/sources.list.d/openmodelica.list
         wget -q http://build.openmodelica.org/apt/openmodelica.asc -O- | sudo apt-key add - 
         sudo apt-get update
-        sudo apt-get install build-essential omc omlib-modelica-${{ matrix.msl }} libglpk-dev
-
+        #sudo apt-get install build-essential omc omlib-modelica-${{ matrix.msl }} libglpk-dev
+        sudo apt-get install build-essential omc omlibrary libglpk-dev
+        
     - name: Install current release OpenModelica
       if: ${{ matrix.om == 'release' }}
       run: |
