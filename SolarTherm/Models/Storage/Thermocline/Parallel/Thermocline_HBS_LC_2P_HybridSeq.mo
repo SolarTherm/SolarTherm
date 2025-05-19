@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline.Parallel;
 
-model Thermocline_HBS_LC_2P_Hybrid_Split
+model Thermocline_HBS_LC_2P_HybridSeq
   //Two-tank mixed outlet flow, charging B-BA-A discharging A-AB-B
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
@@ -113,7 +113,8 @@ model Thermocline_HBS_LC_2P_Hybrid_Split
   
   //Total pumping losses
   SI.Power W_loss_pump = Tank_A.W_loss_pump + Tank_B.W_loss_pump;
-  parameter Real eff_pump = 0.8 "Pumping efficiency, fed into physical model";
+  SI.HeatFlowRate Q_loss_total = Tank_A.Q_loss_total + Tank_B.Q_loss_total "thermal loss rate (J/s)";
+  parameter Real eff_pump = 1.0 "Pumping efficiency, fed into physical model";
   
   parameter SI.Temperature T_bot_high = T_recv_set - 1.0 "Temperature of T_05 at which it switches to the next tank during charging";
   parameter SI.Temperature T_top_low = T_PB_set + 1.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
@@ -208,14 +209,13 @@ equation
       Tank_B.h_in = inStream(fluid_a.h_outflow);
       //Tank_B.h_in = Tank_B.h_f[N_f_B];
     else
-      //Tank_A.h_in = Tank_A.h_f[N_f_A];
-      Tank_A.m_flow = (-1.0 * fluid_a.m_flow)*frac_1;
-      Tank_A.h_in = inStream(fluid_a.h_outflow);
-      Tank_B.m_flow = (-1.0 * fluid_a.m_flow)*(1.0-frac_1);
+      Tank_B.m_flow = -1.0 * fluid_a.m_flow;
       Tank_B.h_in = inStream(fluid_a.h_outflow);
-      
-      fluid_a.h_outflow = frac_1*Tank_A.h_in + (1.0-frac_1)*Tank_B.h_in;
-      fluid_b.h_outflow = frac_1*Tank_A.h_out + (1.0-frac_1)*Tank_B.h_out;
+      fluid_a.h_outflow = Tank_B.h_in;
+      fluid_b.h_outflow = Tank_B.h_out;
+      Tank_A.m_flow = 0.0;
+      Tank_A.h_in = inStream(fluid_a.h_outflow);
+      //Tank_A.h_in = Tank_A.h_f[N_f_A];
     end if;
       /*
       Tank_B.m_flow = -1.0 * fluid_a.m_flow * (1.0 - f_chg); //Swap Tank ID
@@ -248,7 +248,7 @@ equation
     h_bot_outlet = Tank_A.h_f[1];
     //h_top_outlet = Tank_A.h_f[N_f_A];
   else 
-    h_bot_outlet = frac_1*Tank_A.h_f[1] + (1.0-frac_1)*Tank_B.h_f[1];
+    h_bot_outlet = Tank_B.h_f[1];
     //h_top_outlet = Tank_B.h_f[N_f_B];
   end if;
   //h_bot_outlet = (1.0 - f_disch)*Tank_A.h_f[1] + f_disch*Tank_B.h_f[1];
@@ -265,4 +265,4 @@ equation
   fluid_a.m_flow = -1.0 * fluid_b.m_flow;
   annotation(
     Icon(graphics = {Rectangle(origin = {9, 49}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-49, 11}, {31, -109}}), Text(origin = {-27, 33}, extent = {{-5, 5}, {5, -7}}, textString = "A"), Text(origin = {17, 33}, extent = {{-5, 5}, {5, -7}}, textString = "B"), Rectangle(origin = {7, 11}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-39, 7}, {-19, 1}}), Rectangle(origin = {7, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-39, 7}, {-19, 1}}), Rectangle(origin = {-3, 17}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-29, 7}, {-9, 1}}), Rectangle(origin = {1, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-33, -1}, {-13, -7}}), Rectangle(origin = {5, -13}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Rectangle(origin = {7, 5}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-39, 7}, {-19, 1}}), Rectangle(origin = {1, -11}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-33, -1}, {-13, -7}}), Line(origin = {0, 53}, points = {{0, 9}, {0, -7}, {0, -7}}), Line(origin = {0, -53}, points = {{0, -7}, {0, 7}, {0, 7}}), Ellipse(origin = {-5, -41}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Ellipse(origin = {-5, 51}, extent = {{1, -1}, {9, -9}}, endAngle = 360), Rectangle(origin = {45, 17}, fillColor = {203, 203, 203}, fillPattern = FillPattern.Solid, extent = {{-33, 7}, {-13, 1}}), Rectangle(origin = {49, 11}, fillColor = {144, 144, 144}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Rectangle(origin = {49, 5}, fillColor = {113, 113, 113}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Rectangle(origin = {49, -1}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Rectangle(origin = {49, -13}, fillColor = {71, 71, 71}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Rectangle(origin = {43, -11}, fillColor = {47, 47, 47}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -7}}), Rectangle(origin = {43, -17}, fillColor = {24, 24, 24}, fillPattern = FillPattern.Solid, extent = {{-31, -1}, {-11, -7}}), Rectangle(origin = {7, -7}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-39, 7}, {-19, 1}}), Rectangle(origin = {49, -7}, fillColor = {95, 95, 95}, fillPattern = FillPattern.Solid, extent = {{-37, 7}, {-17, 1}}), Polygon(origin = {-23, 6}, fillColor = {195, 195, 195}, fillPattern = FillPattern.Solid, points = {{-3, 20}, {5, 20}, {11, 18}, {11, -30}, {5, -32}, {-3, -32}, {-9, -30}, {-9, 18}, {-3, 20}}), Line(origin = {-22, 23.1708}, points = {{-10, 0.82918}, {-4, -1.17082}, {4, -1.17082}, {10, 0.82918}}), Ellipse(origin = {-22, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Ellipse(origin = {-26, 24}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {-26, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {-20, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {-20, 24}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {-28, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Ellipse(origin = {-16, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Line(origin = {-26, -2}, points = {{0, 24}, {0, -24}}), Line(origin = {-18, -2}, points = {{0, 24}, {0, -24}}), Polygon(origin = {21, 6}, fillColor = {195, 195, 195}, fillPattern = FillPattern.Solid, points = {{-3, 20}, {5, 20}, {11, 18}, {11, -30}, {5, -32}, {-3, -32}, {-9, -30}, {-9, 18}, {-3, 20}}), Line(origin = {22, 23.1325}, points = {{-10, 0.867544}, {-4, -1.13246}, {4, -1.13246}, {10, 0.867544}, {10, 0.867544}}), Line(origin = {18, -2}, points = {{0, 24}, {0, -24}}), Line(origin = {26, -2}, points = {{0, 24}, {0, -24}}), Ellipse(origin = {18, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {24, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {22, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Ellipse(origin = {16, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Ellipse(origin = {28, 26}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-1.5, -1.5}, {1.5, -2.5}}, endAngle = 360), Ellipse(origin = {18, 24}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Ellipse(origin = {24, 24}, fillColor = {211, 211, 255}, fillPattern = FillPattern.Solid, extent = {{-0.5, -0.5}, {2.5, -1.5}}, endAngle = 360), Line(origin = {-22, 25}, points = {{0, 1}, {0, -1}}), Line(origin = {22, 25}, points = {{0, 1}, {0, -1}}), Polygon(origin = {-22, 10}, fillColor = {156, 156, 156}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {-22, 2}, fillColor = {138, 138, 138}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {-22, -6}, fillColor = {108, 108, 108}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {-22, -14}, fillColor = {80, 80, 80}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {-22, -22}, fillColor = {61, 61, 61}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {-22, 18}, fillColor = {195, 195, 195}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Line(origin = {-26, -2}, points = {{0, 24}, {0, -24}}), Line(origin = {-18, -2}, points = {{0, 24}, {0, -24}}), Polygon(origin = {22, 10}, fillColor = {156, 156, 156}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {22, 18}, fillColor = {195, 195, 195}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {22, 2}, fillColor = {138, 138, 138}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {22, -6}, fillColor = {108, 108, 108}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {22, -14}, fillColor = {80, 80, 80}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Polygon(origin = {22, -22}, fillColor = {61, 61, 61}, fillPattern = FillPattern.Solid, points = {{-10, 6}, {-4, 4}, {4, 4}, {10, 6}, {10, -2}, {4, -4}, {-4, -4}, {-10, -2}, {-10, 6}}), Line(origin = {18, -2}, points = {{0, 24}, {0, -24}}), Line(origin = {26, -2}, points = {{0, 24}, {0, -24}}), Line(origin = {0, 36}, points = {{-22, -10}, {-22, 10}, {22, 10}, {22, -10}, {22, -10}}), Line(origin = {0, -36}, points = {{-22, 10}, {-22, -10}, {22, -10}, {22, 10}})}, coordinateSystem(initialScale = 0.1)));
-end Thermocline_HBS_LC_2P_Hybrid_Split;
+end Thermocline_HBS_LC_2P_HybridSeq;

@@ -113,7 +113,8 @@ model Thermocline_HBS_LC_2P_MixedOutlet
   
   //Total pumping losses
   SI.Power W_loss_pump = Tank_A.W_loss_pump + Tank_B.W_loss_pump;
-  parameter Real eff_pump = 0.8 "Pumping efficiency, fed into physical model";
+  SI.HeatFlowRate Q_loss_total = Tank_A.Q_loss_total + Tank_B.Q_loss_total "thermal loss rate (J/s)";
+  parameter Real eff_pump = 1.0 "Pumping efficiency, fed into physical model";
 
 algorithm
   //Tank A assists Tank B during charging, therefore when Tank B needs help, modify the chargestate boolean

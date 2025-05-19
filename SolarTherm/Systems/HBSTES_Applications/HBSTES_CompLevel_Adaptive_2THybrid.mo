@@ -1,29 +1,33 @@
 within SolarTherm.Systems.HBSTES_Applications;
 
-model HBSTES_ComponentLevel_24hcycle_14h_H35m "Old Model"
+model HBSTES_CompLevel_Adaptive_2THybrid "This component analysis allows a variable cycle length where charging and discharging follow immediately after each other assuming the system temperate constraints have not been violated. Tank heights are fixed to 35m for all cases."
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
   package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;
+  package Medium_Utilities = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities;
   package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;
-  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
+  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity_50K_intervals;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 4.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_discharge = 36000.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 100;
-  parameter Real f_TES_oversize = 3.5;
-  parameter Real t_storage_hours_ideal = t_discharge*f_TES_oversize/3600.0;
+  parameter Integer N_tanks = 2 "Number of tanks in the storage array, needed to adjust aspect ratio such that all tanks are 35m high";
+
+  parameter Real t_storage_hours_ideal = t_discharge/3600.0;
   //parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
-  parameter SI.Length d_p = 0.03 "Hole diameter in the filler (m)";
-  parameter Real ar = 6.187*((4.0*3600.0)/t_discharge)^0.5 "Tank H/D ratio (m)";
-  parameter Real eta = 0.51 "Packed-bed porosity";
-  //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
-  parameter SI.Temperature T_ext_max = 100.0 + 273.15 "External surface temperature of the HBS in the worst case scenario (K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_ext_max-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.Length d_p = 0.020 "Hole diameter in the filler (m)";
+  parameter Real epsilon = 0.3232 "Packed-bed porosity";
+  parameter SI.Length H_tank = 35.0 "Fixed tank height (m)";
+  parameter SI.EnergyDensity E_v = epsilon*rho_f_avg*(h_f_max-h_f_min)+(1.0-epsilon)*rho_p*(h_p_max-h_p_min) "Volumetric energy density (J/m3)";
+  parameter Real ar = (N_tanks^0.5)*(0.25*CN.pi*E_v*H_tank*H_tank*H_tank/E_max)^0.5 "Aspect ratio H/D of tanks (-)";
+  
+  parameter SI.Temperature T_ext_max = 323.15 "Maximum external temperature of the HBS walls under worst-case conditions (K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the top of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
   parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
@@ -33,21 +37,43 @@ model HBSTES_ComponentLevel_24hcycle_14h_H35m "Old Model"
   parameter SI.Temperature T_low_set = 450.0 + 273.15 "TES cold blend temperature (K)";
   parameter SI.Temperature T_heater_des = 317.3 + 273.15 "Design receiver inlet temperature (K)";
   parameter SI.Temperature T_min = 317.3 + 273.15 "Minimum temperature (K)";
+  parameter SI.Temperature T_amb_des = 25.0 + 273.15 "Design ambient temperature (K)";
   parameter Integer Correlation = 1; //Gas Internal flow
   //parameter SI.SpecificEnthalpy h_tol = 0.05*(TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
   //Tank Geometry
-  parameter SI.Power Q_process_des = 26.6*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(T_process_des)-SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(T_min)) ;//E_max/t_discharge "Design required process heat-rate (W_th)";//E_max/t_discharge
+  parameter SI.MassFlowRate m_process_des = 26.6;
+  parameter SI.SpecificEnthalpy h_f_amb_des = Fluid_Package.h_Tf(T_amb_des,0.0);
+  parameter SI.SpecificEnthalpy h_f_process_des = Fluid_Package.h_Tf(T_process_des,1.0);
+  parameter SI.Power Q_process_des = m_process_des*(h_f_process_des - h_f_min) "Design required process heat-rate (W_th)";
   parameter SI.Power Q_heater_des = HM * Q_process_des "Design heater output heat-rate (W_th)";
-  parameter SI.Energy E_max = Q_process_des*t_discharge*f_TES_oversize "Ideal storage capacity (J_thermal)"; //Note 3 tanks
+  parameter SI.Energy E_max = Q_process_des*t_discharge "Ideal storage capacity (J_thermal)"; //Note 3 tanks
   parameter SI.Time t_charge = t_discharge / (HM - 1.0) "Charging period (s)";
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
   parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
   //Derived Parameters
-  parameter SI.Time t_cycle = 24.0*3600.0 "Total duration of one cycle (s)";
-  parameter SI.Time t_standby = t_cycle - t_charge - t_discharge "Standby time to make it 24h cycle (s)";
+  parameter SI.Time t_cycle = t_charge + t_discharge "Total duration of one cycle (s)";
   //this is 24 hours
-  parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
-  parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
+  
+  //Storage sizing equations
+  //Fluid
+  parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0) "Starting enthalpy of the HTF";
+  parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0) "Starting enthalpy of the HTF";
+  parameter SI.Density rho_f_min = Fluid_Package.rho_Tf(T_min, 0);
+  parameter SI.Density rho_f_max = Fluid_Package.rho_Tf(T_max, 0);
+  parameter SI.Density rho_f_avg = (rho_f_min + rho_f_max) / 2;
+  //Filler
+  parameter SI.SpecificEnthalpy h_p_max = Filler_Package.h_Tf(T_max, 1.0);
+  parameter SI.SpecificEnthalpy h_p_min = Filler_Package.h_Tf(T_min, 0.0);
+  parameter SI.Density rho_p_min = Filler_Package.rho_Tf(T_min, 0.0);
+  parameter SI.Density rho_p_max = Filler_Package.rho_Tf(T_max, 1.0);
+  parameter SI.Density rho_p = min(rho_p_min, rho_p_max) "kg/m3";
+  
+  //Fluid Entropy
+  parameter SI.SpecificEntropy s_f_max = Medium_Utilities.s_T(T_max);
+  parameter SI.SpecificEntropy s_f_process_des = Medium_Utilities.s_T(T_process_des);
+  parameter SI.SpecificEntropy s_f_min = Medium_Utilities.s_T(T_min);
+  parameter SI.SpecificEntropy s_f_amb = Medium_Utilities.s_T(T_amb_des);
+  
   //Output signals
   Modelica.Fluid.Sources.Boundary_pT Heater_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 100000) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
@@ -79,9 +105,9 @@ model HBSTES_ComponentLevel_24hcycle_14h_H35m "Old Model"
     Placement(visible = true, transformation(origin = {-52, 48}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure process_sink_pump(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
-  SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
+  SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = eta, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_HBS_LC_2P_HybridSplit TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar, d_p_A = d_p, eta_A = epsilon, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, T_PB_set = T_high_set, T_recv_set = T_low_set) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
@@ -96,7 +122,9 @@ model HBSTES_ComponentLevel_24hcycle_14h_H35m "Old Model"
   SI.Energy E_dis(start = 0) "Discharged energy into storage";
   //SI.Energy E_lost(start = 0) "Externally lost energy from storage";
   //SI.Energy E_pump(start = 0) "Pumping energy consumed";
-  parameter SI.Energy X_max = m_discharge_des * t_discharge * (h_f_max * (1.0 - 298.15 / T_max) - h_f_min * (1.0 - 298.15 / T_min)) "Theoretical Exergetic storage capacity (J)";
+  parameter SI.Energy X_max_stor = t_discharge * m_discharge_des * ((h_f_max-h_f_min)-T_amb_des*(s_f_max-s_f_min)) "Ideal exergetic storage capacity of the TES (J)";
+  parameter SI.Energy X_max_sys = t_discharge * m_process_des * ((h_f_process_des-h_f_min)-T_amb_des*(s_f_process_des-s_f_min)) "Ideal Exergy delivered by the system (J)";
+
   //SI.Energy X_chg(start = 0.0) "Total exergy charged i3n the last cycle";
   //SI.Energy X_dis(start = 0.0) "Discharged exergy";
   //Utilisation and efficiencies
@@ -124,82 +152,83 @@ model HBSTES_ComponentLevel_24hcycle_14h_H35m "Old Model"
   //SI.Energy E_pump_prev(start = 0.001) "Total pump energy losses for previous cycle";
   //Real util_prev(start = 0.001) "Previous day's level, starts at 0.1% to prevent divbyzero";
   //Real time_stop(start = 3600.0 * 24.0 * 10.0) "The maximum time this simulation can last";
-  Boolean Chg(start = false) "Can storage be charged?";
-  Boolean Dis(start = false) "Can storage be discharged?";
+  //Boolean Chg(start = false) "Can storage be charged?";
+  //Boolean Dis(start = false) "Can storage be discharged?";
   //Integer Control_State(start = 1) "Control state 1= Charge 2=Standby 3=Discharge";
   Real Level_high(start = 1.0);
   Real Level_low(start = 0.0);
   Real Level_mid(start = 0.5);
   
   SI.Energy E_stored(start = 0.0);
+  SI.Energy E_pump(start=0.0);
+  SI.Energy E_loss(start=0.0);
   
-  //Design Pressure drop
-  parameter SI.Length E_roughness = 3.045e-3 "Checkerbrick surface roughness (m)";
-  parameter SI.Density rho_f_des = 0.5*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(T_max) + SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(T_min));
-  parameter SI.DynamicViscosity mu_des = 0.5*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T_max) + SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T_min)) "Averaged dynamic viscosity of air (Pa.s)";
-  parameter Real Pr_des = (0.5*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.cp_T(T_max) + SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.cp_T(T_min)))*(0.5*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T_max) + SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T_min)))/(0.5*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.k_T(T_max) + SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.k_T(T_min)));
-  parameter Real Re_des = 4.0*max(m_charge_des,m_discharge_des)*d_p/(eta*CN.pi*TES.Tank_A.D_tank*TES.Tank_A.D_tank*mu_des);
-  parameter Real f_des = SolarTherm.Utilities.Nusselt.Internal_Flow.FrictionFactor_HBS_Rough(Re_des,Pr_des,E_roughness/d_p);
-  parameter SI.Pressure p_drop_total_des = ((8.0*rho_f_des*f_des*TES.Tank_A.H_tank*((max(m_charge_des,m_discharge_des))^2.0))/(d_p*rho_f_des*rho_f_des*CN.pi*CN.pi*((TES.Tank_A.D_tank)^4.0)*eta*eta));
+  //Exergy Analysis
+  SI.Energy X_chg(start=0.0) "Total exergy charged in the last cycle";
+  SI.Energy X_dis_stor(start=0.0) "Discharged exergy from storage";
+  SI.Energy X_dis_sys(start=0.0) "Discharged exergy from system";
+  Real util_exergy_stor(start=0.0) "Exergetic utilisation of storage (2nd law)";
+  Real eff_exergy_stor(start=0.0) "Exergetic efficiency of storage (2nd law)";
+  Real util_exergy_sys(start=0.0) "Exergetic utilisation of system (2nd law)";
+  Real eff_exergy_sys(start=0.0) "Exergetic efficiency of system (2nd law)";
+  
+  //Counters
+  Integer Cycle(start=1) "Which cycle number are we in?";
+  Integer State(start=1) "Which state are we in? 1=Chg, 2=Discharging";
+  
 algorithm
 //Mass flow controls
-  when rem(time, t_cycle) > 1e-6 then
-    Dis := false;
-    if TES.T_bot_measured < T_heater_max then
-      Chg := true;
-    end if;
-  end when;
-  when rem(time, t_cycle) > 1e-6 + t_charge then
-    Chg := false;
-    if TES.T_top_measured > T_process_min then
-      Dis := true;
-    end if;
-  end when;
+  //If we are in the charging cycle:
   when TES.T_bot_measured > T_heater_max then
-    Chg := false;
-    Level_high := TES.Level;
+    if State == 1 then
+      State := 2; //Switch to discharging
+      Level_high := TES.Level;  //Store the TES level when TES has been charged to the bottom temp limit
+    end if;
   end when;
+  
+  //If we are in the discharging cycle:
   when TES.T_top_measured < T_process_min then
-    Dis := false;
-    Level_low := TES.Level;
-    Level_mid := 0.5 * (Level_high + Level_low);
+    if State == 2 then
+      State := 1;  //Switch back to charging
+      Level_low := TES.Level;
+      Level_mid := 0.5 * (Level_high + Level_low);
+      Cycle := Cycle + 1; //Go to the next cycle
+    end if;
   end when;
+
+  when State < 2 then //we have switched to intended charging
+    if TES.T_bot_measured > T_heater_max then //we cannot actually charge
+      State := 2; //Try discharging instead
+    end if;
+  end when;
+  
+  when State > 1 then //we have switched to intended discharging
+    if TES.T_top_measured < T_process_min then //we cannot actually discharge
+      State := 1; //Try charging instead
+      Cycle := Cycle + 1; //Go to the next cycle
+    end if;
+  end when;
+
 //Force stop discharging, unacceptable top outlet Temperature
 //Utilisation convergence
-  when time > 10.0 * t_cycle then
+  when Cycle > 10 then
     terminate("Ten cycles have been reached");
   end when;
-//Replace time + t_cycle - 1.0e-6 with 3600.0*24.0*10.0 to bypass the 1% check and simulate the full 10 days
-//if abs((((E_dis_total - E_dis_prev) - (E_pump_total - E_pump_prev))/E_max) - util_prev)/(util_prev) < 0.01 and div(time,t_cycle) > 0.0 then //stable cycle
-//stable cycle
-//time + t_cycle - 1.0e-6;
-//calculate utilisation
-//util_prev := ((E_dis_total - E_dis_prev) - (E_pump_total - E_pump_prev))/E_max;
-//E_pump_prev := E_pump_total;
+  when time > 12.0*t_cycle then //give like 20% leeway
+    terminate("Exceeded expected time limit");
+  end when;
+
 equation
-  der(E_stored) = TES.fluid_a.m_flow * (TES.fluid_a.h_outflow - TES.fluid_b.h_outflow);
-  if Chg then
+  der(E_stored) = TES.fluid_a.m_flow * (TES.fluid_a.h_outflow - TES.fluid_b.h_outflow) - TES.Q_loss_total;
+  
+  if State == 1 then
     m_Heater_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - TES.h_bot_outlet);
-  else
+    m_Process_signal = 1.0e-8;
+  else 
+    m_Process_signal = m_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min);
     m_Heater_signal = 1.0e-8;
   end if;
-  if Dis then
-    m_Process_signal = m_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min);
-  else
-    m_Process_signal = 1.0e-8;
-  end if;
-//if Control_State == 1 then
-//Charging
-//m_Recv_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - thermocline_Tank.h_bot_outlet);
-//m_PB_signal = 1.0e-8;
-//elseif Control_State == 2 then
-//Standby
-//m_Recv_signal = 1.0e-8;
-//m_PB_signal = 1.0e-8;
-//else
-//m_Recv_signal = 1.0e-8;
-//m_PB_signal = m_discharge_des * (h_f_max - h_f_min) / (thermocline_Tank.h_top_outlet - h_f_min);
-//end if;
+
 //Measured temperature sensors
   T_top_degC = TES.T_top_measured - 273.15;
   T_bot_degC = TES.T_bot_measured - 273.15;
@@ -215,25 +244,48 @@ equation
     T_outlet_degC = 25.0;
     T_inlet_degC = 25.0;
   end if;
-  if time > 9.0 * t_cycle and time < 9.0 * t_cycle + t_charge then
-//last charging phase
+  if Cycle == 10 and State == 1 then //last charging phase
     der(E_chg) = TES.fluid_a.m_flow * (inStream(TES.fluid_a.h_outflow) - TES.fluid_b.h_outflow);
     der(E_dis) = 0.0;
-  elseif time >= 9.0 * t_cycle + t_charge and time < 10.0 * t_cycle then
-//last discharging phase
+    der(X_chg) = TES.fluid_a.m_flow * ((inStream(TES.fluid_a.h_outflow) - TES.fluid_b.h_outflow) - T_amb_des*(Medium_Utilities.s_T(Medium_Utilities.T_h(inStream(TES.fluid_a.h_outflow))) - Medium_Utilities.s_T(Medium_Utilities.T_h(TES.fluid_b.h_outflow))));
+    der(X_dis_stor) = 0.0;
+    der(X_dis_sys) = 0.0;
+    der(E_pump) = TES.W_loss_pump;
+  elseif Cycle == 10 and State == 2 then //last discharging phase
     der(E_chg) = 0.0;
     der(E_dis) = TES.fluid_b.m_flow * (TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow));
+    der(X_chg) = 0.0;
+    der(X_dis_stor) = TES.fluid_b.m_flow*((TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow)) - T_amb_des*(Medium_Utilities.s_T(Medium_Utilities.T_h(TES.fluid_a.h_outflow)) - Medium_Utilities.s_T(Medium_Utilities.T_h(inStream(TES.fluid_b.h_outflow)))));
+    if TES.fluid_b.m_flow > 1.0e-6 then
+      der(X_dis_sys) = m_process_des*((h_f_process_des - h_f_min) - T_amb_des*(s_f_process_des - s_f_min));
+    else
+      der(X_dis_sys) = 0.0;
+    end if;
+    der(E_pump) = TES.W_loss_pump;
   else
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
+    der(X_chg) = 0.0;
+    der(X_dis_stor) = 0.0;  
+    der(X_dis_sys) = 0.0;  
+    der(E_pump) = 0.0;
   end if;
-  if time > 9.0 * t_cycle + t_charge then
-//we can calculate utilisation and efficiency because denominator is not zero;
-    util_energy = E_dis / E_max;
-    eff_energy = E_dis / E_chg;
+  if Cycle > 9 then //we can calculate utilisation and efficiency because denominator is not zero;
+    util_energy = (E_dis) / E_max;
+    eff_energy = (E_dis) / max(E_chg,1.0); //Avoid division by zero
+    util_exergy_stor = (X_dis_stor) / X_max_stor;
+    eff_exergy_stor = (X_dis_stor) / max(X_chg,1.0); //Avoid division by zero
+    util_exergy_sys = (X_dis_sys) / X_max_sys;
+    eff_exergy_sys = (X_dis_sys) / max(X_chg,1.0); //Avoid division by zero
+    der(E_loss) = TES.Q_loss_total;
   else
     util_energy = 0.0;
     eff_energy = 0.0;
+    util_exergy_stor = 0.0;
+    eff_exergy_stor = 0.0;
+    util_exergy_sys = 0.0;
+    eff_exergy_sys = 0.0; //Avoid division by zero
+    der(E_loss) = 0.0;
   end if;
 //Connectors
   connect(thermocline_Splitter2.fluid_b, heater_sink_pump.fluid_a) annotation(
@@ -271,7 +323,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 30),
+    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 300),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
-end HBSTES_ComponentLevel_24hcycle_14h_H35m;
+end HBSTES_CompLevel_Adaptive_2THybrid;

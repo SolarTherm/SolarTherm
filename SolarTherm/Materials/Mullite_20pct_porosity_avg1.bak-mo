@@ -1,7 +1,7 @@
 within SolarTherm.Materials;
 
-package Mullite_20pct_porosity_averaged
-  //Mullite properties 298.15 < T (K) < 1700. Stoichiometry of 3Al2O3.2SiO2 ~72wt% is assumed which is typical of sintered mullite. Density, thermal conductivity and specific heat capacity are averaged between 640C and 1100C.
+package Mullite_20pct_porosity_avg1
+  //Mullite properties 298.15 < T (K) < 1500. Stoichiometry of 3Al2O3.2SiO2 ~72wt% is assumed which is typical of sintered mullite. Density, thermal conductivity and specific heat capacity are averaged between 317.3 degC and 1100 degC.
   extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0 + 273.15, cost = 0.55);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
@@ -50,4 +50,4 @@ package Mullite_20pct_porosity_averaged
     T := 298.15 + h/1221.31;
     f := 0.0;
   end Tf_h;
-end Mullite_20pct_porosity_averaged;
+end Mullite_20pct_porosity_avg1;
