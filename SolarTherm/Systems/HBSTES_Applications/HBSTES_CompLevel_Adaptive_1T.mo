@@ -11,10 +11,9 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity_50K_intervals;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 36000.0 "Rated discharging period (s)";
-  //parameter SI.Time t_standby = 2.0*3600.0 "Additional standby time after both charging and discharging cycle (s)";
+  parameter SI.Time t_discharge = 180000.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
-  parameter Integer N_f = 100;
+  parameter Integer N_f = 360;
   parameter Integer N_tanks = 1 "Number of tanks in the storage array, needed to adjust aspect ratio such that all tanks are 35m high";
 
   parameter Real t_storage_hours_ideal = t_discharge/3600.0;
@@ -31,7 +30,7 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the top of the tank (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
-  parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
+  parameter SI.Temperature T_max = 1200.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_high_set = 1000.0 + 273.15 "TES hot blend temperature temperature (K)";
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";
@@ -333,7 +332,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
+    experiment(StopTime = 4320000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end HBSTES_CompLevel_Adaptive_1T;

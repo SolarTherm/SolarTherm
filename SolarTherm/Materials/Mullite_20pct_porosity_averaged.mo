@@ -2,7 +2,7 @@ within SolarTherm.Materials;
 
 package Mullite_20pct_porosity_averaged
   //Mullite properties 298.15 < T (K) < 1700. Stoichiometry of 3Al2O3.2SiO2 ~72wt% is assumed which is typical of sintered mullite. Density, thermal conductivity and specific heat capacity are averaged between 640C and 1100C.
-  extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0 + 273.15, cost = 0.55);
+  extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0 + 273.15, cost = 0.56446, year = 2022);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
 
   redeclare model State "A model which calculates state and properties"
@@ -12,10 +12,9 @@ package Mullite_20pct_porosity_averaged
     SI.Density rho "Density (kg/m3)";
     SI.ThermalConductivity k "Thermal conductivity (W/mK)";
   equation
-    f = 0.0;
-    h = h_Tf(T, 0);
-    rho = rho_Tf(T, 0);
-    k = k_Tf(T, 0);
+    (T, f) = Tf_h(h);
+    rho = rho_Tf(T, 0.0);
+    k = k_Tf(T, 0.0);
   end State;
 
   redeclare function h_Tf "find specific enthalpy from Temperature"

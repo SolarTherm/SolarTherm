@@ -127,27 +127,28 @@ model Thermocline_HBS_LC_Section_Final
   parameter Real C_fluid = 0.0 "Air is free for now...";
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation "FOB Cost of this individual tank (USD_2022)";
   //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
-  parameter Real C_insulation = (816.0/795.1)*(41.13214 + (20.7285/U_loss_top) - 6.57723*(298.15/(U_loss_top*T_max)) - 8.7688*((T_max/298.15)^2.0) + 1.479653*((T_max/298.15)^3.0))*A_insulation "FOB Cost of tank insulation (USD_2022)";
+  parameter Real C_insulation = SolarTherm.Utilities.Finances.Insulation.FOB_Insulation_Mullite_HBS(T_max,U_loss_top,A_insulation,2022) "FOB Cost of tank insulation (USD_2022)";
   
   parameter SI.Length t_insulation = (0.401802 + (0.202476/U_loss_top) - 0.06425*(298.15/(U_loss_top*T_max)) - 0.08566*((T_max/298.15)^2.0) + 0.014454*((T_max/298.15)^3.0)) "Thickness of insulation (m)";
   
   parameter SI.Area A_insulation = 0.5*CN.pi*(D_tank+2.0*t_insulation)^2 + CN.pi*(D_tank+2.0*t_insulation)*(H_tank+2.0*t_insulation) "Outer surface area of insulation (m2)";
   
-  parameter Real C_tank = (816.0/500.0)*570.0*(35.315*V_vessel)^0.46 "FOB cost of a carbon steel bin based on Seider (USD_2022)";
+  parameter Real C_tank = SolarTherm.Utilities.Finances.Equipment.FOB_Vessel_CS(V_vessel,2022) "FOB cost of a carbon steel bin based on Seider (USD_2022)"; 
   
   parameter SI.Volume V_vessel = 0.25*CN.pi*((D_tank+2.0*t_insulation)^2)*(H_tank+2.0*t_insulation) "Volume of the metal vessel after considering insulation (m3)";
-  parameter Real C_filler = (816.0/795.1)*sum(m_p)*Filler_Package.cost "FOB cost of checkerbrick material (USD_2022)";
+  parameter Real C_filler = sum(m_p)*Filler_Package.cost*SolarTherm.Utilities.Finances.r_CEPCI(2022,Filler_Package.year) "FOB cost of checkerbrick material (USD_2022)"; //Make sure to index all costs to 2022 in the materials package.
   
   parameter Real C_encapsulation = 0.0;
   
   
   SI.SpecificEnthalpy h_p[N_f] "J/kg";
   SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
+  //Filler mass-liquid fraction
+  Real f_p[N_f] "Mass liquid fraction of filler";
 protected
   //Initialise Particle
  
-  //Filler mass-liquid fraction
-  Real f_p[N_f] "Mass liquid fraction of filler";
+
   Real Bi[N_f] "Biot Number";
   //Convection Properties
   
@@ -177,7 +178,7 @@ protected
   //SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
-  Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
+  Fluid_Package.State fluid[N_f] "Fluid object array";
   //Try filler state "Remove this if using function-based calculation"
   Filler_Package.State filler[N_f] "Filler object array";
   //.State encapsulation[N_f] "Encapsulation object array";
@@ -242,7 +243,7 @@ initial equation
 equation
   //Pressure drop
   for i in 1:N_f loop
-    f[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.FrictionFactor_HBS_Rough(Re[i],Pr[i],E_roughness/d_p);
+    f[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.f_Darcy_Gas(Re[i],Pr[i],E_roughness/d_p);
   end for;
   
 
@@ -373,7 +374,7 @@ equation
 //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-      Nu[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.Nusselt_HBS(Re[i],Pr[i]);
+      Nu[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.Nusselt_Gas(Re[i],Pr[i],E_roughness/d_p);
     else
       Re[i] = 0;
       Pr[i] = 0;

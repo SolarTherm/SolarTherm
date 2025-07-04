@@ -94,7 +94,7 @@ equation
   //T_recv = SolarTherm.Systems.H2DRI_Applications.recv_T(m_dot);
   //h_conv = SolarTherm.Systems.H2DRI_Applications.recv_h(m_dot);
   //eff_recv = 0.19912 + 2.29859*mu - 3.83750*(mu^2.0) + 3.09303*(mu^3.0) - 0.95285*(mu^4.0);
-  eff_recv = SolarTherm.Systems.H2DRI_Applications.recv_eff(mu);
+  eff_recv = SolarTherm.Systems.Private.HILT_TES_H2DRI.recv_eff(mu);
   if fluid_a.m_flow > 1e-8 then
     Q_flow_recv = eff_recv*Q_flow_helio_out;
     //Q_flow_loss = A_recv*(em_recv*CN.sigma*((T_recv^4.0)-(T_amb^4.0))+h_conv*(T_recv-T_amb));

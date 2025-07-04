@@ -109,7 +109,7 @@ model Thermocline_HBS_LC_SGroup3_Final
     //Tank Temperature measurements
   Modelica.Blocks.Interfaces.RealOutput T_95_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f_A+N_f_B+N_f_C,0.95) + 273.15 "Temperature at the 95% height of the tank as an output signal (K)" annotation (Placement(visible = true,transformation(
           extent = {{40, 36}, {60, 56}}, rotation = 0), iconTransformation(origin = {45, 41}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
-  Modelica.Blocks.Interfaces.RealOutput T_05_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f_A+N_f_B+N_f_C,0.05) + 273.15"Temperature at the 5% height of the tank as an output signal (K)" annotation (Placement(visible = true,transformation(
+  Modelica.Blocks.Interfaces.RealOutput T_05_measured = Interpolate_Temperature(ZDH,T_f_degC,N_f_A+N_f_B+N_f_C,0.05) + 273.15 "Temperature at the 5% height of the tank as an output signal (K)" annotation (Placement(visible = true,transformation(
           extent = {{40, -54}, {60, -34}}, rotation = 0), iconTransformation(origin = {45, -43}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));
     
     //Tank Non-dimensionalized vertical axis

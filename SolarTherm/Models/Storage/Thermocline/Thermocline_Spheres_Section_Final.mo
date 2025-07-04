@@ -7,10 +7,10 @@ model Thermocline_Spheres_Section_Final
   import Tables = Modelica.Blocks.Tables;
 
   //Initialize Material Packages
-  replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
-  replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
-  replaceable package Tank_Package =  SolarTherm.Materials.SS316L "Tank Package (steel shell)";
-  replaceable package Encapsulation_Package = Filler_Package "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
+  replaceable package Fluid_Package = SolarTherm.Materials.SolarSalt constrainedby SolarTherm.Materials.PartialMaterial "Fluid Package";
+  replaceable package Filler_Package = SolarTherm.Materials.Quartzite_Sand constrainedby SolarTherm.Materials.PartialMaterial "Filler Package";
+  replaceable package Tank_Package =  SolarTherm.Materials.SS316L constrainedby SolarTherm.Materials.PartialMaterial "Tank Package (steel shell)";
+  replaceable package Encapsulation_Package = Filler_Package constrainedby SolarTherm.Materials.PartialMaterial "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
 
   //Fluid Material States
   Fluid_Package.State fluid_in "Model which calculates properties at inlet of the section";
@@ -179,7 +179,7 @@ protected
   //SI.ThermalConductivity k_eff[N_f] "W/mK";
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
-  Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
+  Fluid_Package.State fluid[N_f]"Fluid object array";//(each h_start = h_f_min) 
   
   //Try filler state "Remove this if using function-based calculation"
   Filler_Package.State filler[N_f,N_p-1] "Filler object array";

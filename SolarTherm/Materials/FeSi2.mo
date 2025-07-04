@@ -1,63 +1,78 @@
 within SolarTherm.Materials;
 
 package FeSi2
-  extends SolarTherm.Materials.PartialMaterial(MM = 112.02e-3, T_melt = 1270.0, cost = 0.55);
-  import SolarTherm.Models.Chemistry.Property_Tables.FeSi2.*;
+  extends SolarTherm.Materials.PartialMaterial(MM = 112.02e-3, T_melt = 1400.0, cost = 3.0);
+  //import SolarTherm.Models.Chemistry.Property_Tables.FeSi2.*;
 
+  constant SI.SpecificEnthalpy h_melt = 729833.20 "Specific latent heat of fusion (J/kg)";
+  
+  constant SI.SpecificHeatCapacity cp1 = 714.83 "Specific heat capacity of PCM solid (J/kgK)";
+  constant SI.SpecificHeatCapacity cp2 = 879.63 "Specific heat capacity of PCM liquid (J/kgK)"; 
+  
+  constant SI.Density rho1 = 4504.49 "Density of PCM solid (kg/m3)";
+  constant SI.Density rho2 = 4012.01 "Density of PCM liquid (kg/m3)";
+  
+  constant SI.ThermalConductivity k1 = 17.04 "Thermal conductivity of solid (W/mK)";
+  constant SI.ThermalConductivity k2 = 20.47 "Thermal conducitvity of liquid (W/mK)";
+  
   redeclare model State "A model which calculates state and properties"
-    SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
-    SI.Temperature T "Temperature (K)";
-    Real f "Liquid Mass Fraction";
-    SI.Density rho "Density (kg/m3)";
-    SI.ThermalConductivity k "Thermal conductivity (W/mK)";
+	
+	SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
+	SI.Temperature T "Temperature (K)";
+	Real f "Liquid Mass Fraction";
+	SI.Density rho "Density (kg/m3)";
+	SI.ThermalConductivity k "Thermal conductivity (W/mK)";
+	
   equation
-    T = T_h(h);
-    f = f_h(h);
-    rho = rho_h(h);
-    k = k_h(h);
+	(T, f) = Tf_h(h);
+    rho = rho_Tf(T,f);
+    k = k_Tf(T,f); 
   end State;
+  
+  function Tf_h "Find temperature and liquid fraction from temperature"
+    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+    output SI.Temperature T "Absoulte temperature (K)";
+    output Real f "mass liquid fraction";
+  algorithm
+    if h < cp1*(T_melt-298.15) then
+      T := 298.15 + h/cp1;
+      f := 0.0;
+    elseif h > cp1*(T_melt-298.15)+h_melt then
+      T := T_melt + (h-h_melt-cp1*(T_melt-298.15))/cp2;
+      f := 1.0;
+    else
+      T := T_melt;
+      f := (h-cp1*(T_melt-298.15))/h_melt;
+    end if;
+  end Tf_h;
 
   redeclare function h_Tf "find specific enthalpy from Temperature"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    h := Modelica.Math.Vectors.interpolate(T_table, h_table, T);
+    if T < T_melt then
+      h := cp1*(T-298.15);
+    elseif T > T_melt then
+      h := cp1*(T_melt-298.15)+h_melt+cp2*(T-T_melt);
+    else
+      h := cp1*(T_melt-298.15)+f*h_melt;
+    end if;
   end h_Tf;
-
+  
+  function k_Tf "find thermal conductivity from temperature"
+    input SI.Temperature T;
+    input Real f;
+    output SI.ThermalConductivity k;
+  algorithm
+    k := k1*k2*((f-1)*rho2-f*rho1)/((f-1)*k2*rho2 - f*k1*rho1);
+  end k_Tf;
+    
   redeclare function rho_Tf "find density from temperature"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
   algorithm
-    rho := Modelica.Math.Vectors.interpolate(T_table, rho_table, T);
+    rho := rho1*rho2/(rho2+f*rho1-f*rho2);
   end rho_Tf;
-
-  function k_h "find thermal conductivity from specific enthalpy"
-    input SI.SpecificEnthalpy h;
-    output SI.ThermalConductivity k;
-  algorithm
-    k := Modelica.Math.Vectors.interpolate(h_table, k_table, h);
-  end k_h;
-
-  function T_h "Find temperature from specific enthalpy"
-    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
-    output SI.Temperature T "Absolute temperature (K)";
-  algorithm
-    T := Modelica.Math.Vectors.interpolate(h_table, T_table, h);
-  end T_h;
-  
-  function rho_h "Find density from specific enthalpy"
-    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
-    output SI.Density rho "Density (kg/m3)";
-  algorithm
-    rho := Modelica.Math.Vectors.interpolate(h_table, rho_table, h);
-  end rho_h;
-  
-  function f_h "Find density from specific enthalpy"
-    input SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
-    output Real f "Liquid Mass Fraction (-)";
-  algorithm
-    f := Modelica.Math.Vectors.interpolate(h_table, f_table, h);
-  end f_h;
 end FeSi2;

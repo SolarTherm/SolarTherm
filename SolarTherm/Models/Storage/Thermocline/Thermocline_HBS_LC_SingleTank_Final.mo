@@ -103,7 +103,7 @@ model Thermocline_HBS_LC_SingleTank_Final
   
   //Plotting Temperature degC
   Real T_f_degC[N_f](start=fill(T_min,N_f));
-  
+  Real T_p_degC[N_f](start=fill(T_min,N_f));
   //Analysis of fluid entering and exiting storage
   Fluid_Package.State fluid_top "Fluid entering/exiting top";
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
@@ -124,7 +124,7 @@ equation
   end if;
   //Convert from Kelvin to degC for easier plotting
   T_f_degC = (Tank_A.T_f).-273.15;
-  
+  T_p_degC = (Tank_A.T_p).-273.15;
   //Calculate tank energy level
   Level = Tank_A.Level;
   

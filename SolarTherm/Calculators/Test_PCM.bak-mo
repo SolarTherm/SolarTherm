@@ -1,0 +1,33 @@
+within SolarTherm.Calculators;
+
+model Test_PCM
+  import SI = Modelica.SIunits;
+  import CN = Modelica.Constants;
+  import MA = Modelica.Blocks.Math;
+
+  
+  package Filler_Package = SolarTherm.Materials.Aluminium "Filler Package";
+  Filler_Package.State filler;
+  
+  parameter SI.Temperature T_start = 100+273.15;
+  parameter Real f_start = 0.0;
+  parameter Real h_start = Filler_Package.h_Tf(T_start,f_start);
+  SI.Temperature T(start=T_start);
+  
+  SI.SpecificEnthalpy h(start=h_start);
+  SI.ThermalConductivity k;
+  SI.Density rho;
+  
+initial equation
+  filler.h = h_start;
+  
+equation
+  filler.h = h;
+  T = filler.T;
+  k = filler.k;
+  rho = filler.rho;
+
+  der(h) = 10000.0;
+annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)),experiment(StopTime = 200, StartTime = 0, Tolerance = 1.0e-5, Interval = 1, maxStepSize = 1, initialStepSize = 1));
+end Test_PCM;

@@ -12,10 +12,9 @@ package Concrete_Hoivik_2019
     SI.Density rho "Density (kg/m3)";
     SI.ThermalConductivity k "Thermal conductivity (W/mK)";
   equation
-    f = 0.0;
-    h = h_Tf(T, 0);
-    rho = rho_Tf(T, 0);
-    k = k_Tf(T, 0);
+    (T, f) = Tf_h(h);
+    rho = rho_Tf(T, 0.0);
+    k = k_Tf(T, 0.0);
   end State;
 
   redeclare function h_Tf "find specific enthalpy from Temperature"

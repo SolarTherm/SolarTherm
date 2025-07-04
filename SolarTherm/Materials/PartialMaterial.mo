@@ -1,13 +1,11 @@
 within SolarTherm.Materials;
 partial package PartialMaterial
   import SI = Modelica.SIunits;
-  import CN = Modelica.Constants;
-  package Tables = Modelica.Blocks.Tables;
-  import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
   constant SI.MolarMass MM = 0.0 "Molar mass (kg/mol)";
   constant SI.Temperature T_melt = 0.0 "Melting point (K)";
-  constant Real cost = 0.0 "USD/kg";
+  constant Real cost = 0.0 "Unit cost of material (USD_2022/kg)";
+  constant Real year = 2022.0 "Year index for the cost (Anno Domini)";
   
   replaceable partial function h_Tf
     "Return specific enthalpy as a function of temperature and liquid mass fraction f"
@@ -31,6 +29,8 @@ partial package PartialMaterial
 	Real f "Liquid Mass Fraction";
 	SI.Density rho "Density (kg/m3)";
 	SI.ThermalConductivity k "Thermal conductivity (W/mK)";
+	SI.SpecificHeatCapacity cp "Specific heat capacity (J/kgK)";
+	SI.DynamicViscosity mu "Dynamic viscosity (Pa.s)";
   end State;
   
   annotation(
