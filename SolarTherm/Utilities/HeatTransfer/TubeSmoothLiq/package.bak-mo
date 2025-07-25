@@ -1,4 +1,0 @@
-within SolarTherm.Utilities.HeatTransfer;
-
-package TubeSmoothLiq "Convective heat transfer for liquids flowing through a smooth tube"
-end TubeSmoothLiq;

@@ -25,8 +25,6 @@ model Thermocline_HCylinders_SingleTank_Final
   
     //Filler diameter of materials
   parameter SI.Length d_p = 0.015 "Filler sphere diameter";
-  parameter Real f_ht = 1.0 "filler-fluid surface heat transfer enhancement factor";
-  parameter Real f_Nu = 1.0 "Nusselt number correction factor";
   
     //Encapsulation thickness
   parameter SI.Length t_e = d_p/(2*N_p) "Encapsulation thickness"; //Defaults to equidistant radial discretization

@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Examples;
 
-model HBS_1T_AdaptiveCycle "This component analysis allows a variable cycle length where charging and discharging follow immediately after each other assuming the system temperate constraints have not been violated. Tank heights are fixed to 30m for all cases."
+model HBS_1T_AdaptiveCycle "Hot Blast Stove TES, single tank"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -8,12 +8,12 @@ model HBS_1T_AdaptiveCycle "This component analysis allows a variable cycle leng
   package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;
   //package Medium_Utilities = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities;
   package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;
-  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity_50K_intervals;
+  package Filler_Package = SolarTherm.Materials.Examples.Gan_Checker3_Constant;
   //These parameters can be varied
   parameter Real HM = 2.0 "Heater Multiple (relative thermal size of heater to the demand)";
   parameter SI.Time t_discharge = 20.0*3600.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
-  parameter Integer N_f = 100 "Number of vertical mesh elements";
+  parameter Integer N_f = 360 "Number of vertical mesh elements";
   parameter Real t_storage_hours_ideal = t_discharge/3600.0 "Maximum number of storage hours assuming complete utilisation of storage material (h)";
 
   //TES Geometric Parameters
@@ -28,8 +28,8 @@ model HBS_1T_AdaptiveCycle "This component analysis allows a variable cycle leng
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";
   parameter SI.Temperature T_heater_max = 450.0 + 273.15 "Maximum tolerated outlet temperature to heater (K)";
   parameter SI.Temperature T_low_set = 450.0 + 273.15 "TES cold blend temperature (K)";
-  parameter SI.Temperature T_heater_des = 317.3 + 273.15 "Design receiver inlet temperature (K)";
-  parameter SI.Temperature T_min = 317.3 + 273.15 "Minimum temperature (K)";
+  parameter SI.Temperature T_heater_des = 300.0 + 273.15 "Design receiver inlet temperature (K)";
+  parameter SI.Temperature T_min = 300.0 + 273.15 "Minimum temperature (K)";
   parameter SI.Temperature T_amb_des = 25.0 + 273.15 "Design ambient temperature (K)";
   parameter Integer Correlation = 1; //Gas Internal flow
   //parameter SI.SpecificEnthalpy h_tol = 0.05*(TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
@@ -104,7 +104,7 @@ model HBS_1T_AdaptiveCycle "This component analysis allows a variable cycle leng
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = epsilon, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, epsilon = epsilon, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
@@ -254,8 +254,8 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 8640000, StartTime = 0, Tolerance = 1e-4, Interval = 300),
+    experiment(StopTime = 1728000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
-  Documentation(info = "<html><head></head><body>Notes:<div><br></div><div>Hot Blast Stove TES:</div><div><br></div><div>Fluid = Air</div><div>Filler = Mullite checkerbricks</div></body></html>"));
+  Documentation(info = "<html><head></head><body><b><u>Notes:</u></b><div><div><br></div><div>Hot Blast Stove TES:</div><div><br></div><div>Fluid = Air_CoolProp_1bar</div><div>Filler = Gan_Checkerbrick3_Constant (Sensible Storage)</div><div><br></div><div>Tank Height = 30.0 m</div><div>Tank Diameter = 7.826 m</div><div><br></div><div>Checkerbrick hole diameter = 3.0 cm</div><div>Checkerbrick geometric porosity = 51.01%</div><div><br></div><div>Heater Multiple = 2.0 (Charging and discharging occurs at the same rate)</div><div><br></div><div>Design discharging conditions (industrial process requirements):</div><div>30.0 kg of hot air at 1000 degC, with a return air stream at 300 degC. TES can discharge hot air between 1200 and 1000 degC; when the top hot-air outlet is &gt; 1000 degC, the mass flow rate is &lt; 30.0 kg to maintain a constant heat-rate.</div><div><br></div><div><u><b>Operating Strategy:</b></u></div><div><br></div><div>TES is charged with hot air at 1200 degC from the top (z = H_tank), charging is halted when the bottom air outlet temperature rises to 450 degC.</div><div><br></div><div>TES then switches to discharging mode where cold air is pumped into the bottom (z = 0) and hot air is extracted from the top. Discharging is halted when the top air outlet temperature drops to 1000 degC.</div><div><br></div><div>The charging/discharging mass flow rates are adjusted to keep the charging/discharging heat-rates constant.</div><div><br></div><div>The simulation runs 10 charging-discharging cycles to establish cyclical operating behaviour and the tenth cycle is used to calculate performance metrics:</div><div><br></div><div>Energy efficiency \"eff_energy\" is the round-trip efficiency of the TES component. This is the energy discharged / energy charged into the TES over the 10th cycle.</div><div><br></div><div>Energy utilisation \"util_energy\" is the fraction of ideal storage capacity of the TES component that is actually used = energy discharged / ideal energy capacity. The ideal storage capacity is calculated as the combined enthalpy difference of filler and fluid phases between T_min and T_max. This is a measure of how well the storage material is utilised.</div><div><br></div><div><b><u>Outputs:</u></b></div><div><u>Settings:&nbsp;</u></div><div><br></div><div>Interval (step-size) = 60s</div><div>Method = dassl</div><div>Tolerance = 1.0e-4</div><div>Non-linear solver = homotopy</div><div><b><u><br></u></b></div><div><b><u><br></u></b></div><div><u>Calculated Parameters:</u></div><div><br></div><div>E_max (J) = 1.69524e11</div><div>TES.C_filler (USD) = 795408</div><div>TES.C_insulation (USD) = 88075.3</div><div>TES.C_tank (USD) = 170822</div><div><br></div><div><u>Calculated Variables (at end of simulation) at different mesh refinements:</u></div><div><u>Note: Total simulation time is based on an Intel Core i7-7700 CPU @ 3.60 GHz machine</u></div><div><br></div><div>N_f = 160, eff_energy = &nbsp;0.989085, util_energy = 0.257776, Total sim. time = 144.661 s</div><div>N_f = 240, eff_energy = &nbsp;0.986828, util_energy = 0.263479, Total sim. time = 289.075 s</div><div>N_f = 360, eff_energy = &nbsp;0.986499, util_energy = 0.267552, Total sim. time = 632.941 s</div><div><br></div><div><u>Grid Convergence Statistics (energy utilisation)</u></div><div><br></div><div>Mesh refinement ratio = 1.5</div><div>Order of convergence = 0.830 (&gt; 0.0 therefore numerical scheme is convergent)</div><div>Relative error, GCI = 4.75%</div><div>Absolute error, sigma_util_energy = 0.012722</div><div><br></div><div>Energy utilisation = 0.268 +/- 0.013</div></div><div><br></div><div><u>Output Variables to check:</u></div><div>TES.z_f = Vertical positions of each fluid/filler element</div><div>TES.T_f_degC = Vertical temperature profile of each fluid element</div><div>TES.T_p_degC = Vertical temperature profile of each filler element</div><div>TES.Tank_A.Bi = Biot number of each fluid/filler pair</div><div>TES.Tank_A.Re = Reynolds number of the fluid in each vertical element</div></body></html>"));
 end HBS_1T_AdaptiveCycle;

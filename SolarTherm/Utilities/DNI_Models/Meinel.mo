@@ -8,4 +8,7 @@ protected
   Real AM = 1.0/Modelica.Math.cos(zenith_rad);
 algorithm
   DNI := 1367.0*0.7^(AM^0.678);
+  
+annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)), Documentation(info="<html><img width=\"500\" src=\"modelica://SolarTherm/Resources/Utilities/DNI_Meinel.png\"></html>"));
 end Meinel;

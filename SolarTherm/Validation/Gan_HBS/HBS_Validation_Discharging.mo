@@ -13,12 +13,12 @@ model HBS_Validation_Discharging
   parameter SI.Length D_tank = 7.748 "Tank diameter (m)";
   parameter Real ar = H_tank/D_tank;
   
-  parameter SI.Length d_p = 16.0e-3 "Filler pore diameter (m)";
-  parameter Real eta = 0.4034;
-  //parameter SI.Length s_p = 31.7e-3 "Filler pore separation (m)";
+  parameter SI.Length d_p = 13.86e-3 "Filler pore diameter (m)";
+  parameter Real epsilon = 0.3822 "Checkerbrick porosity";
+  parameter Real e_roughness = 3.045e-3 "Roughness of the fluid channels (m)";
   
-  parameter SI.Temperature T_max = 1326.85 + 273.15 "Maximum design system temperature (K)";
-  parameter SI.Temperature T_min = 224.85 + 273.15 "Minimum design system temperature (K)";
+  parameter SI.Temperature T_max = 1598.21 "Maximum design system temperature (K)";
+  parameter SI.Temperature T_min = 498.0 "Minimum design system temperature (K)";
   
   parameter SI.Time t_inlet_data[2] = {0.0,13200.0} "Inlet temperature signal, time axis (s)";
   parameter SI.Temperature T_inlet_data[2] = {498.0,498.0} "Inlet temperature signal, temperature axis (K)";
@@ -63,7 +63,7 @@ model HBS_Validation_Discharging
     Placement(visible = true, transformation(origin = {-24, -66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow_discharging(y = m_flow_discharging_signal) annotation(
     Placement(visible = true, transformation(origin = {-121, -42}, extent = {{-23, -10}, {23, 10}}, rotation = 0)));
-  SolarTherm.Validation.Gan_HBS.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, eta = eta,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
+  SolarTherm.Validation.Gan_HBS.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, epsilon = epsilon, e_roughness = e_roughness,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
     Placement(visible = true, transformation(origin = {0, -6}, extent = {{-44, -44}, {44, 44}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Fluid_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-59, 65}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
@@ -91,6 +91,6 @@ equation
   connect(HBS.fluid_a, Fluid_Sink.port_a) annotation(
     Line(points = {{0, 30}, {0, 30}, {0, 66}, {-38, 66}, {-38, 66}}, color = {0, 127, 255}));
 
-annotation(experiment(StopTime = 2820, StartTime = 0, Tolerance = 1e-5, Interval = 60),
+annotation(experiment(StopTime = 6240, StartTime = 0, Tolerance = 1e-5, Interval = 20),
     Diagram(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1)));
 end HBS_Validation_Discharging;

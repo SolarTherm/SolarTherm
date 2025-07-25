@@ -57,12 +57,11 @@ package PCM710 "51%K2CO3 + 49%Na2CO3, sharp melting point of 983.15 K and consta
   end h_Tf;
   
   function k_Tf "find thermal conductivity from temperature"
-    input SI.Temperature T;
-    input Real f;
-    output SI.ThermalConductivity k;
+    input SI.Temperature T "Absolute temperature (K)";
+    input Real f "Liquid mass fraction";
+    output SI.ThermalConductivity k "Thermal conductivity (W/mK)";
   algorithm
-    k := (1.0-f)*k_1 + f*k_2;
-    //k := k1*k2*((f-1)*rho2-f*rho1)/((f-1)*k2*rho2 - f*k1*rho1);
+    k := k_1*k_2*((f-1.0)*rho_2-f*rho_1)/((f-1.0)*k_2*rho_2 - f*k_1*rho_1);
   end k_Tf;
     
   redeclare function rho_Tf "find density from temperature"
@@ -70,8 +69,7 @@ package PCM710 "51%K2CO3 + 49%Na2CO3, sharp melting point of 983.15 K and consta
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
   algorithm
-    //rho := rho1*rho2/(rho2+f*rho1-f*rho2);
-    rho := (1.0-f)*rho_1 + f*rho_2;
+    rho := rho_1*rho_2/(rho_2+f*rho_1-f*rho_2);
   end rho_Tf;
   
   annotation(

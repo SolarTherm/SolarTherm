@@ -20,7 +20,7 @@ model Thermocline_HBS_LC_SingleTank_Final
   parameter Real ar = 2.0 "Aspect ratio of tank";
   
     //Porosity of tank filler materials
-  parameter Real eta = 0.51 "Porosity";
+  parameter Real epsilon = 0.51 "Porosity";
   
     //Filler diameter of materials
   parameter SI.Length d_p = 0.03 "Channel hydraulic diameter";
@@ -83,7 +83,7 @@ model Thermocline_HBS_LC_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, epsilon = epsilon, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot);
 
 
   //Cost BreakDown

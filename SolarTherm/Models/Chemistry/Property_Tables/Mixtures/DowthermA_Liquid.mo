@@ -12,8 +12,10 @@ record DowthermA_Liquid "Synthetic organic heat transfer fluid"
   constant Modelica.SIunits.ThermalConductivity k_table[7] = {0.1379, 0.1376, 0.1296, 0.1216, 0.1136, 0.1056, 0.1008} "Thermal conductivity (W/mK)";
   
   constant Modelica.SIunits.DynamicViscosity mu_table[7] = {0.004316, 0.004189, 0.001382, 0.000757, 0.000481, 0.000332, 0.000267} "Dynamic Viscosity (Pa.s)";
+  
+  constant Modelica.SIunits.SpecificEntropy s_table[7] = {0.00, 9.80, 246.00, 440.85, 607.98, 755.58, 837.70} "Specific Entropy (J/kgK)";
 
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),
-    Documentation(info = "<html><head></head><body><b>Assumptions:</b><div><br></div><div>Property tables rescaled to 298.15K, 300.00 - 500.0 K at 50 K intervals and 530.25 K via linear interpolation&nbsp;</div><div><br></div><div>The atmospheric boiling point of Dowtherm A is 257.1 degC or 530.25 K.</div><div><br></div><div>Specific enthalpy <i>h</i>&nbsp;is calculated w.r.t. 298.15 K and estimated via trapezium rule of <i>c_p</i>&nbsp;vs. <i>T.</i><br><div><br></div><div><b>Reference:</b></div><div><br></div><div>https://www.dow.com/en-us/pdp.dowtherm-a-heat-transfer-fluid.238000z.html#tech-content</div></div></body></html>"));
+    Documentation(info = "<html><head></head><body><b>Assumptions:</b><div><br></div><div>Property tables rescaled to 298.15K, 300.00 - 500.0 K at 50 K intervals and 530.25 K via linear interpolation&nbsp;</div><div><br></div><div>The atmospheric boiling point of Dowtherm A is 257.1 degC or 530.25 K.</div><div><br></div><div>Specific enthalpy <i>h</i>&nbsp;is calculated w.r.t. 298.15 K and estimated via trapezium rule of <i>c_p</i>&nbsp;vs. <i>T.</i></div><div><i><br></i></div><div>Specific entropy <i>s</i>&nbsp;is estimated using the formula&nbsp;Δ<i>s</i>&nbsp;=&nbsp;Δ<i>h</i>&nbsp;/ T.<br><div><br></div><div><b>Reference:</b></div><div><br></div><div>https://www.dow.com/en-us/pdp.dowtherm-a-heat-transfer-fluid.238000z.html#tech-content</div></div></body></html>"));
 end DowthermA_Liquid;

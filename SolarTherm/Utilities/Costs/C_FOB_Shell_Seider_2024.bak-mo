@@ -1,6 +1,0 @@
-within SolarTherm.Utilities.Costs;
-
-function C_FOB_Shell_Seider_2024
-algorithm
-
-end C_FOB_Shell_Seider_2024;

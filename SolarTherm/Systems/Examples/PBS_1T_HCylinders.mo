@@ -1,6 +1,6 @@
 within SolarTherm.Systems.Examples;
 
-model PBS_1T_HCylinders
+model PBS_1T_HCylinders "Packed-bed storage with sodium fluid and horizontal cylinders of MgO"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -21,10 +21,10 @@ model PBS_1T_HCylinders
   parameter SI.TemperatureDifference T_tol_Recv = 40.0 "Power block Temperature Tolerance (K)";
   parameter SI.TemperatureDifference T_tol_PB = 20.0 "Power block Temperature Tolerance (K)";
   //Numerical Discretisation
-  parameter Integer N_f = 50 "Number of fluid CVs in each tank";//360
-  parameter Integer N_p = 5 "Number of filler CVs  in main tank";
+  parameter Integer N_f = 200 "Number of fluid CVs in each tank";//360
+  parameter Integer N_p = 10 "Number of filler CVs  in main tank";
   //Tank Geometry
-  parameter Real eta = 0.26 "Porosity"; //0.36 if randomly packed, 0.26 for perfect packing.
+  parameter Real eta = 0.26 "Porosity"; 
   parameter SI.Energy E_max = t_discharge * (P_name / eff_PB) "Storage capacity (J), t_discharge(s), 100MWe, 50% PB efficiency";
   parameter Real eff_PB = 0.40 "Power block heat to electricity conversion efficiency";
   parameter SI.Time t_charge = 6.0 * 3600.0 "Charging period";
@@ -237,8 +237,8 @@ equation
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
     Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
   annotation(
-    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-3, Interval = 60),
+    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
-  Documentation(info = "<html><head></head><body>Notes:<div><br></div><div>Thermal energy storage tank with:</div><div><br></div><div>Fluid = Liquid Sodium</div><div>Filler = Horizontal Cylinder MgO</div></body></html>"));
+  Documentation(info = "<html><head></head><body><u>Notes:</u><div><br></div><div>Thermal energy storage tank with:</div><div><br></div><div>Fluid = Liquid Sodium</div><div>Filler = Horizontal Cylinder MgO</div><div><br></div><div><u>Test Results:</u></div><div><u><br></u></div><div>Settings:</div><div>Non-linear Solver</div><div>N_p = 10</div><div><br></div><div>Result Table:</div><div>N_f = 128, util_energy = 0.433644</div><div>N_f = 160, util_energy = 0.454087</div><div>N_f = 200, util energy = 0.470666</div></body></html>"));
 end PBS_1T_HCylinders;

@@ -10,11 +10,11 @@ model HBS_6Layer
   //Initialize Material Packages
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
   replaceable package Filler_Package_1 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
-  replaceable package Filler_Package_2 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
-  replaceable package Filler_Package_3 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
-  replaceable package Filler_Package_4 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
-  replaceable package Filler_Package_5 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
-  replaceable package Filler_Package_6 = SolarTherm.Materials.PartialMaterial "Filler Package layer 1";
+  replaceable package Filler_Package_2 = SolarTherm.Materials.PartialMaterial "Filler Package layer 2";
+  replaceable package Filler_Package_3 = SolarTherm.Materials.PartialMaterial "Filler Package layer 3";
+  replaceable package Filler_Package_4 = SolarTherm.Materials.PartialMaterial "Filler Package layer 4";
+  replaceable package Filler_Package_5 = SolarTherm.Materials.PartialMaterial "Filler Package layer 5";
+  replaceable package Filler_Package_6 = SolarTherm.Materials.PartialMaterial "Filler Package layer 6";
   replaceable package Tank_Package = SolarTherm.Materials.SS316L "Tank Package (steel shell)";
   //replaceable package Encapsulation_Package = Filler_Package "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
   //Fluid Material States
@@ -27,8 +27,10 @@ model HBS_6Layer
   //Tank Design parameters
   parameter SI.Energy E_max = 144e9 "Design storage capacity";
   parameter Real ar = 2.0 "Tank Aspect ratio H/D";
-  parameter Real eta = 0.40 "Structural porosity of the firebrick (m)";
+  parameter Real epsilon = 0.40 "Structural porosity of the firebrick (m)";
   parameter Real d_p = 0.02 "Diameter of the pores (m)";
+  parameter SI.Length e_roughness = 3.045e-3 "Checkerbrick surface roughness (m)";
+  parameter SI.Length L_char_solid = 0.25*d_p*(1.0-epsilon)/epsilon "Characteristic length of the solid media, also the ratio of solid volume to contact-surface-area (m)";
   //parameter Real s_p = 0.04 "Separation of the pores (m)";
   //parameter Real t_e = d_p / (2.0 * N_p) "Thickness of encapsulation, default is such that it is at a value that preserves equidistant radii discretizations (m)";
   //Temperature Bounds
@@ -36,7 +38,7 @@ model HBS_6Layer
   parameter SI.Temperature T_max = CV.from_degC(820) "Design hot Temperature of everything in the tank (K)";
   parameter SI.Temperature T_start = T_min "Initial (uniform) temperature of all components (K), defaults to T_min";
   //Calculated Tank Design Parameters
-  parameter SI.Length H_tank = (4 * E_max / (CN.pi * (1 / ar) ^ 2 * (rho_f_avg * (h_f_max - h_f_min) * eta + rho_p * (h_p_max - h_p_min) * (1.0 - eta)))) ^ (1 / 3);
+  parameter SI.Length H_tank = (4 * E_max / (CN.pi * (1 / ar) ^ 2 * (rho_f_avg * (h_f_max - h_f_min) * epsilon + rho_p * (h_p_max - h_p_min) * (1.0 - epsilon)))) ^ (1 / 3);
   parameter SI.Diameter D_tank = H_tank / ar;
   parameter SI.Area A = CN.pi * D_tank * D_tank / 4.0 "Cross sectional area of tank";
   //Thermal Losses
@@ -109,7 +111,7 @@ model HBS_6Layer
   //Mass flow rates and superficial velocity
   SI.MassFlowRate m_flow(start = 0.0) "kg/s";
   SI.Velocity u_flow "m/s";
-  //SI.Velocity u_0 "Fluid velocity through empty cross section = u_flow/eta (m/s)";
+  //SI.Velocity u_0 "Fluid velocity through empty cross section = u_flow/epsilon (m/s)";
   //Analytics
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min for this to be correct";
   Real Level(start = 0.0) "Tank energy charging level (0-1)";
@@ -124,25 +126,25 @@ model HBS_6Layer
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
   //Cost breakdown
-  parameter Real C_fluid=0.0;// = max(rho_f_max, rho_f_min) * eta * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Fluid_Package.cost;
+  parameter Real C_fluid=0.0;// = max(rho_f_max, rho_f_min) * epsilon * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Fluid_Package.cost;
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation;
   //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
   parameter Real C_insulation =0.0;//= if U_loss_tank > 1e-3 then CpA_external_insulation(T_max, U_loss_tank) * A_loss_tank else 0.0;
   parameter Real C_tank = 0.0;// C_shell(max(rho_f_max, rho_f_min), H_tank, D_tank, Tank_Package.sigma_yield(T_max), Tank_Package.rho_Tf(298.15, 0.0), 4.0);
-  parameter Real C_filler= 0.0;// = rho_p * (1.0 - eta) * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Filler_Package.cost;
+  parameter Real C_filler= 0.0;// = rho_p * (1.0 - epsilon) * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Filler_Package.cost;
   parameter Real C_encapsulation = 0.0;
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
   //Initialise Filler surface temperature
   SI.Temperature T_s[N_f](start = T_f_start);
   //parameter SI.Length r_p[N_p] = cat(1,Particle_Radii(d_p-2*t_e,N_p-1),{(d_p/2)-(t_e/2)}) "Radii of each particle element centre";
-  parameter SI.Volume V_p[N_f] = fill((1.0-eta)*CN.pi*D_tank*D_tank*H_tank/(4.0*N_f), N_f) "Solid volume of each filler slice (m3)";
+  parameter SI.Volume V_p[N_f] = fill((1.0-epsilon)*CN.pi*D_tank*D_tank*H_tank/(4.0*N_f), N_f) "Solid volume of each filler slice (m3)";
   parameter SI.Density rho_p[N_f] = cat(1,fill(rho_p1,5), fill(rho_p2,37),fill(rho_p3,16),fill(rho_p4,8), fill(rho_p5,6), fill(rho_p6,28));
   parameter SI.Mass m_p[N_f] = V_p.*rho_p;
   
   parameter SI.Area A_loss_top = 0.25*CN.pi*D_tank*D_tank "Surface area of the top and bottom of the tank for heat loss calculations (m2)";
   parameter SI.Area A_loss_wall_i = CN.pi*D_tank*dz "Surface area of the side of each element for heat loss calculations (m2)";
-  //parameter SI.Mass m_p[N_f] = fill((1.0-eta)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
+  //parameter SI.Mass m_p[N_f] = fill((1.0-epsilon)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
   SI.SpecificEnthalpy h_p[N_f] "J/kg";
   SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
 
@@ -165,7 +167,7 @@ model HBS_6Layer
   
   SI.ThermalConductivity k_p[N_f] "W/mK";
   //Filler Geometry
-  //parameter Real N_spheres_total = N_f * 6 * (1 - eta) * A * dz / (CN.pi * d_p ^ 3) "Total number of spheres in the tank";
+  //parameter Real N_spheres_total = N_f * 6 * (1 - epsilon) * A * dz / (CN.pi * d_p ^ 3) "Total number of spheres in the tank";
   
   //parameter SI.Mass m_e = rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3)) "Masses of encapsulation in one particle";
   //Pressure Drop
@@ -180,7 +182,7 @@ model HBS_6Layer
   SI.DynamicViscosity mu_f[N_f] "Pa.s";
   SI.SpecificHeatCapacity c_pf[N_f] "J/kgK";
 protected
-  Fluid_Package.State fluid[N_f](each h_start = h_f_min) "Fluid object array";
+  Fluid_Package.State fluid[N_f] "Fluid object array";
   //Try filler state "Remove this if using function-based calculation"
   Filler_Package_1.State filler1[5] "Filler object array";
   Filler_Package_2.State filler2[37] "Filler object array";
@@ -193,18 +195,18 @@ protected
 algorithm
 //Fluid Equations
   if State == 1 then
-    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (eta * d_p) - U_bot * (T_f[1] - T_amb) / (eta * dz) - U_wall * CN.pi * D_tank * (T_f[1] - T_amb) / (eta * A)) / rho_f_avg;
+    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (epsilon * d_p) - U_bot * (T_f[1] - T_amb) / (epsilon * dz) - U_wall * CN.pi * D_tank * (T_f[1] - T_amb) / (epsilon * A)) / rho_f_avg;
     h_out := h_f[1];
     for i in 2:N_f - 1 loop
-      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i] - h_f[i + 1]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (eta * d_p) - U_wall * CN.pi * D_tank * (T_f[i] - T_amb) / (eta * A)) / rho_f_avg;
+      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i] - h_f[i + 1]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (epsilon * d_p) - U_wall * CN.pi * D_tank * (T_f[i] - T_amb) / (epsilon * A)) / rho_f_avg;
     end for;
-    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f] - h_in) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (eta * d_p) - U_wall * CN.pi * D_tank * (T_f[N_f] - T_amb) / (eta * A) - U_top * (T_f[N_f] - T_amb) / (eta * dz)) / rho_f_avg;
+    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f] - h_in) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (epsilon * d_p) - U_wall * CN.pi * D_tank * (T_f[N_f] - T_amb) / (epsilon * A) - U_top * (T_f[N_f] - T_amb) / (epsilon * dz)) / rho_f_avg;
   else
-    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz)) + rho_f_avg * u_flow * (h_in - h_f[1]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (eta * d_p) - U_bot * (T_f[1] - T_amb) / (eta * dz) - U_wall * CN.pi * D_tank * (T_f[1] - T_amb) / (eta * A)) / rho_f_avg;
+    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz)) + rho_f_avg * u_flow * (h_in - h_f[1]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (epsilon * d_p) - U_bot * (T_f[1] - T_amb) / (epsilon * dz) - U_wall * CN.pi * D_tank * (T_f[1] - T_amb) / (epsilon * A)) / rho_f_avg;
     for i in 2:N_f - 1 loop
-      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i - 1] - h_f[i]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (eta * d_p) - U_wall * CN.pi * D_tank * (T_f[i] - T_amb) / (eta * A)) / rho_f_avg;
+      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i - 1] - h_f[i]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (epsilon * d_p) - U_wall * CN.pi * D_tank * (T_f[i] - T_amb) / (epsilon * A)) / rho_f_avg;
     end for;
-    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f - 1] - h_f[N_f]) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (eta * d_p) - U_wall * CN.pi * D_tank * (T_f[N_f] - T_amb) / (eta * A) - U_top * (T_f[N_f] - T_amb) / (eta * dz)) / rho_f_avg;
+    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f - 1] - h_f[N_f]) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (epsilon * d_p) - U_wall * CN.pi * D_tank * (T_f[N_f] - T_amb) / (epsilon * A) - U_top * (T_f[N_f] - T_amb) / (epsilon * dz)) / rho_f_avg;
     h_out := h_f[N_f];
   end if;
 //Charging (Mass flows top to bottom)
@@ -266,85 +268,22 @@ equation
 //mass is flowing upwards so discharging
     State = 3;
   end if;
-  u_flow = m_flow / (eta * rho_f_avg * A);
+  u_flow = m_flow / (epsilon * rho_f_avg * A);
 //positive if flowing upwards (discharge)
-  //u_0 = u_flow * eta;
+  //u_0 = u_flow * epsilon;
 //Velocity through empty cross-section
 //Fluid inlet and outlet properties
   fluid_in.h = h_in;
   fluid_out.h = h_out;
   fluid_in.T = T_in;
   fluid_out.T = T_out;
-/*
-  //Fluid Equations
-  if State == 1 then
-  //Charging (Mass flows top to bottom)
-  //Bottom Charging Fluid Node
-    rho_f_avg * der(h_f[1]) =
-    (-2.0*k_f[1]*k_f[2])*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
-    + (rho_f_avg*u_flow)*(h_f[1]-h_f[2])/dz
-    - h_v[1]*(T_f[1] - T_s[1])/eta
-    - U_bot*(T_f[1]-T_amb)/(eta*dz) 
-    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
-    
-    h_out = h_f[1];
-  //End Bottom Charging Fluid Node
-  //Middle Charging Fluid Nodes
-    for i in 2:N_f - 1 loop
-      rho_f_avg*der(h_f[i]) = 
-      2.0*k_f[i - 1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
-      - 2.0*k_f[i]*k_f[i+1]*(T_f[i]-T_f[i + 1])/((k_f[i]+k_f[i+1])*dz*dz)
-      + (rho_f_avg*u_flow)*(h_f[i]-h_f[i+1])/dz
-      - h_v[i]*(T_f[i]-T_s[i])/eta
-      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
-    end for;
-  //End Middle Charging Fluid Nodes
-  //Top Charging Fluid Node
-    rho_f_avg*der(h_f[N_f]) = 
-    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
-    + (rho_f_avg*u_flow)*(h_f[N_f]-h_in)/dz
-    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
-    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
-  //End Top Charging Fluid Node
-  else
-  //Discharge (Mass flows bottom to top)
-  //Bottom Discharge Node
-    rho_f_avg*der(h_f[1]) =
-    -2.0*k_f[1]*k_f[2]*(T_f[1]-T_f[2])/((k_f[1]+k_f[2])*dz*dz)
-    + (rho_f_avg*u_flow)*(h_in-h_f[1])/dz
-    - h_v[1]*(T_f[1]-T_s[1])/eta
-    - U_bot*(T_f[1]-T_amb)/(eta*dz)
-    - U_wall*CN.pi*D_tank*(T_f[1]-T_amb)/(eta*A);
-  //End Bottom Discharge Node
-  //Middle Discharge Nodes
-    for i in 2:N_f - 1 loop
-      rho_f_avg*der(h_f[i]) =
-      2.0*k_f[i-1]*k_f[i]*(T_f[i-1]-T_f[i])/((k_f[i-1]+k_f[i])*dz*dz)
-      - 2.0*k_f[i]*k_f[i + 1]*(T_f[i]-T_f[i+1])/((k_f[i]+k_f[i+1])*dz*dz)
-      + (rho_f_avg*u_flow)*(h_f[i-1]-h_f[i])/dz
-      - h_v[i]*(T_f[i]-T_s[i])/eta
-      - U_wall*CN.pi*D_tank*(T_f[i]-T_amb)/(eta*A);
-    end for;
-  //End Middle Discharge Nodes
-  //Top Discharge Node
-    rho_f_avg*der(h_f[N_f]) =
-    2.0*k_f[N_f-1]*k_f[N_f]*(T_f[N_f-1]-T_f[N_f])/((k_f[N_f-1]+k_f[N_f])*dz*dz)
-    + (rho_f_avg*u_flow)*(h_f[N_f-1]-h_f[N_f])/dz
-    - h_v[N_f]*(T_f[N_f]-T_s[N_f])/eta
-    - U_wall*CN.pi*D_tank*(T_f[N_f]-T_amb)/(eta*A)
-    - U_top*(T_f[N_f]-T_amb)/(eta*dz);
-    
-    h_out = h_f[N_f];
-  end if;
-  */
+
 //Fluid Property evaluation SolarSalt
   for i in 1:N_f loop
     fluid[i].h = h_f[i];
     T_f[i] = fluid[i].T;
     c_pf[i] = fluid[i].cp;
     k_f[i] = fluid[i].k;
-//k_eff[i] = eta*fluid[i].k; //Effective thermal conductivity of fluid (weighted by porosity)
     mu_f[i] = fluid[i].mu;
   end for;
 //Particle Property evaluation
@@ -387,18 +326,18 @@ equation
   
 //Convection Equations
   for i in 1:N_f loop
-    Bi[i] = Nu[i] * k_f[i] / (6.0 * k_p[i]);
+    Bi[i] = h_c[i]*L_char_solid/k_p[i];
     if abs(u_flow) > 1e-12 then
 //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-      Nu[i] = SolarTherm.Validation.Gan_HBS.Nusselt_Gas_Gan(Re[i],Pr[i]);//,T_f[i],T_s[i]);
+      Nu[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.Nusselt_SwameeJain_GowenSmith(Re[i],Pr[i],e_roughness/d_p);//,T_f[i],T_s[i]);
     else
       Re[i] = 0;
       Pr[i] = 0;
       Nu[i] = 3.66;
     end if;
-    //h_v[i] = f_surface * 6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
+    
     h_c[i] = Nu[i]*k_f[i]/d_p;
     
 //Note that filler surface area correction factor is applied elsewhere.
@@ -406,7 +345,7 @@ equation
 //Particle Equations
   //Vertical Thermal Conductance
   for i in 1:N_f-1 loop
-    U_up[i] = 0.5*k_p[i]*k_p[i+1]*(1.0-eta)*CN.pi*D_tank*D_tank/((k_p[i]+k_p[i+1])*dz);
+    U_up[i] = 0.5*k_p[i]*k_p[i+1]*(1.0-epsilon)*CN.pi*D_tank*D_tank/((k_p[i]+k_p[i+1])*dz);
   end for;
   U_up[N_f] = 0.0; //There is nothing on top of it 
 
@@ -414,7 +353,6 @@ equation
   m_p[1] * der(h_p[1]) = -1.0*U_up[1]*(T_p[1]-T_p[2]) +
     h_c[1] * D_tank * D_tank * CN.pi * dz * (T_f[1] - T_s[1]) / d_p - U_wall*A_loss_wall_i*(T_p[1]-T_amb) - U_bot*A_loss_top*(T_p[1]-T_amb);
   for i in 2:N_f-1 loop
-    //m_p[i] * der(h_p[i]) = CN.pi * d_p ^ 3 * h_v[i] / (6.0 * (1.0 - eta)) * (T_f[i] - T_s[i]);
     m_p[i] * der(h_p[i]) = U_up[i-1]*(T_p[i-1]-T_p[i]) - U_up[i]*(T_p[i]-T_p[i+1]) + h_c[i] * D_tank * D_tank * CN.pi * dz * (T_f[i] - T_s[i]) / d_p;
   end for;
   m_p[N_f] * der(h_p[N_f]) = U_up[N_f-1]*(T_p[N_f-1]-T_p[N_f]) + h_c[N_f] * D_tank * D_tank * CN.pi * dz * (T_f[N_f] - T_s[N_f]) / d_p - U_wall*A_loss_wall_i*(T_p[N_f]-T_amb) - U_top*A_loss_top*(T_p[N_f]-T_amb);
@@ -431,7 +369,7 @@ equation
   Level = E_stored / E_max;
 //Calculated Pumping losses
   for i in 1:N_f loop
-    p_drop[i] = dz * (600 * (1 - eta) ^ 2 * mu_f[i] * abs(m_flow) / (eta ^ 3 * d_p ^ 2 * rho_f_avg * CN.pi * D_tank ^ 2) + 28 * (1 - eta) * m_flow ^ 2 / (eta ^ 3 * d_p * rho_f_avg * CN.pi * CN.pi * D_tank ^ 4));
+    p_drop[i] = dz * (600 * (1 - epsilon) ^ 2 * mu_f[i] * abs(m_flow) / (epsilon ^ 3 * d_p ^ 2 * rho_f_avg * CN.pi * D_tank ^ 2) + 28 * (1 - epsilon) * m_flow ^ 2 / (epsilon ^ 3 * d_p * rho_f_avg * CN.pi * CN.pi * D_tank ^ 4));
   end for;
   p_drop_total = sum(p_drop);
   W_loss_pump = abs(m_flow) / rho_f_avg * p_drop_total / eff_pump;

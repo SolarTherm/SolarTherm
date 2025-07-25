@@ -1,2 +1,7 @@
-f_Darcy_Gas
-Nusselt_Gas
+f_Darcy_SwameeJain
+f_Darcy_HaalandGas
+f_Darcy_HaalandLiq
+Nusselt_SwameeJain_GowenSmith
+Nusselt_HaalandGas_GowenSmith
+Nusselt_SwameeJain_Gnielinski
+Nusselt_HaalandGas_Gnielinski

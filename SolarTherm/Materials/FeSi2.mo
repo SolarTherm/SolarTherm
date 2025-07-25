@@ -61,11 +61,11 @@ package FeSi2
   end h_Tf;
   
   function k_Tf "find thermal conductivity from temperature"
-    input SI.Temperature T;
-    input Real f;
-    output SI.ThermalConductivity k;
+    input SI.Temperature T "Absolute temperature (K)";
+    input Real f "Liquid mass fraction";
+    output SI.ThermalConductivity k "Thermal conductivity (W/mK)";
   algorithm
-    k := k1*k2*((f-1)*rho2-f*rho1)/((f-1)*k2*rho2 - f*k1*rho1);
+    k := k_1*k_2*((f-1.0)*rho_2-f*rho_1)/((f-1.0)*k_2*rho_2 - f*k_1*rho_1);
   end k_Tf;
     
   redeclare function rho_Tf "find density from temperature"
@@ -73,6 +73,6 @@ package FeSi2
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
   algorithm
-    rho := rho1*rho2/(rho2+f*rho1-f*rho2);
+    rho := rho_1*rho_2/(rho_2+f*rho_1-f*rho_2);
   end rho_Tf;
 end FeSi2;

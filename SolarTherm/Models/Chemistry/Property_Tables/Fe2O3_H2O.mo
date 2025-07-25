@@ -8,5 +8,5 @@ record Fe2O3_H2O
   constant Modelica.SIunits.Density rho_table[122] = fill(4248.54,122) "Density (kg/m3)";
   constant Modelica.SIunits.ThermalConductivity k_table[122] = {13.13, 13.04, 12.61, 12.20, 11.81, 11.45, 11.11, 10.79, 10.49, 10.20, 9.93, 9.68, 9.43, 9.20, 8.98, 8.77, 8.57, 8.38, 8.20, 8.02, 7.85, 7.69, 7.54, 7.39, 7.25, 7.11, 6.98, 6.85, 6.73, 6.61, 6.49, 6.38, 6.28, 6.17, 6.07, 5.98, 5.88, 5.79, 5.70, 5.62, 5.54, 5.45, 5.38, 5.30, 5.23, 5.15, 5.08, 5.02, 4.95, 4.89, 4.82, 4.76, 4.70, 4.64, 4.59, 4.53, 4.48, 4.42, 4.37, 4.32, 4.27, 4.23, 4.18, 4.13, 4.09, 4.04, 4.00, 3.99, 3.98, 3.97, 3.96, 3.95, 3.94, 3.93, 3.92, 3.91, 3.90, 3.89, 3.89, 3.88, 3.87, 3.86, 3.85, 3.84, 3.83, 3.82, 3.81, 3.80, 3.79, 3.79, 3.78, 3.77, 3.76, 3.75, 3.74, 3.73, 3.72, 3.72, 3.71, 3.70, 3.69, 3.68, 3.67, 3.67, 3.66, 3.65, 3.64, 3.63, 3.63, 3.62, 3.61, 3.60, 3.59, 3.59, 3.58, 3.57, 3.56, 3.55, 3.55, 3.54, 3.53, 3.52} "Thermal conductivity (W/mK)";
   annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false)), Documentation(info="<html><img src=\"modelica://SolarTherm/Resources/Properties_Fe2O3H2O.png\"></html>"));
+    Diagram(coordinateSystem(preserveAspectRatio = false)), Documentation(info="<html><img width=\"500\" src=\"modelica://SolarTherm/Resources/Properties/Fe2O3H2O.png\"></html>"));
 end Fe2O3_H2O;

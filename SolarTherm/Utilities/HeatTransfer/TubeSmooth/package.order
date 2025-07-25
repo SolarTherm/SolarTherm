@@ -1,4 +1,2 @@
-f_Darcy_Liq
-Nusselt_Liq
-f_Darcy_Gas
-Nusselt_Gas
+f_Darcy_Petukhov
+Nusselt_Petukhov_Gnielinski
