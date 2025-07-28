@@ -95,6 +95,6 @@ equation
   connect(p_amb.y, HBS.p_amb) annotation(
     Line(points = {{-46, -24}, {-38, -24}, {-38, -16}, {-20, -16}, {-20, -14}}, color = {0, 0, 127}));
 
-annotation(experiment(StopTime = 6600, StartTime = 600, Tolerance = 1e-5, Interval = 60),
+annotation(experiment(StopTime = 6600, StartTime = 600, Tolerance = 1e-5, Interval = 10),
     Diagram(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1)));
 end HBS_Validation_Charging;

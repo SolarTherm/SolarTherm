@@ -91,6 +91,6 @@ equation
   connect(HBS.fluid_a, Fluid_Sink.port_a) annotation(
     Line(points = {{0, 30}, {0, 30}, {0, 66}, {-38, 66}, {-38, 66}}, color = {0, 127, 255}));
 
-annotation(experiment(StopTime = 6240, StartTime = 0, Tolerance = 1e-5, Interval = 20),
+annotation(experiment(StopTime = 6240, StartTime = 0, Tolerance = 1e-5, Interval = 10),
     Diagram(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1)));
 end HBS_Validation_Discharging;
