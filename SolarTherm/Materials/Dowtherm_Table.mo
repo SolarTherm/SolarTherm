@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 package Dowtherm_Table
-  extends SolarTherm.Materials.PartialMaterial(MM = 166.0e-3, T_melt = 12.0 + 273.15, cost = 2.10, year = 2013); //Cost from Heller et al. 2013
+  extends SolarTherm.Materials.PartialMaterial(MM = 166.0e-3, T_melt = 12.0 + 273.15, cost = 2.10, year = 2011); //Cost from Heller et al. 2013
   
   redeclare model State
 	SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";

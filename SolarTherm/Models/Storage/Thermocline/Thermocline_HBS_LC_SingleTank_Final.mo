@@ -42,6 +42,7 @@ model Thermocline_HBS_LC_SingleTank_Final
   parameter SI.Temperature T_min = CV.from_deg(290) "Minimum temperature (design) also starting T";
   parameter SI.Temperature T_max = CV.from_deg(574) "Maximum design temperature (design)";
 
+  parameter SI.Length E_roughness = 3.045e-3 "Checkerbrick surface roughness (m)";
 
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)"
@@ -63,7 +64,7 @@ model Thermocline_HBS_LC_SingleTank_Final
           origin = {-40, -70},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-17, -73}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
           
   Modelica.Blocks.Interfaces.RealOutput h_top_outlet "Enthaply at the top of the tank as an output signal (J/kg)" annotation (Placement(visible = true,transformation(
-          origin = {-40, -74},extent = {{-10, -10}, {10, 10}}, rotation = -90), iconTransformation(origin = {-17, 73}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
+          origin = {-40, 68},extent = {{10, -10}, {-10, 10}}, rotation = -90), iconTransformation(origin = {-17, 73}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
 
   Modelica.Blocks.Interfaces.RealInput T_amb "Ambient Temperature" annotation (Placement(
         visible = true,transformation(
@@ -83,16 +84,16 @@ model Thermocline_HBS_LC_SingleTank_Final
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, epsilon = epsilon, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, epsilon = epsilon, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot, E_roughness = E_roughness);
 
 
   //Cost BreakDown
   parameter Real C_filler = Tank_A.C_filler;
-  parameter Real C_fluid = 0.0;
-  parameter Real C_total = 0.0;
+  parameter Real C_fluid = Tank_A.C_fluid;
+  parameter Real C_total = Tank_A.C_filler + Tank_A.C_fluid + Tank_A.C_tank + Tank_A.C_insulation + Tank_A.C_encapsulation;
   parameter Real C_tank = Tank_A.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation;
-  parameter Real C_encapsulation = 0.0;
+  parameter Real C_encapsulation = Tank_A.C_encapsulation;
   //Theoretical Tank Level
   Modelica.Blocks.Interfaces.RealOutput Level "Theoretical Tank Level"
                                           annotation (Placement(visible = true,transformation(

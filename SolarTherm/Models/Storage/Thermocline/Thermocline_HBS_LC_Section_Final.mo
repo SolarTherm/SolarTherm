@@ -111,6 +111,7 @@ model Thermocline_HBS_LC_Section_Final
   //Calculated Pumping Losses
   parameter Real eff_pump = 1.00 "Pump electricity to work efficiency";
   parameter SI.Length E_roughness = 3.045e-3 "Checkerbrick surface roughness (m)";
+  parameter Real E_div_d = E_roughness/d_p;
   Real f[N_f] "Friction factor of each element";
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
@@ -249,7 +250,7 @@ initial equation
 equation
   //Pressure drop
   for i in 1:N_f loop
-    f[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.f_Darcy_SwameeJain(Re[i],E_roughness/d_p);
+    f[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.f_Darcy_SwameeJain(Re[i],E_div_d);
   end for;
   
 
@@ -317,7 +318,7 @@ equation
 //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-      Nu[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.Nusselt_SwameeJain_GowenSmith(Re[i],Pr[i],E_roughness/d_p);
+      Nu[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.Nusselt_SwameeJain_GowenSmith(Re[i],Pr[i],E_div_d);
     else
       Re[i] = 0;
       Pr[i] = 0;
@@ -356,7 +357,6 @@ equation
   Level = E_stored / E_max;
 //Calculated Pumping losses
   for i in 1:N_f loop
-    
     p_drop[i] = ((8.0*rho_f_avg*f[i]*dz*((abs(m_flow))^2.0))/(d_p*rho_f_avg*rho_f_avg*CN.pi*CN.pi*((D_tank)^4.0)*epsilon*epsilon));
   end for;
   p_drop_total = sum(p_drop);

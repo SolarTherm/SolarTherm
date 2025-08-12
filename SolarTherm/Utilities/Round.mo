@@ -1,17 +1,14 @@
 within SolarTherm.Utilities;
-//Rounds a float to the nearest integer
-function Round
+function Round "Rounds a float (Real) to the nearest integer"
     input Real number;
     output Integer int;
   protected
     Integer quotient;
     Real remainder;
   algorithm
-    quotient := integer(number);
-    remainder := number - floor(number);
-    if remainder >= 0.5 then
-      int := 1 + quotient;
+    if number - integer(number) >= 0.5 then
+      int := integer(number + 1);
     else
-      int := quotient;
+      int := integer(number);
     end if;
 end Round;

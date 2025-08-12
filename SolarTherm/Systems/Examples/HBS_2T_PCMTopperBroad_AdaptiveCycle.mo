@@ -124,7 +124,7 @@ model HBS_2T_PCMTopperBroad_AdaptiveCycle "This component analysis allows a vari
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_2TSeries_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package_A, redeclare package Filler_Package_B = Filler_Package_B, N_f_A = N_f_A, N_f_B = N_f_B, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar_A, ar_B = ar_B, d_p_A = d_p, epsilon_A = epsilon, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, frac_1 = frac_1) annotation(
+  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_HBS_LC_2TSeries_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package_A, redeclare package Filler_Package_B = Filler_Package_B, N_f_A = N_f_A, N_f_B = N_f_B, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar_A, ar_B = ar_B, d_p_A = d_p, epsilon_A = epsilon, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, frac_1 = frac_1) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);

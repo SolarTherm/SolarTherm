@@ -20,7 +20,7 @@ package Geopolymer_Rahjoo_2022
     input Real f "Liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
   algorithm
-    h := 944.15*T - 281498.32;
+    h := 944.15*T - 281498.3225;
   end h_Tf;
 
   redeclare function rho_Tf "find density from temperature"
@@ -44,7 +44,7 @@ package Geopolymer_Rahjoo_2022
     output SI.Temperature T "Absoulte temperature (K)";
     output Real f "mass liquid fraction";
   algorithm
-    T := (h + 281498.32)/944.15;
+    T := (h + 281498.3225)/944.15;
     f := 0.0;
   end Tf_h;
 end Geopolymer_Rahjoo_2022;

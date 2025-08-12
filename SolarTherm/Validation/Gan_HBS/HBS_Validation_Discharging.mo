@@ -5,8 +5,8 @@ model HBS_Validation_Discharging
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   
-  package Medium = SolarTherm.Validation.Gan_HBS.Media.Air_533kPa;
-  package Fluid_Package = SolarTherm.Validation.Gan_HBS.Materials.Air_533kPa;
+  package Medium = SolarTherm.Validation.Gan_HBS.Resources.Media.Air_533kPa;
+  package Fluid_Package = SolarTherm.Validation.Gan_HBS.Resources.Materials.Air_533kPa;
   
   //Validation Parameters
   parameter SI.Length H_tank = 37.34 "Tank height (m)";
@@ -23,12 +23,12 @@ model HBS_Validation_Discharging
   parameter SI.Time t_inlet_data[2] = {0.0,13200.0} "Inlet temperature signal, time axis (s)";
   parameter SI.Temperature T_inlet_data[2] = {498.0,498.0} "Inlet temperature signal, temperature axis (K)";
   
-  parameter SI.SpecificEnthalpy Delta_h1 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_1.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_1.h_Tf(T_min,0.0);
-  parameter SI.SpecificEnthalpy Delta_h2 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_2.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_2.h_Tf(T_min,0.0);
-  parameter SI.SpecificEnthalpy Delta_h3 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_3.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_3.h_Tf(T_min,0.0);
-  parameter SI.SpecificEnthalpy Delta_h4 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_4.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_4.h_Tf(T_min,0.0);
-  parameter SI.SpecificEnthalpy Delta_h5 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_5.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_5.h_Tf(T_min,0.0);
-  parameter SI.SpecificEnthalpy Delta_h6 = SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_6.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Materials.Checkerbrick_6.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h1 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_1.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_1.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h2 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_2.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_2.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h3 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_3.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_3.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h4 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_4.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_4.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h5 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_5.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_5.h_Tf(T_min,0.0);
+  parameter SI.SpecificEnthalpy Delta_h6 = SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_6.h_Tf(T_max,0.0) - SolarTherm.Validation.Gan_HBS.Resources.Materials.Checkerbrick_6.h_Tf(T_min,0.0);
   
   parameter SI.Mass m_p1[5] = HBS.Tank_A.m_p[1:5];
   parameter SI.Mass m_p2[37] = HBS.Tank_A.m_p[6:42];
@@ -49,8 +49,8 @@ model HBS_Validation_Discharging
   
   
   parameter SI.Length z_start[100] = HBS.Tank_A.z_f;
-  parameter SI.SpecificEnthalpy h_p_start[100] = Initialise_h_p_start(z_p_start_data,T_p_start_data,z_start);
-  parameter SI.SpecificEnthalpy h_f_start[100] = Initialise_h_f_start_discharging(z_f_start_data,T_f_start_data,z_start);
+  parameter SI.SpecificEnthalpy h_p_start[100] = Resources.Initialise_h_p_start(z_p_start_data,T_p_start_data,z_start);
+  parameter SI.SpecificEnthalpy h_f_start[100] = Resources.Initialise_h_f_start_discharging(z_f_start_data,T_f_start_data,z_start);
   parameter Integer Correlation = 1;
   
   SI.MassFlowRate m_flow_discharging_signal;
@@ -63,7 +63,7 @@ model HBS_Validation_Discharging
     Placement(visible = true, transformation(origin = {-24, -66}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow_discharging(y = m_flow_discharging_signal) annotation(
     Placement(visible = true, transformation(origin = {-121, -42}, extent = {{-23, -10}, {23, 10}}, rotation = 0)));
-  SolarTherm.Validation.Gan_HBS.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, epsilon = epsilon, e_roughness = e_roughness,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
+  SolarTherm.Validation.Gan_HBS.Resources.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, epsilon = epsilon, e_roughness = e_roughness,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
     Placement(visible = true, transformation(origin = {0, -6}, extent = {{-44, -44}, {44, 44}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Fluid_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-59, 65}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
