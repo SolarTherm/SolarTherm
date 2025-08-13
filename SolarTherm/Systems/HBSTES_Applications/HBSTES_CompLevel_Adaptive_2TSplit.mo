@@ -28,7 +28,7 @@ model HBSTES_CompLevel_Adaptive_2TSplit "This component analysis allows a variab
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the top of the tank (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
-  parameter SI.Temperature T_max = 1400.0 + 273.15 "Maximum temperature (K)";
+  parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_high_set = 1000.0 + 273.15 "TES hot blend temperature temperature (K)";
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";

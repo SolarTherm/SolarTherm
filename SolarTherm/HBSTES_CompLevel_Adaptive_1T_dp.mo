@@ -1,17 +1,28 @@
-within SolarTherm.Systems.HBSTES_Applications;
+within SolarTherm;
 
-model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cycle length where charging and discharging follow immediately after each other assuming the system temperate constraints have not been violated. Tank heights are fixed to 35m for all cases."
+model HBSTES_CompLevel_Adaptive_1T_dp 
+/*
+Fixed Dimensions (H_tank && D_tank && d_p). 
+Variable cycle length where Charging and Discharging follow immediately after each other assuming the system temperature constraints have not been violated. 
+*/
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   extends Modelica.Icons.Example;
-  package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;
-  package Medium_Utilities = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities;
-  package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;
-  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity_50K_intervals;
+  
+  package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;   //CoolProp_1bar calls "_utilities"
+  //package Medium = SolarTherm_Tests.Media.Air_CoolProp_1bar;   //CoolProp_1bar calls "_utilities"
+  package Medium_Utilities = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities;   //calls "property_table"
+  //package Medium_Utilities = SolarTherm_Tests.Media.Air_CoolProp_1bar_utilities;   //calls "property_table"
+  package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;   //Table_1bar calls "_utilities"
+  //package Fluid_Package = SolarTherm_Tests.Media.Air_CoolProp_Table_1bar;   //Table_1bar calls "_utilities"
+  package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity_50K_intervals_rho_scaled;
+  //package Filler_Package = SolarTherm_Tests.Dimensional_Study.Mullite_original;
+  
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 5.0*36000.0 "Rated discharging period (s)";
+  //parameter SI.Time t_discharge = 50.0 *3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_discharge = E_max / Q_process_des "Rated discharging period (s)";
   //parameter SI.Time t_standby = 2.0*3600.0 "Additional standby time after both charging and discharging cycle (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 100;
@@ -20,12 +31,20 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
   parameter Real t_storage_hours_ideal = t_discharge/3600.0;
   //parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
-  parameter SI.Length d_p = 0.020 "Hole diameter in the filler (m)";
-  parameter Real epsilon = 0.3232 "Packed-bed porosity";
-  parameter SI.Length H_tank = 35.0 "Fixed tank height (m)";
-  parameter SI.EnergyDensity E_v = epsilon*rho_f_avg*(h_f_max-h_f_min)+(1.0-epsilon)*rho_p*(h_p_max-h_p_min) "Volumetric energy density (J/m3)";
-  parameter Real ar = (N_tanks^0.5)*(0.25*CN.pi*E_v*H_tank*H_tank*H_tank/E_max)^0.5 "Aspect ratio H/D of tanks (-)";
+  parameter SI.Length d_p = 0.02 "Hole diameter in the filler (m)";
+  parameter Real epsilon = CN.pi*(d_p ^ 2.0) / (3.464101615 * ((0.015 + d_p) ^ 2.0)) "Packed-bed porosity";
   
+  parameter SI.Length H_tank = 35.0 "Fixed tank height (m)";
+  parameter SI.Length D_tank = 8.9208 "Fixed tank diametre (m)";
+  parameter SI.EnergyDensity E_v = epsilon*rho_f_avg*(h_f_max-h_f_min)+(1.0-epsilon)*rho_p*(h_p_max-h_p_min) "Volumetric energy density (J/m3)";
+  //parameter Real ar = (N_tanks^0.5)*(0.25*CN.pi*E_v*H_tank*H_tank*H_tank/E_max)^0.5 "Aspect ratio H/D of tanks (-)";
+  
+  //==================AFTER CHANGES (varying H_tank by fixing D_tank)
+  //parameter Real ar = (4.0*E_max) / (CN.pi*(D_tank ^ 3.0)*E_v) "Aspect ratio H/D of tanks (-) THIS ONE for dynamic H_tank";
+  //==================
+  parameter Real ar = H_tank / D_tank "Aspect ratio H/D = 3.92341494";
+  //==================
+
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
   parameter SI.Temperature T_ext_max = 323.15 "Maximum external temperature of the HBS walls under worst-case conditions (K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-T_amb_des)/(T_max-T_amb_des) "Heat loss coefficient at the top of the tank (W/m2K)";
@@ -48,7 +67,8 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
   parameter SI.SpecificEnthalpy h_f_process_des = Fluid_Package.h_Tf(T_process_des,1.0);
   parameter SI.Power Q_process_des = m_process_des*(h_f_process_des - h_f_min) "Design required process heat-rate (W_th)";
   parameter SI.Power Q_heater_des = HM * Q_process_des "Design heater output heat-rate (W_th)";
-  parameter SI.Energy E_max = Q_process_des*t_discharge "Ideal storage capacity (J_thermal)"; //Note 3 tanks
+  //parameter SI.Energy E_max = Q_process_des*t_discharge "Ideal storage capacity (J_thermal)"; //Note 3 tanks
+  parameter SI.Energy E_max = E_v * 0.25 * D_tank * D_tank * CN.pi * H_tank "Ideal storage capacity (J_thermal)"; //Note 3 tanks
   parameter SI.Time t_charge = t_discharge / (HM - 1.0) "Charging period (s)";
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
   parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
@@ -110,6 +130,7 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
   SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = epsilon, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
+  
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
   SI.MassFlowRate m_Process_signal(start = 0.0);
@@ -336,4 +357,4 @@ equation
     experiment(StopTime = 40640000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
-end HBSTES_CompLevel_Adaptive_1T;
+end HBSTES_CompLevel_Adaptive_1T_dp;

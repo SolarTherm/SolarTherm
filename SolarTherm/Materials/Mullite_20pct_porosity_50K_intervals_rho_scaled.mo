@@ -1,6 +1,6 @@
 within SolarTherm.Materials;
 
-package Mullite_20pct_porosity_50K_intervals
+package Mullite_20pct_porosity_50K_intervals_rho_scaled
   //Mullite properties 298.15 < T (K) < 1700. Stoichiometry of 3Al2O3.2SiO2 ~72wt% is assumed which is typical of sintered mullite. Unit costs have been indexed to year 2022.
   extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0 + 273.15, cost = 0.56446);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
@@ -34,7 +34,7 @@ package Mullite_20pct_porosity_50K_intervals
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
   algorithm
-    rho := 2560.0;
+    rho := 2560.0 * 0.4;
   end rho_Tf;
 
   function k_Tf "find thermal conductivity from temperature"
@@ -59,4 +59,4 @@ package Mullite_20pct_porosity_50K_intervals
     T := Modelica.Math.Vectors.interpolate(h_data, T_data, h);
     f := 0.0;
   end Tf_h;
-end Mullite_20pct_porosity_50K_intervals;
+end Mullite_20pct_porosity_50K_intervals_rho_scaled;

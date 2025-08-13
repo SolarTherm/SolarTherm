@@ -58,7 +58,7 @@ if __name__ == '__main__':
 	else:
 		if len(args.var) > 0:
 			plotting.plot_res(res, args.var, xlim=args.xlim, xunit= args.xunit, eunit=args.eunit, punit=args.punit, out=args.outfile,
-					share=args.noshare, bw=args.bw, dpi=args.dpi, font=args.font, usetex=args.usetex, ucode=args.unicode) 
+					share=args.noshare, bw=args.bw, dpi=args.dpi, font=args.font, usetex=args.usetex)#, ucode=args.unicode) 
 		else:
 			print('No variables provided, nothing to plot')
 

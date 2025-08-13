@@ -32,7 +32,6 @@ model Thermocline_HBS_LC_SingleTank_Final
   parameter Integer N_f = 10;
   //parameter Integer N_p = 5;
   
-  
   //Heat loss coefficient of tanks
   //parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 0.698 "Heat loss coefficient at the top of the tank (W/m2K)";
@@ -82,7 +81,7 @@ model Thermocline_HBS_LC_SingleTank_Final
         origin={-46, -20},extent={{-6, -6}, {6, 6}},
         rotation=0)));
   
-  //Initialize Tank
+  //Initialize Tanks
   SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package, Correlation = Correlation, E_max = E_max, ar = ar, eta = eta, d_p = d_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot);
 
 
@@ -90,6 +89,7 @@ model Thermocline_HBS_LC_SingleTank_Final
   parameter Real C_filler = Tank_A.C_filler;
   parameter Real C_fluid = 0.0;
   parameter Real C_total = 0.0;
+  //parameter Real C_total = Tank_A.C_filler + Tank_A.C_tank + Tank_A.C_insulation;
   parameter Real C_tank = Tank_A.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation;
   parameter Real C_encapsulation = 0.0;
@@ -103,7 +103,7 @@ model Thermocline_HBS_LC_SingleTank_Final
   
   //Plotting Temperature degC
   Real T_f_degC[N_f](start=fill(T_min,N_f));
-  
+  Real T_p_degC[N_f](start=fill(T_min,N_f));
   //Analysis of fluid entering and exiting storage
   Fluid_Package.State fluid_top "Fluid entering/exiting top";
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
@@ -124,7 +124,7 @@ equation
   end if;
   //Convert from Kelvin to degC for easier plotting
   T_f_degC = (Tank_A.T_f).-273.15;
-  
+  T_p_degC = (Tank_A.T_p).-273.15;
   //Calculate tank energy level
   Level = Tank_A.Level;
   
