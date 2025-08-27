@@ -41,15 +41,15 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
   parameter Integer Correlation = 2; //2: SwameeJain + KawaseDe
 
   //Tank Geometry
-  parameter SI.MassFlowRate m_process_des = 1.50;
+  parameter SI.MassFlowRate m_flow_process_des = 1.50;
   parameter SI.SpecificEnthalpy h_f_amb_des = Fluid_Package.h_Tf(T_amb_des,0.0);
   parameter SI.SpecificEnthalpy h_f_process_des = Fluid_Package.h_Tf(T_process_des,1.0);
-  parameter SI.Power Q_process_des = m_process_des*(h_f_process_des - h_f_min) "Design required process heat-rate (W_th)";
+  parameter SI.Power Q_process_des = m_flow_process_des*(h_f_process_des - h_f_min) "Design required process heat-rate (W_th)";
   parameter SI.Power Q_heater_des = HM * Q_process_des "Design heater output heat-rate (W_th)";
   parameter SI.Energy E_max = Q_process_des*t_discharge "Ideal storage capacity (J_thermal)"; //Note 3 tanks
   parameter SI.Time t_charge = t_discharge / (HM - 1.0) "Charging period (s)";
-  parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
-  parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
+  parameter SI.MassFlowRate m_flow_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
+  parameter SI.MassFlowRate m_flow_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
   //Derived Parameters
   parameter SI.Time t_cycle = t_charge + t_discharge "Total max duration of one cycle (s)";
   //this is 24 hours
@@ -84,7 +84,7 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
     Placement(visible = true, transformation(origin = {-125, -59}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
     Placement(visible = true, transformation(origin = {-40, -4}, extent = {{-12, -18}, {12, 18}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression m_flow_Heater(y = m_Heater_signal) annotation(
+  Modelica.Blocks.Sources.RealExpression m_flow_Heater(y = m_flow_heater_signal) annotation(
     Placement(visible = true, transformation(origin = {-119, 3}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure heater_sink_pump(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = { -57, -59}, extent = {{15, -15}, {-15, 15}}, rotation = 0)));
@@ -92,7 +92,7 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
     Placement(visible = true, transformation(origin = {-2, 69.5547}, extent = {{-16, 0}, {16, 22.4453}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction thermocline_Splitter2(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, -38.3493}, extent = {{-14, 0}, {14, 21.6507}}, rotation = 180)));
-  Modelica.Blocks.Sources.RealExpression m_flow_Process(y = m_Process_signal) annotation(
+  Modelica.Blocks.Sources.RealExpression m_flow_Process(y = m_flow_process_signal) annotation(
     Placement(visible = true, transformation(origin = {120, 3}, extent = {{20, -19}, {-20, 19}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple process_source_pump(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {45, -59}, extent = {{13, -13}, {-13, 13}}, rotation = 0)));
@@ -109,8 +109,8 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
   SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, d_pipe = d_pipe, d_solid = d_solid, L_pipe = L_pipe, U_loss_tank = 0.0, E_roughness = E_roughness, R_foul = R_foul) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
-  SI.MassFlowRate m_Heater_signal(start = m_charge_des);
-  SI.MassFlowRate m_Process_signal(start = 0.0);
+  SI.MassFlowRate m_flow_heater_signal(start = m_flow_charge_des);
+  SI.MassFlowRate m_flow_process_signal(start = 0.0);
   //Measured Temperatures
   Real T_top_degC;
   Real T_bot_degC;
@@ -121,8 +121,8 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
   SI.Energy E_dis(start = 0) "Discharged energy into storage";
   //SI.Energy E_lost(start = 0) "Externally lost energy from storage";
   //SI.Energy E_pump(start = 0) "Pumping energy consumed";
-  parameter SI.Energy X_max_stor = t_discharge * m_discharge_des * ((h_f_max-h_f_min)-T_amb_des*(s_f_max-s_f_min)) "Ideal exergetic storage capacity of the TES (J)";
-  parameter SI.Energy X_max_sys = t_discharge * m_process_des * ((h_f_process_des-h_f_min)-T_amb_des*(s_f_process_des-s_f_min)) "Ideal Exergy delivered by the system (J)";
+  parameter SI.Energy X_max_stor = t_discharge * m_flow_discharge_des * ((h_f_max-h_f_min)-T_amb_des*(s_f_max-s_f_min)) "Ideal exergetic storage capacity of the TES (J)";
+  parameter SI.Energy X_max_sys = t_discharge * m_flow_process_des * ((h_f_process_des-h_f_min)-T_amb_des*(s_f_process_des-s_f_min)) "Ideal Exergy delivered by the system (J)";
   //SI.Energy X_chg(start = 0.0) "Total exergy charged i3n the last cycle";
   //SI.Energy X_dis(start = 0.0) "Discharged exergy";
   //Utilisation and efficiencies
@@ -228,11 +228,11 @@ equation
   der(E_stored) = TES.fluid_a.m_flow * (TES.fluid_a.h_outflow - TES.fluid_b.h_outflow);
 
   if State == 1 then
-    m_Heater_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - TES.h_bot_outlet);
-    m_Process_signal = 1.0e-8;
+    m_flow_heater_signal = m_flow_charge_des * (h_f_max - h_f_min) / (h_f_max - TES.h_bot_outlet);
+    m_flow_process_signal = 1.0e-8;
   else 
-    m_Process_signal = m_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min);
-    m_Heater_signal = 1.0e-8;
+    m_flow_process_signal = m_flow_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min);
+    m_flow_heater_signal = 1.0e-8;
   end if;
 
 //Measured temperature sensors
@@ -258,7 +258,7 @@ equation
     der(X_chg) = TES.fluid_a.m_flow * ((inStream(TES.fluid_a.h_outflow) - TES.fluid_b.h_outflow) - T_amb_des*(Medium_Utilities.s_T(Medium_Utilities.T_h(inStream(TES.fluid_a.h_outflow))) - Medium_Utilities.s_T(Medium_Utilities.T_h(TES.fluid_b.h_outflow))));
     der(X_dis_stor) = 0.0;
     der(X_dis_sys) = 0.0;
-    der(E_pump) = TES.W_loss_pump;
+    der(E_pump) = TES.W_dot_loss_pump;
   //elseif time >= 9.0 * t_cycle + t_charge + t_standby and time < 9.0 * t_cycle + t_charge + t_standby + t_discharge then
   elseif Cycle == 10 and State == 2 then //last discharging phase
     der(E_chg) = 0.0;
@@ -266,11 +266,11 @@ equation
     der(X_chg) = 0.0;
     der(X_dis_stor) = TES.fluid_b.m_flow*((TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow)) - T_amb_des*(Medium_Utilities.s_T(Medium_Utilities.T_h(TES.fluid_a.h_outflow)) - Medium_Utilities.s_T(Medium_Utilities.T_h(inStream(TES.fluid_b.h_outflow)))));
     if TES.fluid_b.m_flow > 1.0e-6 then
-      der(X_dis_sys) = m_process_des*((h_f_process_des - h_f_min) - T_amb_des*(s_f_process_des - s_f_min));
+      der(X_dis_sys) = m_flow_process_des*((h_f_process_des - h_f_min) - T_amb_des*(s_f_process_des - s_f_min));
     else
       der(X_dis_sys) = 0.0;
     end if;
-    der(E_pump) = TES.W_loss_pump;
+    der(E_pump) = TES.W_dot_loss_pump;
   else
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
@@ -287,7 +287,7 @@ equation
     eff_exergy_stor = (X_dis_stor) / max(X_chg,1.0); //Avoid division by zero
     util_exergy_sys = (X_dis_sys) / X_max_sys;
     eff_exergy_sys = (X_dis_sys) / max(X_chg,1.0); //Avoid division by zero
-    //der(E_loss) = TES.Q_loss_total;
+
   else
     util_energy = 0.0;
     eff_energy = 0.0;
@@ -295,7 +295,7 @@ equation
     eff_exergy_stor = 0.0;
     util_exergy_sys = 0.0;
     eff_exergy_sys = 0.0; //Avoid division by zero
-    //der(E_loss) = 0.0;
+
   end if;
 //Connectors
   connect(thermocline_Splitter2.fluid_b, heater_sink_pump.fluid_a) annotation(

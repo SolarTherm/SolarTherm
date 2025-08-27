@@ -123,6 +123,9 @@ model Thermocline_HBS_LC_2P_Sequential
   parameter SI.Temperature T_bot_high = T_recv_set - 1.0 "Temperature of T_05 at which it switches to the next tank during charging";
   parameter SI.Temperature T_top_low = T_PB_set + 1.0 "Temperature of T_95 at which it switches to the previous tank durng discharging";
   Integer Active_Tank(start = 1) "Which tank is in use currently";
+  
+  parameter SI.Area A_loss_total = Tank_A.A_loss_tank + Tank_B.A_loss_tank;
+  SI.Energy E_stored(start=0.0) = Tank_A.E_stored + Tank_B.E_stored;
 algorithm
   
   when Tank_A.T_f[1] > T_bot_high then

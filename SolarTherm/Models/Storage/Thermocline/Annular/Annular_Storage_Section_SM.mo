@@ -107,7 +107,7 @@ model Annular_Storage_Section_SM //Stationary Momentum Version (SM)
   Real f[N_f] "Friction factor of each fluid element";
   SI.Pressure p_drop[N_f] "Pressure drop for each fluid element (Pa)";
   SI.Pressure p_drop_total "Sum of all pressure drops (Pa)";
-  SI.Power W_loss_pump "losses due to pressure drop (W)";
+  SI.Power W_dot_loss_pump "losses due to pressure drop (W)";
   
   //Initialise Particle
   SI.Temperature T_p[N_f, N_p](start = T_p_start) "Temperature of particle elements";
@@ -344,11 +344,11 @@ equation
   end for;
 //Outermost solid annulus
   der(h_p[N_f, N_p]) = (U_in[N_f, N_p] * (T_p[N_f, N_p - 1] - T_p[N_f, N_p]) + U_right[N_f - 1, N_p] * (T_p[N_f - 1, N_p] - T_p[N_f, N_p]) - U_wall * (T_p[N_f, N_p] - T_amb) * CN.pi * d_solid * dz - U_side * (T_p[N_f, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
-//W_loss_pump =
+//W_dot_loss_pump =
 //Q_loss_total =
 //p_drop_total
   p_drop_total = sum(p_drop);
-  W_loss_pump = sum(p_drop ./ rho_f ) * abs(m_flow)/eff_pump;  //(abs(m_flow) / rho_f_avg) * (p_drop_total / eff_pump);
+  W_dot_loss_pump = sum(p_drop ./ rho_f ) * abs(m_flow)/eff_pump;  //(abs(m_flow) / rho_f_avg) * (p_drop_total / eff_pump);
   
 
 //Analyics

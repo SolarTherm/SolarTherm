@@ -64,6 +64,9 @@ model Thermocline_HBS_LC_2P_HybridSplit
   parameter SI.SpecificEnthalpy h_recv_set = Fluid_Package.h_Tf(T_recv_set,0.0);
   parameter SI.SpecificEnthalpy h_PB_set = Fluid_Package.h_Tf(T_PB_set,0.0);
   
+  parameter SI.Area A_loss_total = Tank_A.A_loss_tank + Tank_B.A_loss_tank;
+  SI.Energy E_stored(start=0.0) = Tank_A.E_stored + Tank_B.E_stored;
+  
   //Input and Output Ports
   Modelica.Blocks.Interfaces.RealOutput T_top_measured "Temperature at the top of the tank as an output signal (K)" annotation(
     Placement(visible = true, transformation(extent = {{40, 50}, {60, 70}}, rotation = 0), iconTransformation(origin = {45, 55}, extent = {{-5, -5}, {5, 5}}, rotation = 0)));

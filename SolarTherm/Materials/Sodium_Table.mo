@@ -56,4 +56,28 @@ package Sodium_Table
   algorithm
     mu := Modelica.Math.Vectors.interpolate(T_data,mu_data,T);
   end mu_Tf;
+  
+  function cp_Tf "Specific heat capacity from temperature"
+    input SI.Temperature T;
+    input Real f = 1 "Liquid mass melt fraction (No effect on result)";
+    output SI.SpecificHeatCapacity cp;
+  algorithm
+    cp := Modelica.Math.Vectors.interpolate(T_data,cp_data,T);
+  end cp_Tf;
+  
+  function Pr_Tf "Prandtl number from temperature"
+    input SI.Temperature T;
+    input Real f = 1 "Liquid mass melt fraction (No effect on result)";
+    output Real Pr "Prandtl number (-)";
+  protected
+    SI.SpecificHeatCapacity cp;
+    SI.DynamicViscosity mu;
+    SI.ThermalConductivity k;
+  algorithm
+    cp := cp_Tf(T,1.0);
+    mu := mu_Tf(T,1.0);
+    k := Modelica.Math.Vectors.interpolate(T_data,k_data,T);
+    Pr := cp*mu/k;
+  end Pr_Tf;
+  
 end Sodium_Table;

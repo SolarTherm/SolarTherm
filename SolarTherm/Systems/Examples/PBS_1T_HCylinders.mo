@@ -40,8 +40,8 @@ model PBS_1T_HCylinders "Packed-bed storage with sodium fluid and horizontal cyl
   parameter SI.Time t_cycle = t_charge + t_discharge + t_standby + 2.0*t_extension; //this is 24 hours
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
-  parameter SI.MassFlowRate m_charge = E_max / (t_charge * (h_f_max - h_f_min));
-  parameter SI.MassFlowRate m_discharge = E_max / (t_discharge * (h_f_max - h_f_min));
+  parameter SI.MassFlowRate m_flow_charge = E_max / (t_charge * (h_f_max - h_f_min));
+  parameter SI.MassFlowRate m_flow_discharge = E_max / (t_discharge * (h_f_max - h_f_min));
   //Output signals
   Modelica.Fluid.Sources.Boundary_pT Recv_outlet(redeclare package Medium = Medium, T = T_max, nPorts = 1, p = 101325) annotation(
     Placement(visible = true, transformation(origin = {-112, 48}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
@@ -60,9 +60,9 @@ model PBS_1T_HCylinders "Packed-bed storage with sodium fluid and horizontal cyl
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpSimple_EqualPressure2(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-56, -36}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction thermocline_Splitter1(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {0, 67.5547}, extent = {{-16, 0}, {16, 22.4453}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {0, 69.5547}, extent = {{-16, 0}, {16, 22.4453}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction thermocline_Splitter2(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {0, -36.3493}, extent = {{-14, 0}, {14, 21.6507}}, rotation = 180)));
+    Placement(visible = true, transformation(origin = {0, -38.3493}, extent = {{-14, 0}, {14, 21.6507}}, rotation = 180)));
   Modelica.Blocks.Sources.RealExpression m_flow_PB(y = m_PB_signal) annotation(
     Placement(visible = true, transformation(origin = {110, 3}, extent = {{20, -19}, {-20, 19}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple pumpSimple_EqualPressure3(redeclare package Medium = Medium) annotation(
@@ -85,7 +85,7 @@ model PBS_1T_HCylinders "Packed-bed storage with sodium fluid and horizontal cyl
   parameter Real C_total = thermocline_Tank.C_total;
   parameter Real C_encapsulation = thermocline_Tank.C_encapsulation;
   //Mass flow Signals starts in charging state
-  SI.MassFlowRate m_Recv_signal(start = m_charge);
+  SI.MassFlowRate m_Recv_signal(start = m_flow_charge);
   SI.MassFlowRate m_PB_signal(start = 0.0);
   //Measured Temperatures
   Real T_top_degC;
@@ -114,12 +114,12 @@ model PBS_1T_HCylinders "Packed-bed storage with sodium fluid and horizontal cyl
 algorithm
   //Mass flow controls
   when rem(time, t_cycle) > 1e-6 then //Start charging
-    m_Recv_signal := m_charge;
+    m_Recv_signal := m_flow_charge;
     m_PB_signal := 0.0;
   end when;
   when rem(time, t_cycle) > t_charge + 1e-6 + t_extension then //Stop charging and start discharging time is up
     m_Recv_signal := 0.0;
-    m_PB_signal := m_discharge;
+    m_PB_signal := m_flow_discharge;
   end when;
   when rem(time, t_cycle) > t_charge + t_discharge + 1e-6 + 2.0*t_extension then //Stop discharging time is up
     m_Recv_signal := 0.0;
@@ -201,21 +201,21 @@ equation
     eff_energy = 0.0;
     util_energy_A = 0.0;
   end if;
-  //Connectors
+//Connectors
   connect(thermocline_Tank.fluid_b, thermocline_Splitter2.fluid_c) annotation(
-    Line(points = {{0, -32}, {0, -46}}, color = {0, 127, 255}));
+    Line(points = {{0, -32}, {0, -49}}, color = {0, 127, 255}));
   connect(thermocline_Splitter2.fluid_b, pumpSimple_EqualPressure2.fluid_a) annotation(
-    Line(points = {{-12, -60}, {-34, -60}, {-34, -36}, {-46, -36}}, color = {0, 127, 255}));
+    Line(points = {{-11, -58}, {-34, -58}, {-34, -36}, {-46, -36}}, color = {0, 127, 255}));
   connect(m_flow_Recv.y, pumpSimple_EqualPressure2.m_flow) annotation(
     Line(points = {{-82, 5}, {-56, 5}, {-56, -27}}, color = {0, 0, 127}));
   connect(pumpSimple_EqualPressure3.fluid_b, thermocline_Splitter2.fluid_a) annotation(
-    Line(points = {{30, -60}, {12, -60}}, color = {0, 127, 255}));
+    Line(points = {{30, -60}, {21, -60}, {21, -58}, {11, -58}}, color = {0, 127, 255}));
   connect(thermocline_Tank.T_amb, Tamb.y) annotation(
     Line(points = {{-17, -2}, {-25, -2}}, color = {0, 0, 127}));
   connect(pumpSimple_EqualPressure.fluid_b, thermocline_Splitter1.fluid_a) annotation(
-    Line(points = {{-44, 48}, {-30, 48}, {-30, 92}, {-13, 92}}, color = {0, 127, 255}));
+    Line(points = {{-44, 48}, {-30, 48}, {-30, 90}, {-13, 90}}, color = {0, 127, 255}));
   connect(thermocline_Splitter1.fluid_b, pumpSimple_EqualPressure1.fluid_a) annotation(
-    Line(points = {{13, 92}, {22, 92}, {22, 44}, {34, 44}}, color = {0, 127, 255}));
+    Line(points = {{13, 90}, {22, 90}, {22, 44}, {34, 44}}, color = {0, 127, 255}));
   connect(thermocline_Tank.p_amb, p_amb.y) annotation(
     Line(points = {{17, -2}, {27, -2}}, color = {0, 0, 127}));
   connect(Recv_outlet.ports[1], pumpSimple_EqualPressure.fluid_a) annotation(
@@ -235,7 +235,7 @@ equation
   connect(mass_loop_breaker.port_b, thermocline_Tank.fluid_a) annotation(
     Line(points = {{0, 36}, {0, 28}}, color = {0, 127, 255}));
   connect(thermocline_Splitter1.fluid_c, mass_loop_breaker.port_a) annotation(
-    Line(points = {{0, 78}, {0, 64}}, color = {0, 127, 255}));
+    Line(points = {{0, 81}, {0, 64}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),

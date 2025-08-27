@@ -17,9 +17,9 @@ protected
 algorithm
   //CEPCI index for chosen year
   CEPCI := SolarTherm.Utilities.Finances.CEPCI(year);
-  //RCalc egression Axes
+  //calculate Regression Axes
   R := 1.0/U_loss;
   t := T_max/298.15;
   x := {1.0,R,R^2.0,t^2.0,R*t};
-  C_FOB := (CEPCI/795.1)*A_surf*sum(a.*x);
+  C_FOB := (CEPCI/795.4)*A_surf*sum(a.*x); //Regression was based on USD_2024, index it to 2022.
 end FOB_Insulation_Mullite_HBS;

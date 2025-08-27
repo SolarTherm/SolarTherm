@@ -10,16 +10,16 @@ model Basic_Heater
   parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot fluid specific enthalpy at design";
   //parameter SI.Power P_renewable_des "Design maximum ";
   parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
-  parameter SI.HeatFlowRate Q_heater_des = 600.0e6 "Design maximum heater heat-rate output (W_th)";
-  parameter SI.Power P_heater_des = Q_heater_des/eff_heater "Design maximum electrical power input to the heater (W_e)";
+  parameter SI.HeatFlowRate Q_flow_heater_des = 600.0e6 "Design maximum heater heat-rate output (W_th)";
+  parameter SI.Power P_heater_des = Q_flow_heater_des/eff_heater "Design maximum electrical power input to the heater (W_e)";
   
   SI.SpecificEnthalpy h_in "Specific enthalpy of fluid entering the heater";
   SI.SpecificEnthalpy h_out(start=h_hot_set) "Specific enthalpy of fluid exiting the heater";  
-  SI.HeatFlowRate Q_out "Heat-rate going into the fluid after curtailment signal from the system controller";
-  SI.HeatFlowRate Q_out_raw "Heat-rate before curtailment signal from the system controller";
+  SI.HeatFlowRate Q_flow_out "Heat-rate going into the fluid after curtailment signal from the system controller";
+  SI.HeatFlowRate Q_flow_out_raw "Heat-rate before curtailment signal from the system controller";
   SI.Power P_heater_out "Heater inlet power after P_supply is limited by P_heater_des";
         
-  Modelica.Blocks.Interfaces.RealInput Q_curtail "Required curtailment heat-rate signal from the system controller" annotation (Placement(
+  Modelica.Blocks.Interfaces.RealInput Q_flow_curtail "Required curtailment heat-rate signal from the system controller" annotation (Placement(
         visible = true,transformation(
         
         origin={44,84},extent={{-12,-12},{12,12}},
@@ -28,7 +28,7 @@ model Basic_Heater
         origin={-112, 38},extent={{12, -12}, {-12, 12}},
         rotation=180)));
     
-  Modelica.Blocks.Interfaces.RealOutput Q_heater_raw "Heat-rate that the heater is currently able to deliver to the fluid" annotation(
+  Modelica.Blocks.Interfaces.RealOutput Q_flow_heater_raw "Heat-rate that the heater is currently able to deliver to the fluid" annotation(
     Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {111, 75}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
 
   Modelica.Blocks.Interfaces.BooleanInput curtail "Does the heater output need to be curtailed based on system controller?" annotation (Placement(
@@ -47,16 +47,16 @@ equation
   fluid_a.h_outflow = h_in;
   fluid_b.h_outflow = h_out;
   
-  Q_heater_raw = Q_out_raw;
-  Q_out_raw = P_heater_out*eff_heater;
+  Q_flow_heater_raw = Q_flow_out_raw;
+  Q_flow_out_raw = P_heater_out*eff_heater;
   P_heater_out = min(P_supply,P_heater_des);
   
   if fluid_a.m_flow > 1e-3 then
-    Q_out = (if curtail == true then min(Q_out_raw,Q_curtail) else Q_out_raw);
-    h_out = h_in + Q_out/max(1.0e-3,fluid_a.m_flow);
+    Q_flow_out = (if curtail == true then min(Q_flow_out_raw,Q_flow_curtail) else Q_flow_out_raw);
+    h_out = h_in + Q_flow_out/max(1.0e-3,fluid_a.m_flow);
 
   else
-    Q_out = 0.0;
+    Q_flow_out = 0.0;
     h_out = h_hot_set;
 
   end if;

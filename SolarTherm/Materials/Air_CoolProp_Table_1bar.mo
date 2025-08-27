@@ -44,4 +44,35 @@ package Air_CoolProp_Table_1bar "Air is free for now, they will make us pay for 
     T := SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.T_h(h);
     f := 1.0;
   end Tf_h;
+  
+  function mu_Tf "Dynamic visocisty from temperature"
+    input SI.Temperature T;
+    input Real f = 1 "Liquid mass melt fraction (No effect on result)";
+    output SI.DynamicViscosity mu;    
+  algorithm
+    mu := SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T);
+  end mu_Tf;
+  
+  function cp_Tf "Specific heat capacity from temperature"
+    input SI.Temperature T;
+    input Real f = 1 "Liquid mass melt fraction (No effect on result)";
+    output SI.SpecificHeatCapacity cp;
+  algorithm
+    cp := SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.cp_T(T);
+  end cp_Tf;
+  
+  function Pr_Tf "Prandtl number from temperature"
+    input SI.Temperature T;
+    input Real f = 1 "Liquid mass melt fraction (No effect on result)";
+    output Real Pr "Prandtl number (-)";
+  protected
+    SI.SpecificHeatCapacity cp;
+    SI.DynamicViscosity mu;
+    SI.ThermalConductivity k;
+  algorithm
+    cp := cp_Tf(T,1.0);
+    mu := mu_Tf(T,1.0);
+    k := SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.k_T(T);
+    Pr := cp*mu/k;
+  end Pr_Tf;
 end Air_CoolProp_Table_1bar;

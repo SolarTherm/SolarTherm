@@ -136,9 +136,12 @@ model Thermocline_HBS_LC_3TSeries_Final
   Fluid_Package.State fluid_top "Fluid entering/exiting top";
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
-  SI.Power W_loss_pump "losses due to pressure drop";
-  SI.HeatFlowRate Q_loss_total "thermal loss rate (J/s)";
+  SI.Power W_dot_loss_pump "losses due to pressure drop";
+  SI.HeatFlowRate Q_dot_loss_total "thermal loss rate (J/s)";
   SI.Pressure p_drop_total "Total pressure drop (Pa)";
+  
+  parameter SI.Area A_loss_total = Tank_A.A_loss_tank + Tank_B.A_loss_tank + Tank_C.A_loss_tank;
+  SI.Energy E_stored(start=0.0) = Tank_A.E_stored + Tank_B.E_stored + Tank_C.E_stored;
   
 equation
   if fluid_a.m_flow > 1e-6 then
@@ -193,8 +196,8 @@ equation
   T_top_measured = Tank_C.T_f[N_f_C];
   T_bot_measured = Tank_A.T_f[1];
   
-  W_loss_pump = Tank_A.W_loss_pump + Tank_B.W_loss_pump + Tank_C.W_loss_pump;
-  Q_loss_total = Tank_A.Q_loss_total + Tank_B.Q_loss_total + Tank_C.Q_loss_total;
+  W_dot_loss_pump = Tank_A.W_dot_loss_pump + Tank_B.W_dot_loss_pump + Tank_C.W_dot_loss_pump;
+  Q_dot_loss_total = Tank_A.Q_dot_loss_total + Tank_B.Q_dot_loss_total + Tank_C.Q_dot_loss_total;
   p_drop_total = Tank_A.p_drop_total + Tank_B.p_drop_total + Tank_C.p_drop_total;
 
 annotation(
