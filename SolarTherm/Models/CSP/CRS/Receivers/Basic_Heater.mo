@@ -4,10 +4,11 @@ model Basic_Heater
   extends Interfaces.Models.Electric_Heater;
   parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290);
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565);
-  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold fluid thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hot fluid thermodynamic state at design";
+  parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(p_des, T_cold_set) "Cold fluid thermodynamic state at design";
+  parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(p_des, T_hot_set) "Hot fluid thermodynamic state at design";
   parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";  
   parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Hot fluid specific enthalpy at design";
+  parameter Modelica.SIunits.Pressure p_des = 101325.0 "Design pressure (Pa)";
   //parameter SI.Power P_renewable_des "Design maximum ";
   parameter Real eff_heater = 0.99 "Electrical-to-heat conversion efficiency of the heater";
   parameter SI.HeatFlowRate Q_flow_heater_des = 600.0e6 "Design maximum heater heat-rate output (W_th)";
@@ -35,9 +36,13 @@ model Basic_Heater
         visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-124, 84}, {-100, 108}}, rotation = 0)));
         
   Medium.BaseProperties state_in "Inlet fluid thermodynamic state";
+  Medium.BaseProperties state_out "Outlet fluid thermodynamic state";
 equation
   state_in.h = h_in;
-  state_in.p = 1e5;
+  state_in.p = p_des;
+  
+  state_out.h = h_out;
+  state_out.p = p_des;
   
   fluid_a.m_flow + fluid_b.m_flow = 0.0;
   fluid_a.p = fluid_b.p;

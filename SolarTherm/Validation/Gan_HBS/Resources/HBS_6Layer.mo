@@ -144,6 +144,7 @@ model HBS_6Layer
   
   parameter SI.Area A_loss_top = 0.25*CN.pi*D_tank*D_tank "Surface area of the top and bottom of the tank for heat loss calculations (m2)";
   parameter SI.Area A_loss_wall_i = CN.pi*D_tank*dz "Surface area of the side of each element for heat loss calculations (m2)";
+  
   //parameter SI.Mass m_p[N_f] = fill((1.0-epsilon)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
   SI.SpecificEnthalpy h_p[N_f] "J/kg";
   SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
@@ -162,7 +163,7 @@ model HBS_6Layer
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete
   //SI.ThermalConductance U_out[N_f, N_p] "K/W";
   //SI.ThermalConductance U_out_e[N_f] "K/W";
-  SI.ThermalConductance U_up[N_f] "Thermal conductance between a filler element and the one on top of it (K/W)";
+  SI.ThermalConductance U_p_up[N_f] "Thermal conductance between a filler element and the one on top of it (K/W)";
   //Filler Properties
   
   SI.ThermalConductivity k_p[N_f] "W/mK";
@@ -194,6 +195,7 @@ protected
   Real der_h_f[N_f] "rate of change of h_f calculated explicitly";
 algorithm
 //Fluid Equations
+  
   if State == 1 then
     der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (epsilon * d_p) - U_bot * (T_f[1] - T_amb) / (epsilon * dz) - U_wall * CN.pi * D_tank * (T_f[1] - T_amb) / (epsilon * A)) / rho_f_avg;
     h_out := h_f[1];
@@ -209,6 +211,7 @@ algorithm
     der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f - 1] - h_f[N_f]) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (epsilon * d_p) - U_wall * CN.pi * D_tank * (T_f[N_f] - T_amb) / (epsilon * A) - U_top * (T_f[N_f] - T_amb) / (epsilon * dz)) / rho_f_avg;
     h_out := h_f[N_f];
   end if;
+
 //Charging (Mass flows top to bottom)
 //Bottom Charging Fluid Node
 //End Bottom Charging Fluid Node
@@ -323,12 +326,12 @@ equation
     f_p[i] = filler6[i-72].f;
     k_p[i] = filler6[i-72].k;
   end for;
-  
-//Convection Equations
+
+  //Convection Equations
   for i in 1:N_f loop
     Bi[i] = h_c[i]*L_char_solid/k_p[i];
     if abs(u_flow) > 1e-12 then
-//There is actually mass flowing
+  //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
       Nu[i] = SolarTherm.Utilities.HeatTransfer.TubeRough.Nusselt_SwameeJain_GowenSmith(Re[i],Pr[i],e_roughness/d_p);//,T_f[i],T_s[i]);
@@ -345,17 +348,17 @@ equation
 //Particle Equations
   //Vertical Thermal Conductance
   for i in 1:N_f-1 loop
-    U_up[i] = 0.5*k_p[i]*k_p[i+1]*(1.0-epsilon)*CN.pi*D_tank*D_tank/((k_p[i]+k_p[i+1])*dz);
+    U_p_up[i] = 0.5*k_p[i]*k_p[i+1]*(1.0-epsilon)*CN.pi*D_tank*D_tank/((k_p[i]+k_p[i+1])*dz);
   end for;
-  U_up[N_f] = 0.0; //There is nothing on top of it 
+  U_p_up[N_f] = 0.0; //There is nothing on top of it 
 
 
-  m_p[1] * der(h_p[1]) = -1.0*U_up[1]*(T_p[1]-T_p[2]) +
+  m_p[1] * der(h_p[1]) = -1.0*U_p_up[1]*(T_p[1]-T_p[2]) +
     h_c[1] * D_tank * D_tank * CN.pi * dz * (T_f[1] - T_s[1]) / d_p - U_wall*A_loss_wall_i*(T_p[1]-T_amb) - U_bot*A_loss_top*(T_p[1]-T_amb);
   for i in 2:N_f-1 loop
-    m_p[i] * der(h_p[i]) = U_up[i-1]*(T_p[i-1]-T_p[i]) - U_up[i]*(T_p[i]-T_p[i+1]) + h_c[i] * D_tank * D_tank * CN.pi * dz * (T_f[i] - T_s[i]) / d_p;
+    m_p[i] * der(h_p[i]) = U_p_up[i-1]*(T_p[i-1]-T_p[i]) - U_p_up[i]*(T_p[i]-T_p[i+1]) + h_c[i] * D_tank * D_tank * CN.pi * dz * (T_f[i] - T_s[i]) / d_p;
   end for;
-  m_p[N_f] * der(h_p[N_f]) = U_up[N_f-1]*(T_p[N_f-1]-T_p[N_f]) + h_c[N_f] * D_tank * D_tank * CN.pi * dz * (T_f[N_f] - T_s[N_f]) / d_p - U_wall*A_loss_wall_i*(T_p[N_f]-T_amb) - U_top*A_loss_top*(T_p[N_f]-T_amb);
+  m_p[N_f] * der(h_p[N_f]) = U_p_up[N_f-1]*(T_p[N_f-1]-T_p[N_f]) + h_c[N_f] * D_tank * D_tank * CN.pi * dz * (T_f[N_f] - T_s[N_f]) / d_p - U_wall*A_loss_wall_i*(T_p[N_f]-T_amb) - U_top*A_loss_top*(T_p[N_f]-T_amb);
 //Heat loss calculations, different form than the equations above as they were in terms of rho*dh/dt not m*dh/dt
   Q_loss_top = U_top * CN.pi * D_tank * D_tank * 0.25 * (T_f[N_f] - T_amb);
   Q_loss_bot = U_bot * CN.pi * D_tank * D_tank * 0.25 * (T_f[1] - T_amb);

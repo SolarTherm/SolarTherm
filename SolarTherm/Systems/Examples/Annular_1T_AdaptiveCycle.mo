@@ -106,7 +106,7 @@ model Annular_1T_AdaptiveCycle "Concrete storage perforated with steel pipes. Th
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Annular.Thermocline_Annular_SingleTank_SM TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, d_pipe = d_pipe, d_solid = d_solid, L_pipe = L_pipe, U_loss_tank = 0.0, E_roughness = E_roughness, R_foul = R_foul) annotation(
+  SolarTherm.Models.Storage.Thermocline.Annular.SM_SingleTank TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, N_p = N_p, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, d_pipe = d_pipe, d_solid = d_solid, L_pipe = L_pipe, U_loss_tank = 0.0, E_roughness = E_roughness, R_foul = R_foul) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_flow_heater_signal(start = m_flow_charge_des);

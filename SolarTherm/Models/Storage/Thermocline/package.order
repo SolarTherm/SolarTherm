@@ -1,3 +1,8 @@
+Annular
+Spheres
+HCylinders
+HotBlastStove
+Thermocline_Table_Final
 C_shell
 Cylinder_Masses
 Cylinder_Radii
@@ -7,15 +12,3 @@ Particle_Radii
 Relative_Tank_Axes
 Set_Linear_Insulation
 Z_position
-Annular
-Parallel
-Series
-Thermocline_Spheres_Section_Final
-Thermocline_Spheres_LC_Section_Final
-Thermocline_HCylinders_Section_Final
-Thermocline_HBS_LC_Section_Final
-Thermocline_Spheres_SingleTank_Final
-Thermocline_Spheres_LC_SingleTank_Final
-Thermocline_HCylinders_SingleTank_Final
-Thermocline_HBS_LC_SingleTank_Final
-Thermocline_Table_Final

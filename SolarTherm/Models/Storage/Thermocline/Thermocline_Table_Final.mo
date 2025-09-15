@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
   
-model Thermocline_Table_Final
+model Thermocline_Table_Final "Reduced-order TES component model of a thermocline tank, outlet performance is based on lookup-tables"
   extends SolarTherm.Interfaces.Models.StorageFluid_Thermocline;
   import SI = Modelica.SIunits;
   

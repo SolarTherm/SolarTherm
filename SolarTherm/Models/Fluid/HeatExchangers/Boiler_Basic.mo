@@ -7,14 +7,14 @@ import Modelica.SIunits.Conversions.*;
   //parameter Modelica.SIunits.HeatFlowRate Q_flow_ref=50e6 "Design thermal power";
   parameter Modelica.SIunits.Temperature T_cold_set = from_degC(290);
   parameter Modelica.SIunits.Temperature T_hot_set = from_degC(565);
-  final parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold fluid thermodynamic state at design";
-  final parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Cold fluid thermodynamic state at design";
+  final parameter Medium.ThermodynamicState state_cold_set = Medium.setState_pTX(p_des, T_cold_set) "Cold fluid thermodynamic state at design";
+  final parameter Medium.ThermodynamicState state_hot_set = Medium.setState_pTX(p_des, T_hot_set) "Cold fluid thermodynamic state at design";
   final parameter Modelica.SIunits.SpecificEnthalpy h_cold_set = Medium.specificEnthalpy(state_cold_set) "Cold fluid specific enthalpy at design";  
   final parameter Modelica.SIunits.SpecificEnthalpy h_hot_set = Medium.specificEnthalpy(state_hot_set) "Cold fluid specific enthalpy at design";
   //final parameter SI.MassFlowRate m_flow_ref = Q_flow_ref / (h_hot_set - h_cold_set) "Mass flow rate at design";
   //final parameter Real nu_eps=1e-3 "Minimum load";
   //parameter Real nu_min=1e-3 "Minimum turbine operation";
-
+  parameter SI.Pressure p_des = 101325.0 "Design pressure of inlet fluid (Pa)";
   Modelica.Fluid.Interfaces.FluidPort_a fluid_a(redeclare package Medium = Medium)
     "Fluid connector a (positive design flow direction is from port_a to port_b)"
     annotation (Placement(visible = true,transformation(extent={{-110,-12},{-90,8}},  rotation=
@@ -29,6 +29,7 @@ import Modelica.SIunits.Conversions.*;
   //Real load;
   //Boolean logic;
   Medium.BaseProperties state_in;
+  Medium.BaseProperties state_out;
   SI.HeatFlowRate Q_flow;
   SI.Energy E_thermal(start=0.0);
   SI.SpecificEnthalpy h_in;
@@ -37,7 +38,10 @@ import Modelica.SIunits.Conversions.*;
 equation
   state_in.h = h_in;
 
-  state_in.p = 1e5;
+  state_in.p = p_des;
+  
+  state_out.h = h_out;
+  state_out.p = p_des;
   //load=max(nu_eps,fluid_a.m_flow/m_flow_ref);
   //logic=load>nu_min;
   h_in=inStream(fluid_a.h_outflow);
