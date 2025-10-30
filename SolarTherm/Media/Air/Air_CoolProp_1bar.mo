@@ -20,7 +20,7 @@ package Air_CoolProp_1bar "Air, explicit in h"
 			max=1700.0,
 			start=800.0));
 	//import SolarTherm.Media.MoltenSalt.MoltenSalt_utilities.*;
-	import SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.*;
+	import SolarTherm.Media.Nara_airish.Air_CoolProp_1bar_utilities.*;
 	// Provide medium constants here
 	//constant SpecificHeatCapacity cp_const=123456
 	// "Constant specific heat capacity at constant pressure";

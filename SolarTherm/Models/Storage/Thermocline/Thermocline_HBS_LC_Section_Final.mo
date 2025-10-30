@@ -10,7 +10,10 @@ model Thermocline_HBS_LC_Section_Final
   import Tables = Modelica.Blocks.Tables;
   //Initialize Material Packages
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial "Fluid Package";
+  
   replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
+
+  
   replaceable package Tank_Package = SolarTherm.Materials.SS316L "Tank Package (steel shell)";
   //replaceable package Encapsulation_Package = Filler_Package "Encapsulation Package, default is the same as Filler package, effectively no encapsulation";
   //Fluid Material States
@@ -42,7 +45,6 @@ model Thermocline_HBS_LC_Section_Final
   //parameter SI.Length D_tank = 8.9208; //default for ISH = 50, Mullite default property
   //parameter SI.Length H_tank = D_tank * ar;
   //parameter SI.Length H_tank = 35.0;
-  
   //==================
   
   parameter SI.Area A = CN.pi * D_tank * D_tank / 4.0 "Cross sectional area of tank";
@@ -64,6 +66,18 @@ model Thermocline_HBS_LC_Section_Final
   //parameter SI.Temperature T_e_start = T_start;
   parameter SI.SpecificEnthalpy h_f_start[N_f] = fill(Fluid_Package.h_Tf(T_start, 0.0), N_f) "Defaults to uniform";
   parameter SI.SpecificEnthalpy h_p_start[N_f] = fill(Filler_Package.h_Tf(T_start, 0.0), N_f) "Defaults to uniform";
+  
+  //[0-N_a = 33], [34-N_b = 66], N_f = 100 
+  //parameter Integer N_a = 33;
+  //parameter SI.SpecificEnthalpy h_p_start_A[N_a] = fill(Filler_Package_A.h_Tf(T_start, 0.0), N_a);
+  //parameter SI.SpecificEnthalpy h_p_start_B[N_a] = fill(Filler_Package_B.h_Tf(T_start, 0.0), N_a);
+  //parameter SI.SpecificEnthalpy h_p_start_C[N_a] = fill(Filler_Package_C.h_Tf(T_start, 0.0), N_a);
+  //parameter SI.SpecificEnthalpy h_p_start[N_f] = cat(1, h_p_start_A, h_p_start_B, h_p_start_C) "Defaults to uniform";
+  //replaceable package Filler_Package_C = Filler_Package "Filler Package";
+  //replaceable package Filler_Package_B = Filler_Package "Filler Package";
+  //replaceable package Filler_Package_A = Filler_Package "Filler Package";
+    
+  
   //Property bounds
   //Fluid
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0) "Starting enthalpy of the HTF";
@@ -86,7 +100,7 @@ model Thermocline_HBS_LC_Section_Final
   //Discretization
   parameter SI.Length dz = H_tank / N_f "discretization vertical length of fluid";
   //parameter SI.Length dr[N_p] = cat(1,fill(0.5 * ((d_p - 2.0*t_e) / (N_p - 1)),N_p-1),{t_e}) "radial thickness of each particle discretization, with last one being the encapsulation";
-  parameter Integer N_f = 25 "Number of finite volume elements in fluid";
+  parameter Integer N_f = 24 "Number of finite volume elements in fluid";
   parameter Integer N_p = 1 "Only One Element";
   //Initialise Fluid Array
   parameter SI.Length z_f[N_f] = Z_position(H_tank, N_f) .+ z_offset;

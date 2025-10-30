@@ -14,7 +14,7 @@ model HBSTES_CompLevel_Adaptive_1T "This component analysis allows a variable cy
   parameter SI.Time t_discharge = 5.0*36000.0 "Rated discharging period (s)";
   //parameter SI.Time t_standby = 2.0*3600.0 "Additional standby time after both charging and discharging cycle (s)";
   //Numerical Discretisation Settings
-  parameter Integer N_f = 100;
+  parameter Integer N_f = 99;
   parameter Integer N_tanks = 1 "Number of tanks in the storage array, needed to adjust aspect ratio such that all tanks are 35m high";
 
   parameter Real t_storage_hours_ideal = t_discharge/3600.0;

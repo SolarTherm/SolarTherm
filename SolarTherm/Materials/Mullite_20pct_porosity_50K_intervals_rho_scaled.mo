@@ -34,7 +34,7 @@ package Mullite_20pct_porosity_50K_intervals_rho_scaled
     input Real f "Liquid mass fraction";
     output SI.Density rho "Density (kg/m3)";
   algorithm
-    rho := 2560.0 * 0.4;
+    rho := 2560.0 * 2.2;
   end rho_Tf;
 
   function k_Tf "find thermal conductivity from temperature"

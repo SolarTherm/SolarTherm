@@ -1,7 +1,7 @@
 within SolarTherm.Media.Air;
 package Air_CoolProp_1bar_utilities
   extends Modelica.Icons.UtilitiesPackage;
-  import SolarTherm.Models.Chemistry.Property_Tables.Mixtures.Air_CoolProp_1bar.*;
+  import SolarTherm.Models.Chemistry.Property_Tables.Mixtures.Nara_airish_rho_scaled.*;
   function cp_T "Specific heat capacity (J/kgK) of air at ambient pressure as a function of temperature"
     extends Modelica.Icons.Function;
     input Modelica.SIunits.Temperature T "Temperature (K)";
