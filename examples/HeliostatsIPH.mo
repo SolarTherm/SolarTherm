@@ -19,6 +19,7 @@ model HeliostatsIPH
   parameter nSI.Time_hour t_zone = 9.5 "Local time zone (UCT=0)";
   parameter Integer year = 1996 "Meteorological year";
   parameter String sunshape = "Buie";
+  parameter Integer target_aligned = 0;
   parameter Real csr = 0.02 "circumsolar ratio";
   parameter Solar_angles angles = Solar_angles.dec_hra "Angles used in the lookup table file";
   parameter SI.Irradiance dni_des = 1000 "DNI at design point";
@@ -28,9 +29,9 @@ model HeliostatsIPH
   parameter SI.HeatFlowRate Q_in_rcv = P_net / 0.9 "Receiver net output at design point";
   parameter String field_type = "polar" "polar or surround";
   parameter SI.Area A_helio = H_helio*W_helio "Reflective area of a heliostat m2";
-  parameter Real  r_helio_to_recv= 0.7 "heliostat to receiver size ratio";  
+  //parameter Real  r_helio_to_recv= 0.7 "heliostat to receiver size ratio";  
   parameter SI.Length W_helio = H_helio "width of heliostat in m";
-  parameter SI.Length H_helio = r_helio_to_recv*H_recv "height of heliostat in m";
+  parameter SI.Length H_helio = 3.5 "height of heliostat in m";
   parameter SI.Efficiency rho_helio = 0.9 "reflectivity of heliostat max =1";
   parameter SI.Angle slope_error = 2.0e-3 "slope error of the heliostat in mrad";
   parameter SI.Length R1 = 60 "distance between the first row heliostat and the tower";
@@ -111,7 +112,7 @@ model HeliostatsIPH
   SolarTherm.Models.Sources.SolarModel.Sun sun(lon = data.lon, lat = data.lat, t_zone = data.t_zone, year = data.year, redeclare function solarPosition = Models.Sources.SolarFunctions.PSA_Algorithm) annotation(
     Placement(visible = true, transformation(extent = {{-10, 40}, {10, 60}}, rotation = 0)));
   // Solar field
-  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolsticeSimpleControl heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, wea_file = wea_file, sunshape = sunshape, csr = csr, dni_des=dni_des, he_av = he_av_design, A_h = A_helio, Q_in_rcv = Q_in_rcv, Q_design = P_net, H_rcv = H_recv, W_rcv = W_recv, n_H_rcv = 1, n_W_rcv = 1, tilt_rcv = tilt_recv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, n_rays = n_rays, field_type = field_type, rcv_type = recv_type, psave = casefolder) annotation(
+  SolarTherm.Models.CSP.CRS.HeliostatsField.HeliostatsFieldSolsticeSimpleControl heliostatsField(lon = data.lon, lat = data.lat, ele_min(displayUnit = "deg") = ele_min, wea_file = wea_file, sunshape = sunshape, csr = csr, dni_des=dni_des, he_av = he_av_design, A_h = A_helio, Q_in_rcv = Q_in_rcv, Q_design = P_net, H_rcv = H_recv, W_rcv = W_recv, n_H_rcv = 1, n_W_rcv = 1, tilt_rcv = tilt_recv, W_helio = W_helio, H_helio = H_helio, H_tower = H_tower, R_tower = R_tower, R1 = R1, fb = fb, rho_helio = rho_helio, slope_error = slope_error, n_row_oelt = n_row_oelt, n_col_oelt = n_col_oelt, n_rays = n_rays, field_type = field_type, rcv_type = recv_type, psave = casefolder, target_aligned=target_aligned) annotation(
     Placement(visible = true, transformation(origin = {8, 0}, extent = {{-24, -24}, {24, 24}}, rotation = 0)));
   // Receiver
   SolarTherm.Models.CSP.CRS.Receivers.ReceiverSimpleBlackbody receiver(em = em_recv, ab = ab_recv, A_recv = A_recv, T_recv = T_recv) annotation(

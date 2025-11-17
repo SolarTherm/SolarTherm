@@ -58,7 +58,7 @@ def run_simul(inputs={}):
         # just because the file exists doesn't mean it's correct/complete. How to check that?
     else:
 
-        crs=CRS(latitude=pm.lat, casedir=casedir_des, nproc=int(pm.n_procs), verbose=pm.verbose)
+        crs=CRS(latitude=pm.lat, casedir=casedir_des, nproc=int(pm.n_procs), verbose=pm.verbose, target_aligned=pm.target_aligned)
 
         crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
@@ -79,7 +79,7 @@ def run_simul(inputs={}):
             if not os.path.exists(crs.casedir):
 	            os.makedirs(crs.casedir)
             crs.yaml(sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
-            oelt, A_land=crs.annual_oelt(num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
+            oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
 
 
         if (A_land==0):    
@@ -100,24 +100,25 @@ def run_simul(inputs={}):
     
 if __name__=='__main__':
     case="./test"
-    Q_in_rcv=553e6 #W
+    Q_in_rcv=56e4 #W 553e6
     W_helio=12.015614841
     H_helio=12.015614841
-    H_tower=183.331344997
+    H_tower=120. #183.3
     n_row_oelt=3
     n_col_oelt=5
-    R1=40.
-    fb=0.4
-    W_rcv=14.9999995285
-    H_rcv=18.6699994131
+    R1=50 #40
+    fb=0.5 #0.4
+    W_rcv=12. #14.9999995285
+    H_rcv=12.#18.6699994131
     n_W_rcv=50
     n_H_rcv=10
     n_rays=10e6
     rcv_type='cylinder'
+    target_aligned=1
 
     field_type='surround'
     wea_file='../../SolarTherm/Data/Weather/example_TMY3.motab'
-    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays }
+    inputs={'casedir': case, 'Q_in_rcv':Q_in_rcv, 'W_rcv':W_rcv, 'H_rcv':H_rcv, 'H_tower':H_tower, 'wea_file':wea_file, 'n_row_oelt':n_row_oelt, 'n_col_oelt': n_col_oelt, 'rcv_type': 'cylinder', 'R1':R1, 'fb':fb, 'field_type': field_type,"n_W_rcv":n_W_rcv,"n_H_rcv":n_H_rcv, "n_rays":n_rays, 'target_aligned': target_aligned}
 
     run_simul(inputs)
 
