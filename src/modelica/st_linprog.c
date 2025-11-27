@@ -171,12 +171,12 @@ double st_linprog(MotabData *wd, MotabData *pd
 
 	/* VARIABLES IN THE PROBLEM
 	
-	SL(i) (Storage Level) : Energy stored in the tank at end of ith hour [MWh_th]
+	SL(i) (Storage Level) : Energy stored in the tank at end of ith hour [MWh_th]
 	      Note: `SLinit` is the energy stored in the tank at the start of the 1st
 	      hour, which is a supplied constant.
-	DE(i) (Dispatch Energy) : Sold energy rate [MW_th], during the ith hour
-	SE(i) (Storage Energy) : The input energy in the tank from the sun [MW_th], during the ith hour
-	XE(i) (Dumped Energy) : Lost energy [MW_th], during the ith hour
+	DE(i) (Dispatch Energy) : Sold energy rate [MW_th], during the ith hour
+	SE(i) (Storage Energy) : The input energy in the tank from the sun [MW_th], during the ith hour
+	XE(i) (Dumped Energy) : Lost energy [MW_th], during the ith hour
 	
 	Note that these symbols SL(i) are not actually 'variables' but rather
 	column numbers in the GLPK problem, and resolve into values from 1..4·N.
@@ -410,3 +410,4 @@ double st_linprog(MotabData *wd, MotabData *pd
 }
 
 // vim: ts=4:sw=4:noet:tw=80
+

@@ -36,7 +36,9 @@ static cbool parseMotabHeader(Parser *P,char *name,unsigned maxl,unsigned *nrows
 
 static cbool parseMetaDataHeaders(Parser *P,MotabData *tab);
 
+#ifdef MOTAB_DEBUG
 static unsigned motab_get_nmeta(MotabData *tab);
+#endif
 
 /* INPUT/OUTPUT FUNCTIONS */
 
@@ -46,8 +48,8 @@ static unsigned motab_get_nmeta(MotabData *tab);
 	FIXME transition to using Modelica's external functions for loading data and interpolating.
 */
 MotabData *motab_load(const char *filepath){
-	char line[MAXCHARS];
-	unsigned i = 0;
+	//char line[MAXCHARS];
+	//unsigned i = 0;
 
 	FILE* fp;
 	fp = fopen(filepath,"r");  
@@ -308,6 +310,7 @@ void motab_free(MotabData *tab){
 
 /* METADATA HANDLING FUNCTIONS */
 
+#ifdef MOTAB_DEBUG
 unsigned motab_get_nmeta(MotabData *tab){
 	unsigned nmeta = 0;
 	MotabMetaData *M = tab->meta;
@@ -317,6 +320,7 @@ unsigned motab_get_nmeta(MotabData *tab){
 	}
 	return nmeta;
 }
+#endif
 
 static const char motab_empty[] = "";
 
@@ -539,7 +543,7 @@ double motab_get_value(MotabData *tab, double time, int col){
 	int err;
 	MSG("Evaluating at t=%f, col=%d",time,col);
 	if(tab->timecol == MOTAB_NO_COL){
-		if(err = motab_check_timestep(tab,NULL)){
+		if((err = motab_check_timestep(tab,NULL))){
 			ERR("Error %d in motab timestep.",err);
 			return MOTAB_NO_REAL;
 		}
@@ -577,12 +581,13 @@ double motab_get_value(MotabData *tab, double time, int col){
 	return val;
 }
 
+/* FIXME merge with motab_get_value somehow? */
 double motab_get_value_wraparound(MotabData *tab, double time, int col){
 	assert(tab);
 	int err;
 	MSG("Evaluating at t=%f, col=%d",time,col);
 	if(tab->timecol == MOTAB_NO_COL){
-		if(err = motab_check_timestep(tab,NULL)){
+		if((err = motab_check_timestep(tab,NULL))){
 			ERR("Error %d in motab timestep.",err);
 			return MOTAB_NO_REAL;
 		}
@@ -590,8 +595,10 @@ double motab_get_value_wraparound(MotabData *tab, double time, int col){
 	MSG("Timestep = %f",tab->timestep);
 	assert(tab->nrows >= 1);
 	double t0 = MOTAB_VAL(tab,0,tab->timecol);
+#ifdef MOTAB_DEBUG
 	double tmax = t0 + tab->nrows * tab->timestep;
 	double offset = time - t0;
+#endif
 	MSG("time = %f, t0 = %f, offset = %f, tmax = %f", time,t0,offset,tmax);
 	double rowrat = (time - t0)/tab->timestep;
 	int rowratint = (int)rowrat;
