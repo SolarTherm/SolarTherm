@@ -53,9 +53,9 @@ def test_ref2solstice():
 
 	print(LCOH, eff_recv, eff_field, eff_sys, eff_ex)
 	
-	assert abs(eff_field- 0.551)/0.551 < 0.1 # epy
-	assert abs(eff_recv- 0.539)/0.539 < 0.1 # LCOE
-	assert abs(eff_sys- 0.297)/0.297 < 0.1 # Capacity factor
+	assert abs(eff_field- 0.551)/0.551 < 0.1 # field efficiency
+	assert abs(eff_recv- 0.539)/0.539 < 0.1 # receiver efficiency
+	assert abs(eff_sys- 0.297)/0.297 < 0.1 # system efficiency
 	cleantest.clean('HeliostatsIPH')
 
 # vim: ts=4:sw=4:noet:tw=80
