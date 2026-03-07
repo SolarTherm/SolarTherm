@@ -23,7 +23,8 @@ extends OpticalEfficiency;
    parameter Real csr = 0.02 "circumsolar ratio";
   parameter SI.Irradiance dni_des = 1000 "DNI at design point";
   parameter Integer target_aligned = 0;
-    parameter Integer argc =23 "Number of variables to be passed to the C function";
+  parameter Integer verbose = 0 "output detailed field design";
+    parameter Integer argc =24 "Number of variables to be passed to the C function";
 
     //parameter Boolean single_field = true "True for single field, false for multi tower";
     //parameter Boolean concrete_tower = true "True for concrete, false for thrust tower";
@@ -64,7 +65,7 @@ extends OpticalEfficiency;
     annotation (Placement(transformation(extent={{-38,22},{-10,42}})));
 
 initial algorithm
-tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, sunshape, argc, {"method", "lat", "Q_in_rcv", "csr", "dni_des",  "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" , "target_aligned"}, {method, lat, Q_in_rcv, csr, dni_des, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays, target_aligned}); 
+tablefile := SolsticePyFunc(ppath, pname, pfunc, psave, field_type, rcv_type, wea_file, sunshape, argc, {"method", "lat", "Q_in_rcv", "csr", "dni_des",  "n_helios", "H_rcv", "W_rcv","n_H_rcv", "n_W_rcv", "tilt_rcv", "W_helio", "H_helio", "H_tower", "R_tower", "R1", "fb", "helio_refl","slope_error", "n_row_oelt", "n_col_oelt", "n_rays" , "target_aligned", "verbose"}, {method, lat, Q_in_rcv, csr, dni_des, n_helios, H_rcv, W_rcv,n_H_rcv, n_W_rcv, tilt_rcv, W_helio, H_helio, H_tower, R_tower, R1, fb, rho_helio,slope_error, n_row_oelt, n_col_oelt, n_rays, target_aligned, verbose}); 
 
 equation
   if angles==SolarTherm.Types.Solar_angles.elo_hra then

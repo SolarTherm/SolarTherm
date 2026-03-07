@@ -58,9 +58,10 @@ def run_simul(inputs={}):
         # just because the file exists doesn't mean it's correct/complete. How to check that?
     else:
 
-        crs=CRS(latitude=pm.lat, casedir=casedir_des, nproc=int(pm.n_procs), verbose=pm.verbose, target_aligned=pm.target_aligned)
+        crs=CRS(latitude=pm.lat, casedir=casedir_des, nproc=int(pm.n_procs), verbose=pm.verbose, target_aligned=pm.target_aligned, fixed_focus=True)
+	
+        crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.H_tower), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
-        crs.receiversystem(receiver=pm.rcv_type, rec_w=float(pm.W_rcv), rec_h=float(pm.H_rcv), rec_x=float(pm.X_rcv), rec_y=float(pm.Y_rcv), rec_z=float(pm.Z_rcv), rec_tilt=float(pm.tilt_rcv), rec_grid_w=int(pm.n_W_rcv), rec_grid_h=int(pm.n_H_rcv), rec_abs=float(pm.alpha_rcv))
 
         if pm.method==1:
             crs.heliostatfield(field=pm.field_type, hst_rho=pm.helio_refl, slope=pm.slope_error, hst_w=pm.W_helio, hst_h=pm.H_helio, tower_h=pm.H_tower, tower_r=pm.R_tower, hst_z=pm.Z_helio, num_hst=pm.n_helios, R1=pm.R1, fb=pm.fb, dsep=pm.dsep)
@@ -73,13 +74,13 @@ def run_simul(inputs={}):
             oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))
 
         else:
-            A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=False, plot=False)
+            oelt, A_land=crs.field_design_annual(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt), weafile=pm.wea_file, method=pm.method, Q_in_des=pm.Q_in_rcv, n_helios=pm.n_helios, zipfiles=False, gen_vtk=pm.gen_vtk, plot=False)
 
-            crs.casedir=pm.casedir+'/performance'
-            if not os.path.exists(crs.casedir):
-	            os.makedirs(crs.casedir)
-            crs.yaml(sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
-            oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
+            #crs.casedir=pm.casedir+'/performance'
+            #if not os.path.exists(crs.casedir):
+	        #    os.makedirs(crs.casedir)
+            #crs.yaml(sunshape=pm.sunshape, csr=pm.csr, half_angle_deg=pm.half_angle_deg, std_dev=pm.std_dev)
+            #oelt, A_land=crs.annual_oelt(dni_des=pm.dni_des, num_rays=int(pm.n_rays), nd=int(pm.n_row_oelt), nh=int(pm.n_col_oelt))	
 
 
         if (A_land==0):    
