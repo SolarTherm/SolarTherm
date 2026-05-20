@@ -77,9 +77,9 @@ model SM_Section
   
   //Initialise Fluid Array
   parameter SI.Length z_f[N_f] = Z_position(L_pipe, N_f);
-  parameter SI.Area A_fx = CN.pi * r_pipe * r_pipe "Cross sectional area of the fluid column";
+  parameter SI.Area A_fz = CN.pi * r_pipe * r_pipe "Cross sectional area of the fluid column";
   parameter SI.Area A_fr = 2.0 * CN.pi * r_pipe * dz "Cylindrical area of the fluid column for one element";
-  parameter SI.Volume dV_f = A_fx * dz "Volume of fluid element";
+  parameter SI.Volume dV_f = A_fz * dz "Volume of fluid element";
   parameter SI.Mass dm_f = rho_f_avg*dV_f "Mass of fluid element, using average density";
   SI.Temperature T_f[N_f] "(K)";
   SI.SpecificEnthalpy h_f[N_f](start = h_f_start) "J/kg";
@@ -114,7 +114,7 @@ model SM_Section
   //Filler Geometry
   
   parameter SI.Mass m_pj[N_p] = Annular.Annular_Masses(r_pipe, r_solid, dz, N_p, rho_p);
-  parameter SI.Area A_px[N_p] = Annular.Annular_CSA(r_pipe, r_solid, N_p) "Annulus cross sectional area of each radial solid element";
+  parameter SI.Area A_pz[N_p] = Annular.Annular_CSA(r_pipe, r_solid, N_p) "Annulus cross sectional area of each radial solid element";
   parameter SI.Length r_pj[N_p] = Annular.Annular_Radii(r_pipe, r_solid, N_p) "midpoint radius of each radial solid element";
 
   //Initialise Filler surface temperature
@@ -158,35 +158,35 @@ algorithm
 //Fluid equations
   if State == 1 then //Fluid is flowing downwards uflow is negative
     der_h_f[1] := 
-    ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) * A_fx / ((k_f[1] + k_f[2]) * dz) 
+    ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) * A_fz / ((k_f[1] + k_f[2]) * dz) 
     +  m_flow_unit * (h_f[1] - h_f[2]) 
     - h_c[1] * (T_f[1] - T_s[1]) * A_fr ) / dm_f;
     h_out := h_f[1];
     for i in 2:N_f - 1 loop
       der_h_f[i] := 
-      (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fx / ((k_f[i - 1] + k_f[i]) * dz) 
-      - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fx / ((k_f[i] + k_f[i + 1]) * dz) 
+      (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fz / ((k_f[i - 1] + k_f[i]) * dz) 
+      - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fz / ((k_f[i] + k_f[i + 1]) * dz) 
       + m_flow_unit * (h_f[i] - h_f[i + 1]) 
       - h_c[i] * (T_f[i] - T_s[i]) * A_fr) / dm_f;
     end for;
     der_h_f[N_f] := 
-    (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fx / ((k_f[N_f - 1] + k_f[N_f]) * dz) 
+    (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fz / ((k_f[N_f - 1] + k_f[N_f]) * dz) 
     + m_flow_unit * (h_f[N_f] - h_in) 
     - h_c[N_f] * (T_f[N_f] - T_s[N_f]) * A_fr) / dm_f;
   else
     der_h_f[1] := 
-    ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) * A_fx / ((k_f[1] + k_f[2]) * dz)) 
+    ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) * A_fz / ((k_f[1] + k_f[2]) * dz)) 
     + m_flow_unit * (h_in - h_f[1]) 
     - h_c[1] * (T_f[1] - T_s[1]) * A_fr) / dm_f;
     for i in 2:N_f - 1 loop
       der_h_f[i] := 
-      (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fx / ((k_f[i - 1] + k_f[i]) * dz) 
-      - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fx / ((k_f[i] + k_f[i + 1]) * dz) 
+      (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) * A_fz / ((k_f[i - 1] + k_f[i]) * dz) 
+      - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) * A_fz / ((k_f[i] + k_f[i + 1]) * dz) 
       + m_flow_unit * (h_f[i - 1] - h_f[i]) 
       - h_c[i] * (T_f[i] - T_s[i]) * A_fr) / dm_f;
     end for;
     der_h_f[N_f] := 
-    (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fx / ((k_f[N_f - 1] + k_f[N_f]) * dz) 
+    (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) * A_fz / ((k_f[N_f - 1] + k_f[N_f]) * dz) 
     + m_flow_unit * (h_f[N_f - 1] - h_f[N_f]) 
     - h_c[N_f] * (T_f[N_f] - T_s[N_f]) * A_fr) / dm_f;
     h_out := h_f[N_f];
@@ -204,7 +204,7 @@ equation
   m_flow_unit = m_flow/N_units;
   for i in 1:N_f loop
     der_h_f[i] = der(h_f[i]);
-    u_flow[i] = m_flow_unit / (rho_f[i] * A_fx);
+    u_flow[i] = m_flow_unit / (rho_f[i] * A_fz);
     p_drop[i] = 0.5*f[i]*dz*rho_f[i]*u_flow[i]*u_flow[i]/d_pipe;
   end for;
   
@@ -221,7 +221,7 @@ equation
 //mass is flowing upwards so discharging
     State = 3;
   end if;
-  //u_flow = m_flow / (rho_f_avg * A_fx);
+  //u_flow = m_flow / (rho_f_avg * A_fz);
 //positive if flowing upwards (discharge)
 //u_0 = u_flow*eta; //Velocity through empty cross-section
 //Fluid inlet and outlet properties
@@ -310,9 +310,9 @@ equation
 //Axial Conductance
   for j in 1:N_p loop
     for i in 1:N_f - 1 loop
-      U_right[i, j] = 2.0 * A_px[j] * k_p[i, j] * k_p[i + 1, j] / (dz * (k_p[i, j] + k_p[i + 1, j]));
+      U_right[i, j] = 2.0 * A_pz[j] * k_p[i, j] * k_p[i + 1, j] / (dz * (k_p[i, j] + k_p[i + 1, j]));
     end for;
-    U_right[N_f, j] = 2.0 * k_p[N_f, j] * A_px[j] / dz;
+    U_right[N_f, j] = 2.0 * k_p[N_f, j] * A_pz[j] / dz;
   end for;
   
   for i in 2:N_f - 1 loop
@@ -328,22 +328,22 @@ equation
   end for;
 //Left end of the pipe i = 1
 //Innermost solid annulus
-  der(h_p[1, 1]) = (U_in[1, 1] * (T_s[1] - T_p[1, 1]) - U_in[1, 2] * (T_p[1, 1] - T_p[1, 2]) - U_right[1, 1] * (T_p[1, 1] - T_p[2, 1]) - U_side * (T_p[1, 1] - T_amb) * A_px[1]) / m_pj[1];
+  der(h_p[1, 1]) = (U_in[1, 1] * (T_s[1] - T_p[1, 1]) - U_in[1, 2] * (T_p[1, 1] - T_p[1, 2]) - U_right[1, 1] * (T_p[1, 1] - T_p[2, 1]) - U_side * (T_p[1, 1] - T_amb) * A_pz[1]) / m_pj[1];
 //Middle solid annuli
   for j in 2:N_p - 1 loop
-    der(h_p[1, j]) = (U_in[1, j] * (T_p[1, j - 1] - T_p[1, j]) - U_in[1, j + 1] * (T_p[1, j] - T_p[1, j + 1]) - U_right[1, j] * (T_p[1, j] - T_p[2, j]) - U_side * (T_p[1, j] - T_amb) * A_px[j]) / m_pj[j];
+    der(h_p[1, j]) = (U_in[1, j] * (T_p[1, j - 1] - T_p[1, j]) - U_in[1, j + 1] * (T_p[1, j] - T_p[1, j + 1]) - U_right[1, j] * (T_p[1, j] - T_p[2, j]) - U_side * (T_p[1, j] - T_amb) * A_pz[j]) / m_pj[j];
   end for;
 //Outermost solid annulus
-  der(h_p[1, N_p]) = (U_in[1, N_p] * (T_p[1, N_p - 1] - T_p[1, N_p]) - U_right[1, N_p] * (T_p[1, N_p] - T_p[2, N_p]) - U_wall * (T_p[1, N_p] - T_amb) * CN.pi * d_solid * dz - U_side * (T_p[1, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
+  der(h_p[1, N_p]) = (U_in[1, N_p] * (T_p[1, N_p - 1] - T_p[1, N_p]) - U_right[1, N_p] * (T_p[1, N_p] - T_p[2, N_p]) - U_wall * (T_p[1, N_p] - T_amb) * CN.pi * d_solid * dz - U_side * (T_p[1, N_p] - T_amb) * A_pz[N_p]) / m_pj[N_p];
 //Right end of the pipe i = N_f
 //Innermost solid annulus
-  der(h_p[N_f, 1]) = (U_in[N_f, 1] * (T_s[N_f] - T_p[N_f, 1]) - U_in[N_f, 2] * (T_p[N_f, 1] - T_p[N_f, 2]) + U_right[N_f - 1, 1] * (T_p[N_f - 1, 1] - T_p[N_f, 1]) - U_side * (T_p[N_f, 1] - T_amb) * A_px[1]) / m_pj[1];
+  der(h_p[N_f, 1]) = (U_in[N_f, 1] * (T_s[N_f] - T_p[N_f, 1]) - U_in[N_f, 2] * (T_p[N_f, 1] - T_p[N_f, 2]) + U_right[N_f - 1, 1] * (T_p[N_f - 1, 1] - T_p[N_f, 1]) - U_side * (T_p[N_f, 1] - T_amb) * A_pz[1]) / m_pj[1];
 //Middle solid annuli
   for j in 2:N_p - 1 loop
-    der(h_p[N_f, j]) = (U_in[N_f, j] * (T_p[N_f, j - 1] - T_p[N_f, j]) - U_in[N_f, j + 1] * (T_p[N_f, j] - T_p[N_f, j + 1]) + U_right[N_f - 1, j] * (T_p[N_f - 1, j] - T_p[N_f, j]) - U_side * (T_p[N_f, j] - T_amb) * A_px[j]) / m_pj[j];
+    der(h_p[N_f, j]) = (U_in[N_f, j] * (T_p[N_f, j - 1] - T_p[N_f, j]) - U_in[N_f, j + 1] * (T_p[N_f, j] - T_p[N_f, j + 1]) + U_right[N_f - 1, j] * (T_p[N_f - 1, j] - T_p[N_f, j]) - U_side * (T_p[N_f, j] - T_amb) * A_pz[j]) / m_pj[j];
   end for;
 //Outermost solid annulus
-  der(h_p[N_f, N_p]) = (U_in[N_f, N_p] * (T_p[N_f, N_p - 1] - T_p[N_f, N_p]) + U_right[N_f - 1, N_p] * (T_p[N_f - 1, N_p] - T_p[N_f, N_p]) - U_wall * (T_p[N_f, N_p] - T_amb) * CN.pi * d_solid * dz - U_side * (T_p[N_f, N_p] - T_amb) * A_px[N_p]) / m_pj[N_p];
+  der(h_p[N_f, N_p]) = (U_in[N_f, N_p] * (T_p[N_f, N_p - 1] - T_p[N_f, N_p]) + U_right[N_f - 1, N_p] * (T_p[N_f - 1, N_p] - T_p[N_f, N_p]) - U_wall * (T_p[N_f, N_p] - T_amb) * CN.pi * d_solid * dz - U_side * (T_p[N_f, N_p] - T_amb) * A_pz[N_p]) / m_pj[N_p];
 //W_dot_loss_pump =
 //Q_loss_total =
 //p_drop_total

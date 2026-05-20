@@ -37,6 +37,7 @@ model Air_HX_Calculation
   
   SI.Temperature T_H_out = Modelica.Media.Air.ReferenceAir.Air_Utilities.T_ph(p_des,h_H_out);
   SI.Temperature T_C_out = Modelica.Media.Air.ReferenceAir.Air_Utilities.T_ph(p_des,h_C_out);
+  
 equation
   Q_flow_real = m_flow_H*(h_H_in-h_H_out);
   Q_flow_real = m_flow_C*(h_C_out-h_C_in);

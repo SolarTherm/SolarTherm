@@ -84,12 +84,16 @@ model LC_Section_Final
   
   //Costing parameters of the TES and intermediate calculations (all indexed to USD_2022)
   parameter Real C_fluid = 0.0 "FOB cost of fluid, set to zero as air is free (USD_2022)";
-  parameter Real C_insulation = SolarTherm.Utilities.Finances.Insulation.FOB_Insulation_Mullite_HBS(T_max,U_loss_top,A_insulation,2022) "FOB Cost of tank insulation, calculated via a regression function (USD_2022)";
-  parameter Real C_tank = SolarTherm.Utilities.Finances.Equipment.FOB_Vessel_CS(V_vessel,2022) "FOB cost of a carbon steel bin based on Seider (USD_2022)"; 
+  parameter Real C_insulation = SolarTherm.Utilities.Finances.Insulation.FOB_Insulation_Mullite_HBS(T_max,U_loss_top,A_insulation) "FOB Cost of tank insulation, calculated via a regression function (USD_2022)";
+  parameter Real C_tank = SolarTherm.Utilities.Finances.Equipment.Bins.FOB_Bin_CS(V_vessel) "FOB cost of a carbon steel bin based on Seider (USD_2022)"; 
   parameter Real C_filler = sum(m_p)*Filler_Package.cost*SolarTherm.Utilities.Finances.r_CEPCI(2022,Filler_Package.year) "FOB cost of checkerbrick material (USD_2022)";
   parameter Real C_encapsulation = 0.0 "FOB cost of encapsulation material, set to zero as no filler encapsulation is used (USD_2022)";
   
+
+  
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation "Total FOB cost of this TES section (USD_2022)";
+  
+
   
   //Thickness and surface area of insulation material
   parameter SI.Length t_insulation = SolarTherm.Utilities.Finances.Insulation.Thickness_Insulation_Mullite_HBS(T_max,U_loss_top) "Thickness of insulation (m)";

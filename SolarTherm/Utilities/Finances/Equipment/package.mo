@@ -1,4 +1,4 @@
 within SolarTherm.Utilities.Finances;
 
-package Equipment
+package Equipment "Standard Equipment Costs"
 end Equipment;

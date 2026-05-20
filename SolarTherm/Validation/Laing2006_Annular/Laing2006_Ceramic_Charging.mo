@@ -24,7 +24,7 @@ model Laing2006_Ceramic_Charging
   //parameter Real eta = 0.37;
   //parameter SI.Diameter d_p = 0.018;
   parameter Real U_loss_tank = 0.0;
-  parameter Integer Correlation = 2; //1:Liquid 2:Gas
+  parameter Integer Correlation = 2; //1: Smooth pipes, 2: Oils/Cool Water, 3: Gases/Cool Water
   //parameter Real ar = 0.48/0.5;
   
   //parameter SI.Volume V_tank = 0.25*CN.pi*D_tank*D_tank*H_tank;
