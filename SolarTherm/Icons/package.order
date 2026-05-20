@@ -38,3 +38,10 @@ ReceiverDishModel
 ResistiveHeater
 Boiler
 GridInput
+ThermoclineModel
+Chemistry
+ChemEqn
+Reactor
+Dehumidifier
+Indirect_FBHX
+PumpedHydro
