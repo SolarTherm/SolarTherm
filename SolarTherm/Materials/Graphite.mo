@@ -1,32 +1,46 @@
 within SolarTherm.Materials;
 package Graphite
-  extends SolarTherm.Materials.PartialMaterial(MM = 12.011e-3, T_melt = 3600, cost = 1.8);
-  import SolarTherm.Utilities.Interpolation.Interpolate1D;
+  extends SolarTherm.Materials.PartialMaterial(MM = 12.011e-3, T_melt = 3600, cost = 1.8, year = 2020);
 
-  //constant SI.MolarMass MM = 12.011e-3 "Molar mass (kg/mol)";
-  //constant SI.Temperature T_melt = 933.47 "Melting point (K)"; 
-	//https://nucleus.iaea.org/sites/graphiteknowledgebase/wiki/Guide_to_Graphite/What%20is%20Graphite.aspx
-  //constant Real cost = 1.8 "USD/kg";
+  //Property Tables
+  constant SI.Temperature T_data[11] = {295.75, 374.15, 472.45, 574.75, 674.75, 774.75, 874.75, 974.85, 1074.45, 1173.95, 1274.05};
+  
+  constant SI.SpecificEnthalpy h_data[11] = {-1742.856, 70919.400, 201224.121, 370939.962, 559940.178, 764242.398, 978738.138, 1200195.120, 1424960.754, 1652354.344, 1882940.496};
+  
+  constant SI.Density rho_data[11] = {1888.50, 1886.30, 1883.50, 1880.40, 1877.20, 1873.90, 1870.50, 1867.00, 1863.40, 1859.60, 1855.70};
+  
+  constant SI.ThermalConductivity k_data[11] = {133.02, 128.54, 117.62, 106.03, 96.70, 88.61, 82.22, 76.52, 71.78, 67.88, 64.26};
 
   redeclare model State "A model which calculates state and properties"
-    parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/Graphite.txt");
-	
 	SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
-	SI.Temperature T "Temperature (K)";
+	SI.Temperature T "Absolute Temperature (K)";
 	Real f "Liquid Mass Fraction";
 	SI.Density rho "Density (kg/m3)";
 	SI.ThermalConductivity k "Thermal conductivity (W/mK)";
-
-	Tables.CombiTable1Ds Tab(tableOnFile=true, tableName="table_1D_1", columns=2:5, fileName=table_file);
-	
-  equation 
-	Tab.u = h;
-	T = Tab.y[1];
-	f = Tab.y[2];
-	rho = Tab.y[3];
-	k = Tab.y[4];
+ equation
+    T = Modelica.Math.Vectors.interpolate(h_data,T_data,h);
+    f = 0.0;
+    rho = Modelica.Math.Vectors.interpolate(h_data,rho_data,h);
+    k = Modelica.Math.Vectors.interpolate(h_data,k_data,h);
   end State;
 
+  redeclare function h_Tf "find specific enthalpy from Temperature and liquid fraction"
+    input SI.Temperature T "Absolute temperature (K)";
+    input Real f "Liquid mass fraction";
+    output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
+  algorithm
+    h := Modelica.Math.Vectors.interpolate(T_data,h_data,T);
+  end h_Tf;
+  
+  redeclare function rho_Tf "find density from temperature and liquid fraction"
+    input SI.Temperature T "Absolute temperature (K)";
+    input Real f "Liquid mass fraction";
+    output SI.Density rho "Density (kg/m3)";
+  algorithm
+    rho := Modelica.Math.Vectors.interpolate(T_data,rho_data,T);
+  end rho_Tf;
+
+  /*
   redeclare function h_Tf "find specific enthalpy from Temperature"
 	// reference: https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782425&Mask=2#Thermo-Condensed
 	// Butland and Maddison, 1973
@@ -50,5 +64,6 @@ package Graphite
     //the specific heat capacity formula is cal/gK, therefore multiply 4.184*1000 to J/kgK
     h:=(A1+B1*T+C1*T^(-1)+D1*T^(-2)+E1*T^(-3)+F1*T^(-4))*cal_to_Joule*1000*(T-Tref);
   end h_Tf;
+  */
   
 end Graphite;

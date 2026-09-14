@@ -21,3 +21,8 @@ HeatTransfer
 ChlorideSaltReceiver
 SodiumReceiver_modular
 PBS_Receiver_Dish
+PBS_Receiver
+Basic_Heater
+Basic_Heater_Energy
+Receiver_Regression
+Receiver_Regression_Simplified

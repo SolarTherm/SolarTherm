@@ -1,48 +1,41 @@
 within SolarTherm.Materials;
-package RT20_Paraffin_Melting
-  extends SolarTherm.Materials.PartialMaterial(MM = 353e-3, T_melt = 295.15, cost = 0.049); //DOnt trust these constants
-  import SolarTherm.Utilities.Interpolation.Interpolate1D;
+package RT20_Paraffin_Melting "Broad melting temperature"
+  extends SolarTherm.Materials.PartialMaterial(MM = 353.0e-3, T_melt = 288.1, cost = 0.049); 
 
-  //constant SI.Temperature T_melt = 295.15 "Melting point (K)";
-  //constant Real cost = 0.049 "USD/kg";
+  //Property Tables
+  constant SI.Temperature T_data[32] = {273.1500, 273.2113, 280.0121, 280.9312, 281.9728, 283.0143, 284.3623, 285.8327, 287.1806, 288.2222, 289.3863, 290.3054, 291.1019, 292.0209, 292.6336, 293.1850, 293.4914, 293.8590, 294.2879, 294.5329, 294.9005, 295.2682, 295.3294, 295.4520, 295.6358, 295.7583, 295.8809, 296.1872, 301.1500, 310.0000, 320.0000, 330.0000};
+  constant SI.SpecificEnthalpy h_data[32] = {0.00, 111.74, 12514.55, 14414.08, 16820.15, 19416.17, 23267.38, 28362.59, 34098.42, 39480.42, 47123.24, 54888.96, 63313.93, 75772.62, 86350.39, 97982.22, 105561.71, 115930.91, 129618.70, 138274.59, 152308.77, 166208.86, 168272.27, 171758.46, 175903.91, 177863.03, 179054.89, 180488.85, 192556.45, 214076.21, 238392.32, 262708.43};
+  constant Real f_data[32] = {0.00, 0.00, 0.00, 0.01, 0.03, 0.04, 0.06, 0.09, 0.13, 0.16, 0.21, 0.25, 0.30, 0.38, 0.44, 0.51, 0.55, 0.62, 0.70, 0.75, 0.83, 0.91, 0.93, 0.95, 0.97, 0.98, 0.99, 1.00, 1.00, 1.00, 1.00, 1.00};
+  constant SI.Density rho_data[32] = {880.00, 880.00, 880.00, 878.53, 876.67, 874.66, 871.68, 867.73, 863.30, 859.13, 853.22, 847.21, 840.68, 831.04, 822.86, 813.85, 807.99, 799.96, 789.37, 782.67, 771.81, 761.05, 759.45, 756.76, 753.55, 752.03, 751.11, 750.00, 750.00, 750.00, 750.00, 750.00};
+  constant SI.ThermalConductivity k_data[32] = {0.2000, 0.2000, 0.2000, 0.1998, 0.1995, 0.1992, 0.1987, 0.1981, 0.1974, 0.1968, 0.1959, 0.1950, 0.1940, 0.1925, 0.1912, 0.1898, 0.1889, 0.1877, 0.1861, 0.1850, 0.1834, 0.1817, 0.1815, 0.1810, 0.1805, 0.1803, 0.1802, 0.1800, 0.1800, 0.1800, 0.1800, 0.1800};
 
   redeclare model State "A model which calculates state and properties"
-  	parameter String table_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/MaterialTables/RT20_Paraffin_Slow.txt");
 	SI.SpecificEnthalpy h "Specific Enthalpy wrt 298.15K (J/kg)";
-	SI.Temperature T "Temperature (K)";
+	SI.Temperature T "Absolute Temperature (K)";
 	Real f "Liquid Mass Fraction";
 	SI.Density rho "Density (kg/m3)";
 	SI.ThermalConductivity k "Thermal conductivity (W/mK)";
-	Tables.CombiTable1Ds Tab (tableOnFile=true, tableName="table_1D_1", columns=2:5, fileName=table_file);
-	
   equation
-	Tab.u = h;
-	T = Tab.y[1];
-	f = Tab.y[2];
-	rho = Tab.y[3];
-	k = Tab.y[4];
+    T = Modelica.Math.Vectors.interpolate(h_data,T_data,h);
+    f = Modelica.Math.Vectors.interpolate(h_data,f_data,h);
+    rho = Modelica.Math.Vectors.interpolate(h_data,rho_data,h);
+    k = Modelica.Math.Vectors.interpolate(h_data,k_data,h);
   end State;
 
   redeclare function h_Tf "find specific enthalpy from Temperature and liquid fraction"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
     output SI.SpecificEnthalpy h "Specific Enthalpy (J/kg)";
-  protected
-    Real T_data[32] = {273.15,273.21,280.0121,280.9311816193,281.9727571116,283.0143326039,284.3622538293,285.8327133479,287.1806345733,288.2222100656,289.3863238512,290.3053610503,291.1018599562,292.0208971554,292.6335886214,293.1850109409,293.491356674,293.8589715536,294.2878555799,294.5329321663,294.900547046,295.2681619256,295.3294310722,295.4519693654,295.6357768053,295.7583150985,295.8808533917,296.1871991247,301.15,310,320,330};
-    Real h_data[32] = {0.00,111.74,12514.5491,14414.0788677313,16820.1499138694,19416.1739373341,23267.3774384282,28362.586712603,34098.4217142326,39480.4227384888,47123.2366497511,54888.9613110481,63313.9345407143,75772.6151124354,86350.3887518043,97982.2151869273,105561.71143908,115930.909260207,129618.697332278,138274.593789282,152308.766702361,166208.855160854,168272.265934168,171758.46175334,175903.906140882,177863.029005075,179054.890823595,180488.849574002,192556.450486522,214076.207325427,238392.31674792,262708.426170412};
   algorithm
-    h := Interpolate1D(T_data,h_data,T);
+    h := Modelica.Math.Vectors.interpolate(T_data,h_data,T);
   end h_Tf;
   
   redeclare function rho_Tf "find density from temperature and liquid fraction"
     input SI.Temperature T "Absolute temperature (K)";
     input Real f "Liquid mass fraction";
-    output SI.SpecificEnthalpy rho "Density (kg/m3)";
-  protected
-    Real T_data[32] = {273.15,273.21,280.0121,280.9311816193,281.9727571116,283.0143326039,284.3622538293,285.8327133479,287.1806345733,288.2222100656,289.3863238512,290.3053610503,291.1018599562,292.0208971554,292.6335886214,293.1850109409,293.491356674,293.8589715536,294.2878555799,294.5329321663,294.900547046,295.2681619256,295.3294310722,295.4519693654,295.6357768053,295.7583150985,295.8808533917,296.1871991247,301.15,310,320,330};
-    Real rho_data[32] = {880.00,880.00,880.0000,878.5299008847,876.6677753387,874.6586398812,871.6780859886,867.7347613029,863.2956384842,859.1303576576,853.2153706291,847.2052595401,840.6849375818,831.0428169139,822.8563826249,813.8541874543,807.9882037296,799.9631920885,789.3698308166,782.6707909266,771.8093527573,761.0516862902,759.4547550943,756.7566908357,753.5484157077,752.0321958358,751.1097807047,750,750,750,750,750};
+    output SI.Density rho "Density (kg/m3)";
   algorithm
-    rho := Interpolate1D(T_data,rho_data,T);
+    rho := Modelica.Math.Vectors.interpolate(T_data,rho_data,T);
   end rho_Tf;
   
 end RT20_Paraffin_Melting;

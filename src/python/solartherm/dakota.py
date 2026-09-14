@@ -26,7 +26,9 @@
 
 
 import os
-
+#Dirty hack
+from solartherm import chpar
+#End Dirty hack
 def gen_dakota_in(response, method, variables, savedir):
 	"""
 	Generate dakota input file: sample.in
@@ -233,7 +235,7 @@ class OptimisationDakotaIn:
 	def __init__(self):
 		self.method=''
 
-	def moga(self,seed=10983, max_eval=2500, init_type='unique_random'
+	def moga(self,seed=10983, max_eval=5000, init_type='unique_random'
 			, crossover_type='shuffle_random', num_offspring=2, num_parents=2
 			, crossover_rate=0.8, mutation_type='replace_uniform'
 			, mutation_rate=0.1, fitness_type='domination_count'
@@ -388,6 +390,9 @@ def gen_interface_bb(savedir):
 import dakota.interfacing as di
 import os
 import glob
+#Dirty hack
+from solartherm import chpar
+#End Dirty hack
 
 ##### Parse Dakota parameters file
 params, results = di.read_parameters_file()
@@ -441,15 +446,29 @@ if runsolstice=='True':
 ##### run solartherm
 from solartherm import postproc
 from solartherm import simulation
-sim = simulation.Simulator(fn=fn, suffix=suffix, fusemount=False)
-if not os.path.exists(model):
-	sim.compile_model()
-	sim.compile_sim(args=['-s'])
+#Dirty hack
+#sim = simulation.Simulator(fn=fn, suffix=suffix, fusemount=False) #Commented out
+#if not os.path.exists(model): #Commented out
+#	sim.compile_model() #Commented out
+#	sim.compile_sim(args=['-s']) #Commented out
 
-sim.update_pars(var_n, var_v)
+
+jsonfile=model+'_info.json'
+mofile=fn
+savenew=model + '_'+suffix+'.mo'
+PX = chpar.SetPar(jsonfile, mofile)
+PX.set_par(var_n,var_v,suffix,savenew)
+
+sim = simulation.Simulator(fn=savenew, fusemount=False)
+sim.compile_model()
+sim.compile_sim(args=['-s'])
+
+#sim.update_pars(var_n, var_v) #Commented out for now
+#End Dirty Hack
+
 #sim.simulate(start=0, stop='1y', step='5m',solver='dassl', nls='newton')
 #sim.simulate(start=0, stop='1y', step='1h',initStep='60s', maxStep='60s', solver='dassl', nls='newton')
-sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, integOrder=integOrder, solver=solver, nls=nls, lv=lv)
+sim.simulate(start=start, stop=stop, step=step, initStep=initStep, maxStep=maxStep, tolerance = '1e-05', integOrder=integOrder, solver=solver, nls=nls, lv=lv)
 
 try:
 	if system=='TEST':
@@ -459,7 +478,9 @@ try:
 		import DyMat
 		res=DyMat.DyMatFile(sim.res_fn)
 	else:
-		if system=='FUEL':
+		if system=='PROD':
+			resultclass = postproc.SimResultProd(sim.res_fn)
+		elif system=='FUEL':
 			resultclass = postproc.SimResultFuel(sim.res_fn)
 		else:
 			resultclass = postproc.SimResultElec(sim.res_fn)
@@ -505,7 +526,24 @@ for i, r in enumerate(results.responses()):
 		r.function = solartherm_res[i]
 results.write()
 
-map(os.unlink, glob.glob(sim.res_fn))
+Name = model + '_'+suffix
+os.system('rm -rf '+ Name)
+os.system('rm -rf '+ Name + '.c')
+os.system('rm -rf '+ Name + '.o')
+os.system('rm -rf '+ Name + '.makefile')
+os.system('rm -rf '+ Name + '_*')
+
+
+#os.system('rm %s'%sim.res_fn)
+#map(os.unlink, glob.glob(sim.res_fn)) #This removes the large res files
+#map(os.unlink, glob.glob(model+'_init_*.xml'))
+
+#os.system('rm %s'%sim.res_fn)
+#os.system('rm %s'%sim.init_out_fn)
+#os.system('rm %s'%(model+*.c))
+#os.system('rm %s'%(model+*.o))
+#os.system('rm %s'%(model+*.h))
+#map(os.unlink, glob.glob(sim.res_fn)) #This removes the large res files
 #map(os.unlink, glob.glob(model+'_init_*.xml'))
 """
 	if not os.path.exists(savedir):

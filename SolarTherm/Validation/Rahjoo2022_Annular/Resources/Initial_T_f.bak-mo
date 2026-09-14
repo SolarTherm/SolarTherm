@@ -1,0 +1,15 @@
+within SolarTherm.Validation.Rahjoo2022_Annular.Resources;
+
+function Initial_T_f
+  input Real[:] z_f;
+  output Real[size(z_f,1)] T_f;
+protected
+  Integer N_f = size(z_f,1);
+  Integer j;
+  Real z_data[5] = {0.0,0.1,0.5,0.9,1.0};
+  Real T_data[5] = {320.0,320.0,320.0,320.0,320.0};
+algorithm
+  for i in 1:N_f loop
+      T_f[i] := Modelica.Math.Vectors.interpolate(z_data,T_data,z_f[i]);
+  end for;
+end Initial_T_f;

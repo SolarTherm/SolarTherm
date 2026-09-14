@@ -1,0 +1,14 @@
+within SolarTherm.Utilities.Finances.Equipment;
+
+function FCI_Blower_CS "CAPEX of a carbon steel centrifugal blower indexed to USD_2022. Inputs = {Power (W)}"
+  input Real P "Required blower sizing power P_c (W)";
+  output Real FCI "Total cost of blower (USD_2022)";
+protected
+  Real FOB;
+  constant Real F_m = 1.0;
+  
+algorithm
+  FOB := (CEPCI/500.0) ; //CEPCI = (816.0 for year 2022)
+annotation(
+    Documentation(info = "<html><head></head><body>Information:<div><br></div><div>Free-on-board of bins for solids-handling system provided by Seider for carbon steek at atmospheric pressure with a reference CEPCI index of 500. When converted to Si units, the FOB cost relationship is:</div><div><br></div><div>FOB = (CEPCI/500.0) * F_m * 570 * (35.315 * V)^0.46</div><div><br></div><div>where:</div><div><br></div><div>F_m = 1.0 (Cabron Steel)</div><div><br></div><div>0.2832 &lt;= V (m3) &lt;= 2832</div></body></html>"));
+end FCI_Blower_CS;

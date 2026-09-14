@@ -1,0 +1,6 @@
+within SolarTherm.Utilities.Finances.Equipment.Blowers;
+
+model FCI_Blower_CS "Inputs = {Blower Sizing Power (W)}. CAPEX of a carbon steel blower indexed to USD_2022."
+equation
+
+end FCI_Blower_CS;
